@@ -36,6 +36,8 @@ public struct ChargingDashboardMapper: Sendable {
                 batteryVoltage: batteryHealth.dcBusVoltage.volts,
                 status: status
             ),
+            isBalancingAtFullCharge: telemetry.batteryLevel.percent == Constants.fullChargePercent
+                && !batteryHealth.balancingCellIndexes.isEmpty,
             isHighBeamOn: telemetry.statusFlags.indicatorState.isHighBeamOn,
             isLeftBlinkerOn: telemetry.statusFlags.indicatorState.isLeftBlinkerOn,
             isBrakeActive: telemetry.statusFlags.isBrakeActive,
@@ -76,6 +78,7 @@ public struct ChargingDashboardMapper: Sendable {
 
     private enum Constants {
         static let percentageScale = 100.0
+        static let fullChargePercent = 100
         static let secondsPerHour = 3_600.0
     }
 }

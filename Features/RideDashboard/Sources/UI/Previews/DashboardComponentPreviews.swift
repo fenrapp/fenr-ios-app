@@ -20,7 +20,8 @@ import SwiftUI
         mode: .charging(
             percentage: 82,
             targetPercentage: 100,
-            estimatedTimeRemaining: "32 min"
+            estimatedTimeRemaining: "32 min",
+            isBalancingAtFullCharge: false
         ),
         reduceMotion: false
     )

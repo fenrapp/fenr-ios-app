@@ -92,4 +92,14 @@ struct ChargingDashboardMapperTests {
         #expect(largerPack.estimatedTimeRemaining != nil)
         #expect(smallerPack.estimatedTimeRemaining != largerPack.estimatedTimeRemaining)
     }
+
+    @Test("Identifies full-charge balancing")
+    func identifiesFullChargeBalancing() {
+        let state = ChargingDashboardMapper().map(
+            telemetry: BikeTelemetry(batteryLevel: .known(percent: 100)),
+            batteryHealth: BikeBatteryHealth(balancingCellIndexes: [0])
+        )
+
+        #expect(state.isBalancingAtFullCharge)
+    }
 }

@@ -3,12 +3,17 @@ import SwiftUI
 
 enum DashboardGaugeMode {
     case speed(speed: RideDashboardMeasurement?, maximum: RideDashboardMeasurement)
-    case charging(percentage: Int?, targetPercentage: Int?, estimatedTimeRemaining: String?)
+    case charging(
+        percentage: Int?,
+        targetPercentage: Int?,
+        estimatedTimeRemaining: String?,
+        isBalancingAtFullCharge: Bool
+    )
 
     var value: Double {
         switch self {
         case let .speed(speed, _): speed?.value ?? .zero
-        case let .charging(percentage, _, _): Double(percentage ?? .zero)
+        case let .charging(percentage, _, _, _): Double(percentage ?? .zero)
         }
     }
 
@@ -27,17 +32,22 @@ enum DashboardGaugeMode {
     }
 
     var title: String? {
-        guard case let .charging(_, _, estimatedTimeRemaining) = self else { return nil }
+        guard case let .charging(_, _, estimatedTimeRemaining, isBalancingAtFullCharge) = self else {
+            return nil
+        }
+        if isBalancingAtFullCharge { return "BALANCING" }
         return estimatedTimeRemaining.map { "ETA: \($0)" } ?? "CHARGING"
     }
 
     var isShowingEstimatedTime: Bool {
-        guard case let .charging(_, _, estimatedTimeRemaining) = self else { return false }
-        return estimatedTimeRemaining != nil
+        guard case let .charging(_, _, estimatedTimeRemaining, isBalancingAtFullCharge) = self else {
+            return false
+        }
+        return estimatedTimeRemaining != nil && !isBalancingAtFullCharge
     }
 
     var targetProgress: Double? {
-        guard case let .charging(_, targetPercentage, _) = self else { return nil }
+        guard case let .charging(_, targetPercentage, _, _) = self else { return nil }
         return targetPercentage.map { min(max(Double($0) / Constants.maximumPercentage, .zero), 1) }
     }
 
@@ -64,9 +74,10 @@ enum DashboardGaugeMode {
         switch self {
         case let .speed(speed, maximum):
             return "Speed \(format(speed?.value ?? .zero)) \(speed?.unit ?? maximum.unit)"
-        case let .charging(percentage, targetPercentage, _):
+        case let .charging(percentage, targetPercentage, _, isBalancingAtFullCharge):
             let target = targetPercentage.map { " Target \($0) percent" } ?? ""
-            return "Charging \(percentage.map { "\($0) percent" } ?? "unavailable").\(target)"
+            let state = isBalancingAtFullCharge ? "Balancing" : "Charging"
+            return "\(state) \(percentage.map { "\($0) percent" } ?? "unavailable").\(target)"
         }
     }
 

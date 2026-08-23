@@ -5,6 +5,7 @@ public struct ChargingDashboardViewState: Equatable, Sendable {
     public var batteryTemperature: RideDashboardMeasurement?
     public var targetStateOfChargePercent: Int?
     public var estimatedTimeRemaining: String?
+    public var isBalancingAtFullCharge: Bool
     public var isHighBeamOn: Bool
     public var isLeftBlinkerOn: Bool
     public var isBrakeActive: Bool
@@ -18,6 +19,7 @@ public struct ChargingDashboardViewState: Equatable, Sendable {
         batteryTemperature: RideDashboardMeasurement? = nil,
         targetStateOfChargePercent: Int? = nil,
         estimatedTimeRemaining: String? = nil,
+        isBalancingAtFullCharge: Bool = false,
         isHighBeamOn: Bool = false,
         isLeftBlinkerOn: Bool = false,
         isBrakeActive: Bool = false,
@@ -30,6 +32,7 @@ public struct ChargingDashboardViewState: Equatable, Sendable {
         self.batteryTemperature = batteryTemperature
         self.targetStateOfChargePercent = targetStateOfChargePercent
         self.estimatedTimeRemaining = estimatedTimeRemaining
+        self.isBalancingAtFullCharge = isBalancingAtFullCharge
         self.isHighBeamOn = isHighBeamOn
         self.isLeftBlinkerOn = isLeftBlinkerOn
         self.isBrakeActive = isBrakeActive
