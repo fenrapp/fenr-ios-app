@@ -1,0 +1,38 @@
+import DesignSystem
+import SwiftUI
+
+struct RideDashboardMetricsColumn: View {
+    let batteryPercent: Int?
+    let odometer: RideDashboardMeasurement?
+    let compact: Bool
+
+    var body: some View {
+        VStack(spacing: .zero) {
+            Spacer(minLength: .zero)
+            VStack(alignment: .leading, spacing: .zero) {
+                DashboardBatteryPanel(percentage: batteryPercent, compact: compact)
+                separator
+                DashboardMetricPanel(
+                    title: "ODOMETER",
+                    measurement: odometer,
+                    fractionDigits: 1,
+                    tint: DesignColor.primaryText,
+                    alignment: .leading
+                )
+            }
+            Spacer(minLength: .zero)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+    }
+
+    private var separator: some View {
+        Rectangle()
+            .fill(DesignColor.border)
+            .frame(height: Constants.separatorHeight)
+            .padding(.vertical, compact ? DesignSpace.small : DesignSpace.medium)
+    }
+
+    private enum Constants {
+        static let separatorHeight: CGFloat = 1
+    }
+}

@@ -1,0 +1,137 @@
+import BikeDomain
+import BikeSDK
+import Foundation
+
+public actor LiveBikeRepository: BikeRepository, BikeBatteryHealthRepository, BikeDiscoveryRepository {
+    private let client: BikeTelemetryClient
+    private let eventHandler: LiveBikeRepositoryEventHandler
+    private let stateStore: BikeRepositoryStateStore
+    private let telemetryHub: AsyncEventHub<BikeTelemetry>
+    private let connectionHub: AsyncEventHub<BikeConnection>
+    private let debugHub: AsyncEventHub<BikeDebugEvent>
+    private let batteryHealthStore: BatteryHealthStateStore
+    private let batteryHealthHub: AsyncEventHub<BikeBatteryHealth>
+    private let batteryCaptureHub: AsyncEventHub<BatteryDatasetCapture>
+    private let discoveredBikesHub: AsyncEventHub<[DiscoveredBike]>
+    private var task: Task<Void, Never>?
+
+    public init(
+        client: BikeTelemetryClient,
+        eventHandler: LiveBikeRepositoryEventHandler,
+        stateStore: BikeRepositoryStateStore,
+        telemetryHub: AsyncEventHub<BikeTelemetry>,
+        connectionHub: AsyncEventHub<BikeConnection>,
+        debugHub: AsyncEventHub<BikeDebugEvent>,
+        batteryHealthStore: BatteryHealthStateStore,
+        batteryHealthHub: AsyncEventHub<BikeBatteryHealth>,
+        batteryCaptureHub: AsyncEventHub<BatteryDatasetCapture>,
+        discoveredBikesHub: AsyncEventHub<[DiscoveredBike]>
+    ) {
+        self.client = client
+        self.stateStore = stateStore
+        self.telemetryHub = telemetryHub
+        self.connectionHub = connectionHub
+        self.debugHub = debugHub
+        self.batteryHealthStore = batteryHealthStore
+        self.batteryHealthHub = batteryHealthHub
+        self.batteryCaptureHub = batteryCaptureHub
+        self.discoveredBikesHub = discoveredBikesHub
+        self.eventHandler = eventHandler
+    }
+
+    deinit {
+        task?.cancel()
+    }
+
+    public func start() async {
+        guard task == nil else { return }
+        await client.start()
+        let events = await client.events()
+        let targets = LiveBikeRepositoryEventTargets(
+            stateStore: stateStore,
+            telemetryHub: telemetryHub,
+            connectionHub: connectionHub,
+            debugHub: debugHub,
+            batteryHealthStore: batteryHealthStore,
+            batteryHealthHub: batteryHealthHub,
+            batteryCaptureHub: batteryCaptureHub,
+            discoveredBikesHub: discoveredBikesHub
+        )
+        task = Task { [eventHandler, targets] in
+            for await event in events {
+                await eventHandler.handle(event, targets: targets)
+            }
+        }
+    }
+
+    public func stop() async {
+        task?.cancel()
+        task = nil
+        await client.stop()
+        let state = await stateStore.resetSession(connectionState: .idle)
+        await telemetryHub.send(state.telemetry)
+        await connectionHub.send(state.connection)
+        await batteryHealthStore.reset()
+        await batteryHealthHub.send(BikeBatteryHealth())
+    }
+
+    public func connect(vin: String) async throws {
+        try await client.connect(to: vin)
+    }
+
+    public func startBikeDiscovery() async {
+        await client.startBikeDiscovery()
+    }
+
+    public func stopBikeDiscovery() async {
+        await client.stopBikeDiscovery()
+    }
+
+    public func observeDiscoveredBikes() async -> AsyncStream<[DiscoveredBike]> {
+        await discoveredBikesHub.stream()
+    }
+
+    public func disconnect() async throws {
+        try await client.disconnect()
+    }
+
+    public func retrySecurityHandshake() async throws {
+        try await client.retrySecurityHandshake()
+    }
+
+    public func readTelemetrySnapshot() async throws {
+        try await client.readTelemetrySnapshot()
+    }
+
+    public func readBikeStatusSnapshot() async throws {
+        try await client.readBikeStatusSnapshot()
+    }
+
+    public func observeTelemetry() async -> AsyncStream<BikeTelemetry> {
+        await telemetryHub.stream(replay: stateStore.currentTelemetry())
+    }
+
+    public func observeConnection() async -> AsyncStream<BikeConnection> {
+        await connectionHub.stream(replay: stateStore.currentConnection())
+    }
+
+    public func observeDebugEvents() async -> AsyncStream<BikeDebugEvent> {
+        await debugHub.stream()
+    }
+
+    public func startBatteryHealthMonitoring() async throws {
+        try await client.startBatteryHealthMonitoring()
+    }
+
+    public func stopBatteryHealthMonitoring() async {
+        await client.stopBatteryHealthMonitoring()
+    }
+
+    public func observeBatteryHealth() async -> AsyncStream<BikeBatteryHealth> {
+        await batteryHealthHub.stream(replay: batteryHealthStore.currentHealth())
+    }
+
+    public func observeBatteryDatasetCaptures() async -> AsyncStream<BatteryDatasetCapture> {
+        await batteryCaptureHub.stream()
+    }
+}

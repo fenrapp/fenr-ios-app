@@ -1,0 +1,52 @@
+@testable import BikeData
+import BikeDomain
+import Foundation
+import Testing
+
+@Suite("UserDefaults bike profile repository")
+struct UserDefaultsBikeProfileRepositoryTests {
+    @Test("Loads an empty profile when no bike has completed onboarding")
+    func loadsEmptyProfile() async {
+        let suiteName = makeSuiteName()
+        let repository = UserDefaultsBikeProfileRepository(suiteName: suiteName)
+
+        #expect(await repository.loadProfile() == nil)
+
+        clearUserDefaults(suiteName: suiteName)
+    }
+
+    @Test("Persists a configured bike profile")
+    func savesAndReloadsProfile() async {
+        let suiteName = makeSuiteName()
+        let repository = UserDefaultsBikeProfileRepository(suiteName: suiteName)
+        let profile = BikeProfile(vin: "FENRTEST000000001")
+
+        await repository.saveProfile(profile)
+
+        let reloadedRepository = UserDefaultsBikeProfileRepository(suiteName: suiteName)
+        #expect(await reloadedRepository.loadProfile() == profile)
+
+        clearUserDefaults(suiteName: suiteName)
+    }
+
+    @Test("Clears the configured bike profile")
+    func clearsProfile() async {
+        let suiteName = makeSuiteName()
+        let repository = UserDefaultsBikeProfileRepository(suiteName: suiteName)
+        await repository.saveProfile(.init(vin: "FENRTEST000000001"))
+
+        await repository.clearProfile()
+
+        #expect(await repository.loadProfile() == nil)
+
+        clearUserDefaults(suiteName: suiteName)
+    }
+
+    private func makeSuiteName() -> String {
+        "fenr.bike-profile.tests.\(UUID().uuidString)"
+    }
+
+    private func clearUserDefaults(suiteName: String) {
+        UserDefaults.standard.removePersistentDomain(forName: suiteName)
+    }
+}

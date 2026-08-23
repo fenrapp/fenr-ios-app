@@ -1,0 +1,561 @@
+name: FENR
+options:
+  minimumXcodeGenVersion: 2.42.0
+  createIntermediateGroups: true
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    GENERATE_INFOPLIST_FILE: YES
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  AsyncSupport:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/AsyncSupport/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.asyncsupport
+  StarkProtocol:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/StarkProtocol/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.protocol
+  BikeSDK:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/BikeSDK/Sources
+    dependencies:
+      - target: AsyncSupport
+      - target: StarkProtocol
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikesdk
+  BikeDomain:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/BikeDomain/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikedomain
+  BikeData:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/BikeData/Sources
+    dependencies:
+      - target: AsyncSupport
+      - target: BikeDomain
+      - target: BikeSDK
+      - target: StarkProtocol
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikedata
+  BikeEmulator:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/BikeEmulator/Sources
+    dependencies:
+      - target: AsyncSupport
+      - target: BikeDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikeemulator
+  EnvironmentDomain:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/EnvironmentDomain/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.environmentdomain
+  EnvironmentData:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/EnvironmentData/Sources
+    dependencies:
+      - target: EnvironmentDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.environmentdata
+  SettingsDomain:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/SettingsDomain/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.settingsdomain
+  SettingsData:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/SettingsData/Sources
+    dependencies:
+      - target: SettingsDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.settingsdata
+  DesignSystem:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/DesignSystem/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.designsystem
+  TestSupport:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/TestSupport/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.testsupport
+  BikeDiagnostics:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Features/BikeDiagnostics/Sources
+    dependencies:
+      - target: AsyncSupport
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.diagnostics
+  BikeOnboarding:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Features/BikeOnboarding/Sources
+    dependencies:
+      - target: BikeDomain
+      - target: StarkProtocol
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.onboarding
+  RideDashboard:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Features/RideDashboard/Sources
+    dependencies:
+      - target: BikeDomain
+      - target: EnvironmentDomain
+      - target: SettingsDomain
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.dashboard
+  BatteryHealth:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Features/BatteryHealth/Sources
+    dependencies:
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.batteryhealth
+  AppSettings:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Features/AppSettings/Sources
+    dependencies:
+      - target: SettingsDomain
+      - target: EnvironmentDomain
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.appsettings
+  FENR:
+    type: application
+    platform: iOS
+    sources:
+      - path: App/Sources
+    preBuildScripts:
+      - name: SwiftLint
+        basedOnDependencyAnalysis: false
+        script: |
+          if command -v swiftlint >/dev/null; then
+            swiftlint lint --config "${SRCROOT}/.swiftlint.yml"
+          elif [ -x "$HOME/.local/share/mise/installs/swiftlint/latest/swiftlint" ]; then
+            "$HOME/.local/share/mise/installs/swiftlint/latest/swiftlint" lint --config "${SRCROOT}/.swiftlint.yml"
+          elif [ -x "/opt/homebrew/bin/swiftlint" ]; then
+            "/opt/homebrew/bin/swiftlint" lint --config "${SRCROOT}/.swiftlint.yml"
+          else
+            echo "warning: SwiftLint not installed. Install with: brew install swiftlint"
+          fi
+    dependencies:
+      # DesignSystem is embedded for feature frameworks at runtime; the app does not import it.
+      - target: DesignSystem
+        embed: true
+      # AsyncSupport is loaded by BikeSDK, BikeData, and BikeDiagnostics at runtime.
+      - target: AsyncSupport
+        embed: true
+      - target: BikeDiagnostics
+      - target: BikeOnboarding
+      - target: RideDashboard
+      - target: BatteryHealth
+      - target: AppSettings
+      - target: BikeData
+      - target: EnvironmentDomain
+      - target: EnvironmentData
+      - target: SettingsDomain
+      - target: SettingsData
+      - target: BikeDomain
+      - target: BikeSDK
+      - target: StarkProtocol
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        INFOPLIST_KEY_CFBundleDisplayName: FENR
+        INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: FENR uses Bluetooth to authenticate with your Stark Varg and display telemetry.
+        INFOPLIST_KEY_NSCameraUsageDescription: FENR uses the camera to scan your bike VIN during setup.
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: FENR uses your location while the ride dashboard is open to provide GPS speed.
+        CODE_SIGN_ENTITLEMENTS: App/FENR.entitlements
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+  FENRDebug:
+    type: application
+    platform: iOS
+    sources:
+      - path: App/Sources
+        excludes:
+          - FENRApp.swift
+          - Composition/BikeData
+          - Composition/BikeSDK
+          - Composition/StarkProtocol
+          - Composition/Production
+      - path: App/DebugSources
+    preBuildScripts:
+      - name: SwiftLint
+        basedOnDependencyAnalysis: false
+        script: |
+          if command -v swiftlint >/dev/null; then
+            swiftlint lint --config "${SRCROOT}/.swiftlint.yml"
+          elif [ -x "$HOME/.local/share/mise/installs/swiftlint/latest/swiftlint" ]; then
+            "$HOME/.local/share/mise/installs/swiftlint/latest/swiftlint" lint --config "${SRCROOT}/.swiftlint.yml"
+          elif [ -x "/opt/homebrew/bin/swiftlint" ]; then
+            "/opt/homebrew/bin/swiftlint" lint --config "${SRCROOT}/.swiftlint.yml"
+          else
+            echo "warning: SwiftLint not installed. Install with: brew install swiftlint"
+          fi
+    dependencies:
+      # DesignSystem is embedded for feature frameworks at runtime; the app does not import it.
+      - target: DesignSystem
+        embed: true
+      # AsyncSupport is loaded by BikeEmulator and BikeDiagnostics at runtime.
+      - target: AsyncSupport
+        embed: true
+      # BikeOnboarding loads StarkProtocol at runtime; the app does not import it.
+      - target: StarkProtocol
+        embed: true
+      - target: BikeDiagnostics
+      - target: BikeOnboarding
+      - target: RideDashboard
+      - target: BatteryHealth
+      - target: AppSettings
+      - target: BikeDomain
+      - target: EnvironmentDomain
+      - target: EnvironmentData
+      - target: SettingsDomain
+      - target: SettingsData
+      - target: BikeEmulator
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        INFOPLIST_KEY_CFBundleDisplayName: FENR Debug
+        INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
+        INFOPLIST_KEY_NSCameraUsageDescription: FENR uses the camera to scan your bike VIN during setup.
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: FENR uses your location while the ride dashboard is open to provide GPS speed.
+        CODE_SIGN_ENTITLEMENTS: App/FENRDebug.entitlements
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+  StarkProtocolTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/StarkProtocol/Tests
+    dependencies:
+      - target: StarkProtocol
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.protocol.tests
+  AsyncSupportTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/AsyncSupport/Tests
+    dependencies:
+      - target: AsyncSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.asyncsupport.tests
+  BikeSDKTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/BikeSDK/Tests
+    dependencies:
+      - target: BikeSDK
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikesdk.tests
+  BikeDomainTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/BikeDomain/Tests
+    dependencies:
+      - target: BikeDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikedomain.tests
+  BikeDataTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/BikeData/Tests
+    dependencies:
+      - target: BikeData
+      - target: BikeDomain
+      - target: BikeSDK
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikedata.tests
+  BikeEmulatorTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/BikeEmulator/Tests
+    dependencies:
+      - target: BikeEmulator
+      - target: BikeDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikeemulator.tests
+  SettingsDataTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/SettingsData/Tests
+    dependencies:
+      - target: SettingsData
+      - target: SettingsDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.settingsdata.tests
+  DesignSystemTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/DesignSystem/Tests
+    dependencies:
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.designsystem.tests
+  BikeDiagnosticsTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Features/BikeDiagnostics/Tests
+    dependencies:
+      - target: BikeDiagnostics
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.diagnostics.tests
+  BikeOnboardingTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Features/BikeOnboarding/Tests
+    dependencies:
+      - target: BikeOnboarding
+      - target: BikeDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.onboarding.tests
+  RideDashboardTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Features/RideDashboard/Tests
+    dependencies:
+      - target: RideDashboard
+      - target: BikeDomain
+      - target: EnvironmentDomain
+      - target: SettingsDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.dashboard.tests
+  BatteryHealthTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Features/BatteryHealth/Tests
+    dependencies:
+      - target: BatteryHealth
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.batteryhealth.tests
+  AppSettingsTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Features/AppSettings/Tests
+    dependencies:
+      - target: AppSettings
+      - target: SettingsDomain
+      - target: EnvironmentDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.appsettings.tests
+  TestSupportTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/TestSupport/Tests
+    dependencies:
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.testsupport.tests
+  FENRTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: App/Tests
+      - path: App/Sources/Composition
+    dependencies:
+      - target: BikeDiagnostics
+      - target: BikeOnboarding
+      - target: RideDashboard
+      - target: AppSettings
+      - target: BikeData
+      - target: EnvironmentDomain
+      - target: EnvironmentData
+      - target: SettingsDomain
+      - target: SettingsData
+      - target: BikeDomain
+      - target: BikeSDK
+      - target: StarkProtocol
+      - target: BatteryHealth
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.tests
+  FENRDebugTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: App/DebugTests
+      - path: App/DebugSources
+        excludes:
+          - FENRDebugApp.swift
+          - DebugScenarioPicker.swift
+      - path: App/Sources/Composition
+        excludes:
+          - BikeData
+          - BikeSDK
+          - StarkProtocol
+          - Production
+    dependencies:
+      - target: AppSettings
+      - target: BikeDiagnostics
+      - target: BikeOnboarding
+      - target: RideDashboard
+      - target: BatteryHealth
+      - target: BikeDomain
+      - target: BikeEmulator
+      - target: EnvironmentDomain
+      - target: EnvironmentData
+      - target: SettingsDomain
+      - target: SettingsData
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug.tests
+schemes:
+  FENR:
+    build:
+      targets:
+        FENR: all
+        StarkProtocolTests: [test]
+        AsyncSupportTests: [test]
+        BikeSDKTests: [test]
+        BikeDomainTests: [test]
+        BikeDataTests: [test]
+        BikeEmulatorTests: [test]
+        SettingsDataTests: [test]
+        DesignSystemTests: [test]
+        BikeDiagnosticsTests: [test]
+        BikeOnboardingTests: [test]
+        RideDashboardTests: [test]
+        BatteryHealthTests: [test]
+        AppSettingsTests: [test]
+        TestSupportTests: [test]
+        FENRTests: [test]
+        FENRDebugTests: [test]
+    test:
+      targets:
+        - StarkProtocolTests
+        - BikeSDKTests
+        - BikeDomainTests
+        - BikeDataTests
+        - BikeEmulatorTests
+        - SettingsDataTests
+        - DesignSystemTests
+        - BikeDiagnosticsTests
+        - BikeOnboardingTests
+        - RideDashboardTests
+        - BatteryHealthTests
+        - AppSettingsTests
+        - FENRTests
+        - FENRDebugTests

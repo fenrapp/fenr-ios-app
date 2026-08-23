@@ -1,0 +1,145 @@
+@testable import BikeSDK
+import Foundation
+import StarkProtocol
+import Testing
+
+@Suite("Bike SDK notification mapping")
+struct BikeSDKMappingTests {
+    @Test("Notification mapper emits battery payload")
+    func mapsBattery() throws {
+        let mapper = makeNotificationMapper()
+        let event = try mapper.telemetryPayload(
+            characteristic: StarkUUIDs.batterySOC,
+            data: BikeSDKPayloadFixtures.battery
+        )
+        #expect(event == .battery(.init(stateOfChargePercent: 91, stateOfHealthPercent: 99, dcBusRaw: nil)))
+    }
+
+    @Test("Notification mapper emits speed payload")
+    func mapsSpeed() throws {
+        let mapper = makeNotificationMapper()
+        let event = try mapper.telemetryPayload(
+            characteristic: StarkUUIDs.liveSpeed,
+            data: BikeSDKPayloadFixtures.speed
+        )
+        #expect(event == .speed(.init(speedKmh: 42.1, speedKmhX10: 421, motorRPM: 3180)))
+    }
+
+    @Test("Notification mapper emits map payload")
+    func mapsMap() throws {
+        let mapper = makeNotificationMapper()
+
+        let event = try mapper.telemetryPayload(
+            characteristic: StarkUUIDs.liveMap,
+            data: BikeSDKPayloadFixtures.map
+        )
+
+        #expect(event == .map(3))
+    }
+
+    @Test("Notification mapper emits charger payload")
+    func mapsCharger() throws {
+        let mapper = makeNotificationMapper()
+
+        let event = try mapper.telemetryPayload(
+            characteristic: StarkUUIDs.chargerData,
+            data: BikeSDKPayloadFixtures.charger
+        )
+
+        #expect(event == .charger(.init(
+            requestedCurrentAmperes: 2.5,
+            reportedCurrentAmperes: 2.5,
+            targetCellVoltageVolts: 4.275,
+            maximumCurrentAmperes: 20,
+            maximumPowerWatts: 1_000,
+            maximumStateOfChargePercent: 100,
+            requestedVoltageRaw: 0,
+            reportedVoltageRaw: 0,
+            statusRaw: 0,
+            isEnabled: false,
+            typeRaw: 3
+        )))
+    }
+
+    @Test("Notification mapper emits decoded status payload")
+    func mapsStatus() throws {
+        let mapper = makeNotificationMapper()
+
+        let event = try mapper.telemetryPayload(
+            characteristic: StarkUUIDs.bikeStatus,
+            data: BikeSDKPayloadFixtures.status
+        )
+
+        guard case .status(let status) = event else {
+            Issue.record("Expected a status telemetry payload")
+            return
+        }
+        #expect(status.isOn)
+        #expect(status.isCharging)
+        #expect(status.isInGear)
+        #expect(status.isFaultActive)
+        #expect(status.isCrawlActive)
+        #expect(status.isCrawlForward)
+    }
+
+    @Test("Notification mapper emits VCU brake payload only for VCU telemetry frames")
+    func mapsVCUBrake() throws {
+        let mapper = makeNotificationMapper()
+
+        let active = try mapper.telemetryPayload(
+            characteristic: StarkUUIDs.vcuTelemetryTLV,
+            data: Data([0x05, 0x0F, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00])
+        )
+        let compactFrame = try mapper.telemetryPayload(
+            characteristic: StarkUUIDs.vcuTelemetryTLV,
+            data: Data([0x02, 0x0A, 0x02, 0x00, 0x97, 0x00, 0x40, 0x1F])
+        )
+
+        #expect(active == .vcuBrake(.init(primaryBrakeSignal: 1, secondaryBrakeSignal: 1)))
+        #expect(compactFrame == nil)
+    }
+
+    @Test("Notification mapper emits raw inverter temperature readings")
+    func mapsInverterTemperatures() throws {
+        let mapper = makeNotificationMapper()
+        let data = Data([
+            0x8B, 0x01, 0x98, 0x01, 0x43, 0x01, 0x07, 0x02,
+            0x42, 0x01, 0x45, 0x01, 0x4A, 0x01, 0x00, 0x00
+        ])
+
+        let event = try mapper.telemetryPayload(
+            characteristic: StarkUUIDs.inverterTemperatures,
+            data: data
+        )
+
+        #expect(event == .inverterTemperatures(.init(
+            rawValues: [395, 408, 323, 519, 322, 325, 330, 0]
+        )))
+    }
+
+    @Test("Unknown characteristic is ignored")
+    func unknownCharacteristic() throws {
+        let mapper = makeNotificationMapper()
+        let event = try mapper.telemetryPayload(characteristic: UUID(), data: Data([1, 2, 3]))
+        #expect(event == nil)
+    }
+
+    @Test("Notification registry accepts an injected protocol decoder")
+    func injectedDecoder() throws {
+        let expectedModeIndex = 9
+        let registry = StarkNotificationDecoderRegistry(decoders: [
+            StarkUUIDs.liveMap: .adapting(
+                decoder: FakeStarkMapDecoder(payload: .init(modeIndex: expectedModeIndex)),
+                transform: { .map($0.modeIndex) }
+            )
+        ])
+        let mapper = StarkNotificationToSDKEventMapper(decoderRegistry: registry)
+
+        let payload = try mapper.telemetryPayload(
+            characteristic: StarkUUIDs.liveMap,
+            data: Data()
+        )
+
+        #expect(payload == .map(expectedModeIndex))
+    }
+}

@@ -1,0 +1,16 @@
+enum BatteryHealthText {
+    static let placeholder = "--"
+    static let monitoring = "Monitoring"
+    static let awaitingSample = "Awaiting sample"
+    static let captured = "Captured"
+    static let validated = "Validated"
+    static let summary = "Summary"
+    static let pack = "Pack health"
+    static let charging = "Charging"
+    static let cells = "Cells"
+    static let temperatures = "Temperatures"
+    static let dataSources = "Data sources"
+    static let noValidatedCells = "No validated cell samples"
+    static let noValidatedTemperatures = "No validated temperature samples"
+    static let copyLog = "Copy battery log"
+}

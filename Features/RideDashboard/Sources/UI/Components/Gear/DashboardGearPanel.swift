@@ -1,0 +1,70 @@
+import DesignSystem
+import SwiftUI
+
+struct DashboardGearPanel: View {
+    enum Display {
+        case text(String)
+        case crawlForward
+        case crawlReverse
+
+        var accessibilityLabel: String {
+            switch self {
+            case let .text(value): value
+            case .crawlForward: "Crawl forward"
+            case .crawlReverse: "Crawl reverse"
+            }
+        }
+    }
+
+    let display: Display
+    let tint: Color
+
+    var body: some View {
+        VStack(spacing: .zero) {
+            Text("GEAR")
+                .font(.system(size: Constants.titleFontSize, weight: .semibold))
+                .foregroundStyle(.secondary)
+            gearValue
+                .frame(maxWidth: .infinity, minHeight: Constants.valueFontSize)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Gear \(display.accessibilityLabel)")
+    }
+
+    private var gearValue: some View {
+        Group {
+            switch display {
+            case let .text(value):
+                Text(value)
+                    .font(.system(size: Constants.valueFontSize, weight: .medium, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(Constants.minimumScaleFactor)
+            case .crawlForward:
+                Image(systemName: "tortoise.fill")
+                    .font(.system(size: Constants.crawlIconSize, weight: .medium))
+            case .crawlReverse:
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "tortoise.fill")
+                        .font(.system(size: Constants.crawlIconSize, weight: .medium))
+                        .scaleEffect(x: -1, y: 1)
+                    Image(systemName: "arrow.backward")
+                        .font(.system(size: Constants.reverseArrowSize, weight: .bold))
+                        .padding(.top, Constants.reverseArrowVerticalOffset)
+                        .padding(.trailing, Constants.reverseArrowHorizontalOffset)
+                }
+            }
+        }
+        .foregroundStyle(tint)
+    }
+
+    private enum Constants {
+        static let titleFontSize: CGFloat = 16
+        static let valueFontSize: CGFloat = 73
+        static let minimumScaleFactor = 0.65
+        static let crawlIconSize: CGFloat = 57
+        static let reverseArrowSize: CGFloat = 22
+        static let reverseArrowVerticalOffset: CGFloat = -2
+        static let reverseArrowHorizontalOffset: CGFloat = -8
+    }
+}
