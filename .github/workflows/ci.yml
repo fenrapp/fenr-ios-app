@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tooling
+        run: brew install xcodegen swiftlint
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Lint
+        run: swiftlint lint --strict
+      - name: Test
+        run: >-
+          xcodebuild -project FENR.xcodeproj -scheme FENR
+          -destination 'platform=iOS Simulator,name=iPhone 16 Pro' test
