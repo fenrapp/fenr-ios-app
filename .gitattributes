@@ -1,0 +1,10 @@
+* text=auto eol=lf
+*.swift text diff=swift
+*.yml text
+*.yaml text
+*.md text
+*.xcodeproj/project.pbxproj text
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.xcassets/** binary

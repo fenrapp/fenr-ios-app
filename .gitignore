@@ -1,0 +1,57 @@
+# macOS
+.DS_Store
+
+# Xcode
+DerivedData/
+build/
+Build/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+xcuserdata/
+*.xcuserdatad/
+*.moved-aside
+*.ipa
+*.dSYM
+*.dSYM.zip
+
+# Swift Package Manager
+.build/
+Packages/
+Package.resolved
+
+# CocoaPods and Carthage
+Pods/
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Credentials and signing material
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+*.entitlements.private
+*.key
+*.pem
+.env
+.env.*
+
+# Local diagnostics and research material
+captures/
+logs/
+*.pcap
+*.pcapng
+*.btsnoop
+*.apk
+*.aab
+research/
+archive/
+
+# Tooling
+.swiftpm/
+.xcodegen/
