@@ -124,7 +124,7 @@ public final class WatchDashboardViewModel: ObservableObject {
     private func gear(for telemetry: BikeTelemetry) -> String {
         switch telemetry.runState {
         case .neutral, .charging: "N"
-        case .on: telemetry.mode.displayIndex.map(String.init) ?? "R"
+        case .on: telemetry.mode.displayIndex.map { String($0) } ?? "R"
         case .crawlForward: "􀋺"
         case .crawlReverse: "􀋻"
         case .off: "OFF"
@@ -134,19 +134,19 @@ public final class WatchDashboardViewModel: ObservableObject {
 
     private var chargingPower: String? {
         guard let status = batteryHealth.chargingStatus else { return nil }
-        return Self.numberFormatter.string(from: status.maximumPowerWatts / 1_000) + " kW"
+        return Self.formatNumber(status.maximumPowerWatts / Constants.wattsPerKilowatt) + " kW"
     }
 
     private var chargingCurrent: String? {
         guard let status = batteryHealth.chargingStatus else { return nil }
-        return Self.numberFormatter.string(from: status.reportedCurrentAmperes) + " A"
+        return Self.formatNumber(status.reportedCurrentAmperes) + " A"
     }
 
     private var batteryTemperature: String? {
         let temperatures = batteryHealth.temperatures.map(\.celsius)
         guard !temperatures.isEmpty else { return nil }
-        let average = temperatures.reduce(.zero, +) / Double(temperatures.count)
-        return Self.numberFormatter.string(from: average) + " C"
+        let average = temperatures.reduce(0.0, +) / Double(temperatures.count)
+        return Self.formatNumber(average) + " C"
     }
 
     private var chargingETA: String? {
@@ -155,12 +155,14 @@ public final class WatchDashboardViewModel: ObservableObject {
             let voltage = batteryHealth.dcBusVoltage.volts,
             let status = batteryHealth.chargingStatus,
             stateOfCharge < status.maximumStateOfChargePercent,
-            voltage > .zero,
-            status.reportedCurrentAmperes > .zero
+            voltage > 0,
+            status.reportedCurrentAmperes > 0
         else { return nil }
-        let wattHours = Double(status.maximumStateOfChargePercent - stateOfCharge) / 100 * 7_200
-        let seconds = wattHours / (voltage * status.reportedCurrentAmperes) * 3_600
-        guard seconds.isFinite, seconds > .zero else { return nil }
+        let wattHours = Double(status.maximumStateOfChargePercent - stateOfCharge)
+            / Constants.percentageScale
+            * Constants.batteryPackWattHours
+        let seconds = wattHours / (voltage * status.reportedCurrentAmperes) * Constants.secondsPerHour
+        guard seconds.isFinite, seconds > 0 else { return nil }
         return Self.etaFormatter.string(from: seconds)
     }
 
@@ -193,13 +195,25 @@ public final class WatchDashboardViewModel: ObservableObject {
     }()
 
     private static func formatDistance(_ kilometers: Double) -> String {
-        numberFormatter.string(from: kilometers) + " km"
+        formatNumber(kilometers) + " km"
+    }
+
+    private static func formatNumber(_ value: Double) -> String {
+        numberFormatter.string(from: NSNumber(value: value)) ?? String(value)
+    }
+
+    fileprivate enum Constants {
+        static let batteryPackWattHours = 7_200.0
+        static let percentageScale = 100.0
+        static let secondsPerHour = 3_600.0
+        static let telemetryFreshness: TimeInterval = 30
+        static let wattsPerKilowatt = 1_000.0
     }
 }
 
 private extension Date? {
     var isRecent: Bool {
         guard let self else { return false }
-        return timeIntervalSinceNow > -30
+        return Date().timeIntervalSince(self) < WatchDashboardViewModel.Constants.telemetryFreshness
     }
 }

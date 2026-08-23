@@ -37,7 +37,12 @@ struct WatchRootView: View {
         }
         .task {
             await sessionController.start()
-            let loadedProfile = initialProfile ?? await profileRepository.loadProfile()
+            let loadedProfile: BikeProfile?
+            if let initialProfile {
+                loadedProfile = initialProfile
+            } else {
+                loadedProfile = await profileRepository.loadProfile()
+            }
             setup.profile = loadedProfile
             setup.isLoading = false
             if let loadedProfile {

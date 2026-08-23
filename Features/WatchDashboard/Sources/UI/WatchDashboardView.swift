@@ -21,15 +21,6 @@ public struct WatchDashboardView: View {
             }
         }
         .navigationTitle("FENR")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button("Change Bike", role: .destructive, action: onChangeBike)
-                } label: {
-                    Image(systemName: "ellipsis")
-                }
-            }
-        }
         .task { viewModel.start() }
         .onDisappear { viewModel.stop() }
     }
@@ -47,6 +38,7 @@ public struct WatchDashboardView: View {
                         .foregroundStyle(.green)
                 }
                 metric("ODOMETER", value: viewModel.viewState.odometer ?? "--")
+                changeBikeButton
             }
             .padding(.horizontal, 8)
         }
@@ -65,6 +57,7 @@ public struct WatchDashboardView: View {
                     metric("CURRENT", value: viewModel.viewState.chargingCurrent ?? "--")
                 }
                 metric("PACK TEMP", value: viewModel.viewState.batteryTemperature ?? "--")
+                changeBikeButton
             }
             .padding(.horizontal, 8)
         }
@@ -98,11 +91,19 @@ public struct WatchDashboardView: View {
     }
 
     private func unavailable(detail: String) -> some View {
-        ContentUnavailableView(
-            "Waiting for bike",
-            systemImage: "bolt.horizontal.circle",
-            description: Text(detail)
-        )
+        VStack(spacing: 12) {
+            ContentUnavailableView(
+                "Waiting for bike",
+                systemImage: "bolt.horizontal.circle",
+                description: Text(detail)
+            )
+            changeBikeButton
+        }
+    }
+
+    private var changeBikeButton: some View {
+        Button("Change Bike", role: .destructive, action: onChangeBike)
+            .font(.caption)
     }
 }
 
