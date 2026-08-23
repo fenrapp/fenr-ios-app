@@ -11,7 +11,7 @@ struct BatteryCellsGridView: View {
             LazyVGrid(columns: columns, spacing: Constants.gridSpacing) {
                 ForEach(cells) { cell in
                     Button {
-                        selectedCell = cell
+                        selectedCell = selectedCell?.id == cell.id ? nil : cell
                     } label: {
                         Text("\(cell.position)")
                             .font(.system(size: Constants.positionFontSize, design: .monospaced).weight(.semibold))
@@ -32,13 +32,6 @@ struct BatteryCellsGridView: View {
             }
 
             legend
-        }
-        .background {
-            Color.clear
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    selectedCell = nil
-                }
         }
     }
 

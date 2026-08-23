@@ -13,6 +13,7 @@ public final class BatteryHealthViewModel: ObservableObject {
     private var captures: [BatteryDataset: BatteryDatasetCapture] = [:]
     private var streamTasks: [Task<Void, Never>] = []
     private var monitoringTask: Task<Void, Never>?
+    private var renderTask: Task<Void, Never>?
     private var isStarted = false
     private var isMonitoring = false
     private var monitorError: String?
@@ -30,6 +31,7 @@ public final class BatteryHealthViewModel: ObservableObject {
     deinit {
         streamTasks.forEach { $0.cancel() }
         monitoringTask?.cancel()
+        renderTask?.cancel()
     }
 
     public func start() {
@@ -59,6 +61,8 @@ public final class BatteryHealthViewModel: ObservableObject {
         streamTasks.forEach { $0.cancel() }
         streamTasks.removeAll()
         monitoringTask?.cancel()
+        renderTask?.cancel()
+        renderTask = nil
         monitoringTask = Task {
             let stopMonitoring = useCases.stopMonitoring
             await stopMonitoring.execute()
@@ -92,7 +96,7 @@ public final class BatteryHealthViewModel: ObservableObject {
             for await settings in stream {
                 guard !Task.isCancelled, let self else { return }
                 self.mapper = self.makeMapper(settings.measurementSystem)
-                self.render()
+                self.scheduleRender()
             }
         })
         let observeCaptures = useCases.observeCaptures
@@ -107,12 +111,24 @@ public final class BatteryHealthViewModel: ObservableObject {
 
     private func receive(_ health: BikeBatteryHealth) {
         self.health = health
-        render()
+        scheduleRender()
     }
 
     private func receive(_ capture: BatteryDatasetCapture) {
         captures[capture.dataset] = capture
-        render()
+        scheduleRender()
+    }
+
+    // BMS frames arrive quickly enough to interrupt an active ScrollView gesture.
+    // Keep the latest data, but publish it to SwiftUI at a rider-readable cadence.
+    private func scheduleRender() {
+        guard renderTask == nil else { return }
+        renderTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: RefreshConstants.renderInterval)
+            guard !Task.isCancelled, let self else { return }
+            renderTask = nil
+            render()
+        }
     }
 
     private func render() {
@@ -124,5 +140,9 @@ public final class BatteryHealthViewModel: ObservableObject {
         )
         guard nextState != viewState else { return }
         viewState = nextState
+    }
+
+    private enum RefreshConstants {
+        static let renderInterval: Duration = .milliseconds(250)
     }
 }
