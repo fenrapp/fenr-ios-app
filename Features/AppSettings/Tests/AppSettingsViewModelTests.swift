@@ -16,12 +16,13 @@ struct AppSettingsViewModelTests {
         viewModel.selectSpeedSource(.hybrid)
         viewModel.selectMeasurementSystem(.imperial)
         viewModel.selectBatteryPackCapacity(.sixPointEightKilowattHours)
+        let expectedSettings = AppSettings(
+            speedSource: .hybrid,
+            measurementSystem: .imperial,
+            batteryPackCapacity: .sixPointEightKilowattHours
+        )
         let didSave = await waitUntil {
-            await repository.settings == .init(
-                speedSource: .hybrid,
-                measurementSystem: .imperial,
-                batteryPackCapacity: .sixPointEightKilowattHours
-            )
+            await repository.settings == expectedSettings
         }
 
         #expect(didSave)

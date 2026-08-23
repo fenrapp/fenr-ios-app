@@ -2,11 +2,12 @@
 
 ## Scope
 
-FENR is an iOS-only, read-only dashboard and diagnostics app for compatible electric motorcycles. Keep work within that scope. Do not add BLE commands that modify vehicle configuration, behaviour, safety controls, or firmware. Do not add raw captures, credentials, APKs, copied vendor assets, private endpoints, or research notes to this repository.
+FENR is a read-only iPhone and Apple Watch dashboard and diagnostics app for compatible electric motorcycles. Keep work within that scope. Do not add BLE commands that modify vehicle configuration, behaviour, safety controls, or firmware. Do not add raw captures, credentials, APKs, copied vendor assets, private endpoints, or research notes to this repository.
 
 ## Architecture
 
 - `App/` owns application composition, navigation, and the single `BikeSessionController` lifecycle.
+- `Watch/` owns the standalone watchOS app shell, direct Watch Bluetooth lifecycle, and compact onboarding.
 - `Features/` contains SwiftUI presentation modules. Features may depend on `DesignSystem`, domain modules, and their own use-case/container layer.
 - `Modules/*Domain` exposes entities, repository contracts, and use cases.
 - `Modules/*Data` implements repositories and persistence.
@@ -23,6 +24,7 @@ View models depend on use cases and mappers, not concrete data repositories or B
 - Keep UI text in English.
 - Use `StarkPairingIdentity` as the only VIN normalization/validation utility.
 - Preserve the app-wide single BLE session. Navigating between dashboard, settings, diagnostics, and battery health must not create competing telemetry connections.
+- The Watch app has its own direct Bluetooth session and must remain foreground-only until an explicit background strategy is designed and validated. Do not route its runtime dependency through a paired iPhone.
 - Add only confirmed telemetry to rider-facing UI. Clearly keep experimental protocol candidates out of production presentation.
 - Keep all source and docs ASCII unless a user-facing file intentionally uses Unicode, such as README emoji.
 
