@@ -4,7 +4,7 @@ import SwiftUI
 struct FENRWatchApp: App {
     var body: some Scene {
         WindowGroup {
-            WatchRootView(container: .makeLive())
+            WatchRootView(container: LiveWatchAppDependencyContainerFactory.makeDefault())
         }
     }
 }

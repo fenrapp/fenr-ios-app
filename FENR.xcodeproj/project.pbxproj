@@ -77,6 +77,7 @@
 		16A6E07878223AE8CD86ABDD /* EnvironmentData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E7632D61C9EB2B79730F4FBE /* EnvironmentData.framework */; };
 		178D9714B2F773DFC0A75CAD /* SettingsDomain.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A9A16741AABDA8641A96BF6E /* SettingsDomain.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		179A6A054DC195832D7610D4 /* RideDashboardConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DD265594F808F1D68AA224B /* RideDashboardConstants.swift */; };
+		182F050FA8B4219CE02E23DF /* LiveWatchAppDependencyContainerFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2163661F7BEF05849A319E06 /* LiveWatchAppDependencyContainerFactory.swift */; };
 		18D6F4A63B2A1073120F8628 /* SettingsDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9A16741AABDA8641A96BF6E /* SettingsDomain.framework */; };
 		192F3E22B813116BB162F2EC /* AsyncEventHub.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2B94A356E8BB2E9BC363DFF /* AsyncEventHub.swift */; };
 		1956B3677E2B346AA5B6394A /* BatteryHealthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D081D5FF7A2B8C4949954091 /* BatteryHealthViewModel.swift */; };
@@ -1990,6 +1991,7 @@
 		202B66D53BC1104B1B005C91 /* BikeBLEReconnectDelay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeBLEReconnectDelay.swift; sourceTree = "<group>"; };
 		20575CC542E6BD8B7767072E /* BikeDataTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BikeDataTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		20782022A9FDB2E894FD9935 /* FENRApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FENRApp.swift; sourceTree = "<group>"; };
+		2163661F7BEF05849A319E06 /* LiveWatchAppDependencyContainerFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveWatchAppDependencyContainerFactory.swift; sourceTree = "<group>"; };
 		21767B39ECB07B9DA3FDED14 /* BatteryHealthFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryHealthFormatterTests.swift; sourceTree = "<group>"; };
 		21BAA378CEFC547F3B2D6ED5 /* CoreBluetoothBikeTelemetryClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreBluetoothBikeTelemetryClient.swift; sourceTree = "<group>"; };
 		220E82A19BEF8735E70C4906 /* BikeSDKTelemetryPayloadToDomainMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeSDKTelemetryPayloadToDomainMapper.swift; sourceTree = "<group>"; };
@@ -4409,6 +4411,7 @@
 		C1D594310319BC46F6F61DBD /* Composition */ = {
 			isa = PBXGroup;
 			children = (
+				2163661F7BEF05849A319E06 /* LiveWatchAppDependencyContainerFactory.swift */,
 				1C1741A365171134A9B8E00F /* WatchAppDependencyContainer.swift */,
 				34A05515C71F946A7F4152CC /* WatchBikeSessionController.swift */,
 			);
@@ -6481,6 +6484,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				49C3853F9F5C8DAF384AA9EB /* FENRWatchApp.swift in Sources */,
+				182F050FA8B4219CE02E23DF /* LiveWatchAppDependencyContainerFactory.swift in Sources */,
 				E7A6750BE3866C8B22386543 /* WatchAppDependencyContainer.swift in Sources */,
 				AF2A6E5621C2CA3B2E00584C /* WatchBikeSessionController.swift in Sources */,
 				7D0956E890900E2E35774CAC /* WatchOnboardingView.swift in Sources */,

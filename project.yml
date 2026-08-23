@@ -358,6 +358,7 @@ targets:
       - path: Watch/Sources
         excludes:
           - FENRWatchApp.swift
+          - Composition/LiveWatchAppDependencyContainerFactory.swift
       - path: Watch/DebugSources
     dependencies:
       - target: AsyncSupport
