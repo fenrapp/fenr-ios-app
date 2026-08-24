@@ -263,6 +263,15 @@ targets:
         NSSupportsLiveActivities: true
         UIBackgroundModes:
           - bluetooth-central
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
     sources:
       - path: App/Sources
     preBuildScripts:
@@ -331,6 +340,15 @@ targets:
         NSSupportsLiveActivities: true
         UIBackgroundModes:
           - bluetooth-central
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
     sources:
       - path: App/Sources
         excludes:
@@ -429,6 +447,11 @@ targets:
     type: application
     platform: watchOS
     deploymentTarget: "10.0"
+    info:
+      path: Watch/Generated/FENRWatch-Info.plist
+      properties:
+        UIBackgroundModes:
+          - bluetooth-central
     sources:
       - path: Watch/Sources
     dependencies:
@@ -658,6 +681,19 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchdashboard.tests
+  WatchOnboardingTests:
+    type: bundle.unit-test
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: Features/WatchOnboarding/Tests
+    dependencies:
+      - target: WatchOnboarding
+      - target: BikeDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchonboarding.tests
   BatteryHealthTests:
     type: bundle.unit-test
     platform: iOS
@@ -821,3 +857,9 @@ schemes:
     build:
       targets:
         FENRWatchDebug: all
+        WatchDashboardTests: [test]
+        WatchOnboardingTests: [test]
+    test:
+      targets:
+        - WatchDashboardTests
+        - WatchOnboardingTests

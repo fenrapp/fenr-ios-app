@@ -20,6 +20,34 @@
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A3CD38ED7B4B04E359083090"
+               BuildableName = "WatchDashboardTests.xctest"
+               BlueprintName = "WatchDashboardTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "8A58000E4600947527540951"
+               BuildableName = "WatchOnboardingTests.xctest"
+               BlueprintName = "WatchOnboardingTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -37,6 +65,28 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A3CD38ED7B4B04E359083090"
+               BuildableName = "WatchDashboardTests.xctest"
+               BlueprintName = "WatchDashboardTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "8A58000E4600947527540951"
+               BuildableName = "WatchOnboardingTests.xctest"
+               BlueprintName = "WatchOnboardingTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
