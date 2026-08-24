@@ -112,6 +112,9 @@ struct AppRootView: View {
         }
         .onAppear(perform: updateInterfaceOrientation)
         .onChange(of: setupFlow.isCompleted) { _ in
+            if setupFlow.isCompleted {
+                path.removeAll()
+            }
             bikeLiveActivityController.setIsSetupCompleted(setupFlow.isCompleted)
             synchronizeOnboardingObservation()
             updateInterfaceOrientation()

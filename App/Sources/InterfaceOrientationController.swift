@@ -20,10 +20,9 @@ final class InterfaceOrientationController {
             let preferences = UIWindowScene.GeometryPreferences.iOS(
                 interfaceOrientations: orientations
             )
-            windowScene.requestGeometryUpdate(preferences) { _ in
-                // The system can decline a rotation while another presentation is active.
-            }
+            windowScene.requestGeometryUpdate(preferences)
         }
+        UIViewController.attemptRotationToDeviceOrientation()
     }
 }
 
