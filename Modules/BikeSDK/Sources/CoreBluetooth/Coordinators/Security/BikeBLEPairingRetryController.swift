@@ -60,6 +60,10 @@ final class BikeBLEPairingRetryController {
                 detail: "Automatic security retry limit reached"
             )))
         }
+        recoverIfNeeded()
+    }
+
+    func recoverIfNeeded() {
         guard !didRequestRecovery, let recoveryHandler else { return }
         didRequestRecovery = true
         Task {

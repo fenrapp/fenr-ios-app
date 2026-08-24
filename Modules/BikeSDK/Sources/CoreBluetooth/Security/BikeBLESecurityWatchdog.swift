@@ -5,15 +5,18 @@ public final class BikeBLESecurityWatchdog {
     private let sessionStore: BLESessionStore
     private let eventEmitter: BikeBLEEventEmitter
     private let timeoutScheduler: any BikeBLETimeoutScheduling
+    private let timeoutRecoveryHandler: @MainActor @Sendable () async -> Void
 
     public init(
         sessionStore: BLESessionStore,
         eventEmitter: BikeBLEEventEmitter,
-        timeoutScheduler: any BikeBLETimeoutScheduling
+        timeoutScheduler: any BikeBLETimeoutScheduling,
+        timeoutRecoveryHandler: @escaping @MainActor @Sendable () async -> Void = {}
     ) {
         self.sessionStore = sessionStore
         self.eventEmitter = eventEmitter
         self.timeoutScheduler = timeoutScheduler
+        self.timeoutRecoveryHandler = timeoutRecoveryHandler
     }
 
     public func watch(expectedState: BLEAuthenticationState, operation: String) {
@@ -24,6 +27,7 @@ public final class BikeBLESecurityWatchdog {
             ] != nil else { return }
             guard self.sessionStore.authenticationState == expectedState else { return }
             await self.fail("Security operation timed out: \(operation)")
+            await self.timeoutRecoveryHandler()
         }
     }
 
