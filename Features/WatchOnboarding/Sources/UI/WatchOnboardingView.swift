@@ -49,6 +49,21 @@ public struct WatchOnboardingView: View {
                     Button("Try Again", action: viewModel.scan)
                 }
             }
+
+            if !viewModel.debugEvents.isEmpty {
+                Section("Debug") {
+                    ForEach(viewModel.debugEvents) { event in
+                        VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
+                            Text(event.title)
+                                .font(.caption2.weight(.semibold))
+                            Text(event.detail)
+                                .font(.caption2.monospaced())
+                                .foregroundStyle(.secondary)
+                                .lineLimit(4)
+                        }
+                    }
+                }
+            }
         }
         .task { viewModel.start() }
         .onDisappear { viewModel.stop() }

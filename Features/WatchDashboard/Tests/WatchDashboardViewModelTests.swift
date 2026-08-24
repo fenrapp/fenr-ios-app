@@ -82,4 +82,22 @@ struct WatchDashboardViewModelTests {
         #expect(viewModel.viewState.batteryTemperature == "30 °C")
         #expect(viewModel.viewState.chargeETA != nil)
     }
+
+    @Test("dashboard retains recent debug events")
+    func retainsRecentDebugEvents() async {
+        let repository = WatchDashboardRepository()
+        let viewModel = WatchDashboardViewModel(
+            useCases: .init(
+                repository: repository,
+                batteryHealthRepository: repository,
+                settingsRepository: WatchDashboardSettingsRepository()
+            )
+        )
+
+        viewModel.start()
+        await repository.send(.init(title: "BLE", detail: "scan started"))
+
+        #expect(await waitUntil { viewModel.debugEvents.first?.title == "BLE" })
+        #expect(viewModel.debugEvents.first?.detail == "scan started")
+    }
 }

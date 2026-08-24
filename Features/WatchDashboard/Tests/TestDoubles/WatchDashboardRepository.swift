@@ -5,6 +5,8 @@ actor WatchDashboardRepository: BikeRepository, BikeBatteryHealthRepository {
     private let telemetryStream: AsyncStream<BikeTelemetry>
     private let telemetryContinuation: AsyncStream<BikeTelemetry>.Continuation
     private let connectionStream: AsyncStream<BikeConnection>
+    private let debugEventsStream: AsyncStream<BikeDebugEvent>
+    private let debugEventsContinuation: AsyncStream<BikeDebugEvent>.Continuation
     private let healthStream: AsyncStream<BikeBatteryHealth>
     private let healthContinuation: AsyncStream<BikeBatteryHealth>.Continuation
     private(set) var startMonitoringCalls = 0
@@ -15,6 +17,9 @@ actor WatchDashboardRepository: BikeRepository, BikeBatteryHealthRepository {
         telemetryStream = telemetry.stream
         telemetryContinuation = telemetry.continuation
         connectionStream = AsyncStream { _ in }
+        let debugEvents = AsyncStream.makeStream(of: BikeDebugEvent.self)
+        debugEventsStream = debugEvents.stream
+        debugEventsContinuation = debugEvents.continuation
         let health = AsyncStream.makeStream(of: BikeBatteryHealth.self)
         healthStream = health.stream
         healthContinuation = health.continuation
@@ -28,13 +33,14 @@ actor WatchDashboardRepository: BikeRepository, BikeBatteryHealthRepository {
     func readTelemetrySnapshot() async throws {}
     func observeTelemetry() async -> AsyncStream<BikeTelemetry> { telemetryStream }
     func observeConnection() async -> AsyncStream<BikeConnection> { connectionStream }
-    func observeDebugEvents() async -> AsyncStream<BikeDebugEvent> { AsyncStream { _ in } }
+    func observeDebugEvents() async -> AsyncStream<BikeDebugEvent> { debugEventsStream }
     func startBatteryHealthMonitoring() async throws { startMonitoringCalls += 1 }
     func stopBatteryHealthMonitoring() async { stopMonitoringCalls += 1 }
     func observeBatteryHealth() async -> AsyncStream<BikeBatteryHealth> { healthStream }
     func observeBatteryDatasetCaptures() async -> AsyncStream<BatteryDatasetCapture> { AsyncStream { _ in } }
     func send(_ telemetry: BikeTelemetry) async { telemetryContinuation.yield(telemetry) }
     func send(_ health: BikeBatteryHealth) async { healthContinuation.yield(health) }
+    func send(_ event: BikeDebugEvent) async { debugEventsContinuation.yield(event) }
 }
 
 actor WatchDashboardSettingsRepository: AppSettingsRepository {

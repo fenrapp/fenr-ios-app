@@ -26,6 +26,7 @@ struct WatchAppDependencyContainer {
             useCases: .init(
                 connectToBike: .init(repository: repository),
                 observeConnection: .init(repository: repository),
+                observeDebugEvents: .init(repository: repository),
                 observeDiscoveredBikes: .init(repository: repository),
                 startDiscovery: .init(repository: repository),
                 stopDiscovery: .init(repository: repository),

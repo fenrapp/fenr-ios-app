@@ -8,7 +8,9 @@ import SettingsDomain
 @MainActor
 public final class WatchDashboardViewModel: ObservableObject {
     @Published public private(set) var viewState = WatchDashboardViewState()
+    @Published public private(set) var debugEvents: [BikeDebugEvent] = []
 
+    private let maximumDebugEvents = 12
     private let useCases: WatchDashboardUseCases
     private let measurementTextFormatter: VehicleMeasurementTextFormatter
     private let timeRemainingFormatter: TimeRemainingFormatter
@@ -17,6 +19,7 @@ public final class WatchDashboardViewModel: ObservableObject {
     private var settings = AppSettings()
     private var telemetryTask: Task<Void, Never>?
     private var connectionTask: Task<Void, Never>?
+    private var debugTask: Task<Void, Never>?
     private var settingsTask: Task<Void, Never>?
     private var batteryHealthTask: Task<Void, Never>?
     private var isMonitoringBatteryHealth = false
@@ -42,6 +45,7 @@ public final class WatchDashboardViewModel: ObservableObject {
         guard telemetryTask == nil else { return }
         observeTelemetry()
         observeConnection()
+        observeDebugEvents()
         observeSettings()
     }
 
@@ -50,6 +54,8 @@ public final class WatchDashboardViewModel: ObservableObject {
         telemetryTask = nil
         connectionTask?.cancel()
         connectionTask = nil
+        debugTask?.cancel()
+        debugTask = nil
         settingsTask?.cancel()
         settingsTask = nil
         stopBatteryHealthMonitoring()
@@ -73,6 +79,17 @@ public final class WatchDashboardViewModel: ObservableObject {
             for await connection in stream {
                 guard !Task.isCancelled else { return }
                 self?.receive(connection)
+            }
+        }
+    }
+
+    private func observeDebugEvents() {
+        let useCase = useCases.observeDebugEvents
+        debugTask = Task { [weak self] in
+            let stream = await useCase.execute()
+            for await event in stream {
+                guard !Task.isCancelled else { return }
+                self?.receive(event)
             }
         }
     }
@@ -105,6 +122,13 @@ public final class WatchDashboardViewModel: ObservableObject {
             return
         }
         viewState.mode = .unavailable(detail: connectionDetail(connection.state))
+    }
+
+    private func receive(_ event: BikeDebugEvent) {
+        debugEvents.insert(event, at: 0)
+        if debugEvents.count > maximumDebugEvents {
+            debugEvents.removeLast(debugEvents.count - maximumDebugEvents)
+        }
     }
 
     private func startBatteryHealthMonitoringIfNeeded() {
@@ -207,7 +231,6 @@ public final class WatchDashboardViewModel: ObservableObject {
         default: "Waiting for telemetry"
         }
     }
-
     private func formatDistance(_ kilometers: Double) -> String {
         format(measurementMapper.distance(kilometers: kilometers))
     }

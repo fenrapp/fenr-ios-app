@@ -4,6 +4,7 @@ import SettingsDomain
 public struct WatchDashboardUseCases: Sendable {
     let observeTelemetry: ObserveBikeTelemetryUseCase
     let observeConnection: ObserveBikeConnectionUseCase
+    let observeDebugEvents: ObserveBikeDebugEventsUseCase
     let observeBatteryHealth: ObserveBikeBatteryHealthUseCase
     let startBatteryHealthMonitoring: StartBatteryHealthMonitoringUseCase
     let stopBatteryHealthMonitoring: StopBatteryHealthMonitoringUseCase
@@ -16,6 +17,7 @@ public struct WatchDashboardUseCases: Sendable {
     ) {
         observeTelemetry = ObserveBikeTelemetryUseCase(repository: repository)
         observeConnection = ObserveBikeConnectionUseCase(repository: repository)
+        observeDebugEvents = ObserveBikeDebugEventsUseCase(repository: repository)
         observeBatteryHealth = ObserveBikeBatteryHealthUseCase(repository: batteryHealthRepository)
         startBatteryHealthMonitoring = StartBatteryHealthMonitoringUseCase(repository: batteryHealthRepository)
         stopBatteryHealthMonitoring = StopBatteryHealthMonitoringUseCase(repository: batteryHealthRepository)

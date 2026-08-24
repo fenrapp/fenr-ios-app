@@ -46,13 +46,30 @@ public struct WatchDashboardView: View {
     }
 
     private func unavailable(detail: String) -> some View {
-        VStack(spacing: DesignSpace.small) {
-            ContentUnavailableView(
-                "Waiting for bike",
-                systemImage: "bolt.horizontal.circle",
-                description: Text(detail)
-            )
-            WatchChangeBikeButton(action: onChangeBike)
+        List {
+            Section {
+                ContentUnavailableView(
+                    "Waiting for bike",
+                    systemImage: "bolt.horizontal.circle",
+                    description: Text(detail)
+                )
+                WatchChangeBikeButton(action: onChangeBike)
+            }
+
+            if !viewModel.debugEvents.isEmpty {
+                Section("Debug") {
+                    ForEach(viewModel.debugEvents) { event in
+                        VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
+                            Text(event.title)
+                                .font(.caption2.weight(.semibold))
+                            Text(event.detail)
+                                .font(.caption2.monospaced())
+                                .foregroundStyle(.secondary)
+                                .lineLimit(4)
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -61,7 +61,6 @@ struct WatchRootView: View {
                 await sessionController.connectAutomatically(vin: loadedProfile.vin)
             }
         }
-        .onDisappear { Task { await sessionController.stop() } }
     }
 
     private func changeBike() {
