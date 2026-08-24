@@ -16,12 +16,13 @@ struct AppSettingsViewModelTests {
         viewModel.selectSpeedSource(.hybrid)
         viewModel.selectMeasurementSystem(.imperial)
         viewModel.selectBatteryPackCapacity(.sixPointEightKilowattHours)
+        let expectedSettings = AppSettings(
+            speedSource: .hybrid,
+            measurementSystem: .imperial,
+            batteryPackCapacity: .sixPointEightKilowattHours
+        )
         let didSave = await waitUntil {
-            await repository.settings == .init(
-                speedSource: .hybrid,
-                measurementSystem: .imperial,
-                batteryPackCapacity: .sixPointEightKilowattHours
-            )
+            await repository.settings == expectedSettings
         }
 
         #expect(didSave)
@@ -30,7 +31,6 @@ struct AppSettingsViewModelTests {
 
     private func makeUseCases(repository: SettingsRepository) -> AppSettingsUseCases {
         .init(
-            loadSettings: .init(repository: repository),
             saveSettings: .init(repository: repository),
             observeSettings: .init(repository: repository),
             locationAuthorizationStatus: .init(repository: repository),

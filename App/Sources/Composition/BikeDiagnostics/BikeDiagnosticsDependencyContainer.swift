@@ -1,6 +1,7 @@
 import BikeDiagnostics
 import BikeDomain
 import Foundation
+import MeasurementPresentation
 import SettingsDomain
 
 @MainActor
@@ -49,11 +50,8 @@ struct BikeDiagnosticsDependencyContainer {
         let dateFormatter = BikeDiagnosticsDateFormatter()
         let locale = Locale.autoupdatingCurrent
         let speedFormatter = BikeDiagnosticsSpeedFormatter(
-            measurementSystem: BikeDiagnosticsMeasurementSystem(
-                measurementSystem: measurementSystem,
-                locale: locale
-            ),
-            formatter: makeSpeedMeasurementFormatter(locale: locale)
+            measurementSystem: measurementSystem.resolved(for: locale),
+            locale: locale
         )
         return BikeDiagnosticsMappers(
             viewState: BikeTelemetryToBikeDiagnosticsViewStateMapper(
@@ -63,7 +61,7 @@ struct BikeDiagnosticsDependencyContainer {
                 metricsMapper: BikeTelemetryToMetricsMapper(
                     dateFormatter: dateFormatter,
                     speedFormatter: speedFormatter,
-                    percentFormatter: BikeDiagnosticsPercentFormatter(locale: locale)
+                    measurementTextFormatter: VehicleMeasurementTextFormatter(locale: locale)
                 ),
                 badgesMapper: BikeTelemetryToBadgesMapper(
                     runStateMapper: BikeRunStateToBadgeMapper()
@@ -74,14 +72,6 @@ struct BikeDiagnosticsDependencyContainer {
                 )
             )
         )
-    }
-
-    private func makeSpeedMeasurementFormatter(locale: Locale) -> MeasurementFormatter {
-        let formatter = MeasurementFormatter()
-        formatter.locale = locale
-        formatter.unitOptions = .providedUnit
-        formatter.numberFormatter.maximumFractionDigits = 1
-        return formatter
     }
 
 }

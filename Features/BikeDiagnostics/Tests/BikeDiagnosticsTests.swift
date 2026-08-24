@@ -1,6 +1,7 @@
 @testable import BikeDiagnostics
 import BikeDomain
 import Foundation
+import MeasurementPresentation
 import Testing
 import TestSupport
 
@@ -115,7 +116,7 @@ struct BikeDiagnosticsTests {
     }
 
     private func formattedPercent(_ value: Int) -> String {
-        BikeDiagnosticsPercentFormatter(locale: .init(identifier: "es_ES")).string(fromPercent: value)
+        VehicleMeasurementTextFormatter(locale: .init(identifier: "es_ES")).percentage(value)
     }
 
     @Test("Missing telemetry values render placeholders")

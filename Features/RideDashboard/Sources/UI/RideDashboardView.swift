@@ -91,7 +91,8 @@ public struct RideDashboardView: View {
                         mode: .charging(
                             percentage: chargingViewModel.viewState.batteryPercent,
                             targetPercentage: chargingViewModel.viewState.targetStateOfChargePercent,
-                            estimatedTimeRemaining: chargingViewModel.viewState.estimatedTimeRemaining
+                            estimatedTimeRemaining: chargingViewModel.viewState.estimatedTimeRemaining,
+                            isBalancingAtFullCharge: chargingViewModel.viewState.isBalancingAtFullCharge
                         ),
                         reduceMotion: reduceMotion
                     )

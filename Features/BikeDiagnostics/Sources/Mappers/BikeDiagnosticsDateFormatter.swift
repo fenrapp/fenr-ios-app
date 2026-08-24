@@ -1,14 +1,14 @@
 import Foundation
+import MeasurementPresentation
 
 public struct BikeDiagnosticsDateFormatter: Sendable {
-    private static let formatStyle = Date.FormatStyle()
-        .hour(.twoDigits(amPM: .omitted))
-        .minute(.twoDigits)
-        .second(.twoDigits)
+    private let formatter: SystemTimeFormatter
 
-    public init() {}
+    public init(formatter: SystemTimeFormatter = .init()) {
+        self.formatter = formatter
+    }
 
     public func string(from date: Date) -> String {
-        date.formatted(Self.formatStyle)
+        formatter.diagnosticsTime(from: date)
     }
 }

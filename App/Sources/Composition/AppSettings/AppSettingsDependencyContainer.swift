@@ -10,7 +10,6 @@ struct AppSettingsDependencyContainer {
     ) -> AppSettingsViewModel {
         AppSettingsViewModel(
             useCases: .init(
-                loadSettings: LoadAppSettingsUseCase(repository: settingsRepository),
                 saveSettings: SaveAppSettingsUseCase(repository: settingsRepository),
                 observeSettings: ObserveAppSettingsUseCase(repository: settingsRepository),
                 locationAuthorizationStatus: LocationAuthorizationStatusUseCase(

@@ -17,10 +17,7 @@ struct AppDependencyContainerTests {
 
     @Test("Composable containers build independently")
     func composableContainersBuildIndependently() {
-        let protocolContainer = StarkProtocolDependencyContainer()
-        let bikeSDKContainer = BikeSDKDependencyContainer(
-            starkProtocolContainer: protocolContainer
-        )
+        let bikeSDKContainer = BikeSDKDependencyContainer()
         let bikeDataContainer = BikeDataDependencyContainer()
         let diagnosticsContainer = BikeDiagnosticsDependencyContainer()
 

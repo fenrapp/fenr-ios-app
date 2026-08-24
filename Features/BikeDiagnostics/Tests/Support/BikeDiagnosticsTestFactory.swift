@@ -1,6 +1,7 @@
 import BikeDiagnostics
 import BikeDomain
 import Foundation
+import MeasurementPresentation
 
 @MainActor
 func makeViewModel(
@@ -33,8 +34,8 @@ func makeMappers() -> BikeDiagnosticsMappers {
     let dateFormatter = BikeDiagnosticsDateFormatter()
     let locale = Locale(identifier: "es_ES")
     let speedFormatter = BikeDiagnosticsSpeedFormatter(
-        measurementSystem: BikeDiagnosticsMeasurementSystem(locale: locale),
-        formatter: makeSpeedMeasurementFormatter(locale: locale)
+        measurementSystem: locale.measurementSystem,
+        locale: locale
     )
     return BikeDiagnosticsMappers(
         viewState: .init(
@@ -42,20 +43,11 @@ func makeMappers() -> BikeDiagnosticsMappers {
             metricsMapper: .init(
                 dateFormatter: dateFormatter,
                 speedFormatter: speedFormatter,
-                percentFormatter: .init(locale: locale)
+                measurementTextFormatter: .init(locale: locale)
             ),
             badgesMapper: .init(runStateMapper: .init()),
             rawFlagsMapper: .init(),
             debugEventMapper: .init(dateFormatter: dateFormatter)
         )
     )
-}
-
-@MainActor
-private func makeSpeedMeasurementFormatter(locale: Locale) -> MeasurementFormatter {
-    let formatter = MeasurementFormatter()
-    formatter.locale = locale
-    formatter.unitOptions = .providedUnit
-    formatter.numberFormatter.maximumFractionDigits = 1
-    return formatter
 }

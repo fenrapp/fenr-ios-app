@@ -1,20 +1,21 @@
 import BikeDomain
 import Foundation
+import MeasurementPresentation
 
 @MainActor
 public struct BikeTelemetryToMetricsMapper {
     private let dateFormatter: BikeDiagnosticsDateFormatter
     private let speedFormatter: BikeDiagnosticsSpeedFormatter
-    private let percentFormatter: BikeDiagnosticsPercentFormatter
+    private let measurementTextFormatter: VehicleMeasurementTextFormatter
 
     public init(
         dateFormatter: BikeDiagnosticsDateFormatter,
         speedFormatter: BikeDiagnosticsSpeedFormatter,
-        percentFormatter: BikeDiagnosticsPercentFormatter
+        measurementTextFormatter: VehicleMeasurementTextFormatter
     ) {
         self.dateFormatter = dateFormatter
         self.speedFormatter = speedFormatter
-        self.percentFormatter = percentFormatter
+        self.measurementTextFormatter = measurementTextFormatter
     }
 
     public func map(_ telemetry: BikeTelemetry) -> [BikeDiagnosticsMetricViewData] {
@@ -29,7 +30,7 @@ public struct BikeTelemetryToMetricsMapper {
     }
 
     private func percentText(_ value: Int?) -> String {
-        value.map(percentFormatter.string) ?? BikeDiagnosticsText.placeholder
+        value.map { measurementTextFormatter.percentage($0) } ?? BikeDiagnosticsText.placeholder
     }
 
     private func modeText(_ mode: BikeMode) -> String {

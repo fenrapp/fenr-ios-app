@@ -1,5 +1,6 @@
 import BikeDomain
 import Foundation
+import MeasurementPresentation
 import SettingsDomain
 
 public struct ChargingDashboardMapper: Sendable {
@@ -36,6 +37,8 @@ public struct ChargingDashboardMapper: Sendable {
                 batteryVoltage: batteryHealth.dcBusVoltage.volts,
                 status: status
             ),
+            isBalancingAtFullCharge: telemetry.batteryLevel.percent == Constants.fullChargePercent
+                && !batteryHealth.balancingCellIndexes.isEmpty,
             isHighBeamOn: telemetry.statusFlags.indicatorState.isHighBeamOn,
             isLeftBlinkerOn: telemetry.statusFlags.indicatorState.isLeftBlinkerOn,
             isBrakeActive: telemetry.statusFlags.isBrakeActive,
@@ -71,11 +74,12 @@ public struct ChargingDashboardMapper: Sendable {
         let chargingPowerWatts = batteryVoltage * status.reportedCurrentAmperes
         let remainingSeconds = remainingEnergyWattHours / chargingPowerWatts * Constants.secondsPerHour
         guard remainingSeconds.isFinite, remainingSeconds > .zero else { return nil }
-        return ChargingTimeRemainingFormatter().string(from: remainingSeconds)
+        return TimeRemainingFormatter().string(from: remainingSeconds)
     }
 
     private enum Constants {
         static let percentageScale = 100.0
+        static let fullChargePercent = 100
         static let secondsPerHour = 3_600.0
     }
 }

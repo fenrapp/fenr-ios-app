@@ -1,6 +1,6 @@
-# FENR iOS ⚡️🏍️
+# FENR ⚡️🏍️⌚️
 
-FENR is an independent iOS dashboard and read-only diagnostics app for compatible electric motorcycles. It turns live Bluetooth telemetry into a clear riding display, battery insight, and practical diagnostics without pretending to be the one true client for a machine you own.
+FENR is an independent iPhone and Apple Watch dashboard and read-only diagnostics app for compatible electric motorcycles. It turns live Bluetooth telemetry into a clear riding display, battery insight, and practical diagnostics without pretending to be the one true client for a machine you own.
 
 > **Unofficial and independent.** FENR is not affiliated with, endorsed by, sponsored by, or otherwise connected to Stark Future or any vehicle manufacturer. Names used in technical compatibility code remain the property of their respective owners.
 
@@ -12,6 +12,7 @@ FENR is an independent iOS dashboard and read-only diagnostics app for compatibl
 - First-run bike onboarding and Bluetooth pairing flow.
 - Optional device GPS speed, plus metric, imperial, and system unit preferences.
 - A focused SwiftUI design system shared by the app features.
+- A standalone Watch app that connects directly to the motorcycle for compact ride and charging telemetry. The first release is foreground-only by design.
 
 FENR is intentionally **read-only**. It does not bypass safety controls, change vehicle behaviour, or send undocumented control/configuration commands. Authentication required by the existing telemetry connection is the only write-related protocol activity in this app.
 
@@ -43,7 +44,7 @@ Use the `FENRDebug` scheme to exercise the emulator without a motorcycle. More d
 
 ## Architecture 🧭
 
-The app keeps SwiftUI features separate from domain contracts, data implementations, SDK/BLE code, and protocol decoding. `App` owns app-level composition and the single BLE session; features consume explicit use cases rather than opening competing connections.
+The app keeps SwiftUI features separate from domain contracts, data implementations, SDK/BLE code, and protocol decoding. `App` owns the iPhone BLE session, while `Watch` owns a separate direct Watch session; features consume explicit use cases rather than opening competing connections.
 
 Read [docs/architecture.md](docs/architecture.md) for the module map and [docs/testing.md](docs/testing.md) for test conventions.
 

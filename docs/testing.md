@@ -34,3 +34,10 @@ xcodebuild -project FENR.xcodeproj -scheme FENR \
 ```
 
 For UI work, also build `FENRDebug` and inspect the intended orientation/device in the simulator.
+
+For Watch changes, build `FENRWatchDebug` with an installed watchOS runtime and inspect both the ride and charging states. The Watch dashboard test target is `WatchDashboardTests`.
+
+```sh
+xcodebuild -project FENR.xcodeproj -scheme WatchDashboard \
+  -destination "platform=watchOS Simulator,name=$FENR_WATCH_SIMULATOR" test
+```

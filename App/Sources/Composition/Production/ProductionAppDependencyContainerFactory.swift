@@ -8,10 +8,7 @@ import SettingsData
 @MainActor
 enum ProductionAppDependencyContainerFactory {
     static func makeDefault() -> AppDependencyContainer {
-        let starkProtocolContainer = StarkProtocolDependencyContainer()
-        let bikeSDKContainer = BikeSDKDependencyContainer(
-            starkProtocolContainer: starkProtocolContainer
-        )
+        let bikeSDKContainer = BikeSDKDependencyContainer()
         let bikeDataContainer = BikeDataDependencyContainer()
         let client = bikeSDKContainer.makeBikeTelemetryClient()
         let repository = bikeDataContainer.makeBikeRepository(client: client)
