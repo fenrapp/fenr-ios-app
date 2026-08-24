@@ -10,6 +10,7 @@ enum BatteryHealthText {
     static let cells = "Cells"
     static let temperatures = "Temperatures"
     static let dataSources = "Data sources"
+    static let chargePowerControl = "Charge power"
     static let noValidatedCells = "No validated cell samples"
     static let noValidatedTemperatures = "No validated temperature samples"
     static let copyLog = "Copy battery log"

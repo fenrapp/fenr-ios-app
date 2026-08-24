@@ -11,6 +11,20 @@ public final class BatteryHealthViewModel: ObservableObject {
     private let useCases: BatteryHealthUseCases
     private var mapper: BikeBatteryHealthToViewStateMapper
     private let makeMapper: (MeasurementSystem) -> BikeBatteryHealthToViewStateMapper
+    private let chargeControlLogStore: BatteryHealthChargeControlLogStore
+    private let chargeControlStateUpdater: BatteryHealthChargeControlStateUpdater
+    private let chargeControlTaskScheduler: BatteryHealthChargeControlTaskScheduler
+    private let captureTimeFormatter: SystemTimeFormatter
+    private lazy var chargeControl = BatteryHealthChargeControlCoordinator(
+        useCases: useCases,
+        logger: chargeControlLogStore,
+        stateUpdater: chargeControlStateUpdater,
+        taskScheduler: chargeControlTaskScheduler,
+        requestRender: { [weak self] in
+            self?.scheduleRender()
+        }
+    )
+
     private var health = BikeBatteryHealth()
     private var captures: [BatteryDataset: BatteryDatasetCapture] = [:]
     private var streamTasks: [Task<Void, Never>] = []
@@ -23,11 +37,19 @@ public final class BatteryHealthViewModel: ObservableObject {
     public init(
         useCases: BatteryHealthUseCases,
         mapper: BikeBatteryHealthToViewStateMapper,
-        makeMapper: @escaping (MeasurementSystem) -> BikeBatteryHealthToViewStateMapper
+        makeMapper: @escaping (MeasurementSystem) -> BikeBatteryHealthToViewStateMapper,
+        chargeControlLogStore: BatteryHealthChargeControlLogStore,
+        chargeControlStateUpdater: BatteryHealthChargeControlStateUpdater,
+        chargeControlTaskScheduler: BatteryHealthChargeControlTaskScheduler,
+        captureTimeFormatter: SystemTimeFormatter
     ) {
         self.useCases = useCases
         self.mapper = mapper
         self.makeMapper = makeMapper
+        self.chargeControlLogStore = chargeControlLogStore
+        self.chargeControlStateUpdater = chargeControlStateUpdater
+        self.chargeControlTaskScheduler = chargeControlTaskScheduler
+        self.captureTimeFormatter = captureTimeFormatter
     }
 
     deinit {
@@ -64,6 +86,7 @@ public final class BatteryHealthViewModel: ObservableObject {
         streamTasks.removeAll()
         monitoringTask?.cancel()
         renderTask?.cancel()
+        chargeControl.stop()
         renderTask = nil
         monitoringTask = Task {
             let stopMonitoring = useCases.stopMonitoring
@@ -73,15 +96,39 @@ public final class BatteryHealthViewModel: ObservableObject {
         render()
     }
 
+    public func beginChargePowerDrag() {
+        chargeControl.beginPowerDrag()
+    }
+
+    public func setDisplayedChargePower(watts: Double) {
+        chargeControl.setDisplayedPower(watts: watts)
+    }
+
+    public func endChargePowerDrag() {
+        chargeControl.endPowerDrag()
+    }
+
+    public func beginChargeTargetDrag() {
+        chargeControl.beginTargetDrag()
+    }
+
+    public func setDisplayedChargeTarget(percent: Double) {
+        chargeControl.setDisplayedTarget(percent: percent)
+    }
+
+    public func endChargeTargetDrag() {
+        chargeControl.endTargetDrag()
+    }
+
     public func captureLogText() -> String {
-        let timeFormatter = SystemTimeFormatter()
-        return captures.values
+        let captureLines = captures.values
             .sorted { $0.date > $1.date }
             .map { capture in
-                "\(timeFormatter.standardTime(from: capture.date)) | "
+                "\(captureTimeFormatter.standardTime(from: capture.date)) | "
                     + "\(capture.dataset.displayName) | \(capture.byteCount) B | \(capture.hex)"
             }
-            .joined(separator: "\n")
+        let chargeLines = chargeControl.logLines.map { "ChargePower | \($0)" }
+        return (chargeLines + captureLines).joined(separator: "\n")
     }
 
     private func bindStreams() {
@@ -114,6 +161,7 @@ public final class BatteryHealthViewModel: ObservableObject {
 
     private func receive(_ health: BikeBatteryHealth) {
         self.health = health
+        chargeControl.receive(health)
         scheduleRender()
     }
 
@@ -141,8 +189,10 @@ public final class BatteryHealthViewModel: ObservableObject {
             isMonitoring: isMonitoring,
             monitorError: monitorError
         )
-        guard nextState != viewState else { return }
-        viewState = nextState
+        var renderedState = nextState
+        renderedState.chargePowerControl = chargeControl.state
+        guard renderedState != viewState else { return }
+        viewState = renderedState
     }
 
     private enum RefreshConstants {

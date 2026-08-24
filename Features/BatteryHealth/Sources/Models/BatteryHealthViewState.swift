@@ -5,6 +5,7 @@ public struct BatteryHealthViewState: Equatable, Sendable {
     public var cells: [BatteryCellViewData]
     public var temperatures: [BatteryTemperatureViewData]
     public var datasets: [BatteryHealthDatasetViewData]
+    public var chargePowerControl: ChargePowerControlViewState
     public var isMonitoring: Bool
     public var monitorError: String?
 
@@ -15,6 +16,7 @@ public struct BatteryHealthViewState: Equatable, Sendable {
         cells: [BatteryCellViewData] = [],
         temperatures: [BatteryTemperatureViewData] = [],
         datasets: [BatteryHealthDatasetViewData] = [],
+        chargePowerControl: ChargePowerControlViewState = .init(),
         isMonitoring: Bool = false,
         monitorError: String? = nil
     ) {
@@ -24,6 +26,7 @@ public struct BatteryHealthViewState: Equatable, Sendable {
         self.cells = cells
         self.temperatures = temperatures
         self.datasets = datasets
+        self.chargePowerControl = chargePowerControl
         self.isMonitoring = isMonitoring
         self.monitorError = monitorError
     }

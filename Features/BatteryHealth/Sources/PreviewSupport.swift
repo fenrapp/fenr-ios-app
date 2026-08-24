@@ -1,5 +1,6 @@
 import BikeDomain
 import Foundation
+import MeasurementPresentation
 import SettingsDomain
 
 extension BatteryHealthViewModel {
@@ -11,10 +12,19 @@ extension BatteryHealthViewModel {
                 stopMonitoring: .init(repository: BatteryHealthPreviewRepository()),
                 observeHealth: .init(repository: BatteryHealthPreviewRepository()),
                 observeCaptures: .init(repository: BatteryHealthPreviewRepository()),
-                observeSettings: .init(repository: BatteryHealthPreviewSettingsRepository())
+                observeSettings: .init(repository: BatteryHealthPreviewSettingsRepository()),
+                prepareChargePowerControl: .init(repository: BatteryHealthPreviewRepository()),
+                setChargePowerLimit: .init(repository: BatteryHealthPreviewRepository()),
+                setChargeTarget: .init(repository: BatteryHealthPreviewRepository())
             ),
             mapper: .init(formatter: .preview()),
-            makeMapper: { _ in .init(formatter: .preview()) }
+            makeMapper: { _ in .init(formatter: .preview()) },
+            chargeControlLogStore: BatteryHealthChargeControlLogStore(),
+            chargeControlStateUpdater: BatteryHealthChargeControlStateUpdater(
+                normalizer: BatteryHealthChargeControlNormalizer()
+            ),
+            chargeControlTaskScheduler: BatteryHealthChargeControlTaskScheduler(),
+            captureTimeFormatter: SystemTimeFormatter()
         )
     }
 }

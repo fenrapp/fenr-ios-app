@@ -1,6 +1,7 @@
 @testable import BatteryHealth
 import BikeDomain
 import Foundation
+import MeasurementPresentation
 
 @MainActor
 func makeBatteryHealthViewModel(repository: any BikeBatteryHealthRepository) -> BatteryHealthViewModel {
@@ -10,10 +11,19 @@ func makeBatteryHealthViewModel(repository: any BikeBatteryHealthRepository) -> 
             stopMonitoring: .init(repository: repository),
             observeHealth: .init(repository: repository),
             observeCaptures: .init(repository: repository),
-            observeSettings: .init(repository: FakeAppSettingsRepository())
+            observeSettings: .init(repository: FakeAppSettingsRepository()),
+            prepareChargePowerControl: .init(repository: repository),
+            setChargePowerLimit: .init(repository: repository),
+            setChargeTarget: .init(repository: repository)
         ),
         mapper: .init(formatter: makeBatteryHealthFormatter()),
-        makeMapper: { _ in .init(formatter: makeBatteryHealthFormatter()) }
+        makeMapper: { _ in .init(formatter: makeBatteryHealthFormatter()) },
+        chargeControlLogStore: BatteryHealthChargeControlLogStore(),
+        chargeControlStateUpdater: BatteryHealthChargeControlStateUpdater(
+            normalizer: BatteryHealthChargeControlNormalizer()
+        ),
+        chargeControlTaskScheduler: BatteryHealthChargeControlTaskScheduler(),
+        captureTimeFormatter: SystemTimeFormatter()
     )
 }
 

@@ -20,6 +20,19 @@ public struct BatteryHealthView: View {
                         BatteryHealthMetricsGridView(metrics: viewModel.viewState.charging)
                     }
                 }
+                if viewModel.viewState.chargePowerControl.isVisible {
+                    SurfacePanel(title: BatteryHealthText.chargePowerControl) {
+                        ChargePowerControlView(
+                            state: viewModel.viewState.chargePowerControl,
+                            setDisplayedPower: viewModel.setDisplayedChargePower(watts:),
+                            beginPowerDrag: viewModel.beginChargePowerDrag,
+                            endPowerDrag: viewModel.endChargePowerDrag,
+                            setDisplayedTarget: viewModel.setDisplayedChargeTarget(percent:),
+                            beginTargetDrag: viewModel.beginChargeTargetDrag,
+                            endTargetDrag: viewModel.endChargeTargetDrag
+                        )
+                    }
+                }
                 SurfacePanel(title: BatteryHealthText.pack) {
                     BatteryHealthMetricsGridView(metrics: viewModel.viewState.packStatus)
                 }
