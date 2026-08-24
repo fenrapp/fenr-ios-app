@@ -7,52 +7,45 @@ import TestSupport
 @MainActor
 @Suite("Battery Health charge control view model")
 struct BatteryHealthChargeControlViewModelTests {
-    @Test("Charge power dragging does not write until release debounce")
-    func chargePowerDraggingDoesNotWriteUntilRelease() async {
+    @Test("Charge power request waits for debounce")
+    func chargePowerRequestWaitsForDebounce() async {
         let repository = FakeBatteryHealthRepository()
         let viewModel = makeBatteryHealthViewModel(repository: repository)
         viewModel.start()
         await sendChargingHealth(repository: repository, maximumPowerWatts: 1_000)
         #expect(await waitUntil { await repository.chargePowerPrepareCount() == 1 })
 
-        viewModel.beginChargePowerDrag()
-        viewModel.setDisplayedChargePower(watts: 2_500)
+        viewModel.setChargePowerLimit(watts: 2_500)
         #expect(await repository.chargePowerWrites().isEmpty)
 
-        viewModel.endChargePowerDrag()
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargePowerWrites() == [2_500] })
         viewModel.stop()
     }
 
-    @Test("Charge power rapid releases produce one final debounced write")
-    func chargePowerRapidReleasesProduceOneFinalWrite() async {
+    @Test("Rapid charge power requests produce one final debounced write")
+    func rapidChargePowerRequestsProduceOneFinalWrite() async {
         let repository = FakeBatteryHealthRepository()
         let viewModel = makeBatteryHealthViewModel(repository: repository)
         viewModel.start()
         await sendChargingHealth(repository: repository, maximumPowerWatts: 1_000)
         #expect(await waitUntil { await repository.chargePowerPrepareCount() == 1 })
 
-        viewModel.setDisplayedChargePower(watts: 2_000)
-        viewModel.endChargePowerDrag()
-        viewModel.beginChargePowerDrag()
-        viewModel.setDisplayedChargePower(watts: 2_700)
-        viewModel.endChargePowerDrag()
+        viewModel.setChargePowerLimit(watts: 2_000)
+        viewModel.setChargePowerLimit(watts: 2_700)
 
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargePowerWrites() == [2_700] })
         viewModel.stop()
     }
 
-    @Test("Charge power release keeps optimistic value while old telemetry arrives")
-    func chargePowerReleaseKeepsOptimisticValue() async {
+    @Test("Charge power request keeps optimistic value while old telemetry arrives")
+    func chargePowerRequestKeepsOptimisticValue() async {
         let repository = FakeBatteryHealthRepository()
         let viewModel = makeBatteryHealthViewModel(repository: repository)
         viewModel.start()
         await sendChargingHealth(repository: repository, maximumPowerWatts: 1_000)
         #expect(await waitUntil { await repository.chargePowerPrepareCount() == 1 })
 
-        viewModel.beginChargePowerDrag()
-        viewModel.setDisplayedChargePower(watts: 1_500)
-        viewModel.endChargePowerDrag()
+        viewModel.setChargePowerLimit(watts: 1_500)
         await sendChargingHealth(repository: repository, maximumPowerWatts: 1_000)
 
         #expect(await waitUntil {
@@ -62,16 +55,15 @@ struct BatteryHealthChargeControlViewModelTests {
         viewModel.stop()
     }
 
-    @Test("Charge power dragging ignores stale telemetry")
-    func chargePowerDraggingIgnoresStaleTelemetry() async {
+    @Test("Charge power request ignores stale telemetry during debounce")
+    func chargePowerRequestIgnoresStaleTelemetryDuringDebounce() async {
         let repository = FakeBatteryHealthRepository()
         let viewModel = makeBatteryHealthViewModel(repository: repository)
         viewModel.start()
         await sendChargingHealth(repository: repository, maximumPowerWatts: 1_000)
         #expect(await waitUntil { await repository.chargePowerPrepareCount() == 1 })
 
-        viewModel.beginChargePowerDrag()
-        viewModel.setDisplayedChargePower(watts: 2_200)
+        viewModel.setChargePowerLimit(watts: 2_200)
         await sendChargingHealth(repository: repository, maximumPowerWatts: 1_000)
 
         #expect(await waitUntil {
@@ -89,8 +81,7 @@ struct BatteryHealthChargeControlViewModelTests {
         await sendChargingHealth(repository: repository, maximumPowerWatts: 1_000)
         #expect(await waitUntil { await repository.chargePowerPrepareCount() == 1 })
 
-        viewModel.setDisplayedChargePower(watts: 1_000)
-        viewModel.endChargePowerDrag()
+        viewModel.setChargePowerLimit(watts: 1_000)
 
         try? await Task.sleep(for: .milliseconds(1_200))
         #expect(await repository.chargePowerWrites().isEmpty)
@@ -105,17 +96,15 @@ struct BatteryHealthChargeControlViewModelTests {
         await sendChargingHealth(repository: repository, maximumPowerWatts: 1_000)
         #expect(await waitUntil { await repository.chargePowerPrepareCount() == 1 })
 
-        viewModel.beginChargePowerDrag()
-        viewModel.setDisplayedChargePower(watts: 100)
-        viewModel.endChargePowerDrag()
+        viewModel.setChargePowerLimit(watts: 100)
 
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargePowerWrites() == [300] })
         #expect(viewModel.viewState.chargePowerControl.selectedWatts == 300)
         viewModel.stop()
     }
 
-    @Test("Charge target dragging does not write until release debounce")
-    func chargeTargetDraggingDoesNotWriteUntilRelease() async {
+    @Test("Charge target request waits for debounce")
+    func chargeTargetRequestWaitsForDebounce() async {
         let repository = FakeBatteryHealthRepository()
         let viewModel = makeBatteryHealthViewModel(repository: repository)
         viewModel.start()
@@ -126,17 +115,15 @@ struct BatteryHealthChargeControlViewModelTests {
         )
         #expect(await waitUntil { await repository.chargePowerPrepareCount() == 1 })
 
-        viewModel.beginChargeTargetDrag()
-        viewModel.setDisplayedChargeTarget(percent: 80)
+        viewModel.setChargeTarget(percent: 80)
         #expect(await repository.chargeTargetWrites().isEmpty)
 
-        viewModel.endChargeTargetDrag()
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargeTargetWrites() == [80] })
         viewModel.stop()
     }
 
-    @Test("Charge target rapid releases produce one final debounced write")
-    func chargeTargetRapidReleasesProduceOneFinalWrite() async {
+    @Test("Rapid charge target requests produce one final debounced write")
+    func rapidChargeTargetRequestsProduceOneFinalWrite() async {
         let repository = FakeBatteryHealthRepository()
         let viewModel = makeBatteryHealthViewModel(repository: repository)
         viewModel.start()
@@ -147,11 +134,8 @@ struct BatteryHealthChargeControlViewModelTests {
         )
         #expect(await waitUntil { await repository.chargePowerPrepareCount() == 1 })
 
-        viewModel.setDisplayedChargeTarget(percent: 90)
-        viewModel.endChargeTargetDrag()
-        viewModel.beginChargeTargetDrag()
-        viewModel.setDisplayedChargeTarget(percent: 75)
-        viewModel.endChargeTargetDrag()
+        viewModel.setChargeTarget(percent: 90)
+        viewModel.setChargeTarget(percent: 75)
 
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargeTargetWrites() == [75] })
         viewModel.stop()
@@ -169,8 +153,7 @@ struct BatteryHealthChargeControlViewModelTests {
         )
         #expect(await waitUntil { await repository.chargePowerPrepareCount() == 1 })
 
-        viewModel.setDisplayedChargeTarget(percent: 80)
-        viewModel.endChargeTargetDrag()
+        viewModel.setChargeTarget(percent: 80)
 
         try? await Task.sleep(for: .milliseconds(1_200))
         #expect(await repository.chargeTargetWrites().isEmpty)
@@ -189,9 +172,7 @@ struct BatteryHealthChargeControlViewModelTests {
         )
         #expect(await waitUntil { await repository.chargePowerPrepareCount() == 1 })
 
-        viewModel.beginChargeTargetDrag()
-        viewModel.setDisplayedChargeTarget(percent: 0)
-        viewModel.endChargeTargetDrag()
+        viewModel.setChargeTarget(percent: 0)
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargeTargetWrites() == [1] })
 
         await sendChargingHealth(
@@ -199,16 +180,14 @@ struct BatteryHealthChargeControlViewModelTests {
             maximumPowerWatts: 1_000,
             maximumStateOfChargePercent: 1
         )
-        viewModel.beginChargeTargetDrag()
-        viewModel.setDisplayedChargeTarget(percent: 105)
-        viewModel.endChargeTargetDrag()
+        viewModel.setChargeTarget(percent: 105)
 
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargeTargetWrites() == [1, 100] })
         viewModel.stop()
     }
 
-    @Test("Charge target dragging ignores stale telemetry")
-    func chargeTargetDraggingIgnoresStaleTelemetry() async {
+    @Test("Charge target request ignores stale telemetry during debounce")
+    func chargeTargetRequestIgnoresStaleTelemetryDuringDebounce() async {
         let repository = FakeBatteryHealthRepository()
         let viewModel = makeBatteryHealthViewModel(repository: repository)
         viewModel.start()
@@ -219,8 +198,7 @@ struct BatteryHealthChargeControlViewModelTests {
         )
         #expect(await waitUntil { await repository.chargePowerPrepareCount() == 1 })
 
-        viewModel.beginChargeTargetDrag()
-        viewModel.setDisplayedChargeTarget(percent: 72)
+        viewModel.setChargeTarget(percent: 72)
         await sendChargingHealth(
             repository: repository,
             maximumPowerWatts: 1_000,
@@ -246,14 +224,10 @@ struct BatteryHealthChargeControlViewModelTests {
         )
         #expect(await waitUntil { await repository.chargePowerPrepareCount() == 1 })
 
-        viewModel.beginChargePowerDrag()
-        viewModel.setDisplayedChargePower(watts: 1_500)
-        viewModel.endChargePowerDrag()
+        viewModel.setChargePowerLimit(watts: 1_500)
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargePowerWrites() == [1_500] })
 
-        viewModel.beginChargeTargetDrag()
-        viewModel.setDisplayedChargeTarget(percent: 80)
-        viewModel.endChargeTargetDrag()
+        viewModel.setChargeTarget(percent: 80)
         try? await Task.sleep(for: .milliseconds(1_200))
         #expect(await repository.chargeTargetWrites().isEmpty)
 

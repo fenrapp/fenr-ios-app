@@ -96,28 +96,12 @@ public final class BatteryHealthViewModel: ObservableObject {
         render()
     }
 
-    public func beginChargePowerDrag() {
-        chargeControl.beginPowerDrag()
+    public func setChargePowerLimit(watts: Double) {
+        chargeControl.setPowerLimit(watts: watts)
     }
 
-    public func setDisplayedChargePower(watts: Double) {
-        chargeControl.setDisplayedPower(watts: watts)
-    }
-
-    public func endChargePowerDrag() {
-        chargeControl.endPowerDrag()
-    }
-
-    public func beginChargeTargetDrag() {
-        chargeControl.beginTargetDrag()
-    }
-
-    public func setDisplayedChargeTarget(percent: Double) {
-        chargeControl.setDisplayedTarget(percent: percent)
-    }
-
-    public func endChargeTargetDrag() {
-        chargeControl.endTargetDrag()
+    public func setChargeTarget(percent: Double) {
+        chargeControl.setTarget(percent: percent)
     }
 
     public func captureLogText() -> String {

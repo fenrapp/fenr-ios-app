@@ -2,18 +2,30 @@ import SwiftUI
 
 struct ChargePowerControlView: View {
     let state: ChargePowerControlViewState
-    let setDisplayedPower: (Double) -> Void
-    let beginPowerDrag: () -> Void
-    let endPowerDrag: () -> Void
-    let setDisplayedTarget: (Double) -> Void
-    let beginTargetDrag: () -> Void
-    let endTargetDrag: () -> Void
+    let setPowerLimit: (Double) -> Void
+    let setChargeTarget: (Double) -> Void
+    @State private var displayedPowerWatts: Double
+    @State private var displayedTargetPercent: Double
+    @State private var isEditingPower = false
+    @State private var isEditingTarget = false
+
+    init(
+        state: ChargePowerControlViewState,
+        setPowerLimit: @escaping (Double) -> Void,
+        setChargeTarget: @escaping (Double) -> Void
+    ) {
+        self.state = state
+        self.setPowerLimit = setPowerLimit
+        self.setChargeTarget = setChargeTarget
+        _displayedPowerWatts = State(initialValue: state.selectedWatts)
+        _displayedTargetPercent = State(initialValue: state.selectedTargetPercent)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.spacing) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: Constants.labelSpacing) {
-                    Text("\(Int(state.selectedWatts)) W")
+                    Text("\(Int(displayedPowerWatts)) W")
                         .font(.title3.weight(.semibold))
                     Text("\(state.chargerType) charger")
                         .font(.caption)
@@ -33,16 +45,15 @@ struct ChargePowerControlView: View {
 
                 Slider(
                     value: Binding(
-                        get: { state.selectedWatts },
-                        set: setDisplayedPower
+                        get: { displayedPowerWatts },
+                        set: { displayedPowerWatts = $0 }
                     ),
                     in: state.minimumWatts ... state.maximumWatts,
                     step: state.stepWatts,
                     onEditingChanged: { isEditing in
-                        if isEditing {
-                            beginPowerDrag()
-                        } else {
-                            endPowerDrag()
+                        isEditingPower = isEditing
+                        if !isEditing {
+                            setPowerLimit(displayedPowerWatts)
                         }
                     }
                 )
@@ -63,22 +74,21 @@ struct ChargePowerControlView: View {
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text("\(Int(state.selectedTargetPercent))%")
+                    Text("\(Int(displayedTargetPercent))%")
                         .font(.callout.weight(.semibold))
                 }
 
                 Slider(
                     value: Binding(
-                        get: { state.selectedTargetPercent },
-                        set: setDisplayedTarget
+                        get: { displayedTargetPercent },
+                        set: { displayedTargetPercent = $0 }
                     ),
                     in: state.minimumTargetPercent ... state.maximumTargetPercent,
                     step: state.targetStepPercent,
                     onEditingChanged: { isEditing in
-                        if isEditing {
-                            beginTargetDrag()
-                        } else {
-                            endTargetDrag()
+                        isEditingTarget = isEditing
+                        if !isEditing {
+                            setChargeTarget(displayedTargetPercent)
                         }
                     }
                 )
@@ -98,6 +108,14 @@ struct ChargePowerControlView: View {
                     .font(.caption)
                     .foregroundStyle(.red)
             }
+        }
+        .onChange(of: state.selectedWatts) { value in
+            guard !isEditingPower else { return }
+            displayedPowerWatts = value
+        }
+        .onChange(of: state.selectedTargetPercent) { value in
+            guard !isEditingTarget else { return }
+            displayedTargetPercent = value
         }
     }
 

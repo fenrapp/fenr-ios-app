@@ -24,12 +24,8 @@ public struct BatteryHealthView: View {
                     SurfacePanel(title: BatteryHealthText.chargePowerControl) {
                         ChargePowerControlView(
                             state: viewModel.viewState.chargePowerControl,
-                            setDisplayedPower: viewModel.setDisplayedChargePower(watts:),
-                            beginPowerDrag: viewModel.beginChargePowerDrag,
-                            endPowerDrag: viewModel.endChargePowerDrag,
-                            setDisplayedTarget: viewModel.setDisplayedChargeTarget(percent:),
-                            beginTargetDrag: viewModel.beginChargeTargetDrag,
-                            endTargetDrag: viewModel.endChargeTargetDrag
+                            setPowerLimit: viewModel.setChargePowerLimit(watts:),
+                            setChargeTarget: viewModel.setChargeTarget(percent:)
                         )
                     }
                 }

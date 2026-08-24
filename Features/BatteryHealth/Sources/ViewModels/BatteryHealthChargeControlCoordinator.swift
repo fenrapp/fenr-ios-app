@@ -22,8 +22,6 @@ final class BatteryHealthChargeControlCoordinator {
     private var optimisticTargetPercent: Int?
     private var queuedPowerWatts: Int?
     private var queuedTargetPercent: Int?
-    private var isDraggingPower = false
-    private var isDraggingTarget = false
 
     init(
         useCases: BatteryHealthUseCases,
@@ -43,48 +41,26 @@ final class BatteryHealthChargeControlCoordinator {
         cancelTasks()
         queuedPowerWatts = nil
         queuedTargetPercent = nil
-        isDraggingPower = false
-        isDraggingTarget = false
     }
-    func beginPowerDrag() {
-        isDraggingPower = true
-        taskScheduler.cancelPowerDebounce()
+
+    func setPowerLimit(watts: Double) {
+        let finalWatts = normalizedPowerWatts(Int(watts.rounded()))
         queuedPowerWatts = nil
-        appendLog("slider drag start; debounce cancelled")
-    }
-    func setDisplayedPower(watts: Double) {
-        state.selectedWatts = watts
-        requestRender()
-    }
-    func endPowerDrag() {
-        let finalWatts = normalizedPowerWatts(Int(state.selectedWatts.rounded()))
-        isDraggingPower = false
         state.selectedWatts = Double(finalWatts)
         optimisticPowerWatts = finalWatts
-        appendLog("slider final value: \(finalWatts) W")
+        appendLog("power requested: \(finalWatts) W")
         taskScheduler.schedulePowerDebounce { [weak self] in
             guard let self else { return }
             self.appendLog("debounce fired: \(finalWatts) W")
             await self.writePowerLimit(finalWatts)
         }
     }
-    func beginTargetDrag() {
-        isDraggingTarget = true
-        taskScheduler.cancelTargetDebounce()
+    func setTarget(percent: Double) {
+        let finalPercent = normalizedTargetPercent(Int(percent.rounded()))
         queuedTargetPercent = nil
-        appendLog("target slider drag start; debounce cancelled")
-    }
-    func setDisplayedTarget(percent: Double) {
-        state.selectedTargetPercent = percent
-        requestRender()
-    }
-
-    func endTargetDrag() {
-        let finalPercent = normalizedTargetPercent(Int(state.selectedTargetPercent.rounded()))
-        isDraggingTarget = false
         state.selectedTargetPercent = Double(finalPercent)
         optimisticTargetPercent = finalPercent
-        appendLog("target slider final value: \(finalPercent)%")
+        appendLog("target requested: \(finalPercent)%")
         taskScheduler.scheduleTargetDebounce { [weak self] in
             guard let self else { return }
             self.appendLog("target debounce fired: \(finalPercent)%")
@@ -240,10 +216,8 @@ final class BatteryHealthChargeControlCoordinator {
             charging: charging,
             state: &state,
             interaction: .init(
-                isDraggingPower: isDraggingPower,
                 optimisticPowerWatts: optimisticPowerWatts,
                 pendingPowerConfirmationWatts: pendingPowerConfirmationWatts,
-                isDraggingTarget: isDraggingTarget,
                 optimisticTargetPercent: optimisticTargetPercent,
                 pendingTargetConfirmationPercent: pendingTargetConfirmationPercent
             )

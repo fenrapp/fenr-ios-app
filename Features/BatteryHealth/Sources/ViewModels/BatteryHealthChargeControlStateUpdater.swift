@@ -80,9 +80,7 @@ public struct BatteryHealthChargeControlStateUpdater {
         state: inout ChargePowerControlViewState
     ) {
         let selected: Int?
-        if interaction.isDraggingPower {
-            selected = Int(state.selectedWatts.rounded())
-        } else if let optimistic = interaction.optimisticPowerWatts {
+        if let optimistic = interaction.optimisticPowerWatts {
             selected = optimistic
         } else if interaction.pendingPowerConfirmationWatts == nil {
             selected = confirmed
@@ -99,9 +97,7 @@ public struct BatteryHealthChargeControlStateUpdater {
         state: inout ChargePowerControlViewState
     ) {
         let selected: Int?
-        if interaction.isDraggingTarget {
-            selected = Int(state.selectedTargetPercent.rounded())
-        } else if let optimistic = interaction.optimisticTargetPercent {
+        if let optimistic = interaction.optimisticTargetPercent {
             selected = optimistic
         } else if interaction.pendingTargetConfirmationPercent == nil {
             selected = confirmed
@@ -114,10 +110,8 @@ public struct BatteryHealthChargeControlStateUpdater {
 }
 
 struct BatteryHealthChargeControlInteractionState {
-    let isDraggingPower: Bool
     let optimisticPowerWatts: Int?
     let pendingPowerConfirmationWatts: Int?
-    let isDraggingTarget: Bool
     let optimisticTargetPercent: Int?
     let pendingTargetConfirmationPercent: Int?
 }
