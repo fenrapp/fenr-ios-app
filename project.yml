@@ -751,15 +751,11 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug.tests
 schemes:
-  WatchDashboard:
-    build:
-      targets:
-        WatchDashboard: all
-        WatchDashboardTests: [test]
-    test:
-      targets:
-        - WatchDashboardTests
   FENR:
+    management:
+      shared: true
+      orderHint: 0
+      isShown: true
     build:
       targets:
         FENR: all
@@ -797,3 +793,31 @@ schemes:
         - AppSettingsTests
         - FENRTests
         - FENRDebugTests
+  FENRDebug:
+    management:
+      shared: true
+      orderHint: 1
+      isShown: true
+    build:
+      targets:
+        FENRDebug: all
+        FENRDebugTests: [test]
+    test:
+      targets:
+        - FENRDebugTests
+  FENRWatch:
+    management:
+      shared: true
+      orderHint: 2
+      isShown: true
+    build:
+      targets:
+        FENRWatch: all
+  FENRWatchDebug:
+    management:
+      shared: true
+      orderHint: 3
+      isShown: true
+    build:
+      targets:
+        FENRWatchDebug: all
