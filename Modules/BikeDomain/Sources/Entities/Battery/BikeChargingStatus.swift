@@ -5,6 +5,7 @@ public struct BikeChargingStatus: Equatable, Sendable {
     public let maximumPowerWatts: Double
     public let targetCellVoltageVolts: Double
     public let maximumStateOfChargePercent: Int
+    public let chargerType: BikeChargerType
 
     public init(
         requestedCurrentAmperes: Double,
@@ -12,7 +13,8 @@ public struct BikeChargingStatus: Equatable, Sendable {
         maximumCurrentAmperes: Double,
         maximumPowerWatts: Double,
         targetCellVoltageVolts: Double,
-        maximumStateOfChargePercent: Int
+        maximumStateOfChargePercent: Int,
+        chargerType: BikeChargerType = .unknown(255)
     ) {
         self.requestedCurrentAmperes = requestedCurrentAmperes
         self.reportedCurrentAmperes = reportedCurrentAmperes
@@ -20,5 +22,6 @@ public struct BikeChargingStatus: Equatable, Sendable {
         self.maximumPowerWatts = maximumPowerWatts
         self.targetCellVoltageVolts = targetCellVoltageVolts
         self.maximumStateOfChargePercent = maximumStateOfChargePercent
+        self.chargerType = chargerType
     }
 }
