@@ -119,9 +119,13 @@ public final class CoreBluetoothPeripheralDelegateProxy: NSObject, @preconcurren
         didWriteValueFor characteristic: CBCharacteristic,
         error: Error?
     ) {
-        callbackQueue.enqueue { [sessionStore, securityCoordinator] in
+        callbackQueue.enqueue { [sessionStore, securityCoordinator, notificationCoordinator] in
             guard sessionStore.isActive(peripheral) else { return }
-            await securityCoordinator.didWriteValue(characteristic: characteristic, error: error)
+            if securityCoordinator.handles(characteristic) {
+                await securityCoordinator.didWriteValue(characteristic: characteristic, error: error)
+            } else {
+                await notificationCoordinator.didWriteValue(characteristic: characteristic, error: error)
+            }
         }
     }
 

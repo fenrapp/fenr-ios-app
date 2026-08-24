@@ -23,6 +23,10 @@ enum BikeSDKConstants {
 
     static var bikeStatusCharacteristicUUID: CBUUID { BikeBLEDiagnosticsProfile.bikeStatusUUID }
 
+    static var vcuVersionsUUID: CBUUID { BikeBLEDiagnosticsProfile.vcuVersionsUUID }
+
+    static var vcuBikeConfigurationUUID: CBUUID { BikeBLEDiagnosticsProfile.vcuBikeConfigurationUUID }
+
     static var telemetryCharacteristicUUIDs: [CBUUID] {
         BikeBLEDiagnosticsProfile.telemetryCharacteristicUUIDs
     }

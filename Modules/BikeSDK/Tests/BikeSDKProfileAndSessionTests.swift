@@ -21,24 +21,10 @@ struct BikeSDKProfileAndSessionTests {
 
     @Test("BLE diagnostics discovers the experimental capture surface without making it required")
     func discoversBikeDiagnosticsTelemetrySurface() {
-        #expect(BikeSDKConstants.serviceUUIDs == [
-            CBUUID(nsuuid: StarkUUIDs.bikeService),
-            CBUUID(nsuuid: StarkUUIDs.liveService),
-            CBUUID(nsuuid: StarkUUIDs.batteryService),
-            CBUUID(nsuuid: StarkUUIDs.chargerService),
-            CBUUID(nsuuid: StarkUUIDs.vcuService),
-            CBUUID(nsuuid: StarkUUIDs.inverterService)
-        ])
+        #expect(BikeSDKConstants.serviceUUIDs == expectedServiceUUIDs)
         #expect(BikeSDKConstants.characteristicUUIDs.contains(CBUUID(nsuuid: StarkUUIDs.batteryCellVoltages)))
         #expect(BikeSDKConstants.characteristicUUIDs.contains(CBUUID(nsuuid: StarkUUIDs.chargerData)))
-        #expect(BikeSDKConstants.requiredTelemetryNotifyUUIDs == [
-            CBUUID(nsuuid: StarkUUIDs.bikeStatus),
-            CBUUID(nsuuid: StarkUUIDs.liveSpeed),
-            CBUUID(nsuuid: StarkUUIDs.liveMap),
-            CBUUID(nsuuid: StarkUUIDs.liveTotals),
-            CBUUID(nsuuid: StarkUUIDs.batterySOC),
-            CBUUID(nsuuid: StarkUUIDs.vcuTelemetryTLV)
-        ])
+        #expect(BikeSDKConstants.requiredTelemetryNotifyUUIDs == expectedRequiredTelemetryUUIDs)
         #expect(!BikeSDKConstants.requiredTelemetryNotifyUUIDs.contains(
             CBUUID(nsuuid: StarkUUIDs.batteryCellVoltages)
         ))
@@ -67,7 +53,13 @@ struct BikeSDKProfileAndSessionTests {
             CBUUID(nsuuid: StarkUUIDs.vcuInfo)
         ))
         #expect(BikeSDKConstants.experimentalCaptureUUIDs == expectedExperimentalCaptureUUIDs)
-        #expect(!BikeSDKConstants.characteristicUUIDs.contains(
+        #expect(BikeSDKConstants.characteristicUUIDs.contains(
+            CBUUID(nsuuid: StarkUUIDs.vcuBikeConfiguration)
+        ))
+        #expect(!BikeSDKConstants.requiredTelemetryNotifyUUIDs.contains(
+            CBUUID(nsuuid: StarkUUIDs.vcuBikeConfiguration)
+        ))
+        #expect(!BikeSDKConstants.experimentalCaptureUUIDs.contains(
             CBUUID(nsuuid: StarkUUIDs.vcuBikeConfiguration)
         ))
         #expect(!BikeSDKConstants.characteristicUUIDs.contains(
@@ -79,6 +71,28 @@ struct BikeSDKProfileAndSessionTests {
         #expect(BikeSDKConstants.requiredCharacteristicUUIDs(
             for: CBUUID(nsuuid: StarkUUIDs.batteryService)
         ) == [CBUUID(nsuuid: StarkUUIDs.batterySOC)])
+    }
+
+    private var expectedServiceUUIDs: [CBUUID] {
+        [
+            CBUUID(nsuuid: StarkUUIDs.bikeService),
+            CBUUID(nsuuid: StarkUUIDs.liveService),
+            CBUUID(nsuuid: StarkUUIDs.batteryService),
+            CBUUID(nsuuid: StarkUUIDs.chargerService),
+            CBUUID(nsuuid: StarkUUIDs.vcuService),
+            CBUUID(nsuuid: StarkUUIDs.inverterService)
+        ]
+    }
+
+    private var expectedRequiredTelemetryUUIDs: [CBUUID] {
+        [
+            CBUUID(nsuuid: StarkUUIDs.bikeStatus),
+            CBUUID(nsuuid: StarkUUIDs.liveSpeed),
+            CBUUID(nsuuid: StarkUUIDs.liveMap),
+            CBUUID(nsuuid: StarkUUIDs.liveTotals),
+            CBUUID(nsuuid: StarkUUIDs.batterySOC),
+            CBUUID(nsuuid: StarkUUIDs.vcuTelemetryTLV)
+        ]
     }
 
     @Test("Battery Health profile contains only read-only monitoring datasets")

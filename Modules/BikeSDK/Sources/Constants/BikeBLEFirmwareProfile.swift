@@ -81,6 +81,20 @@ enum BikeBLEDiagnosticsProfile {
         }
     }
 
+    static var vcuVersionsUUID: CBUUID {
+        switch firmware {
+        case .currentObserved:
+            BikeBLECurrentObservedFirmwareProfile.vcuVersionsUUID
+        }
+    }
+
+    static var vcuBikeConfigurationUUID: CBUUID {
+        switch firmware {
+        case .currentObserved:
+            BikeBLECurrentObservedFirmwareProfile.vcuBikeConfigurationUUID
+        }
+    }
+
     static func characteristicUUIDs(for serviceUUID: CBUUID) -> [CBUUID] {
         switch firmware {
         case .currentObserved:

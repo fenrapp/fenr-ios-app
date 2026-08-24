@@ -13,15 +13,18 @@ struct BikeSDKRuntimeConfigurationTests {
         #expect(configuration.reconnectPolicy == expectedPolicy)
     }
 
-    @Test("CoreBluetooth restoration is disabled without bluetooth-central background mode")
-    func coreBluetoothRestorationRequiresBackgroundMode() throws {
+    @Test("CoreBluetooth restoration identifier is stable without bluetooth-central background mode")
+    func coreBluetoothRestorationIdentifierIsStableWithoutBackgroundMode() throws {
         let bundle = try makeBundle(backgroundModes: [])
 
-        #expect(CoreBluetoothRestorationPolicy.restorationIdentifier(for: bundle) == nil)
+        #expect(
+            CoreBluetoothRestorationPolicy.restorationIdentifier(for: bundle)
+                == FENRRuntimeConstants.BikeSDK.centralRestorationIdentifier
+        )
     }
 
-    @Test("CoreBluetooth restoration is enabled with bluetooth-central background mode")
-    func coreBluetoothRestorationUsesIdentifierWhenBackgroundModeIsPresent() throws {
+    @Test("CoreBluetooth restoration identifier is stable with bluetooth-central background mode")
+    func coreBluetoothRestorationIdentifierIsStableWithBackgroundMode() throws {
         let bundle = try makeBundle(
             backgroundModes: [FENRRuntimeConstants.BikeSDK.bluetoothCentralBackgroundMode]
         )

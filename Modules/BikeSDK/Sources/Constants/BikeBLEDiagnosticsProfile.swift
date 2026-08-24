@@ -18,7 +18,7 @@ enum BikeBLECurrentObservedFirmwareProfile {
         [statusUUID, speedUUID, mapUUID, liveTotalsUUID, batterySOCUUID, vcuTelemetryTLVUUID]
     }
 
-    // These UUIDs still need protocol characterization. No writes or configuration UUIDs are used.
+    // These UUIDs still need protocol characterization. Charge power control uses only 4005 after prepare guards.
     static var experimentalCaptureUUIDs: [CBUUID] {
         [
             bikeTelemetryTLVUUID,
@@ -116,6 +116,8 @@ enum BikeBLECurrentObservedFirmwareProfile {
     private static var batteryTelemetryTLVUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.batteryTelemetryTLV) }
     private static var chargerDataUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.chargerData) }
     private static var chargerTelemetryTLVUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.chargerTelemetryTLV) }
+    static var vcuVersionsUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.vcuVersions) }
+    static var vcuBikeConfigurationUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.vcuBikeConfiguration) }
     private static var vcuTelemetryTLVUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.vcuTelemetryTLV) }
     private static var inverterInfoUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.inverterInfo) }
     private static var inverterSignalsUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.inverterSignals) }
@@ -170,7 +172,7 @@ enum BikeBLECurrentObservedFirmwareProfile {
     private static var vcuService: BikeBLEServiceProfile {
         BikeBLEServiceProfile(
             serviceUUID: CBUUID(nsuuid: StarkUUIDs.vcuService),
-            characteristicUUIDs: [vcuTelemetryTLVUUID]
+            characteristicUUIDs: [vcuVersionsUUID, vcuBikeConfigurationUUID, vcuTelemetryTLVUUID]
         )
     }
 

@@ -14,7 +14,8 @@ enum BikeSDKText {
     static let manualSOCRead = "Manual SOC"
     static let manualSecurityRetry = "Manual security retry"
     static let securityChallenge = "Security challenge"
-    static let securityChallengeGuidance = "Complete the iOS pairing dialog, then retry security"
+    static let securityChallengeGuidance =
+        "Accept the Bluetooth pairing prompt on Watch or iPhone; authentication will retry automatically"
     static let securityCharacteristicMissing = "Security characteristic 00001001 is unavailable"
     static let securityServiceMissing = "Security service 00001000 is unavailable"
     static let securityCCCDMissing = "Security characteristic is missing CCCD"

@@ -21,4 +21,38 @@ struct StarkPairingIdentityTests {
         #expect(!StarkPairingIdentity.isValidVIN("1HGCM82633A00435"))
         #expect(!StarkPairingIdentity.isValidVIN("1HGCM826I3A004352"))
     }
+
+    @Test("Matches advertised Stark bike names against normalized targets")
+    func matchesAdvertisedBikeNames() {
+        #expect(
+            StarkPairingIdentity.matches(
+                "UDUEX1AE4-00000001",
+                targetVIN: "UDUEX1AE400000001"
+            )
+        )
+        #expect(
+            StarkPairingIdentity.matches(
+                "UDUEX1AE4-00000001",
+                targetVIN: "00000001"
+            )
+        )
+        #expect(
+            StarkPairingIdentity.matches(
+                "00000001",
+                targetVIN: "UDUEX1AE400000001"
+            )
+        )
+        #expect(
+            !StarkPairingIdentity.matches(
+                "UDUEX1AE4-00000001",
+                targetVIN: "TA000000"
+            )
+        )
+        #expect(
+            !StarkPairingIdentity.matches(
+                "UDUEX1AE4-00000001",
+                targetVIN: "1973"
+            )
+        )
+    }
 }

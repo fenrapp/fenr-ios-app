@@ -2,7 +2,7 @@ import CoreBluetooth
 import StarkProtocol
 
 @MainActor
-public final class BikeBLEDiscoveryCoordinator {
+public struct BikeBLEDiscoveryCoordinator {
     private let eventEmitter: BikeBLEEventEmitter
     private let securityCoordinator: BikeBLESecurityCoordinator
     private let notificationCoordinator: BikeBLENotificationCoordinator

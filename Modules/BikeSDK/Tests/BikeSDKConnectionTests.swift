@@ -16,7 +16,7 @@ struct BikeSDKConnectionTests {
         await #expect(throws: BikeSDKError.emptyVIN) {
             try await coordinator.connect(to: " ")
         }
-        await #expect(iterator.next() == .error(.emptyVIN))
+        await #expect(nextNonDebugEvent(&iterator) == .error(.emptyVIN))
     }
 
     @MainActor
@@ -31,7 +31,7 @@ struct BikeSDKConnectionTests {
 
         try await coordinator.connect(to: "VIN123")
 
-        await #expect(iterator.next() == .connection(.scanning(vin: "VIN123")))
+        await #expect(nextNonDebugEvent(&iterator) == .connection(.scanning(vin: "VIN123")))
         #expect(adapter.stopScanCount == 1)
         #expect(adapter.retrieveConnectedPeripheralsCount == 1)
         #expect(adapter.scanCount == 1)
@@ -49,7 +49,7 @@ struct BikeSDKConnectionTests {
 
         try await coordinator.connect(to: "VIN123")
 
-        await #expect(iterator.next() == .connection(.bluetoothPoweredOff))
+        await #expect(nextNonDebugEvent(&iterator) == .connection(.bluetoothPoweredOff))
         #expect(adapter.scanCount == 0)
     }
 
@@ -65,7 +65,7 @@ struct BikeSDKConnectionTests {
 
         try await coordinator.connect(to: "  VIN123  ")
 
-        await #expect(iterator.next() == .connection(.scanning(vin: "VIN123")))
+        await #expect(nextNonDebugEvent(&iterator) == .connection(.scanning(vin: "VIN123")))
     }
 
     @MainActor
@@ -79,12 +79,32 @@ struct BikeSDKConnectionTests {
         let coordinator = makeConnectionCoordinator(adapter: adapter, eventHub: hub)
 
         try await coordinator.connect(to: "VIN123")
-        await #expect(iterator.next() == .connection(.bluetoothPoweredOff))
+        await #expect(nextNonDebugEvent(&iterator) == .connection(.bluetoothPoweredOff))
 
         adapter.state = .poweredOn
         await coordinator.centralDidUpdateState()
 
-        await #expect(iterator.next() == .connection(.scanning(vin: "VIN123")))
+        await #expect(nextNonDebugEvent(&iterator) == .connection(.scanning(vin: "VIN123")))
+        #expect(adapter.scanCount == 1)
+    }
+
+    @MainActor
+    @Test("Bike discovery starts after Bluetooth becomes available")
+    func discoveryStartsAfterBluetoothBecomesAvailable() async {
+        let adapter = FakeCoreBluetoothAdapter()
+        adapter.state = .poweredOff
+        let hub = AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
+        let stream = await hub.stream()
+        var iterator = stream.makeAsyncIterator()
+        let coordinator = makeConnectionCoordinator(adapter: adapter, eventHub: hub)
+
+        await coordinator.startBikeDiscovery()
+        await #expect(nextNonDebugEvent(&iterator) == .connection(.bluetoothPoweredOff))
+        #expect(adapter.scanCount == 0)
+
+        adapter.state = .poweredOn
+        await coordinator.centralDidUpdateState()
+
         #expect(adapter.scanCount == 1)
     }
 
@@ -102,7 +122,7 @@ struct BikeSDKConnectionTests {
             try await coordinator.connect(to: "VIN123")
         }
 
-        await #expect(iterator.next() == .error(.bluetoothUnavailable))
+        await #expect(nextNonDebugEvent(&iterator) == .error(.bluetoothUnavailable))
         #expect(adapter.scanCount == 0)
     }
 
@@ -116,7 +136,7 @@ struct BikeSDKConnectionTests {
         var iterator = stream.makeAsyncIterator()
         let coordinator = makeConnectionCoordinator(adapter: adapter, eventHub: hub)
         try await coordinator.connect(to: "VIN123")
-        _ = await iterator.next()
+        _ = await nextNonDebugEvent(&iterator)
 
         await #expect(
             throws: BikeSDKError.operationFailed(BikeSDKText.connectionAlreadyActive)
@@ -125,7 +145,7 @@ struct BikeSDKConnectionTests {
         }
 
         await #expect(
-            iterator.next()
+            nextNonDebugEvent(&iterator)
                 == .error(.operationFailed(BikeSDKText.connectionAlreadyActive))
         )
         #expect(adapter.scanCount == 1)
@@ -139,17 +159,23 @@ struct BikeSDKConnectionTests {
         let hub = AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
         let stream = await hub.stream()
         var iterator = stream.makeAsyncIterator()
-        let coordinator = makeConnectionCoordinator(adapter: adapter, eventHub: hub)
+        var sessionResetCount = 0
+        let coordinator = makeConnectionCoordinator(
+            adapter: adapter,
+            eventHub: hub,
+            sessionResetHandler: { sessionResetCount += 1 }
+        )
         try await coordinator.connect(to: "VIN123")
-        _ = await iterator.next()
+        _ = await nextNonDebugEvent(&iterator)
 
         try await coordinator.disconnect()
 
         await #expect(
-            iterator.next()
+            nextNonDebugEvent(&iterator)
                 == .connection(.disconnected(reason: BikeSDKText.disconnectedByUser))
         )
         #expect(adapter.stopScanCount == 2)
+        #expect(sessionResetCount == 1)
     }
 
     @MainActor
@@ -158,7 +184,12 @@ struct BikeSDKConnectionTests {
         let adapter = FakeCoreBluetoothAdapter()
         adapter.state = .poweredOff
         let hub = AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
-        let coordinator = makeConnectionCoordinator(adapter: adapter, eventHub: hub)
+        var sessionResetCount = 0
+        let coordinator = makeConnectionCoordinator(
+            adapter: adapter,
+            eventHub: hub,
+            sessionResetHandler: { sessionResetCount += 1 }
+        )
 
         try await coordinator.connect(to: "VIN123")
         await coordinator.stop()
@@ -166,6 +197,7 @@ struct BikeSDKConnectionTests {
         await coordinator.centralDidUpdateState()
 
         #expect(adapter.scanCount == 0)
+        #expect(sessionResetCount == 1)
     }
 
     @MainActor
@@ -207,8 +239,17 @@ struct BikeSDKConnectionTests {
 
         await client.stop()
 
-        await #expect(iterator.next() == .connection(.idle))
+        await #expect(nextNonDebugEvent(&iterator) == .connection(.idle))
         #expect(adapter.stopScanCount == 1)
         #expect(adapter.scanCount == 0)
     }
+}
+
+private func nextNonDebugEvent(
+    _ iterator: inout AsyncStream<BikeSDKEvent>.Iterator
+) async -> BikeSDKEvent? {
+    while let event = await iterator.next() {
+        guard case .debug = event else { return event }
+    }
+    return nil
 }

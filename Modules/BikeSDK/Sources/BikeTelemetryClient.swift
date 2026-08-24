@@ -10,9 +10,25 @@ public protocol BikeTelemetryClient: AnyObject, Sendable {
     func readBikeStatusSnapshot() async throws
     func startBatteryHealthMonitoring() async throws
     func stopBatteryHealthMonitoring() async
+    func prepareChargePowerControl(
+        context: BikeSDKChargePowerTelemetryContext
+    ) async throws -> BikeSDKChargePowerControlSnapshot
+    func setChargePowerLimit(watts: Int) async throws -> BikeSDKChargePowerControlSnapshot
+    func setChargeTarget(percent: Int) async throws -> BikeSDKChargePowerControlSnapshot
     func events() async -> AsyncStream<BikeSDKEvent>
 }
 
 public extension BikeTelemetryClient {
     func readBikeStatusSnapshot() async throws {}
+    func prepareChargePowerControl(
+        context: BikeSDKChargePowerTelemetryContext
+    ) async throws -> BikeSDKChargePowerControlSnapshot {
+        throw BikeSDKError.operationFailed("Charge power control is unavailable")
+    }
+    func setChargePowerLimit(watts: Int) async throws -> BikeSDKChargePowerControlSnapshot {
+        throw BikeSDKError.operationFailed("Charge power control is unavailable")
+    }
+    func setChargeTarget(percent: Int) async throws -> BikeSDKChargePowerControlSnapshot {
+        throw BikeSDKError.operationFailed("Charge target control is unavailable")
+    }
 }

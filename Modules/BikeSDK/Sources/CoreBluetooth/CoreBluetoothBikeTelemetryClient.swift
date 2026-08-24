@@ -42,6 +42,7 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
 
     public func stop() async {
         callbackQueue.cancelPending()
+        securityCoordinator.cancelPendingRetry()
         await connectionCoordinator.stop()
     }
 
@@ -81,6 +82,20 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
 
     public func stopBatteryHealthMonitoring() async {
         await notificationCoordinator.stopBatteryHealthMonitoring()
+    }
+
+    public func prepareChargePowerControl(
+        context: BikeSDKChargePowerTelemetryContext
+    ) async throws -> BikeSDKChargePowerControlSnapshot {
+        try await notificationCoordinator.prepareChargePowerControl(context: context)
+    }
+
+    public func setChargePowerLimit(watts: Int) async throws -> BikeSDKChargePowerControlSnapshot {
+        try await notificationCoordinator.setChargePowerLimit(watts: watts)
+    }
+
+    public func setChargeTarget(percent: Int) async throws -> BikeSDKChargePowerControlSnapshot {
+        try await notificationCoordinator.setChargeTarget(percent: percent)
     }
 
     private func startRuntimeIfNeeded() {

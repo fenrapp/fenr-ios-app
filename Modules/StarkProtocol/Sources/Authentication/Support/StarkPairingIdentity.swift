@@ -13,6 +13,17 @@ public enum StarkPairingIdentity {
         }
     }
 
+    public static func matches(_ candidate: String?, targetVIN: String) -> Bool {
+        guard let candidate else { return false }
+        let normalizedCandidate = normalizedVIN(candidate)
+        let normalizedTarget = normalizedVIN(targetVIN)
+        guard !normalizedCandidate.isEmpty, !normalizedTarget.isEmpty else { return false }
+        if normalizedCandidate == normalizedTarget { return true }
+        guard normalizedCandidate.count >= 8, normalizedTarget.count >= 8 else { return false }
+        return normalizedCandidate.hasSuffix(normalizedTarget)
+            || normalizedTarget.hasSuffix(normalizedCandidate)
+    }
+
     public static func normalizedDate(_ pairingDate: String) -> String {
         let digits = pairingDate.filter(\.isNumber)
         guard digits.count >= StarkPinConstants.pairingDateDigits else {

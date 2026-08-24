@@ -40,4 +40,20 @@ struct BikeBLENotificationCoordinatorTests {
         var iterator = stream.makeAsyncIterator()
         await #expect(iterator.next() == .error(.operationFailed(BikeSDKText.noActivePeripheral)))
     }
+
+    @Test("Session reset cancels pending notification work")
+    func resetCancelsPendingNotificationWork() {
+        let eventHub = AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
+        let scheduler = FakeBikeBLETimeoutScheduler()
+        let coordinator = makeNotificationCoordinator(
+            sessionStore: BLESessionStore(),
+            eventHub: eventHub,
+            timeoutScheduler: scheduler
+        )
+        scheduler.schedule {}
+
+        coordinator.resetSession()
+
+        #expect(!scheduler.hasPendingOperation)
+    }
 }

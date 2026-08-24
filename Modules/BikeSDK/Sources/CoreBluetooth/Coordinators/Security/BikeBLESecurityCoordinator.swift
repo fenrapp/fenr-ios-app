@@ -6,29 +6,30 @@ import StarkProtocol
 public final class BikeBLESecurityCoordinator {
     private let sessionStore: BLESessionStore
     private let eventEmitter: BikeBLEEventEmitter
-    private let payloadBuilder: any StarkAuthenticationPayloadBuilding
-    private let configuration: BikeSecurityConfiguration
-    private let notificationCoordinator: BikeBLENotificationCoordinator
     private let watchdog: BikeBLESecurityWatchdog
+    private let handshake: BikeBLESecurityHandshake
+    private let pairingRetryController: BikeBLEPairingRetryController?
 
-    public init(
+    init(
         sessionStore: BLESessionStore,
         eventEmitter: BikeBLEEventEmitter,
-        payloadBuilder: any StarkAuthenticationPayloadBuilding,
-        configuration: BikeSecurityConfiguration,
-        notificationCoordinator: BikeBLENotificationCoordinator,
-        watchdog: BikeBLESecurityWatchdog
+        watchdog: BikeBLESecurityWatchdog,
+        handshake: BikeBLESecurityHandshake,
+        pairingRetryController: BikeBLEPairingRetryController? = nil
     ) {
         self.sessionStore = sessionStore
         self.eventEmitter = eventEmitter
-        self.payloadBuilder = payloadBuilder
-        self.configuration = configuration
-        self.notificationCoordinator = notificationCoordinator
         self.watchdog = watchdog
+        self.handshake = handshake
+        self.pairingRetryController = pairingRetryController
     }
 
     public func handles(_ characteristic: CBCharacteristic) -> Bool {
         characteristic.uuid == BikeSDKConstants.securityCharacteristicUUID
+    }
+
+    public func cancelPendingRetry() {
+        pairingRetryController?.reset()
     }
 
     public func discovered(characteristic: CBCharacteristic, peripheral: CBPeripheral) async {
@@ -70,7 +71,7 @@ public final class BikeBLESecurityCoordinator {
             return
         }
 
-        await enableNotifications(peripheral: peripheral, characteristic: characteristic)
+        await handshake.enableNotifications(peripheral: peripheral, characteristic: characteristic)
     }
 
     public func didUpdateNotificationState(
@@ -103,7 +104,7 @@ public final class BikeBLESecurityCoordinator {
             title: BikeSDKText.securityTitle,
             detail: BikeSDKText.securityNotificationsEnabled
         )))
-        await readNonce(peripheral: peripheral, characteristic: characteristic)
+        await handshake.readNonce(peripheral: peripheral, characteristic: characteristic)
     }
 
     public func didUpdateValue(
@@ -123,9 +124,10 @@ public final class BikeBLESecurityCoordinator {
 
         switch sessionStore.authenticationState {
         case .readingNonce:
-            await handleNonce(data, peripheral: peripheral, characteristic: characteristic)
+            await handshake.handleNonce(data, peripheral: peripheral, characteristic: characteristic)
         case .writingResponse, .waitingForResult:
-            await handleAuthenticationResult(data, peripheral: peripheral, characteristic: characteristic)
+            cancelPendingRetry()
+            await handshake.handleAuthenticationResult(data, peripheral: peripheral, characteristic: characteristic)
         case .idle, .enablingNotifications, .authenticated, .failed:
             await eventEmitter.send(.debug(.init(
                 title: BikeSDKText.securityTitle,
@@ -164,6 +166,7 @@ public final class BikeBLESecurityCoordinator {
 
         switch sessionStore.authenticationState {
         case .authenticated:
+            cancelPendingRetry()
             await eventEmitter.send(.debug(.init(
                 title: BikeSDKText.securityTitle,
                 detail: BikeSDKText.securityAlreadyAuthenticated
@@ -176,7 +179,7 @@ public final class BikeBLESecurityCoordinator {
             )))
             return
         case .idle, .failed:
-            break
+            pairingRetryController?.cancelScheduledRetry()
         }
 
         await eventEmitter.send(.debug(.init(
@@ -184,98 +187,35 @@ public final class BikeBLESecurityCoordinator {
             detail: "\(BikeSDKText.manualSecurityRetry) \(characteristic.uuid.uuidString)"
         )))
         if characteristic.isNotifying {
-            await readNonce(peripheral: peripheral, characteristic: characteristic)
+            await handshake.readNonce(peripheral: peripheral, characteristic: characteristic)
         } else {
-            await enableNotifications(peripheral: peripheral, characteristic: characteristic)
+            await handshake.enableNotifications(peripheral: peripheral, characteristic: characteristic)
         }
-    }
-
-    private func enableNotifications(
-        peripheral: CBPeripheral,
-        characteristic: CBCharacteristic
-    ) async {
-        sessionStore.setAuthenticationState(.enablingNotifications)
-        watchdog.watch(expectedState: .enablingNotifications, operation: "security subscription")
-        await eventEmitter.send(.debug(.init(
-            title: BikeSDKText.subscriptionTitle,
-            detail: "Enabling \(characteristic.uuid.uuidString)"
-        )))
-        peripheral.setNotifyValue(true, for: characteristic)
-    }
-
-    private func readNonce(peripheral: CBPeripheral, characteristic: CBCharacteristic) async {
-        sessionStore.setAuthenticationState(.readingNonce)
-        watchdog.watch(expectedState: .readingNonce, operation: "nonce read")
-        await eventEmitter.send(.connection(.authenticating(peripheralName: peripheral.name)))
-        await eventEmitter.send(.debug(.init(
-            title: BikeSDKText.securityTitle,
-            detail: BikeSDKText.securityNonceRead
-        )))
-        peripheral.readValue(for: characteristic)
-    }
-
-    private func handleNonce(
-        _ nonce: Data,
-        peripheral: CBPeripheral,
-        characteristic: CBCharacteristic
-    ) async {
-        guard nonce.count == StarkAuthenticationConstants.nonceLength else {
-            await watchdog.fail(
-                "Security nonce has \(nonce.count) bytes; expected "
-                    + "\(StarkAuthenticationConstants.nonceLength)"
-            )
-            return
-        }
-
-        await eventEmitter.send(.debug(.init(
-            title: BikeSDKText.securityTitle,
-            detail: BikeSDKText.securityNonceReceived
-        )))
-
-        do {
-            let payload = try payloadBuilder.buildVersionTwo(
-                vin: sessionStore.targetVIN,
-                pairingDate: configuration.pairingDate,
-                nonce: nonce
-            )
-            sessionStore.setAuthenticationState(.writingResponse)
-            watchdog.watch(expectedState: .writingResponse, operation: "security response write")
-            await eventEmitter.send(.debug(.init(
-                title: BikeSDKText.securityTitle,
-                detail: "Writing V2 response: \(payload.count) bytes"
-            )))
-            peripheral.writeValue(payload, for: characteristic, type: .withResponse)
-        } catch {
-            await watchdog.fail("Security payload build failed: \(error)")
-        }
-    }
-
-    private func handleAuthenticationResult(
-        _ data: Data,
-        peripheral: CBPeripheral,
-        characteristic: CBCharacteristic
-    ) async {
-        guard let result = data.first else {
-            await watchdog.fail("Security result was empty")
-            return
-        }
-        guard result == StarkAuthenticationConstants.successCode else {
-            await watchdog.fail("\(BikeSDKText.securityAuthenticationFailed): code \(result)")
-            return
-        }
-
-        watchdog.cancel()
-        sessionStore.setAuthenticationState(.authenticated)
-        await eventEmitter.send(.debug(.init(
-            title: BikeSDKText.securityTitle,
-            detail: BikeSDKText.securityAuthenticated
-        )))
-        await eventEmitter.send(.connection(.authenticated(peripheralName: peripheral.name)))
-        peripheral.setNotifyValue(false, for: characteristic)
-        await notificationCoordinator.authenticationDidSucceed(peripheral: peripheral)
     }
 
     private func handleSecurityError(_ error: Error, characteristic: CBCharacteristic) async {
+        let shouldRetryPairing = pairingRetryController != nil && error.requiresPairingOrEncryption
         await watchdog.handle(error: error, characteristicUUID: characteristic.uuid.uuidString)
+        guard shouldRetryPairing else { return }
+        pairingRetryController?.schedule(characteristicUUID: characteristic.uuid) { [weak self] attempt, uuid in
+            await self?.retryAfterPairingDelay(attempt: attempt, characteristicUUID: uuid)
+        }
+    }
+
+    private func retryAfterPairingDelay(attempt: Int, characteristicUUID: CBUUID) async {
+        guard sessionStore.authenticationState == .failed else { return }
+        guard let characteristic = sessionStore.discoveredCharacteristics[characteristicUUID],
+              let peripheral = sessionStore.peripheral
+        else { return }
+        pairingRetryController?.cancelScheduledRetry()
+        await eventEmitter.send(.debug(.init(
+            title: BikeSDKText.pairingTitle,
+            detail: "Automatic security retry \(attempt) running"
+        )))
+        if characteristic.isNotifying {
+            await handshake.readNonce(peripheral: peripheral, characteristic: characteristic)
+        } else {
+            await handshake.enableNotifications(peripheral: peripheral, characteristic: characteristic)
+        }
     }
 }
