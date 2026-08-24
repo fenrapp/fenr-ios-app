@@ -13,6 +13,7 @@ public actor LiveBikeRepository: BikeRepository, BikeBatteryHealthRepository, Bi
     private let batteryHealthHub: AsyncEventHub<BikeBatteryHealth>
     private let batteryCaptureHub: AsyncEventHub<BatteryDatasetCapture>
     private let discoveredBikesHub: AsyncEventHub<[DiscoveredBike]>
+    private let chargePowerMapper = BikeSDKChargePowerControlToDomainMapper()
     private var task: Task<Void, Never>?
 
     public init(
@@ -133,5 +134,30 @@ public actor LiveBikeRepository: BikeRepository, BikeBatteryHealthRepository, Bi
 
     public func observeBatteryDatasetCaptures() async -> AsyncStream<BatteryDatasetCapture> {
         await batteryCaptureHub.stream()
+    }
+
+    public func prepareChargePowerControl(
+        chargingStatus: BikeChargingStatus
+    ) async throws -> BikeChargePowerControlSnapshot {
+        let snapshot = try await client.prepareChargePowerControl(
+            context: .init(
+                requestedCurrentAmperes: chargingStatus.requestedCurrentAmperes,
+                maximumCurrentAmperes: chargingStatus.maximumCurrentAmperes,
+                maximumPowerWatts: chargingStatus.maximumPowerWatts,
+                maximumStateOfChargePercent: chargingStatus.maximumStateOfChargePercent,
+                chargerTypeRaw: chargingStatus.chargerType.rawValue
+            )
+        )
+        return chargePowerMapper.map(snapshot)
+    }
+
+    public func setChargePowerLimit(watts: Int) async throws -> BikeChargePowerControlSnapshot {
+        let snapshot = try await client.setChargePowerLimit(watts: watts)
+        return chargePowerMapper.map(snapshot)
+    }
+
+    public func setChargeTarget(percent: Int) async throws -> BikeChargePowerControlSnapshot {
+        let snapshot = try await client.setChargeTarget(percent: percent)
+        return chargePowerMapper.map(snapshot)
     }
 }

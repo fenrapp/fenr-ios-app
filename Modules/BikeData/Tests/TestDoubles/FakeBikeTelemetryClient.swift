@@ -16,6 +16,7 @@ actor FakeBikeTelemetryClient: BikeTelemetryClient {
     func disconnect() async throws {}
     func retrySecurityHandshake() async throws {}
     func readTelemetrySnapshot() async throws {}
+    func readBikeStatusSnapshot() async throws {}
 
     func startBatteryHealthMonitoring() async throws {
         await state.incrementBatteryHealthStart()
@@ -23,6 +24,66 @@ actor FakeBikeTelemetryClient: BikeTelemetryClient {
 
     func stopBatteryHealthMonitoring() async {
         await state.incrementBatteryHealthStop()
+    }
+
+    func prepareChargePowerControl(
+        context: BikeSDKChargePowerTelemetryContext
+    ) async throws -> BikeSDKChargePowerControlSnapshot {
+        await state.setChargePowerContext(context)
+        return BikeSDKChargePowerControlSnapshot(
+            vcuFirmware: "1.9.1",
+            isFirmwareCompatible: true,
+            readRequestHex: "00 04",
+            readResponseHex: "01 04 01 50 00 E8 03 E8 03 E4 0C E4 0C",
+            parsedConfig: .init(
+                chargeCurrentDeciAmperes: 80,
+                chargePowerWatts: 1_000,
+                maximumStateOfChargeDeciPercent: 1_000,
+                standardChargerMaximumPowerWatts: 3_300,
+                backpackChargerMaximumPowerWatts: 3_300
+            ),
+            lastWriteHex: "01 04 01 50 00 E8 03 E8 03 E4 0C E4 0C",
+            didPassNoOpWrite: true,
+            logLines: []
+        )
+    }
+
+    func setChargePowerLimit(watts: Int) async throws -> BikeSDKChargePowerControlSnapshot {
+        BikeSDKChargePowerControlSnapshot(
+            vcuFirmware: "1.9.1",
+            isFirmwareCompatible: true,
+            readRequestHex: "00 04",
+            readResponseHex: "01 04 01 50 00 E8 03 E8 03 E4 0C E4 0C",
+            parsedConfig: .init(
+                chargeCurrentDeciAmperes: 80,
+                chargePowerWatts: watts,
+                maximumStateOfChargeDeciPercent: 1_000,
+                standardChargerMaximumPowerWatts: 3_300,
+                backpackChargerMaximumPowerWatts: 3_300
+            ),
+            lastWriteHex: "01 04 01",
+            didPassNoOpWrite: true,
+            logLines: []
+        )
+    }
+
+    func setChargeTarget(percent: Int) async throws -> BikeSDKChargePowerControlSnapshot {
+        BikeSDKChargePowerControlSnapshot(
+            vcuFirmware: "1.9.1",
+            isFirmwareCompatible: true,
+            readRequestHex: "00 04",
+            readResponseHex: "01 04 01 50 00 E8 03 E8 03 E4 0C E4 0C",
+            parsedConfig: .init(
+                chargeCurrentDeciAmperes: 80,
+                chargePowerWatts: 1_000,
+                maximumStateOfChargeDeciPercent: percent * 10,
+                standardChargerMaximumPowerWatts: 3_300,
+                backpackChargerMaximumPowerWatts: 3_300
+            ),
+            lastWriteHex: "01 04 01",
+            didPassNoOpWrite: true,
+            logLines: []
+        )
     }
 
     func events() async -> AsyncStream<BikeSDKEvent> {
@@ -49,6 +110,10 @@ actor FakeBikeTelemetryClient: BikeTelemetryClient {
     func batteryHealthStopCount() async -> Int {
         await state.batteryHealthStopCount
     }
+
+    func chargePowerContext() async -> BikeSDKChargePowerTelemetryContext? {
+        await state.chargePowerContext
+    }
 }
 
 private actor FakeBikeTelemetryClientState {
@@ -56,6 +121,7 @@ private actor FakeBikeTelemetryClientState {
     private(set) var eventStreamCount = 0
     private(set) var batteryHealthStartCount = 0
     private(set) var batteryHealthStopCount = 0
+    private(set) var chargePowerContext: BikeSDKChargePowerTelemetryContext?
 
     func incrementStart() {
         startCount += 1
@@ -71,5 +137,9 @@ private actor FakeBikeTelemetryClientState {
 
     func incrementBatteryHealthStop() {
         batteryHealthStopCount += 1
+    }
+
+    func setChargePowerContext(_ context: BikeSDKChargePowerTelemetryContext) {
+        chargePowerContext = context
     }
 }

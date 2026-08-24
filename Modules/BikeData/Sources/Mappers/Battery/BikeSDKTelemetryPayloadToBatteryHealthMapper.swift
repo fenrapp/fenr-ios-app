@@ -49,7 +49,8 @@ public struct BikeSDKTelemetryPayloadToBatteryHealthMapper: Sendable {
                 maximumCurrentAmperes: payload.maximumCurrentAmperes,
                 maximumPowerWatts: payload.maximumPowerWatts,
                 targetCellVoltageVolts: payload.targetCellVoltageVolts,
-                maximumStateOfChargePercent: payload.maximumStateOfChargePercent
+                maximumStateOfChargePercent: payload.maximumStateOfChargePercent,
+                chargerType: BikeChargerType(rawValue: payload.typeRaw)
             )
             health.lastUpdated = date
         case .vcuBrake, .map, .speed, .throttle, .imu, .liveTotals, .inverterTemperatures, .vin:

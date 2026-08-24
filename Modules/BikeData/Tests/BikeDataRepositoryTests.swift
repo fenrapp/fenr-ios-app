@@ -114,6 +114,29 @@ struct BikeDataRepositoryTests {
         #expect(health.chargingStatus?.targetCellVoltageVolts == 4.275)
     }
 
+    @Test("Charge power preparation passes charger maximum current, not live requested current")
+    func prepareChargePowerUsesMaximumCurrent() async throws {
+        let client = FakeBikeTelemetryClient()
+        let repository = makeRepository(client: client)
+        let chargingStatus = BikeChargingStatus(
+            requestedCurrentAmperes: 1.2,
+            reportedCurrentAmperes: 1.1,
+            maximumCurrentAmperes: 2.0,
+            maximumPowerWatts: 500,
+            targetCellVoltageVolts: 4.275,
+            maximumStateOfChargePercent: 100,
+            chargerType: .backpack
+        )
+
+        _ = try await repository.prepareChargePowerControl(chargingStatus: chargingStatus)
+        let context = try #require(await client.chargePowerContext())
+
+        #expect(context.requestedCurrentAmperes == 1.2)
+        #expect(context.maximumCurrentAmperes == 2.0)
+        #expect(context.maximumPowerWatts == 500)
+        #expect(context.chargerTypeRaw == 3)
+    }
+
     @Test("Battery Health retains only the latest capture for each dataset")
     func mapsBatteryDatasetCapture() async throws {
         let client = FakeBikeTelemetryClient()
