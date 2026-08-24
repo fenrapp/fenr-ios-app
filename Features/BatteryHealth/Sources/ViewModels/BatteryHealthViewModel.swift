@@ -1,6 +1,7 @@
 import BikeDomain
 import Foundation
 import MeasurementPresentation
+import RuntimeConfiguration
 import SettingsDomain
 
 @MainActor
@@ -145,6 +146,6 @@ public final class BatteryHealthViewModel: ObservableObject {
     }
 
     private enum RefreshConstants {
-        static let renderInterval: Duration = .milliseconds(250)
+        static let renderInterval = FENRRuntimeConstants.BatteryHealth.renderInterval
     }
 }

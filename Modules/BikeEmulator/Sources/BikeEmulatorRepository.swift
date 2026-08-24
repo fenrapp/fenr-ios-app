@@ -1,5 +1,6 @@
 import BikeDomain
 import Foundation
+import RuntimeConfiguration
 
 public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository, BikeDiscoveryRepository {
     private let telemetryHub = BikeEmulatorEventHub<BikeTelemetry>(replaysLatestValue: true)
@@ -110,7 +111,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
         updateTask?.cancel()
         updateTask = Task { [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: Constants.updateIntervalNanoseconds)
+                try? await Task.sleep(for: FENRRuntimeConstants.Emulator.updateInterval)
                 guard !Task.isCancelled else { return }
                 await self?.advance()
             }
@@ -154,9 +155,5 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
 
     private func makeCaptures(date: Date) -> [BatteryDatasetCapture] {
         BikeEmulatorPayloadFactory.makeCaptures(scenario: scenario, tick: tick, date: date)
-    }
-
-    private enum Constants {
-        static let updateIntervalNanoseconds: UInt64 = 400_000_000
     }
 }

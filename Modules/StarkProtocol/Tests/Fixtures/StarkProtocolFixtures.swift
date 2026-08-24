@@ -3,11 +3,11 @@ import StarkProtocol
 
 enum StarkProtocolFixtures {
     static let sampleVIN = "FENRTEST000000001"
-    static let referenceVIN = "FENRTEST000000001"
+    static let referenceVIN = "FENRTEST000000002"
     static let fallbackPairingDate = "19700101"
     static let formattedPairingDate = "2026-08-16"
     static let sampleFallbackPIN = "003368"
-    static let referenceFallbackPIN = "003937"
+    static let referenceFallbackPIN = "007868"
     static let sampleDatedPIN = "002994"
     static let syntheticVIN = "TESTVIN0000000001"
     static let authenticationNonce = Data((0..<StarkAuthenticationConstants.nonceLength).map(UInt8.init))

@@ -24,6 +24,15 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.asyncsupport
+  RuntimeConfiguration:
+    type: framework
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
+    sources:
+      - path: Modules/RuntimeConfiguration/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.runtimeconfiguration
   StarkProtocol:
     type: framework
     platform: auto
@@ -41,6 +50,7 @@ targets:
       - path: Modules/BikeSDK/Sources
     dependencies:
       - target: AsyncSupport
+      - target: RuntimeConfiguration
       - target: StarkProtocol
     settings:
       base:
@@ -77,6 +87,7 @@ targets:
     dependencies:
       - target: AsyncSupport
       - target: BikeDomain
+      - target: RuntimeConfiguration
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikeemulator
@@ -96,6 +107,7 @@ targets:
       - path: Modules/EnvironmentData/Sources
     dependencies:
       - target: EnvironmentDomain
+      - target: RuntimeConfiguration
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.environmentdata
@@ -183,6 +195,7 @@ targets:
       - target: SettingsDomain
       - target: DesignSystem
       - target: MeasurementPresentation
+      - target: RuntimeConfiguration
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.dashboard
@@ -196,6 +209,7 @@ targets:
       - target: SettingsDomain
       - target: DesignSystem
       - target: MeasurementPresentation
+      - target: RuntimeConfiguration
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.batteryhealth
@@ -223,6 +237,7 @@ targets:
       - target: DesignSystem
       - target: MeasurementPresentation
       - target: SettingsDomain
+      - target: RuntimeConfiguration
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchdashboard
@@ -278,6 +293,9 @@ targets:
       - target: BikeDomain
       - target: BikeSDK
       - target: StarkProtocol
+      - target: RuntimeConfiguration
+      - target: ChargingLiveActivityExtension
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app
@@ -287,6 +305,9 @@ targets:
         INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: FENR uses Bluetooth to authenticate with your Stark Varg and display telemetry.
         INFOPLIST_KEY_NSCameraUsageDescription: FENR uses the camera to scan your bike VIN during setup.
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: FENR uses your location while the ride dashboard is open to provide GPS speed.
+        INFOPLIST_KEY_NSSupportsLiveActivities: YES
+        INFOPLIST_KEY_UIBackgroundModes:
+          - bluetooth-central
         CODE_SIGN_ENTITLEMENTS: App/FENR.entitlements
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone:
           - UIInterfaceOrientationPortrait
@@ -344,7 +365,10 @@ targets:
       - target: EnvironmentData
       - target: SettingsDomain
       - target: SettingsData
+      - target: RuntimeConfiguration
       - target: BikeEmulator
+      - target: ChargingLiveActivityDebugExtension
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug
@@ -353,6 +377,9 @@ targets:
         INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
         INFOPLIST_KEY_NSCameraUsageDescription: FENR uses the camera to scan your bike VIN during setup.
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: FENR uses your location while the ride dashboard is open to provide GPS speed.
+        INFOPLIST_KEY_NSSupportsLiveActivities: YES
+        INFOPLIST_KEY_UIBackgroundModes:
+          - bluetooth-central
         CODE_SIGN_ENTITLEMENTS: App/FENRDebug.entitlements
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone:
           - UIInterfaceOrientationPortrait
@@ -363,6 +390,34 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
+  ChargingLiveActivityExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "16.1"
+    sources:
+      - path: LiveActivityExtension/Sources
+      - path: App/Sources/Composition/LiveActivity/ChargingLiveActivityAttributes.swift
+    dependencies:
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.charging-live-activity
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: LiveActivityExtension/Info.plist
+  ChargingLiveActivityDebugExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "16.1"
+    sources:
+      - path: LiveActivityExtension/Sources
+      - path: App/Sources/Composition/LiveActivity/ChargingLiveActivityAttributes.swift
+    dependencies:
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug.charging-live-activity
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: LiveActivityExtension/Info.plist
   FENRWatch:
     type: application
     platform: watchOS
@@ -469,6 +524,7 @@ targets:
       - path: Modules/BikeSDK/Tests
     dependencies:
       - target: BikeSDK
+      - target: RuntimeConfiguration
       - target: TestSupport
     settings:
       base:
@@ -637,6 +693,7 @@ targets:
       - target: BikeDiagnostics
       - target: BikeOnboarding
       - target: RideDashboard
+      - target: MeasurementPresentation
       - target: AppSettings
       - target: BikeData
       - target: EnvironmentDomain
@@ -647,6 +704,7 @@ targets:
       - target: BikeSDK
       - target: StarkProtocol
       - target: BatteryHealth
+      - target: RuntimeConfiguration
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.tests
@@ -677,6 +735,7 @@ targets:
       - target: EnvironmentData
       - target: SettingsDomain
       - target: SettingsData
+      - target: RuntimeConfiguration
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug.tests

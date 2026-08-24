@@ -1,6 +1,7 @@
 import BikeDomain
 import Combine
 import EnvironmentDomain
+import RuntimeConfiguration
 import SettingsDomain
 
 @MainActor
@@ -23,7 +24,7 @@ public final class RideDashboardViewModel: ObservableObject {
     public init(
         useCases: RideDashboardUseCases,
         mapper: RideDashboardMapper = .init(),
-        reconnectionGracePeriod: Duration = .seconds(30)
+        reconnectionGracePeriod: Duration = FENRRuntimeConstants.RideDashboard.reconnectionGracePeriod
     ) {
         self.useCases = useCases
         self.mapper = mapper
@@ -208,6 +209,6 @@ public final class RideDashboardViewModel: ObservableObject {
     }
 
     private enum Constants {
-        static let statusSnapshotRefreshInterval = Duration.milliseconds(125)
+        static let statusSnapshotRefreshInterval = FENRRuntimeConstants.Telemetry.statusSnapshotRefreshInterval
     }
 }

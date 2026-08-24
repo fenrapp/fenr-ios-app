@@ -137,10 +137,10 @@ struct BikeOnboardingViewModelTests {
         let repository = OnboardingRepository()
         let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
         let first = DiscoveredBike(vin: "FENRTEST000000001", rssi: -55)
-        let second = DiscoveredBike(vin: "FENRTEST000000001", rssi: -45)
+        let second = DiscoveredBike(vin: "FENRTEST000000003", rssi: -45)
 
         viewModel.startDiscovery()
-        await waitUntil { await repository.isObservingDiscovery() }
+        #expect(await waitUntil { await repository.isObservingDiscovery() })
         await repository.sendDiscoveredBikes([first, second])
         #expect(await waitUntil { viewModel.viewState.discoveredBikes.count == 2 })
         viewModel.selectDiscoveredBike(second)

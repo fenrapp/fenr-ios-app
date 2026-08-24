@@ -111,4 +111,11 @@ struct AppDependencyContainer {
             settingsRepository: settingsRepository
         )
     }
+
+    func makeChargingLiveActivityController(session: BikeSession) -> ChargingLiveActivityController {
+        ChargingLiveActivityController(
+            repository: session.repository,
+            settingsRepository: settingsRepository
+        )
+    }
 }

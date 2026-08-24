@@ -95,6 +95,20 @@ public final class BikeBLEConnectionCoordinator {
         }
     }
 
+    public func restore(peripherals: [CBPeripheral]) async {
+        guard sessionStore.peripheral == nil else { return }
+        guard let peripheral = restoredPeripheral(from: peripherals) else { return }
+        if sessionStore.targetVIN.isEmpty, let name = peripheral.name, StarkPairingIdentity.isValidVIN(name) {
+            sessionStore.setTargetVIN(StarkPairingIdentity.normalizedVIN(name))
+        }
+        sessionStore.setReconnectIntent(true)
+        sessionStore.setPeripheral(peripheral)
+        peripheral.delegate = peripheralDelegate
+        await eventEmitter.send(.peripheral(name: peripheral.name, identifier: peripheral.identifier))
+        await eventEmitter.send(.connection(.discovering(peripheralName: peripheral.name)))
+        continueDiscovery(for: peripheral)
+    }
+
     public func didDiscover(peripheral: CBPeripheral, name: String?, rssi: Int) async {
         if isDiscoveringBikes,
            let name,
@@ -176,6 +190,37 @@ public final class BikeBLEConnectionCoordinator {
         }
         await connect(peripheral: peripheral, name: peripheral.name, rssi: nil)
         return true
+    }
+
+    private func restoredPeripheral(from peripherals: [CBPeripheral]) -> CBPeripheral? {
+        if !sessionStore.targetVIN.isEmpty {
+            return peripherals.first { $0.name == sessionStore.targetVIN }
+        }
+        return peripherals.first { peripheral in
+            guard let name = peripheral.name else { return false }
+            return StarkPairingIdentity.isValidVIN(name)
+        } ?? peripherals.first
+    }
+
+    private func continueDiscovery(for peripheral: CBPeripheral) {
+        guard let services = peripheral.services, !services.isEmpty else {
+            peripheral.discoverServices(BikeSDKConstants.serviceUUIDs)
+            peripheral.readRSSI()
+            return
+        }
+        for service in services where BikeSDKConstants.serviceUUIDs.contains(service.uuid) {
+            if let characteristics = service.characteristics, !characteristics.isEmpty {
+                for characteristic in characteristics {
+                    sessionStore.setCharacteristic(characteristic)
+                }
+            } else {
+                peripheral.discoverCharacteristics(
+                    BikeSDKConstants.characteristicUUIDs(for: service.uuid),
+                    for: service
+                )
+            }
+        }
+        peripheral.readRSSI()
     }
 
     private func reconnectIfNeeded() async {

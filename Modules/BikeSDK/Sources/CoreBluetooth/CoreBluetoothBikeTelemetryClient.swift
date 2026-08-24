@@ -1,3 +1,5 @@
+import RuntimeConfiguration
+
 @MainActor
 public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
     private let eventHub: AsyncEventHub<BikeSDKEvent>
@@ -81,7 +83,10 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
     private func startRuntimeIfNeeded() {
         callbackQueue.start()
         guard !isCentralStarted else { return }
-        adapter.start(delegate: centralDelegate)
+        adapter.start(
+            delegate: centralDelegate,
+            restorationIdentifier: FENRRuntimeConstants.BikeSDK.centralRestorationIdentifier
+        )
         isCentralStarted = true
     }
 }

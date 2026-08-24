@@ -43,7 +43,7 @@ struct HeaderView: View {
             Text("VIN")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
-            TextField("FENRTEST000000001", text: Binding(get: { vin }, set: { value in onVINChange(value) }))
+            TextField("FENRTEST000000002", text: Binding(get: { vin }, set: { value in onVINChange(value) }))
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled()
                 .keyboardType(.asciiCapable)
@@ -207,7 +207,7 @@ struct HeaderView: View {
 
 #Preview("Header") {
     HeaderView(
-        vin: "FENRTEST000000001",
+        vin: "FENRTEST000000002",
         pin: "003421",
         isVINEditingEnabled: true,
         isConnectEnabled: true,

@@ -69,7 +69,7 @@ struct ConnectionPanelView: View {
         status: "Receiving telemetry",
         detail: "Secure telemetry active",
         rssi: "-61 dBm",
-        peripheral: "FENRTEST000000001\n9B42F2A0-AAAA-BBBB-CCCC-123456789ABC"
+        peripheral: "FENRTEST000000002\n9B42F2A0-AAAA-BBBB-CCCC-123456789ABC"
     ))
         .padding()
 }

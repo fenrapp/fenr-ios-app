@@ -2,6 +2,7 @@ import BikeDomain
 import Combine
 import Foundation
 import MeasurementPresentation
+import RuntimeConfiguration
 import SettingsDomain
 
 @MainActor
@@ -224,7 +225,7 @@ public final class WatchDashboardViewModel: ObservableObject {
     fileprivate enum Constants {
         static let percentageScale = 100.0
         static let secondsPerHour = 3_600.0
-        static let telemetryFreshness: TimeInterval = 30
+        static let telemetryFreshness = FENRRuntimeConstants.Telemetry.freshnessInterval
     }
 }
 

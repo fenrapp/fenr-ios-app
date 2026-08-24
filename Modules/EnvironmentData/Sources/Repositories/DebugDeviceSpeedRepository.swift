@@ -1,5 +1,6 @@
 import EnvironmentDomain
 import Foundation
+import RuntimeConfiguration
 
 public actor DebugDeviceSpeedRepository: DeviceSpeedRepository {
     private var authorizationStatus: LocationAuthorizationStatus
@@ -20,7 +21,7 @@ public actor DebugDeviceSpeedRepository: DeviceSpeedRepository {
                         observedAt: .now
                     ))
                     index += 1
-                    try? await Task.sleep(for: .seconds(1))
+                    try? await Task.sleep(for: FENRRuntimeConstants.Environment.debugDeviceSpeedUpdateInterval)
                 }
             }
             continuation.onTermination = { _ in task.cancel() }

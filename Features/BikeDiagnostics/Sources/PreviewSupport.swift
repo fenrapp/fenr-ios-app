@@ -18,7 +18,7 @@ extension BikeDiagnosticsViewModel {
             mappers: BikeDiagnosticsPreviewFactory.makeMappers(),
             makeMappers: { _ in BikeDiagnosticsPreviewFactory.makeMappers() }
         )
-        viewModel.vinChanged("FENRTEST000000001")
+        viewModel.vinChanged("FENRTEST000000002")
         viewModel.start()
         Task { await repository.seed() }
         return viewModel
@@ -98,7 +98,7 @@ private actor PreviewBikeRepository: BikeRepository {
     func observeDebugEvents() async -> AsyncStream<BikeDebugEvent> { await debug.stream() }
 
     func seed() async {
-        let vin = "FENRTEST000000001"
+        let vin = "FENRTEST000000002"
         await connection.send(.init(
             state: .receivingTelemetry(peripheralName: vin),
             peripheralName: vin,

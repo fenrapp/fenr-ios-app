@@ -1,5 +1,6 @@
 import EnvironmentDomain
 import Foundation
+import RuntimeConfiguration
 import SettingsDomain
 
 struct DeviceSpeedResolver: Sendable {
@@ -32,6 +33,6 @@ struct DeviceSpeedResolver: Sendable {
 
     private enum Constants {
         static let maximumAccuracyMetersPerSecond = 5.0
-        static let maximumSampleAge: TimeInterval = 3
+        static let maximumSampleAge = FENRRuntimeConstants.RideDashboard.deviceSpeedMaximumSampleAge
     }
 }

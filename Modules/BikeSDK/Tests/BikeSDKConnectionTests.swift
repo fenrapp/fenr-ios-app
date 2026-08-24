@@ -1,4 +1,5 @@
 @testable import BikeSDK
+import RuntimeConfiguration
 import Testing
 
 @Suite("Bike SDK connection")
@@ -178,6 +179,7 @@ struct BikeSDKConnectionTests {
         await client.start()
 
         #expect(adapter.startCount == 1)
+        #expect(adapter.restorationIdentifier == FENRRuntimeConstants.BikeSDK.centralRestorationIdentifier)
     }
 
     @MainActor

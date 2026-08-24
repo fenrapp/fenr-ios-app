@@ -20,6 +20,13 @@ public final class CoreBluetoothCentralDelegateProxy: NSObject, @preconcurrency 
         }
     }
 
+    public func centralManager(_ central: CBCentralManager, willRestoreState dict: [String: Any]) {
+        let peripherals = dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral] ?? []
+        callbackQueue.enqueue { [connectionCoordinator] in
+            await connectionCoordinator.restore(peripherals: peripherals)
+        }
+    }
+
     public func centralManager(
         _ central: CBCentralManager,
         didDiscover peripheral: CBPeripheral,

@@ -1,4 +1,5 @@
 import Foundation
+import RuntimeConfiguration
 
 public struct BikeBLEReconnectPolicy: Equatable, Sendable {
     public let delays: [Duration]
@@ -13,6 +14,6 @@ public struct BikeBLEReconnectPolicy: Equatable, Sendable {
     }
 
     public static let standard = BikeBLEReconnectPolicy(
-        delays: [.seconds(1), .seconds(2), .seconds(4), .seconds(8), .seconds(15)]
+        delays: FENRRuntimeConstants.BikeSDK.reconnectDelays
     )
 }

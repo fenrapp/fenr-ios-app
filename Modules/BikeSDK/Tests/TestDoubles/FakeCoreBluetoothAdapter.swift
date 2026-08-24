@@ -8,9 +8,11 @@ final class FakeCoreBluetoothAdapter: CoreBluetoothAdapter {
     private(set) var stopScanCount = 0
     private(set) var scanCount = 0
     private(set) var retrieveConnectedPeripheralsCount = 0
+    private(set) var restorationIdentifier: String?
 
-    func start(delegate: CBCentralManagerDelegate) {
+    func start(delegate: CBCentralManagerDelegate, restorationIdentifier: String) {
         startCount += 1
+        self.restorationIdentifier = restorationIdentifier
     }
 
     func stopScan() {

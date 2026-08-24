@@ -1,4 +1,5 @@
 import Foundation
+import RuntimeConfiguration
 
 public struct BikeSDKRuntimeConfiguration: Sendable {
     public let eventBufferLimit: Int
@@ -9,9 +10,10 @@ public struct BikeSDKRuntimeConfiguration: Sendable {
 
     public init(
         eventBufferLimit: Int = 256,
-        notificationDebugMinimumInterval: TimeInterval = 1,
-        securityOperationTimeout: Duration = .seconds(10),
-        subscriptionOperationTimeout: Duration = .seconds(8),
+        notificationDebugMinimumInterval: TimeInterval =
+            FENRRuntimeConstants.BikeSDK.notificationDebugMinimumInterval,
+        securityOperationTimeout: Duration = FENRRuntimeConstants.BikeSDK.securityOperationTimeout,
+        subscriptionOperationTimeout: Duration = FENRRuntimeConstants.BikeSDK.subscriptionOperationTimeout,
         reconnectPolicy: BikeBLEReconnectPolicy = .standard
     ) {
         self.eventBufferLimit = eventBufferLimit
