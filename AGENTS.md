@@ -20,7 +20,7 @@ View models depend on use cases and mappers, not concrete data repositories or B
 
 ## UI Feature Rules
 
-- Structure new UI like the existing feature modules: put screens in `UI/`, reusable view pieces in `UI/Components/`, layout helpers in `UI/Layout/`, UI state helpers in `UI/State/`, previews in `UI/Previews/`, and formatting/text/presentation helpers in `UI/Support` or the existing local folder that matches the feature.
+- Structure new UI like the existing feature modules: put screens in `UI/`, reusable view pieces in `UI/Components/`, layout helpers in `UI/Layout/`, UI state helpers in `UI/State/`, previews in `UI/Previews/`, and formatting/text/presentation helpers in `UI/Support` or the existing local folder that matches the feature. When a feature's `UI/Components/` grows beyond a few files, organize it into focused category folders such as `Navigation`, `Feedback`, `Inputs`, `Rows`, `Surfaces`, or domain-specific groups instead of leaving a flat components directory.
 - Before creating a new UI component, design token, formatter, color, spacing scale, radius, font wrapper, or presentation helper, search the feature and `Modules/DesignSystem` for an existing equivalent and reuse it when it fits.
 - Use `DesignSystem` for shared SwiftUI colors, spacing, radii, surfaces, and common reusable components. Only create feature-specific constants for values that are genuinely local to that feature or component.
 - Split non-trivial SwiftUI views into focused components. Do not collect unrelated UI pieces in broad files such as `Components.swift`, `Views.swift`, or `Style.swift`.
