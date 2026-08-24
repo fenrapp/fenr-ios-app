@@ -10,6 +10,7 @@ struct BikeOnboardingViewModelTests {
     func normalizesInitialVIN() {
         let viewModel = BikeOnboardingViewModel(
             useCases: .init(
+                start: .init(repository: OnboardingRepository()),
                 connect: .init(repository: OnboardingRepository()),
                 observeConnection: .init(repository: OnboardingRepository()),
                 startDiscovery: .init(repository: OnboardingRepository()),
@@ -29,8 +30,10 @@ struct BikeOnboardingViewModelTests {
         let profileRepository = OnboardingProfileRepository()
         let viewModel = makeViewModel(repository: repository, profileRepository: profileRepository)
 
+        viewModel.startObserving()
+        #expect(await waitUntil { await repository.isObservingConnection() })
         viewModel.vinChanged("FENRTEST000000001")
-        advanceToConnection(viewModel)
+        await advanceToConnection(viewModel, repository: repository)
         #expect(await waitUntil { await repository.connectedVIN() != nil })
 
         #expect(await profileRepository.loadProfile() == nil)
@@ -44,7 +47,7 @@ struct BikeOnboardingViewModelTests {
         viewModel.startObserving()
         #expect(await waitUntil { await repository.isObservingConnection() })
         viewModel.vinChanged("FENRTEST000000001")
-        advanceToConnection(viewModel)
+        await advanceToConnection(viewModel, repository: repository)
 
         await repository.sendConnection(.init(state: .receivingTelemetry(peripheralName: "FENRTEST000000001")))
         #expect(await waitUntil { await profileRepository.loadProfile() != nil })
@@ -60,6 +63,7 @@ struct BikeOnboardingViewModelTests {
         let completionRecorder = OnboardingCompletionRecorder()
         let viewModel = BikeOnboardingViewModel(
             useCases: .init(
+                start: .init(repository: repository),
                 connect: .init(repository: repository),
                 observeConnection: .init(repository: repository),
                 startDiscovery: .init(repository: repository),
@@ -74,7 +78,7 @@ struct BikeOnboardingViewModelTests {
         viewModel.startObserving()
         #expect(await waitUntil { await repository.isObservingConnection() })
         viewModel.vinChanged("FENRTEST000000001")
-        advanceToConnection(viewModel)
+        await advanceToConnection(viewModel, repository: repository)
 
         await repository.sendConnection(.init(state: .receivingTelemetry(peripheralName: "FENRTEST000000001")))
         #expect(await waitUntil { await completionRecorder.value() != nil })
@@ -89,6 +93,7 @@ struct BikeOnboardingViewModelTests {
     ) -> BikeOnboardingViewModel {
         BikeOnboardingViewModel(
             useCases: .init(
+                start: .init(repository: repository),
                 connect: .init(repository: repository),
                 observeConnection: .init(repository: repository),
                 startDiscovery: .init(repository: repository),
@@ -99,9 +104,14 @@ struct BikeOnboardingViewModelTests {
         )
     }
 
-    private func advanceToConnection(_ viewModel: BikeOnboardingViewModel) {
+    private func advanceToConnection(
+        _ viewModel: BikeOnboardingViewModel,
+        repository: OnboardingRepository
+    ) async {
         viewModel.next()
         viewModel.next()
+        await repository.sendConnection(.init(state: .idle))
+        #expect(await waitUntil { viewModel.viewState.step == .identify })
         viewModel.next()
     }
 
@@ -124,12 +134,99 @@ struct BikeOnboardingViewModelTests {
         let repository = OnboardingRepository()
         let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
 
+        viewModel.startObserving()
+        #expect(await waitUntil { await repository.isObservingConnection() })
         viewModel.next()
         viewModel.next()
+        await repository.sendConnection(.init(state: .idle))
         #expect(await waitUntil { await repository.isObservingDiscovery() })
 
         #expect(viewModel.viewState.step == .identify)
         #expect(viewModel.viewState.isDiscoveringBikes)
+    }
+
+    @Test("Does not start Bluetooth before preparation continue")
+    func doesNotStartBluetoothBeforePreparationContinue() async {
+        let repository = OnboardingRepository()
+        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
+
+        viewModel.startObserving()
+        viewModel.next()
+
+        #expect(viewModel.viewState.step == .preparation)
+        #expect(await repository.startCount() == 0)
+    }
+
+    @Test("Requests Bluetooth access from preparation before identifying")
+    func requestsBluetoothAccessBeforeIdentifying() async {
+        let repository = OnboardingRepository()
+        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
+
+        viewModel.startObserving()
+        viewModel.next()
+        viewModel.next()
+
+        #expect(await waitUntil { await repository.startCount() == 1 })
+        #expect(viewModel.viewState.step == .preparation)
+        #expect(viewModel.viewState.isRequestingBluetoothAccess)
+
+        await repository.sendConnection(.init(state: .idle))
+        #expect(await waitUntil { viewModel.viewState.step == .identify })
+        #expect(!viewModel.viewState.isRequestingBluetoothAccess)
+    }
+
+    @Test("Blocks onboarding when Bluetooth permission is denied")
+    func blocksWhenBluetoothPermissionIsDenied() async {
+        let repository = OnboardingRepository()
+        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
+
+        viewModel.startObserving()
+        #expect(await waitUntil { await repository.isObservingConnection() })
+        viewModel.next()
+        viewModel.next()
+        await repository.sendConnection(.init(state: .bluetoothUnauthorized))
+
+        #expect(await waitUntil { !viewModel.viewState.isRequestingBluetoothAccess })
+        #expect(viewModel.viewState.step == .preparation)
+        #expect(viewModel.viewState.errorMessage?.contains("Settings") == true)
+        #expect(viewModel.viewState.showsBluetoothSettingsButton)
+    }
+
+    @Test("Does not show app settings for Bluetooth powered off")
+    func doesNotShowSettingsWhenBluetoothIsPoweredOff() async {
+        let repository = OnboardingRepository()
+        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
+
+        viewModel.startObserving()
+        #expect(await waitUntil { await repository.isObservingConnection() })
+        viewModel.next()
+        viewModel.next()
+        await repository.sendConnection(.init(state: .bluetoothPoweredOff))
+
+        #expect(await waitUntil { !viewModel.viewState.isRequestingBluetoothAccess })
+        #expect(viewModel.viewState.step == .preparation)
+        #expect(!viewModel.viewState.showsBluetoothSettingsButton)
+    }
+
+    @Test("Does not request Bluetooth again after permission is denied")
+    func doesNotRequestBluetoothAgainAfterPermissionDenied() async {
+        let repository = OnboardingRepository()
+        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
+
+        viewModel.startObserving()
+        #expect(await waitUntil { await repository.isObservingConnection() })
+        viewModel.next()
+        viewModel.next()
+        #expect(await waitUntil { await repository.startCount() == 1 })
+        await repository.sendConnection(.init(state: .bluetoothUnauthorized))
+        #expect(await waitUntil { viewModel.viewState.showsBluetoothSettingsButton })
+
+        viewModel.next()
+
+        #expect(await repository.startCount() == 1)
+        #expect(viewModel.viewState.step == .preparation)
+        #expect(viewModel.viewState.errorMessage?.contains("Settings") == true)
+        #expect(viewModel.viewState.showsBluetoothSettingsButton)
     }
 
     @Test("Keeps multiple discovered bikes available for selection")

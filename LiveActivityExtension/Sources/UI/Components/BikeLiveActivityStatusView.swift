@@ -1,27 +1,30 @@
 import DesignSystem
 import SwiftUI
 
-struct ChargingLiveActivityStatusView: View {
-    let state: ChargingLiveActivityAttributes.ContentState
+struct BikeLiveActivityStatusView: View {
+    let state: BikeLiveActivityAttributes.ContentState
 
     var body: some View {
         HStack(spacing: DesignSpace.extraExtraSmall) {
-            Image(systemName: ChargingLiveActivityIcon.name(for: state.phase))
+            Image(systemName: BikeLiveActivityIcon.name(for: state.phase))
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(ChargingLiveActivityPresentation.tint(for: state.phase))
+                .foregroundStyle(BikeLiveActivityPresentation.tint(for: state.phase))
             Text(statusText)
                 .font(.caption.weight(.medium))
-                .lineLimit(ChargingLiveActivityText.singleLineLimit)
+                .lineLimit(BikeLiveActivityText.singleLineLimit)
                 .minimumScaleFactor(Constants.minimumScale)
         }
     }
 
     private var statusText: String {
         if state.phase == .complete {
-            return ChargingLiveActivityText.ready
+            return BikeLiveActivityText.ready
         }
         if let estimatedTimeRemaining = state.estimatedTimeRemaining {
-            return ChargingLiveActivityText.remaining(estimatedTimeRemaining)
+            return BikeLiveActivityText.remaining(estimatedTimeRemaining)
+        }
+        if state.mode == .riding {
+            return state.runState.displayTitle
         }
         return state.phase.displayTitle
     }

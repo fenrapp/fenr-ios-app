@@ -21,6 +21,10 @@ public enum FENRRuntimeConstants {
         public static let renderInterval: Duration = .milliseconds(250)
     }
 
+    public enum Onboarding {
+        public static let bluetoothPermissionResponseTimeout: Duration = .seconds(10)
+    }
+
     public enum BikeSDK {
         public static let backgroundModesInfoPlistKey = "UIBackgroundModes"
         public static let bluetoothCentralBackgroundMode = "bluetooth-central"

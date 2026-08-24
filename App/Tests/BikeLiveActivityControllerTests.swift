@@ -4,20 +4,50 @@ import SettingsDomain
 import Testing
 
 @MainActor
-@Suite("Charging Live Activity controller")
-struct ChargingLiveActivityControllerTests {
-    @Test("Does not start when the bike is not charging")
-    func doesNotStartOutsideCharging() async {
+@Suite("Bike Live Activity controller")
+struct BikeLiveActivityControllerTests {
+    @Test("Does not start with default telemetry")
+    func doesNotStartWithDefaultTelemetry() async {
         let fixture = Fixture()
 
         fixture.controller.start()
         await settle()
+        fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
+        await fixture.repository.sendConnection(.receivingTelemetry)
         await fixture.repository.sendTelemetry(BikeTelemetry())
         await settle()
 
         #expect(fixture.activityClient.startCount == 0)
         #expect(await fixture.repository.monitoringStartCount() == 0)
+    }
+
+    @Test("Does not start during onboarding")
+    func doesNotStartDuringOnboarding() async {
+        let fixture = Fixture()
+
+        fixture.controller.start()
+        await settle()
+        fixture.controller.setCanShowLiveActivity(true)
+        await fixture.repository.sendConnection(.receivingTelemetry)
+        await fixture.repository.sendTelemetry(chargingTelemetry(percent: 62))
+        await settle()
+
+        #expect(fixture.activityClient.startCount == 0)
+    }
+
+    @Test("Does not start in foreground")
+    func doesNotStartInForeground() async {
+        let fixture = Fixture()
+
+        fixture.controller.start()
+        await settle()
+        fixture.controller.setIsSetupCompleted(true)
+        await fixture.repository.sendConnection(.receivingTelemetry)
+        await fixture.repository.sendTelemetry(ridingTelemetry(percent: 72, mode: 3))
+        await settle()
+
+        #expect(fixture.activityClient.startCount == 0)
     }
 
     @Test("Starts automatically in background while charging")
@@ -26,13 +56,34 @@ struct ChargingLiveActivityControllerTests {
 
         fixture.controller.start()
         await settle()
+        fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
+        await fixture.repository.sendConnection(.receivingTelemetry)
         await fixture.repository.sendTelemetry(chargingTelemetry(percent: 62))
         await settle()
 
         #expect(fixture.activityClient.startCount == 1)
         #expect(fixture.activityClient.lastStartedVIN == "FENRTEST000000001")
+        #expect(fixture.activityClient.lastStartedState?.mode == .charging)
         #expect(await fixture.repository.monitoringStartCount() == 1)
+    }
+
+    @Test("Starts automatically in background while riding")
+    func startsInBackgroundWhileRiding() async {
+        let fixture = Fixture()
+
+        fixture.controller.start()
+        await settle()
+        fixture.controller.setIsSetupCompleted(true)
+        fixture.controller.setCanShowLiveActivity(true)
+        await fixture.repository.sendConnection(.receivingTelemetry)
+        await fixture.repository.sendTelemetry(ridingTelemetry(percent: 72, mode: 3))
+        await settle()
+
+        #expect(fixture.activityClient.startCount == 1)
+        #expect(fixture.activityClient.lastStartedState?.mode == .riding)
+        #expect(fixture.activityClient.lastStartedState?.modeIndex == 3)
+        #expect(await fixture.repository.monitoringStartCount() == 0)
     }
 
     @Test("Starts on first background transition when charging was already observed")
@@ -41,6 +92,8 @@ struct ChargingLiveActivityControllerTests {
 
         fixture.controller.start()
         await settle()
+        fixture.controller.setIsSetupCompleted(true)
+        await fixture.repository.sendConnection(.receivingTelemetry)
         await fixture.repository.sendTelemetry(chargingTelemetry(percent: 62))
         await settle()
         fixture.controller.setCanShowLiveActivity(true)
@@ -57,7 +110,9 @@ struct ChargingLiveActivityControllerTests {
 
         fixture.controller.start()
         await settle()
+        fixture.controller.setIsSetupCompleted(true)
         await fixture.repository.delayNextMonitoringStart()
+        await fixture.repository.sendConnection(.receivingTelemetry)
         await fixture.repository.sendTelemetry(chargingTelemetry(percent: 62))
         await settle()
         fixture.controller.setCanShowLiveActivity(true)
@@ -73,7 +128,9 @@ struct ChargingLiveActivityControllerTests {
 
         fixture.controller.start()
         await settle()
+        fixture.controller.setIsSetupCompleted(true)
         await fixture.repository.delayNextMonitoringStart()
+        await fixture.repository.sendConnection(.receivingTelemetry)
         await fixture.repository.sendTelemetry(chargingTelemetry(percent: 62))
         await settle()
         fixture.controller.setCanShowLiveActivity(true)
@@ -93,7 +150,9 @@ struct ChargingLiveActivityControllerTests {
 
         fixture.controller.start()
         await settle()
+        fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
+        await fixture.repository.sendConnection(.receivingTelemetry)
         await fixture.repository.sendTelemetry(chargingTelemetry(percent: 62))
         await settle()
         fixture.controller.setCanShowLiveActivity(false)
@@ -110,7 +169,9 @@ struct ChargingLiveActivityControllerTests {
 
         fixture.controller.start()
         await settle()
+        fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
+        await fixture.repository.sendConnection(.receivingTelemetry)
         await fixture.repository.sendTelemetry(chargingTelemetry(percent: 62))
         await settle()
         fixture.clock.advance(by: 29)
@@ -130,7 +191,9 @@ struct ChargingLiveActivityControllerTests {
 
         fixture.controller.start()
         await settle()
+        fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
+        await fixture.repository.sendConnection(.receivingTelemetry)
         await fixture.repository.sendTelemetry(chargingTelemetry(percent: 62))
         await settle()
         await fixture.repository.sendConnection(BikeConnection(state: .disconnected(reason: "Out of range")))
@@ -140,13 +203,71 @@ struct ChargingLiveActivityControllerTests {
         #expect(fixture.activityClient.updatedStates.last?.phase == .connectionLost)
     }
 
+    @Test("Updates immediately when riding mode changes")
+    func updatesImmediatelyWhenRidingModeChanges() async {
+        let fixture = Fixture()
+
+        fixture.controller.start()
+        await settle()
+        fixture.controller.setIsSetupCompleted(true)
+        fixture.controller.setCanShowLiveActivity(true)
+        await fixture.repository.sendConnection(.receivingTelemetry)
+        await fixture.repository.sendTelemetry(ridingTelemetry(percent: 72, mode: 2))
+        await settle()
+        fixture.clock.advance(by: 1)
+        await fixture.repository.sendTelemetry(ridingTelemetry(percent: 72, mode: 3))
+        await settle()
+
+        #expect(fixture.activityClient.updateCount == 1)
+        #expect(fixture.activityClient.updatedStates.last?.modeIndex == 3)
+    }
+
+    @Test("Switches from riding to charging without duplicate activity")
+    func switchesFromRidingToChargingWithoutDuplicateActivity() async {
+        let fixture = Fixture()
+
+        fixture.controller.start()
+        await settle()
+        fixture.controller.setIsSetupCompleted(true)
+        fixture.controller.setCanShowLiveActivity(true)
+        await fixture.repository.sendConnection(.receivingTelemetry)
+        await fixture.repository.sendTelemetry(ridingTelemetry(percent: 72, mode: 3))
+        await settle()
+        await fixture.repository.sendTelemetry(chargingTelemetry(percent: 73))
+        await settle()
+
+        #expect(fixture.activityClient.startCount == 1)
+        #expect(fixture.activityClient.updateCount == 1)
+        #expect(fixture.activityClient.updatedStates.last?.mode == .charging)
+        #expect(await fixture.repository.monitoringStartCount() == 1)
+    }
+
+    @Test("Ends when riding turns off")
+    func endsWhenRidingTurnsOff() async {
+        let fixture = Fixture()
+
+        fixture.controller.start()
+        await settle()
+        fixture.controller.setIsSetupCompleted(true)
+        fixture.controller.setCanShowLiveActivity(true)
+        await fixture.repository.sendConnection(.receivingTelemetry)
+        await fixture.repository.sendTelemetry(ridingTelemetry(percent: 72, mode: 3))
+        await settle()
+        await fixture.repository.sendTelemetry(idleTelemetry(percent: 72))
+        await settle()
+
+        #expect(fixture.activityClient.endCount == 1)
+    }
+
     @Test("Ends and releases monitoring at charge target")
     func endsAtChargeTarget() async {
         let fixture = Fixture()
 
         fixture.controller.start()
         await settle()
+        fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
+        await fixture.repository.sendConnection(.receivingTelemetry)
         await fixture.repository.sendTelemetry(chargingTelemetry(percent: 79))
         await fixture.repository.sendBatteryHealth(chargingHealth(target: 80, current: 5))
         await settle()
@@ -160,14 +281,14 @@ struct ChargingLiveActivityControllerTests {
 
     @MainActor
     private final class Fixture {
-        let repository = ChargingLiveActivityRepository()
-        let settingsRepository = ChargingLiveActivitySettingsRepository()
-        let activityClient = FakeChargingLiveActivityClient()
-        let clock = FakeChargingLiveActivityClock()
-        let controller: ChargingLiveActivityController
+        let repository = BikeLiveActivityRepository()
+        let settingsRepository = BikeLiveActivitySettingsRepository()
+        let activityClient = FakeBikeLiveActivityClient()
+        let clock = FakeBikeLiveActivityClock()
+        let controller: BikeLiveActivityController
 
         init() {
-            controller = ChargingLiveActivityController(
+            controller = BikeLiveActivityController(
                 repository: repository,
                 settingsRepository: settingsRepository,
                 activityClient: activityClient,
@@ -177,7 +298,7 @@ struct ChargingLiveActivityControllerTests {
     }
 }
 
-private actor ChargingLiveActivityRepository: BikeRepository, BikeBatteryHealthRepository {
+private actor BikeLiveActivityRepository: BikeRepository, BikeBatteryHealthRepository {
     private let telemetrySource = AsyncSource<BikeTelemetry>()
     private let batteryHealthSource = AsyncSource<BikeBatteryHealth>()
     private let connectionSource = AsyncSource<BikeConnection>()
@@ -248,7 +369,7 @@ private actor ChargingLiveActivityRepository: BikeRepository, BikeBatteryHealthR
     }
 }
 
-private actor ChargingLiveActivitySettingsRepository: AppSettingsRepository {
+private actor BikeLiveActivitySettingsRepository: AppSettingsRepository {
     func load() async -> AppSettings { .init() }
     func save(_: AppSettings) async {}
 
@@ -260,36 +381,38 @@ private actor ChargingLiveActivitySettingsRepository: AppSettingsRepository {
 }
 
 @MainActor
-private final class FakeChargingLiveActivityClient: ChargingLiveActivityClient {
+private final class FakeBikeLiveActivityClient: BikeLiveActivityClient {
     private(set) var startCount = 0
     private(set) var updateCount = 0
     private(set) var endCount = 0
     private(set) var lastStartedVIN: String?
-    private(set) var updatedStates: [ChargingLiveActivityContentState] = []
-    private(set) var endedStates: [ChargingLiveActivityContentState] = []
+    private(set) var lastStartedState: BikeLiveActivityContentState?
+    private(set) var updatedStates: [BikeLiveActivityContentState] = []
+    private(set) var endedStates: [BikeLiveActivityContentState] = []
     private var active = false
 
     var isActive: Bool { active }
 
-    func start(vin: String, state: ChargingLiveActivityContentState) async throws {
+    func start(vin: String, state: BikeLiveActivityContentState) async throws {
         startCount += 1
         lastStartedVIN = vin
+        lastStartedState = state
         active = true
     }
 
-    func update(state: ChargingLiveActivityContentState) async {
+    func update(state: BikeLiveActivityContentState) async {
         updateCount += 1
         updatedStates.append(state)
     }
 
-    func end(state: ChargingLiveActivityContentState) async {
+    func end(state: BikeLiveActivityContentState) async {
         endCount += 1
         endedStates.append(state)
         active = false
     }
 }
 
-private final class FakeChargingLiveActivityClock: ChargingLiveActivityClock, @unchecked Sendable {
+private final class FakeBikeLiveActivityClock: BikeLiveActivityClock, @unchecked Sendable {
     private(set) var now = Date(timeIntervalSinceReferenceDate: 0)
 
     func advance(by seconds: TimeInterval) {
@@ -325,7 +448,8 @@ private func chargingTelemetry(percent: Int) -> BikeTelemetry {
     BikeTelemetry(
         vin: "FENRTEST000000001",
         batteryLevel: .known(percent: percent),
-        statusFlags: .init(isCharging: true)
+        statusFlags: .init(isCharging: true),
+        lastUpdated: .testNow
     )
 }
 
@@ -333,7 +457,19 @@ private func idleTelemetry(percent: Int) -> BikeTelemetry {
     BikeTelemetry(
         vin: "FENRTEST000000001",
         batteryLevel: .known(percent: percent),
-        statusFlags: .init(isCharging: false)
+        statusFlags: .init(isOn: false),
+        lastUpdated: .testNow
+    )
+}
+
+private func ridingTelemetry(percent: Int, mode: Int) -> BikeTelemetry {
+    BikeTelemetry(
+        vin: "FENRTEST000000001",
+        batteryLevel: .known(percent: percent),
+        mode: .index(mode),
+        speed: .known(kmh: 48, kmhX10: 480),
+        statusFlags: .init(isOn: true, isInGear: true),
+        lastUpdated: .testNow
     )
 }
 
@@ -358,4 +494,12 @@ private func settle() async {
 
 private func settle(milliseconds: Int64) async {
     try? await Task.sleep(for: .milliseconds(milliseconds))
+}
+
+private extension BikeConnection {
+    static let receivingTelemetry = BikeConnection(state: .receivingTelemetry(peripheralName: "Bike"))
+}
+
+private extension Date {
+    static let testNow = Date(timeIntervalSinceReferenceDate: 0)
 }

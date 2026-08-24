@@ -1,13 +1,13 @@
 import DesignSystem
 import SwiftUI
 
-struct ChargingLiveActivityMetricStack: View {
+struct BikeLiveActivityMetricStack: View {
     enum Mode {
         case compact
         case regular
     }
 
-    let state: ChargingLiveActivityAttributes.ContentState
+    let state: BikeLiveActivityAttributes.ContentState
     let mode: Mode
 
     var body: some View {
@@ -24,7 +24,7 @@ struct ChargingLiveActivityMetricStack: View {
             ForEach(metrics.prefix(Constants.compactMetricLimit), id: \.title) { metric in
                 Text(metric.value)
                     .font(.caption2.weight(.semibold))
-                    .lineLimit(ChargingLiveActivityText.singleLineLimit)
+                    .lineLimit(BikeLiveActivityText.singleLineLimit)
                     .minimumScaleFactor(Constants.compactMinimumScale)
             }
         }
@@ -37,10 +37,10 @@ struct ChargingLiveActivityMetricStack: View {
                     Text(metric.title)
                         .font(.caption2.weight(.medium))
                         .foregroundStyle(DesignColor.secondaryText)
-                        .lineLimit(ChargingLiveActivityText.singleLineLimit)
+                        .lineLimit(BikeLiveActivityText.singleLineLimit)
                     Text(metric.value)
                         .font(.caption.weight(.semibold))
-                        .lineLimit(ChargingLiveActivityText.singleLineLimit)
+                        .lineLimit(BikeLiveActivityText.singleLineLimit)
                         .minimumScaleFactor(Constants.metricMinimumScale)
                         .monospacedDigit()
                 }
@@ -49,15 +49,31 @@ struct ChargingLiveActivityMetricStack: View {
         }
     }
 
-    private var metrics: [ChargingLiveActivityMetric] {
-        [
-            OptionalChargingLiveActivityMetric(title: ChargingLiveActivityText.power, value: state.powerText),
-            OptionalChargingLiveActivityMetric(title: ChargingLiveActivityText.current, value: state.currentText),
-            OptionalChargingLiveActivityMetric(title: ChargingLiveActivityText.temperature, value: state.temperatureText)
-        ].compactMap { metric in
+    private var metrics: [BikeLiveActivityMetric] {
+        optionalMetrics.compactMap { metric in
             metric.value.map { value in
-                ChargingLiveActivityMetric(title: metric.title, value: value)
+                BikeLiveActivityMetric(title: metric.title, value: value)
             }
+        }
+    }
+
+    private var optionalMetrics: [OptionalBikeLiveActivityMetric] {
+        switch state.mode {
+        case .charging:
+            [
+                OptionalBikeLiveActivityMetric(title: BikeLiveActivityText.power, value: state.powerText),
+                OptionalBikeLiveActivityMetric(title: BikeLiveActivityText.current, value: state.currentText),
+                OptionalBikeLiveActivityMetric(title: BikeLiveActivityText.temperature, value: state.temperatureText)
+            ]
+        case .riding, .connectionLost, .stale:
+            [
+                OptionalBikeLiveActivityMetric(
+                    title: BikeLiveActivityText.mode,
+                    value: BikeLiveActivityFormatter.modeText(state.modeIndex)
+                ),
+                OptionalBikeLiveActivityMetric(title: BikeLiveActivityText.speed, value: state.speedText),
+                OptionalBikeLiveActivityMetric(title: "State", value: state.runState.displayTitle)
+            ]
         }
     }
 
@@ -68,12 +84,12 @@ struct ChargingLiveActivityMetricStack: View {
     }
 }
 
-private struct OptionalChargingLiveActivityMetric {
+private struct OptionalBikeLiveActivityMetric {
     let title: String
     let value: String?
 }
 
-private struct ChargingLiveActivityMetric {
+private struct BikeLiveActivityMetric {
     let title: String
     let value: String
 }

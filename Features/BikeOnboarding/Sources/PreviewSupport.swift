@@ -7,6 +7,7 @@ enum BikeOnboardingPreviewFactory {
         let repository = BikeOnboardingPreviewRepository()
         return BikeOnboardingViewModel(
             useCases: .init(
+                start: .init(repository: repository),
                 connect: .init(repository: repository),
                 observeConnection: .init(repository: repository),
                 startDiscovery: .init(repository: repository),

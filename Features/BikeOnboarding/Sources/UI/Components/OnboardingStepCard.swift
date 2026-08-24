@@ -37,7 +37,7 @@ private enum OnboardingStepCardConstants {
 }
 
 #Preview("Onboarding step") {
-    OnboardingStepCard(icon: "bluetooth", title: "Prepare your bike") {
+    OnboardingStepCard(icon: "antenna.radiowaves.left.and.right", title: "Prepare your bike") {
         Text("Turn on the bike and keep it nearby.")
     }
     .padding()

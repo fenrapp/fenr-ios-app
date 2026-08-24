@@ -181,6 +181,7 @@ targets:
       - target: BikeDomain
       - target: StarkProtocol
       - target: DesignSystem
+      - target: RuntimeConfiguration
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.onboarding
@@ -402,7 +403,7 @@ targets:
     deploymentTarget: "16.1"
     sources:
       - path: LiveActivityExtension/Sources
-      - path: App/Sources/Composition/LiveActivity/ChargingLiveActivityAttributes.swift
+      - path: App/Sources/Composition/LiveActivity/BikeLiveActivityAttributes.swift
     dependencies:
       - target: DesignSystem
     settings:
@@ -416,7 +417,7 @@ targets:
     deploymentTarget: "16.1"
     sources:
       - path: LiveActivityExtension/Sources
-      - path: App/Sources/Composition/LiveActivity/ChargingLiveActivityAttributes.swift
+      - path: App/Sources/Composition/LiveActivity/BikeLiveActivityAttributes.swift
     dependencies:
       - target: DesignSystem
     settings:

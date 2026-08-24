@@ -16,7 +16,7 @@ struct AppRootView: View {
     @StateObject private var sessionController: BikeSessionController
     @StateObject private var setupFlow: BikeSetupFlowController
     @State private var path: [Route] = []
-    private let chargingLiveActivityController: ChargingLiveActivityController
+    private let bikeLiveActivityController: BikeLiveActivityController
     private let batteryHealthAccessory: () -> AnyView
 
     init(
@@ -40,7 +40,7 @@ struct AppRootView: View {
         )
         _sessionController = StateObject(wrappedValue: BikeSessionController(repository: session.repository))
         _setupFlow = StateObject(wrappedValue: setupFlow)
-        chargingLiveActivityController = container.makeChargingLiveActivityController(session: session)
+        bikeLiveActivityController = container.makeBikeLiveActivityController(session: session)
         _onboardingViewModel = StateObject(
             wrappedValue: container.makeOnboardingViewModel { vin in
                 setupFlow.complete(vin: vin)
@@ -89,25 +89,27 @@ struct AppRootView: View {
         }
         .task {
             await setupFlow.load()
-            await sessionController.start()
-            chargingLiveActivityController.start()
+            bikeLiveActivityController.start()
+            bikeLiveActivityController.setIsSetupCompleted(setupFlow.isCompleted)
             if let vin = setupFlow.configuredVIN {
+                await sessionController.start()
                 await sessionController.connectAutomatically(vin: vin)
             }
             updateInterfaceOrientation()
         }
         .onAppear(perform: updateInterfaceOrientation)
         .onChange(of: setupFlow.isCompleted) { _ in
+            bikeLiveActivityController.setIsSetupCompleted(setupFlow.isCompleted)
             updateInterfaceOrientation()
         }
         .onChange(of: path) { _ in
             updateInterfaceOrientation()
         }
         .onChange(of: scenePhase) { phase in
-            chargingLiveActivityController.setCanShowLiveActivity(phase != .active)
+            bikeLiveActivityController.setCanShowLiveActivity(phase != .active)
         }
         .onDisappear {
-            chargingLiveActivityController.stop()
+            bikeLiveActivityController.stop()
             Task { await sessionController.stop() }
         }
     }
@@ -116,6 +118,7 @@ struct AppRootView: View {
         Task {
             await sessionController.disconnect()
             await setupFlow.reset()
+            bikeLiveActivityController.setIsSetupCompleted(false)
             path.removeAll()
         }
     }

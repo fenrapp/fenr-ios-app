@@ -59,7 +59,10 @@ public final class BikeBLEConnectionCoordinator {
 
     public func startBikeDiscovery() async {
         guard !sessionStore.shouldConnectWhenPoweredOn, sessionStore.peripheral == nil else { return }
-        guard adapter.state == .poweredOn else { return }
+        guard adapter.state == .poweredOn else {
+            await emitBluetoothAvailability()
+            return
+        }
         isDiscoveringBikes = true
         adapter.scanForBike()
     }
@@ -87,7 +90,10 @@ public final class BikeBLEConnectionCoordinator {
     }
 
     public func centralDidUpdateState() async {
-        guard sessionStore.shouldConnectWhenPoweredOn else { return }
+        guard sessionStore.shouldConnectWhenPoweredOn else {
+            await emitBluetoothAvailability()
+            return
+        }
         do {
             try await scanIfPossible()
         } catch {
@@ -251,6 +257,23 @@ public final class BikeBLEConnectionCoordinator {
             try await scanIfPossible()
         } catch {
             return
+        }
+    }
+}
+
+private extension BikeBLEConnectionCoordinator {
+    func emitBluetoothAvailability() async {
+        switch adapter.state {
+        case .poweredOn:
+            await eventEmitter.send(.connection(.idle))
+        case .poweredOff:
+            await eventEmitter.send(.connection(.bluetoothPoweredOff))
+        case .unauthorized:
+            await eventEmitter.send(.connection(.bluetoothUnauthorized))
+        case .unsupported, .resetting, .unknown:
+            await eventEmitter.send(.connection(.bluetoothUnavailable))
+        @unknown default:
+            await eventEmitter.send(.connection(.bluetoothUnavailable))
         }
     }
 }

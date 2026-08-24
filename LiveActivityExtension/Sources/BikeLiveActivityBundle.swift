@@ -3,8 +3,8 @@ import SwiftUI
 
 @available(iOSApplicationExtension 16.1, *)
 @main
-struct ChargingLiveActivityBundle: WidgetBundle {
+struct BikeLiveActivityBundle: WidgetBundle {
     var body: some Widget {
-        ChargingLiveActivityWidget()
+        BikeLiveActivityWidget()
     }
 }

@@ -3,8 +3,24 @@ import SwiftUI
 
 struct OnboardingNavigationControls: View {
     let step: BikeOnboardingStep
+    let isContinueDisabled: Bool
+    let isContinueBusy: Bool
     let onBack: () -> Void
     let onContinue: () -> Void
+
+    init(
+        step: BikeOnboardingStep,
+        isContinueDisabled: Bool = false,
+        isContinueBusy: Bool = false,
+        onBack: @escaping () -> Void,
+        onContinue: @escaping () -> Void
+    ) {
+        self.step = step
+        self.isContinueDisabled = isContinueDisabled
+        self.isContinueBusy = isContinueBusy
+        self.onBack = onBack
+        self.onContinue = onContinue
+    }
 
     var body: some View {
         HStack {
@@ -14,8 +30,15 @@ struct OnboardingNavigationControls: View {
             }
             Spacer()
             if step != .connect {
-                Button(step == .identify ? "Connect" : "Continue", action: onContinue)
-                    .buttonStyle(.borderedProminent)
+                Button(action: onContinue) {
+                    if isContinueBusy {
+                        ProgressView()
+                    } else {
+                        Text(step == .identify ? "Connect" : "Continue")
+                    }
+                }
+                .disabled(isContinueDisabled || isContinueBusy)
+                .buttonStyle(.borderedProminent)
             }
         }
     }

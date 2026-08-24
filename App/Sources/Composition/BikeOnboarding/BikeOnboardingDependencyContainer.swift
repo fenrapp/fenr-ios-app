@@ -11,6 +11,7 @@ struct BikeOnboardingDependencyContainer {
     ) -> BikeOnboardingViewModel {
         BikeOnboardingViewModel(
             useCases: .init(
+                start: StartBikeRepositoryUseCase(repository: repository),
                 connect: ConnectToBikeUseCase(repository: repository),
                 observeConnection: ObserveBikeConnectionUseCase(repository: repository),
                 startDiscovery: StartBikeDiscoveryUseCase(repository: repository),

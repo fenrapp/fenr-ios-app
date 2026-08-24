@@ -1,5 +1,6 @@
 import BikeDomain
 import Foundation
+import RuntimeConfiguration
 import StarkProtocol
 
 @MainActor
@@ -9,6 +10,7 @@ public final class BikeOnboardingViewModel: ObservableObject {
     private let useCases: BikeOnboardingUseCases
     private var connectionTask: Task<Void, Never>?
     private var discoveryTask: Task<Void, Never>?
+    private var bluetoothAccessTask: Task<Void, Never>?
     private var isObserving = false
     private var didComplete = false
     private let onCompleted: @MainActor (String) -> Void
@@ -26,6 +28,7 @@ public final class BikeOnboardingViewModel: ObservableObject {
     deinit {
         connectionTask?.cancel()
         discoveryTask?.cancel()
+        bluetoothAccessTask?.cancel()
     }
 
     public func startObserving() {
@@ -45,17 +48,25 @@ public final class BikeOnboardingViewModel: ObservableObject {
         isObserving = false
         connectionTask?.cancel()
         connectionTask = nil
+        bluetoothAccessTask?.cancel()
+        bluetoothAccessTask = nil
         stopDiscovery()
     }
 
     public func next() {
+        if viewState.step == .preparation {
+            requestBluetoothAccess()
+            return
+        }
         guard let next = BikeOnboardingStep(rawValue: viewState.step.rawValue + 1) else { return }
         guard viewState.step != .identify || StarkPairingIdentity.isValidVIN(viewState.vin) else {
             viewState.errorMessage = "Enter a valid 17-character VIN."
+            viewState.showsBluetoothSettingsButton = false
             return
         }
         viewState.step = next
         viewState.errorMessage = nil
+        viewState.showsBluetoothSettingsButton = false
         if next == .identify { startDiscovery() }
         if next == .connect { connect() }
     }
@@ -64,12 +75,14 @@ public final class BikeOnboardingViewModel: ObservableObject {
         guard let previous = BikeOnboardingStep(rawValue: viewState.step.rawValue - 1) else { return }
         viewState.step = previous
         viewState.errorMessage = nil
+        viewState.showsBluetoothSettingsButton = false
         if previous == .identify { startDiscovery() }
     }
 
     public func vinChanged(_ value: String) {
         viewState.vin = StarkPairingIdentity.normalizedVIN(value)
         viewState.errorMessage = nil
+        viewState.showsBluetoothSettingsButton = false
     }
 
     public func startDiscovery() {
@@ -77,6 +90,7 @@ public final class BikeOnboardingViewModel: ObservableObject {
         viewState.isDiscoveringBikes = true
         viewState.discoveredBikes = []
         viewState.errorMessage = nil
+        viewState.showsBluetoothSettingsButton = false
         let observeDiscoveredBikes = useCases.observeDiscoveredBikes
         let startDiscovery = useCases.startDiscovery
         discoveryTask = Task { [weak self] in
@@ -102,12 +116,47 @@ public final class BikeOnboardingViewModel: ObservableObject {
     }
 #endif
 
+    private func requestBluetoothAccess() {
+        guard !viewState.isRequestingBluetoothAccess else { return }
+        guard !viewState.showsBluetoothSettingsButton else {
+            viewState.errorMessage = "Allow Bluetooth access in Settings > FENR, then return to continue."
+            return
+        }
+        viewState.isRequestingBluetoothAccess = true
+        viewState.errorMessage = nil
+        viewState.showsBluetoothSettingsButton = false
+        viewState.connectionDetail = "Checking Bluetooth access"
+        let start = useCases.start
+        bluetoothAccessTask = Task { [weak self] in
+            await start.execute()
+            try? await Task.sleep(for: FENRRuntimeConstants.Onboarding.bluetoothPermissionResponseTimeout)
+            await MainActor.run {
+                guard let self, self.viewState.isRequestingBluetoothAccess else { return }
+                self.viewState.isRequestingBluetoothAccess = false
+                self.viewState.showsBluetoothSettingsButton = false
+                self.viewState.errorMessage = """
+                Bluetooth access is still pending. Try again and respond to the iOS prompt.
+                """
+            }
+        }
+    }
+
+    private func advanceAfterBluetoothAccess() {
+        viewState.isRequestingBluetoothAccess = false
+        viewState.errorMessage = nil
+        viewState.showsBluetoothSettingsButton = false
+        guard viewState.step == .preparation else { return }
+        viewState.step = .identify
+        startDiscovery()
+    }
+
     private func connect() {
         guard StarkPairingIdentity.isValidVIN(viewState.vin) else { return }
         viewState.isConnecting = true
         stopDiscovery()
         viewState.connectionDetail = "Looking for \(viewState.vin)"
         viewState.errorMessage = nil
+        viewState.showsBluetoothSettingsButton = false
         let vin = viewState.vin
         let connect = useCases.connect
         Task {
@@ -117,6 +166,7 @@ public final class BikeOnboardingViewModel: ObservableObject {
                 await MainActor.run {
                     self.viewState.isConnecting = false
                     self.viewState.errorMessage = "Unable to start the connection."
+                    self.viewState.showsBluetoothSettingsButton = false
                 }
             }
         }
@@ -141,6 +191,14 @@ public final class BikeOnboardingViewModel: ObservableObject {
 
     private func receive(_ connection: BikeConnection) {
         switch connection.state {
+        case .idle:
+            guard viewState.isRequestingBluetoothAccess else {
+                viewState.connectionDetail = connectionDetail(connection.state)
+                return
+            }
+            bluetoothAccessTask?.cancel()
+            bluetoothAccessTask = nil
+            advanceAfterBluetoothAccess()
         case .receivingTelemetry(let peripheralName):
             guard peripheralName == nil || peripheralName == viewState.vin else { return }
             guard !didComplete else { return }
@@ -155,12 +213,21 @@ public final class BikeOnboardingViewModel: ObservableObject {
         case .failed(let message):
             viewState.isConnecting = false
             viewState.errorMessage = message
+            viewState.showsBluetoothSettingsButton = false
         case .bluetoothPoweredOff:
+            bluetoothAccessTask?.cancel()
+            bluetoothAccessTask = nil
+            viewState.isRequestingBluetoothAccess = false
             viewState.isConnecting = false
             viewState.errorMessage = "Turn on Bluetooth and try again."
+            viewState.showsBluetoothSettingsButton = false
         case .bluetoothUnauthorized:
+            bluetoothAccessTask?.cancel()
+            bluetoothAccessTask = nil
+            viewState.isRequestingBluetoothAccess = false
             viewState.isConnecting = false
-            viewState.errorMessage = "Allow Bluetooth access in Settings."
+            viewState.errorMessage = "Allow Bluetooth access in Settings > FENR, then return to continue."
+            viewState.showsBluetoothSettingsButton = true
         default:
             viewState.connectionDetail = connectionDetail(connection.state)
         }

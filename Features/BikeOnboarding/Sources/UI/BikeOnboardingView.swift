@@ -1,7 +1,9 @@
 import DesignSystem
 import SwiftUI
+import UIKit
 
 public struct BikeOnboardingView: View {
+    @Environment(\.openURL) private var openURL
     @ObservedObject private var viewModel: BikeOnboardingViewModel
     @State private var isScannerPresented = false
     @State private var isScannerUnavailable = false
@@ -41,8 +43,18 @@ public struct BikeOnboardingView: View {
                     Text("It does not change bike settings.")
                 }
             case .preparation:
-                OnboardingStepCard(icon: "bluetooth", title: "Prepare your bike") {
-                    Text("Turn on the bike, keep it nearby, and allow Bluetooth access when iOS asks.")
+                OnboardingStepCard(icon: "antenna.radiowaves.left.and.right", title: "Prepare your bike") {
+                    Text("Turn on the bike and keep it nearby.")
+                    Text("Turn off the Arkenstone so FENR can connect directly to the bike.")
+                    Text("On the next tap, iOS will ask for Bluetooth access.")
+                    Text("FENR needs it to find and connect to your bike.")
+                    if viewModel.viewState.isRequestingBluetoothAccess {
+                        ProgressView()
+                    }
+                    if let errorMessage = viewModel.viewState.errorMessage {
+                        Text(errorMessage).foregroundStyle(DesignColor.critical)
+                        bluetoothSettingsButton
+                    }
                 }
             case .identify:
                 OnboardingStepCard(icon: "number", title: "Add your VIN") {
@@ -62,6 +74,7 @@ public struct BikeOnboardingView: View {
                     Text(viewModel.viewState.connectionDetail).foregroundStyle(.secondary)
                     if let errorMessage = viewModel.viewState.errorMessage {
                         Text(errorMessage).foregroundStyle(DesignColor.critical)
+                        bluetoothSettingsButton
                         Button("Try Again") { viewModel.retry() }.buttonStyle(.borderedProminent)
                     }
                 }
@@ -72,10 +85,20 @@ public struct BikeOnboardingView: View {
     private var controls: some View {
         OnboardingNavigationControls(
             step: viewModel.viewState.step,
+            isContinueDisabled: !viewModel.viewState.canContinue,
+            isContinueBusy: viewModel.viewState.isRequestingBluetoothAccess,
             onBack: viewModel.back,
             onContinue: viewModel.next
         )
         .frame(maxWidth: Constants.contentMaxWidth)
+    }
+
+    @ViewBuilder
+    private var bluetoothSettingsButton: some View {
+        if viewModel.viewState.showsBluetoothSettingsButton {
+            Button("Open Settings") { openAppSettings() }
+                .buttonStyle(.borderedProminent)
+        }
     }
 
     private var scannerSheet: some View {
@@ -87,6 +110,11 @@ public struct BikeOnboardingView: View {
             isScannerUnavailable = true
         })
         .ignoresSafeArea()
+    }
+
+    private func openAppSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        openURL(url)
     }
 
     private enum Constants {
@@ -117,6 +145,18 @@ public struct BikeOnboardingView: View {
                 vin: "FENRTEST000000001",
                 connectionDetail: "Bluetooth unavailable",
                 errorMessage: "Turn on Bluetooth and try again."
+            )
+        )
+    )
+}
+
+#Preview("Onboarding Bluetooth denied") {
+    BikeOnboardingView(
+        viewModel: BikeOnboardingPreviewFactory.makeViewModel(
+            state: .init(
+                step: .preparation,
+                showsBluetoothSettingsButton: true,
+                errorMessage: "Allow Bluetooth access in Settings > FENR, then return to continue."
             )
         )
     )

@@ -1,15 +1,15 @@
 import DesignSystem
 import SwiftUI
 
-struct ChargingLiveActivityTargetText: View {
+struct BikeLiveActivityTargetText: View {
     let percent: Int?
 
     var body: some View {
         if let percent {
-            Text(ChargingLiveActivityText.target(percent))
+            Text(BikeLiveActivityText.target(percent))
                 .font(.caption2.weight(.medium))
                 .foregroundStyle(DesignColor.secondaryText)
-                .lineLimit(ChargingLiveActivityText.singleLineLimit)
+                .lineLimit(BikeLiveActivityText.singleLineLimit)
         }
     }
 }

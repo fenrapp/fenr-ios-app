@@ -1,11 +1,11 @@
 import SwiftUI
 
-struct ChargingLiveActivityProgressView: View {
-    let state: ChargingLiveActivityAttributes.ContentState
+struct BikeLiveActivityProgressView: View {
+    let state: BikeLiveActivityAttributes.ContentState
 
     var body: some View {
         ProgressView(value: progressValue)
-            .tint(ChargingLiveActivityPresentation.tint(for: state.phase))
+            .tint(BikeLiveActivityPresentation.tint(for: state.phase))
     }
 
     private var progressValue: Double {

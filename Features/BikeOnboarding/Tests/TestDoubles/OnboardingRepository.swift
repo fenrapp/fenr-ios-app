@@ -6,8 +6,9 @@ actor OnboardingRepository: BikeRepository, BikeDiscoveryRepository {
     private var isObserving = false
     private var discoveryContinuation: AsyncStream<[DiscoveredBike]>.Continuation?
     private var isObservingDiscoveryValue = false
+    private var starts = 0
 
-    func start() async {}
+    func start() async { starts += 1 }
     func stop() async {}
     func connect(vin: String) async throws { self.vin = vin }
     func disconnect() async throws {}
@@ -33,6 +34,7 @@ actor OnboardingRepository: BikeRepository, BikeDiscoveryRepository {
     }
 
     func connectedVIN() -> String? { vin }
+    func startCount() -> Int { starts }
     func isObservingConnection() -> Bool { isObserving }
     func isObservingDiscovery() -> Bool { isObservingDiscoveryValue }
     func sendConnection(_ connection: BikeConnection) { continuation?.yield(connection) }
