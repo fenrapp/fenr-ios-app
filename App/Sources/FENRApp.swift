@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct FENRApp: App {
+    @UIApplicationDelegateAdaptor(AppOrientationDelegate.self) private var appDelegate
     private let container: AppDependencyContainer
 
     init() {

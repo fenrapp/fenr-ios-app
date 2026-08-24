@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct FENRDebugApp: App {
+    @UIApplicationDelegateAdaptor(AppOrientationDelegate.self) private var appDelegate
     private let container: AppDependencyContainer
     @StateObject private var scenarioController: DebugScenarioController
 

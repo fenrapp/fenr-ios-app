@@ -1,7 +1,14 @@
 import BikeDomain
+import CoreBluetooth
 import Foundation
 import RuntimeConfiguration
 import StarkProtocol
+
+public enum BikeOnboardingBluetoothAuthorization: Sendable {
+    case notDetermined
+    case allowed
+    case denied
+}
 
 @MainActor
 public final class BikeOnboardingViewModel: ObservableObject {
@@ -12,17 +19,32 @@ public final class BikeOnboardingViewModel: ObservableObject {
     private var discoveryTask: Task<Void, Never>?
     private var bluetoothAccessTask: Task<Void, Never>?
     private var isObserving = false
+    private var isBluetoothAccessKnownDenied = false
     private var didComplete = false
+    private let bluetoothAuthorization: @MainActor @Sendable () -> BikeOnboardingBluetoothAuthorization
     private let onCompleted: @MainActor (String) -> Void
 
     public init(
         useCases: BikeOnboardingUseCases,
         initialVIN: String? = nil,
+        bluetoothAuthorization: @escaping @MainActor @Sendable () -> BikeOnboardingBluetoothAuthorization = {
+            switch CBManager.authorization {
+            case .allowedAlways: .allowed
+            case .denied, .restricted: .denied
+            case .notDetermined: .notDetermined
+            @unknown default: .notDetermined
+            }
+        },
         onCompleted: @escaping @MainActor (String) -> Void = { _ in }
     ) {
         self.useCases = useCases
+        self.bluetoothAuthorization = bluetoothAuthorization
         self.onCompleted = onCompleted
-        viewState = .init(vin: initialVIN.map(StarkPairingIdentity.normalizedVIN) ?? "")
+        let normalizedVIN = initialVIN.map(StarkPairingIdentity.normalizedVIN) ?? ""
+        viewState = .init(
+            vin: normalizedVIN,
+            canContinue: Self.canContinue(step: .welcome, vin: normalizedVIN)
+        )
     }
 
     deinit {
@@ -65,8 +87,10 @@ public final class BikeOnboardingViewModel: ObservableObject {
             return
         }
         viewState.step = next
+        viewState.canContinue = Self.canContinue(step: next, vin: viewState.vin)
         viewState.errorMessage = nil
         viewState.showsBluetoothSettingsButton = false
+        if next == .preparation { restoreKnownBluetoothAccessDenialIfNeeded() }
         if next == .identify { startDiscovery() }
         if next == .connect { connect() }
     }
@@ -74,13 +98,16 @@ public final class BikeOnboardingViewModel: ObservableObject {
     public func back() {
         guard let previous = BikeOnboardingStep(rawValue: viewState.step.rawValue - 1) else { return }
         viewState.step = previous
+        viewState.canContinue = Self.canContinue(step: previous, vin: viewState.vin)
         viewState.errorMessage = nil
         viewState.showsBluetoothSettingsButton = false
+        if previous == .preparation { restoreKnownBluetoothAccessDenialIfNeeded() }
         if previous == .identify { startDiscovery() }
     }
 
     public func vinChanged(_ value: String) {
         viewState.vin = StarkPairingIdentity.normalizedVIN(value)
+        viewState.canContinue = Self.canContinue(step: viewState.step, vin: viewState.vin)
         viewState.errorMessage = nil
         viewState.showsBluetoothSettingsButton = false
     }
@@ -115,11 +142,14 @@ public final class BikeOnboardingViewModel: ObservableObject {
         self.viewState = viewState
     }
 #endif
+}
 
+private extension BikeOnboardingViewModel {
     private func requestBluetoothAccess() {
         guard !viewState.isRequestingBluetoothAccess else { return }
-        guard !viewState.showsBluetoothSettingsButton else {
-            viewState.errorMessage = "Allow Bluetooth access in Settings > FENR, then return to continue."
+        refreshKnownBluetoothAccessDenial()
+        guard !isBluetoothAccessKnownDenied else {
+            restoreKnownBluetoothAccessDenialIfNeeded()
             return
         }
         viewState.isRequestingBluetoothAccess = true
@@ -132,6 +162,10 @@ public final class BikeOnboardingViewModel: ObservableObject {
             try? await Task.sleep(for: FENRRuntimeConstants.Onboarding.bluetoothPermissionResponseTimeout)
             await MainActor.run {
                 guard let self, self.viewState.isRequestingBluetoothAccess else { return }
+                if self.bluetoothAuthorization() == .allowed {
+                    self.advanceAfterBluetoothAccess()
+                    return
+                }
                 self.viewState.isRequestingBluetoothAccess = false
                 self.viewState.showsBluetoothSettingsButton = false
                 self.viewState.errorMessage = """
@@ -142,17 +176,20 @@ public final class BikeOnboardingViewModel: ObservableObject {
     }
 
     private func advanceAfterBluetoothAccess() {
+        isBluetoothAccessKnownDenied = false
         viewState.isRequestingBluetoothAccess = false
         viewState.errorMessage = nil
         viewState.showsBluetoothSettingsButton = false
         guard viewState.step == .preparation else { return }
         viewState.step = .identify
+        viewState.canContinue = Self.canContinue(step: .identify, vin: viewState.vin)
         startDiscovery()
     }
 
     private func connect() {
         guard StarkPairingIdentity.isValidVIN(viewState.vin) else { return }
         viewState.isConnecting = true
+        viewState.connectionPhase = .scanning
         stopDiscovery()
         viewState.connectionDetail = "Looking for \(viewState.vin)"
         viewState.errorMessage = nil
@@ -192,6 +229,7 @@ public final class BikeOnboardingViewModel: ObservableObject {
     private func receive(_ connection: BikeConnection) {
         switch connection.state {
         case .idle:
+            isBluetoothAccessKnownDenied = false
             guard viewState.isRequestingBluetoothAccess else {
                 viewState.connectionDetail = connectionDetail(connection.state)
                 return
@@ -204,6 +242,7 @@ public final class BikeOnboardingViewModel: ObservableObject {
             guard !didComplete else { return }
             didComplete = true
             viewState.isConnecting = false
+            viewState.connectionPhase = .subscribing
             let profile = BikeProfile(vin: viewState.vin)
             let saveProfile = useCases.saveProfile
             Task { [onCompleted] in
@@ -212,6 +251,7 @@ public final class BikeOnboardingViewModel: ObservableObject {
             }
         case .failed(let message):
             viewState.isConnecting = false
+            viewState.connectionPhase = nil
             viewState.errorMessage = message
             viewState.showsBluetoothSettingsButton = false
         case .bluetoothPoweredOff:
@@ -219,17 +259,45 @@ public final class BikeOnboardingViewModel: ObservableObject {
             bluetoothAccessTask = nil
             viewState.isRequestingBluetoothAccess = false
             viewState.isConnecting = false
+            viewState.connectionPhase = nil
             viewState.errorMessage = "Turn on Bluetooth and try again."
             viewState.showsBluetoothSettingsButton = false
         case .bluetoothUnauthorized:
             bluetoothAccessTask?.cancel()
             bluetoothAccessTask = nil
+            isBluetoothAccessKnownDenied = true
             viewState.isRequestingBluetoothAccess = false
             viewState.isConnecting = false
+            viewState.connectionPhase = nil
             viewState.errorMessage = "Allow Bluetooth access in Settings > FENR, then return to continue."
             viewState.showsBluetoothSettingsButton = true
         default:
+            isBluetoothAccessKnownDenied = false
+            viewState.connectionPhase = connectionPhase(connection.state)
             viewState.connectionDetail = connectionDetail(connection.state)
+        }
+    }
+
+    private func restoreKnownBluetoothAccessDenialIfNeeded() {
+        refreshKnownBluetoothAccessDenial()
+        guard isBluetoothAccessKnownDenied, viewState.step == .preparation else { return }
+        bluetoothAccessTask?.cancel()
+        bluetoothAccessTask = nil
+        viewState.isRequestingBluetoothAccess = false
+        viewState.isConnecting = false
+        viewState.connectionPhase = nil
+        viewState.errorMessage = "Allow Bluetooth access in Settings > FENR, then return to continue."
+        viewState.showsBluetoothSettingsButton = true
+    }
+
+    private func refreshKnownBluetoothAccessDenial() {
+        switch bluetoothAuthorization() {
+        case .denied:
+            isBluetoothAccessKnownDenied = true
+        case .allowed:
+            isBluetoothAccessKnownDenied = false
+        case .notDetermined:
+            break
         }
     }
 
@@ -243,5 +311,20 @@ public final class BikeOnboardingViewModel: ObservableObject {
         case .reconnecting(_, let attempt, let maximumAttempts): "Reconnecting (\(attempt)/\(maximumAttempts))"
         default: "Ready to connect"
         }
+    }
+
+    private func connectionPhase(_ state: ConnectionState) -> BikeOnboardingConnectionPhase? {
+        switch state {
+        case .scanning: .scanning
+        case .connecting: .connecting
+        case .discovering: .discovering
+        case .authenticating, .authenticated: .authenticating
+        case .subscribed, .receivingTelemetry: .subscribing
+        default: nil
+        }
+    }
+
+    private static func canContinue(step: BikeOnboardingStep, vin: String) -> Bool {
+        step != .identify || StarkPairingIdentity.isValidVIN(vin)
     }
 }

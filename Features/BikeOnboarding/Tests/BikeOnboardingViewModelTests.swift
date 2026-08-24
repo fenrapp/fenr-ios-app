@@ -71,6 +71,7 @@ struct BikeOnboardingViewModelTests {
                 observeDiscoveredBikes: .init(repository: repository),
                 saveProfile: .init(repository: profileRepository)
             ),
+            bluetoothAuthorization: { .notDetermined },
             onCompleted: { vin in
                 Task { await completionRecorder.record(vin) }
             }
@@ -85,34 +86,6 @@ struct BikeOnboardingViewModelTests {
 
         #expect(await completionRecorder.value() == "FENRTEST000000001")
         viewModel.stopObserving()
-    }
-
-    private func makeViewModel(
-        repository: OnboardingRepository,
-        profileRepository: OnboardingProfileRepository
-    ) -> BikeOnboardingViewModel {
-        BikeOnboardingViewModel(
-            useCases: .init(
-                start: .init(repository: repository),
-                connect: .init(repository: repository),
-                observeConnection: .init(repository: repository),
-                startDiscovery: .init(repository: repository),
-                stopDiscovery: .init(repository: repository),
-                observeDiscoveredBikes: .init(repository: repository),
-                saveProfile: .init(repository: profileRepository)
-            )
-        )
-    }
-
-    private func advanceToConnection(
-        _ viewModel: BikeOnboardingViewModel,
-        repository: OnboardingRepository
-    ) async {
-        viewModel.next()
-        viewModel.next()
-        await repository.sendConnection(.init(state: .idle))
-        #expect(await waitUntil { viewModel.viewState.step == .identify })
-        viewModel.next()
     }
 
     @Test("Selects a single discovered bike automatically")
@@ -173,6 +146,70 @@ struct BikeOnboardingViewModelTests {
         await repository.sendConnection(.init(state: .idle))
         #expect(await waitUntil { viewModel.viewState.step == .identify })
         #expect(!viewModel.viewState.isRequestingBluetoothAccess)
+    }
+
+    @Test("Shows settings immediately when Bluetooth permission is already denied")
+    func showsSettingsImmediatelyWhenBluetoothPermissionIsDenied() async {
+        let repository = OnboardingRepository()
+        let viewModel = makeViewModel(
+            repository: repository,
+            profileRepository: OnboardingProfileRepository(),
+            bluetoothAuthorization: { .denied }
+        )
+
+        viewModel.startObserving()
+        viewModel.next()
+
+        #expect(viewModel.viewState.step == .preparation)
+        #expect(!viewModel.viewState.isRequestingBluetoothAccess)
+        #expect(viewModel.viewState.showsBluetoothSettingsButton)
+        #expect(viewModel.viewState.errorMessage?.contains("Settings") == true)
+
+        viewModel.next()
+
+        #expect(await repository.startCount() == 0)
+        #expect(!viewModel.viewState.isRequestingBluetoothAccess)
+        #expect(viewModel.viewState.showsBluetoothSettingsButton)
+    }
+
+    @Test("Requires a valid VIN before connection")
+    func requiresValidVINBeforeConnection() async {
+        let repository = OnboardingRepository()
+        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
+
+        viewModel.startObserving()
+        #expect(await waitUntil { await repository.isObservingConnection() })
+        viewModel.next()
+        viewModel.next()
+        await repository.sendConnection(.init(state: .idle))
+        #expect(await waitUntil { viewModel.viewState.step == .identify })
+
+        #expect(!viewModel.viewState.canContinue)
+        viewModel.vinChanged("FENRTEST000000001")
+        #expect(viewModel.viewState.canContinue)
+    }
+
+    @Test("Maps connection states to onboarding phases")
+    func mapsConnectionStatesToOnboardingPhases() async {
+        let repository = OnboardingRepository()
+        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
+
+        viewModel.startObserving()
+        #expect(await waitUntil { await repository.isObservingConnection() })
+        viewModel.vinChanged("FENRTEST000000001")
+        await advanceToConnection(viewModel, repository: repository)
+        #expect(viewModel.viewState.connectionPhase == .scanning)
+
+        await repository.sendConnection(.init(
+            state: .connecting(vin: "FENRTEST000000001", peripheralName: "FENRTEST000000001")
+        ))
+        #expect(await waitUntil { viewModel.viewState.connectionPhase == .connecting })
+        await repository.sendConnection(.init(state: .discovering(peripheralName: "FENRTEST000000001")))
+        #expect(await waitUntil { viewModel.viewState.connectionPhase == .discovering })
+        await repository.sendConnection(.init(state: .authenticating(peripheralName: "FENRTEST000000001")))
+        #expect(await waitUntil { viewModel.viewState.connectionPhase == .authenticating })
+        await repository.sendConnection(.init(state: .subscribed(peripheralName: "FENRTEST000000001")))
+        #expect(await waitUntil { viewModel.viewState.connectionPhase == .subscribing })
     }
 
     @Test("Blocks onboarding when Bluetooth permission is denied")
@@ -246,4 +283,38 @@ struct BikeOnboardingViewModelTests {
         #expect(!viewModel.viewState.isDiscoveringBikes)
     }
 
+}
+
+private extension BikeOnboardingViewModelTests {
+    func makeViewModel(
+        repository: OnboardingRepository,
+        profileRepository: OnboardingProfileRepository,
+        bluetoothAuthorization: @escaping @MainActor @Sendable () -> BikeOnboardingBluetoothAuthorization = {
+            .notDetermined
+        }
+    ) -> BikeOnboardingViewModel {
+        BikeOnboardingViewModel(
+            useCases: .init(
+                start: .init(repository: repository),
+                connect: .init(repository: repository),
+                observeConnection: .init(repository: repository),
+                startDiscovery: .init(repository: repository),
+                stopDiscovery: .init(repository: repository),
+                observeDiscoveredBikes: .init(repository: repository),
+                saveProfile: .init(repository: profileRepository)
+            ),
+            bluetoothAuthorization: bluetoothAuthorization
+        )
+    }
+
+    func advanceToConnection(
+        _ viewModel: BikeOnboardingViewModel,
+        repository: OnboardingRepository
+    ) async {
+        viewModel.next()
+        viewModel.next()
+        await repository.sendConnection(.init(state: .idle))
+        #expect(await waitUntil { viewModel.viewState.step == .identify })
+        viewModel.next()
+    }
 }
