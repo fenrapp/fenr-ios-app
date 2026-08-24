@@ -109,7 +109,10 @@ public enum BikeTelemetryClientFactory {
             eventEmitter: eventEmitter,
             timeoutScheduler: BikeBLEOperationTimeoutScheduler(
                 duration: runtimeConfiguration.securityOperationTimeout
-            )
+            ),
+            timeoutRecoveryHandler: { [pairingRetryController] in
+                pairingRetryController?.recoverIfNeeded()
+            }
         )
         let handshake = BikeBLESecurityHandshake(
             sessionStore: sessionStore,

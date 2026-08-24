@@ -90,7 +90,11 @@ public final class BikeBLESecurityCoordinator {
 
         watchdog.cancel()
         if let error {
-            await watchdog.fail("Security subscription failed: \(error.localizedDescription)")
+            if pairingRetryController != nil, error.requiresPairingOrEncryption {
+                await handleSecurityError(error, characteristic: characteristic)
+            } else {
+                await watchdog.fail("Security subscription failed: \(error.localizedDescription)")
+            }
             return
         }
 
@@ -140,7 +144,11 @@ public final class BikeBLESecurityCoordinator {
         guard handles(characteristic) else { return }
         guard sessionStore.authenticationState == .writingResponse else { return }
         if let error {
-            await watchdog.fail("Security response write failed: \(error.localizedDescription)")
+            if pairingRetryController != nil, error.requiresPairingOrEncryption {
+                await handleSecurityError(error, characteristic: characteristic)
+            } else {
+                await watchdog.fail("Security response write failed: \(error.localizedDescription)")
+            }
             return
         }
 

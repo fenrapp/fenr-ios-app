@@ -30,6 +30,28 @@ struct BikeBLETimeoutRecoveryTests {
         #expect(event == .error(.operationFailed("Security operation timed out: nonce read")))
     }
 
+    @Test("Security watchdog requests link recovery after an authentication timeout")
+    func securityWatchdogRecoversStalledAuthenticationLink() async {
+        let eventHub = AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
+        let sessionStore = BLESessionStore()
+        let scheduler = FakeBikeBLETimeoutScheduler()
+        let recoveryRecorder = MainActorValueRecorder()
+        sessionStore.setCharacteristic(makeMutableCharacteristic(uuid: StarkUUIDs.bikeSecurity))
+        sessionStore.setAuthenticationState(.readingNonce)
+        let watchdog = BikeBLESecurityWatchdog(
+            sessionStore: sessionStore,
+            eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
+            timeoutScheduler: scheduler,
+            timeoutRecoveryHandler: { recoveryRecorder.append(1) }
+        )
+
+        watchdog.watch(expectedState: .readingNonce, operation: "nonce read")
+        await scheduler.fire()
+
+        #expect(sessionStore.authenticationState == .failed)
+        #expect(recoveryRecorder.values == [1])
+    }
+
     @Test("Security watchdog ignores a timeout once authentication state advances")
     func securityWatchdogIgnoresAdvancedState() async {
         let eventHub = AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)

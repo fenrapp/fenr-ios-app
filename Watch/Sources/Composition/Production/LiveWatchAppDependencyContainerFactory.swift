@@ -6,7 +6,11 @@ import SettingsData
 @MainActor
 enum LiveWatchAppDependencyContainerFactory {
     static func makeDefault() -> WatchAppDependencyContainer {
-        let client = BikeTelemetryClientFactory.makeDefault(centralRestorationIdentifier: nil)
+        let client = BikeTelemetryClientFactory.makeDefault(
+            centralRestorationIdentifier: nil,
+            automaticallyRetryPairing: true,
+            authenticationLinkRecoveryEnabled: true
+        )
         return WatchAppDependencyContainer(
             repository: LiveBikeRepositoryFactory.makeDefault(client: client),
             profileRepository: UserDefaultsBikeProfileRepository(),
