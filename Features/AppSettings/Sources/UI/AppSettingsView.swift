@@ -4,7 +4,6 @@ import SwiftUI
 
 public struct AppSettingsView: View {
     @ObservedObject private var viewModel: AppSettingsViewModel
-    @Environment(\.openURL) private var openURL
     private let onOpenTelemetry: () -> Void
 
     public init(
@@ -17,6 +16,7 @@ public struct AppSettingsView: View {
 
     public var body: some View {
         Form {
+            #if os(iOS)
             Section("Ride dashboard") {
                 Picker("Speed source", selection: speedSourceBinding) {
                     Text("Bike").tag(SpeedSource.motorcycle.rawValue)
@@ -36,6 +36,7 @@ public struct AppSettingsView: View {
                     )
                 }
             }
+            #endif
 
             Section("Units") {
                 Picker("Measurement system", selection: measurementSystemBinding) {
@@ -43,7 +44,7 @@ public struct AppSettingsView: View {
                     Text("Metric").tag(MeasurementSystem.metric.rawValue)
                     Text("Imperial").tag(MeasurementSystem.imperial.rawValue)
                 }
-                .pickerStyle(.segmented)
+                .pickerStyle(selectionPickerStyle)
             }
 
             Section("Battery") {
@@ -52,16 +53,18 @@ public struct AppSettingsView: View {
                         Text(capacity.displayName).tag(capacity.rawValue)
                     }
                 }
-                .pickerStyle(.segmented)
+                .pickerStyle(selectionPickerStyle)
 
                 Text("Used to estimate the remaining charging time.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
 
+            #if os(iOS)
             Section("Diagnostics") {
                 TelemetryActionRow(action: onOpenTelemetry)
             }
+            #endif
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
@@ -77,6 +80,14 @@ public struct AppSettingsView: View {
                 viewModel.selectSpeedSource(source)
             }
         )
+    }
+
+    private var selectionPickerStyle: some PickerStyle {
+        #if os(watchOS)
+        NavigationLinkPickerStyle()
+        #else
+        SegmentedPickerStyle()
+        #endif
     }
 
     private var measurementSystemBinding: Binding<String> {

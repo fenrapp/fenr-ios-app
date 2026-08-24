@@ -1,4 +1,5 @@
 import BikeDomain
+import SettingsDomain
 
 #if DEBUG
 @MainActor
@@ -6,7 +7,11 @@ enum WatchDashboardPreviewFactory {
     static func ride() -> WatchDashboardViewModel {
         let repository = WatchDashboardPreviewRepository()
         let viewModel = WatchDashboardViewModel(
-            useCases: .init(repository: repository, batteryHealthRepository: repository)
+            useCases: .init(
+                repository: repository,
+                batteryHealthRepository: repository,
+                settingsRepository: WatchDashboardPreviewSettingsRepository()
+            )
         )
         return viewModel
     }
@@ -27,5 +32,16 @@ private actor WatchDashboardPreviewRepository: BikeRepository, BikeBatteryHealth
     func stopBatteryHealthMonitoring() async {}
     func observeBatteryHealth() async -> AsyncStream<BikeBatteryHealth> { .init { _ in } }
     func observeBatteryDatasetCaptures() async -> AsyncStream<BatteryDatasetCapture> { .init { _ in } }
+}
+
+private actor WatchDashboardPreviewSettingsRepository: AppSettingsRepository {
+    func load() -> AppSettings { .init() }
+    func save(_: AppSettings) {}
+
+    func observe() -> AsyncStream<AppSettings> {
+        AsyncStream { continuation in
+            continuation.yield(.init())
+        }
+    }
 }
 #endif

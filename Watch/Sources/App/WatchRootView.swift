@@ -1,20 +1,25 @@
+import AppSettings
 import BikeDomain
 import SwiftUI
 import WatchDashboard
+import WatchOnboarding
 
 struct WatchRootView: View {
     @StateObject private var sessionController: WatchBikeSessionController
     @StateObject private var dashboardViewModel: WatchDashboardViewModel
     @StateObject private var onboardingViewModel: WatchOnboardingViewModel
+    @StateObject private var settingsViewModel: AppSettingsViewModel
+    @StateObject private var setup: WatchSetupState
+    @State private var isPresentingSettings = false
     private let profileRepository: any BikeProfileRepository
     private let initialProfile: BikeProfile?
-    @StateObject private var setup: WatchSetupState
 
     init(container: WatchAppDependencyContainer) {
         let sessionController = WatchBikeSessionController(repository: container.repository)
         let setup = WatchSetupState()
         _sessionController = StateObject(wrappedValue: sessionController)
         _dashboardViewModel = StateObject(wrappedValue: container.makeDashboardViewModel())
+        _settingsViewModel = StateObject(wrappedValue: container.makeSettingsViewModel())
         _onboardingViewModel = StateObject(wrappedValue: container.makeOnboardingViewModel { profile in
             setup.profile = profile
         })
@@ -29,10 +34,17 @@ struct WatchRootView: View {
                 if setup.isLoading {
                     ProgressView()
                 } else if setup.profile != nil {
-                    WatchDashboardView(viewModel: dashboardViewModel, onChangeBike: changeBike)
+                    WatchDashboardView(
+                        viewModel: dashboardViewModel,
+                        onChangeBike: changeBike,
+                        onOpenSettings: { isPresentingSettings = true }
+                    )
                 } else {
                     WatchOnboardingView(viewModel: onboardingViewModel)
                 }
+            }
+            .navigationDestination(isPresented: $isPresentingSettings) {
+                AppSettingsView(viewModel: settingsViewModel)
             }
         }
         .task {

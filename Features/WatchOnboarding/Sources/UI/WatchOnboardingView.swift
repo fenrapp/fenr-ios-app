@@ -1,10 +1,15 @@
 import BikeDomain
+import DesignSystem
 import SwiftUI
 
-struct WatchOnboardingView: View {
-    @ObservedObject var viewModel: WatchOnboardingViewModel
+public struct WatchOnboardingView: View {
+    @ObservedObject private var viewModel: WatchOnboardingViewModel
 
-    var body: some View {
+    public init(viewModel: WatchOnboardingViewModel) {
+        self.viewModel = viewModel
+    }
+
+    public var body: some View {
         List {
             Section {
                 Image(systemName: "antenna.radiowaves.left.and.right")
@@ -23,7 +28,7 @@ struct WatchOnboardingView: View {
                         Button {
                             viewModel.select(bike)
                         } label: {
-                            VStack(alignment: .leading) {
+                            VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
                                 Text(bike.vin).font(.caption.monospaced())
                                 Text("Signal \(bike.rssi) dBm").font(.caption2)
                             }

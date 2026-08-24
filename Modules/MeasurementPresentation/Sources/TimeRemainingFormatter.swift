@@ -1,7 +1,9 @@
 import Foundation
 
-struct ChargingTimeRemainingFormatter {
-    func string(from seconds: Double) -> String? {
+public struct TimeRemainingFormatter: Sendable {
+    public init() {}
+
+    public func string(from seconds: Double) -> String? {
         let formatter = DateComponentsFormatter()
         formatter.allowedUnits = [.hour, .minute]
         formatter.unitsStyle = .abbreviated

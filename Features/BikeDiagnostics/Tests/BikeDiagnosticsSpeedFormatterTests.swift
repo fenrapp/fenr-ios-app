@@ -9,8 +9,8 @@ struct BikeDiagnosticsSpeedFormatterTests {
     func formatsMetricSpeed() {
         let locale = Locale(identifier: "es_ES")
         let formatter = BikeDiagnosticsSpeedFormatter(
-            measurementSystem: BikeDiagnosticsMeasurementSystem(locale: locale),
-            formatter: makeMeasurementFormatter(locale: locale)
+            measurementSystem: locale.measurementSystem,
+            locale: locale
         )
 
         #expect(formatter.string(kilometersPerHour: 42.1) == "42,1 km/h")
@@ -20,18 +20,10 @@ struct BikeDiagnosticsSpeedFormatterTests {
     func formatsImperialSpeed() {
         let locale = Locale(identifier: "en_US")
         let formatter = BikeDiagnosticsSpeedFormatter(
-            measurementSystem: BikeDiagnosticsMeasurementSystem(locale: locale),
-            formatter: makeMeasurementFormatter(locale: locale)
+            measurementSystem: locale.measurementSystem,
+            locale: locale
         )
 
         #expect(formatter.string(kilometersPerHour: 42.1) == "26.2 mph")
-    }
-
-    private func makeMeasurementFormatter(locale: Locale) -> MeasurementFormatter {
-        let formatter = MeasurementFormatter()
-        formatter.locale = locale
-        formatter.unitOptions = .providedUnit
-        formatter.numberFormatter.maximumFractionDigits = 1
-        return formatter
     }
 }

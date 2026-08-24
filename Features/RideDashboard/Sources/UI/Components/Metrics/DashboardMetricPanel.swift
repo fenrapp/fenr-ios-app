@@ -1,4 +1,5 @@
 import DesignSystem
+import MeasurementPresentation
 import SwiftUI
 
 struct DashboardMetricPanel: View {
@@ -7,6 +8,8 @@ struct DashboardMetricPanel: View {
     let fractionDigits: Int
     let tint: Color
     let alignment: HorizontalAlignment
+
+    private let measurementTextFormatter = VehicleMeasurementTextFormatter()
 
     var body: some View {
         VStack(alignment: alignment, spacing: DesignSpace.extraSmall) {
@@ -33,7 +36,7 @@ struct DashboardMetricPanel: View {
 
     private var formattedValue: String {
         guard let measurement else { return "—" }
-        return measurement.value.formatted(.number.precision(.fractionLength(fractionDigits)))
+        return measurementTextFormatter.number(measurement.value, fractionDigits: fractionDigits)
     }
 
     private enum Constants {

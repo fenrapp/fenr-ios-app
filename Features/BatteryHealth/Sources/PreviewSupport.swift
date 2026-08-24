@@ -25,25 +25,8 @@ private extension BatteryHealthFormatter {
         let locale = Locale.autoupdatingCurrent
         return BatteryHealthFormatter(
             locale: locale,
-            measurementFormatters: .init(
-                voltageFormatter: measurementFormatter(locale: locale, unitOptions: .providedUnit),
-                temperatureFormatter: measurementFormatter(locale: locale, unitOptions: .naturalScale),
-                currentFormatter: measurementFormatter(locale: locale, unitOptions: .providedUnit),
-                powerFormatter: measurementFormatter(locale: locale, unitOptions: .naturalScale),
-                temperatureUnit: .celsius
-            )
+            measurementSystem: .metric
         )
-    }
-
-    private static func measurementFormatter(
-        locale: Locale,
-        unitOptions: MeasurementFormatter.UnitOptions
-    ) -> MeasurementFormatter {
-        let formatter = MeasurementFormatter()
-        formatter.locale = locale
-        formatter.unitOptions = unitOptions
-        formatter.numberFormatter.maximumFractionDigits = 1
-        return formatter
     }
 }
 

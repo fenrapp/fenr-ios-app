@@ -1,6 +1,7 @@
 import BikeData
 import BikeDomain
 import BikeSDK
+import SettingsData
 
 @MainActor
 enum LiveWatchAppDependencyContainerFactory {
@@ -9,6 +10,7 @@ enum LiveWatchAppDependencyContainerFactory {
         return WatchAppDependencyContainer(
             repository: LiveBikeRepositoryFactory.makeDefault(client: client),
             profileRepository: UserDefaultsBikeProfileRepository(),
+            settingsRepository: UserDefaultsAppSettingsRepository(),
             initialProfile: nil
         )
     }

@@ -82,7 +82,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikeemulator
   EnvironmentDomain:
     type: framework
-    platform: iOS
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
     sources:
       - path: Modules/EnvironmentDomain/Sources
     settings:
@@ -100,7 +101,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.environmentdata
   SettingsDomain:
     type: framework
-    platform: iOS
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
     sources:
       - path: Modules/SettingsDomain/Sources
     settings:
@@ -108,7 +110,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.settingsdomain
   SettingsData:
     type: framework
-    platform: iOS
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
     sources:
       - path: Modules/SettingsData/Sources
     dependencies:
@@ -118,15 +121,26 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.settingsdata
   DesignSystem:
     type: framework
-    platform: iOS
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
     sources:
       - path: Modules/DesignSystem/Sources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.designsystem
+  MeasurementPresentation:
+    type: framework
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
+    sources:
+      - path: Modules/MeasurementPresentation/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.measurementpresentation
   TestSupport:
     type: framework
-    platform: iOS
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
     sources:
       - path: Modules/TestSupport/Sources
     settings:
@@ -142,6 +156,7 @@ targets:
       - target: BikeDomain
       - target: SettingsDomain
       - target: DesignSystem
+      - target: MeasurementPresentation
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.diagnostics
@@ -167,6 +182,7 @@ targets:
       - target: EnvironmentDomain
       - target: SettingsDomain
       - target: DesignSystem
+      - target: MeasurementPresentation
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.dashboard
@@ -179,12 +195,14 @@ targets:
       - target: BikeDomain
       - target: SettingsDomain
       - target: DesignSystem
+      - target: MeasurementPresentation
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.batteryhealth
   AppSettings:
     type: framework
-    platform: iOS
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
     sources:
       - path: Features/AppSettings/Sources
     dependencies:
@@ -202,9 +220,24 @@ targets:
       - path: Features/WatchDashboard/Sources
     dependencies:
       - target: BikeDomain
+      - target: DesignSystem
+      - target: MeasurementPresentation
+      - target: SettingsDomain
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchdashboard
+  WatchOnboarding:
+    type: framework
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: Features/WatchOnboarding/Sources
+    dependencies:
+      - target: BikeDomain
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchonboarding
   FENR:
     type: application
     platform: iOS
@@ -233,6 +266,8 @@ targets:
       - target: BikeDiagnostics
       - target: BikeOnboarding
       - target: RideDashboard
+      - target: MeasurementPresentation
+        embed: true
       - target: BatteryHealth
       - target: AppSettings
       - target: BikeData
@@ -300,6 +335,8 @@ targets:
       - target: BikeDiagnostics
       - target: BikeOnboarding
       - target: RideDashboard
+      - target: MeasurementPresentation
+        embed: true
       - target: BatteryHealth
       - target: AppSettings
       - target: BikeDomain
@@ -345,11 +382,27 @@ targets:
         embed: true
       - target: WatchDashboard
         embed: true
+      - target: WatchOnboarding
+        embed: true
+      - target: AppSettings
+        embed: true
+      - target: SettingsDomain
+        embed: true
+      - target: SettingsData
+        embed: true
+      - target: EnvironmentDomain
+        embed: true
+      - target: DesignSystem
+        embed: true
+      - target: MeasurementPresentation
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watch
         INFOPLIST_KEY_CFBundleDisplayName: FENR
+        INFOPLIST_KEY_WKWatchOnly: YES
         INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: FENR uses Bluetooth to connect directly to your bike and show live telemetry.
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
   FENRWatchDebug:
     type: application
     platform: watchOS
@@ -357,8 +410,8 @@ targets:
     sources:
       - path: Watch/Sources
         excludes:
-          - FENRWatchApp.swift
-          - Composition/LiveWatchAppDependencyContainerFactory.swift
+          - App/FENRWatchApp.swift
+          - Composition/Production/LiveWatchAppDependencyContainerFactory.swift
       - path: Watch/DebugSources
     dependencies:
       - target: AsyncSupport
@@ -369,10 +422,26 @@ targets:
         embed: true
       - target: WatchDashboard
         embed: true
+      - target: WatchOnboarding
+        embed: true
+      - target: AppSettings
+        embed: true
+      - target: SettingsDomain
+        embed: true
+      - target: SettingsData
+        embed: true
+      - target: EnvironmentDomain
+        embed: true
+      - target: DesignSystem
+        embed: true
+      - target: MeasurementPresentation
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watch.debug
         INFOPLIST_KEY_CFBundleDisplayName: FENR Debug
+        INFOPLIST_KEY_WKWatchOnly: YES
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
   StarkProtocolTests:
     type: bundle.unit-test
     platform: iOS
@@ -459,6 +528,16 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.designsystem.tests
+  MeasurementPresentationTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/MeasurementPresentation/Tests
+    dependencies:
+      - target: MeasurementPresentation
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.measurementpresentation.tests
   BikeDiagnosticsTests:
     type: bundle.unit-test
     platform: iOS
@@ -507,6 +586,8 @@ targets:
     dependencies:
       - target: WatchDashboard
       - target: BikeDomain
+      - target: SettingsDomain
+      - target: TestSupport
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchdashboard.tests
@@ -620,6 +701,7 @@ schemes:
         BikeEmulatorTests: [test]
         SettingsDataTests: [test]
         DesignSystemTests: [test]
+        MeasurementPresentationTests: [test]
         BikeDiagnosticsTests: [test]
         BikeOnboardingTests: [test]
         RideDashboardTests: [test]
@@ -637,6 +719,7 @@ schemes:
         - BikeEmulatorTests
         - SettingsDataTests
         - DesignSystemTests
+        - MeasurementPresentationTests
         - BikeDiagnosticsTests
         - BikeOnboardingTests
         - RideDashboardTests

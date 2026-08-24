@@ -9,12 +9,16 @@ public final class AppSettingsViewModel: ObservableObject {
 
     private let useCases: AppSettingsUseCases
     private var observationTask: Task<Void, Never>?
+    private var settingsSaveTask: Task<Void, Never>?
 
     public init(useCases: AppSettingsUseCases) {
         self.useCases = useCases
     }
 
-    deinit { observationTask?.cancel() }
+    deinit {
+        observationTask?.cancel()
+        settingsSaveTask?.cancel()
+    }
 
     public func start() {
         guard observationTask == nil else { return }
@@ -39,31 +43,43 @@ public final class AppSettingsViewModel: ObservableObject {
         var updated = settings
         updated.speedSource = speedSource
         settings = updated
-        Task { await useCases.saveSettings.execute(updated) }
+        save(updated)
     }
 
     public func selectMeasurementSystem(_ measurementSystem: MeasurementSystem) {
         var updated = settings
         updated.measurementSystem = measurementSystem
         settings = updated
-        Task { await useCases.saveSettings.execute(updated) }
+        save(updated)
     }
 
     public func selectBatteryPackCapacity(_ batteryPackCapacity: BatteryPackCapacity) {
         var updated = settings
         updated.batteryPackCapacity = batteryPackCapacity
         settings = updated
-        Task { await useCases.saveSettings.execute(updated) }
+        save(updated)
     }
 
     public func requestLocationAccess() {
+        guard let requestLocationAuthorization = useCases.requestLocationAuthorization else { return }
         Task {
-            await useCases.requestLocationAuthorization.execute()
+            await requestLocationAuthorization.execute()
             await refreshLocationAuthorizationStatus()
         }
     }
 
     private func refreshLocationAuthorizationStatus() async {
-        locationAuthorizationStatus = await useCases.locationAuthorizationStatus.execute()
+        guard let locationAuthorizationStatus = useCases.locationAuthorizationStatus else { return }
+        self.locationAuthorizationStatus = await locationAuthorizationStatus.execute()
+    }
+
+    private func save(_ settings: AppSettings) {
+        let previousSaveTask = settingsSaveTask
+        let saveSettings = useCases.saveSettings
+        settingsSaveTask = Task {
+            await previousSaveTask?.value
+            guard !Task.isCancelled else { return }
+            await saveSettings.execute(settings)
+        }
     }
 }

@@ -1,3 +1,4 @@
+#if os(iOS)
 import DesignSystem
 import EnvironmentDomain
 import SwiftUI
@@ -37,3 +38,4 @@ struct LocationPermissionRow: View {
         LocationPermissionRow(status: .notDetermined, onRequestAccess: {})
     }
 }
+#endif

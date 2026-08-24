@@ -31,7 +31,6 @@ struct AppSettingsViewModelTests {
 
     private func makeUseCases(repository: SettingsRepository) -> AppSettingsUseCases {
         .init(
-            loadSettings: .init(repository: repository),
             saveSettings: .init(repository: repository),
             observeSettings: .init(repository: repository),
             locationAuthorizationStatus: .init(repository: repository),

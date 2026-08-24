@@ -2,30 +2,24 @@ import BikeDomain
 import Combine
 
 @MainActor
-final class WatchOnboardingViewModel: ObservableObject {
+public final class WatchOnboardingViewModel: ObservableObject {
     @Published private(set) var discoveredBikes: [DiscoveredBike] = []
     @Published private(set) var detail = "Searching for nearby bikes"
     @Published private(set) var errorMessage: String?
     @Published private(set) var isConnecting = false
 
-    private let repository: any BikeRepository
-    private let discoveryRepository: any BikeDiscoveryRepository
-    private let profileRepository: any BikeProfileRepository
+    private let useCases: WatchOnboardingUseCases
     private let onCompleted: @MainActor (BikeProfile) -> Void
     private var connectionTask: Task<Void, Never>?
     private var discoveryTask: Task<Void, Never>?
     private var selectedVIN: String?
     private var didComplete = false
 
-    init(
-        repository: any BikeRepository,
-        discoveryRepository: any BikeDiscoveryRepository,
-        profileRepository: any BikeProfileRepository,
+    public init(
+        useCases: WatchOnboardingUseCases,
         onCompleted: @escaping @MainActor (BikeProfile) -> Void
     ) {
-        self.repository = repository
-        self.discoveryRepository = discoveryRepository
-        self.profileRepository = profileRepository
+        self.useCases = useCases
         self.onCompleted = onCompleted
     }
 
@@ -45,7 +39,8 @@ final class WatchOnboardingViewModel: ObservableObject {
         connectionTask = nil
         discoveryTask?.cancel()
         discoveryTask = nil
-        Task { await discoveryRepository.stopBikeDiscovery() }
+        let stopDiscovery = useCases.stopDiscovery
+        Task { await stopDiscovery.execute() }
     }
 
     func scan() {
@@ -53,10 +48,11 @@ final class WatchOnboardingViewModel: ObservableObject {
         discoveredBikes = []
         errorMessage = nil
         detail = "Searching for nearby bikes"
-        let discoveryRepository = discoveryRepository
+        let observeDiscoveredBikes = useCases.observeDiscoveredBikes
+        let startDiscovery = useCases.startDiscovery
         discoveryTask = Task { [weak self] in
-            let stream = await discoveryRepository.observeDiscoveredBikes()
-            await discoveryRepository.startBikeDiscovery()
+            let stream = await observeDiscoveredBikes.execute()
+            await startDiscovery.execute()
             for await bikes in stream {
                 guard !Task.isCancelled else { return }
                 self?.receive(bikes)
@@ -70,10 +66,12 @@ final class WatchOnboardingViewModel: ObservableObject {
         isConnecting = true
         detail = "Connecting to \(bike.vin)"
         discoveryTask?.cancel()
+        let stopDiscovery = useCases.stopDiscovery
+        let connectToBike = useCases.connectToBike
         Task {
-            await discoveryRepository.stopBikeDiscovery()
+            await stopDiscovery.execute()
             do {
-                try await repository.connect(vin: bike.vin)
+                try await connectToBike.execute(vin: bike.vin)
             } catch {
                 isConnecting = false
                 errorMessage = "Unable to connect. Try again."
@@ -82,9 +80,9 @@ final class WatchOnboardingViewModel: ObservableObject {
     }
 
     private func observeConnection() {
-        let repository = repository
+        let observeConnection = useCases.observeConnection
         connectionTask = Task { [weak self] in
-            let stream = await repository.observeConnection()
+            let stream = await observeConnection.execute()
             for await connection in stream {
                 guard !Task.isCancelled else { return }
                 self?.receive(connection)
@@ -104,8 +102,9 @@ final class WatchOnboardingViewModel: ObservableObject {
             guard let selectedVIN, name == nil || name == selectedVIN, !didComplete else { return }
             didComplete = true
             let profile = BikeProfile(vin: selectedVIN)
-            Task { [profileRepository, onCompleted] in
-                await profileRepository.saveProfile(profile)
+            let saveProfile = useCases.saveProfile
+            Task { [onCompleted] in
+                await saveProfile.execute(profile)
                 onCompleted(profile)
             }
         case .failed(let message):

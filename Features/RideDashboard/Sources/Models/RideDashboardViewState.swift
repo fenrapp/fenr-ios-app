@@ -1,4 +1,5 @@
 import BikeDomain
+import MeasurementPresentation
 
 public struct RideDashboardViewState: Equatable, Sendable {
     public var speed: RideDashboardMeasurement?

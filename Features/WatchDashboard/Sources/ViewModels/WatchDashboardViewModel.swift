@@ -1,26 +1,39 @@
 import BikeDomain
 import Combine
 import Foundation
+import MeasurementPresentation
+import SettingsDomain
 
 @MainActor
 public final class WatchDashboardViewModel: ObservableObject {
     @Published public private(set) var viewState = WatchDashboardViewState()
 
     private let useCases: WatchDashboardUseCases
+    private let measurementTextFormatter: VehicleMeasurementTextFormatter
+    private let timeRemainingFormatter: TimeRemainingFormatter
     private var telemetry = BikeTelemetry()
     private var batteryHealth = BikeBatteryHealth()
+    private var settings = AppSettings()
     private var telemetryTask: Task<Void, Never>?
     private var connectionTask: Task<Void, Never>?
+    private var settingsTask: Task<Void, Never>?
     private var batteryHealthTask: Task<Void, Never>?
     private var isMonitoringBatteryHealth = false
 
-    public init(useCases: WatchDashboardUseCases) {
+    public init(
+        useCases: WatchDashboardUseCases,
+        measurementTextFormatter: VehicleMeasurementTextFormatter = .init(),
+        timeRemainingFormatter: TimeRemainingFormatter = .init()
+    ) {
         self.useCases = useCases
+        self.measurementTextFormatter = measurementTextFormatter
+        self.timeRemainingFormatter = timeRemainingFormatter
     }
 
     deinit {
         telemetryTask?.cancel()
         connectionTask?.cancel()
+        settingsTask?.cancel()
         batteryHealthTask?.cancel()
     }
 
@@ -28,6 +41,7 @@ public final class WatchDashboardViewModel: ObservableObject {
         guard telemetryTask == nil else { return }
         observeTelemetry()
         observeConnection()
+        observeSettings()
     }
 
     public func stop() {
@@ -35,6 +49,8 @@ public final class WatchDashboardViewModel: ObservableObject {
         telemetryTask = nil
         connectionTask?.cancel()
         connectionTask = nil
+        settingsTask?.cancel()
+        settingsTask = nil
         stopBatteryHealthMonitoring()
     }
 
@@ -56,6 +72,18 @@ public final class WatchDashboardViewModel: ObservableObject {
             for await connection in stream {
                 guard !Task.isCancelled else { return }
                 self?.receive(connection)
+            }
+        }
+    }
+
+    private func observeSettings() {
+        let useCase = useCases.observeSettings
+        settingsTask = Task { [weak self] in
+            let stream = await useCase.execute()
+            for await settings in stream {
+                guard !Task.isCancelled else { return }
+                self?.settings = settings
+                self?.updateViewState()
             }
         }
     }
@@ -113,7 +141,7 @@ public final class WatchDashboardViewModel: ObservableObject {
             mode: isCharging ? .charging : .ride,
             batteryPercent: telemetry.batteryLevel.percent,
             gear: gear(for: telemetry),
-            odometer: telemetry.odometer.kilometers.map(Self.formatDistance),
+            odometer: telemetry.odometer.kilometers.map { formatDistance($0) },
             chargingPower: isCharging ? chargingPower : nil,
             chargingCurrent: isCharging ? chargingCurrent : nil,
             batteryTemperature: isCharging ? batteryTemperature : nil,
@@ -134,19 +162,19 @@ public final class WatchDashboardViewModel: ObservableObject {
 
     private var chargingPower: String? {
         guard let status = batteryHealth.chargingStatus else { return nil }
-        return Self.formatNumber(status.maximumPowerWatts / Constants.wattsPerKilowatt) + " kW"
+        return format(measurementMapper.power(watts: status.maximumPowerWatts))
     }
 
     private var chargingCurrent: String? {
         guard let status = batteryHealth.chargingStatus else { return nil }
-        return Self.formatNumber(status.reportedCurrentAmperes) + " A"
+        return format(measurementMapper.current(amperes: status.reportedCurrentAmperes))
     }
 
     private var batteryTemperature: String? {
         let temperatures = batteryHealth.temperatures.map(\.celsius)
         guard !temperatures.isEmpty else { return nil }
         let average = temperatures.reduce(0.0, +) / Double(temperatures.count)
-        return Self.formatNumber(average) + " C"
+        return format(measurementMapper.temperature(celsius: average))
     }
 
     private var chargingETA: String? {
@@ -160,10 +188,10 @@ public final class WatchDashboardViewModel: ObservableObject {
         else { return nil }
         let wattHours = Double(status.maximumStateOfChargePercent - stateOfCharge)
             / Constants.percentageScale
-            * Constants.batteryPackWattHours
+            * settings.batteryPackCapacity.wattHours
         let seconds = wattHours / (voltage * status.reportedCurrentAmperes) * Constants.secondsPerHour
         guard seconds.isFinite, seconds > 0 else { return nil }
-        return Self.etaFormatter.string(from: seconds)
+        return timeRemainingFormatter.string(from: seconds)
     }
 
     private func connectionDetail(_ state: ConnectionState) -> String {
@@ -179,35 +207,24 @@ public final class WatchDashboardViewModel: ObservableObject {
         }
     }
 
-    private static let numberFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.maximumFractionDigits = 1
-        formatter.minimumFractionDigits = 0
-        return formatter
-    }()
-
-    private static let etaFormatter: DateComponentsFormatter = {
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.hour, .minute]
-        formatter.unitsStyle = .abbreviated
-        formatter.zeroFormattingBehavior = .dropAll
-        return formatter
-    }()
-
-    private static func formatDistance(_ kilometers: Double) -> String {
-        formatNumber(kilometers) + " km"
+    private func formatDistance(_ kilometers: Double) -> String {
+        format(measurementMapper.distance(kilometers: kilometers))
     }
 
-    private static func formatNumber(_ value: Double) -> String {
-        numberFormatter.string(from: NSNumber(value: value)) ?? String(value)
+    private func format(_ measurement: VehicleMeasurement) -> String {
+        measurementTextFormatter.string(from: measurement)
+    }
+
+    private var measurementMapper: VehicleMeasurementMapper {
+        VehicleMeasurementMapper(
+            measurementSystem: settings.measurementSystem.resolved()
+        )
     }
 
     fileprivate enum Constants {
-        static let batteryPackWattHours = 7_200.0
         static let percentageScale = 100.0
         static let secondsPerHour = 3_600.0
         static let telemetryFreshness: TimeInterval = 30
-        static let wattsPerKilowatt = 1_000.0
     }
 }
 

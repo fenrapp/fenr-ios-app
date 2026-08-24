@@ -1,20 +1,16 @@
 import BikeDomain
 import BikeEmulator
+import SettingsData
 
 @MainActor
 enum DebugWatchAppDependencyContainerFactory {
     static func makeDefault() -> WatchAppDependencyContainer {
-        let repository = BikeEmulatorRepository()
+        let repository = BikeEmulatorRepository(scenario: .riding)
         return WatchAppDependencyContainer(
             repository: repository,
             profileRepository: WatchDebugProfileRepository(),
+            settingsRepository: UserDefaultsAppSettingsRepository(),
             initialProfile: BikeProfile(vin: BikeEmulatorIdentity.vin)
         )
     }
-}
-
-private actor WatchDebugProfileRepository: BikeProfileRepository {
-    func loadProfile() -> BikeProfile? { BikeProfile(vin: BikeEmulatorIdentity.vin) }
-    func saveProfile(_: BikeProfile) {}
-    func clearProfile() {}
 }

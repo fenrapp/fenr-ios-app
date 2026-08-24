@@ -1,42 +1,53 @@
 import BikeDomain
 import Foundation
+import MeasurementPresentation
 
 @MainActor
 public struct BatteryHealthFormatter {
     private let locale: Locale
-    private let measurementFormatters: BatteryHealthMeasurementFormatters
+    private let measurementMapper: VehicleMeasurementMapper
+    private let measurementTextFormatter: VehicleMeasurementTextFormatter
 
-    public init(locale: Locale, measurementFormatters: BatteryHealthMeasurementFormatters) {
+    public init(
+        locale: Locale,
+        measurementSystem: Locale.MeasurementSystem = Locale.autoupdatingCurrent.measurementSystem
+    ) {
         self.locale = locale
-        self.measurementFormatters = measurementFormatters
+        measurementMapper = VehicleMeasurementMapper(measurementSystem: measurementSystem)
+        measurementTextFormatter = VehicleMeasurementTextFormatter(locale: locale)
     }
 
     public func percent(_ value: Int?) -> String {
         guard let value else { return BatteryHealthText.placeholder }
-        return (Double(value) / Constants.percentDivisor).formatted(
-            .percent.precision(.fractionLength(Constants.percentageFractionDigits)).locale(locale)
-        )
+        return measurementTextFormatter.percentage(value)
     }
 
     public func voltage(_ value: Double?) -> String {
         guard let value else { return BatteryHealthText.placeholder }
-        return measurementFormatters.voltage(value)
+        return measurementTextFormatter.voltage(value)
     }
 
     public func cellVoltage(_ value: Double) -> String {
-        "\(value.formatted(.number.precision(.fractionLength(Constants.cellVoltageFractionDigits)).locale(locale))) V"
+        measurementTextFormatter.voltage(
+            value,
+            fractionDigits: Constants.cellVoltageFractionDigits,
+            minimumFractionDigits: Constants.cellVoltageFractionDigits
+        )
     }
 
     public func temperature(celsius: Double) -> String {
-        measurementFormatters.temperature(celsius: celsius)
+        measurementTextFormatter.string(
+            from: measurementMapper.temperature(celsius: celsius),
+            unitSeparator: ""
+        )
     }
 
     public func current(amperes: Double) -> String {
-        measurementFormatters.current(amperes: amperes)
+        measurementTextFormatter.current(amperes)
     }
 
     public func power(watts: Double) -> String {
-        measurementFormatters.power(watts: watts)
+        measurementTextFormatter.power(watts)
     }
 
     public func voltageDeviation(volts: Double) -> String {
@@ -63,8 +74,6 @@ public struct BatteryHealthFormatter {
     }
 
     private enum Constants {
-        static let percentDivisor = 100.0
-        static let percentageFractionDigits = 0
         static let cellVoltageFractionDigits = 4
         static let deviationFractionDigits = 0
         static let voltsToMillivolts = 1_000.0

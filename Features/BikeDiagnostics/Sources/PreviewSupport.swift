@@ -1,6 +1,7 @@
 import AsyncSupport
 import BikeDomain
 import Foundation
+import MeasurementPresentation
 import SettingsDomain
 
 extension BikeDiagnosticsViewModel {
@@ -51,8 +52,8 @@ private enum BikeDiagnosticsPreviewFactory {
         let dateFormatter = BikeDiagnosticsDateFormatter()
         let locale = Locale(identifier: "en_US")
         let speedFormatter = BikeDiagnosticsSpeedFormatter(
-            measurementSystem: BikeDiagnosticsMeasurementSystem(locale: locale),
-            formatter: makeSpeedMeasurementFormatter(locale: locale)
+            measurementSystem: locale.measurementSystem,
+            locale: locale
         )
         return BikeDiagnosticsMappers(
             viewState: BikeTelemetryToBikeDiagnosticsViewStateMapper(
@@ -60,7 +61,7 @@ private enum BikeDiagnosticsPreviewFactory {
                 metricsMapper: .init(
                     dateFormatter: dateFormatter,
                     speedFormatter: speedFormatter,
-                    percentFormatter: .init(locale: locale)
+                    measurementTextFormatter: .init(locale: locale)
                 ),
                 badgesMapper: .init(runStateMapper: .init()),
                 rawFlagsMapper: .init(),
@@ -69,13 +70,6 @@ private enum BikeDiagnosticsPreviewFactory {
         )
     }
 
-    private static func makeSpeedMeasurementFormatter(locale: Locale) -> MeasurementFormatter {
-        let formatter = MeasurementFormatter()
-        formatter.locale = locale
-        formatter.unitOptions = .providedUnit
-        formatter.numberFormatter.maximumFractionDigits = 1
-        return formatter
-    }
 }
 
 private actor PreviewAppSettingsRepository: AppSettingsRepository {

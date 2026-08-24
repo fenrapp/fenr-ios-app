@@ -1,5 +1,6 @@
 import BikeDomain
 import Foundation
+import MeasurementPresentation
 import SettingsDomain
 
 public struct ChargingDashboardMapper: Sendable {
@@ -73,7 +74,7 @@ public struct ChargingDashboardMapper: Sendable {
         let chargingPowerWatts = batteryVoltage * status.reportedCurrentAmperes
         let remainingSeconds = remainingEnergyWattHours / chargingPowerWatts * Constants.secondsPerHour
         guard remainingSeconds.isFinite, remainingSeconds > .zero else { return nil }
-        return ChargingTimeRemainingFormatter().string(from: remainingSeconds)
+        return TimeRemainingFormatter().string(from: remainingSeconds)
     }
 
     private enum Constants {

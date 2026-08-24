@@ -1,5 +1,6 @@
 import BikeDomain
 import Foundation
+import MeasurementPresentation
 import SettingsDomain
 
 @MainActor
@@ -72,10 +73,11 @@ public final class BatteryHealthViewModel: ObservableObject {
     }
 
     public func captureLogText() -> String {
-        captures.values
+        let timeFormatter = SystemTimeFormatter()
+        return captures.values
             .sorted { $0.date > $1.date }
             .map { capture in
-                "\(capture.date.formatted(date: .omitted, time: .standard)) | "
+                "\(timeFormatter.standardTime(from: capture.date)) | "
                     + "\(capture.dataset.displayName) | \(capture.byteCount) B | \(capture.hex)"
             }
             .joined(separator: "\n")

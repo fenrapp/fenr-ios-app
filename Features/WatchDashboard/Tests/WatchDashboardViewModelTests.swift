@@ -1,5 +1,7 @@
 import BikeDomain
+import SettingsDomain
 import Testing
+import TestSupport
 @testable import WatchDashboard
 
 @MainActor
@@ -8,21 +10,76 @@ struct WatchDashboardViewModelTests {
     func chargingMonitoringFollowsRunState() async {
         let repository = WatchDashboardRepository()
         let viewModel = WatchDashboardViewModel(
-            useCases: .init(repository: repository, batteryHealthRepository: repository)
+            useCases: .init(
+                repository: repository,
+                batteryHealthRepository: repository,
+                settingsRepository: WatchDashboardSettingsRepository()
+            )
         )
 
         viewModel.start()
-        await repository.send(.init(lastUpdated: .now))
-        try? await Task.sleep(for: .milliseconds(20))
-        #expect(await repository.startMonitoringCalls == 0)
+        await repository.send(.init(
+            statusFlags: .init(isOn: true),
+            lastUpdated: .now
+        ))
+        #expect(await waitUntil { await repository.startMonitoringCalls == 0 })
 
         await repository.send(.init(
-            batteryLevel: .init(percent: 42),
+            batteryLevel: .known(percent: 42),
             statusFlags: .init(isCharging: true),
             lastUpdated: .now
         ))
-        try? await Task.sleep(for: .milliseconds(20))
-        #expect(await repository.startMonitoringCalls == 1)
+        #expect(await waitUntil { await repository.startMonitoringCalls == 1 })
         #expect(viewModel.viewState.mode == .charging)
+
+        await repository.send(.init(
+            statusFlags: .init(isOn: true),
+            lastUpdated: .now
+        ))
+        #expect(await waitUntil { viewModel.viewState.mode == .ride })
+        #expect(await waitUntil { await repository.stopMonitoringCalls == 1 })
+    }
+
+    @Test("charging state presents health data using selected units")
+    func chargingStateUsesBatteryHealthAndSettings() async {
+        let repository = WatchDashboardRepository()
+        let settings = WatchDashboardSettingsRepository(
+            settings: .init(measurementSystem: .metric)
+        )
+        let viewModel = WatchDashboardViewModel(
+            useCases: .init(
+                repository: repository,
+                batteryHealthRepository: repository,
+                settingsRepository: settings
+            )
+        )
+
+        viewModel.start()
+        await repository.send(.init(
+            batteryLevel: .known(percent: 80),
+            statusFlags: .init(isCharging: true),
+            lastUpdated: .now
+        ))
+        #expect(await waitUntil { await repository.startMonitoringCalls == 1 })
+
+        await repository.send(.init(
+            dcBusVoltage: .known(volts: 400),
+            temperatures: [.init(position: 1, celsius: 30)],
+            chargingStatus: .init(
+                requestedCurrentAmperes: 4,
+                reportedCurrentAmperes: 4,
+                maximumCurrentAmperes: 20,
+                maximumPowerWatts: 2_000,
+                targetCellVoltageVolts: 4.275,
+                maximumStateOfChargePercent: 100
+            )
+        ))
+
+        #expect(await waitUntil {
+            viewModel.viewState.chargingPower == "2 kW"
+        })
+        #expect(viewModel.viewState.chargingCurrent == "4 A")
+        #expect(viewModel.viewState.batteryTemperature == "30 °C")
+        #expect(viewModel.viewState.chargeETA != nil)
     }
 }
