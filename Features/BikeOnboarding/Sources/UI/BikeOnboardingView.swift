@@ -7,24 +7,58 @@ public struct BikeOnboardingView: View {
     @ObservedObject private var viewModel: BikeOnboardingViewModel
     @State private var isScannerPresented = false
     @State private var isScannerUnavailable = false
+    private let visibleStep: BikeOnboardingStep
+    private let managesObservation: Bool
+    private let onNavigateToStep: @MainActor (BikeOnboardingStep) -> Void
 
-    public init(viewModel: BikeOnboardingViewModel) { self.viewModel = viewModel }
+    public init(
+        viewModel: BikeOnboardingViewModel,
+        visibleStep: BikeOnboardingStep = .welcome,
+        managesObservation: Bool = true,
+        onNavigateToStep: @escaping @MainActor (BikeOnboardingStep) -> Void = { _ in }
+    ) {
+        self.viewModel = viewModel
+        self.visibleStep = visibleStep
+        self.managesObservation = managesObservation
+        self.onNavigateToStep = onNavigateToStep
+    }
 
     public var body: some View {
-        VStack(spacing: DesignSpace.large) {
-            OnboardingProgressView(currentStep: viewModel.viewState.step)
-            Spacer(minLength: DesignSpace.extraSmall)
-            stepContent
-                .frame(maxWidth: Constants.contentMaxWidth)
-            Spacer(minLength: DesignSpace.extraSmall)
-            controls
+        onboardingScreen(for: visibleStep)
+        .task {
+            guard managesObservation else { return }
+            viewModel.startObserving()
         }
-        .padding(DesignSpace.large)
+        .onDisappear {
+            guard managesObservation else { return }
+            viewModel.stopObserving()
+        }
+    }
+
+    private func onboardingScreen(for step: BikeOnboardingStep) -> some View {
+        ZStack {
+            OnboardingBackground()
+
+            VStack(spacing: 0) {
+                ScrollView {
+                    stepContent(for: step)
+                        .frame(maxWidth: Constants.contentMaxWidth)
+                        .padding(.horizontal, DesignSpace.large)
+                        .padding(.top, DesignSpace.large)
+                        .padding(.bottom, DesignSpace.large)
+                        .frame(maxWidth: .infinity)
+                }
+
+                controls(for: step)
+                    .padding(.horizontal, DesignSpace.large)
+                    .padding(.bottom, DesignSpace.extraSmall)
+            }
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(DesignColor.groupedSurface)
         .dynamicTypeSize(.medium ... .accessibility2)
-        .task { viewModel.startObserving() }
-        .onDisappear { viewModel.stopObserving() }
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarRole(.editor)
         .sheet(isPresented: $isScannerPresented) { scannerSheet }
         .alert("Scanner unavailable", isPresented: $isScannerUnavailable) {
             Button("Use Manual Entry", role: .cancel) {}
@@ -34,71 +68,40 @@ public struct BikeOnboardingView: View {
     }
 
     @ViewBuilder
-    private var stepContent: some View {
-        Group {
-            switch viewModel.viewState.step {
-            case .welcome:
-                OnboardingStepCard(icon: "gauge.with.dots.needle.67percent", title: "Your Stark dashboard") {
-                    Text("FENR connects to your bike to display live telemetry, battery health, and diagnostics.")
-                    Text("It does not change bike settings.")
-                }
-            case .preparation:
-                OnboardingStepCard(icon: "antenna.radiowaves.left.and.right", title: "Prepare your bike") {
-                    Text("Turn on the bike and keep it nearby.")
-                    Text("Turn off the Arkenstone so FENR can connect directly to the bike.")
-                    Text("On the next tap, iOS will ask for Bluetooth access.")
-                    Text("FENR needs it to find and connect to your bike.")
-                    if viewModel.viewState.isRequestingBluetoothAccess {
-                        ProgressView()
-                    }
-                    if let errorMessage = viewModel.viewState.errorMessage {
-                        Text(errorMessage).foregroundStyle(DesignColor.critical)
-                        bluetoothSettingsButton
-                    }
-                }
-            case .identify:
-                OnboardingStepCard(icon: "number", title: "Add your VIN") {
-                    OnboardingIdentifyBikeView(
-                        vin: viewModel.viewState.vin,
-                        discoveredBikes: viewModel.viewState.discoveredBikes,
-                        isDiscoveringBikes: viewModel.viewState.isDiscoveringBikes,
-                        onVINChange: viewModel.vinChanged,
-                        onSelectBike: viewModel.selectDiscoveredBike,
-                        onStartDiscovery: viewModel.startDiscovery,
-                        onScanVIN: { isScannerPresented = true }
-                    )
-                }
-            case .connect:
-                OnboardingStepCard(icon: "antenna.radiowaves.left.and.right", title: "Connect your bike") {
-                    ProgressView().opacity(viewModel.viewState.isConnecting ? 1 : 0)
-                    Text(viewModel.viewState.connectionDetail).foregroundStyle(.secondary)
-                    if let errorMessage = viewModel.viewState.errorMessage {
-                        Text(errorMessage).foregroundStyle(DesignColor.critical)
-                        bluetoothSettingsButton
-                        Button("Try Again") { viewModel.retry() }.buttonStyle(.borderedProminent)
-                    }
-                }
-            }
+    private func stepContent(for step: BikeOnboardingStep) -> some View {
+        switch step {
+        case .welcome:
+            WelcomeOnboardingStepView()
+        case .preparation:
+            PrepareBikeOnboardingStepView(
+                viewState: viewModel.viewState,
+                onOpenSettings: openAppSettings
+            )
+        case .identify:
+            IdentifyBikeOnboardingStepView(
+                viewState: viewModel.viewState,
+                onVINChange: viewModel.vinChanged,
+                onSelectBike: viewModel.selectDiscoveredBike,
+                onStartDiscovery: viewModel.startDiscovery,
+                onScanVIN: { isScannerPresented = true }
+            )
+        case .connect:
+            ConnectBikeOnboardingStepView(
+                viewState: viewModel.viewState,
+                onOpenSettings: openAppSettings,
+                onRetry: viewModel.retry
+            )
         }
     }
 
-    private var controls: some View {
+    private func controls(for step: BikeOnboardingStep) -> some View {
         OnboardingNavigationControls(
-            step: viewModel.viewState.step,
+            step: step,
             isContinueDisabled: !viewModel.viewState.canContinue,
             isContinueBusy: viewModel.viewState.isRequestingBluetoothAccess,
-            onBack: viewModel.back,
-            onContinue: viewModel.next
+            onContinue: { continueTapped(from: step) }
         )
         .frame(maxWidth: Constants.contentMaxWidth)
-    }
-
-    @ViewBuilder
-    private var bluetoothSettingsButton: some View {
-        if viewModel.viewState.showsBluetoothSettingsButton {
-            Button("Open Settings") { openAppSettings() }
-                .buttonStyle(.borderedProminent)
-        }
     }
 
     private var scannerSheet: some View {
@@ -117,48 +120,14 @@ public struct BikeOnboardingView: View {
         openURL(url)
     }
 
+    private func continueTapped(from visibleStep: BikeOnboardingStep) {
+        viewModel.next()
+        let nextStep = viewModel.viewState.step
+        guard nextStep.rawValue > visibleStep.rawValue else { return }
+        onNavigateToStep(nextStep)
+    }
+
     private enum Constants {
         static let contentMaxWidth: CGFloat = 480
     }
 }
-
-#if DEBUG
-#Preview("Onboarding welcome") {
-    BikeOnboardingView(
-        viewModel: BikeOnboardingPreviewFactory.makeViewModel(state: .init())
-    )
-}
-
-#Preview("Onboarding identify") {
-    BikeOnboardingView(
-        viewModel: BikeOnboardingPreviewFactory.makeViewModel(
-            state: .init(step: .identify, vin: "FENRTEST000000001")
-        )
-    )
-}
-
-#Preview("Onboarding connection failure") {
-    BikeOnboardingView(
-        viewModel: BikeOnboardingPreviewFactory.makeViewModel(
-            state: .init(
-                step: .connect,
-                vin: "FENRTEST000000001",
-                connectionDetail: "Bluetooth unavailable",
-                errorMessage: "Turn on Bluetooth and try again."
-            )
-        )
-    )
-}
-
-#Preview("Onboarding Bluetooth denied") {
-    BikeOnboardingView(
-        viewModel: BikeOnboardingPreviewFactory.makeViewModel(
-            state: .init(
-                step: .preparation,
-                showsBluetoothSettingsButton: true,
-                errorMessage: "Allow Bluetooth access in Settings > FENR, then return to continue."
-            )
-        )
-    )
-}
-#endif
