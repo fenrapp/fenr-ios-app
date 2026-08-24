@@ -13,8 +13,8 @@ FENR is structured as a modular Swift application. The goal is to keep vehicle t
 | `Features` | SwiftUI screens, view models, presentation mappers, and feature-specific containers. |
 | `*Domain` | Entities, repository protocols, and use cases. |
 | `*Data` | Repository implementations, persistence, and mappings from lower layers. |
-| `BikeSDK` | Platform Bluetooth integration and authenticated telemetry transport. |
-| `StarkProtocol` | Clean-room UUID catalogues, payload parsing, and pairing identity helpers. |
+| `BikeSDK` | Platform Bluetooth integration, authenticated telemetry, and guarded charger-configuration transport. |
+| `StarkProtocol` | Clean-room UUID catalogues, payload parsing/encoding, firmware gates, and pairing identity helpers. |
 | `DesignSystem` | SwiftUI-only shared colours, spacing, radii, and reusable visual components. |
 | `AsyncSupport` | Cross-app asynchronous support utilities used by tests and infrastructure. |
 
@@ -22,17 +22,23 @@ FENR is structured as a modular Swift application. The goal is to keep vehicle t
 
 `AppRootView` owns the iPhone `BikeSessionController`. It starts and stops the repository once for the application lifecycle. Feature modules observe streams through use cases, so moving from the dashboard to settings or diagnostics does not create a second Bluetooth session.
 
-`WatchRootView` owns an independent `WatchBikeSessionController`. It connects directly through the Watch's Bluetooth stack, without requiring the paired iPhone at runtime. The initial Watch implementation is foreground-only: telemetry and battery-health monitoring stop when its UI leaves the foreground. Battery-health monitoring starts only while the bike reports charging.
+`WatchRootView` owns an independent `WatchBikeSessionController`. It connects directly through the Watch's Bluetooth stack, without requiring the paired iPhone at runtime, and declares the Bluetooth central background mode. watchOS still controls suspension and screen wake behaviour, so background support preserves the session when execution is available rather than guaranteeing continuous execution. Battery-health monitoring starts only while the bike reports charging.
 
 ## Main features
 
 - `BikeOnboarding`: discovers/selects a motorcycle, validates its identity, and completes setup only after telemetry is received.
 - `RideDashboard`: presents live riding and charging states. It displays confirmed telemetry only.
 - `BikeDiagnostics`: exposes advanced connection status and raw diagnostic context as a secondary destination.
-- `BatteryHealth`: presents battery and cell measurements.
+- `BatteryHealth`: presents battery and cell measurements and owns the guarded iPhone UI flow for charging-power and charge-target writes.
 - `AppSettings`: stores speed-source, measurement-system, and battery-capacity preferences.
 - `WatchDashboard`: presents a native, compact Watch ride/charge surface with battery, gear/map, odometer, charging power/current, pack temperature, and charge ETA when available.
 
 ## Dependency direction
 
 Dependencies point inward: features consume domain contracts and use cases; data implements those contracts; SDK and protocol code stay below product/UI layers. `DesignSystem` is a feature dependency only and must not leak into domain, data, SDK, or protocol modules.
+
+## Vehicle writes
+
+Vehicle writes are explicit use cases rather than generic BLE access. Battery Health requests a charge-control preparation through the domain repository; `BikeData` maps it to `BikeSDK`, and the SDK serializes writes to the VCU charger configuration characteristic. `StarkProtocol` owns the immutable configuration payload and encoder.
+
+The charge-control flow requires compatible VCU PIC firmware, an authenticated session, a connected charger, the required characteristic, and a successful unchanged no-op write. Power and target changes preserve every unrelated field and are accepted only after the charger telemetry reports the requested value. A timeout desynchronizes the transport until the BLE session reconnects, preventing a late response from confirming a newer operation.

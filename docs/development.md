@@ -44,4 +44,4 @@ List available simulators with `xcrun simctl list devices available` and assign 
 
 ## Safety boundary
 
-The app is read-only. Keep vehicle-facing changes limited to the established authenticated telemetry connection. Do not implement undocumented write commands or product-control behaviour.
+The app is predominantly read-only, with a narrowly scoped authenticated VCU write path for the verified charging-power and charge-target configuration. Any vehicle-facing write must preserve unrelated configuration fields, be firmware-gated, pass a no-op guard, run serially with timeout recovery, and be confirmed by telemetry. Do not add arbitrary configuration writes or commands affecting riding maps, vehicle behaviour, safety controls, or firmware.

@@ -1,20 +1,34 @@
 # FENR ⚡️🏍️⌚️
 
-FENR is an independent iPhone and Apple Watch dashboard and read-only diagnostics app for compatible electric motorcycles. It turns live Bluetooth telemetry into a clear riding display, battery insight, and practical diagnostics without pretending to be the one true client for a machine you own.
+FENR is an independent iPhone and Apple Watch dashboard, diagnostics, and charging-control app for compatible electric motorcycles. It turns live Bluetooth telemetry into a clear riding display, battery insight, practical diagnostics, and a small set of guarded VCU charging controls without pretending to be the one true client for a machine you own.
 
 > **Unofficial and independent.** FENR is not affiliated with, endorsed by, sponsored by, or otherwise connected to Stark Future or any vehicle manufacturer. Names used in technical compatibility code remain the property of their respective owners.
 
 ## What is here? ✨
 
 - A live landscape ride dashboard with battery, speed, gear/map, indicators, charging state, and an adaptive compact presentation.
-- Battery health and cell-voltage views.
+- Battery health and cell-voltage views, including copyable charging telemetry for hardware diagnostics.
+- Authenticated charge-power and charge-target controls from Battery Health on supported VCU firmware.
 - Read-only diagnostics, connection logging, and a developer emulator.
 - First-run bike onboarding and Bluetooth pairing flow.
 - Optional device GPS speed, plus metric, imperial, and system unit preferences.
 - A focused SwiftUI design system shared by the app features.
-- A standalone Watch app that connects directly to the motorcycle for compact ride and charging telemetry. The first release is foreground-only by design.
+- A standalone Watch app that connects directly to the motorcycle for compact ride and charging telemetry, with Bluetooth background support subject to watchOS execution limits.
 
-FENR is intentionally **read-only**. It does not bypass safety controls, change vehicle behaviour, or send undocumented control/configuration commands. Authentication required by the existing telemetry connection is the only write-related protocol activity in this app.
+Most of FENR remains read-only. Its write surface is deliberately limited to the verified VCU charger configuration used for maximum charging power and target state of charge. FENR does not edit riding maps, bypass safety controls, modify firmware, or expose arbitrary configuration writes.
+
+## Charging controls
+
+The iPhone Battery Health screen can adjust two values over the existing authenticated Bluetooth session:
+
+- Maximum charging power in 100 W steps. FENR currently exposes 300-3,300 W for standard, backpack, and unknown chargers, and 300-7,000 W for fast chargers.
+- Charge target from 1% through 100% in 1% steps.
+
+These controls are enabled only for VCU PIC firmware 1.9.1 or newer and while a charger is connected. Before enabling them, FENR reconstructs or reads the current charger configuration and sends an unchanged no-op command. Every later command preserves the other configuration fields, is serialized, and must be confirmed by charger telemetry.
+
+Each slider keeps its draft value inside the SwiftUI view while it is being dragged, so incoming telemetry cannot move the control. SwiftUI submits only the released value; the application applies it optimistically and sends it after a one-second debounce. Pending operations are cancelled or queued as appropriate, and timeouts or telemetry mismatches leave a copyable diagnostic entry instead of silently accepting the requested value.
+
+The Apple Watch app remains telemetry-only. Charging configuration is currently available only from the iPhone Battery Health screen.
 
 ## Why FENR? 🛠️
 

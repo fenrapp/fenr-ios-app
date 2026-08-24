@@ -2,7 +2,7 @@
 
 ## Scope
 
-FENR is a read-only iPhone and Apple Watch dashboard and diagnostics app for compatible electric motorcycles. Keep work within that scope. Do not add BLE commands that modify vehicle configuration, behaviour, safety controls, or firmware. Do not add raw captures, credentials, APKs, copied vendor assets, private endpoints, or research notes to this repository.
+FENR is an iPhone and Apple Watch dashboard and diagnostics app for compatible electric motorcycles, with a narrowly scoped authenticated VCU write surface for verified charging-power and charge-target configuration. Keep vehicle writes limited to protocol behavior confirmed by clean-room evidence and physical telemetry, with firmware gates, no-op validation, serialized operations, value preservation, timeout handling, and telemetry confirmation. Do not add arbitrary configuration writes or commands that modify riding maps, vehicle behavior, safety controls, or firmware. Do not add raw captures, credentials, APKs, copied vendor assets, private endpoints, or research notes to this repository.
 
 ## Architecture
 
@@ -29,11 +29,18 @@ View models depend on use cases and mappers, not concrete data repositories or B
 ## Coding Rules
 
 - Follow existing module boundaries and local patterns before adding abstractions.
+- Keep dependency construction in an explicit composition root, dependency container, assembly, or factory. Initializers for coordinators, services, repositories, transports, queues, schedulers, controllers, and view models must receive their collaborators and only assign them; do not instantiate hidden collaborators inside those initializers.
+- Inject collaborators even when they are value types or stateless utilities. Do not initialize log stores, normalizers, formatters, mappers, schedulers, transports, controllers, or similar dependencies in stored-property declarations or inside the consuming object. Direct initialization is reserved for the object's own primitive runtime state and collections that do not represent a replaceable collaborator.
+- Construct complete object graphs in one phase. Avoid setter injection, post-init callback wiring, and other two-phase initialization when the dependency or handler can be supplied at construction time.
+- Keep transient presentation state such as dragging, focus, hover, and gesture phases inside the SwiftUI view. View models and coordinators receive semantic intents or final values, not control lifecycle callbacks, unless the interaction phase is itself domain behavior.
+- Prefer immutable value types: use `struct` or `enum` with `let` properties when a type only groups dependencies, configuration, input, output, or stateless behavior. Use a reference type only when identity, shared mutable state, cancellation/lifecycle ownership, weak references, continuations, caching, delegate interoperability, or another concrete reference semantic is required.
+- During review and cleanup passes, inspect the touched code for hidden dependency construction, unnecessary reference types, and two-phase initialization. Refactor these issues when they are within the task's scope and keep behavior protected by existing or focused new tests; do not expand into unrelated modules solely to apply the rule mechanically.
+- Use typed branch prefixes for agent work: `feature/<name>` for product changes, `qa/fixes/<name>` for test or validation fixes, `bugfix/<name>` for defects, `chore/<name>` for maintenance, and `research/<name>` for protocol investigation that does not ship app behaviour.
 - Keep UI text in English.
 - Use `StarkPairingIdentity` as the only VIN normalization/validation utility.
 - Treat user-provided VINs and real motorcycle identifiers as sensitive data. Never copy them into source, tests, previews, docs, commit messages, logs, or final responses; use synthetic VINs such as `FENRTEST000000001` or shared debug constants instead.
 - Preserve the app-wide single BLE session. Navigating between dashboard, settings, diagnostics, and battery health must not create competing telemetry connections.
-- The Watch app has its own direct Bluetooth session and must remain foreground-only until an explicit background strategy is designed and validated. Do not route its runtime dependency through a paired iPhone.
+- The Watch app has its own direct Bluetooth session and declares Bluetooth background support. Preserve one Watch session and its restoration policy, and do not route its runtime dependency through a paired iPhone.
 - Add only confirmed telemetry to rider-facing UI. Clearly keep experimental protocol candidates out of production presentation.
 - Keep all source and docs ASCII unless a user-facing file intentionally uses Unicode, such as README emoji.
 
