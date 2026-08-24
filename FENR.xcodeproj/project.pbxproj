@@ -73,6 +73,7 @@
 		12EF8390F51EEC9413816AF6 /* BikeSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49C8A294F5FCCF6DA2312AB7 /* BikeSDK.framework */; };
 		1320EB0695A561644F18A774 /* WatchBatteryRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC218BA851EA3AB97CCFFCD0 /* WatchBatteryRing.swift */; };
 		1336DB5B451FD466D6A8005C /* RuntimeConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4B6E1FF0AFD3619BD8C8E82 /* RuntimeConfiguration.framework */; };
+		13E2BA0D1A4B4D0CA6D5D01E /* RuntimeConfiguration.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F4B6E1FF0AFD3619BD8C8E82 /* RuntimeConfiguration.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		13BBEFDDE912521F596E1ED8 /* BikeRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30889513EC7C09F6346430EB /* BikeRepository.swift */; };
 		13CD118EA05AD36F6ECEA976 /* DebugAppDependencyContainerFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFD361C4F73C43E636B5BB3 /* DebugAppDependencyContainerFactory.swift */; };
 		140986D171D2A63F331C42B8 /* BatteryHealthTestFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C6ECE7F6968AB1F33C6D20A /* BatteryHealthTestFactory.swift */; };
@@ -93,6 +94,7 @@
 		1956B3677E2B346AA5B6394A /* BatteryHealthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D081D5FF7A2B8C4949954091 /* BatteryHealthViewModel.swift */; };
 		19CD0CAC174C05F3AA8BB764 /* BikeDiagnostics.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 86BBE9CEB6A949807ED2A9A7 /* BikeDiagnostics.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		1A531AF72F30D4768FFD839C /* RuntimeConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4B6E1FF0AFD3619BD8C8E82 /* RuntimeConfiguration.framework */; };
+		1B74E2BC2C7B4F8AB552102C /* RuntimeConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4B6E1FF0AFD3619BD8C8E82 /* RuntimeConfiguration.framework */; };
 		1A6BE7A6AC6BFF42CE16B102 /* RetryBikeSecurityHandshakeUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE7AB91736FFAF9CA98D25D /* RetryBikeSecurityHandshakeUseCase.swift */; };
 		1AD778F84FB7E3AF58717B2C /* BikeDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66791CC3437C3C3CF15B7DC3 /* BikeDomain.framework */; };
 		1B0AD9BCBDCAC3A47049EE47 /* WatchRideDashboardContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CF7E9BBC37A1E5767C0D384 /* WatchRideDashboardContent.swift */; };
@@ -260,6 +262,7 @@
 		47A21A487B2A1086A01EF746 /* BikeDataAsyncEventHubTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA51C11361A1E3A1EF061A58 /* BikeDataAsyncEventHubTests.swift */; };
 		47ECAD64195630FABA5FC16E /* AsyncSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 307B01E584E7F27278D08FF8 /* AsyncSupport.framework */; };
 		489BC3C5685BD7E1080FACDF /* RuntimeConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4B6E1FF0AFD3619BD8C8E82 /* RuntimeConfiguration.framework */; };
+		48D557E1E7C74AE3AF7D709C /* RuntimeConfiguration.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F4B6E1FF0AFD3619BD8C8E82 /* RuntimeConfiguration.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		491F1AF13B88ED0548117267 /* BikeDiagnosticsDateFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC80F74C8C3D925024C4D92C /* BikeDiagnosticsDateFormatter.swift */; };
 		49220D033824F1AE743EFA91 /* BikeLiveActivityBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09ED4199536763F256505EBB /* BikeLiveActivityBundle.swift */; };
 		49637005B1D394C49953C6D3 /* BikeBLEFirmwareProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BEAB846A5817ED4E802A7C8 /* BikeBLEFirmwareProfile.swift */; };
@@ -301,6 +304,7 @@
 		552F5EDD17E535FC31810E17 /* BikeDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66791CC3437C3C3CF15B7DC3 /* BikeDomain.framework */; };
 		55AAC46FAB502C34E82A999B /* TelemetryActionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D6DDED6D0BF179BB91F40DC /* TelemetryActionRow.swift */; };
 		55EAA74FC2C5289D69091F06 /* RuntimeConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4B6E1FF0AFD3619BD8C8E82 /* RuntimeConfiguration.framework */; };
+		56A4C6024C7F4E44A3B61C0E /* RuntimeConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4B6E1FF0AFD3619BD8C8E82 /* RuntimeConfiguration.framework */; };
 		5616F250EAEB60787749C14B /* SettingsData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE69387F1BF8B3E7428562EC /* SettingsData.framework */; };
 		56A8F4194E3EC359194990AB /* BikeDiagnosticsSpeedFormatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C75BFCA7751F9EE34FE586B4 /* BikeDiagnosticsSpeedFormatterTests.swift */; };
 		56E090F161ADBE46023FC117 /* SettingsData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE69387F1BF8B3E7428562EC /* SettingsData.framework */; };
@@ -2215,6 +2219,7 @@
 				D6316A10E6124C17D7FC9B42 /* EnvironmentDomain.framework in Embed Frameworks */,
 				9DD1D90610077BB4B116FE05 /* DesignSystem.framework in Embed Frameworks */,
 				08B176E120654021BFECF77B /* MeasurementPresentation.framework in Embed Frameworks */,
+				48D557E1E7C74AE3AF7D709C /* RuntimeConfiguration.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2236,6 +2241,7 @@
 				289BD643AD3C53E7B143E91E /* EnvironmentDomain.framework in Embed Frameworks */,
 				2F590D6426255397BF7565BB /* DesignSystem.framework in Embed Frameworks */,
 				678656E5ECD9EAD86E400F06 /* MeasurementPresentation.framework in Embed Frameworks */,
+				13E2BA0D1A4B4D0CA6D5D01E /* RuntimeConfiguration.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -3069,6 +3075,7 @@
 				5B55A87CB52F02381FD19CA5 /* EnvironmentDomain.framework in Frameworks */,
 				42AEEE205BE248AAF3DE6D8A /* DesignSystem.framework in Frameworks */,
 				9C44C1B4BF194C9855F603D2 /* MeasurementPresentation.framework in Frameworks */,
+				1B74E2BC2C7B4F8AB552102C /* RuntimeConfiguration.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3287,6 +3294,7 @@
 				9D898BF046BD96C045824C62 /* EnvironmentDomain.framework in Frameworks */,
 				C42B0CF9407F1E7C769741E5 /* DesignSystem.framework in Frameworks */,
 				3DA56FDC1BDE576BEBBB4A21 /* MeasurementPresentation.framework in Frameworks */,
+				56A4C6024C7F4E44A3B61C0E /* RuntimeConfiguration.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

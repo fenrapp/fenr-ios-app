@@ -458,6 +458,8 @@ targets:
         embed: true
       - target: MeasurementPresentation
         embed: true
+      - target: RuntimeConfiguration
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watch
@@ -497,6 +499,8 @@ targets:
       - target: DesignSystem
         embed: true
       - target: MeasurementPresentation
+        embed: true
+      - target: RuntimeConfiguration
         embed: true
     settings:
       base:
