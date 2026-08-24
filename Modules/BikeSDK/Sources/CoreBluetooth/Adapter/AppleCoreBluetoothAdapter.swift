@@ -10,12 +10,15 @@ public final class AppleCoreBluetoothAdapter: CoreBluetoothAdapter {
 
     public init() {}
 
-    public func start(delegate: CBCentralManagerDelegate, restorationIdentifier: String) {
+    public func start(delegate: CBCentralManagerDelegate, restorationIdentifier: String?) {
         guard central == nil else { return }
+        let options = restorationIdentifier.map {
+            [CBCentralManagerOptionRestoreIdentifierKey: $0]
+        }
         central = CBCentralManager(
             delegate: delegate,
             queue: .main,
-            options: [CBCentralManagerOptionRestoreIdentifierKey: restorationIdentifier]
+            options: options
         )
     }
 

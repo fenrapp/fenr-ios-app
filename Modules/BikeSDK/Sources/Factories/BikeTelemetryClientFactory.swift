@@ -55,7 +55,7 @@ public enum BikeTelemetryClientFactory {
             connectionCoordinator: connectionCoordinator,
             callbackQueue: callbackQueue
         )
-        return CoreBluetoothBikeTelemetryClient(
+        return makeClient(.init(
             eventHub: eventHub,
             adapter: adapter,
             callbackQueue: callbackQueue,
@@ -63,6 +63,31 @@ public enum BikeTelemetryClientFactory {
             securityCoordinator: securityCoordinator,
             notificationCoordinator: notificationCoordinator,
             centralDelegate: centralDelegate
+        ))
+    }
+
+    private struct CoreBluetoothClientComponents {
+        let eventHub: AsyncEventHub<BikeSDKEvent>
+        let adapter: CoreBluetoothAdapter
+        let callbackQueue: BikeBLECallbackQueue
+        let connectionCoordinator: BikeBLEConnectionCoordinator
+        let securityCoordinator: BikeBLESecurityCoordinator
+        let notificationCoordinator: BikeBLENotificationCoordinator
+        let centralDelegate: CoreBluetoothCentralDelegateProxy
+    }
+
+    private static func makeClient(
+        _ components: CoreBluetoothClientComponents
+    ) -> CoreBluetoothBikeTelemetryClient {
+        CoreBluetoothBikeTelemetryClient(
+            eventHub: components.eventHub,
+            adapter: components.adapter,
+            callbackQueue: components.callbackQueue,
+            connectionCoordinator: components.connectionCoordinator,
+            securityCoordinator: components.securityCoordinator,
+            notificationCoordinator: components.notificationCoordinator,
+            centralDelegate: components.centralDelegate,
+            centralRestorationIdentifier: CoreBluetoothRestorationPolicy.restorationIdentifier(for: .main)
         )
     }
 

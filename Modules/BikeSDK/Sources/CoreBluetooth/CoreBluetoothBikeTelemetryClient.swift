@@ -9,6 +9,7 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
     private let securityCoordinator: BikeBLESecurityCoordinator
     private let notificationCoordinator: BikeBLENotificationCoordinator
     private let centralDelegate: CoreBluetoothCentralDelegateProxy
+    private let centralRestorationIdentifier: String?
     private var isCentralStarted = false
 
     public init(
@@ -18,7 +19,8 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
         connectionCoordinator: BikeBLEConnectionCoordinator,
         securityCoordinator: BikeBLESecurityCoordinator,
         notificationCoordinator: BikeBLENotificationCoordinator,
-        centralDelegate: CoreBluetoothCentralDelegateProxy
+        centralDelegate: CoreBluetoothCentralDelegateProxy,
+        centralRestorationIdentifier: String?
     ) {
         self.eventHub = eventHub
         self.adapter = adapter
@@ -27,6 +29,7 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
         self.securityCoordinator = securityCoordinator
         self.notificationCoordinator = notificationCoordinator
         self.centralDelegate = centralDelegate
+        self.centralRestorationIdentifier = centralRestorationIdentifier
     }
 
     nonisolated public func events() async -> AsyncStream<BikeSDKEvent> {
@@ -85,7 +88,7 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
         guard !isCentralStarted else { return }
         adapter.start(
             delegate: centralDelegate,
-            restorationIdentifier: FENRRuntimeConstants.BikeSDK.centralRestorationIdentifier
+            restorationIdentifier: centralRestorationIdentifier
         )
         isCentralStarted = true
     }

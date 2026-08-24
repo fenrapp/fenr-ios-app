@@ -5,7 +5,7 @@ import RuntimeConfiguration
 public protocol CoreBluetoothAdapter: AnyObject {
     var state: CBManagerState { get }
     func start(delegate: CBCentralManagerDelegate)
-    func start(delegate: CBCentralManagerDelegate, restorationIdentifier: String)
+    func start(delegate: CBCentralManagerDelegate, restorationIdentifier: String?)
     func stopScan()
     func retrieveConnectedPeripherals(withServices serviceUUIDs: [CBUUID]) -> [CBPeripheral]
     func scanForBike()
@@ -15,9 +15,6 @@ public protocol CoreBluetoothAdapter: AnyObject {
 
 public extension CoreBluetoothAdapter {
     func start(delegate: CBCentralManagerDelegate) {
-        start(
-            delegate: delegate,
-            restorationIdentifier: FENRRuntimeConstants.BikeSDK.centralRestorationIdentifier
-        )
+        start(delegate: delegate, restorationIdentifier: nil)
     }
 }

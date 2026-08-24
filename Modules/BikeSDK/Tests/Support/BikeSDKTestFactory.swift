@@ -1,6 +1,7 @@
 import BikeSDK
 import CoreBluetooth
 import Foundation
+import RuntimeConfiguration
 import StarkProtocol
 
 @MainActor
@@ -178,6 +179,7 @@ func makeTelemetryClient(
         centralDelegate: CoreBluetoothCentralDelegateProxy(
             connectionCoordinator: coordinator,
             callbackQueue: callbackQueue
-        )
+        ),
+        centralRestorationIdentifier: FENRRuntimeConstants.BikeSDK.centralRestorationIdentifier
     )
 }

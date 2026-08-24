@@ -22,6 +22,8 @@ public enum FENRRuntimeConstants {
     }
 
     public enum BikeSDK {
+        public static let backgroundModesInfoPlistKey = "UIBackgroundModes"
+        public static let bluetoothCentralBackgroundMode = "bluetooth-central"
         public static let centralRestorationIdentifier = "com.fenr.app.ble-central"
         public static let notificationDebugMinimumInterval: TimeInterval = 1
         public static let securityOperationTimeout: Duration = .seconds(10)
