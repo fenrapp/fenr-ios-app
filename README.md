@@ -8,7 +8,7 @@ FENR is an independent iPhone and Apple Watch dashboard, diagnostics, and chargi
 
 - A live landscape ride dashboard with battery, speed, gear/map, indicators, charging state, and an adaptive compact presentation.
 - Battery health and cell-voltage views, including copyable charging telemetry for hardware diagnostics.
-- Authenticated charge-power and charge-target controls from Battery Health on supported VCU firmware.
+- Authenticated charge-power and charge-target controls from the charging dashboard and Battery Health on supported VCU firmware.
 - Read-only diagnostics, connection logging, and a developer emulator.
 - First-run bike onboarding and Bluetooth pairing flow.
 - Optional device GPS speed, plus metric, imperial, and system unit preferences.
@@ -19,7 +19,7 @@ Most of FENR remains read-only. Its write surface is deliberately limited to the
 
 ## Charging controls
 
-The iPhone Battery Health screen can adjust two values over the existing authenticated Bluetooth session:
+The iPhone charging dashboard and Battery Health screen share one guarded control session that can adjust two values over the existing authenticated Bluetooth connection:
 
 - Maximum charging power in 100 W steps. FENR currently exposes 300-3,300 W for standard, backpack, and unknown chargers, and 300-7,000 W for fast chargers.
 - Charge target from 1% through 100% in 1% steps.
@@ -28,7 +28,7 @@ These controls are enabled only for VCU PIC firmware 1.9.1 or newer and while a 
 
 Each slider keeps its draft value inside the SwiftUI view while it is being dragged, so incoming telemetry cannot move the control. SwiftUI submits only the released value; the application applies it optimistically and sends it after a one-second debounce. Pending operations are cancelled or queued as appropriate, and timeouts or telemetry mismatches leave a copyable diagnostic entry instead of silently accepting the requested value.
 
-The Apple Watch app remains telemetry-only. Charging configuration is currently available only from the iPhone Battery Health screen.
+The Apple Watch app remains telemetry-only. Charging configuration is available from the iPhone charging dashboard and Battery Health screen.
 
 ## Why FENR? 🛠️
 
