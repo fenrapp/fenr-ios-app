@@ -1,13 +1,13 @@
 public struct BatteryHealthViewState: Equatable, Sendable {
-    public var summary: [BatteryHealthMetricViewData]
-    public var charging: [BatteryHealthMetricViewData]
-    public var packStatus: [BatteryHealthMetricViewData]
-    public var cells: [BatteryCellViewData]
-    public var temperatures: [BatteryTemperatureViewData]
-    public var datasets: [BatteryHealthDatasetViewData]
-    public var chargePowerControl: ChargePowerControlViewState
-    public var isMonitoring: Bool
-    public var monitorError: String?
+    public let summary: [BatteryHealthMetricViewData]
+    public let charging: [BatteryHealthMetricViewData]
+    public let packStatus: [BatteryHealthMetricViewData]
+    public let cells: [BatteryCellViewData]
+    public let temperatures: [BatteryTemperatureViewData]
+    public let datasets: [BatteryHealthDatasetViewData]
+    public let chargePowerControl: BatteryHealthChargeControlViewState
+    public let isMonitoring: Bool
+    public let monitorError: String?
 
     public init(
         summary: [BatteryHealthMetricViewData] = [],
@@ -16,7 +16,7 @@ public struct BatteryHealthViewState: Equatable, Sendable {
         cells: [BatteryCellViewData] = [],
         temperatures: [BatteryTemperatureViewData] = [],
         datasets: [BatteryHealthDatasetViewData] = [],
-        chargePowerControl: ChargePowerControlViewState = .init(),
+        chargePowerControl: BatteryHealthChargeControlViewState = .init(),
         isMonitoring: Bool = false,
         monitorError: String? = nil
     ) {

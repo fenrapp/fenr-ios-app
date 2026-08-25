@@ -1,4 +1,5 @@
 import BikeDomain
+import ChargeControl
 import Foundation
 
 @MainActor
@@ -12,6 +13,7 @@ public struct BikeBatteryHealthToViewStateMapper {
     public func map(
         health: BikeBatteryHealth,
         captures: [BatteryDataset: BatteryDatasetCapture],
+        chargeControl: ChargeControlState = .init(),
         isMonitoring: Bool,
         monitorError: String?
     ) -> BatteryHealthViewState {
@@ -34,8 +36,32 @@ public struct BikeBatteryHealthToViewStateMapper {
             datasets: BatteryDataset.allCases.map { dataset in
             datasetViewData(dataset: dataset, capture: captures[dataset], health: health)
             },
+            chargePowerControl: mapChargeControl(chargeControl),
             isMonitoring: isMonitoring,
             monitorError: monitorError
+        )
+    }
+
+    private func mapChargeControl(_ state: ChargeControlState) -> BatteryHealthChargeControlViewState {
+        .init(
+            isVisible: state.isVisible,
+            isEnabled: state.isEnabled,
+            power: .init(
+                selected: state.selectedWatts,
+                minimum: state.minimumWatts,
+                maximum: state.maximumWatts,
+                step: state.stepWatts
+            ),
+            target: .init(
+                selected: state.selectedTargetPercent,
+                minimum: state.minimumTargetPercent,
+                maximum: state.maximumTargetPercent,
+                step: state.targetStepPercent
+            ),
+            chargerText: "\(state.chargerType) charger",
+            statusText: state.status,
+            statusIsError: state.error != nil,
+            errorText: state.error
         )
     }
 
@@ -48,15 +74,16 @@ public struct BikeBatteryHealthToViewStateMapper {
         capture: BatteryDatasetCapture?,
         health: BikeBatteryHealth
     ) -> BatteryHealthDatasetViewData {
-        let status: BatteryHealthDatasetViewData.Status
+        let status: BatteryHealthStatusViewData
         if isValidated(dataset: dataset, health: health) {
-            status = .validated(BatteryHealthText.validated)
+            status = .init(text: BatteryHealthText.validated, emphasis: .positive)
         } else if let capture {
-            status = .captured(
-                "\(BatteryHealthText.captured) \(capture.byteCount) B"
+            status = .init(
+                text: "\(BatteryHealthText.captured) \(capture.byteCount) B",
+                emphasis: .warning
             )
         } else {
-            status = .awaitingSample
+            status = .init(text: BatteryHealthText.awaitingSample, emphasis: .neutral)
         }
         return .init(id: dataset.rawValue, title: dataset.displayName, status: status)
     }

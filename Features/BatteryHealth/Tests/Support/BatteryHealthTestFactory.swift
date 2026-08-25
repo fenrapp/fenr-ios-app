@@ -1,5 +1,6 @@
 @testable import BatteryHealth
 import BikeDomain
+import ChargeControl
 import Foundation
 import MeasurementPresentation
 
@@ -11,19 +12,26 @@ func makeBatteryHealthViewModel(repository: any BikeBatteryHealthRepository) -> 
             stopMonitoring: .init(repository: repository),
             observeHealth: .init(repository: repository),
             observeCaptures: .init(repository: repository),
-            observeSettings: .init(repository: FakeAppSettingsRepository()),
-            prepareChargePowerControl: .init(repository: repository),
-            setChargePowerLimit: .init(repository: repository),
-            setChargeTarget: .init(repository: repository)
+            observeSettings: .init(repository: FakeAppSettingsRepository())
         ),
         mapper: .init(formatter: makeBatteryHealthFormatter()),
         makeMapper: { _ in .init(formatter: makeBatteryHealthFormatter()) },
-        chargeControlLogStore: BatteryHealthChargeControlLogStore(),
-        chargeControlStateUpdater: BatteryHealthChargeControlStateUpdater(
-            normalizer: BatteryHealthChargeControlNormalizer()
+        chargeControl: makeChargeControlSession(repository: repository),
+        captureTimeFormatStyle: Date.FormatStyle(date: .omitted, time: .standard)
+    )
+}
+
+@MainActor
+func makeChargeControlSession(repository: any BikeBatteryHealthRepository) -> ChargeControlSession {
+    ChargeControlSession(
+        useCases: .init(
+            prepare: .init(repository: repository),
+            setPowerLimit: .init(repository: repository),
+            setTarget: .init(repository: repository)
         ),
-        chargeControlTaskScheduler: BatteryHealthChargeControlTaskScheduler(),
-        captureTimeFormatter: SystemTimeFormatter()
+        logger: ChargeControlLogStore(),
+        stateUpdater: ChargeControlStateUpdater(normalizer: ChargeControlNormalizer()),
+        taskScheduler: ChargeControlTaskScheduler()
     )
 }
 
@@ -31,6 +39,7 @@ func makeBatteryHealthViewModel(repository: any BikeBatteryHealthRepository) -> 
 func makeBatteryHealthFormatter(locale: Locale = .init(identifier: "en_US")) -> BatteryHealthFormatter {
     return BatteryHealthFormatter(
         locale: locale,
-        measurementSystem: locale.measurementSystem
+        measurementMapper: VehicleMeasurementMapper(measurementSystem: locale.measurementSystem),
+        measurementTextFormatter: VehicleMeasurementTextFormatter(locale: locale)
     )
 }

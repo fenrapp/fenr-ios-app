@@ -1,53 +1,72 @@
 @MainActor
-public final class BatteryHealthChargeControlTaskScheduler {
+public final class ChargeControlTaskScheduler {
+    private let debounceDelay: Duration
+    private let confirmationDelay: Duration
     private var powerDebounceTask: Task<Void, Never>?
     private var powerConfirmationTask: Task<Void, Never>?
     private var targetDebounceTask: Task<Void, Never>?
     private var targetConfirmationTask: Task<Void, Never>?
 
-    public init() {}
+    public init(
+        debounceDelay: Duration = .seconds(1),
+        confirmationDelay: Duration = .seconds(5)
+    ) {
+        self.debounceDelay = debounceDelay
+        self.confirmationDelay = confirmationDelay
+    }
 
-    func cancelAll() {
+    deinit {
         powerDebounceTask?.cancel()
         powerConfirmationTask?.cancel()
         targetDebounceTask?.cancel()
         targetConfirmationTask?.cancel()
+    }
+
+    func cancelAll() {
+        cancelPowerDebounce()
+        cancelPowerConfirmation()
+        cancelTargetDebounce()
+        cancelTargetConfirmation()
     }
 
     func cancelPowerDebounce() {
         powerDebounceTask?.cancel()
+        powerDebounceTask = nil
     }
 
     func cancelPowerConfirmation() {
         powerConfirmationTask?.cancel()
+        powerConfirmationTask = nil
     }
 
     func cancelTargetDebounce() {
         targetDebounceTask?.cancel()
+        targetDebounceTask = nil
     }
 
     func cancelTargetConfirmation() {
         targetConfirmationTask?.cancel()
+        targetConfirmationTask = nil
     }
 
     func schedulePowerDebounce(operation: @escaping @MainActor () async -> Void) {
-        powerDebounceTask?.cancel()
-        powerDebounceTask = delayedTask(delay: .seconds(1), operation: operation)
+        cancelPowerDebounce()
+        powerDebounceTask = delayedTask(delay: debounceDelay, operation: operation)
     }
 
     func scheduleTargetDebounce(operation: @escaping @MainActor () async -> Void) {
-        targetDebounceTask?.cancel()
-        targetDebounceTask = delayedTask(delay: .seconds(1), operation: operation)
+        cancelTargetDebounce()
+        targetDebounceTask = delayedTask(delay: debounceDelay, operation: operation)
     }
 
     func schedulePowerConfirmation(operation: @escaping @MainActor () async -> Void) {
-        powerConfirmationTask?.cancel()
-        powerConfirmationTask = delayedTask(delay: .seconds(5), operation: operation)
+        cancelPowerConfirmation()
+        powerConfirmationTask = delayedTask(delay: confirmationDelay, operation: operation)
     }
 
     func scheduleTargetConfirmation(operation: @escaping @MainActor () async -> Void) {
-        targetConfirmationTask?.cancel()
-        targetConfirmationTask = delayedTask(delay: .seconds(5), operation: operation)
+        cancelTargetConfirmation()
+        targetConfirmationTask = delayedTask(delay: confirmationDelay, operation: operation)
     }
 
     private func delayedTask(

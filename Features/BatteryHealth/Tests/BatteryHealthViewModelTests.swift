@@ -60,8 +60,7 @@ struct BatteryHealthViewModelTests {
         ))
         #expect(await waitUntil {
             viewModel.viewState.datasets.contains(where: {
-                if case .captured = $0.status { return true }
-                return false
+                $0.status.emphasis == .warning
             })
         })
 
@@ -69,7 +68,7 @@ struct BatteryHealthViewModelTests {
         #expect(viewModel.viewState.datasets.contains(.init(
             id: "cellVoltages",
             title: "Cell voltages",
-            status: .captured("Captured 200 B")
+            status: .init(text: "Captured 200 B", emphasis: .warning)
         )))
         #expect(viewModel.captureLogText().contains("AA BB"))
         viewModel.stop()
@@ -98,7 +97,7 @@ struct BatteryHealthViewModelTests {
         #expect(viewModel.viewState.datasets.contains(.init(
             id: "cellVoltages",
             title: "Cell voltages",
-            status: .validated("Validated")
+            status: .init(text: "Validated", emphasis: .positive)
         )))
         viewModel.stop()
     }

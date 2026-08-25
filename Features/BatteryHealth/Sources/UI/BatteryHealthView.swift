@@ -93,6 +93,6 @@ public struct BatteryHealthView: View {
 
 #Preview("Battery Health") {
     NavigationStack {
-        BatteryHealthView(viewModel: .preview())
+        BatteryHealthView(viewModel: BatteryHealthPreviewFactory.makeViewModel())
     }
 }

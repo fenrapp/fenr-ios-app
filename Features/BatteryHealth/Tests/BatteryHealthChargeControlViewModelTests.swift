@@ -49,7 +49,7 @@ struct BatteryHealthChargeControlViewModelTests {
         await sendChargingHealth(repository: repository, maximumPowerWatts: 1_000)
 
         #expect(await waitUntil {
-            viewModel.viewState.chargePowerControl.selectedWatts == 1_500
+            viewModel.viewState.chargePowerControl.power.selected == 1_500
         })
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargePowerWrites() == [1_500] })
         viewModel.stop()
@@ -67,7 +67,7 @@ struct BatteryHealthChargeControlViewModelTests {
         await sendChargingHealth(repository: repository, maximumPowerWatts: 1_000)
 
         #expect(await waitUntil {
-            viewModel.viewState.chargePowerControl.selectedWatts == 2_200
+            viewModel.viewState.chargePowerControl.power.selected == 2_200
         })
         #expect(await repository.chargePowerWrites().isEmpty)
         viewModel.stop()
@@ -99,7 +99,7 @@ struct BatteryHealthChargeControlViewModelTests {
         viewModel.setChargePowerLimit(watts: 100)
 
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargePowerWrites() == [300] })
-        #expect(viewModel.viewState.chargePowerControl.selectedWatts == 300)
+        #expect(viewModel.viewState.chargePowerControl.power.selected == 300)
         viewModel.stop()
     }
 
@@ -206,7 +206,7 @@ struct BatteryHealthChargeControlViewModelTests {
         )
 
         #expect(await waitUntil {
-            viewModel.viewState.chargePowerControl.selectedTargetPercent == 72
+            viewModel.viewState.chargePowerControl.target.selected == 72
         })
         #expect(await repository.chargeTargetWrites().isEmpty)
         viewModel.stop()

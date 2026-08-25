@@ -10,11 +10,12 @@ public struct BatteryHealthFormatter {
 
     public init(
         locale: Locale,
-        measurementSystem: Locale.MeasurementSystem = Locale.autoupdatingCurrent.measurementSystem
+        measurementMapper: VehicleMeasurementMapper,
+        measurementTextFormatter: VehicleMeasurementTextFormatter
     ) {
         self.locale = locale
-        measurementMapper = VehicleMeasurementMapper(measurementSystem: measurementSystem)
-        measurementTextFormatter = VehicleMeasurementTextFormatter(locale: locale)
+        self.measurementMapper = measurementMapper
+        self.measurementTextFormatter = measurementTextFormatter
     }
 
     public func percent(_ value: Int?) -> String {

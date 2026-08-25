@@ -1,6 +1,5 @@
 enum BatteryHealthText {
     static let placeholder = "--"
-    static let monitoring = "Monitoring"
     static let awaitingSample = "Awaiting sample"
     static let captured = "Captured"
     static let validated = "Validated"

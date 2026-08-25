@@ -1,6 +1,7 @@
 import BikeDomain
+import ChargeControl
+import Combine
 import Foundation
-import MeasurementPresentation
 import RuntimeConfiguration
 import SettingsDomain
 
@@ -8,28 +9,23 @@ import SettingsDomain
 public final class BatteryHealthViewModel: ObservableObject {
     @Published public private(set) var viewState = BatteryHealthViewState()
 
+#if DEBUG
+    var chargeControlSessionIdentity: ObjectIdentifier {
+        ObjectIdentifier(chargeControl)
+    }
+#endif
+
     private let useCases: BatteryHealthUseCases
     private var mapper: BikeBatteryHealthToViewStateMapper
     private let makeMapper: (MeasurementSystem) -> BikeBatteryHealthToViewStateMapper
-    private let chargeControlLogStore: BatteryHealthChargeControlLogStore
-    private let chargeControlStateUpdater: BatteryHealthChargeControlStateUpdater
-    private let chargeControlTaskScheduler: BatteryHealthChargeControlTaskScheduler
-    private let captureTimeFormatter: SystemTimeFormatter
-    private lazy var chargeControl = BatteryHealthChargeControlCoordinator(
-        useCases: useCases,
-        logger: chargeControlLogStore,
-        stateUpdater: chargeControlStateUpdater,
-        taskScheduler: chargeControlTaskScheduler,
-        requestRender: { [weak self] in
-            self?.scheduleRender()
-        }
-    )
-
+    private let chargeControl: ChargeControlSession
+    private let captureTimeFormatStyle: Date.FormatStyle
     private var health = BikeBatteryHealth()
     private var captures: [BatteryDataset: BatteryDatasetCapture] = [:]
     private var streamTasks: [Task<Void, Never>] = []
     private var monitoringTask: Task<Void, Never>?
     private var renderTask: Task<Void, Never>?
+    private var chargeControlCancellable: AnyCancellable?
     private var isStarted = false
     private var isMonitoring = false
     private var monitorError: String?
@@ -38,18 +34,17 @@ public final class BatteryHealthViewModel: ObservableObject {
         useCases: BatteryHealthUseCases,
         mapper: BikeBatteryHealthToViewStateMapper,
         makeMapper: @escaping (MeasurementSystem) -> BikeBatteryHealthToViewStateMapper,
-        chargeControlLogStore: BatteryHealthChargeControlLogStore,
-        chargeControlStateUpdater: BatteryHealthChargeControlStateUpdater,
-        chargeControlTaskScheduler: BatteryHealthChargeControlTaskScheduler,
-        captureTimeFormatter: SystemTimeFormatter
+        chargeControl: ChargeControlSession,
+        captureTimeFormatStyle: Date.FormatStyle
     ) {
         self.useCases = useCases
         self.mapper = mapper
         self.makeMapper = makeMapper
-        self.chargeControlLogStore = chargeControlLogStore
-        self.chargeControlStateUpdater = chargeControlStateUpdater
-        self.chargeControlTaskScheduler = chargeControlTaskScheduler
-        self.captureTimeFormatter = captureTimeFormatter
+        self.chargeControl = chargeControl
+        self.captureTimeFormatStyle = captureTimeFormatStyle
+        chargeControlCancellable = chargeControl.$state
+            .dropFirst()
+            .sink { [weak self] _ in self?.scheduleRender() }
     }
 
     deinit {
@@ -86,7 +81,6 @@ public final class BatteryHealthViewModel: ObservableObject {
         streamTasks.removeAll()
         monitoringTask?.cancel()
         renderTask?.cancel()
-        chargeControl.stop()
         renderTask = nil
         monitoringTask = Task {
             let stopMonitoring = useCases.stopMonitoring
@@ -108,7 +102,7 @@ public final class BatteryHealthViewModel: ObservableObject {
         let captureLines = captures.values
             .sorted { $0.date > $1.date }
             .map { capture in
-                "\(captureTimeFormatter.standardTime(from: capture.date)) | "
+                "\(capture.date.formatted(captureTimeFormatStyle)) | "
                     + "\(capture.dataset.displayName) | \(capture.byteCount) B | \(capture.hex)"
             }
         let chargeLines = chargeControl.logLines.map { "ChargePower | \($0)" }
@@ -170,13 +164,12 @@ public final class BatteryHealthViewModel: ObservableObject {
         let nextState = mapper.map(
             health: health,
             captures: captures,
+            chargeControl: chargeControl.state,
             isMonitoring: isMonitoring,
             monitorError: monitorError
         )
-        var renderedState = nextState
-        renderedState.chargePowerControl = chargeControl.state
-        guard renderedState != viewState else { return }
-        viewState = renderedState
+        guard nextState != viewState else { return }
+        viewState = nextState
     }
 
     private enum RefreshConstants {

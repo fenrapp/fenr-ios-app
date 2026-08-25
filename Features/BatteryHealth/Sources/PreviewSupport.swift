@@ -1,41 +1,45 @@
 import BikeDomain
+import ChargeControl
 import Foundation
 import MeasurementPresentation
 import SettingsDomain
 
-extension BatteryHealthViewModel {
+enum BatteryHealthPreviewFactory {
     @MainActor
-    static func preview() -> BatteryHealthViewModel {
-        BatteryHealthViewModel(
+    static func makeViewModel() -> BatteryHealthViewModel {
+        let formatter = makeFormatter()
+        let repository = BatteryHealthPreviewRepository()
+        return BatteryHealthViewModel(
             useCases: .init(
-                startMonitoring: .init(repository: BatteryHealthPreviewRepository()),
-                stopMonitoring: .init(repository: BatteryHealthPreviewRepository()),
-                observeHealth: .init(repository: BatteryHealthPreviewRepository()),
-                observeCaptures: .init(repository: BatteryHealthPreviewRepository()),
-                observeSettings: .init(repository: BatteryHealthPreviewSettingsRepository()),
-                prepareChargePowerControl: .init(repository: BatteryHealthPreviewRepository()),
-                setChargePowerLimit: .init(repository: BatteryHealthPreviewRepository()),
-                setChargeTarget: .init(repository: BatteryHealthPreviewRepository())
+                startMonitoring: .init(repository: repository),
+                stopMonitoring: .init(repository: repository),
+                observeHealth: .init(repository: repository),
+                observeCaptures: .init(repository: repository),
+                observeSettings: .init(repository: BatteryHealthPreviewSettingsRepository())
             ),
-            mapper: .init(formatter: .preview()),
-            makeMapper: { _ in .init(formatter: .preview()) },
-            chargeControlLogStore: BatteryHealthChargeControlLogStore(),
-            chargeControlStateUpdater: BatteryHealthChargeControlStateUpdater(
-                normalizer: BatteryHealthChargeControlNormalizer()
+            mapper: .init(formatter: formatter),
+            makeMapper: { _ in .init(formatter: makeFormatter()) },
+            chargeControl: ChargeControlSession(
+                useCases: .init(
+                    prepare: .init(repository: repository),
+                    setPowerLimit: .init(repository: repository),
+                    setTarget: .init(repository: repository)
+                ),
+                logger: ChargeControlLogStore(),
+                stateUpdater: ChargeControlStateUpdater(normalizer: ChargeControlNormalizer()),
+                taskScheduler: ChargeControlTaskScheduler()
             ),
-            chargeControlTaskScheduler: BatteryHealthChargeControlTaskScheduler(),
-            captureTimeFormatter: SystemTimeFormatter()
+            captureTimeFormatStyle: Date.FormatStyle(date: .omitted, time: .standard)
         )
     }
-}
 
-@MainActor
-private extension BatteryHealthFormatter {
-    static func preview() -> BatteryHealthFormatter {
+    @MainActor
+    private static func makeFormatter() -> BatteryHealthFormatter {
         let locale = Locale.autoupdatingCurrent
         return BatteryHealthFormatter(
             locale: locale,
-            measurementSystem: .metric
+            measurementMapper: VehicleMeasurementMapper(measurementSystem: .metric),
+            measurementTextFormatter: VehicleMeasurementTextFormatter(locale: locale)
         )
     }
 }

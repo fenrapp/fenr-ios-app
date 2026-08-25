@@ -1,19 +1,28 @@
-public struct ChargePowerControlViewState: Equatable, Sendable {
-    public var isVisible: Bool
-    public var isEnabled: Bool
-    public var selectedWatts: Double
-    public var confirmedWatts: Int?
-    public var minimumWatts: Double
-    public var maximumWatts: Double
-    public var stepWatts: Double
-    public var selectedTargetPercent: Double
-    public var confirmedTargetPercent: Int?
-    public var minimumTargetPercent: Double
-    public var maximumTargetPercent: Double
-    public var targetStepPercent: Double
-    public var chargerType: String
-    public var status: String
-    public var error: String?
+public enum ChargeControlPhase: Equatable, Sendable {
+    case unavailable
+    case preparing
+    case ready
+    case updating
+    case failed
+}
+
+public struct ChargeControlState: Equatable, Sendable {
+    public internal(set) var isVisible: Bool
+    public internal(set) var isEnabled: Bool
+    public internal(set) var selectedWatts: Double
+    public internal(set) var confirmedWatts: Int?
+    public internal(set) var minimumWatts: Double
+    public internal(set) var maximumWatts: Double
+    public internal(set) var stepWatts: Double
+    public internal(set) var selectedTargetPercent: Double
+    public internal(set) var confirmedTargetPercent: Int?
+    public internal(set) var minimumTargetPercent: Double
+    public internal(set) var maximumTargetPercent: Double
+    public internal(set) var targetStepPercent: Double
+    public internal(set) var chargerType: String
+    public internal(set) var status: String
+    public internal(set) var error: String?
+    public internal(set) var phase: ChargeControlPhase
 
     public init(
         isVisible: Bool = false,
@@ -30,7 +39,8 @@ public struct ChargePowerControlViewState: Equatable, Sendable {
         targetStepPercent: Double = 1,
         chargerType: String = "Unknown",
         status: String = "Unavailable",
-        error: String? = nil
+        error: String? = nil,
+        phase: ChargeControlPhase = .unavailable
     ) {
         self.isVisible = isVisible
         self.isEnabled = isEnabled
@@ -47,5 +57,6 @@ public struct ChargePowerControlViewState: Equatable, Sendable {
         self.chargerType = chargerType
         self.status = status
         self.error = error
+        self.phase = phase
     }
 }

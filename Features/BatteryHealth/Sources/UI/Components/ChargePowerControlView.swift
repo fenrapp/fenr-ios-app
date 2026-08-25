@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ChargePowerControlView: View {
-    let state: ChargePowerControlViewState
+    let state: BatteryHealthChargeControlViewState
     let setPowerLimit: (Double) -> Void
     let setChargeTarget: (Double) -> Void
     @State private var displayedPowerWatts: Double
@@ -10,15 +10,15 @@ struct ChargePowerControlView: View {
     @State private var isEditingTarget = false
 
     init(
-        state: ChargePowerControlViewState,
+        state: BatteryHealthChargeControlViewState,
         setPowerLimit: @escaping (Double) -> Void,
         setChargeTarget: @escaping (Double) -> Void
     ) {
         self.state = state
         self.setPowerLimit = setPowerLimit
         self.setChargeTarget = setChargeTarget
-        _displayedPowerWatts = State(initialValue: state.selectedWatts)
-        _displayedTargetPercent = State(initialValue: state.selectedTargetPercent)
+        _displayedPowerWatts = State(initialValue: state.power.selected)
+        _displayedTargetPercent = State(initialValue: state.target.selected)
     }
 
     var body: some View {
@@ -27,14 +27,14 @@ struct ChargePowerControlView: View {
                 VStack(alignment: .leading, spacing: Constants.labelSpacing) {
                     Text("\(Int(displayedPowerWatts)) W")
                         .font(.title3.weight(.semibold))
-                    Text("\(state.chargerType) charger")
+                    Text(state.chargerText)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Text(state.status)
+                Text(state.statusText)
                     .font(.caption.weight(.medium))
-                    .foregroundStyle(state.error == nil ? Color.secondary : Color.red)
+                    .foregroundStyle(state.statusIsError ? Color.red : Color.secondary)
                     .multilineTextAlignment(.trailing)
             }
 
@@ -48,11 +48,12 @@ struct ChargePowerControlView: View {
                         get: { displayedPowerWatts },
                         set: { displayedPowerWatts = $0 }
                     ),
-                    in: state.minimumWatts ... state.maximumWatts,
-                    step: state.stepWatts,
+                    in: state.power.minimum ... state.power.maximum,
+                    step: state.power.step,
                     onEditingChanged: { isEditing in
                         isEditingPower = isEditing
                         if !isEditing {
+                            guard displayedPowerWatts != state.power.selected else { return }
                             setPowerLimit(displayedPowerWatts)
                         }
                     }
@@ -60,9 +61,9 @@ struct ChargePowerControlView: View {
                 .disabled(!state.isEnabled)
 
                 HStack {
-                    Text("\(Int(state.minimumWatts)) W")
+                    Text("\(Int(state.power.minimum)) W")
                     Spacer()
-                    Text("\(Int(state.maximumWatts)) W")
+                    Text("\(Int(state.power.maximum)) W")
                 }
                 .font(.caption2)
                 .foregroundStyle(.secondary)
@@ -83,11 +84,12 @@ struct ChargePowerControlView: View {
                         get: { displayedTargetPercent },
                         set: { displayedTargetPercent = $0 }
                     ),
-                    in: state.minimumTargetPercent ... state.maximumTargetPercent,
-                    step: state.targetStepPercent,
+                    in: state.target.minimum ... state.target.maximum,
+                    step: state.target.step,
                     onEditingChanged: { isEditing in
                         isEditingTarget = isEditing
                         if !isEditing {
+                            guard displayedTargetPercent != state.target.selected else { return }
                             setChargeTarget(displayedTargetPercent)
                         }
                     }
@@ -95,25 +97,25 @@ struct ChargePowerControlView: View {
                 .disabled(!state.isEnabled)
 
                 HStack {
-                    Text("\(Int(state.minimumTargetPercent))%")
+                    Text("\(Int(state.target.minimum))%")
                     Spacer()
-                    Text("\(Int(state.maximumTargetPercent))%")
+                    Text("\(Int(state.target.maximum))%")
                 }
                 .font(.caption2)
                 .foregroundStyle(.secondary)
             }
 
-            if let error = state.error {
+            if let error = state.errorText {
                 Text(error)
                     .font(.caption)
                     .foregroundStyle(.red)
             }
         }
-        .onChange(of: state.selectedWatts) { value in
+        .onChange(of: state.power.selected) { value in
             guard !isEditingPower else { return }
             displayedPowerWatts = value
         }
-        .onChange(of: state.selectedTargetPercent) { value in
+        .onChange(of: state.target.selected) { value in
             guard !isEditingTarget else { return }
             displayedTargetPercent = value
         }
