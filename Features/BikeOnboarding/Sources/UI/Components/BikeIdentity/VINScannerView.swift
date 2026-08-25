@@ -1,4 +1,3 @@
-import StarkProtocol
 import SwiftUI
 import UIKit
 import VisionKit
@@ -62,9 +61,7 @@ struct VINScannerView: UIViewControllerRepresentable {
             case .barcode(let barcode): value = barcode.payloadStringValue ?? ""
             @unknown default: return
             }
-            let vin = StarkPairingIdentity.normalizedVIN(value)
-            guard StarkPairingIdentity.isValidVIN(vin) else { return }
-            onVIN(vin)
+            onVIN(value)
         }
     }
 }

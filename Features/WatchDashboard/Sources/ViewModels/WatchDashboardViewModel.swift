@@ -1,8 +1,5 @@
 import BikeDomain
 import Combine
-import Foundation
-import MeasurementPresentation
-import RuntimeConfiguration
 import SettingsDomain
 
 @MainActor
@@ -10,10 +7,9 @@ public final class WatchDashboardViewModel: ObservableObject {
     @Published public private(set) var viewState = WatchDashboardViewState()
     @Published public private(set) var debugEvents: [BikeDebugEvent] = []
 
-    private let maximumDebugEvents = 12
     private let useCases: WatchDashboardUseCases
-    private let measurementTextFormatter: VehicleMeasurementTextFormatter
-    private let timeRemainingFormatter: TimeRemainingFormatter
+    private let mapper: WatchDashboardViewStateMapper
+    private let maximumDebugEvents: Int
     private var telemetry = BikeTelemetry()
     private var batteryHealth = BikeBatteryHealth()
     private var settings = AppSettings()
@@ -22,23 +18,29 @@ public final class WatchDashboardViewModel: ObservableObject {
     private var debugTask: Task<Void, Never>?
     private var settingsTask: Task<Void, Never>?
     private var batteryHealthTask: Task<Void, Never>?
+    private var monitoringTask: Task<Void, Never>?
+    private var monitoringStopTask: Task<Void, Never>?
     private var isMonitoringBatteryHealth = false
+    private var monitoringGeneration = 0
 
     public init(
         useCases: WatchDashboardUseCases,
-        measurementTextFormatter: VehicleMeasurementTextFormatter = .init(),
-        timeRemainingFormatter: TimeRemainingFormatter = .init()
+        mapper: WatchDashboardViewStateMapper,
+        maximumDebugEvents: Int
     ) {
         self.useCases = useCases
-        self.measurementTextFormatter = measurementTextFormatter
-        self.timeRemainingFormatter = timeRemainingFormatter
+        self.mapper = mapper
+        self.maximumDebugEvents = maximumDebugEvents
     }
 
     deinit {
         telemetryTask?.cancel()
         connectionTask?.cancel()
+        debugTask?.cancel()
         settingsTask?.cancel()
         batteryHealthTask?.cancel()
+        monitoringTask?.cancel()
+        monitoringStopTask?.cancel()
     }
 
     public func start() {
@@ -117,11 +119,11 @@ public final class WatchDashboardViewModel: ObservableObject {
     }
 
     private func receive(_ connection: BikeConnection) {
-        guard !telemetry.lastUpdated.isRecent else {
+        guard !mapper.hasRecentTelemetry(telemetry) else {
             updateViewState()
             return
         }
-        viewState.mode = .unavailable(detail: connectionDetail(connection.state))
+        viewState = mapper.unavailable(connectionState: connection.state)
     }
 
     private func receive(_ event: BikeDebugEvent) {
@@ -132,12 +134,47 @@ public final class WatchDashboardViewModel: ObservableObject {
     }
 
     private func startBatteryHealthMonitoringIfNeeded() {
-        guard !isMonitoringBatteryHealth else { return }
-        isMonitoringBatteryHealth = true
+        guard !isMonitoringBatteryHealth, monitoringTask == nil else { return }
         let startMonitoring = useCases.startBatteryHealthMonitoring
+        let stopMonitoring = useCases.stopBatteryHealthMonitoring
+        let pendingStop = monitoringStopTask
+        monitoringGeneration += 1
+        let generation = monitoringGeneration
+        monitoringTask = Task { [weak self] in
+            await pendingStop?.value
+            guard
+                !Task.isCancelled,
+                let self,
+                self.monitoringGeneration == generation,
+                self.telemetry.runState == .charging
+            else { return }
+            do {
+                try await startMonitoring.execute()
+            } catch {
+                guard self.monitoringGeneration == generation else { return }
+                self.monitoringTask = nil
+                return
+            }
+            guard
+                !Task.isCancelled,
+                self.monitoringGeneration == generation,
+                self.telemetry.runState == .charging
+            else {
+                await stopMonitoring.execute()
+                return
+            }
+            self.isMonitoringBatteryHealth = true
+            self.startObservingBatteryHealth()
+            if self.monitoringGeneration == generation {
+                self.monitoringTask = nil
+            }
+        }
+    }
+
+    private func startObservingBatteryHealth() {
+        guard batteryHealthTask == nil else { return }
         let observeBatteryHealth = useCases.observeBatteryHealth
         batteryHealthTask = Task { [weak self] in
-            try? await startMonitoring.execute()
             let stream = await observeBatteryHealth.execute()
             for await health in stream {
                 guard !Task.isCancelled else { return }
@@ -148,113 +185,29 @@ public final class WatchDashboardViewModel: ObservableObject {
     }
 
     private func stopBatteryHealthMonitoring() {
-        guard isMonitoringBatteryHealth else { return }
-        isMonitoringBatteryHealth = false
         batteryHealthTask?.cancel()
         batteryHealthTask = nil
+        let pendingStart = monitoringTask
+        monitoringGeneration += 1
+        pendingStart?.cancel()
+        monitoringTask = nil
+
+        guard isMonitoringBatteryHealth || pendingStart != nil else { return }
+        isMonitoringBatteryHealth = false
         let stopMonitoring = useCases.stopBatteryHealthMonitoring
-        Task { await stopMonitoring.execute() }
+        let previousStop = monitoringStopTask
+        monitoringStopTask = Task {
+            await pendingStart?.value
+            await previousStop?.value
+            await stopMonitoring.execute()
+        }
     }
 
     private func updateViewState() {
-        guard telemetry.lastUpdated.isRecent else {
-            viewState = .init(mode: .unavailable(detail: "Waiting for telemetry"))
-            return
-        }
-        let isCharging = telemetry.runState == .charging
-        viewState = WatchDashboardViewState(
-            mode: isCharging ? .charging : .ride,
-            batteryPercent: telemetry.batteryLevel.percent,
-            gear: gear(for: telemetry),
-            odometer: telemetry.odometer.kilometers.map { formatDistance($0) },
-            chargingPower: isCharging ? chargingPower : nil,
-            chargingCurrent: isCharging ? chargingCurrent : nil,
-            batteryTemperature: isCharging ? batteryTemperature : nil,
-            chargeETA: isCharging ? chargingETA : nil
+        viewState = mapper.map(
+            telemetry: telemetry,
+            batteryHealth: batteryHealth,
+            settings: settings
         )
-    }
-
-    private func gear(for telemetry: BikeTelemetry) -> String {
-        switch telemetry.runState {
-        case .neutral, .charging: "N"
-        case .on: telemetry.mode.displayIndex.map { String($0) } ?? "R"
-        case .crawlForward: "􀋺"
-        case .crawlReverse: "􀋻"
-        case .off: "OFF"
-        case .unknown: "--"
-        }
-    }
-
-    private var chargingPower: String? {
-        guard let status = batteryHealth.chargingStatus else { return nil }
-        return format(measurementMapper.power(watts: status.maximumPowerWatts))
-    }
-
-    private var chargingCurrent: String? {
-        guard let status = batteryHealth.chargingStatus else { return nil }
-        return format(measurementMapper.current(amperes: status.reportedCurrentAmperes))
-    }
-
-    private var batteryTemperature: String? {
-        let temperatures = batteryHealth.temperatures.map(\.celsius)
-        guard !temperatures.isEmpty else { return nil }
-        let average = temperatures.reduce(0.0, +) / Double(temperatures.count)
-        return format(measurementMapper.temperature(celsius: average))
-    }
-
-    private var chargingETA: String? {
-        guard
-            let stateOfCharge = telemetry.batteryLevel.percent,
-            let voltage = batteryHealth.dcBusVoltage.volts,
-            let status = batteryHealth.chargingStatus,
-            stateOfCharge < status.maximumStateOfChargePercent,
-            voltage > 0,
-            status.reportedCurrentAmperes > 0
-        else { return nil }
-        let wattHours = Double(status.maximumStateOfChargePercent - stateOfCharge)
-            / Constants.percentageScale
-            * settings.batteryPackCapacity.wattHours
-        let seconds = wattHours / (voltage * status.reportedCurrentAmperes) * Constants.secondsPerHour
-        guard seconds.isFinite, seconds > 0 else { return nil }
-        return timeRemainingFormatter.string(from: seconds)
-    }
-
-    private func connectionDetail(_ state: ConnectionState) -> String {
-        switch state {
-        case .reconnecting: "Reconnecting"
-        case .scanning: "Looking for bike"
-        case .connecting, .discovering, .authenticating, .authenticated, .subscribed: "Connecting"
-        case .bluetoothPoweredOff: "Bluetooth is off"
-        case .bluetoothUnauthorized: "Bluetooth permission required"
-        case .failed(let message): message
-        case .disconnected(let reason): reason ?? "Disconnected"
-        default: "Waiting for telemetry"
-        }
-    }
-    private func formatDistance(_ kilometers: Double) -> String {
-        format(measurementMapper.distance(kilometers: kilometers))
-    }
-
-    private func format(_ measurement: VehicleMeasurement) -> String {
-        measurementTextFormatter.string(from: measurement)
-    }
-
-    private var measurementMapper: VehicleMeasurementMapper {
-        VehicleMeasurementMapper(
-            measurementSystem: settings.measurementSystem.resolved()
-        )
-    }
-
-    fileprivate enum Constants {
-        static let percentageScale = 100.0
-        static let secondsPerHour = 3_600.0
-        static let telemetryFreshness = FENRRuntimeConstants.Telemetry.freshnessInterval
-    }
-}
-
-private extension Date? {
-    var isRecent: Bool {
-        guard let self else { return false }
-        return Date().timeIntervalSince(self) < WatchDashboardViewModel.Constants.telemetryFreshness
     }
 }

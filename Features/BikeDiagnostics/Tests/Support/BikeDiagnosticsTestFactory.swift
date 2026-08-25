@@ -31,23 +31,26 @@ func makeViewModel(
 
 @MainActor
 func makeMappers() -> BikeDiagnosticsMappers {
-    let dateFormatter = BikeDiagnosticsDateFormatter()
+    let dateFormatStyle = Date.FormatStyle()
+        .hour(.twoDigits(amPM: .omitted))
+        .minute(.twoDigits)
+        .second(.twoDigits)
     let locale = Locale(identifier: "es_ES")
     let speedFormatter = BikeDiagnosticsSpeedFormatter(
-        measurementSystem: locale.measurementSystem,
-        locale: locale
+        measurementMapper: VehicleMeasurementMapper(measurementSystem: locale.measurementSystem),
+        textFormatter: VehicleMeasurementTextFormatter(locale: locale)
     )
     return BikeDiagnosticsMappers(
         viewState: .init(
             connectionMapper: .init(stateMapper: .init()),
             metricsMapper: .init(
-                dateFormatter: dateFormatter,
+                dateFormatStyle: dateFormatStyle,
                 speedFormatter: speedFormatter,
                 measurementTextFormatter: .init(locale: locale)
             ),
             badgesMapper: .init(runStateMapper: .init()),
             rawFlagsMapper: .init(),
-            debugEventMapper: .init(dateFormatter: dateFormatter)
+            debugEventMapper: .init(dateFormatStyle: dateFormatStyle)
         )
     )
 }

@@ -1,16 +1,17 @@
 import BikeDomain
+import Foundation
 
 public struct BikeDebugEventToDebugEventViewDataMapper: Sendable {
-    private let dateFormatter: BikeDiagnosticsDateFormatter
+    private let dateFormatStyle: Date.FormatStyle
 
-    public init(dateFormatter: BikeDiagnosticsDateFormatter) {
-        self.dateFormatter = dateFormatter
+    public init(dateFormatStyle: Date.FormatStyle) {
+        self.dateFormatStyle = dateFormatStyle
     }
 
     public func map(_ event: BikeDebugEvent) -> DebugEventViewData {
         DebugEventViewData(
             id: event.id,
-            time: dateFormatter.string(from: event.date),
+            time: event.date.formatted(dateFormatStyle),
             title: event.title,
             detail: event.detail
         )
@@ -18,7 +19,7 @@ public struct BikeDebugEventToDebugEventViewDataMapper: Sendable {
 
     public func exportLine(_ event: BikeDebugEvent) -> String {
         [
-            dateFormatter.string(from: event.date),
+            event.date.formatted(dateFormatStyle),
             event.title,
             event.detail
         ].joined(separator: BikeDiagnosticsConstants.debugLogSeparator)

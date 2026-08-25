@@ -7,14 +7,14 @@ public struct WatchDashboardViewState: Equatable, Sendable {
         case charging
     }
 
-    public var mode: Mode
-    public var batteryPercent: Int?
-    public var gear: String
-    public var odometer: String?
-    public var chargingPower: String?
-    public var chargingCurrent: String?
-    public var batteryTemperature: String?
-    public var chargeETA: String?
+    public let mode: Mode
+    public let batteryPercent: Int?
+    public let gear: String
+    public let odometer: String?
+    public let chargingPower: String?
+    public let chargingCurrent: String?
+    public let batteryTemperature: String?
+    public let chargeETA: String?
 
     public init(
         mode: Mode = .unavailable(detail: "Waiting for telemetry"),

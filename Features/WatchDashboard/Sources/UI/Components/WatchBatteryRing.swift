@@ -1,5 +1,4 @@
 import DesignSystem
-import MeasurementPresentation
 import SwiftUI
 
 struct WatchBatteryRing: View {
@@ -58,7 +57,7 @@ struct WatchBatteryRing: View {
     }
 
     private var progress: Double {
-        Double(percentage ?? 0).clamped(to: 0 ... Constants.maximumPercentage)
+        min(max(Double(percentage ?? 0), .zero), Constants.maximumPercentage)
             / Constants.maximumPercentage
     }
 

@@ -277,12 +277,69 @@ struct BikeOnboardingViewModelTests {
         #expect(await waitUntil { await repository.isObservingDiscovery() })
         await repository.sendDiscoveredBikes([first, second])
         #expect(await waitUntil { viewModel.viewState.discoveredBikes.count == 2 })
-        viewModel.selectDiscoveredBike(second)
+        #expect(viewModel.viewState.discoveredBikes.first?.vin == second.vin)
+        #expect(viewModel.viewState.discoveredBikes.first?.signalText == "Strong signal")
+        viewModel.selectDiscoveredBike(
+            .init(vin: second.vin, signalText: "Strong signal", isSelected: false)
+        )
 
         #expect(viewModel.viewState.vin == second.vin)
+        #expect(viewModel.viewState.discoveredBikes.first?.isSelected == true)
         #expect(!viewModel.viewState.isDiscoveringBikes)
     }
 
+    @Test("Accepts only valid VIN scanner output")
+    func validatesScannedVIN() {
+        let viewModel = makeViewModel(
+            repository: OnboardingRepository(),
+            profileRepository: OnboardingProfileRepository()
+        )
+
+        #expect(!viewModel.scannedVIN("not-a-vin"))
+        #expect(viewModel.viewState.vin.isEmpty)
+        #expect(viewModel.scannedVIN(" fenrtest000000001 "))
+        #expect(viewModel.viewState.vin == "FENRTEST000000001")
+    }
+
+}
+
+@MainActor
+@Suite("Bike onboarding task lifecycle")
+struct BikeOnboardingTaskLifecycleTests {
+    @Test("Waits for discovery shutdown before restarting")
+    func serializesDiscoveryRestart() async throws {
+        let repository = OnboardingRepository()
+        let viewModel = makeViewModel(repository: repository)
+        viewModel.startDiscovery()
+        #expect(await waitUntil { await repository.discoveryStartCount() == 1 })
+        await repository.suspendDiscoveryStop()
+
+        viewModel.selectDiscoveredBike(
+            .init(vin: "FENRTEST000000001", signalText: "Strong signal", isSelected: false)
+        )
+        #expect(await waitUntil { await repository.discoveryStopCount() == 1 })
+        viewModel.startDiscovery()
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(await repository.discoveryStartCount() == 1)
+
+        await repository.resumeDiscoveryStop()
+        #expect(await waitUntil { await repository.discoveryStartCount() == 2 })
+    }
+
+    private func makeViewModel(repository: OnboardingRepository) -> BikeOnboardingViewModel {
+        BikeOnboardingViewModel(
+            useCases: .init(
+                start: .init(repository: repository),
+                connect: .init(repository: repository),
+                observeConnection: .init(repository: repository),
+                startDiscovery: .init(repository: repository),
+                stopDiscovery: .init(repository: repository),
+                observeDiscoveredBikes: .init(repository: repository),
+                saveProfile: .init(repository: OnboardingProfileRepository())
+            ),
+            bluetoothAuthorization: { .notDetermined }
+        )
+    }
 }
 
 private extension BikeOnboardingViewModelTests {

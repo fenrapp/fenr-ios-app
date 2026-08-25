@@ -14,6 +14,7 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
     private var streamTasks: [Task<Void, Never>] = []
     private var lifecycleTask: Task<Void, Never>?
     private var actionTask: Task<Void, Never>?
+    private var profileRestoreTask: Task<Void, Never>?
     private var isStarted = false
 
     public init(
@@ -30,6 +31,7 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
         streamTasks.forEach { $0.cancel() }
         lifecycleTask?.cancel()
         actionTask?.cancel()
+        profileRestoreTask?.cancel()
     }
 
     public func start() {
@@ -58,6 +60,8 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
         guard isStarted else { return }
         isStarted = false
         cancelStreamTasks()
+        profileRestoreTask?.cancel()
+        profileRestoreTask = nil
     }
 
     public func vinChanged(_ vin: String) {
@@ -156,9 +160,11 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
     }
 
     private func restoreProfileIfNeeded() {
+        profileRestoreTask?.cancel()
         let loadProfile = useCases.loadProfile
-        Task { [weak self] in
+        profileRestoreTask = Task { [weak self] in
             guard let profile = await loadProfile.execute() else { return }
+            guard !Task.isCancelled else { return }
             self?.vinChanged(profile.vin)
         }
     }

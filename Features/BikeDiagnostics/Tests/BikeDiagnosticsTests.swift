@@ -35,6 +35,23 @@ struct BikeDiagnosticsTests {
         #expect(viewModel.viewState.pin == "999999")
     }
 
+    @Test("Stopping observation cancels profile restoration")
+    func stopCancelsProfileRestoration() async {
+        let repository = FakeBikeDiagnosticsRepository()
+        let profileRepository = FakeBikeProfileRepository(
+            profile: .init(vin: "vin123"),
+            loadDelay: .seconds(5)
+        )
+        let viewModel = makeViewModel(repository: repository, profileRepository: profileRepository)
+        viewModel.startObserving()
+        #expect(await waitUntil { await profileRepository.loadStarted() })
+
+        viewModel.stopObserving()
+
+        #expect(await waitUntil { await profileRepository.loadWasCancelled() })
+        #expect(viewModel.viewState.vin.isEmpty)
+    }
+
     @Test("Connection requests do not replace the configured bike profile")
     func connectionRequestDoesNotPersistVIN() async {
         let repository = FakeBikeDiagnosticsRepository()
@@ -184,7 +201,12 @@ struct BikeDiagnosticsTests {
             viewModel.viewState.debugEvents.first?.title == "Subscription"
         })
 
-        let expectedTime = BikeDiagnosticsDateFormatter().string(from: date)
+        let expectedTime = date.formatted(
+            Date.FormatStyle()
+                .hour(.twoDigits(amPM: .omitted))
+                .minute(.twoDigits)
+                .second(.twoDigits)
+        )
         let debugLogText = viewModel.debugLogText()
         #expect(viewModel.viewState.debugEvents.first?.title == "Subscription")
         #expect(viewModel.viewState.hasDebugLog)

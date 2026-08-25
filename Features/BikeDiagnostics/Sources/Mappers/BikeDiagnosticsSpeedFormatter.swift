@@ -6,11 +6,11 @@ public struct BikeDiagnosticsSpeedFormatter: Sendable {
     private let textFormatter: VehicleMeasurementTextFormatter
 
     public init(
-        measurementSystem: Locale.MeasurementSystem,
-        locale: Locale = .autoupdatingCurrent
+        measurementMapper: VehicleMeasurementMapper,
+        textFormatter: VehicleMeasurementTextFormatter
     ) {
-        measurementMapper = VehicleMeasurementMapper(measurementSystem: measurementSystem)
-        textFormatter = VehicleMeasurementTextFormatter(locale: locale)
+        self.measurementMapper = measurementMapper
+        self.textFormatter = textFormatter
     }
 
     public func string(kilometersPerHour: Double) -> String {

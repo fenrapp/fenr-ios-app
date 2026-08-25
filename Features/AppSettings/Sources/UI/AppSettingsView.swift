@@ -1,5 +1,4 @@
 import DesignSystem
-import SettingsDomain
 import SwiftUI
 
 public struct AppSettingsView: View {
@@ -19,19 +18,19 @@ public struct AppSettingsView: View {
             #if os(iOS)
             Section("Ride dashboard") {
                 Picker("Speed source", selection: speedSourceBinding) {
-                    Text("Bike").tag(SpeedSource.motorcycle.rawValue)
-                    Text("GPS").tag(SpeedSource.gps.rawValue)
-                    Text("Hybrid").tag(SpeedSource.hybrid.rawValue)
+                    ForEach(viewModel.viewState.speedSource.selection.options) { option in
+                        Text(option.title).tag(option.id)
+                    }
                 }
                 .pickerStyle(.segmented)
 
-                Text(speedSourceDescription)
+                Text(viewModel.viewState.speedSource.description)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
 
-                if viewModel.settings.speedSource.usesDeviceLocation {
+                if let locationPermission = viewModel.viewState.speedSource.locationPermission {
                     LocationPermissionRow(
-                        status: viewModel.locationAuthorizationStatus,
+                        status: locationPermission,
                         onRequestAccess: viewModel.requestLocationAccess
                     )
                 }
@@ -40,17 +39,17 @@ public struct AppSettingsView: View {
 
             Section("Units") {
                 Picker("Measurement system", selection: measurementSystemBinding) {
-                    Text("System").tag(MeasurementSystem.system.rawValue)
-                    Text("Metric").tag(MeasurementSystem.metric.rawValue)
-                    Text("Imperial").tag(MeasurementSystem.imperial.rawValue)
+                    ForEach(viewModel.viewState.measurementSystem.options) { option in
+                        Text(option.title).tag(option.id)
+                    }
                 }
                 .pickerStyle(selectionPickerStyle)
             }
 
             Section("Battery") {
                 Picker("Pack capacity", selection: batteryPackCapacityBinding) {
-                    ForEach(BatteryPackCapacity.allCases, id: \.rawValue) { capacity in
-                        Text(capacity.displayName).tag(capacity.rawValue)
+                    ForEach(viewModel.viewState.batteryCapacity.options) { option in
+                        Text(option.title).tag(option.id)
                     }
                 }
                 .pickerStyle(selectionPickerStyle)
@@ -74,11 +73,8 @@ public struct AppSettingsView: View {
 
     private var speedSourceBinding: Binding<String> {
         .init(
-            get: { viewModel.settings.speedSource.rawValue },
-            set: { rawValue in
-                guard let source = SpeedSource(rawValue: rawValue) else { return }
-                viewModel.selectSpeedSource(source)
-            }
+            get: { viewModel.viewState.speedSource.selection.selectedID },
+            set: { viewModel.selectSpeedSource(id: $0) }
         )
     }
 
@@ -92,29 +88,16 @@ public struct AppSettingsView: View {
 
     private var measurementSystemBinding: Binding<String> {
         .init(
-            get: { viewModel.settings.measurementSystem.rawValue },
-            set: { rawValue in
-                guard let system = MeasurementSystem(rawValue: rawValue) else { return }
-                viewModel.selectMeasurementSystem(system)
-            }
+            get: { viewModel.viewState.measurementSystem.selectedID },
+            set: { viewModel.selectMeasurementSystem(id: $0) }
         )
     }
 
     private var batteryPackCapacityBinding: Binding<String> {
         .init(
-            get: { viewModel.settings.batteryPackCapacity.rawValue },
-            set: { rawValue in
-                guard let capacity = BatteryPackCapacity(rawValue: rawValue) else { return }
-                viewModel.selectBatteryPackCapacity(capacity)
-            }
+            get: { viewModel.viewState.batteryCapacity.selectedID },
+            set: { viewModel.selectBatteryPackCapacity(id: $0) }
         )
     }
 
-    private var speedSourceDescription: String {
-        switch viewModel.settings.speedSource {
-        case .motorcycle: "Uses speed reported by the motorcycle."
-        case .gps: "Uses phone GPS when a recent, accurate reading is available."
-        case .hybrid: "Uses GPS when available and falls back to motorcycle telemetry."
-        }
-    }
 }

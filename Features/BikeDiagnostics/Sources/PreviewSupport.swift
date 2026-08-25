@@ -4,29 +4,25 @@ import Foundation
 import MeasurementPresentation
 import SettingsDomain
 
-extension BikeDiagnosticsViewModel {
-    public static func preview() -> BikeDiagnosticsViewModel {
+@MainActor
+enum BikeDiagnosticsPreviewFactory {
+    static func makeViewModel() -> BikeDiagnosticsViewModel {
         let repository = PreviewBikeRepository()
         let pinDeriver = PreviewBikePinDeriver()
         let profileRepository = PreviewBikeProfileRepository()
         let viewModel = BikeDiagnosticsViewModel(
-            useCases: BikeDiagnosticsPreviewFactory.makeUseCases(
+            useCases: makeUseCases(
                 repository: repository,
                 pinDeriver: pinDeriver,
                 profileRepository: profileRepository
             ),
-            mappers: BikeDiagnosticsPreviewFactory.makeMappers(),
-            makeMappers: { _ in BikeDiagnosticsPreviewFactory.makeMappers() }
+            mappers: makeMappers(),
+            makeMappers: { _ in makeMappers() }
         )
         viewModel.vinChanged("FENRTEST000000002")
         viewModel.start()
-        Task { await repository.seed() }
         return viewModel
     }
-}
-
-@MainActor
-private enum BikeDiagnosticsPreviewFactory {
     static func makeUseCases(
         repository: BikeRepository,
         pinDeriver: any BikePinDeriving,
@@ -49,23 +45,26 @@ private enum BikeDiagnosticsPreviewFactory {
     }
 
     static func makeMappers() -> BikeDiagnosticsMappers {
-        let dateFormatter = BikeDiagnosticsDateFormatter()
+        let dateFormatStyle = Date.FormatStyle()
+            .hour(.twoDigits(amPM: .omitted))
+            .minute(.twoDigits)
+            .second(.twoDigits)
         let locale = Locale(identifier: "en_US")
         let speedFormatter = BikeDiagnosticsSpeedFormatter(
-            measurementSystem: locale.measurementSystem,
-            locale: locale
+            measurementMapper: VehicleMeasurementMapper(measurementSystem: locale.measurementSystem),
+            textFormatter: VehicleMeasurementTextFormatter(locale: locale)
         )
         return BikeDiagnosticsMappers(
             viewState: BikeTelemetryToBikeDiagnosticsViewStateMapper(
                 connectionMapper: .init(stateMapper: .init()),
                 metricsMapper: .init(
-                    dateFormatter: dateFormatter,
+                    dateFormatStyle: dateFormatStyle,
                     speedFormatter: speedFormatter,
                     measurementTextFormatter: .init(locale: locale)
                 ),
                 badgesMapper: .init(runStateMapper: .init()),
                 rawFlagsMapper: .init(),
-                debugEventMapper: .init(dateFormatter: dateFormatter)
+                debugEventMapper: .init(dateFormatStyle: dateFormatStyle)
             )
         )
     }
@@ -86,8 +85,13 @@ private actor PreviewBikeRepository: BikeRepository {
     private let telemetry = PreviewEventHub<BikeTelemetry>(replaysLatestValue: true)
     private let connection = PreviewEventHub<BikeConnection>(replaysLatestValue: true)
     private let debug = PreviewEventHub<BikeDebugEvent>(replaysLatestValue: true)
+    private var isSeeded = false
 
-    func start() async {}
+    func start() async {
+        guard !isSeeded else { return }
+        isSeeded = true
+        await seed()
+    }
     func stop() async {}
     func connect(vin: String) async throws {}
     func disconnect() async throws {}
@@ -97,7 +101,7 @@ private actor PreviewBikeRepository: BikeRepository {
     func observeConnection() async -> AsyncStream<BikeConnection> { await connection.stream() }
     func observeDebugEvents() async -> AsyncStream<BikeDebugEvent> { await debug.stream() }
 
-    func seed() async {
+    private func seed() async {
         let vin = "FENRTEST000000002"
         await connection.send(.init(
             state: .receivingTelemetry(peripheralName: vin),

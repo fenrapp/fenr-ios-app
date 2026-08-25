@@ -1,4 +1,5 @@
 import BikeDomain
+import Foundation
 import SettingsDomain
 import Testing
 import TestSupport
@@ -14,7 +15,9 @@ struct WatchDashboardViewModelTests {
                 repository: repository,
                 batteryHealthRepository: repository,
                 settingsRepository: WatchDashboardSettingsRepository()
-            )
+            ),
+            mapper: makeMapper(),
+            maximumDebugEvents: 12
         )
 
         viewModel.start()
@@ -51,7 +54,9 @@ struct WatchDashboardViewModelTests {
                 repository: repository,
                 batteryHealthRepository: repository,
                 settingsRepository: settings
-            )
+            ),
+            mapper: makeMapper(),
+            maximumDebugEvents: 12
         )
 
         viewModel.start()
@@ -83,6 +88,25 @@ struct WatchDashboardViewModelTests {
         #expect(viewModel.viewState.chargeETA != nil)
     }
 
+    @Test("monitoring restart waits for the previous stop")
+    func monitoringRestartWaitsForStop() async throws {
+        let repository = WatchDashboardRepository()
+        let viewModel = makeViewModel(repository: repository)
+        viewModel.start()
+        await repository.send(chargingTelemetry())
+        #expect(await waitUntil { await repository.startMonitoringCalls == 1 })
+        await repository.suspendMonitoringStop()
+
+        await repository.send(.init(statusFlags: .init(isOn: true), lastUpdated: .now))
+        #expect(await waitUntil { await repository.stopMonitoringCalls == 1 })
+        await repository.send(chargingTelemetry())
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(await repository.startMonitoringCalls == 1)
+
+        await repository.resumeMonitoringStop()
+        #expect(await waitUntil { await repository.startMonitoringCalls == 2 })
+    }
+
     @Test("dashboard retains recent debug events")
     func retainsRecentDebugEvents() async {
         let repository = WatchDashboardRepository()
@@ -91,7 +115,9 @@ struct WatchDashboardViewModelTests {
                 repository: repository,
                 batteryHealthRepository: repository,
                 settingsRepository: WatchDashboardSettingsRepository()
-            )
+            ),
+            mapper: makeMapper(),
+            maximumDebugEvents: 12
         )
 
         viewModel.start()
@@ -99,5 +125,33 @@ struct WatchDashboardViewModelTests {
 
         #expect(await waitUntil { viewModel.debugEvents.first?.title == "BLE" })
         #expect(viewModel.debugEvents.first?.detail == "scan started")
+    }
+
+    private func makeMapper() -> WatchDashboardViewStateMapper {
+        WatchDashboardMapperFactory.make(
+            locale: Locale(identifier: "en_US"),
+            now: Date.init,
+            telemetryFreshnessInterval: 60
+        )
+    }
+
+    private func makeViewModel(repository: WatchDashboardRepository) -> WatchDashboardViewModel {
+        WatchDashboardViewModel(
+            useCases: .init(
+                repository: repository,
+                batteryHealthRepository: repository,
+                settingsRepository: WatchDashboardSettingsRepository()
+            ),
+            mapper: makeMapper(),
+            maximumDebugEvents: 12
+        )
+    }
+
+    private func chargingTelemetry() -> BikeTelemetry {
+        .init(
+            batteryLevel: .known(percent: 42),
+            statusFlags: .init(isCharging: true),
+            lastUpdated: .now
+        )
     }
 }

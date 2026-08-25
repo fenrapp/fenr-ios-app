@@ -1,13 +1,12 @@
-import BikeDomain
 import DesignSystem
 import SwiftUI
 
 struct OnboardingIdentifyBikeView: View {
     let vin: String
-    let discoveredBikes: [DiscoveredBike]
+    let discoveredBikes: [BikeDiscoveryViewData]
     let isDiscoveringBikes: Bool
     let onVINChange: (String) -> Void
-    let onSelectBike: (DiscoveredBike) -> Void
+    let onSelectBike: (BikeDiscoveryViewData) -> Void
     let onStartDiscovery: () -> Void
     let onScanVIN: () -> Void
 
@@ -104,7 +103,7 @@ struct OnboardingIdentifyBikeView: View {
                                 VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
                                     Text(bike.vin)
                                         .font(.system(.subheadline, design: .monospaced).weight(.semibold))
-                                    Text(signalLabel(for: bike.rssi))
+                                    Text(bike.signalText)
                                         .font(.caption)
                                         .foregroundStyle(DesignColor.secondaryText)
                                 }
@@ -126,24 +125,16 @@ struct OnboardingIdentifyBikeView: View {
         }
     }
 
-    private func signalLabel(for rssi: Int) -> String {
-        switch rssi {
-        case (-55)...: "Strong signal"
-        case -70 ..< -55: "Good signal"
-        default: "Weak signal"
-        }
+    private func bikeBackground(for bike: BikeDiscoveryViewData) -> Color {
+        bike.isSelected ? DesignColor.accent.opacity(Constants.selectedBikeOpacity) : DesignColor.controlSurface
     }
 
-    private func bikeBackground(for bike: DiscoveredBike) -> Color {
-        vin == bike.vin ? DesignColor.accent.opacity(Constants.selectedBikeOpacity) : DesignColor.controlSurface
+    private func selectedBikeIcon(for bike: BikeDiscoveryViewData) -> String {
+        bike.isSelected ? "checkmark.circle.fill" : "chevron.right"
     }
 
-    private func selectedBikeIcon(for bike: DiscoveredBike) -> String {
-        vin == bike.vin ? "checkmark.circle.fill" : "chevron.right"
-    }
-
-    private func selectedBikeTint(for bike: DiscoveredBike) -> Color {
-        vin == bike.vin ? DesignColor.accent : DesignColor.secondaryText
+    private func selectedBikeTint(for bike: BikeDiscoveryViewData) -> Color {
+        bike.isSelected ? DesignColor.accent : DesignColor.secondaryText
     }
 }
 

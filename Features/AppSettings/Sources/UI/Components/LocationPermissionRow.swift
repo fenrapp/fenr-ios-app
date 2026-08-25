@@ -1,11 +1,10 @@
 #if os(iOS)
 import DesignSystem
-import EnvironmentDomain
 import SwiftUI
 import UIKit
 
 struct LocationPermissionRow: View {
-    let status: LocationAuthorizationStatus
+    let status: LocationPermissionViewState
     let onRequestAccess: () -> Void
 
     @Environment(\.openURL) private var openURL
@@ -17,7 +16,7 @@ struct LocationPermissionRow: View {
                 .foregroundStyle(DesignColor.positive)
         case .notDetermined:
             Button("Allow location access", action: onRequestAccess)
-        case .denied, .restricted:
+        case .denied:
             VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
                 Text("Location access is required for GPS speed.")
                     .font(.footnote)

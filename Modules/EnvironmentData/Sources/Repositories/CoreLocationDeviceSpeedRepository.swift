@@ -2,11 +2,13 @@
 import EnvironmentDomain
 
 @MainActor
-public final class CoreLocationDeviceSpeedRepository: NSObject, DeviceSpeedRepository {
-    private let locationManager = CLLocationManager()
+public final class CoreLocationDeviceSpeedRepository: NSObject, DeviceSpeedRepository,
+    @preconcurrency CLLocationManagerDelegate {
+    private let locationManager: CLLocationManager
     private var continuations: [UUID: AsyncStream<DeviceSpeedSample>.Continuation] = [:]
 
-    override public init() {
+    public init(locationManager: CLLocationManager) {
+        self.locationManager = locationManager
         super.init()
         locationManager.delegate = self
         locationManager.activityType = .automotiveNavigation
@@ -59,9 +61,7 @@ public final class CoreLocationDeviceSpeedRepository: NSObject, DeviceSpeedRepos
             break
         }
     }
-}
 
-extension CoreLocationDeviceSpeedRepository: @preconcurrency CLLocationManagerDelegate {
     public func locationManagerDidChangeAuthorization(_: CLLocationManager) {
         updateLocationMonitoring()
     }

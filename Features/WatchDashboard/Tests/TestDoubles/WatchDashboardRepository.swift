@@ -11,6 +11,8 @@ actor WatchDashboardRepository: BikeRepository, BikeBatteryHealthRepository {
     private let healthContinuation: AsyncStream<BikeBatteryHealth>.Continuation
     private(set) var startMonitoringCalls = 0
     private(set) var stopMonitoringCalls = 0
+    private var suspendsMonitoringStop = false
+    private var monitoringStopContinuations: [CheckedContinuation<Void, Never>] = []
 
     init() {
         let telemetry = AsyncStream.makeStream(of: BikeTelemetry.self)
@@ -35,12 +37,31 @@ actor WatchDashboardRepository: BikeRepository, BikeBatteryHealthRepository {
     func observeConnection() async -> AsyncStream<BikeConnection> { connectionStream }
     func observeDebugEvents() async -> AsyncStream<BikeDebugEvent> { debugEventsStream }
     func startBatteryHealthMonitoring() async throws { startMonitoringCalls += 1 }
-    func stopBatteryHealthMonitoring() async { stopMonitoringCalls += 1 }
+
+    func stopBatteryHealthMonitoring() async {
+        stopMonitoringCalls += 1
+        guard suspendsMonitoringStop else { return }
+        await withCheckedContinuation { continuation in
+            monitoringStopContinuations.append(continuation)
+        }
+    }
+
     func observeBatteryHealth() async -> AsyncStream<BikeBatteryHealth> { healthStream }
     func observeBatteryDatasetCaptures() async -> AsyncStream<BatteryDatasetCapture> { AsyncStream { _ in } }
     func send(_ telemetry: BikeTelemetry) async { telemetryContinuation.yield(telemetry) }
     func send(_ health: BikeBatteryHealth) async { healthContinuation.yield(health) }
     func send(_ event: BikeDebugEvent) async { debugEventsContinuation.yield(event) }
+
+    func suspendMonitoringStop() {
+        suspendsMonitoringStop = true
+    }
+
+    func resumeMonitoringStop() {
+        suspendsMonitoringStop = false
+        let continuations = monitoringStopContinuations
+        monitoringStopContinuations.removeAll()
+        continuations.forEach { $0.resume() }
+    }
 }
 
 actor WatchDashboardSettingsRepository: AppSettingsRepository {

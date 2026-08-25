@@ -16,8 +16,12 @@ public final class BikeOnboardingViewModel: ObservableObject {
 
     private let useCases: BikeOnboardingUseCases
     private var connectionTask: Task<Void, Never>?
+    private var connectionAttemptTask: Task<Void, Never>?
     private var discoveryTask: Task<Void, Never>?
+    private var discoveryStopTask: Task<Void, Never>?
     private var bluetoothAccessTask: Task<Void, Never>?
+    private var completionTask: Task<Void, Never>?
+    private var discoveredBikeSignals: [String: Int] = [:]
     private var isObserving = false
     private var isBluetoothAccessKnownDenied = false
     private var didComplete = false
@@ -49,8 +53,11 @@ public final class BikeOnboardingViewModel: ObservableObject {
 
     deinit {
         connectionTask?.cancel()
+        connectionAttemptTask?.cancel()
         discoveryTask?.cancel()
+        discoveryStopTask?.cancel()
         bluetoothAccessTask?.cancel()
+        completionTask?.cancel()
     }
 
     public func startObserving() {
@@ -70,6 +77,8 @@ public final class BikeOnboardingViewModel: ObservableObject {
         isObserving = false
         connectionTask?.cancel()
         connectionTask = nil
+        connectionAttemptTask?.cancel()
+        connectionAttemptTask = nil
         bluetoothAccessTask?.cancel()
         bluetoothAccessTask = nil
         stopDiscovery()
@@ -107,22 +116,36 @@ public final class BikeOnboardingViewModel: ObservableObject {
 
     public func vinChanged(_ value: String) {
         viewState.vin = StarkPairingIdentity.normalizedVIN(value)
+        refreshDiscoveredBikeViewData()
         viewState.canContinue = Self.canContinue(step: viewState.step, vin: viewState.vin)
         viewState.errorMessage = nil
         viewState.showsBluetoothSettingsButton = false
     }
 
+    public func scannedVIN(_ value: String) -> Bool {
+        let normalizedVIN = StarkPairingIdentity.normalizedVIN(value)
+        guard StarkPairingIdentity.isValidVIN(normalizedVIN) else { return false }
+        vinChanged(normalizedVIN)
+        return true
+    }
+
     public func startDiscovery() {
         guard !viewState.isDiscoveringBikes else { return }
         viewState.isDiscoveringBikes = true
+        discoveredBikeSignals = [:]
         viewState.discoveredBikes = []
         viewState.errorMessage = nil
         viewState.showsBluetoothSettingsButton = false
         let observeDiscoveredBikes = useCases.observeDiscoveredBikes
         let startDiscovery = useCases.startDiscovery
+        let pendingStop = discoveryStopTask
         discoveryTask = Task { [weak self] in
+            await pendingStop?.value
+            guard !Task.isCancelled else { return }
             let stream = await observeDiscoveredBikes.execute()
+            guard !Task.isCancelled else { return }
             await startDiscovery.execute()
+            guard !Task.isCancelled else { return }
             for await bikes in stream {
                 guard !Task.isCancelled else { return }
                 self?.receive(discoveredBikes: bikes)
@@ -130,7 +153,7 @@ public final class BikeOnboardingViewModel: ObservableObject {
         }
     }
 
-    public func selectDiscoveredBike(_ bike: DiscoveredBike) {
+    public func selectDiscoveredBike(_ bike: BikeDiscoveryViewData) {
         vinChanged(bike.vin)
         stopDiscovery()
     }
@@ -159,19 +182,22 @@ private extension BikeOnboardingViewModel {
         let start = useCases.start
         bluetoothAccessTask = Task { [weak self] in
             await start.execute()
-            try? await Task.sleep(for: FENRRuntimeConstants.Onboarding.bluetoothPermissionResponseTimeout)
-            await MainActor.run {
-                guard let self, self.viewState.isRequestingBluetoothAccess else { return }
-                if self.bluetoothAuthorization() == .allowed {
-                    self.advanceAfterBluetoothAccess()
-                    return
-                }
-                self.viewState.isRequestingBluetoothAccess = false
-                self.viewState.showsBluetoothSettingsButton = false
-                self.viewState.errorMessage = """
-                Bluetooth access is still pending. Try again and respond to the iOS prompt.
-                """
+            guard !Task.isCancelled else { return }
+            do {
+                try await Task.sleep(for: FENRRuntimeConstants.Onboarding.bluetoothPermissionResponseTimeout)
+            } catch {
+                return
             }
+            guard !Task.isCancelled, let self, self.viewState.isRequestingBluetoothAccess else { return }
+            if self.bluetoothAuthorization() == .allowed {
+                self.advanceAfterBluetoothAccess()
+                return
+            }
+            self.viewState.isRequestingBluetoothAccess = false
+            self.viewState.showsBluetoothSettingsButton = false
+            self.viewState.errorMessage = """
+            Bluetooth access is still pending. Try again and respond to the iOS prompt.
+            """
         }
     }
 
@@ -190,40 +216,72 @@ private extension BikeOnboardingViewModel {
         guard StarkPairingIdentity.isValidVIN(viewState.vin) else { return }
         viewState.isConnecting = true
         viewState.connectionPhase = .scanning
-        stopDiscovery()
         viewState.connectionDetail = "Looking for \(viewState.vin)"
         viewState.errorMessage = nil
         viewState.showsBluetoothSettingsButton = false
         let vin = viewState.vin
         let connect = useCases.connect
-        Task {
+        let pendingStop = stopDiscovery()
+        connectionAttemptTask?.cancel()
+        connectionAttemptTask = Task { [weak self] in
+            await pendingStop.value
+            guard !Task.isCancelled else { return }
             do {
                 try await connect.execute(vin: vin)
+            } catch is CancellationError {
+                return
             } catch {
-                await MainActor.run {
-                    self.viewState.isConnecting = false
-                    self.viewState.errorMessage = "Unable to start the connection."
-                    self.viewState.showsBluetoothSettingsButton = false
-                }
+                guard !Task.isCancelled, let self else { return }
+                self.viewState.isConnecting = false
+                self.viewState.errorMessage = "Unable to start the connection."
+                self.viewState.showsBluetoothSettingsButton = false
             }
         }
     }
 
     private func receive(discoveredBikes: [DiscoveredBike]) {
-        for bike in discoveredBikes where !viewState.discoveredBikes.contains(where: { $0.vin == bike.vin }) {
-            viewState.discoveredBikes.append(bike)
+        for bike in discoveredBikes {
+            discoveredBikeSignals[bike.vin] = bike.rssi
         }
-        viewState.discoveredBikes.sort { $0.rssi > $1.rssi }
+        refreshDiscoveredBikeViewData()
         guard viewState.discoveredBikes.count == 1, let bike = viewState.discoveredBikes.first else { return }
         selectDiscoveredBike(bike)
     }
 
-    private func stopDiscovery() {
+    private func refreshDiscoveredBikeViewData() {
+        viewState.discoveredBikes = discoveredBikeSignals
+            .sorted { $0.value > $1.value }
+            .map { vin, rssi in
+                .init(
+                    vin: vin,
+                    signalText: signalText(for: rssi),
+                    isSelected: vin == viewState.vin
+                )
+            }
+    }
+
+    private func signalText(for rssi: Int) -> String {
+        switch rssi {
+        case (-55)...: "Strong signal"
+        case -70 ..< -55: "Good signal"
+        default: "Weak signal"
+        }
+    }
+
+    @discardableResult
+    private func stopDiscovery() -> Task<Void, Never> {
         viewState.isDiscoveringBikes = false
         discoveryTask?.cancel()
         discoveryTask = nil
+        let previousStop = discoveryStopTask
         let stopDiscovery = useCases.stopDiscovery
-        Task { await stopDiscovery.execute() }
+        let task = Task {
+            await previousStop?.value
+            guard !Task.isCancelled else { return }
+            await stopDiscovery.execute()
+        }
+        discoveryStopTask = task
+        return task
     }
 
     private func receive(_ connection: BikeConnection) {
@@ -245,8 +303,10 @@ private extension BikeOnboardingViewModel {
             viewState.connectionPhase = .subscribing
             let profile = BikeProfile(vin: viewState.vin)
             let saveProfile = useCases.saveProfile
-            Task { [onCompleted] in
+            completionTask?.cancel()
+            completionTask = Task { [weak self, onCompleted] in
                 await saveProfile.execute(profile)
+                guard !Task.isCancelled, self?.didComplete == true else { return }
                 onCompleted(profile.vin)
             }
         case .failed(let message):

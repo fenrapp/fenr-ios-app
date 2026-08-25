@@ -1,5 +1,6 @@
 @testable import BikeDiagnostics
 import Foundation
+import MeasurementPresentation
 import Testing
 
 @MainActor
@@ -9,8 +10,8 @@ struct BikeDiagnosticsSpeedFormatterTests {
     func formatsMetricSpeed() {
         let locale = Locale(identifier: "es_ES")
         let formatter = BikeDiagnosticsSpeedFormatter(
-            measurementSystem: locale.measurementSystem,
-            locale: locale
+            measurementMapper: VehicleMeasurementMapper(measurementSystem: locale.measurementSystem),
+            textFormatter: VehicleMeasurementTextFormatter(locale: locale)
         )
 
         #expect(formatter.string(kilometersPerHour: 42.1) == "42,1 km/h")
@@ -20,8 +21,8 @@ struct BikeDiagnosticsSpeedFormatterTests {
     func formatsImperialSpeed() {
         let locale = Locale(identifier: "en_US")
         let formatter = BikeDiagnosticsSpeedFormatter(
-            measurementSystem: locale.measurementSystem,
-            locale: locale
+            measurementMapper: VehicleMeasurementMapper(measurementSystem: locale.measurementSystem),
+            textFormatter: VehicleMeasurementTextFormatter(locale: locale)
         )
 
         #expect(formatter.string(kilometersPerHour: 42.1) == "26.2 mph")

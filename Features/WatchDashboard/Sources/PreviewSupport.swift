@@ -1,4 +1,6 @@
 import BikeDomain
+import Foundation
+import RuntimeConfiguration
 import SettingsDomain
 
 #if DEBUG
@@ -11,7 +13,13 @@ enum WatchDashboardPreviewFactory {
                 repository: repository,
                 batteryHealthRepository: repository,
                 settingsRepository: WatchDashboardPreviewSettingsRepository()
-            )
+            ),
+            mapper: WatchDashboardMapperFactory.make(
+                locale: .autoupdatingCurrent,
+                now: Date.init,
+                telemetryFreshnessInterval: FENRRuntimeConstants.Telemetry.freshnessInterval
+            ),
+            maximumDebugEvents: 12
         )
         return viewModel
     }

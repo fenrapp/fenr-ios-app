@@ -1,20 +1,3 @@
-import BikeDomain
-
-public enum BikeOnboardingStep: Int, CaseIterable, Hashable, Sendable {
-    case welcome
-    case preparation
-    case identify
-    case connect
-}
-
-public enum BikeOnboardingConnectionPhase: Int, CaseIterable, Sendable {
-    case scanning
-    case connecting
-    case discovering
-    case authenticating
-    case subscribing
-}
-
 public struct BikeOnboardingViewState: Equatable, Sendable {
     public var step: BikeOnboardingStep
     public var vin: String
@@ -23,7 +6,7 @@ public struct BikeOnboardingViewState: Equatable, Sendable {
     public var isConnecting: Bool
     public var isRequestingBluetoothAccess: Bool
     public var isDiscoveringBikes: Bool
-    public var discoveredBikes: [DiscoveredBike]
+    public var discoveredBikes: [BikeDiscoveryViewData]
     public var canContinue: Bool
     public var showsBluetoothSettingsButton: Bool
     public var errorMessage: String?
@@ -36,7 +19,7 @@ public struct BikeOnboardingViewState: Equatable, Sendable {
         isConnecting: Bool = false,
         isRequestingBluetoothAccess: Bool = false,
         isDiscoveringBikes: Bool = false,
-        discoveredBikes: [DiscoveredBike] = [],
+        discoveredBikes: [BikeDiscoveryViewData] = [],
         canContinue: Bool = true,
         showsBluetoothSettingsButton: Bool = false,
         errorMessage: String? = nil

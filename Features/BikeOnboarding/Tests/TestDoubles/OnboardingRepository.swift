@@ -7,6 +7,10 @@ actor OnboardingRepository: BikeRepository, BikeDiscoveryRepository {
     private var discoveryContinuation: AsyncStream<[DiscoveredBike]>.Continuation?
     private var isObservingDiscoveryValue = false
     private var starts = 0
+    private var discoveryStarts = 0
+    private var discoveryStops = 0
+    private var suspendsDiscoveryStop = false
+    private var discoveryStopContinuations: [CheckedContinuation<Void, Never>] = []
 
     func start() async { starts += 1 }
     func stop() async {}
@@ -16,8 +20,15 @@ actor OnboardingRepository: BikeRepository, BikeDiscoveryRepository {
     func readTelemetrySnapshot() async throws {}
     func observeTelemetry() async -> AsyncStream<BikeTelemetry> { .init { _ in } }
     func observeDebugEvents() async -> AsyncStream<BikeDebugEvent> { .init { _ in } }
-    func startBikeDiscovery() async {}
-    func stopBikeDiscovery() async {}
+    func startBikeDiscovery() async { discoveryStarts += 1 }
+
+    func stopBikeDiscovery() async {
+        discoveryStops += 1
+        guard suspendsDiscoveryStop else { return }
+        await withCheckedContinuation { continuation in
+            discoveryStopContinuations.append(continuation)
+        }
+    }
 
     func observeDiscoveredBikes() async -> AsyncStream<[DiscoveredBike]> {
         AsyncStream { continuation in
@@ -35,8 +46,19 @@ actor OnboardingRepository: BikeRepository, BikeDiscoveryRepository {
 
     func connectedVIN() -> String? { vin }
     func startCount() -> Int { starts }
+    func discoveryStartCount() -> Int { discoveryStarts }
+    func discoveryStopCount() -> Int { discoveryStops }
     func isObservingConnection() -> Bool { isObserving }
     func isObservingDiscovery() -> Bool { isObservingDiscoveryValue }
+    func suspendDiscoveryStop() { suspendsDiscoveryStop = true }
+
+    func resumeDiscoveryStop() {
+        suspendsDiscoveryStop = false
+        let continuations = discoveryStopContinuations
+        discoveryStopContinuations.removeAll()
+        continuations.forEach { $0.resume() }
+    }
+
     func sendConnection(_ connection: BikeConnection) { continuation?.yield(connection) }
     func sendDiscoveredBikes(_ bikes: [DiscoveredBike]) { discoveryContinuation?.yield(bikes) }
 }

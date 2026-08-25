@@ -3,18 +3,17 @@ import Combine
 
 @MainActor
 public final class WatchOnboardingViewModel: ObservableObject {
-    @Published private(set) var discoveredBikes: [DiscoveredBike] = []
-    @Published private(set) var debugEvents: [BikeDebugEvent] = []
-    @Published private(set) var detail = "Searching for nearby bikes"
-    @Published private(set) var errorMessage: String?
-    @Published private(set) var isConnecting = false
+    @Published private(set) var viewState = WatchOnboardingViewState()
 
     private let maximumDebugEvents = 12
     private let useCases: WatchOnboardingUseCases
     private let onCompleted: @MainActor (BikeProfile) -> Void
     private var connectionTask: Task<Void, Never>?
+    private var connectionAttemptTask: Task<Void, Never>?
     private var debugTask: Task<Void, Never>?
     private var discoveryTask: Task<Void, Never>?
+    private var discoveryStopTask: Task<Void, Never>?
+    private var completionTask: Task<Void, Never>?
     private var selectedVIN: String?
     private var didComplete = false
 
@@ -28,8 +27,11 @@ public final class WatchOnboardingViewModel: ObservableObject {
 
     deinit {
         connectionTask?.cancel()
+        connectionAttemptTask?.cancel()
         debugTask?.cancel()
         discoveryTask?.cancel()
+        discoveryStopTask?.cancel()
+        completionTask?.cancel()
     }
 
     func start() {
@@ -42,25 +44,29 @@ public final class WatchOnboardingViewModel: ObservableObject {
     func stop() {
         connectionTask?.cancel()
         connectionTask = nil
+        connectionAttemptTask?.cancel()
+        connectionAttemptTask = nil
         debugTask?.cancel()
         debugTask = nil
-        discoveryTask?.cancel()
-        discoveryTask = nil
-        let stopDiscovery = useCases.stopDiscovery
-        Task { await stopDiscovery.execute() }
+        stopDiscovery()
     }
 
     func scan() {
         discoveryTask?.cancel()
-        discoveredBikes = []
-        debugEvents = []
-        errorMessage = nil
-        detail = "Searching for nearby bikes"
+        viewState.discoveredBikes = []
+        viewState.debugEvents = []
+        viewState.errorMessage = nil
+        viewState.detail = "Searching for nearby bikes"
         let observeDiscoveredBikes = useCases.observeDiscoveredBikes
         let startDiscovery = useCases.startDiscovery
+        let pendingStop = discoveryStopTask
         discoveryTask = Task { [weak self] in
+            await pendingStop?.value
+            guard !Task.isCancelled else { return }
             let stream = await observeDiscoveredBikes.execute()
+            guard !Task.isCancelled else { return }
             await startDiscovery.execute()
+            guard !Task.isCancelled else { return }
             for await bikes in stream {
                 guard !Task.isCancelled else { return }
                 self?.receive(bikes)
@@ -68,21 +74,25 @@ public final class WatchOnboardingViewModel: ObservableObject {
         }
     }
 
-    func select(_ bike: DiscoveredBike) {
-        guard !isConnecting else { return }
+    func select(_ bike: WatchDiscoveredBikeViewData) {
+        guard !viewState.isConnecting else { return }
         selectedVIN = bike.vin
-        isConnecting = true
-        detail = "Connecting to \(bike.vin)"
-        discoveryTask?.cancel()
-        let stopDiscovery = useCases.stopDiscovery
+        viewState.isConnecting = true
+        viewState.detail = "Connecting to \(bike.vin)"
+        let pendingStop = stopDiscovery()
         let connectToBike = useCases.connectToBike
-        Task {
-            await stopDiscovery.execute()
+        connectionAttemptTask?.cancel()
+        connectionAttemptTask = Task { [weak self] in
+            await pendingStop.value
+            guard !Task.isCancelled else { return }
             do {
                 try await connectToBike.execute(vin: bike.vin)
+            } catch is CancellationError {
+                return
             } catch {
-                isConnecting = false
-                errorMessage = "Unable to connect. Try again."
+                guard !Task.isCancelled, let self else { return }
+                self.viewState.isConnecting = false
+                self.viewState.errorMessage = "Unable to connect. Try again."
             }
         }
     }
@@ -110,8 +120,10 @@ public final class WatchOnboardingViewModel: ObservableObject {
     }
 
     private func receive(_ bikes: [DiscoveredBike]) {
-        discoveredBikes = bikes.sorted { $0.rssi > $1.rssi }
-        guard discoveredBikes.count == 1, let bike = discoveredBikes.first else { return }
+        viewState.discoveredBikes = bikes
+            .sorted { $0.rssi > $1.rssi }
+            .map { .init(vin: $0.vin, signalText: "Signal \($0.rssi) dBm") }
+        guard viewState.discoveredBikes.count == 1, let bike = viewState.discoveredBikes.first else { return }
         select(bike)
     }
 
@@ -123,34 +135,51 @@ public final class WatchOnboardingViewModel: ObservableObject {
         case .receivingTelemetry:
             guard let selectedVIN, !didComplete else { return }
             didComplete = true
-            isConnecting = false
-            errorMessage = nil
-            detail = "Receiving data"
+            viewState.isConnecting = false
+            viewState.errorMessage = nil
+            viewState.detail = "Receiving data"
             let profile = BikeProfile(vin: selectedVIN)
             let saveProfile = useCases.saveProfile
-            Task { [onCompleted] in
+            completionTask?.cancel()
+            completionTask = Task { [weak self, onCompleted] in
                 await saveProfile.execute(profile)
+                guard !Task.isCancelled, self?.didComplete == true else { return }
                 onCompleted(profile)
             }
         case .failed(let message):
-            isConnecting = false
-            errorMessage = message
+            viewState.isConnecting = false
+            viewState.errorMessage = message
         case .bluetoothPoweredOff:
-            isConnecting = false
-            errorMessage = "Turn on Bluetooth to continue."
+            viewState.isConnecting = false
+            viewState.errorMessage = "Turn on Bluetooth to continue."
         case .bluetoothUnauthorized:
-            isConnecting = false
-            errorMessage = "Allow Bluetooth access to continue."
+            viewState.isConnecting = false
+            viewState.errorMessage = "Allow Bluetooth access to continue."
         default:
-            detail = detail(for: connection.state)
+            viewState.detail = detail(for: connection.state)
         }
     }
 
     private func receive(_ event: BikeDebugEvent) {
-        debugEvents.insert(event, at: 0)
-        if debugEvents.count > maximumDebugEvents {
-            debugEvents.removeLast(debugEvents.count - maximumDebugEvents)
+        viewState.debugEvents.insert(.init(id: event.id, title: event.title, detail: event.detail), at: 0)
+        if viewState.debugEvents.count > maximumDebugEvents {
+            viewState.debugEvents.removeLast(viewState.debugEvents.count - maximumDebugEvents)
         }
+    }
+
+    @discardableResult
+    private func stopDiscovery() -> Task<Void, Never> {
+        discoveryTask?.cancel()
+        discoveryTask = nil
+        let previousStop = discoveryStopTask
+        let stopDiscovery = useCases.stopDiscovery
+        let task = Task {
+            await previousStop?.value
+            guard !Task.isCancelled else { return }
+            await stopDiscovery.execute()
+        }
+        discoveryStopTask = task
+        return task
     }
 
     private func detail(for state: ConnectionState) -> String {
@@ -160,7 +189,7 @@ public final class WatchOnboardingViewModel: ObservableObject {
         case .authenticating: "Authenticating"
         case .authenticated, .subscribed: "Starting telemetry"
         case .reconnecting: "Reconnecting"
-        default: detail
+        default: viewState.detail
         }
     }
 

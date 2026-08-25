@@ -1,10 +1,9 @@
-import BikeDomain
 import SwiftUI
 
 struct IdentifyBikeOnboardingStepView: View {
     let viewState: BikeOnboardingViewState
     let onVINChange: (String) -> Void
-    let onSelectBike: (DiscoveredBike) -> Void
+    let onSelectBike: (BikeDiscoveryViewData) -> Void
     let onStartDiscovery: () -> Void
     let onScanVIN: () -> Void
 

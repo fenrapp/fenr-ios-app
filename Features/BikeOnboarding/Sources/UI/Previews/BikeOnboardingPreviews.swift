@@ -1,4 +1,3 @@
-import BikeDomain
 import DesignSystem
 import SwiftUI
 
@@ -48,8 +47,8 @@ import SwiftUI
                 step: .identify,
                 vin: "FENRTEST000000001",
                 discoveredBikes: [
-                    .init(vin: "FENRTEST000000001", rssi: -45),
-                    .init(vin: "FENRTEST000000002", rssi: -64)
+                    .init(vin: "FENRTEST000000001", signalText: "Strong signal", isSelected: true),
+                    .init(vin: "FENRTEST000000002", signalText: "Good signal", isSelected: false)
                 ]
             )
         ),

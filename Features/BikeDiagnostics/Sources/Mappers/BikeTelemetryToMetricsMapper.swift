@@ -4,16 +4,16 @@ import MeasurementPresentation
 
 @MainActor
 public struct BikeTelemetryToMetricsMapper {
-    private let dateFormatter: BikeDiagnosticsDateFormatter
+    private let dateFormatStyle: Date.FormatStyle
     private let speedFormatter: BikeDiagnosticsSpeedFormatter
     private let measurementTextFormatter: VehicleMeasurementTextFormatter
 
     public init(
-        dateFormatter: BikeDiagnosticsDateFormatter,
+        dateFormatStyle: Date.FormatStyle,
         speedFormatter: BikeDiagnosticsSpeedFormatter,
         measurementTextFormatter: VehicleMeasurementTextFormatter
     ) {
-        self.dateFormatter = dateFormatter
+        self.dateFormatStyle = dateFormatStyle
         self.speedFormatter = speedFormatter
         self.measurementTextFormatter = measurementTextFormatter
     }
@@ -46,6 +46,6 @@ public struct BikeTelemetryToMetricsMapper {
     }
 
     private func updatedText(_ date: Date?) -> String {
-        date.map(dateFormatter.string(from:)) ?? BikeDiagnosticsText.placeholder
+        date.map { $0.formatted(dateFormatStyle) } ?? BikeDiagnosticsText.placeholder
     }
 }

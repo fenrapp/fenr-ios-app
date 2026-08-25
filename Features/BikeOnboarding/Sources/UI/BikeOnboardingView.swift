@@ -106,8 +106,9 @@ public struct BikeOnboardingView: View {
 
     private var scannerSheet: some View {
         VINScannerView(onVIN: { vin in
-            viewModel.vinChanged(vin)
-            isScannerPresented = false
+            if viewModel.scannedVIN(vin) {
+                isScannerPresented = false
+            }
         }, onUnavailable: {
             isScannerPresented = false
             isScannerUnavailable = true

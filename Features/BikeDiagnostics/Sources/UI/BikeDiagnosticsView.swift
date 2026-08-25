@@ -96,5 +96,5 @@ public struct BikeDiagnosticsView: View {
 }
 
 #Preview("BikeDiagnostics") {
-    BikeDiagnosticsView(viewModel: .preview())
+    BikeDiagnosticsView(viewModel: BikeDiagnosticsPreviewFactory.makeViewModel())
 }

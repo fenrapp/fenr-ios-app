@@ -10,12 +10,15 @@ struct AppSettingsViewModelTests {
     @Test("Saves selected settings")
     func savesSelectedSettings() async {
         let repository = SettingsRepository()
-        let viewModel = AppSettingsViewModel(useCases: makeUseCases(repository: repository))
+        let viewModel = AppSettingsViewModel(
+            useCases: makeUseCases(repository: repository),
+            mapper: AppSettingsViewStateMapper()
+        )
 
         viewModel.start()
-        viewModel.selectSpeedSource(.hybrid)
-        viewModel.selectMeasurementSystem(.imperial)
-        viewModel.selectBatteryPackCapacity(.sixPointEightKilowattHours)
+        viewModel.selectSpeedSource(id: SpeedSource.hybrid.rawValue)
+        viewModel.selectMeasurementSystem(id: MeasurementSystem.imperial.rawValue)
+        viewModel.selectBatteryPackCapacity(id: BatteryPackCapacity.sixPointEightKilowattHours.rawValue)
         let expectedSettings = AppSettings(
             speedSource: .hybrid,
             measurementSystem: .imperial,
@@ -26,6 +29,30 @@ struct AppSettingsViewModelTests {
         }
 
         #expect(didSave)
+        viewModel.stop()
+    }
+
+    @Test("Publishes controls shaped for direct rendering")
+    func publishesPresentationControls() async {
+        let repository = SettingsRepository()
+        let viewModel = AppSettingsViewModel(
+            useCases: makeUseCases(repository: repository),
+            mapper: AppSettingsViewStateMapper()
+        )
+
+        viewModel.start()
+        viewModel.selectSpeedSource(id: SpeedSource.gps.rawValue)
+        #expect(await waitUntil {
+            viewModel.viewState.speedSource.locationPermission == .authorized
+        })
+
+        #expect(viewModel.viewState.speedSource.selection.selectedID == SpeedSource.gps.rawValue)
+        #expect(viewModel.viewState.speedSource.description.contains("phone GPS"))
+        #expect(viewModel.viewState.speedSource.locationPermission == .authorized)
+        #expect(viewModel.viewState.measurementSystem.options.map(\.title) == ["System", "Metric", "Imperial"])
+
+        viewModel.selectSpeedSource(id: SpeedSource.motorcycle.rawValue)
+        #expect(viewModel.viewState.speedSource.locationPermission == nil)
         viewModel.stop()
     }
 
