@@ -124,7 +124,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     public func prepareChargePowerControl(
         chargingStatus: BikeChargingStatus
     ) async throws -> BikeChargePowerControlSnapshot {
-        guard scenario == .charging else { throw BikeEmulatorChargeControlError.chargerUnavailable }
+        guard scenario.supportsChargeControl else { throw BikeEmulatorChargeControlError.chargerUnavailable }
         return makeChargeControlSnapshot(
             watts: Int(chargingStatus.maximumPowerWatts.rounded()),
             targetPercent: chargingStatus.maximumStateOfChargePercent,
@@ -133,7 +133,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     }
 
     public func setChargePowerLimit(watts: Int) async throws -> BikeChargePowerControlSnapshot {
-        guard scenario == .charging else { throw BikeEmulatorChargeControlError.chargerUnavailable }
+        guard scenario.supportsChargeControl else { throw BikeEmulatorChargeControlError.chargerUnavailable }
         guard Constants.minimumChargePowerWatts ... Constants.maximumChargePowerWatts ~= watts else {
             throw BikeEmulatorChargeControlError.invalidPower
         }
@@ -147,7 +147,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     }
 
     public func setChargeTarget(percent: Int) async throws -> BikeChargePowerControlSnapshot {
-        guard scenario == .charging else { throw BikeEmulatorChargeControlError.chargerUnavailable }
+        guard scenario.supportsChargeControl else { throw BikeEmulatorChargeControlError.chargerUnavailable }
         guard Constants.minimumChargeTargetPercent ... Constants.maximumChargeTargetPercent ~= percent else {
             throw BikeEmulatorChargeControlError.invalidTarget
         }

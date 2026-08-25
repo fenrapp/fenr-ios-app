@@ -26,6 +26,9 @@ public struct ChargingDashboardMapper: Sendable {
     ) -> ChargingDashboardViewState {
         let status = batteryHealth.chargingStatus
         let batteryTemperature = averageBatteryTemperature(from: batteryHealth.temperatures)
+        let chargingPowerWatts = status.flatMap { status in
+            batteryHealth.dcBusVoltage.volts.map { $0 * status.reportedCurrentAmperes }
+        }
         let targetPercent = status.map {
             chargeControl.isVisible
                 ? Int(chargeControl.selectedTargetPercent.rounded())
@@ -40,25 +43,29 @@ public struct ChargingDashboardMapper: Sendable {
             status: status
         )
         return ChargingDashboardViewState(
-            gauge: .init(
+            batteryPercent: batteryPercent,
+            targetPercent: targetPercent,
+            estimatedTimeRemaining: estimatedTimeRemaining,
+            isBalancingAtFullCharge: isBalancingAtFullCharge,
+            readout: mapReadout(.init(
                 batteryPercent: batteryPercent,
                 targetPercent: targetPercent,
                 estimatedTimeRemaining: estimatedTimeRemaining,
                 isBalancingAtFullCharge: isBalancingAtFullCharge,
-                readout: mapReadout(
-                    batteryPercent: batteryPercent,
-                    targetPercent: targetPercent,
-                    estimatedTimeRemaining: estimatedTimeRemaining,
-                    isBalancingAtFullCharge: isBalancingAtFullCharge
-                ),
-                control: mapControl(chargeControl)
-            ),
+                isChargerConnected: telemetry.statusFlags.isChargerConnected,
+                batteryHealth: batteryHealth
+            )),
+            control: mapControl(chargeControl),
             maximumPower: measurementMapper.metric(
                 status.map {
                     measurementMapper.power(
                         watts: chargeControl.isVisible ? chargeControl.selectedWatts : $0.maximumPowerWatts
                     )
                 },
+                fractionDigits: 1
+            ),
+            chargingPower: measurementMapper.metric(
+                chargingPowerWatts.map { measurementMapper.power(watts: $0) },
                 fractionDigits: 1
             ),
             reportedCurrent: measurementMapper.metric(
@@ -68,6 +75,11 @@ public struct ChargingDashboardMapper: Sendable {
             batteryTemperature: measurementMapper.metric(
                 batteryTemperature.map { measurementMapper.temperature(celsius: $0) },
                 fractionDigits: 0
+            ),
+            batteryTemperatureEmphasis: temperatureEmphasis(batteryTemperature),
+            activeBalancingCells: .init(
+                valueText: batteryHealth.balancingCellIndexes.count.formatted(),
+                animationValue: Double(batteryHealth.balancingCellIndexes.count)
             )
         )
     }
@@ -99,33 +111,105 @@ public struct ChargingDashboardMapper: Sendable {
         }
     }
 
-    private func mapReadout(
-        batteryPercent: Int?,
-        targetPercent: Int?,
-        estimatedTimeRemaining: String?,
-        isBalancingAtFullCharge: Bool
-    ) -> ChargingDashboardReadoutViewData {
-        let title: String
-        let usesEstimatedTimeStyle: Bool
-        if isBalancingAtFullCharge {
-            title = "BALANCING"
-            usesEstimatedTimeStyle = false
-        } else if let estimatedTimeRemaining {
-            title = "ETA: \(estimatedTimeRemaining)"
-            usesEstimatedTimeStyle = true
-        } else {
-            title = "CHARGING"
-            usesEstimatedTimeStyle = false
+    private func mapReadout(_ context: ReadoutContext) -> ChargingDashboardReadoutViewData {
+        if let exceptionalState = exceptionalReadout(
+            isBalancingAtFullCharge: context.isBalancingAtFullCharge,
+            isChargerConnected: context.isChargerConnected,
+            batteryHealth: context.batteryHealth
+        ) {
+            return exceptionalState
         }
 
-        let chargeState = isBalancingAtFullCharge ? "Balancing" : "Charging"
-        let chargeLevel = batteryPercent.map { "\($0) percent" } ?? "unavailable"
-        let target = targetPercent.map { ". Target \($0) percent" } ?? ""
+        let title: String
+        let subtitle: String?
+        if context.isBalancingAtFullCharge {
+            title = "BALANCING"
+            let activeCellCount = context.batteryHealth.balancingCellIndexes.count
+            subtitle = "\(activeCellCount) \(activeCellCount == 1 ? "CELL" : "CELLS") ACTIVE"
+        } else if let estimatedTimeRemaining = context.estimatedTimeRemaining {
+            title = "ETA: \(estimatedTimeRemaining)"
+            subtitle = context.targetPercent.map { "TARGET \($0)%" }
+        } else {
+            title = "CHARGING"
+            subtitle = context.targetPercent.map { "TARGET \($0)%" }
+        }
+
+        let chargeState = context.isBalancingAtFullCharge ? "Balancing" : "Charging"
+        let chargeLevel = context.batteryPercent.map { "\($0) percent" } ?? "unavailable"
+        let target = context.targetPercent.map { ". Target \($0) percent" } ?? ""
         return .init(
             title: title,
-            usesEstimatedTimeStyle: usesEstimatedTimeStyle,
-            accessibilityLabel: "\(chargeState) \(chargeLevel)\(target)"
+            subtitle: subtitle,
+            accessibilityLabel: "\(chargeState) \(chargeLevel)\(target)",
+            emphasis: context.isBalancingAtFullCharge ? .balancing : .charging,
+            allowsControl: !context.isBalancingAtFullCharge
         )
+    }
+
+    private func exceptionalReadout(
+        isBalancingAtFullCharge: Bool,
+        isChargerConnected: Bool,
+        batteryHealth: BikeBatteryHealth
+    ) -> ChargingDashboardReadoutViewData? {
+        guard !isBalancingAtFullCharge else { return nil }
+        guard isChargerConnected else {
+            return .init(
+                title: "CHARGER",
+                subtitle: "DISCONNECTED",
+                accessibilityLabel: "Charger disconnected",
+                systemImage: "bolt.slash.fill",
+                emphasis: .critical,
+                allowsControl: false,
+                showsProgress: false
+            )
+        }
+        guard batteryHealth.lastUpdated != nil,
+              batteryHealth.chargeState != .unknown,
+              batteryHealth.chargingStatus != nil else {
+            return .init(
+                title: "CHARGING",
+                subtitle: "DATA UNAVAILABLE",
+                accessibilityLabel: "Charging data unavailable",
+                systemImage: "exclamationmark.triangle.fill",
+                emphasis: .warning,
+                allowsControl: false,
+                showsProgress: false
+            )
+        }
+        guard batteryHealth.chargeState != .connected else {
+            return .init(
+                title: "CHARGER",
+                subtitle: "CONNECTED · IDLE",
+                accessibilityLabel: "Charger connected but not charging",
+                systemImage: "powerplug.fill",
+                emphasis: .warning,
+                allowsControl: false,
+                showsProgress: false
+            )
+        }
+        guard batteryHealth.chargeState != .disconnected else {
+            return .init(
+                title: "CHARGER",
+                subtitle: "DISCONNECTED",
+                accessibilityLabel: "Charger disconnected",
+                systemImage: "bolt.slash.fill",
+                emphasis: .critical,
+                allowsControl: false,
+                showsProgress: false
+            )
+        }
+        return nil
+    }
+
+    private func temperatureEmphasis(_ celsius: Double?) -> ChargingDashboardViewState.TemperatureEmphasis {
+        guard let celsius else { return .unavailable }
+        return switch celsius {
+        case ..<Constants.minimumChargingTemperatureCelsius: .critical
+        case Constants.criticalTemperatureCelsius...: .critical
+        case Constants.minimumChargingTemperatureCelsius ..< Constants.lowTemperatureWarningCelsius: .warning
+        case Constants.warningTemperatureCelsius...: .warning
+        default: .normal
+        }
     }
 
     private func averageBatteryTemperature(from temperatures: [BatteryTemperature]) -> Double? {
@@ -162,5 +246,18 @@ public struct ChargingDashboardMapper: Sendable {
         static let percentageScale = 100.0
         static let fullChargePercent = 100
         static let secondsPerHour = 3_600.0
+        static let minimumChargingTemperatureCelsius = 4.0
+        static let lowTemperatureWarningCelsius = 10.0
+        static let warningTemperatureCelsius = 50.0
+        static let criticalTemperatureCelsius = 60.0
+    }
+
+    private struct ReadoutContext {
+        let batteryPercent: Int?
+        let targetPercent: Int?
+        let estimatedTimeRemaining: String?
+        let isBalancingAtFullCharge: Bool
+        let isChargerConnected: Bool
+        let batteryHealth: BikeBatteryHealth
     }
 }

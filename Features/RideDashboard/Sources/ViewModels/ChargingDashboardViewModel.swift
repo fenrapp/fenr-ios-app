@@ -108,7 +108,7 @@ public final class ChargingDashboardViewModel: ObservableObject {
     }
 
     private func updateBatteryHealthMonitoring() {
-        guard telemetry.runState == .charging else {
+        guard telemetry.statusFlags.isChargerConnected else {
             stopBatteryHealthMonitoring(resetsChargeControl: true)
             return
         }
@@ -125,14 +125,14 @@ public final class ChargingDashboardViewModel: ObservableObject {
                 !Task.isCancelled,
                 let self,
                 self.monitoringGeneration == generation,
-                self.telemetry.runState == .charging
+                self.telemetry.statusFlags.isChargerConnected
             else { return }
             do {
                 try await startMonitoring.execute()
                 guard
                     !Task.isCancelled,
                     self.monitoringGeneration == generation,
-                    self.telemetry.runState == .charging
+                    self.telemetry.statusFlags.isChargerConnected
                 else {
                     await stopMonitoring.execute()
                     return

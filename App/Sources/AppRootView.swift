@@ -10,6 +10,7 @@ struct AppRootView: View {
     @StateObject private var diagnosticsViewModel: BikeDiagnosticsViewModel
     @StateObject private var batteryHealthViewModel: BatteryHealthViewModel
     @StateObject private var dashboardViewModel: RideDashboardViewModel
+    @StateObject private var chargingDashboardViewModel: ChargingDashboardViewModel
     @StateObject private var onboardingViewModel: BikeOnboardingViewModel
     @StateObject private var appSettingsViewModel: AppSettingsViewModel
     @StateObject private var setupFlow: BikeSetupFlowController
@@ -29,6 +30,7 @@ struct AppRootView: View {
         _diagnosticsViewModel = StateObject(wrappedValue: dependencies.diagnosticsViewModel)
         _batteryHealthViewModel = StateObject(wrappedValue: dependencies.batteryHealthViewModel)
         _dashboardViewModel = StateObject(wrappedValue: dependencies.dashboardViewModel)
+        _chargingDashboardViewModel = StateObject(wrappedValue: dependencies.chargingDashboardViewModel)
         _onboardingViewModel = StateObject(wrappedValue: dependencies.onboardingViewModel)
         _appSettingsViewModel = StateObject(wrappedValue: dependencies.appSettingsViewModel)
         _setupFlow = StateObject(wrappedValue: dependencies.setupFlow)
@@ -47,6 +49,7 @@ struct AppRootView: View {
                 } else if setupFlow.isCompleted {
                     RideDashboardView(
                         viewModel: dashboardViewModel,
+                        chargingViewModel: chargingDashboardViewModel,
                         onDiagnostics: { path.append(.diagnostics) }
                     )
                     .overlay(alignment: .topTrailing) {

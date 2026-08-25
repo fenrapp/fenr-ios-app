@@ -5,11 +5,9 @@ import SwiftUI
 #Preview("Speed gauge") {
     DashboardSpeedometer(
         state: .init(
-            value: 82,
             valueText: "82",
             unit: "km/h",
             progress: 82.0 / 180.0,
-            emphasis: .positive,
             accessibilityLabel: "Speed 82 km/h"
         )
     )
@@ -22,21 +20,6 @@ import SwiftUI
     DashboardSpeedProgressBar(progress: 0.65)
         .frame(width: 844, height: 3)
         .background(Color.black)
-}
-
-#Preview("Charging gauge") {
-    DashboardChargingGauge(
-        state: .init(
-            batteryPercent: 82,
-            targetPercent: 100,
-            estimatedTimeRemaining: "32 min",
-            isBalancingAtFullCharge: false
-        ),
-        reduceMotion: false
-    )
-    .frame(width: 620, height: 310)
-    .padding()
-    .background(DesignColor.surface)
 }
 
 #Preview("Battery panel") {
@@ -133,31 +116,6 @@ import SwiftUI
     ])
     .padding()
     .background(Color.black)
-}
-
-#Preview("Ride metrics") {
-    RideDashboardMetricsColumn(
-        battery: previewBattery(percentage: 78, emphasis: .positive),
-        odometer: .init(valueText: "180.0", unitText: "km", animationValue: 180),
-        compact: false
-    )
-    .frame(width: 240, height: 280)
-    .padding()
-    .background(DesignColor.surface)
-}
-
-#Preview("Charging metrics") {
-    ChargingDashboardMetricsColumn(
-        viewState: .init(
-            maximumPower: .init(valueText: "6.2", unitText: "kW", animationValue: 6.2),
-            reportedCurrent: .init(valueText: "13.6", unitText: "A", animationValue: 13.6),
-            batteryTemperature: .init(valueText: "24", unitText: "°C", animationValue: 24)
-        ),
-        compact: false
-    )
-    .frame(width: 240, height: 280)
-    .padding()
-    .background(DesignColor.surface)
 }
 
 private func previewBattery(

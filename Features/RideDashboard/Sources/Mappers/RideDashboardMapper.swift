@@ -38,9 +38,6 @@ public struct RideDashboardMapper: Sendable {
             }
             : nil
         let maximumSpeed = measurementMapper.speedometerMaximum()
-        let odometer = hasTelemetry
-            ? telemetry.odometer.kilometers.map(measurementMapper.distance)
-            : nil
         return RideDashboardViewState(
             speedometer: speedometer(
                 speed: speed,
@@ -50,13 +47,14 @@ public struct RideDashboardMapper: Sendable {
             battery: battery(
                 percentage: hasTelemetry ? telemetry.batteryLevel.percent : nil
             ),
-            odometer: measurementMapper.metric(odometer, fractionDigits: 1),
             gear: gear(
                 runState: hasTelemetry ? telemetry.runState : .unknown,
                 modeIndex: hasTelemetry ? telemetry.mode.displayIndex : nil
             ),
             powerMode: powerMode(telemetry: telemetry, hasTelemetry: hasTelemetry),
-            isCharging: hasTelemetry && telemetry.runState == .charging,
+            centerCard: hasTelemetry && telemetry.statusFlags.isChargerConnected
+                ? .charging
+                : .speedometer,
             connectionDetail: connectionText(connection.state),
             hasTelemetry: hasTelemetry,
             indicators: indicators(flags: telemetry.statusFlags, hasTelemetry: hasTelemetry)
@@ -118,19 +116,12 @@ public struct RideDashboardMapper: Sendable {
         let progress = maximum.value > .zero
             ? min(max(value / maximum.value, .zero), 1)
             : .zero
-        let emphasis: DashboardGaugeEmphasis = switch progress {
-        case ..<Constants.moderateSpeedProgress: .informational
-        case ..<Constants.fastSpeedProgress: .positive
-        default: .warning
-        }
         let unit = speed?.unit ?? maximum.unit
         let valueText = measurementMapper.number(value, fractionDigits: .zero)
         return .init(
-            value: value,
             valueText: valueText,
             unit: unit,
             progress: progress,
-            emphasis: emphasis,
             accessibilityLabel: "Speed \(valueText) \(unit)"
         )
     }
@@ -235,8 +226,6 @@ public struct RideDashboardMapper: Sendable {
     }
 
     private enum Constants {
-        static let moderateSpeedProgress = 0.45
-        static let fastSpeedProgress = 0.72
         static let maximumBatteryPercentage = 100
         static let criticalBatteryPercentage = 21
         static let warningBatteryPercentage = 51

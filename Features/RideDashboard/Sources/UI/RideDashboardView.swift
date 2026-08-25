@@ -2,15 +2,19 @@ import SwiftUI
 import UIKit
 
 public struct RideDashboardView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ObservedObject private var viewModel: RideDashboardViewModel
+    @ObservedObject private var chargingViewModel: ChargingDashboardViewModel
     @ScaledMetric(relativeTo: .body) private var speedometerTypeScale: CGFloat = 1
     private let onDiagnostics: () -> Void
 
     public init(
         viewModel: RideDashboardViewModel,
+        chargingViewModel: ChargingDashboardViewModel,
         onDiagnostics: @escaping () -> Void
     ) {
         self.viewModel = viewModel
+        self.chargingViewModel = chargingViewModel
         self.onDiagnostics = onDiagnostics
     }
 
@@ -31,11 +35,21 @@ public struct RideDashboardView: View {
                                 .frame(width: sideWidth)
 
                             ZStack(alignment: .bottom) {
-                                DashboardSpeedometer(
-                                    state: viewModel.viewState.speedometer,
-                                    referenceSize: proxy.size
+                                DashboardCenterCard(
+                                    activeCard: viewModel.viewState.centerCard,
+                                    speedometer: viewModel.viewState.speedometer,
+                                    charging: chargingViewModel.viewState,
+                                    referenceSize: proxy.size,
+                                    reduceMotion: reduceMotion,
+                                    setChargePowerLimit: chargingViewModel.setChargePowerLimit(watts:),
+                                    setChargeTarget: chargingViewModel.setChargeTarget(percent:)
                                 )
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .offset(
+                                    y: viewModel.viewState.centerCard == .charging
+                                        ? physicalCenterOffset(for: proxy.safeAreaInsets)
+                                        : .zero
+                                )
 
                                 DashboardIndicatorStatus(indicators: viewModel.viewState.indicators)
                                     .frame(maxHeight: .infinity, alignment: .top)
@@ -52,7 +66,7 @@ public struct RideDashboardView: View {
 
                     }
                     .overlay(alignment: .bottom) {
-                        if !viewModel.viewState.isCharging {
+                        if viewModel.viewState.centerCard == .speedometer {
                             DashboardSpeedProgressBar(
                                 progress: viewModel.viewState.speedometer.progress
                             )
@@ -71,11 +85,26 @@ public struct RideDashboardView: View {
         }
         .background(Color(uiColor: .systemBackground).ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
-        .task { viewModel.startObserving() }
+        .task {
+            viewModel.startObserving()
+            synchronizeChargingObservation(centerCard: viewModel.viewState.centerCard)
+        }
+        .onChange(of: viewModel.viewState.centerCard) { centerCard in
+            synchronizeChargingObservation(centerCard: centerCard)
+        }
         .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
         .onDisappear {
             UIApplication.shared.isIdleTimerDisabled = false
             viewModel.stopObserving()
+            chargingViewModel.stop()
+        }
+    }
+
+    private func synchronizeChargingObservation(centerCard: RideDashboardViewState.CenterCard) {
+        if centerCard == .charging {
+            chargingViewModel.start()
+        } else {
+            chargingViewModel.stop()
         }
     }
 
@@ -98,6 +127,10 @@ public struct RideDashboardView: View {
 
     private func sideColumnWidth(for size: CGSize, centerWidth: CGFloat) -> CGFloat {
         (size.width - centerWidth) / 2
+    }
+
+    private func physicalCenterOffset(for safeAreaInsets: EdgeInsets) -> CGFloat {
+        (safeAreaInsets.bottom - safeAreaInsets.top) / 2
     }
 
     private enum Constants {

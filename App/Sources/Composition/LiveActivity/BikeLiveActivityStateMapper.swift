@@ -52,9 +52,9 @@ struct BikeLiveActivityStateMapper {
         )
         let runState = liveActivityRunState(telemetry.runState)
         let contentState = BikeLiveActivityContentState(
-            batteryPercent: dashboardState.gauge.batteryPercent,
-            targetPercent: dashboardState.gauge.targetPercent,
-            estimatedTimeRemaining: dashboardState.gauge.estimatedTimeRemaining,
+            batteryPercent: dashboardState.batteryPercent,
+            targetPercent: dashboardState.targetPercent,
+            estimatedTimeRemaining: dashboardState.estimatedTimeRemaining,
             powerText: metricText(dashboardState.maximumPower),
             currentText: metricText(dashboardState.reportedCurrent),
             temperatureText: metricText(dashboardState.batteryTemperature),
@@ -85,7 +85,7 @@ struct BikeLiveActivityStateMapper {
         if !hasRecentTelemetry { return .stale }
         if telemetry.statusFlags.isFaultActive { return .fault }
         if isChargeComplete(telemetry: telemetry, dashboardState: dashboardState) { return .complete }
-        if dashboardState.gauge.isBalancingAtFullCharge { return .balancing }
+        if dashboardState.isBalancingAtFullCharge { return .balancing }
         return switch telemetry.runState {
         case .charging: .charging
         case .on: .riding
@@ -99,9 +99,9 @@ struct BikeLiveActivityStateMapper {
         telemetry: BikeTelemetry,
         dashboardState: ChargingDashboardViewState
     ) -> Bool {
-        guard let percent = dashboardState.gauge.batteryPercent else { return false }
+        guard let percent = dashboardState.batteryPercent else { return false }
         guard telemetry.runState == .charging else { return false }
-        return percent >= (dashboardState.gauge.targetPercent ?? completeBatteryPercent)
+        return percent >= (dashboardState.targetPercent ?? completeBatteryPercent)
     }
 
     private func liveActivityRunState(_ runState: BikeRunState) -> BikeLiveActivityRunState {

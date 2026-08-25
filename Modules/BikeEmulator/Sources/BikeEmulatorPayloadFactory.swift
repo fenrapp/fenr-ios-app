@@ -18,7 +18,7 @@ enum BikeEmulatorPayloadFactory {
         tick: Int,
         date: Date
     ) -> BikeTelemetry {
-        let isCharging = scenario == .charging
+        let isCharging = scenario.isCharging
         let isRiding = scenario == .riding
         let batteryPercent = batteryPercent(for: scenario, tick: tick)
         let speed = isRiding ? ridingSpeed(for: tick) : .zero
@@ -36,9 +36,9 @@ enum BikeEmulatorPayloadFactory {
                 centiKilometers: Constants.odometerCentiKilometers
             ),
             statusFlags: BikeStatusFlags(
-                isOn: !isCharging,
+                isOn: !scenario.isChargerConnected,
                 isCharging: isCharging,
-                isChargerConnected: isCharging,
+                isChargerConnected: scenario.isChargerConnected,
                 isInGear: isRiding && ridingGear.isInGear,
                 isFaultActive: scenario == .cellAnomaly,
                 isBrakeActive: isBrakeActive(for: scenario, tick: tick),
@@ -66,21 +66,30 @@ enum BikeEmulatorPayloadFactory {
         chargePowerLimitWatts: Int = 1_000,
         chargeTargetPercent: Int = 100
     ) -> BikeBatteryHealth {
-        let isCharging = scenario == .charging
+        if scenario == .chargingDataUnavailable {
+            return BikeBatteryHealth(lastUpdated: date)
+        }
+
+        let isCharging = scenario.isCharging
+        let isChargerConnected = scenario.isChargerConnected
         return BikeBatteryHealth(
             stateOfCharge: .known(percent: batteryPercent(for: scenario, tick: tick)),
             stateOfHealth: .known(percent: Constants.healthPercent),
-            dcBusVoltage: .known(volts: isCharging ? Constants.chargingBusVoltage : Constants.stationaryBusVoltage),
-            chargeState: isCharging ? .charging : .disconnected,
+            dcBusVoltage: .known(
+                volts: isChargerConnected ? Constants.chargingBusVoltage : Constants.stationaryBusVoltage
+            ),
+            chargeState: isCharging ? .charging : (isChargerConnected ? .connected : .disconnected),
             isFaultActive: scenario == .cellAnomaly,
             cellVoltages: makeCellVoltages(scenario: scenario, tick: tick),
-            balancingCellIndexes: isCharging ? Constants.balancingCells : [],
+            balancingCellIndexes: scenario == .cellBalancing ? Constants.balancingCells : [],
             temperatures: makeTemperatures(tick: tick),
-            chargingStatus: isCharging
-                ? makeChargingStatus(
+            chargingStatus: isChargerConnected
+                ? BikeEmulatorChargingStatusFactory.make(
                     tick: tick,
                     chargePowerLimitWatts: chargePowerLimitWatts,
-                    chargeTargetPercent: chargeTargetPercent
+                    chargeTargetPercent: chargeTargetPercent,
+                    isCharging: isCharging,
+                    chargingBusVoltage: Constants.chargingBusVoltage
                 )
                 : nil,
             lastUpdated: date
@@ -109,6 +118,10 @@ enum BikeEmulatorPayloadFactory {
                 (abs(sin(Double(tick) * Constants.chargingBatteryWaveRadians))
                     * Double(Constants.chargingBatteryAmplitude)).rounded()
             )
+        case .cellBalancing:
+            return Constants.fullBatteryPercent
+        case .chargerIdle, .chargingDataUnavailable:
+            return Constants.stationaryBatteryPercent
         case .riding:
             return ridingBatteryPercent(for: tick)
         case .cellAnomaly:
@@ -180,35 +193,13 @@ enum BikeEmulatorPayloadFactory {
                 isLeftBlinkerOn: isBlinking,
                 isCheckEngineLightOn: true
             )
-        case .charging:
+        case .charging, .cellBalancing, .chargerIdle, .chargingDataUnavailable:
             return .init()
         }
     }
 
     private static func isBrakeActive(for scenario: BikeEmulatorScenario, tick: Int) -> Bool {
         scenario == .riding && tick % Constants.brakeCycleTicks >= Constants.brakeActiveStartTick
-    }
-
-    private static func makeChargingStatus(
-        tick: Int,
-        chargePowerLimitWatts: Int,
-        chargeTargetPercent: Int
-    ) -> BikeChargingStatus {
-        let chargeLoad = abs(sin(Double(tick) * Constants.chargingLoadWaveRadians))
-        let requestedCurrent = Constants.chargeCurrent + chargeLoad * Constants.chargingCurrentAmplitude
-        let reportedCurrent = min(
-            requestedCurrent,
-            Double(chargePowerLimitWatts) / Constants.chargingBusVoltage
-        )
-        return BikeChargingStatus(
-            requestedCurrentAmperes: requestedCurrent,
-            reportedCurrentAmperes: reportedCurrent,
-            maximumCurrentAmperes: Constants.maximumCurrent,
-            maximumPowerWatts: Double(chargePowerLimitWatts),
-            targetCellVoltageVolts: Constants.targetCellVoltage,
-            maximumStateOfChargePercent: chargeTargetPercent,
-            chargerType: .backpack
-        )
     }
 
     private static func makeCellVoltages(
@@ -327,6 +318,7 @@ private extension BikeEmulatorPayloadFactory {
         static let peripheralIdentifier = UUID(uuidString: "00000000-0000-0000-0000-000000000001")
         static let rssi = -48
         static let stationaryBatteryPercent = 68
+        static let fullBatteryPercent = 100
         static let chargingBatteryPercent = 68
         static let chargingBatteryAmplitude = 26
         static let chargingBatteryWaveRadians = 0.06
@@ -354,11 +346,6 @@ private extension BikeEmulatorPayloadFactory {
         static let ridingInfoFlag = 0x0212
         static let chargingBusVoltage = 388.4
         static let stationaryBusVoltage = 387.4
-        static let chargeCurrent = 2.5
-        static let chargingCurrentAmplitude = 12.0
-        static let chargingLoadWaveRadians = 0.14
-        static let maximumCurrent = 20.0
-        static let targetCellVoltage = 4.275
         static let balancingCells: Set<Int> = [12, 57]
         static let firstCellPosition = 1
         static let cellCount = 100
