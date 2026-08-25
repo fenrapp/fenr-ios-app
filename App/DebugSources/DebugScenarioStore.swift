@@ -22,7 +22,27 @@ struct DebugScenarioStore {
         userDefaults.set(scenario.rawValue, forKey: Constants.scenarioKey)
     }
 
+    func loadPowerModePreset() -> BikeEmulatorPowerModePreset {
+        userDefaults.string(forKey: Constants.powerModePresetKey)
+            .flatMap(BikeEmulatorPowerModePreset.init(rawValue:)) ?? .standard
+    }
+
+    func save(_ preset: BikeEmulatorPowerModePreset) {
+        userDefaults.set(preset.rawValue, forKey: Constants.powerModePresetKey)
+    }
+
+    func loadActiveMap() -> Int {
+        let value = userDefaults.integer(forKey: Constants.activeMapKey)
+        return 1 ... 5 ~= value ? value : 4
+    }
+
+    func saveActiveMap(_ map: Int) {
+        userDefaults.set(map, forKey: Constants.activeMapKey)
+    }
+
     private enum Constants {
         static let scenarioKey = "fenr.debug.selectedScenario"
+        static let powerModePresetKey = "fenr.debug.powerModePreset"
+        static let activeMapKey = "fenr.debug.activeMap"
     }
 }

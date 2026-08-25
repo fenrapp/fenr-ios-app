@@ -11,6 +11,8 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     private let discoveredBikesHub: BikeEmulatorEventHub<[DiscoveredBike]>
 
     private var scenario: BikeEmulatorScenario
+    private var powerModePreset: BikeEmulatorPowerModePreset
+    private var activeMapNumber: Int
     private var tick = 0
     private var isStarted = false
     private var batteryHealthMonitoringLeaseCount = 0
@@ -18,8 +20,15 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     private var chargeTargetPercent = Constants.defaultChargeTargetPercent
     private var updateTask: Task<Void, Never>?
 
-    init(scenario: BikeEmulatorScenario, channels: BikeEmulatorChannels) {
+    init(
+        scenario: BikeEmulatorScenario,
+        powerModePreset: BikeEmulatorPowerModePreset,
+        activeMapNumber: Int,
+        channels: BikeEmulatorChannels
+    ) {
         self.scenario = scenario
+        self.powerModePreset = powerModePreset
+        self.activeMapNumber = max(1, min(5, activeMapNumber))
         telemetryHub = channels.telemetry
         connectionHub = channels.connection
         debugEventHub = channels.debugEvent
@@ -71,6 +80,14 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     }
 
     public func readTelemetrySnapshot() async throws {
+        await publishCurrentState()
+    }
+
+    public func refreshPowerModeConfigurations() async throws {
+        guard powerModePreset != .failure else {
+            await publishDebugEvent(title: "Power modes", detail: "Simulated 4005 timeout")
+            throw BikeEmulatorPowerModeError.readFailure
+        }
         await publishCurrentState()
     }
 
@@ -156,6 +173,18 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
         scenario
     }
 
+    public func setPowerModePreset(_ preset: BikeEmulatorPowerModePreset) async {
+        powerModePreset = preset
+        await publishCurrentState()
+        await publishDebugEvent(title: "Power modes", detail: "Preset: \(preset.displayName)")
+    }
+
+    public func setActiveMap(_ visibleMap: Int) async {
+        activeMapNumber = max(1, min(5, visibleMap))
+        await publishCurrentState()
+        await publishDebugEvent(title: "Power modes", detail: "Active map: \(activeMapNumber)")
+    }
+
     private func scheduleUpdates() {
         updateTask?.cancel()
         updateTask = Task { [weak self] in
@@ -195,7 +224,13 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     }
 
     private func makeTelemetry(date: Date) -> BikeTelemetry {
-        BikeEmulatorPayloadFactory.makeTelemetry(scenario: scenario, tick: tick, date: date)
+        BikeEmulatorPayloadFactory.makeTelemetry(
+            scenario: scenario,
+            powerModePreset: powerModePreset,
+            activeMapNumber: activeMapNumber,
+            tick: tick,
+            date: date
+        )
     }
 
     private func makeBatteryHealth(date: Date) -> BikeBatteryHealth {
@@ -251,4 +286,10 @@ private enum BikeEmulatorChargeControlError: Error {
     case chargerUnavailable
     case invalidPower
     case invalidTarget
+}
+
+private enum BikeEmulatorPowerModeError: LocalizedError {
+    case readFailure
+
+    var errorDescription: String? { "Simulated 4005 read timeout" }
 }

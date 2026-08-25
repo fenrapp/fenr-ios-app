@@ -13,6 +13,8 @@ enum BikeEmulatorPayloadFactory {
 
     static func makeTelemetry(
         scenario: BikeEmulatorScenario,
+        powerModePreset: BikeEmulatorPowerModePreset,
+        activeMapNumber: Int,
         tick: Int,
         date: Date
     ) -> BikeTelemetry {
@@ -25,7 +27,7 @@ enum BikeEmulatorPayloadFactory {
             vin: BikeEmulatorIdentity.vin,
             batteryLevel: .known(percent: batteryPercent),
             healthLevel: .known(percent: Constants.healthPercent),
-            mode: .index(Constants.mode),
+            mode: .index(activeMapNumber),
             speed: .known(kmh: speed, kmhX10: Int(speed * Constants.speedScale)),
             motorRPM: .known(isRiding ? Int(speed * Constants.rpmPerKmh) : .zero),
             statusFlags: BikeStatusFlags(
@@ -42,6 +44,11 @@ enum BikeEmulatorPayloadFactory {
                 fault: scenario == .cellAnomaly ? Constants.anomalyFaultFlag : .zero,
                 info: isCharging ? Constants.chargingInfoFlag : Constants.ridingInfoFlag
             ),
+            powerModeConfigurations: powerModeConfigurations(
+                preset: powerModePreset,
+                activeMapNumber: activeMapNumber
+            ),
+            detectedPowerTier: detectedPowerTier(preset: powerModePreset),
             lastUpdated: date
         )
     }
@@ -228,6 +235,54 @@ enum BikeEmulatorPayloadFactory {
 }
 
 private extension BikeEmulatorPayloadFactory {
+    static func powerModeConfigurations(
+        preset: BikeEmulatorPowerModePreset,
+        activeMapNumber: Int
+    ) -> [Int: BikePowerModeConfiguration] {
+        switch preset {
+        case .failure:
+            return [:]
+        case .partial:
+            let configurationIndex = activeMapNumber - 1
+            return [configurationIndex: .init(mapIndex: configurationIndex, powerTractionPercent: 20)]
+        case .standard, .claimedAlpha:
+            let horsepower = [20, 30, 40, 50, 60]
+            let regenerativeBraking = [10.0, 20, 30, 40, 50]
+            return Dictionary(uniqueKeysWithValues: horsepower.enumerated().map {
+                ($0.offset, BikePowerModeConfiguration(
+                    mapIndex: $0.offset,
+                    horsepower: $0.element,
+                    regenerativeBrakingPercent: regenerativeBraking[$0.offset]
+                ))
+            })
+        case .alpha, .mismatch:
+            let horsepower = [20, 35, 50, 65, 80]
+            let regenerativeBraking = [10.0, 20, 30, 40, 50]
+            let powerTraction = [0.0, 10, 20, 30, 40]
+            let brakingTraction = [0.0, 5, 10, 15, 20]
+            return Dictionary(uniqueKeysWithValues: horsepower.indices.map {
+                ($0, BikePowerModeConfiguration(
+                    mapIndex: $0,
+                    horsepower: horsepower[$0],
+                    regenerativeBrakingPercent: regenerativeBraking[$0],
+                    powerTractionPercent: powerTraction[$0],
+                    brakingTractionPercent: brakingTraction[$0]
+                ))
+            })
+        }
+    }
+
+    static func detectedPowerTier(preset: BikeEmulatorPowerModePreset) -> BikeDetectedPowerTier {
+        switch preset {
+        case .alpha, .mismatch:
+            .alpha(evidence: [.powerAboveStandard, .tractionControlConfigured])
+        case .standard, .claimedAlpha, .partial, .failure:
+            .standardBaseline
+        }
+    }
+}
+
+private extension BikeEmulatorPayloadFactory {
     enum Constants {
         static let peripheralName = BikeEmulatorIdentity.vin
         static let peripheralIdentifier = UUID(uuidString: "00000000-0000-0000-0000-000000000001")
@@ -240,7 +295,6 @@ private extension BikeEmulatorPayloadFactory {
         static let ridingBatteryFloor = 50
         static let ridingBatteryDropInterval = 20
         static let healthPercent = 94
-        static let mode = 3
         static let ridingSpeedMinimum = 18.0
         static let ridingSpeedAmplitude = 132.0
         static let ridingSpeedWaveRadians = 0.13

@@ -18,6 +18,9 @@ struct FENRDebugApp: App {
                 dependencies: dependencies,
                 batteryHealthAccessory: {
                     AnyView(DebugScenarioPicker(controller: scenarioController))
+                },
+                settingsAccessory: {
+                    AnyView(DebugPowerModeControls(controller: scenarioController))
                 }
             )
         }

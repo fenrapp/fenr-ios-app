@@ -2,10 +2,14 @@ import BikeDomain
 
 public enum BikeEmulatorRepositoryFactory {
     public static func make(
-        scenario: BikeEmulatorScenario = .charging
+        scenario: BikeEmulatorScenario = .charging,
+        powerModePreset: BikeEmulatorPowerModePreset = .standard,
+        activeMap: Int = 4
     ) -> BikeEmulatorRepository {
         BikeEmulatorRepository(
             scenario: scenario,
+            powerModePreset: powerModePreset,
+            activeMapNumber: activeMap,
             channels: BikeEmulatorChannels(
                 telemetry: BikeEmulatorEventHub<BikeTelemetry>(replaysLatestValue: true),
                 connection: BikeEmulatorEventHub<BikeConnection>(replaysLatestValue: true),

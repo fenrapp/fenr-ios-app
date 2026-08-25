@@ -189,6 +189,56 @@ struct BikeEmulatorRepositoryTests {
         #expect(BikeEmulatorIdentity.vin.count == 17)
     }
 
+    @Test("Power mode presets publish through domain telemetry")
+    func powerModePresetsPublishDomainTelemetry() async throws {
+        for preset in BikeEmulatorPowerModePreset.allCases where preset != .failure {
+            let repository = BikeEmulatorRepositoryFactory.make(
+                scenario: .riding,
+                powerModePreset: preset,
+                activeMap: 5
+            )
+            await repository.start()
+            let telemetry = try await nextValue(from: await repository.observeTelemetry())
+
+            #expect(telemetry.mode == .index(5))
+            if preset == .partial {
+                #expect(telemetry.activePowerModeConfiguration?.horsepower == nil)
+                #expect(telemetry.activePowerModeConfiguration?.powerTractionPercent == 20)
+            } else {
+                #expect(telemetry.powerModeConfigurations.count == 5)
+            }
+            if preset == .alpha || preset == .mismatch {
+                #expect(!telemetry.detectedPowerTier.alphaEvidence.isEmpty)
+            } else {
+                #expect(telemetry.detectedPowerTier == .standardBaseline)
+            }
+            await repository.stop()
+        }
+    }
+
+    @Test("Active map changes immediately and read failure preserves base telemetry")
+    func activeMapAndReadFailure() async throws {
+        let repository = BikeEmulatorRepositoryFactory.make(
+            scenario: .riding,
+            powerModePreset: .failure,
+            activeMap: 1
+        )
+        await repository.start()
+        let stream = await repository.observeTelemetry()
+        var iterator = stream.makeAsyncIterator()
+        let initial = try await nextValue(from: &iterator)
+
+        await repository.setActiveMap(5)
+        let updated = try await nextValue(from: &iterator)
+
+        #expect(initial.speed.kmh != nil)
+        #expect(updated.mode == .index(5))
+        #expect(updated.speed.kmh != nil)
+        await #expect(throws: (any Error).self) {
+            try await repository.refreshPowerModeConfigurations()
+        }
+    }
+
     private func nextValue<Value: Sendable>(
         from stream: AsyncStream<Value>
     ) async throws -> Value {
