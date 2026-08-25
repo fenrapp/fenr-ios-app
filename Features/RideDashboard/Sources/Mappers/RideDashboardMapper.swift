@@ -63,24 +63,21 @@ public struct RideDashboardMapper: Sendable {
     ) -> DashboardPowerModeViewData {
         guard hasTelemetry else { return .init() }
         let configuration = telemetry.activePowerModeConfiguration
-        let badge: String = switch telemetry.detectedPowerTier {
-        case .standardBaseline: "STANDARD · 60 MAX"
-        case .alpha: "ALPHA · 80 MAX"
-        }
         return .init(
             map: telemetry.mode.displayIndex.map(String.init) ?? "--",
-            horsepower: configuration?.horsepower.map { "\($0) HP" } ?? "--",
+            horsepower: configuration?.horsepower.map(String.init) ?? "--",
             regenerativeBraking: percent(configuration?.regenerativeBrakingPercent),
             powerTraction: percent(configuration?.powerTractionPercent),
             brakingTraction: percent(configuration?.brakingTractionPercent),
-            tierBadge: badge
+            showsTractionControl: configuration?.powerTractionPercent != nil
+                || configuration?.brakingTractionPercent != nil
         )
     }
 
     private func percent(_ value: Double?) -> String {
         guard let value else { return "--" }
-        if value.rounded() == value { return "\(Int(value))%" }
-        return String(format: "%.1f%%", locale: Locale(identifier: "en_US_POSIX"), value)
+        if value.rounded() == value { return "\(Int(value))" }
+        return String(format: "%.1f", locale: Locale(identifier: "en_US_POSIX"), value)
     }
 
     private func speedometer(

@@ -23,7 +23,11 @@ public struct RideDashboardView: View {
 
     public var body: some View {
         GeometryReader { proxy in
-            let layout = RideDashboardLayout(size: proxy.size)
+            let layout = RideDashboardLayout(
+                size: proxy.size,
+                displaysBottomMetrics: viewModel.viewState.hasTelemetry
+                    && !viewModel.viewState.isCharging
+            )
             Group {
                 if proxy.size.width <= proxy.size.height {
                     DashboardUnavailableState.rotationRequired
@@ -91,7 +95,8 @@ public struct RideDashboardView: View {
                         setChargeTarget: chargingViewModel.setChargeTarget(percent:)
                     )
                 },
-                indicators: { indicatorRail }
+                indicators: { indicatorRail },
+                bottomMetrics: { EmptyView() }
             )
             .task { chargingViewModel.start() }
             .onDisappear { chargingViewModel.stop() }
@@ -106,7 +111,7 @@ public struct RideDashboardView: View {
                     )
                 },
                 gear: {
-                    DashboardPowerModeColumn(state: viewModel.viewState.powerMode)
+                    DashboardGearColumn(state: viewModel.viewState.gear)
                 },
                 instrument: {
                     DashboardSpeedometer(
@@ -114,7 +119,10 @@ public struct RideDashboardView: View {
                         reduceMotion: reduceMotion
                     )
                 },
-                indicators: { indicatorRail }
+                indicators: { indicatorRail },
+                bottomMetrics: {
+                    DashboardPowerModeStrip(state: viewModel.viewState.powerMode)
+                }
             )
         }
     }

@@ -4,7 +4,7 @@ public struct DashboardPowerModeViewData: Equatable, Sendable {
     public let regenerativeBraking: String
     public let powerTraction: String
     public let brakingTraction: String
-    public let tierBadge: String
+    public let showsTractionControl: Bool
 
     public init(
         map: String = "--",
@@ -12,13 +12,13 @@ public struct DashboardPowerModeViewData: Equatable, Sendable {
         regenerativeBraking: String = "--",
         powerTraction: String = "--",
         brakingTraction: String = "--",
-        tierBadge: String = "STANDARD · 60 MAX"
+        showsTractionControl: Bool = false
     ) {
         self.map = map
         self.horsepower = horsepower
         self.regenerativeBraking = regenerativeBraking
         self.powerTraction = powerTraction
         self.brakingTraction = brakingTraction
-        self.tierBadge = tierBadge
+        self.showsTractionControl = showsTractionControl
     }
 }

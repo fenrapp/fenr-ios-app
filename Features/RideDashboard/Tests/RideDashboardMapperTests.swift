@@ -135,7 +135,7 @@ struct RideDashboardMapperTests {
         #expect(state.gear == .init(display: .text("N"), isActive: true, accessibilityLabel: "Gear neutral"))
     }
 
-    @Test("Maps active mode HP, signed TC and effective Alpha tier")
+    @Test("Maps active mode HP, regen and signed TC without exposing the bike tier")
     func mapsPowerModePresentation() {
         let telemetry = BikeTelemetry(
             batteryLevel: .known(percent: 60),
@@ -162,11 +162,11 @@ struct RideDashboardMapperTests {
 
         #expect(state.powerMode == .init(
             map: "5",
-            horsepower: "80 HP",
-            regenerativeBraking: "40%",
-            powerTraction: "12.5%",
-            brakingTraction: "-3%",
-            tierBadge: "ALPHA · 80 MAX"
+            horsepower: "80",
+            regenerativeBraking: "40",
+            powerTraction: "12.5",
+            brakingTraction: "-3",
+            showsTractionControl: true
         ))
     }
 
@@ -186,8 +186,29 @@ struct RideDashboardMapperTests {
 
         #expect(state.powerMode.horsepower == "--")
         #expect(state.powerMode.regenerativeBraking == "--")
-        #expect(state.powerMode.powerTraction == "20%")
+        #expect(state.powerMode.powerTraction == "20")
         #expect(state.powerMode.brakingTraction == "--")
-        #expect(state.powerMode.tierBadge == "STANDARD · 60 MAX")
+        #expect(state.powerMode.showsTractionControl)
+    }
+
+    @Test("Keeps power and regen available while hiding unavailable TC")
+    func hidesUnavailableTractionControl() {
+        let telemetry = BikeTelemetry(
+            batteryLevel: .known(percent: 60),
+            mode: .index(4),
+            powerModeConfigurations: [
+                3: .init(mapIndex: 3, horsepower: 60, regenerativeBrakingPercent: 50)
+            ]
+        )
+        let state = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_US")).map(
+            telemetry: telemetry,
+            connection: BikeConnection(state: .receivingTelemetry(peripheralName: "FENRTEST000000001")),
+            speedKilometersPerHour: nil,
+            measurementSystem: .metric
+        )
+
+        #expect(state.powerMode.horsepower == "60")
+        #expect(state.powerMode.regenerativeBraking == "50")
+        #expect(!state.powerMode.showsTractionControl)
     }
 }
