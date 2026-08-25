@@ -3,6 +3,10 @@ import BikeDomain
 actor DebugBikeProfileRepository: BikeProfileRepository {
     private var profile: BikeProfile?
 
+    init(initialProfile: BikeProfile? = nil) {
+        profile = initialProfile
+    }
+
     func loadProfile() async -> BikeProfile? {
         profile
     }

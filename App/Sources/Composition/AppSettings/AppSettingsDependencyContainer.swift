@@ -18,7 +18,8 @@ struct AppSettingsDependencyContainer {
                 requestLocationAuthorization: RequestLocationAuthorizationUseCase(
                     repository: deviceSpeedRepository
                 )
-            )
+            ),
+            mapper: AppSettingsViewStateMapper()
         )
     }
 }

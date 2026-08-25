@@ -4,15 +4,15 @@ import SwiftUI
 @main
 struct FENRApp: App {
     @UIApplicationDelegateAdaptor(AppOrientationDelegate.self) private var appDelegate
-    private let container: AppDependencyContainer
+    private let dependencies: AppRootDependencies
 
     init() {
-        container = ProductionAppDependencyContainerFactory.makeDefault()
+        dependencies = ProductionAppDependencyContainerFactory.makeDefault().makeRootDependencies()
     }
 
     var body: some Scene {
         WindowGroup {
-            AppRootView(container: container)
+            AppRootView(dependencies: dependencies)
         }
     }
 }

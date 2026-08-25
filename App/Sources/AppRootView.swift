@@ -13,40 +13,25 @@ struct AppRootView: View {
     @StateObject private var chargingDashboardViewModel: ChargingDashboardViewModel
     @StateObject private var onboardingViewModel: BikeOnboardingViewModel
     @StateObject private var appSettingsViewModel: AppSettingsViewModel
-    @StateObject private var sessionController: BikeSessionController
     @StateObject private var setupFlow: BikeSetupFlowController
     @State private var path: [Route] = []
-    private let bikeLiveActivityController: BikeLiveActivityController
+    private let lifecycleController: AppLifecycleController
+    private let interfaceOrientationController: InterfaceOrientationController
     private let batteryHealthAccessory: () -> AnyView
 
     init(
-        container: AppDependencyContainer,
+        dependencies: AppRootDependencies,
         batteryHealthAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
-        let session = container.makeBikeSession()
-        let setupFlow = BikeSetupFlowController(
-            useCases: container.makeBikeProfileUseCases(),
-            forceOnboarding: container.forceOnboarding
-        )
-        _diagnosticsViewModel = StateObject(wrappedValue: container.makeBikeDiagnosticsViewModel(session: session))
-        _batteryHealthViewModel = StateObject(
-            wrappedValue: container.makeBatteryHealthViewModel(session: session)
-        )
-        _dashboardViewModel = StateObject(
-            wrappedValue: container.makeRideDashboardViewModel(session: session)
-        )
-        _chargingDashboardViewModel = StateObject(
-            wrappedValue: container.makeChargingDashboardViewModel(session: session)
-        )
-        _sessionController = StateObject(wrappedValue: BikeSessionController(repository: session.repository))
-        _setupFlow = StateObject(wrappedValue: setupFlow)
-        bikeLiveActivityController = container.makeBikeLiveActivityController(session: session)
-        _onboardingViewModel = StateObject(
-            wrappedValue: container.makeOnboardingViewModel { vin in
-                setupFlow.complete(vin: vin)
-            }
-        )
-        _appSettingsViewModel = StateObject(wrappedValue: container.makeAppSettingsViewModel())
+        _diagnosticsViewModel = StateObject(wrappedValue: dependencies.diagnosticsViewModel)
+        _batteryHealthViewModel = StateObject(wrappedValue: dependencies.batteryHealthViewModel)
+        _dashboardViewModel = StateObject(wrappedValue: dependencies.dashboardViewModel)
+        _chargingDashboardViewModel = StateObject(wrappedValue: dependencies.chargingDashboardViewModel)
+        _onboardingViewModel = StateObject(wrappedValue: dependencies.onboardingViewModel)
+        _appSettingsViewModel = StateObject(wrappedValue: dependencies.appSettingsViewModel)
+        _setupFlow = StateObject(wrappedValue: dependencies.setupFlow)
+        lifecycleController = dependencies.lifecycleController
+        interfaceOrientationController = dependencies.interfaceOrientationController
         self.batteryHealthAccessory = batteryHealthAccessory
     }
 
@@ -100,13 +85,7 @@ struct AppRootView: View {
         }
         .task {
             updateInterfaceOrientation()
-            await setupFlow.load()
-            bikeLiveActivityController.start()
-            bikeLiveActivityController.setIsSetupCompleted(setupFlow.isCompleted)
-            if let vin = setupFlow.configuredVIN {
-                await sessionController.start()
-                await sessionController.connectAutomatically(vin: vin)
-            }
+            await lifecycleController.start()
             synchronizeOnboardingObservation()
             updateInterfaceOrientation()
         }
@@ -115,7 +94,7 @@ struct AppRootView: View {
             if setupFlow.isCompleted {
                 path.removeAll()
             }
-            bikeLiveActivityController.setIsSetupCompleted(setupFlow.isCompleted)
+            lifecycleController.setIsSetupCompleted(setupFlow.isCompleted)
             synchronizeOnboardingObservation()
             updateInterfaceOrientation()
         }
@@ -131,20 +110,16 @@ struct AppRootView: View {
             navigateToCurrentOnboardingStep()
         }
         .onChange(of: scenePhase) { phase in
-            bikeLiveActivityController.setCanShowLiveActivity(phase != .active)
+            lifecycleController.setCanShowLiveActivity(phase != .active)
         }
         .onDisappear {
             onboardingViewModel.stopObserving()
-            bikeLiveActivityController.stop()
-            Task { await sessionController.stop() }
+            lifecycleController.stop()
         }
     }
 
     private func changeBike() {
-        Task {
-            await sessionController.disconnect()
-            await setupFlow.reset()
-            bikeLiveActivityController.setIsSetupCompleted(false)
+        lifecycleController.changeBike {
             path.removeAll()
             synchronizeOnboardingObservation()
             updateInterfaceOrientation()
@@ -153,7 +128,7 @@ struct AppRootView: View {
 
     private func updateInterfaceOrientation() {
         let shouldUseDashboardOrientation = setupFlow.isCompleted && path.isEmpty
-        InterfaceOrientationController.shared.request(
+        interfaceOrientationController.request(
             shouldUseDashboardOrientation ? .landscape : .portrait
         )
     }

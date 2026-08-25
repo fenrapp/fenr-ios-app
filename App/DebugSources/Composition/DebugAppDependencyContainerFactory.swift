@@ -11,23 +11,35 @@ enum DebugAppDependencyContainerFactory {
         make(userDefaults: .standard)
     }
 
-    static func make(userDefaults: UserDefaults) -> DebugAppContext {
-        let repository = BikeEmulatorRepository(
+    static func make(
+        userDefaults: UserDefaults,
+        arguments: [String] = ProcessInfo.processInfo.arguments
+    ) -> DebugAppContext {
+        let skipsOnboarding = arguments.contains(Constants.skipOnboardingArgument)
+        let repository = BikeEmulatorRepositoryFactory.make(
             scenario: DebugScenarioStore(userDefaults: userDefaults).load()
         )
         let session = BikeSession(
             repository: repository,
             pinDeriver: DebugBikePinDeriver()
         )
+        let chargeControl = ChargeControlDependencyContainer().makeSession(repository: repository)
         let container = AppDependencyContainer(
             diagnosticsContainer: BikeDiagnosticsDependencyContainer(),
             batteryHealthContainer: BatteryHealthDependencyContainer(),
             session: session,
-            profileRepository: DebugBikeProfileRepository(),
+            chargeControlSession: chargeControl,
+            profileRepository: DebugBikeProfileRepository(
+                initialProfile: skipsOnboarding ? .init(vin: BikeEmulatorIdentity.vin) : nil
+            ),
             settingsRepository: UserDefaultsAppSettingsRepository(),
             deviceSpeedRepository: DebugDeviceSpeedRepository(),
+            onboardingContainer: BikeOnboardingDependencyContainer(),
+            dashboardContainer: RideDashboardDependencyContainer(),
+            chargingDashboardContainer: ChargingDashboardDependencyContainer(),
+            appSettingsContainer: AppSettingsDependencyContainer(),
             initialOnboardingVIN: BikeEmulatorIdentity.vin,
-            forceOnboarding: true
+            forceOnboarding: !skipsOnboarding
         )
         return DebugAppContext(
             container: container,
@@ -36,6 +48,10 @@ enum DebugAppDependencyContainerFactory {
                 store: DebugScenarioStore(userDefaults: userDefaults)
             )
         )
+    }
+
+    private enum Constants {
+        static let skipOnboardingArgument = "-skipOnboarding"
     }
 }
 

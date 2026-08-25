@@ -6,7 +6,7 @@ import Testing
 struct BikeLiveActivityControllerTests {
     @Test("Does not start with default telemetry")
     func doesNotStartWithDefaultTelemetry() async {
-        let fixture = Fixture()
+        let fixture = BikeLiveActivityControllerFixture()
 
         fixture.controller.start()
         await settle()
@@ -22,7 +22,7 @@ struct BikeLiveActivityControllerTests {
 
     @Test("Does not start during onboarding")
     func doesNotStartDuringOnboarding() async {
-        let fixture = Fixture()
+        let fixture = BikeLiveActivityControllerFixture()
 
         fixture.controller.start()
         await settle()
@@ -36,7 +36,7 @@ struct BikeLiveActivityControllerTests {
 
     @Test("Does not start in foreground")
     func doesNotStartInForeground() async {
-        let fixture = Fixture()
+        let fixture = BikeLiveActivityControllerFixture()
 
         fixture.controller.start()
         await settle()
@@ -50,7 +50,7 @@ struct BikeLiveActivityControllerTests {
 
     @Test("Starts automatically in background while charging")
     func startsInBackgroundWhileCharging() async {
-        let fixture = Fixture()
+        let fixture = BikeLiveActivityControllerFixture()
 
         fixture.controller.start()
         await settle()
@@ -68,7 +68,7 @@ struct BikeLiveActivityControllerTests {
 
     @Test("Starts automatically in background while riding")
     func startsInBackgroundWhileRiding() async {
-        let fixture = Fixture()
+        let fixture = BikeLiveActivityControllerFixture()
 
         fixture.controller.start()
         await settle()
@@ -86,7 +86,7 @@ struct BikeLiveActivityControllerTests {
 
     @Test("Starts on first background transition when charging was already observed")
     func startsOnFirstBackgroundTransitionAfterChargingWasObserved() async {
-        let fixture = Fixture()
+        let fixture = BikeLiveActivityControllerFixture()
 
         fixture.controller.start()
         await settle()
@@ -104,7 +104,7 @@ struct BikeLiveActivityControllerTests {
 
     @Test("Requests activity before waiting for battery health monitoring")
     func requestsActivityBeforeBatteryHealthMonitoringCompletes() async {
-        let fixture = Fixture()
+        let fixture = BikeLiveActivityControllerFixture()
 
         fixture.controller.start()
         await settle()
@@ -122,7 +122,7 @@ struct BikeLiveActivityControllerTests {
 
     @Test("Stops delayed monitoring if charge ends before monitoring starts")
     func stopsDelayedMonitoringWhenChargeEndsBeforeMonitoringStarts() async {
-        let fixture = Fixture()
+        let fixture = BikeLiveActivityControllerFixture()
 
         fixture.controller.start()
         await settle()
@@ -144,7 +144,7 @@ struct BikeLiveActivityControllerTests {
 
     @Test("Does not duplicate activities across repeated background transitions")
     func doesNotDuplicateActivities() async {
-        let fixture = Fixture()
+        let fixture = BikeLiveActivityControllerFixture()
 
         fixture.controller.start()
         await settle()
@@ -163,7 +163,7 @@ struct BikeLiveActivityControllerTests {
 
     @Test("Throttles non-critical updates to thirty seconds")
     func throttlesUpdates() async {
-        let fixture = Fixture()
+        let fixture = BikeLiveActivityControllerFixture()
 
         fixture.controller.start()
         await settle()
@@ -185,7 +185,7 @@ struct BikeLiveActivityControllerTests {
 
     @Test("Allows immediate updates for critical phase changes")
     func updatesCriticalPhaseImmediately() async {
-        let fixture = Fixture()
+        let fixture = BikeLiveActivityControllerFixture()
 
         fixture.controller.start()
         await settle()
@@ -203,7 +203,7 @@ struct BikeLiveActivityControllerTests {
 
     @Test("Updates immediately when riding mode changes")
     func updatesImmediatelyWhenRidingModeChanges() async {
-        let fixture = Fixture()
+        let fixture = BikeLiveActivityControllerFixture()
 
         fixture.controller.start()
         await settle()
@@ -222,7 +222,7 @@ struct BikeLiveActivityControllerTests {
 
     @Test("Switches from riding to charging without duplicate activity")
     func switchesFromRidingToChargingWithoutDuplicateActivity() async {
-        let fixture = Fixture()
+        let fixture = BikeLiveActivityControllerFixture()
 
         fixture.controller.start()
         await settle()
@@ -242,7 +242,7 @@ struct BikeLiveActivityControllerTests {
 
     @Test("Ends when riding turns off")
     func endsWhenRidingTurnsOff() async {
-        let fixture = Fixture()
+        let fixture = BikeLiveActivityControllerFixture()
 
         fixture.controller.start()
         await settle()
@@ -259,7 +259,7 @@ struct BikeLiveActivityControllerTests {
 
     @Test("Ends and releases monitoring at charge target")
     func endsAtChargeTarget() async {
-        let fixture = Fixture()
+        let fixture = BikeLiveActivityControllerFixture()
 
         fixture.controller.start()
         await settle()
@@ -277,23 +277,6 @@ struct BikeLiveActivityControllerTests {
         #expect(await fixture.repository.monitoringStopCount() == 1)
     }
 
-    @MainActor
-    private final class Fixture {
-        let repository = BikeLiveActivityRepository()
-        let settingsRepository = BikeLiveActivitySettingsRepository()
-        let activityClient = FakeBikeLiveActivityClient()
-        let clock = FakeBikeLiveActivityClock()
-        let controller: BikeLiveActivityController
-
-        init() {
-            controller = BikeLiveActivityController(
-                repository: repository,
-                settingsRepository: settingsRepository,
-                activityClient: activityClient,
-                clock: clock
-            )
-        }
-    }
 }
 private func settle() async {
     await settle(milliseconds: 20)

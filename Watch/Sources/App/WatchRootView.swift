@@ -1,42 +1,30 @@
 import AppSettings
-import BikeDomain
 import SwiftUI
 import WatchDashboard
 import WatchOnboarding
 
 struct WatchRootView: View {
-    @StateObject private var sessionController: WatchBikeSessionController
     @StateObject private var dashboardViewModel: WatchDashboardViewModel
     @StateObject private var onboardingViewModel: WatchOnboardingViewModel
     @StateObject private var settingsViewModel: AppSettingsViewModel
-    @StateObject private var setup: WatchSetupState
+    @StateObject private var setupController: WatchSetupController
     @State private var isPresentingSettings = false
-    private let profileRepository: any BikeProfileRepository
-    private let initialProfile: BikeProfile?
-
-    init(container: WatchAppDependencyContainer) {
-        let sessionController = WatchBikeSessionController(repository: container.repository)
-        let setup = WatchSetupState()
-        _sessionController = StateObject(wrappedValue: sessionController)
-        _dashboardViewModel = StateObject(wrappedValue: container.makeDashboardViewModel())
-        _settingsViewModel = StateObject(wrappedValue: container.makeSettingsViewModel())
-        _onboardingViewModel = StateObject(wrappedValue: container.makeOnboardingViewModel { profile in
-            setup.profile = profile
-        })
-        _setup = StateObject(wrappedValue: setup)
-        profileRepository = container.profileRepository
-        initialProfile = container.initialProfile
+    init(dependencies: WatchRootDependencies) {
+        _dashboardViewModel = StateObject(wrappedValue: dependencies.dashboardViewModel)
+        _settingsViewModel = StateObject(wrappedValue: dependencies.settingsViewModel)
+        _onboardingViewModel = StateObject(wrappedValue: dependencies.onboardingViewModel)
+        _setupController = StateObject(wrappedValue: dependencies.setupController)
     }
 
     var body: some View {
         NavigationStack {
             Group {
-                if setup.isLoading {
+                if setupController.isLoading {
                     ProgressView()
-                } else if setup.profile != nil {
+                } else if setupController.isConfigured {
                     WatchDashboardView(
                         viewModel: dashboardViewModel,
-                        onChangeBike: changeBike,
+                        onChangeBike: setupController.changeBike,
                         onOpenSettings: { isPresentingSettings = true }
                     )
                 } else {
@@ -48,32 +36,7 @@ struct WatchRootView: View {
             }
         }
         .task {
-            await sessionController.start()
-            let loadedProfile: BikeProfile?
-            if let initialProfile {
-                loadedProfile = initialProfile
-            } else {
-                loadedProfile = await profileRepository.loadProfile()
-            }
-            setup.profile = loadedProfile
-            setup.isLoading = false
-            if let loadedProfile {
-                await sessionController.connectAutomatically(vin: loadedProfile.vin)
-            }
+            await setupController.start()
         }
     }
-
-    private func changeBike() {
-        Task {
-            await sessionController.disconnect()
-            await profileRepository.clearProfile()
-            setup.profile = nil
-        }
-    }
-}
-
-@MainActor
-private final class WatchSetupState: ObservableObject {
-    @Published var profile: BikeProfile?
-    @Published var isLoading = true
 }

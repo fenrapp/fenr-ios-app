@@ -1,6 +1,7 @@
 import BikeData
 import BikeDiagnostics
 import BikeDomain
+import CoreLocation
 import EnvironmentData
 import Foundation
 import SettingsData
@@ -16,13 +17,21 @@ enum ProductionAppDependencyContainerFactory {
             repository: repository,
             pinDeriver: bikeDataContainer.makeBikePinDeriver()
         )
+        let chargeControl = ChargeControlDependencyContainer().makeSession(repository: repository)
         return AppDependencyContainer(
             diagnosticsContainer: BikeDiagnosticsDependencyContainer(),
             batteryHealthContainer: BatteryHealthDependencyContainer(),
             session: session,
+            chargeControlSession: chargeControl,
             profileRepository: UserDefaultsBikeProfileRepository(),
             settingsRepository: UserDefaultsAppSettingsRepository(),
-            deviceSpeedRepository: CoreLocationDeviceSpeedRepository()
+            deviceSpeedRepository: CoreLocationDeviceSpeedRepository(
+                locationManager: CLLocationManager()
+            ),
+            onboardingContainer: BikeOnboardingDependencyContainer(),
+            dashboardContainer: RideDashboardDependencyContainer(),
+            chargingDashboardContainer: ChargingDashboardDependencyContainer(),
+            appSettingsContainer: AppSettingsDependencyContainer()
         )
     }
 }

@@ -1,4 +1,6 @@
+@testable import BatteryHealth
 import BikeDomain
+@testable import RideDashboard
 import SettingsDomain
 import Testing
 
@@ -13,6 +15,19 @@ struct AppDependencyContainerTests {
         #expect(viewModel.viewState.vin.isEmpty)
         #expect(!viewModel.viewState.isConnectEnabled)
         #expect(viewModel.viewState.debugEvents.isEmpty)
+    }
+
+    @Test("Container assembles root dependencies before the view is created")
+    func buildsRootDependencies() {
+        let dependencies = ProductionAppDependencyContainerFactory.makeDefault().makeRootDependencies()
+
+        #expect(!dependencies.setupFlow.isLoaded)
+        #expect(!dependencies.dashboardViewModel.viewState.hasTelemetry)
+        #expect(!dependencies.chargingDashboardViewModel.viewState.gauge.control.isEnabled)
+        #expect(
+            dependencies.batteryHealthViewModel.chargeControlSessionIdentity
+                == dependencies.chargingDashboardViewModel.chargeControlSessionIdentity
+        )
     }
 
     @Test("Composable containers build independently")

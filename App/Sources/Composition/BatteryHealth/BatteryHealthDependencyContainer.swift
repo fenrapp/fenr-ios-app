@@ -1,5 +1,6 @@
 import BatteryHealth
 import BikeDomain
+import ChargeControl
 import Foundation
 import MeasurementPresentation
 import SettingsDomain
@@ -8,7 +9,8 @@ import SettingsDomain
 struct BatteryHealthDependencyContainer {
     func makeBatteryHealthViewModel(
         repository: any BikeBatteryHealthRepository,
-        settingsRepository: AppSettingsRepository
+        settingsRepository: AppSettingsRepository,
+        chargeControl: ChargeControlSession
     ) -> BatteryHealthViewModel {
         let locale = Locale.autoupdatingCurrent
         return BatteryHealthViewModel(
@@ -17,21 +19,14 @@ struct BatteryHealthDependencyContainer {
                 stopMonitoring: StopBatteryHealthMonitoringUseCase(repository: repository),
                 observeHealth: ObserveBikeBatteryHealthUseCase(repository: repository),
                 observeCaptures: ObserveBatteryDatasetCapturesUseCase(repository: repository),
-                observeSettings: ObserveAppSettingsUseCase(repository: settingsRepository),
-                prepareChargePowerControl: PrepareChargePowerControlUseCase(repository: repository),
-                setChargePowerLimit: SetChargePowerLimitUseCase(repository: repository),
-                setChargeTarget: SetChargeTargetUseCase(repository: repository)
+                observeSettings: ObserveAppSettingsUseCase(repository: settingsRepository)
             ),
             mapper: makeMapper(measurementSystem: .system, locale: locale),
             makeMapper: { [self] measurementSystem in
                 makeMapper(measurementSystem: measurementSystem, locale: locale)
             },
-            chargeControlLogStore: BatteryHealthChargeControlLogStore(),
-            chargeControlStateUpdater: BatteryHealthChargeControlStateUpdater(
-                normalizer: BatteryHealthChargeControlNormalizer()
-            ),
-            chargeControlTaskScheduler: BatteryHealthChargeControlTaskScheduler(),
-            captureTimeFormatter: SystemTimeFormatter()
+            chargeControl: chargeControl,
+            captureTimeFormatStyle: Date.FormatStyle(date: .omitted, time: .standard)
         )
     }
 
@@ -42,7 +37,10 @@ struct BatteryHealthDependencyContainer {
         BikeBatteryHealthToViewStateMapper(
             formatter: BatteryHealthFormatter(
                 locale: locale,
-                measurementSystem: measurementSystem.resolved(for: locale)
+                measurementMapper: VehicleMeasurementMapper(
+                    measurementSystem: measurementSystem.resolved(for: locale)
+                ),
+                measurementTextFormatter: VehicleMeasurementTextFormatter(locale: locale)
             )
         )
     }

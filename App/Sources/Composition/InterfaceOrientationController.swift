@@ -17,12 +17,15 @@ final class InterfaceOrientationController {
         requestedOrientations = orientations
 
         for case let windowScene as UIWindowScene in UIApplication.shared.connectedScenes {
+            windowScene.windows
+                .first(where: \.isKeyWindow)?
+                .rootViewController?
+                .setNeedsUpdateOfSupportedInterfaceOrientations()
             let preferences = UIWindowScene.GeometryPreferences.iOS(
                 interfaceOrientations: orientations
             )
             windowScene.requestGeometryUpdate(preferences)
         }
-        UIViewController.attemptRotationToDeviceOrientation()
     }
 }
 

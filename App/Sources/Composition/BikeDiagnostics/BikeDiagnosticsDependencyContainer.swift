@@ -47,11 +47,16 @@ struct BikeDiagnosticsDependencyContainer {
     }
 
     private func makeMappers(measurementSystem: MeasurementSystem) -> BikeDiagnosticsMappers {
-        let dateFormatter = BikeDiagnosticsDateFormatter()
+        let dateFormatStyle = Date.FormatStyle()
+            .hour(.twoDigits(amPM: .omitted))
+            .minute(.twoDigits)
+            .second(.twoDigits)
         let locale = Locale.autoupdatingCurrent
         let speedFormatter = BikeDiagnosticsSpeedFormatter(
-            measurementSystem: measurementSystem.resolved(for: locale),
-            locale: locale
+            measurementMapper: VehicleMeasurementMapper(
+                measurementSystem: measurementSystem.resolved(for: locale)
+            ),
+            textFormatter: VehicleMeasurementTextFormatter(locale: locale)
         )
         return BikeDiagnosticsMappers(
             viewState: BikeTelemetryToBikeDiagnosticsViewStateMapper(
@@ -59,7 +64,7 @@ struct BikeDiagnosticsDependencyContainer {
                     stateMapper: ConnectionStateToDisplayMapper()
                 ),
                 metricsMapper: BikeTelemetryToMetricsMapper(
-                    dateFormatter: dateFormatter,
+                    dateFormatStyle: dateFormatStyle,
                     speedFormatter: speedFormatter,
                     measurementTextFormatter: VehicleMeasurementTextFormatter(locale: locale)
                 ),
@@ -68,7 +73,7 @@ struct BikeDiagnosticsDependencyContainer {
                 ),
                 rawFlagsMapper: BikeTelemetryToRawFlagsMapper(),
                 debugEventMapper: BikeDebugEventToDebugEventViewDataMapper(
-                    dateFormatter: dateFormatter
+                    dateFormatStyle: dateFormatStyle
                 )
             )
         )

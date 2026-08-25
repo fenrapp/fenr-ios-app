@@ -2,36 +2,37 @@ import BikeDomain
 import Combine
 import Foundation
 
+struct BikeSessionControllerUseCases {
+    let startRepository: StartBikeRepositoryUseCase
+    let stopRepository: StopBikeRepositoryUseCase
+    let connectToBike: ConnectToBikeUseCase
+    let disconnectFromBike: DisconnectBikeUseCase
+}
+
 @MainActor
 final class BikeSessionController: ObservableObject {
-    private let startRepository: StartBikeRepositoryUseCase
-    private let stopRepository: StopBikeRepositoryUseCase
-    private let connectToBike: ConnectToBikeUseCase
-    private let disconnectFromBike: DisconnectBikeUseCase
+    private let useCases: BikeSessionControllerUseCases
     private var isRunning = false
 
-    init(repository: BikeRepository) {
-        startRepository = StartBikeRepositoryUseCase(repository: repository)
-        stopRepository = StopBikeRepositoryUseCase(repository: repository)
-        connectToBike = ConnectToBikeUseCase(repository: repository)
-        disconnectFromBike = DisconnectBikeUseCase(repository: repository)
+    init(useCases: BikeSessionControllerUseCases) {
+        self.useCases = useCases
     }
 
     func start() async {
         guard !isRunning else { return }
         isRunning = true
-        await startRepository.execute()
+        await useCases.startRepository.execute()
     }
 
     func stop() async {
         guard isRunning else { return }
         isRunning = false
-        await stopRepository.execute()
+        await useCases.stopRepository.execute()
     }
 
     func connectAutomatically(vin: String) async {
         do {
-            try await connectToBike.execute(vin: vin)
+            try await useCases.connectToBike.execute(vin: vin)
         } catch is CancellationError {
             return
         } catch {
@@ -41,7 +42,7 @@ final class BikeSessionController: ObservableObject {
 
     func disconnect() async {
         do {
-            try await disconnectFromBike.execute()
+            try await useCases.disconnectFromBike.execute()
         } catch is CancellationError {
             return
         } catch {

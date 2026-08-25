@@ -3,19 +3,19 @@ import SwiftUI
 @main
 struct FENRDebugApp: App {
     @UIApplicationDelegateAdaptor(AppOrientationDelegate.self) private var appDelegate
-    private let container: AppDependencyContainer
+    private let dependencies: AppRootDependencies
     @StateObject private var scenarioController: DebugScenarioController
 
     init() {
         let context = DebugAppDependencyContainerFactory.makeDefault()
-        container = context.container
+        dependencies = context.container.makeRootDependencies()
         _scenarioController = StateObject(wrappedValue: context.scenarioController)
     }
 
     var body: some Scene {
         WindowGroup {
             AppRootView(
-                container: container,
+                dependencies: dependencies,
                 batteryHealthAccessory: {
                     AnyView(DebugScenarioPicker(controller: scenarioController))
                 }
