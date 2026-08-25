@@ -7,7 +7,10 @@ struct BikeDataDependencyContainer {
         LiveBikeRepositoryFactory.makePinDeriver()
     }
 
-    func makeBikeRepository(client: BikeTelemetryClient) -> LiveBikeRepository {
-        LiveBikeRepositoryFactory.makeDefault(client: client)
+    func makeBikeRepository(
+        client: BikeTelemetryClient,
+        profileRepository: (any BikeProfileRepository)? = nil
+    ) -> LiveBikeRepository {
+        LiveBikeRepositoryFactory.makeDefault(client: client, profileRepository: profileRepository)
     }
 }

@@ -1,3 +1,4 @@
+import BikeDomain
 import Combine
 import EnvironmentDomain
 import SettingsDomain
@@ -10,9 +11,17 @@ public final class AppSettingsViewModel: ObservableObject {
     private let mapper: AppSettingsViewStateMapper
     private var settings = AppSettings()
     private var locationAuthorizationStatus: LocationAuthorizationStatus = .notDetermined
+    private var profile: BikeProfile?
+    private var connection = BikeConnection()
+    private var isVerifyingPowerTier = false
+    private var powerTierVerificationMessage: String?
     private var observationTask: Task<Void, Never>?
     private var settingsSaveTask: Task<Void, Never>?
     private var locationAuthorizationTask: Task<Void, Never>?
+    private var profileTask: Task<Void, Never>?
+    private var profileSaveTask: Task<Void, Never>?
+    private var connectionTask: Task<Void, Never>?
+    private var powerTierTask: Task<Void, Never>?
 
     public init(useCases: AppSettingsUseCases, mapper: AppSettingsViewStateMapper) {
         self.useCases = useCases
@@ -24,6 +33,10 @@ public final class AppSettingsViewModel: ObservableObject {
         observationTask?.cancel()
         settingsSaveTask?.cancel()
         locationAuthorizationTask?.cancel()
+        profileTask?.cancel()
+        profileSaveTask?.cancel()
+        connectionTask?.cancel()
+        powerTierTask?.cancel()
     }
 
     public func start() {
@@ -42,6 +55,8 @@ public final class AppSettingsViewModel: ObservableObject {
         locationAuthorizationTask = Task { [weak self] in
             await self?.refreshLocationAuthorizationStatus()
         }
+        observeProfile()
+        observeConnection()
     }
 
     public func stop() {
@@ -49,6 +64,10 @@ public final class AppSettingsViewModel: ObservableObject {
         observationTask = nil
         locationAuthorizationTask?.cancel()
         locationAuthorizationTask = nil
+        profileTask?.cancel()
+        profileTask = nil
+        connectionTask?.cancel()
+        connectionTask = nil
     }
 
     public func selectSpeedSource(id: String) {
@@ -85,6 +104,36 @@ public final class AppSettingsViewModel: ObservableObject {
         }
     }
 
+    public func selectDeclaredPowerTier(id: String) {
+        guard let tier = BikeDeclaredPowerTier(rawValue: id), var profile else { return }
+        profile.declaredPowerTier = tier
+        self.profile = profile
+        powerTierVerificationMessage = nil
+        render()
+        guard let save = useCases.saveBikeProfile else { return }
+        profileSaveTask?.cancel()
+        profileSaveTask = Task { await save.execute(profile) }
+    }
+
+    public func verifyPowerTierWithBike() {
+        guard let refresh = useCases.refreshBikePowerModes, !isVerifyingPowerTier else { return }
+        isVerifyingPowerTier = true
+        powerTierVerificationMessage = nil
+        render()
+        powerTierTask?.cancel()
+        powerTierTask = Task { [weak self] in
+            do {
+                try await refresh.execute()
+                try? await Task.sleep(for: .milliseconds(100))
+                await self?.reloadProfile(message: "Bike verification completed")
+            } catch {
+                self?.isVerifyingPowerTier = false
+                self?.powerTierVerificationMessage = "Verification failed: \(error.localizedDescription)"
+                self?.render()
+            }
+        }
+    }
+
     private func refreshLocationAuthorizationStatus() async {
         guard let locationAuthorizationStatus = useCases.locationAuthorizationStatus else { return }
         self.locationAuthorizationStatus = await locationAuthorizationStatus.execute()
@@ -102,10 +151,47 @@ public final class AppSettingsViewModel: ObservableObject {
         }
     }
 
+    private func observeProfile() {
+        guard let observe = useCases.observeBikeProfile else { return }
+        profileTask?.cancel()
+        profileTask = Task { [weak self] in
+            for await profile in await observe.execute() {
+                guard !Task.isCancelled else { return }
+                self?.profile = profile
+                self?.render()
+            }
+        }
+    }
+
+    private func reloadProfile(message: String) async {
+        if let load = useCases.loadBikeProfile {
+            profile = await load.execute()
+        }
+        isVerifyingPowerTier = false
+        powerTierVerificationMessage = message
+        render()
+    }
+
+    private func observeConnection() {
+        guard let observe = useCases.observeBikeConnection else { return }
+        connectionTask?.cancel()
+        connectionTask = Task { [weak self] in
+            for await connection in await observe.execute() {
+                guard !Task.isCancelled else { return }
+                self?.connection = connection
+                self?.render()
+            }
+        }
+    }
+
     private func render() {
         viewState = mapper.map(
             settings: settings,
-            locationAuthorizationStatus: locationAuthorizationStatus
+            locationAuthorizationStatus: locationAuthorizationStatus,
+            profile: profile,
+            connection: connection,
+            isVerifying: isVerifyingPowerTier,
+            verificationMessage: powerTierVerificationMessage
         )
     }
 }

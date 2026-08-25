@@ -81,9 +81,7 @@ public struct RideDashboardView: View {
                     )
                 },
                 gear: {
-                    DashboardGearColumn(
-                        state: viewModel.viewState.gear
-                    )
+                    DashboardGearColumn(state: viewModel.viewState.gear)
                 },
                 instrument: {
                     DashboardChargingGauge(
@@ -108,9 +106,7 @@ public struct RideDashboardView: View {
                     )
                 },
                 gear: {
-                    DashboardGearColumn(
-                        state: viewModel.viewState.gear
-                    )
+                    DashboardPowerModeColumn(state: viewModel.viewState.powerMode)
                 },
                 instrument: {
                     DashboardSpeedometer(

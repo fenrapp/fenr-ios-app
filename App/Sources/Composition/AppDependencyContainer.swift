@@ -137,7 +137,9 @@ struct AppDependencyContainer {
     func makeAppSettingsViewModel() -> AppSettingsViewModel {
         appSettingsContainer.makeViewModel(
             settingsRepository: settingsRepository,
-            deviceSpeedRepository: deviceSpeedRepository
+            deviceSpeedRepository: deviceSpeedRepository,
+            bikeRepository: session.repository,
+            profileRepository: profileRepository
         )
     }
 

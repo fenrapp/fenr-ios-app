@@ -3,6 +3,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
     public let batteryPercent: Int?
     public let odometer: DashboardMetricViewData
     public let gear: DashboardGearViewData
+    public let powerMode: DashboardPowerModeViewData
     public let isCharging: Bool
     public let connectionDetail: String
     public let hasTelemetry: Bool
@@ -13,6 +14,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
         batteryPercent: Int? = nil,
         odometer: DashboardMetricViewData = .init(),
         gear: DashboardGearViewData = .init(),
+        powerMode: DashboardPowerModeViewData = .init(),
         isCharging: Bool = false,
         connectionDetail: String = "Connect your bike from Diagnostics.",
         hasTelemetry: Bool = false,
@@ -22,6 +24,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
         self.batteryPercent = batteryPercent
         self.odometer = odometer
         self.gear = gear
+        self.powerMode = powerMode
         self.isCharging = isCharging
         self.connectionDetail = connectionDetail
         self.hasTelemetry = hasTelemetry

@@ -18,10 +18,12 @@ struct AppRootView: View {
     private let lifecycleController: AppLifecycleController
     private let interfaceOrientationController: InterfaceOrientationController
     private let batteryHealthAccessory: () -> AnyView
+    private let settingsAccessory: () -> AnyView
 
     init(
         dependencies: AppRootDependencies,
-        batteryHealthAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
+        batteryHealthAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) },
+        settingsAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
         _diagnosticsViewModel = StateObject(wrappedValue: dependencies.diagnosticsViewModel)
         _batteryHealthViewModel = StateObject(wrappedValue: dependencies.batteryHealthViewModel)
@@ -33,6 +35,7 @@ struct AppRootView: View {
         lifecycleController = dependencies.lifecycleController
         interfaceOrientationController = dependencies.interfaceOrientationController
         self.batteryHealthAccessory = batteryHealthAccessory
+        self.settingsAccessory = settingsAccessory
     }
 
     var body: some View {
@@ -78,7 +81,8 @@ struct AppRootView: View {
                 case .settings:
                     AppSettingsView(
                         viewModel: appSettingsViewModel,
-                        onOpenTelemetry: { path.append(.diagnostics) }
+                        onOpenTelemetry: { path.append(.diagnostics) },
+                        accessory: settingsAccessory
                     )
                 }
             }

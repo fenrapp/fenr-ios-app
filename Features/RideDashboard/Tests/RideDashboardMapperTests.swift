@@ -44,7 +44,7 @@ struct RideDashboardMapperTests {
 
         let state = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "es_ES")).map(
             telemetry: telemetry,
-            connection: BikeConnection(state: .receivingTelemetry(peripheralName: "VIN")),
+            connection: BikeConnection(state: .receivingTelemetry(peripheralName: "FENRTEST000000001")),
             speedKilometersPerHour: telemetry.speed.kmh,
             measurementSystem: .metric
         )
@@ -69,7 +69,7 @@ struct RideDashboardMapperTests {
     func mapsUnavailableValues() {
         let state = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_US")).map(
             telemetry: BikeTelemetry(speed: .known(kmh: -5, kmhX10: -50)),
-            connection: BikeConnection(state: .receivingTelemetry(peripheralName: "VIN")),
+            connection: BikeConnection(state: .receivingTelemetry(peripheralName: "FENRTEST000000001")),
             speedKilometersPerHour: -5,
             measurementSystem: .imperial
         )
@@ -88,7 +88,7 @@ struct RideDashboardMapperTests {
                 speed: .known(kmh: -3.5, kmhX10: -35),
                 statusFlags: BikeStatusFlags(crawlState: .reverse)
             ),
-            connection: BikeConnection(state: .receivingTelemetry(peripheralName: "VIN")),
+            connection: BikeConnection(state: .receivingTelemetry(peripheralName: "FENRTEST000000001")),
             speedKilometersPerHour: -3.5,
             measurementSystem: .metric
         )
@@ -133,5 +133,61 @@ struct RideDashboardMapperTests {
 
         #expect(state.isCharging)
         #expect(state.gear == .init(display: .text("N"), isActive: true, accessibilityLabel: "Gear neutral"))
+    }
+
+    @Test("Maps active mode HP, signed TC and effective Alpha tier")
+    func mapsPowerModePresentation() {
+        let telemetry = BikeTelemetry(
+            batteryLevel: .known(percent: 60),
+            mode: .index(5),
+            speed: .known(kmh: 42, kmhX10: 420),
+            powerModeConfigurations: [
+                4: .init(
+                    mapIndex: 4,
+                    horsepower: 80,
+                    regenerativeBrakingPercent: 40,
+                    powerTractionPercent: 12.5,
+                    brakingTractionPercent: -3
+                )
+            ],
+            detectedPowerTier: .alpha(evidence: [.powerAboveStandard])
+        )
+
+        let state = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_US")).map(
+            telemetry: telemetry,
+            connection: BikeConnection(state: .receivingTelemetry(peripheralName: "FENRTEST000000001")),
+            speedKilometersPerHour: 42,
+            measurementSystem: .metric
+        )
+
+        #expect(state.powerMode == .init(
+            map: "5",
+            horsepower: "80 HP",
+            regenerativeBraking: "40%",
+            powerTraction: "12.5%",
+            brakingTraction: "-3%",
+            tierBadge: "ALPHA · 80 MAX"
+        ))
+    }
+
+    @Test("Keeps unknown active configuration as placeholders")
+    func mapsPartialPowerModePresentation() {
+        let telemetry = BikeTelemetry(
+            batteryLevel: .known(percent: 60),
+            mode: .index(2),
+            powerModeConfigurations: [1: .init(mapIndex: 1, powerTractionPercent: 20)]
+        )
+        let state = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_US")).map(
+            telemetry: telemetry,
+            connection: BikeConnection(state: .receivingTelemetry(peripheralName: "FENRTEST000000001")),
+            speedKilometersPerHour: nil,
+            measurementSystem: .metric
+        )
+
+        #expect(state.powerMode.horsepower == "--")
+        #expect(state.powerMode.regenerativeBraking == "--")
+        #expect(state.powerMode.powerTraction == "20%")
+        #expect(state.powerMode.brakingTraction == "--")
+        #expect(state.powerMode.tierBadge == "STANDARD · 60 MAX")
     }
 }

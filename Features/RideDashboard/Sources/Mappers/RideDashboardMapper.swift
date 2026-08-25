@@ -49,11 +49,38 @@ public struct RideDashboardMapper: Sendable {
                 runState: hasTelemetry ? telemetry.runState : .unknown,
                 modeIndex: hasTelemetry ? telemetry.mode.displayIndex : nil
             ),
+            powerMode: powerMode(telemetry: telemetry, hasTelemetry: hasTelemetry),
             isCharging: hasTelemetry && telemetry.runState == .charging,
             connectionDetail: connectionText(connection.state),
             hasTelemetry: hasTelemetry,
             indicators: indicators(flags: telemetry.statusFlags, hasTelemetry: hasTelemetry)
         )
+    }
+
+    private func powerMode(
+        telemetry: BikeTelemetry,
+        hasTelemetry: Bool
+    ) -> DashboardPowerModeViewData {
+        guard hasTelemetry else { return .init() }
+        let configuration = telemetry.activePowerModeConfiguration
+        let badge: String = switch telemetry.detectedPowerTier {
+        case .standardBaseline: "STANDARD · 60 MAX"
+        case .alpha: "ALPHA · 80 MAX"
+        }
+        return .init(
+            map: telemetry.mode.displayIndex.map(String.init) ?? "--",
+            horsepower: configuration?.horsepower.map { "\($0) HP" } ?? "--",
+            regenerativeBraking: percent(configuration?.regenerativeBrakingPercent),
+            powerTraction: percent(configuration?.powerTractionPercent),
+            brakingTraction: percent(configuration?.brakingTractionPercent),
+            tierBadge: badge
+        )
+    }
+
+    private func percent(_ value: Double?) -> String {
+        guard let value else { return "--" }
+        if value.rounded() == value { return "\(Int(value))%" }
+        return String(format: "%.1f%%", locale: Locale(identifier: "en_US_POSIX"), value)
     }
 
     private func speedometer(

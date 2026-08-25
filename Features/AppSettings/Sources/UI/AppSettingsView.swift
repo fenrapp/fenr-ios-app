@@ -4,13 +4,16 @@ import SwiftUI
 public struct AppSettingsView: View {
     @ObservedObject private var viewModel: AppSettingsViewModel
     private let onOpenTelemetry: () -> Void
+    private let accessory: () -> AnyView
 
     public init(
         viewModel: AppSettingsViewModel,
-        onOpenTelemetry: @escaping () -> Void = {}
+        onOpenTelemetry: @escaping () -> Void = {},
+        accessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
         self.viewModel = viewModel
         self.onOpenTelemetry = onOpenTelemetry
+        self.accessory = accessory
     }
 
     public var body: some View {
@@ -34,6 +37,42 @@ public struct AppSettingsView: View {
                         onRequestAccess: viewModel.requestLocationAccess
                     )
                 }
+            }
+            #endif
+
+            #if os(iOS)
+            Section("Bike power tier") {
+                Picker("Declared model", selection: powerTierBinding) {
+                    ForEach(viewModel.viewState.powerTier.selection.options) { option in
+                        Text(option.title).tag(option.id)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                Text(viewModel.viewState.powerTier.status)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                if let evidence = viewModel.viewState.powerTier.evidence {
+                    Text(evidence)
+                        .font(.footnote)
+                }
+                Button {
+                    viewModel.verifyPowerTierWithBike()
+                } label: {
+                    if viewModel.viewState.powerTier.isVerifying {
+                        ProgressView()
+                    } else {
+                        Text("Verify with bike")
+                    }
+                }
+                .disabled(!viewModel.viewState.powerTier.isVerifyEnabled)
+
+                Text(
+                    "The manual selection is only an expectation. "
+                        + "Bike telemetry determines HP, TC and the effective tier."
+                )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             #endif
 
@@ -64,6 +103,8 @@ public struct AppSettingsView: View {
                 TelemetryActionRow(action: onOpenTelemetry)
             }
             #endif
+
+            accessory()
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
@@ -97,6 +138,13 @@ public struct AppSettingsView: View {
         .init(
             get: { viewModel.viewState.batteryCapacity.selectedID },
             set: { viewModel.selectBatteryPackCapacity(id: $0) }
+        )
+    }
+
+    private var powerTierBinding: Binding<String> {
+        .init(
+            get: { viewModel.viewState.powerTier.selection.selectedID },
+            set: { viewModel.selectDeclaredPowerTier(id: $0) }
         )
     }
 

@@ -12,7 +12,11 @@ enum ProductionAppDependencyContainerFactory {
         let bikeSDKContainer = BikeSDKDependencyContainer()
         let bikeDataContainer = BikeDataDependencyContainer()
         let client = bikeSDKContainer.makeBikeTelemetryClient()
-        let repository = bikeDataContainer.makeBikeRepository(client: client)
+        let profileRepository = UserDefaultsBikeProfileRepository()
+        let repository = bikeDataContainer.makeBikeRepository(
+            client: client,
+            profileRepository: profileRepository
+        )
         let session = BikeSession(
             repository: repository,
             pinDeriver: bikeDataContainer.makeBikePinDeriver()
@@ -23,7 +27,7 @@ enum ProductionAppDependencyContainerFactory {
             batteryHealthContainer: BatteryHealthDependencyContainer(),
             session: session,
             chargeControlSession: chargeControl,
-            profileRepository: UserDefaultsBikeProfileRepository(),
+            profileRepository: profileRepository,
             settingsRepository: UserDefaultsAppSettingsRepository(),
             deviceSpeedRepository: CoreLocationDeviceSpeedRepository(
                 locationManager: CLLocationManager()

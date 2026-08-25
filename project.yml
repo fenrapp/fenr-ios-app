@@ -233,6 +233,7 @@ targets:
     sources:
       - path: Features/AppSettings/Sources
     dependencies:
+      - target: BikeDomain
       - target: SettingsDomain
       - target: EnvironmentDomain
       - target: DesignSystem
