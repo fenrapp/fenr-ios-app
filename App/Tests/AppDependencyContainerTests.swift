@@ -23,7 +23,7 @@ struct AppDependencyContainerTests {
 
         #expect(!dependencies.setupFlow.isLoaded)
         #expect(!dependencies.dashboardViewModel.viewState.hasTelemetry)
-        #expect(!dependencies.chargingDashboardViewModel.viewState.gauge.control.isEnabled)
+        #expect(!dependencies.chargingDashboardViewModel.viewState.control.isEnabled)
         #expect(
             dependencies.batteryHealthViewModel.chargeControlSessionIdentity
                 == dependencies.chargingDashboardViewModel.chargeControlSessionIdentity

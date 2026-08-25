@@ -9,8 +9,8 @@ import TestSupport
 @MainActor
 @Suite("Charging dashboard view model")
 struct ChargingDashboardViewModelTests {
-    @Test("Monitors charger data only for the charging state")
-    func monitorsOnlyWhileCharging() async {
+    @Test("Monitors battery health while a charger is connected")
+    func monitorsWhileChargerIsConnected() async {
         let repository = ChargingDashboardRepository()
         let chargeControl = makeChargeControl(repository: repository)
         let locale = Locale(identifier: "en_US")
@@ -29,7 +29,7 @@ struct ChargingDashboardViewModelTests {
         await Task.yield()
         #expect(await repository.monitoringStartCount() == 0)
 
-        await repository.sendTelemetry(BikeTelemetry(statusFlags: .init(isCharging: true)))
+        await repository.sendTelemetry(BikeTelemetry(statusFlags: .init(isChargerConnected: true)))
         #expect(await waitUntil { await repository.monitoringStartCount() == 1 })
         #expect(await repository.monitoringStartCount() == 1)
         await repository.sendBatteryHealth(chargingHealth())
@@ -49,12 +49,12 @@ struct ChargingDashboardViewModelTests {
         await repository.suspendMonitoringStops()
 
         viewModel.start()
-        await repository.sendTelemetry(BikeTelemetry(statusFlags: .init(isCharging: true)))
+        await repository.sendTelemetry(BikeTelemetry(statusFlags: .init(isChargerConnected: true)))
         #expect(await waitUntil { await repository.monitoringStartCount() == 1 })
 
         await repository.sendTelemetry(BikeTelemetry())
         #expect(await waitUntil { await repository.monitoringStopCount() == 1 })
-        await repository.sendTelemetry(BikeTelemetry(statusFlags: .init(isCharging: true)))
+        await repository.sendTelemetry(BikeTelemetry(statusFlags: .init(isChargerConnected: true)))
         try? await Task.sleep(for: .milliseconds(30))
         #expect(await repository.monitoringStartCount() == 1)
 

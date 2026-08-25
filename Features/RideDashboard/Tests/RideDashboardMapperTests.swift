@@ -50,15 +50,14 @@ struct RideDashboardMapperTests {
         )
 
         #expect(state.hasTelemetry)
-        #expect(state.speedometer.value == 42)
+        #expect(state.speedometer.valueText == "42")
         #expect(state.speedometer.unit == "km/h")
         #expect(abs(state.speedometer.progress - (42.0 / 180.0)) < 0.001)
-        #expect(state.speedometer.emphasis == .informational)
         #expect(state.speedometer.accessibilityLabel == "Speed 42 km/h")
-        #expect(state.batteryPercent == 60)
-        #expect(state.odometer == .init(valueText: "180", unitText: "km", animationValue: 180))
+        #expect(state.battery.percentageText == "60%")
+        #expect(state.battery.emphasis == .positive)
         #expect(state.gear == .init(display: .text("3"), isActive: true, accessibilityLabel: "Gear 3"))
-        #expect(!state.isCharging)
+        #expect(state.centerCard == .speedometer)
         #expect(state.indicators.first(where: { $0.id == "highBeam" })?.isActive == true)
         #expect(state.indicators.first(where: { $0.id == "leftTurn" })?.isActive == true)
         #expect(state.indicators.first(where: { $0.id == "brake" })?.isActive == true)
@@ -75,7 +74,7 @@ struct RideDashboardMapperTests {
         )
 
         #expect(state.hasTelemetry)
-        #expect(state.speedometer.value == 0)
+        #expect(state.speedometer.valueText == "0")
         #expect(state.speedometer.unit == "mph")
         #expect(state.speedometer.progress == 0)
         #expect(state.connectionDetail == "Live telemetry active")
@@ -94,7 +93,7 @@ struct RideDashboardMapperTests {
         )
 
         #expect(state.gear == .init(display: .crawlReverse, isActive: true, accessibilityLabel: "Crawl reverse"))
-        #expect(state.speedometer.value == -3.5)
+        #expect(state.speedometer.valueText == "-4")
     }
 
     @Test("Does not present stale telemetry outside an active telemetry session")
@@ -111,9 +110,8 @@ struct RideDashboardMapperTests {
         )
 
         #expect(!state.hasTelemetry)
-        #expect(state.speedometer.value == 0)
-        #expect(state.odometer == .init())
-        #expect(state.batteryPercent == nil)
+        #expect(state.speedometer.valueText == "0")
+        #expect(state.battery == .init())
         #expect(state.gear == .init())
         #expect(state.indicators.allSatisfy { !$0.isActive })
         #expect(state.connectionDetail == "Bluetooth is off")
@@ -124,15 +122,30 @@ struct RideDashboardMapperTests {
         let state = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_US")).map(
             telemetry: BikeTelemetry(
                 batteryLevel: .known(percent: 50),
-                statusFlags: .init(isCharging: true)
+                statusFlags: .init(isCharging: true, isChargerConnected: true)
             ),
             connection: BikeConnection(state: .receivingTelemetry(peripheralName: "SYNTHETIC")),
             speedKilometersPerHour: nil,
             measurementSystem: .metric
         )
 
-        #expect(state.isCharging)
+        #expect(state.centerCard == .charging)
         #expect(state.gear == .init(display: .text("N"), isActive: true, accessibilityLabel: "Gear neutral"))
+    }
+
+    @Test("Shows the charging card for a connected idle charger")
+    func mapsConnectedIdleChargerPresentation() {
+        let state = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_US")).map(
+            telemetry: BikeTelemetry(
+                batteryLevel: .known(percent: 50),
+                statusFlags: .init(isChargerConnected: true)
+            ),
+            connection: BikeConnection(state: .receivingTelemetry(peripheralName: "SYNTHETIC")),
+            speedKilometersPerHour: nil,
+            measurementSystem: .metric
+        )
+
+        #expect(state.centerCard == .charging)
     }
 
     @Test("Maps active mode HP, regen and signed TC without exposing the bike tier")
@@ -141,6 +154,7 @@ struct RideDashboardMapperTests {
             batteryLevel: .known(percent: 60),
             mode: .index(5),
             speed: .known(kmh: 42, kmhX10: 420),
+            statusFlags: .init(isOn: true, isInGear: true),
             powerModeConfigurations: [
                 4: .init(
                     mapIndex: 4,
@@ -166,7 +180,8 @@ struct RideDashboardMapperTests {
             regenerativeBraking: "40",
             powerTraction: "12.5",
             brakingTraction: "-3",
-            showsTractionControl: true
+            showsTractionControl: true,
+            isVisible: true
         ))
     }
 
@@ -175,6 +190,7 @@ struct RideDashboardMapperTests {
         let telemetry = BikeTelemetry(
             batteryLevel: .known(percent: 60),
             mode: .index(2),
+            statusFlags: .init(isOn: true, isInGear: true),
             powerModeConfigurations: [1: .init(mapIndex: 1, powerTractionPercent: 20)]
         )
         let state = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_US")).map(
@@ -196,6 +212,7 @@ struct RideDashboardMapperTests {
         let telemetry = BikeTelemetry(
             batteryLevel: .known(percent: 60),
             mode: .index(4),
+            statusFlags: .init(isOn: true, isInGear: true),
             powerModeConfigurations: [
                 3: .init(mapIndex: 3, horsepower: 60, regenerativeBrakingPercent: 50)
             ]

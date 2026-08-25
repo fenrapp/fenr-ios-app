@@ -56,20 +56,24 @@ struct BikeEmulatorRepositoryTests {
         #expect(receivedDatasets == Set(BatteryDataset.allCases))
     }
 
-    @Test("Riding scenario publishes moving telemetry")
-    func ridingScenarioPublishesMovingTelemetry() async throws {
+    @Test("Riding scenario progresses from rest")
+    func ridingScenarioProgressesFromRest() async throws {
         let repository = BikeEmulatorRepositoryFactory.make(scenario: .riding)
 
         await repository.start()
-        let telemetry = try await nextValue(from: await repository.observeTelemetry())
+        let stream = await repository.observeTelemetry()
+        var iterator = stream.makeAsyncIterator()
+        let initialTelemetry = try await nextValue(from: &iterator)
+        try await Task.sleep(for: .milliseconds(600))
+        let movingTelemetry = try await nextValue(from: &iterator)
         try await repository.startBatteryHealthMonitoring()
         let health = try await nextValue(from: await repository.observeBatteryHealth())
 
-        #expect(telemetry.speed.kmh ?? .zero > .zero)
-        #expect(telemetry.motorRPM.value ?? .zero > .zero)
-        #expect(telemetry.statusFlags.isInGear)
-        #expect(!telemetry.statusFlags.isCharging)
-        #expect(telemetry.batteryLevel.percent == health.stateOfCharge.percent)
+        #expect(initialTelemetry.speed.kmh == .zero)
+        #expect(movingTelemetry.speed.kmh ?? .zero > .zero)
+        #expect(movingTelemetry.motorRPM.value ?? .zero > .zero)
+        #expect(!movingTelemetry.statusFlags.isCharging)
+        #expect(movingTelemetry.batteryLevel.percent == health.stateOfCharge.percent)
     }
 
     @Test("Debug scenarios evolve their live dashboard values")
