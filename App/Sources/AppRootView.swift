@@ -10,30 +10,31 @@ struct AppRootView: View {
     @StateObject private var diagnosticsViewModel: BikeDiagnosticsViewModel
     @StateObject private var batteryHealthViewModel: BatteryHealthViewModel
     @StateObject private var dashboardViewModel: RideDashboardViewModel
-    @StateObject private var chargingDashboardViewModel: ChargingDashboardViewModel
     @StateObject private var onboardingViewModel: BikeOnboardingViewModel
     @StateObject private var appSettingsViewModel: AppSettingsViewModel
     @StateObject private var setupFlow: BikeSetupFlowController
     @State private var path: [Route] = []
     private let lifecycleController: AppLifecycleController
     private let interfaceOrientationController: InterfaceOrientationController
+    private let dashboardAccessory: () -> AnyView
     private let batteryHealthAccessory: () -> AnyView
     private let settingsAccessory: () -> AnyView
 
     init(
         dependencies: AppRootDependencies,
+        dashboardAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) },
         batteryHealthAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) },
         settingsAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
         _diagnosticsViewModel = StateObject(wrappedValue: dependencies.diagnosticsViewModel)
         _batteryHealthViewModel = StateObject(wrappedValue: dependencies.batteryHealthViewModel)
         _dashboardViewModel = StateObject(wrappedValue: dependencies.dashboardViewModel)
-        _chargingDashboardViewModel = StateObject(wrappedValue: dependencies.chargingDashboardViewModel)
         _onboardingViewModel = StateObject(wrappedValue: dependencies.onboardingViewModel)
         _appSettingsViewModel = StateObject(wrappedValue: dependencies.appSettingsViewModel)
         _setupFlow = StateObject(wrappedValue: dependencies.setupFlow)
         lifecycleController = dependencies.lifecycleController
         interfaceOrientationController = dependencies.interfaceOrientationController
+        self.dashboardAccessory = dashboardAccessory
         self.batteryHealthAccessory = batteryHealthAccessory
         self.settingsAccessory = settingsAccessory
     }
@@ -46,10 +47,12 @@ struct AppRootView: View {
                 } else if setupFlow.isCompleted {
                     RideDashboardView(
                         viewModel: dashboardViewModel,
-                        chargingViewModel: chargingDashboardViewModel,
-                        onDiagnostics: { path.append(.diagnostics) },
-                        onSettings: { path.append(.settings) }
+                        onDiagnostics: { path.append(.diagnostics) }
                     )
+                    .overlay(alignment: .topTrailing) {
+                        dashboardAccessory()
+                            .padding([.top, .trailing], Constants.dashboardAccessoryPadding)
+                    }
                 } else {
                     BikeOnboardingView(
                         viewModel: onboardingViewModel,
@@ -185,5 +188,9 @@ struct AppRootView: View {
         case batteryHealth
         case diagnostics
         case settings
+    }
+
+    private enum Constants {
+        static let dashboardAccessoryPadding: CGFloat = 8
     }
 }

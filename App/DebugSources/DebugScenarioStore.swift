@@ -13,7 +13,7 @@ struct DebugScenarioStore {
             let rawValue = userDefaults.string(forKey: Constants.scenarioKey),
             let scenario = BikeEmulatorScenario(rawValue: rawValue)
         else {
-            return .charging
+            return .riding
         }
         return scenario
     }

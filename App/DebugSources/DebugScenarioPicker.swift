@@ -10,7 +10,7 @@ struct DebugScenarioPicker: View {
 
     var body: some View {
         Menu {
-            Picker("Escenario", selection: scenarioBinding) {
+            Picker("Scenario", selection: scenarioBinding) {
                 ForEach(BikeEmulatorScenario.allCases) { scenario in
                     Text(scenario.displayName).tag(scenario)
                 }

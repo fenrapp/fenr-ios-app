@@ -42,8 +42,14 @@ public struct RideDashboardMapper: Sendable {
             ? telemetry.odometer.kilometers.map(measurementMapper.distance)
             : nil
         return RideDashboardViewState(
-            speedometer: speedometer(speed: speed, maximum: maximumSpeed),
-            batteryPercent: hasTelemetry ? telemetry.batteryLevel.percent : nil,
+            speedometer: speedometer(
+                speed: speed,
+                maximum: maximumSpeed,
+                measurementMapper: measurementMapper
+            ),
+            battery: battery(
+                percentage: hasTelemetry ? telemetry.batteryLevel.percent : nil
+            ),
             odometer: measurementMapper.metric(odometer, fractionDigits: 1),
             gear: gear(
                 runState: hasTelemetry ? telemetry.runState : .unknown,
@@ -61,16 +67,39 @@ public struct RideDashboardMapper: Sendable {
         telemetry: BikeTelemetry,
         hasTelemetry: Bool
     ) -> DashboardPowerModeViewData {
-        guard hasTelemetry else { return .init() }
+        guard
+            hasTelemetry,
+            telemetry.runState == .on,
+            let mapNumber = telemetry.mode.displayIndex,
+            Constants.validPowerModeRange.contains(mapNumber)
+        else {
+            return .init()
+        }
         let configuration = telemetry.activePowerModeConfiguration
         return .init(
-            map: telemetry.mode.displayIndex.map(String.init) ?? "--",
+            map: String(mapNumber),
             horsepower: configuration?.horsepower.map(String.init) ?? "--",
             regenerativeBraking: percent(configuration?.regenerativeBrakingPercent),
             powerTraction: percent(configuration?.powerTractionPercent),
             brakingTraction: percent(configuration?.brakingTractionPercent),
-            showsTractionControl: configuration?.powerTractionPercent != nil
-                || configuration?.brakingTractionPercent != nil
+            showsTractionControl: configuration?.powerTractionPercent != nil,
+            isVisible: true
+        )
+    }
+
+    private func battery(percentage: Int?) -> RideDashboardViewState.Battery {
+        guard let percentage else { return .init() }
+        let clampedPercentage = min(max(percentage, .zero), Constants.maximumBatteryPercentage)
+        let emphasis: RideDashboardViewState.Battery.Emphasis = switch clampedPercentage {
+        case ..<Constants.criticalBatteryPercentage: .critical
+        case ..<Constants.warningBatteryPercentage: .warning
+        default: .positive
+        }
+        return .init(
+            percentageText: "\(clampedPercentage)%",
+            progress: Double(clampedPercentage) / Double(Constants.maximumBatteryPercentage),
+            emphasis: emphasis,
+            accessibilityLabel: "Battery \(clampedPercentage) percent"
         )
     }
 
@@ -82,7 +111,8 @@ public struct RideDashboardMapper: Sendable {
 
     private func speedometer(
         speed: RideDashboardMeasurement?,
-        maximum: RideDashboardMeasurement
+        maximum: RideDashboardMeasurement,
+        measurementMapper: RideDashboardMeasurementMapper
     ) -> DashboardSpeedometerViewData {
         let value = speed?.value ?? .zero
         let progress = maximum.value > .zero
@@ -94,13 +124,14 @@ public struct RideDashboardMapper: Sendable {
         default: .warning
         }
         let unit = speed?.unit ?? maximum.unit
-        let formattedValue = Int(value.rounded())
+        let valueText = measurementMapper.number(value, fractionDigits: .zero)
         return .init(
             value: value,
+            valueText: valueText,
             unit: unit,
             progress: progress,
             emphasis: emphasis,
-            accessibilityLabel: "Speed \(formattedValue) \(unit)"
+            accessibilityLabel: "Speed \(valueText) \(unit)"
         )
     }
 
@@ -139,21 +170,21 @@ public struct RideDashboardMapper: Sendable {
                 symbolName: "arrow.left",
                 label: "Left turn",
                 isActive: hasTelemetry && flags.indicatorState.isLeftBlinkerOn,
-                emphasis: .positive
+                emphasis: .warning
             ),
             indicator(
                 id: "brake",
-                symbolName: "hand.raised.fill",
+                symbolName: "exclamationmark.circle.fill",
                 label: "Brake",
                 isActive: hasTelemetry && flags.isBrakeActive,
-                emphasis: .warning
+                emphasis: .critical
             ),
             indicator(
                 id: "rightTurn",
                 symbolName: "arrow.right",
                 label: "Right turn",
                 isActive: hasTelemetry && flags.indicatorState.isRightBlinkerOn,
-                emphasis: .positive
+                emphasis: .warning
             ),
             indicator(
                 id: "fault",
@@ -206,5 +237,9 @@ public struct RideDashboardMapper: Sendable {
     private enum Constants {
         static let moderateSpeedProgress = 0.45
         static let fastSpeedProgress = 0.72
+        static let maximumBatteryPercentage = 100
+        static let criticalBatteryPercentage = 21
+        static let warningBatteryPercentage = 51
+        static let validPowerModeRange = 1 ... 5
     }
 }

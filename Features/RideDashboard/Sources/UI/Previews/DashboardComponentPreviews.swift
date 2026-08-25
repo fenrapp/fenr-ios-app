@@ -6,16 +6,22 @@ import SwiftUI
     DashboardSpeedometer(
         state: .init(
             value: 82,
+            valueText: "82",
             unit: "km/h",
             progress: 82.0 / 180.0,
             emphasis: .positive,
             accessibilityLabel: "Speed 82 km/h"
-        ),
-        reduceMotion: false
+        )
     )
     .frame(width: 620, height: 310)
     .padding()
     .background(DesignColor.surface)
+}
+
+#Preview("Speed progress bar") {
+    DashboardSpeedProgressBar(progress: 0.65)
+        .frame(width: 844, height: 3)
+        .background(Color.black)
 }
 
 #Preview("Charging gauge") {
@@ -35,9 +41,10 @@ import SwiftUI
 
 #Preview("Battery panel") {
     VStack(alignment: .leading, spacing: DesignSpace.large) {
-        DashboardBatteryPanel(percentage: 78, compact: false)
-        DashboardBatteryPanel(percentage: 18, compact: true)
-        DashboardBatteryPanel(percentage: nil, compact: false)
+        DashboardBatteryPanel(state: previewBattery(percentage: 78, emphasis: .positive))
+        DashboardBatteryPanel(state: previewBattery(percentage: 28, emphasis: .warning))
+        DashboardBatteryPanel(state: previewBattery(percentage: 8, emphasis: .critical))
+        DashboardBatteryPanel(state: .init())
     }
     .frame(width: 240)
     .padding()
@@ -55,8 +62,50 @@ import SwiftUI
     .background(DesignColor.surface)
 }
 
-#Preview("Indicator rail") {
-    DashboardIndicatorRail(indicators: [
+#Preview("Power mode summary") {
+    VStack(spacing: DesignSpace.large) {
+        DashboardPowerModeSummary(state: .init(
+            horsepower: "40",
+            regenerativeBraking: "30",
+            isVisible: true
+        ))
+        DashboardPowerModeSummary(state: .init(
+            horsepower: "80",
+            regenerativeBraking: "50",
+            powerTraction: "35",
+            showsTractionControl: true,
+            isVisible: true
+        ))
+    }
+    .padding()
+    .background(DesignColor.surface)
+}
+
+#Preview("Ambient lighting") {
+    DashboardAmbientLighting(indicators: [
+        .init(
+            id: "leftTurn",
+            symbolName: "arrow.left",
+            accessibilityLabel: "Left turn",
+            accessibilityValue: "On",
+            isActive: true,
+            emphasis: .warning
+        ),
+        .init(
+            id: "rightTurn",
+            symbolName: "arrow.right",
+            accessibilityLabel: "Right turn",
+            accessibilityValue: "Off",
+            isActive: false,
+            emphasis: .warning
+        )
+    ])
+    .frame(width: 844, height: 390)
+    .background(Color.black)
+}
+
+#Preview("Indicator status") {
+    DashboardIndicatorStatus(indicators: [
         .init(
             id: "highBeam",
             symbolName: "headlight.high.beam",
@@ -71,33 +120,24 @@ import SwiftUI
             accessibilityLabel: "Left turn",
             accessibilityValue: "On",
             isActive: true,
-            emphasis: .positive
-        ),
-        .init(
-            id: "brake",
-            symbolName: "hand.raised.fill",
-            accessibilityLabel: "Brake",
-            accessibilityValue: "On",
-            isActive: true,
             emphasis: .warning
         ),
         .init(
-            id: "fault",
-            symbolName: "exclamationmark.triangle.fill",
-            accessibilityLabel: "Fault",
+            id: "brake",
+            symbolName: "exclamationmark.circle.fill",
+            accessibilityLabel: "Brake",
             accessibilityValue: "On",
             isActive: true,
             emphasis: .critical
         )
     ])
-    .frame(width: 620, height: 48)
     .padding()
-    .background(DesignColor.surface)
+    .background(Color.black)
 }
 
 #Preview("Ride metrics") {
     RideDashboardMetricsColumn(
-        batteryPercent: 78,
+        battery: previewBattery(percentage: 78, emphasis: .positive),
         odometer: .init(valueText: "180.0", unitText: "km", animationValue: 180),
         compact: false
     )
@@ -118,5 +158,17 @@ import SwiftUI
     .frame(width: 240, height: 280)
     .padding()
     .background(DesignColor.surface)
+}
+
+private func previewBattery(
+    percentage: Int,
+    emphasis: RideDashboardViewState.Battery.Emphasis
+) -> RideDashboardViewState.Battery {
+    .init(
+        percentageText: "\(percentage)%",
+        progress: Double(percentage) / 100,
+        emphasis: emphasis,
+        accessibilityLabel: "Battery \(percentage) percent"
+    )
 }
 #endif

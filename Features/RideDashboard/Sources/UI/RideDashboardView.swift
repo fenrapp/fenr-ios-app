@@ -1,38 +1,65 @@
-import DesignSystem
 import SwiftUI
 import UIKit
 
 public struct RideDashboardView: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ObservedObject private var viewModel: RideDashboardViewModel
-    @ObservedObject private var chargingViewModel: ChargingDashboardViewModel
+    @ScaledMetric(relativeTo: .body) private var speedometerTypeScale: CGFloat = 1
     private let onDiagnostics: () -> Void
-    private let onSettings: () -> Void
 
     public init(
         viewModel: RideDashboardViewModel,
-        chargingViewModel: ChargingDashboardViewModel,
-        onDiagnostics: @escaping () -> Void,
-        onSettings: @escaping () -> Void = {}
+        onDiagnostics: @escaping () -> Void
     ) {
         self.viewModel = viewModel
-        self.chargingViewModel = chargingViewModel
         self.onDiagnostics = onDiagnostics
-        self.onSettings = onSettings
     }
 
     public var body: some View {
         GeometryReader { proxy in
-            let layout = RideDashboardLayout(
-                size: proxy.size,
-                displaysBottomMetrics: viewModel.viewState.hasTelemetry
-                    && !viewModel.viewState.isCharging
-            )
             Group {
                 if proxy.size.width <= proxy.size.height {
                     DashboardUnavailableState.rotationRequired
                 } else if viewModel.viewState.hasTelemetry {
-                    liveDashboard(layout: layout)
+                    let centerWidth = centerColumnWidth(for: proxy.size)
+                    let sideWidth = sideColumnWidth(for: proxy.size, centerWidth: centerWidth)
+                    ZStack {
+                        DashboardAmbientLighting(indicators: viewModel.viewState.indicators)
+                            .ignoresSafeArea()
+
+                        HStack(spacing: .zero) {
+                            DashboardBatteryPanel(state: viewModel.viewState.battery)
+                                .frame(width: sideWidth)
+
+                            ZStack(alignment: .bottom) {
+                                DashboardSpeedometer(
+                                    state: viewModel.viewState.speedometer,
+                                    referenceSize: proxy.size
+                                )
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                                DashboardIndicatorStatus(indicators: viewModel.viewState.indicators)
+                                    .frame(maxHeight: .infinity, alignment: .top)
+                                    .padding(.top, Constants.accessoryEdgePadding)
+
+                                DashboardPowerModeSummary(state: viewModel.viewState.powerMode)
+                                    .padding(.bottom, Constants.accessoryEdgePadding)
+                            }
+                            .frame(width: centerWidth)
+
+                            DashboardGearPanel(state: viewModel.viewState.gear)
+                            .frame(width: sideWidth)
+                        }
+
+                    }
+                    .overlay(alignment: .bottom) {
+                        if !viewModel.viewState.isCharging {
+                            DashboardSpeedProgressBar(
+                                progress: viewModel.viewState.speedometer.progress
+                            )
+                            .offset(y: proxy.safeAreaInsets.bottom)
+                            .allowsHitTesting(false)
+                        }
+                    }
                 } else {
                     DashboardUnavailableState.disconnected(
                         detail: viewModel.viewState.connectionDetail,
@@ -42,7 +69,7 @@ public struct RideDashboardView: View {
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
-        .background(DesignColor.surface.ignoresSafeArea())
+        .background(Color(uiColor: .systemBackground).ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .task { viewModel.startObserving() }
         .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
@@ -52,98 +79,31 @@ public struct RideDashboardView: View {
         }
     }
 
-    private func liveDashboard(layout: RideDashboardLayout) -> some View {
-        ZStack {
-            if viewModel.viewState.isCharging {
-                ChargingDashboardBackground()
-                    .transition(.opacity)
-            }
-            dashboardContent(layout: layout)
-                .transition(DashboardLiveTransition.transition(reduceMotion: reduceMotion))
-            settingsButton
-        }
-        .padding(.horizontal, layout.horizontalContentPadding)
-        .padding(.vertical, layout.verticalContentPadding)
-        .animation(
-            reduceMotion ? nil : .spring(
-                response: RideDashboardLayout.Constants.liveTransitionResponse,
-                dampingFraction: RideDashboardLayout.Constants.liveTransitionDamping
-            ),
-            value: viewModel.viewState.isCharging
+    private func centerColumnWidth(for size: CGSize) -> CGFloat {
+        let equalColumnWidth = size.width / Constants.columnCount
+        let desiredWidth = max(
+            equalColumnWidth,
+            Constants.minimumCenterColumnWidth,
+            DashboardSpeedometer.minimumContentWidth(
+                for: size,
+                dynamicTypeScale: speedometerTypeScale
+            )
         )
+        let maximumWidth = max(
+            equalColumnWidth,
+            size.width - (Constants.minimumSideColumnWidth * 2)
+        )
+        return min(desiredWidth, maximumWidth)
     }
 
-    @ViewBuilder
-    private func dashboardContent(layout: RideDashboardLayout) -> some View {
-        if viewModel.viewState.isCharging {
-            DashboardShell(
-                layout: layout,
-                sideMetrics: {
-                    ChargingDashboardMetricsColumn(
-                        viewState: chargingViewModel.viewState,
-                        compact: layout.usesCompactSideMetrics
-                    )
-                },
-                gear: {
-                    DashboardGearColumn(state: viewModel.viewState.gear)
-                },
-                instrument: {
-                    DashboardChargingGauge(
-                        state: chargingViewModel.viewState.gauge,
-                        reduceMotion: reduceMotion,
-                        setPowerLimit: chargingViewModel.setChargePowerLimit(watts:),
-                        setChargeTarget: chargingViewModel.setChargeTarget(percent:)
-                    )
-                },
-                indicators: { indicatorRail },
-                bottomMetrics: { EmptyView() }
-            )
-            .task { chargingViewModel.start() }
-            .onDisappear { chargingViewModel.stop() }
-        } else {
-            DashboardShell(
-                layout: layout,
-                sideMetrics: {
-                    RideDashboardMetricsColumn(
-                        batteryPercent: viewModel.viewState.batteryPercent,
-                        odometer: viewModel.viewState.odometer,
-                        compact: layout.usesCompactSideMetrics
-                    )
-                },
-                gear: {
-                    DashboardGearColumn(state: viewModel.viewState.gear)
-                },
-                instrument: {
-                    DashboardSpeedometer(
-                        state: viewModel.viewState.speedometer,
-                        reduceMotion: reduceMotion
-                    )
-                },
-                indicators: { indicatorRail },
-                bottomMetrics: {
-                    DashboardPowerModeStrip(state: viewModel.viewState.powerMode)
-                }
-            )
-        }
+    private func sideColumnWidth(for size: CGSize, centerWidth: CGFloat) -> CGFloat {
+        (size.width - centerWidth) / 2
     }
 
-    private var settingsButton: some View {
-        VStack {
-            HStack {
-                Spacer()
-                Button(action: onSettings) {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: RideDashboardLayout.Constants.settingsIconSize, weight: .semibold))
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(DesignColor.secondaryText)
-                .accessibilityLabel("Settings")
-            }
-            Spacer()
-        }
-    }
-
-    private var indicatorRail: DashboardIndicatorRail {
-        DashboardIndicatorRail(indicators: viewModel.viewState.indicators)
+    private enum Constants {
+        static let columnCount: CGFloat = 3
+        static let minimumCenterColumnWidth: CGFloat = 360
+        static let minimumSideColumnWidth: CGFloat = 124
+        static let accessoryEdgePadding: CGFloat = 16
     }
 }

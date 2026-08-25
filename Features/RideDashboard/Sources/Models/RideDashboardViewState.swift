@@ -1,6 +1,6 @@
 public struct RideDashboardViewState: Equatable, Sendable {
     public let speedometer: DashboardSpeedometerViewData
-    public let batteryPercent: Int?
+    public let battery: Battery
     public let odometer: DashboardMetricViewData
     public let gear: DashboardGearViewData
     public let powerMode: DashboardPowerModeViewData
@@ -11,7 +11,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
 
     public init(
         speedometer: DashboardSpeedometerViewData = .init(),
-        batteryPercent: Int? = nil,
+        battery: Battery = .init(),
         odometer: DashboardMetricViewData = .init(),
         gear: DashboardGearViewData = .init(),
         powerMode: DashboardPowerModeViewData = .init(),
@@ -21,7 +21,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
         indicators: [DashboardIndicatorViewData] = []
     ) {
         self.speedometer = speedometer
-        self.batteryPercent = batteryPercent
+        self.battery = battery
         self.odometer = odometer
         self.gear = gear
         self.powerMode = powerMode
@@ -29,5 +29,31 @@ public struct RideDashboardViewState: Equatable, Sendable {
         self.connectionDetail = connectionDetail
         self.hasTelemetry = hasTelemetry
         self.indicators = indicators
+    }
+
+    public struct Battery: Equatable, Sendable {
+        public let percentageText: String
+        public let progress: Double
+        public let emphasis: Emphasis
+        public let accessibilityLabel: String
+
+        public init(
+            percentageText: String = "—",
+            progress: Double = .zero,
+            emphasis: Emphasis = .unavailable,
+            accessibilityLabel: String = "Battery unavailable"
+        ) {
+            self.percentageText = percentageText
+            self.progress = progress
+            self.emphasis = emphasis
+            self.accessibilityLabel = accessibilityLabel
+        }
+
+        public enum Emphasis: Equatable, Sendable {
+            case unavailable
+            case positive
+            case warning
+            case critical
+        }
     }
 }

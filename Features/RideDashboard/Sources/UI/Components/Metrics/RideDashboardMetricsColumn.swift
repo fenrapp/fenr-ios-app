@@ -2,7 +2,7 @@ import DesignSystem
 import SwiftUI
 
 struct RideDashboardMetricsColumn: View {
-    let batteryPercent: Int?
+    let battery: RideDashboardViewState.Battery
     let odometer: DashboardMetricViewData
     let compact: Bool
 
@@ -10,7 +10,7 @@ struct RideDashboardMetricsColumn: View {
         VStack(spacing: .zero) {
             Spacer(minLength: .zero)
             VStack(alignment: .leading, spacing: .zero) {
-                DashboardBatteryPanel(percentage: batteryPercent, compact: compact)
+                DashboardBatteryPanel(state: battery)
                 separator
                 DashboardMetricPanel(
                     title: "ODOMETER",

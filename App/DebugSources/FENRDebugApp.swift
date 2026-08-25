@@ -16,6 +16,9 @@ struct FENRDebugApp: App {
         WindowGroup {
             AppRootView(
                 dependencies: dependencies,
+                dashboardAccessory: {
+                    AnyView(DebugScenarioPicker(controller: scenarioController))
+                },
                 batteryHealthAccessory: {
                     AnyView(DebugScenarioPicker(controller: scenarioController))
                 },

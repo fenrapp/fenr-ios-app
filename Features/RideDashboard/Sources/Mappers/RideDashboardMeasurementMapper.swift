@@ -37,6 +37,13 @@ public struct RideDashboardMeasurementMapper: Sendable {
         speed(kilometersPerHour: RideDashboardConstants.maximumSpeedKilometersPerHour)
     }
 
+    public func number(
+        _ value: Double,
+        fractionDigits: Int
+    ) -> String {
+        textFormatter.number(value, fractionDigits: fractionDigits)
+    }
+
     public func metric(
         _ measurement: RideDashboardMeasurement?,
         fractionDigits: Int

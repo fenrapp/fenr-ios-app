@@ -22,21 +22,27 @@ enum BikeEmulatorPayloadFactory {
         let isRiding = scenario == .riding
         let batteryPercent = batteryPercent(for: scenario, tick: tick)
         let speed = isRiding ? ridingSpeed(for: tick) : .zero
+        let ridingGear = ridingGearState(for: tick, fallbackMapNumber: activeMapNumber)
         let indicators = indicatorState(for: scenario, tick: tick)
         return BikeTelemetry(
             vin: BikeEmulatorIdentity.vin,
             batteryLevel: .known(percent: batteryPercent),
             healthLevel: .known(percent: Constants.healthPercent),
-            mode: .index(activeMapNumber),
+            mode: .index(isRiding ? ridingGear.mapNumber : activeMapNumber),
             speed: .known(kmh: speed, kmhX10: Int(speed * Constants.speedScale)),
             motorRPM: .known(isRiding ? Int(speed * Constants.rpmPerKmh) : .zero),
+            odometer: .known(
+                kilometers: Constants.odometerKilometers,
+                centiKilometers: Constants.odometerCentiKilometers
+            ),
             statusFlags: BikeStatusFlags(
                 isOn: !isCharging,
                 isCharging: isCharging,
                 isChargerConnected: isCharging,
-                isInGear: isRiding,
+                isInGear: isRiding && ridingGear.isInGear,
                 isFaultActive: scenario == .cellAnomaly,
                 isBrakeActive: isBrakeActive(for: scenario, tick: tick),
+                crawlState: isRiding ? ridingGear.crawlState : .inactive,
                 indicatorState: indicators
             ),
             rawStatusFlags: BikeRawStatusFlags(
@@ -104,18 +110,45 @@ enum BikeEmulatorPayloadFactory {
                     * Double(Constants.chargingBatteryAmplitude)).rounded()
             )
         case .riding:
-            return max(
-                Constants.ridingBatteryFloor,
-                Constants.ridingBatteryPercent - tick / Constants.ridingBatteryDropInterval
-            )
+            return ridingBatteryPercent(for: tick)
         case .cellAnomaly:
             return Constants.stationaryBatteryPercent
         }
     }
 
+    private static func ridingBatteryPercent(for tick: Int) -> Int {
+        let cycleLength = Constants.ridingBatteryPeakPercent * 2
+        let cycleTick = tick % cycleLength
+        let distanceFromPeak = min(cycleTick, cycleLength - cycleTick)
+        return Constants.ridingBatteryPeakPercent - distanceFromPeak
+    }
+
     private static func ridingSpeed(for tick: Int) -> Double {
-        Constants.ridingSpeedMinimum + abs(sin(Double(tick) * Constants.ridingSpeedWaveRadians))
-            * Constants.ridingSpeedAmplitude
+        let ascentTickCount = Int(Constants.ridingSpeedMaximum / Constants.ridingSpeedStep)
+        let cycleTick = tick % (ascentTickCount * 2)
+        let distanceFromZero = min(cycleTick, (ascentTickCount * 2) - cycleTick)
+        return Double(distanceFromZero) * Constants.ridingSpeedStep
+    }
+
+    private static func ridingGearState(
+        for tick: Int,
+        fallbackMapNumber: Int
+    ) -> RidingGearState {
+        let cycleStep = (tick / Constants.gearStateDurationTicks) % Constants.gearStateCount
+        return switch cycleStep {
+        case .zero:
+            .init(mapNumber: fallbackMapNumber, isInGear: false, crawlState: .inactive)
+        case 1:
+            .init(mapNumber: fallbackMapNumber, isInGear: false, crawlState: .forward)
+        case 2:
+            .init(mapNumber: fallbackMapNumber, isInGear: false, crawlState: .reverse)
+        default:
+            .init(
+                mapNumber: cycleStep - Constants.nonNumericGearStateOffset,
+                isInGear: true,
+                crawlState: .inactive
+            )
+        }
     }
 
     private static func indicatorState(
@@ -234,6 +267,12 @@ enum BikeEmulatorPayloadFactory {
 
 }
 
+private struct RidingGearState {
+    let mapNumber: Int
+    let isInGear: Bool
+    let crawlState: BikeCrawlState
+}
+
 private extension BikeEmulatorPayloadFactory {
     static func powerModeConfigurations(
         preset: BikeEmulatorPowerModePreset,
@@ -291,13 +330,13 @@ private extension BikeEmulatorPayloadFactory {
         static let chargingBatteryPercent = 68
         static let chargingBatteryAmplitude = 26
         static let chargingBatteryWaveRadians = 0.06
-        static let ridingBatteryPercent = 72
-        static let ridingBatteryFloor = 50
-        static let ridingBatteryDropInterval = 20
+        static let ridingBatteryPeakPercent = 72
         static let healthPercent = 94
-        static let ridingSpeedMinimum = 18.0
-        static let ridingSpeedAmplitude = 132.0
-        static let ridingSpeedWaveRadians = 0.13
+        static let ridingSpeedMaximum = 180.0
+        static let ridingSpeedStep = 5.0
+        static let gearStateDurationTicks = 4
+        static let gearStateCount = 8
+        static let nonNumericGearStateOffset = 2
         static let blinkIntervalTicks = 2
         static let indicatorCycleTicks = 6
         static let indicatorCycleCount = 3
@@ -307,6 +346,8 @@ private extension BikeEmulatorPayloadFactory {
         static let brakeActiveStartTick = 4
         static let speedScale = 10.0
         static let rpmPerKmh = 75.0
+        static let odometerKilometers = 1_842.7
+        static let odometerCentiKilometers: UInt32 = 184_270
         static let anomalyAlertFlag = 1
         static let anomalyFaultFlag = 1
         static let chargingInfoFlag = 0x0414

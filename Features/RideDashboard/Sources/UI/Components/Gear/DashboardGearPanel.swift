@@ -5,14 +5,16 @@ struct DashboardGearPanel: View {
     let state: DashboardGearViewData
 
     var body: some View {
-        VStack(spacing: .zero) {
-            Text("GEAR")
-                .font(.system(size: Constants.titleFontSize, weight: .semibold))
-                .foregroundStyle(.secondary)
-            gearValue
-                .frame(maxWidth: .infinity, minHeight: Constants.valueFontSize)
-        }
-        .frame(maxWidth: .infinity)
+        gearValue
+            .frame(width: Constants.width, height: Constants.height)
+            .background {
+                Capsule()
+                    .fill(tint.opacity(Constants.backgroundOpacity))
+            }
+            .overlay {
+                Capsule()
+                    .stroke(tint, lineWidth: Constants.outlineWidth)
+            }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(state.accessibilityLabel)
     }
@@ -40,16 +42,28 @@ struct DashboardGearPanel: View {
                 }
             }
         }
-        .foregroundStyle(state.isActive ? DesignColor.positive : Color.primary)
+        .foregroundStyle(tint)
+    }
+
+    private var tint: Color {
+        guard state.isActive else { return DesignColor.secondaryText }
+        return switch state.display {
+        case .crawlForward: DesignColor.informational
+        case .crawlReverse: DesignColor.warning
+        case .text: DesignColor.positive
+        }
     }
 
     private enum Constants {
-        static let titleFontSize: CGFloat = 16
-        static let valueFontSize: CGFloat = 73
+        static let width: CGFloat = 112
+        static let height: CGFloat = 60
+        static let outlineWidth: CGFloat = 2.75
+        static let backgroundOpacity = 0.08
+        static let valueFontSize: CGFloat = 34
         static let minimumScaleFactor = 0.65
-        static let crawlIconSize: CGFloat = 57
-        static let reverseArrowSize: CGFloat = 22
+        static let crawlIconSize: CGFloat = 32
+        static let reverseArrowSize: CGFloat = 14
         static let reverseArrowVerticalOffset: CGFloat = -2
-        static let reverseArrowHorizontalOffset: CGFloat = -8
+        static let reverseArrowHorizontalOffset: CGFloat = -6
     }
 }

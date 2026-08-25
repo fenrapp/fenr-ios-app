@@ -12,7 +12,7 @@ private enum DashboardPreviewConstants {
             viewModel: RideDashboardPreviewFactory.makeViewModel(
                 state: .init(
                     speedometer: previewSpeedometer(value: 20),
-                    batteryPercent: 78,
+                    battery: previewBattery(percentage: 78, emphasis: .positive),
                     odometer: .init(valueText: "180.0", unitText: "km", animationValue: 180),
                     gear: previewGear("2"),
                     connectionDetail: "Live telemetry active",
@@ -20,7 +20,6 @@ private enum DashboardPreviewConstants {
                     indicators: previewIndicators(highBeam: true, brake: true)
                 )
             ),
-            chargingViewModel: ChargingDashboardPreviewFactory.makeViewModel(state: .init()),
             onDiagnostics: {}
         )
     }
@@ -32,15 +31,15 @@ private enum DashboardPreviewConstants {
             viewModel: RideDashboardPreviewFactory.makeViewModel(
                 state: .init(
                     speedometer: previewSpeedometer(value: 142, emphasis: .warning),
-                    batteryPercent: 34,
+                    battery: previewBattery(percentage: 34, emphasis: .warning),
                     odometer: .init(valueText: "180.0", unitText: "km", animationValue: 180),
                     gear: previewGear("3"),
+                    powerMode: previewPowerMode(horsepower: "40", regen: "30"),
                     connectionDetail: "Live telemetry active",
                     hasTelemetry: true,
                     indicators: previewIndicators(rightTurn: true)
                 )
             ),
-            chargingViewModel: ChargingDashboardPreviewFactory.makeViewModel(state: .init()),
             onDiagnostics: {}
         )
     }
@@ -54,15 +53,15 @@ private enum DashboardPreviewConstants {
             viewModel: RideDashboardPreviewFactory.makeViewModel(
                 state: .init(
                     speedometer: previewSpeedometer(value: 96, emphasis: .positive),
-                    batteryPercent: 12,
+                    battery: previewBattery(percentage: 12, emphasis: .critical),
                     odometer: .init(valueText: "180.0", unitText: "km", animationValue: 180),
                     gear: previewGear("4"),
+                    powerMode: previewPowerMode(horsepower: "50", regen: "40"),
                     connectionDetail: "Live telemetry active",
                     hasTelemetry: true,
                     indicators: previewIndicators(fault: true)
                 )
             ),
-            chargingViewModel: ChargingDashboardPreviewFactory.makeViewModel(state: .init()),
             onDiagnostics: {}
         )
     }
@@ -73,7 +72,6 @@ private enum DashboardPreviewConstants {
     NavigationStack {
         RideDashboardView(
             viewModel: RideDashboardPreviewFactory.makeViewModel(state: .init()),
-            chargingViewModel: ChargingDashboardPreviewFactory.makeViewModel(state: .init()),
             onDiagnostics: {}
         )
     }
@@ -90,16 +88,6 @@ private enum DashboardPreviewConstants {
                 indicators: previewIndicators()
             )
         ),
-        chargingViewModel: ChargingDashboardPreviewFactory.makeViewModel(
-            state: .init(
-                gauge: .init(
-                    batteryPercent: 82,
-                    targetPercent: 100
-                ),
-                maximumPower: .init(valueText: "6.2", unitText: "kW", animationValue: 6.2),
-                reportedCurrent: .init(valueText: "13.6", unitText: "A", animationValue: 13.6)
-            )
-        ),
         onDiagnostics: {}
     )
     .frame(width: DashboardPreviewConstants.landscapeWidth, height: DashboardPreviewConstants.landscapeHeight)
@@ -111,6 +99,7 @@ private func previewSpeedometer(
 ) -> DashboardSpeedometerViewData {
     .init(
         value: value,
+        valueText: value.rounded().formatted(.number.precision(.fractionLength(0))),
         unit: "km/h",
         progress: value / 180,
         emphasis: emphasis,
@@ -118,8 +107,28 @@ private func previewSpeedometer(
     )
 }
 
+private func previewBattery(
+    percentage: Int,
+    emphasis: RideDashboardViewState.Battery.Emphasis
+) -> RideDashboardViewState.Battery {
+    .init(
+        percentageText: "\(percentage)%",
+        progress: Double(percentage) / 100,
+        emphasis: emphasis,
+        accessibilityLabel: "Battery \(percentage) percent"
+    )
+}
+
 private func previewGear(_ text: String) -> DashboardGearViewData {
     .init(display: .text(text), isActive: true, accessibilityLabel: "Gear \(text)")
+}
+
+private func previewPowerMode(horsepower: String, regen: String) -> DashboardPowerModeViewData {
+    .init(
+        horsepower: horsepower,
+        regenerativeBraking: regen,
+        isVisible: true
+    )
 }
 
 private func previewIndicators(
@@ -130,9 +139,9 @@ private func previewIndicators(
 ) -> [DashboardIndicatorViewData] {
     [
         previewIndicator("highBeam", "headlight.high.beam", "High beam", highBeam, .informational),
-        previewIndicator("leftTurn", "arrow.left", "Left turn", false, .positive),
-        previewIndicator("brake", "hand.raised.fill", "Brake", brake, .warning),
-        previewIndicator("rightTurn", "arrow.right", "Right turn", rightTurn, .positive),
+        previewIndicator("leftTurn", "arrow.left", "Left turn", false, .warning),
+        previewIndicator("brake", "exclamationmark.circle.fill", "Brake", brake, .critical),
+        previewIndicator("rightTurn", "arrow.right", "Right turn", rightTurn, .warning),
         previewIndicator("fault", "exclamationmark.triangle.fill", "Fault", fault, .critical)
     ]
 }

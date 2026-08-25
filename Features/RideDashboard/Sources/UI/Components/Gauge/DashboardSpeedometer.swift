@@ -3,43 +3,113 @@ import SwiftUI
 
 struct DashboardSpeedometer: View {
     let state: DashboardSpeedometerViewData
-    let reduceMotion: Bool
+    private let referenceSize: CGSize?
+    @ScaledMetric(relativeTo: .body) private var dynamicTypeScale: CGFloat = 1
+
+    init(
+        state: DashboardSpeedometerViewData,
+        referenceSize: CGSize? = nil
+    ) {
+        self.state = state
+        self.referenceSize = referenceSize
+    }
 
     var body: some View {
-        DashboardGauge(
-            arc: {
-                DashboardGaugeArc(
-                    progress: state.progress,
-                    color: progressColor,
-                    showsTicks: true,
-                    targetProgress: nil,
-                    powerProgress: nil,
-                    controlsAreEnabled: false,
-                    activeControl: nil,
-                    reduceMotion: reduceMotion
-                )
-            },
-            readout: {
-                DashboardGaugeReadout(
-                    state: .init(
-                        value: state.value,
-                        unit: state.unit,
-                        title: nil,
-                        style: .number,
-                        titleStyle: .status
-                    ),
-                    reduceMotion: reduceMotion
-                )
+        GeometryReader { proxy in
+            let fontReferenceSize = referenceSize ?? proxy.size
+            let valueFontSize = Self.valueFontSize(
+                for: fontReferenceSize,
+                availableSize: proxy.size,
+                dynamicTypeScale: dynamicTypeScale
+            )
+            let unitFontSize = Self.unitFontSize(
+                for: fontReferenceSize,
+                availableSize: proxy.size,
+                dynamicTypeScale: dynamicTypeScale
+            )
+            VStack(spacing: Constants.valueToUnitSpacing) {
+                speedValue(fontSize: valueFontSize)
+                Text(state.unit)
+                    .font(
+                        .system(
+                            size: unitFontSize,
+                            weight: .semibold,
+                            design: .rounded
+                        )
+                    )
+                    .lineLimit(1)
+                    .foregroundStyle(DesignColor.secondaryText)
             }
-        )
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        }
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel(state.accessibilityLabel)
     }
 
-    private var progressColor: Color {
-        switch state.emphasis {
-        case .informational: DesignColor.informational
-        case .positive: DesignColor.positive
-        case .warning: DesignColor.warning
-        }
+    private func speedValue(fontSize: CGFloat) -> some View {
+        Text(state.valueText)
+            .font(
+                .system(
+                    size: fontSize,
+                    weight: .medium,
+                    design: .rounded
+                )
+            )
+            .monospacedDigit()
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
+            .foregroundStyle(DesignColor.primaryText)
+    }
+
+    static func minimumContentWidth(
+        for size: CGSize,
+        dynamicTypeScale: CGFloat = 1
+    ) -> CGFloat {
+        baseValueFontSize(for: size) * dynamicTypeScale * Constants.maximumValueWidthRatio
+            + Constants.valueHorizontalAllowance
+    }
+
+    private static func valueFontSize(
+        for referenceSize: CGSize,
+        availableSize: CGSize,
+        dynamicTypeScale: CGFloat
+    ) -> CGFloat {
+        let desiredSize = baseValueFontSize(for: referenceSize) * dynamicTypeScale
+        let maximumWidthSize = max(
+            .zero,
+            (availableSize.width - Constants.valueHorizontalAllowance)
+                / Constants.maximumValueWidthRatio
+        )
+        let maximumHeightSize = availableSize.height * Constants.maximumValueHeightRatio
+        return min(desiredSize, maximumWidthSize, maximumHeightSize)
+    }
+
+    private static func baseValueFontSize(for size: CGSize) -> CGFloat {
+        min(size.width * Constants.valueWidthRatio, size.height * Constants.valueHeightRatio)
+    }
+
+    private static func unitFontSize(
+        for referenceSize: CGSize,
+        availableSize: CGSize,
+        dynamicTypeScale: CGFloat
+    ) -> CGFloat {
+        let baseSize = min(
+            referenceSize.width * Constants.unitWidthRatio,
+            referenceSize.height * Constants.unitHeightRatio
+        )
+        return min(baseSize * dynamicTypeScale, availableSize.height * Constants.maximumUnitHeightRatio)
+    }
+
+    private enum Constants {
+        static let valueToUnitSpacing: CGFloat = 4
+        static let valueWidthRatio: CGFloat = 0.22
+        static let valueHeightRatio: CGFloat = 0.46
+        static let maximumValueWidthRatio: CGFloat = 1.85
+        static let maximumValueHeightRatio: CGFloat = 0.78
+        static let valueHorizontalAllowance: CGFloat = 16
+        static let unitWidthRatio: CGFloat = 0.035
+        static let unitHeightRatio: CGFloat = 0.075
+        static let maximumUnitHeightRatio: CGFloat = 0.16
     }
 }
