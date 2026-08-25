@@ -1,19 +1,38 @@
 import DesignSystem
 import SwiftUI
 
+enum DashboardGaugeReadoutStyle {
+    case number
+    case percentage
+}
+
+enum DashboardGaugeTitleStyle {
+    case status
+    case estimatedTime
+    case error
+}
+
+struct DashboardGaugeReadoutState {
+    let value: Double
+    let unit: String?
+    let title: String?
+    let style: DashboardGaugeReadoutStyle
+    let titleStyle: DashboardGaugeTitleStyle
+}
+
 struct DashboardGaugeReadout: View {
-    let mode: DashboardGaugeMode
+    let state: DashboardGaugeReadoutState
     let reduceMotion: Bool
 
     var body: some View {
         GeometryReader { proxy in
             VStack(spacing: readoutSpacing) {
-                if let title = mode.title {
+                if let title = state.title {
                     Text(title)
-                        .font(mode.isShowingEstimatedTime ? .title3.weight(.semibold) : .caption.weight(.semibold))
-                        .tracking(mode.isShowingEstimatedTime ? .zero : Constants.statusTracking)
+                        .font(titleFont)
+                        .tracking(state.titleStyle == .estimatedTime ? .zero : Constants.statusTracking)
                         .monospacedDigit()
-                        .foregroundStyle(DesignColor.secondaryText)
+                        .foregroundStyle(state.titleStyle == .error ? DesignColor.critical : DesignColor.secondaryText)
                 }
                 Color.clear
                     .frame(height: valueFontSize(for: proxy.size))
@@ -23,7 +42,7 @@ struct DashboardGaugeReadout: View {
                             percentageSignFontSize: percentageSignFontSize(for: proxy.size)
                         )
                     }
-                if let unit = mode.unit {
+                if let unit = state.unit {
                     Text(unit)
                         .font(.title2.weight(.semibold))
                         .foregroundStyle(DesignColor.secondaryText)
@@ -37,17 +56,15 @@ struct DashboardGaugeReadout: View {
 
     @ViewBuilder
     private func valueReadout(fontSize: CGFloat, percentageSignFontSize: CGFloat) -> some View {
-        switch mode {
-        case .speed:
-            Color.clear
-                .animatedDashboardNumber(mode.value, formatter: mode.displayValue)
+        switch state.style {
+        case .number:
+            AnimatedDashboardNumber(value: state.value, formatter: displayValue)
                 .font(.system(size: fontSize, weight: .bold, design: .rounded))
                 .foregroundStyle(DesignColor.primaryText)
                 .contentTransition(.opacity)
-                .animation(reduceMotion ? nil : Constants.valueAnimation, value: mode.value)
-        case .charging:
-            Color.clear
-                .animatedDashboardNumber(mode.value, formatter: mode.displayValue)
+                .animation(reduceMotion ? nil : Constants.valueAnimation, value: state.value)
+        case .percentage:
+            AnimatedDashboardNumber(value: state.value, formatter: displayValue)
                 .font(.system(size: fontSize, weight: .medium, design: .rounded))
                 .overlay(alignment: .trailing) {
                     Text("%")
@@ -59,13 +76,13 @@ struct DashboardGaugeReadout: View {
                 }
                 .foregroundStyle(DesignColor.primaryText)
                 .contentTransition(.opacity)
-                .animation(reduceMotion ? nil : Constants.valueAnimation, value: mode.value)
+                .animation(reduceMotion ? nil : Constants.valueAnimation, value: state.value)
         }
     }
 
     private func valueFontSize(for size: CGSize) -> CGFloat {
         let baseFontSize = baseValueFontSize(for: size)
-        guard case .charging = mode else { return baseFontSize }
+        guard state.style == .percentage else { return baseFontSize }
         return baseFontSize * Constants.chargingValueScale
     }
 
@@ -74,9 +91,9 @@ struct DashboardGaugeReadout: View {
     }
 
     private func baseValueFontSize(for size: CGSize) -> CGFloat {
-        let ratio = switch mode {
-        case .speed: Constants.speedValueWidthRatio
-        case .charging: Constants.chargingValueWidthRatio
+        let ratio = switch state.style {
+        case .number: Constants.speedValueWidthRatio
+        case .percentage: Constants.chargingValueWidthRatio
         }
         return min(
             max(size.width * ratio, Constants.minimumValueFontSize),
@@ -85,8 +102,15 @@ struct DashboardGaugeReadout: View {
     }
 
     private var readoutSpacing: CGFloat {
-        if case .charging = mode { return Constants.chargingTitleSpacing }
-        return Constants.readoutSpacing
+        state.style == .percentage ? Constants.chargingTitleSpacing : Constants.readoutSpacing
+    }
+
+    private var titleFont: Font {
+        state.titleStyle == .estimatedTime ? .title3.weight(.semibold) : .caption.weight(.semibold)
+    }
+
+    private func displayValue(_ value: Double) -> String {
+        value.rounded().formatted(.number.precision(.fractionLength(0)))
     }
 
     private enum Constants {

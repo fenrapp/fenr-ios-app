@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct AnimatedDashboardNumber: AnimatableModifier {
+struct AnimatedDashboardNumber: View, Animatable {
     var value: Double
     let formatter: (Double) -> String
 
@@ -9,14 +9,8 @@ struct AnimatedDashboardNumber: AnimatableModifier {
         set { value = newValue }
     }
 
-    func body(content _: Content) -> some View {
+    var body: some View {
         Text(formatter(value))
             .monospacedDigit()
-    }
-}
-
-extension View {
-    func animatedDashboardNumber(_ value: Double, formatter: @escaping (Double) -> String) -> some View {
-        modifier(AnimatedDashboardNumber(value: value, formatter: formatter))
     }
 }

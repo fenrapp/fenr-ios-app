@@ -1,16 +1,28 @@
 import EnvironmentDomain
 import Foundation
-import RuntimeConfiguration
 import SettingsDomain
 
-struct DeviceSpeedResolver: Sendable {
-    func resolvedSpeed(
+public struct DeviceSpeedResolver: Sendable {
+    private let now: @Sendable () -> Date
+    private let maximumAccuracyMetersPerSecond: Double
+    private let maximumSampleAge: TimeInterval
+
+    public init(
+        now: @escaping @Sendable () -> Date,
+        maximumAccuracyMetersPerSecond: Double,
+        maximumSampleAge: TimeInterval
+    ) {
+        self.now = now
+        self.maximumAccuracyMetersPerSecond = maximumAccuracyMetersPerSecond
+        self.maximumSampleAge = maximumSampleAge
+    }
+
+    public func resolvedSpeed(
         motorcycleKilometersPerHour: Double?,
         deviceSample: DeviceSpeedSample?,
-        source: SpeedSource,
-        now: Date = .now
+        source: SpeedSource
     ) -> Double? {
-        let gpsSpeed = validSpeed(from: deviceSample, now: now)
+        let gpsSpeed = validSpeed(from: deviceSample)
         return switch source {
         case .motorcycle: motorcycleKilometersPerHour
         case .gps: gpsSpeed
@@ -18,21 +30,17 @@ struct DeviceSpeedResolver: Sendable {
         }
     }
 
-    private func validSpeed(from sample: DeviceSpeedSample?, now: Date) -> Double? {
+    private func validSpeed(from sample: DeviceSpeedSample?) -> Double? {
         guard
             let sample,
             sample.kilometersPerHour >= 0,
             sample.accuracyMetersPerSecond >= 0,
-            sample.accuracyMetersPerSecond <= Constants.maximumAccuracyMetersPerSecond,
-            now.timeIntervalSince(sample.observedAt) <= Constants.maximumSampleAge
+            sample.accuracyMetersPerSecond <= maximumAccuracyMetersPerSecond,
+            now().timeIntervalSince(sample.observedAt) <= maximumSampleAge
         else {
             return nil
         }
         return sample.kilometersPerHour
     }
 
-    private enum Constants {
-        static let maximumAccuracyMetersPerSecond = 5.0
-        static let maximumSampleAge = FENRRuntimeConstants.RideDashboard.deviceSpeedMaximumSampleAge
-    }
 }

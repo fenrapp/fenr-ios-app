@@ -6,14 +6,21 @@ struct DashboardGaugeArc: View {
     let color: Color
     let showsTicks: Bool
     let targetProgress: Double?
+    let powerProgress: Double?
+    let controlsAreEnabled: Bool
+    let activeControl: ChargingGaugeControl?
     let reduceMotion: Bool
 
     var body: some View {
         Canvas { context, size in
-            let center = CGPoint(x: size.width / 2, y: size.height)
-            let radius = max(.zero, min((size.width / 2) - Constants.horizontalInset, size.height))
+            let geometry = ChargingGaugeControlGeometry(size: size)
+            let center = geometry.center
+            let radius = geometry.gaugeRadius
             let trackPath = arcPath(center: center, radius: radius)
-            let outerPath = arcPath(center: center, radius: radius + Constants.outerRingOffset)
+            let outerPath = arcPath(
+                center: center,
+                radius: radius + ChargingGaugeArcGeometry.targetRadiusOffset
+            )
 
             context.stroke(
                 outerPath,
@@ -29,9 +36,12 @@ struct DashboardGaugeArc: View {
                 drawTickMarks(context: context, center: center, radius: radius)
             }
             drawProgressSegments(context: context, center: center, radius: radius)
-            drawTargetZone(context: context, center: center, radius: radius)
+            drawTargetControl(context: context, center: center, radius: radius)
+            drawPowerControl(context: context, center: center, radius: radius)
         }
         .animation(reduceMotion ? nil : .easeOut(duration: Constants.animationDuration), value: progress)
+        .animation(reduceMotion ? nil : .easeOut(duration: Constants.animationDuration), value: targetProgress)
+        .animation(reduceMotion ? nil : .easeOut(duration: Constants.animationDuration), value: powerProgress)
         .shadow(
             color: reduceMotion ? .clear : color.opacity(Constants.glowOpacity),
             radius: reduceMotion ? .zero : Constants.glowRadius
@@ -101,23 +111,104 @@ struct DashboardGaugeArc: View {
         }
     }
 
-    private func drawTargetZone(context: GraphicsContext, center: CGPoint, radius: CGFloat) {
+    private func drawTargetControl(context: GraphicsContext, center: CGPoint, radius: CGFloat) {
         guard let targetProgress else { return }
-        let start = max(.zero, targetProgress - Constants.targetZoneLength)
-        let targetZone = Path { path in
+        let targetPath = Path { path in
             path.addArc(
                 center: center,
-                radius: radius + Constants.targetZoneRadiusOffset,
-                startAngle: angle(for: start),
+                radius: radius + ChargingGaugeArcGeometry.targetRadiusOffset,
+                startAngle: angle(for: .zero),
                 endAngle: angle(for: targetProgress),
                 clockwise: false
             )
         }
         context.stroke(
-            targetZone,
+            targetPath,
             with: .color(DesignColor.positive),
-            style: .init(lineWidth: Constants.targetZoneLineWidth, lineCap: .round)
+            style: .init(lineWidth: Constants.targetLineWidth, lineCap: .round)
         )
+        if controlsAreEnabled {
+            drawThumb(
+                context: context,
+                center: center,
+                configuration: .init(
+                    radius: radius + ChargingGaugeArcGeometry.targetRadiusOffset,
+                    progress: targetProgress,
+                    color: DesignColor.positive,
+                    isActive: activeControl == .target
+                )
+            )
+        }
+    }
+
+    private func drawPowerControl(context: GraphicsContext, center: CGPoint, radius: CGFloat) {
+        guard controlsAreEnabled, let powerProgress else { return }
+        let controlRadius = radius + ChargingGaugeArcGeometry.powerRadiusOffset
+        context.stroke(
+            arcPath(center: center, radius: controlRadius),
+            with: .color(DesignColor.warning.opacity(Constants.controlTrackOpacity)),
+            style: .init(lineWidth: Constants.controlTrackLineWidth, lineCap: .round)
+        )
+        if powerProgress > .zero {
+            let path = Path { path in
+                path.addArc(
+                    center: center,
+                    radius: controlRadius,
+                    startAngle: angle(for: .zero),
+                    endAngle: angle(for: powerProgress),
+                    clockwise: false
+                )
+            }
+            context.stroke(
+                path,
+                with: .color(DesignColor.warning),
+                style: .init(lineWidth: Constants.powerLineWidth, lineCap: .round)
+            )
+        }
+        drawThumb(
+            context: context,
+            center: center,
+            configuration: .init(
+                radius: controlRadius,
+                progress: powerProgress,
+                color: DesignColor.warning,
+                isActive: activeControl == .power
+            )
+        )
+    }
+
+    private func drawThumb(
+        context: GraphicsContext,
+        center: CGPoint,
+        configuration: ThumbConfiguration
+    ) {
+        guard let progress = configuration.progress else { return }
+        let radians = Double.pi * (Constants.startAngleDegrees
+            + (Constants.endAngleDegrees - Constants.startAngleDegrees) * progress) / 180
+        let point = CGPoint(
+            x: center.x + configuration.radius * cos(radians),
+            y: center.y + configuration.radius * sin(radians)
+        )
+        let diameter = configuration.isActive ? Constants.activeThumbDiameter : Constants.thumbDiameter
+        let rect = CGRect(
+            x: point.x - diameter / 2,
+            y: point.y - diameter / 2,
+            width: diameter,
+            height: diameter
+        )
+        context.fill(Path(ellipseIn: rect), with: .color(configuration.color))
+        context.stroke(
+            Path(ellipseIn: rect),
+            with: .color(DesignColor.primaryText),
+            lineWidth: Constants.thumbBorderWidth
+        )
+    }
+
+    private struct ThumbConfiguration {
+        let radius: CGFloat
+        let progress: Double?
+        let color: Color
+        let isActive: Bool
     }
 
     private func angle(for progress: Double) -> Angle {
@@ -126,10 +217,8 @@ struct DashboardGaugeArc: View {
     }
 
     private enum Constants {
-        static let horizontalInset: CGFloat = 32
         static let startAngleDegrees = 180.0
         static let endAngleDegrees = 360.0
-        static let outerRingOffset: CGFloat = 14
         static let outerRingLineWidth: CGFloat = 1.5
         static let outerRingOpacity = 0.3
         static let trackLineWidth: CGFloat = 7
@@ -144,9 +233,13 @@ struct DashboardGaugeArc: View {
         static let inactiveTickOpacity = 0.14
         static let segmentCount = 24
         static let segmentGap = 0.008
-        static let targetZoneLength = 0.12
-        static let targetZoneRadiusOffset: CGFloat = 14
-        static let targetZoneLineWidth: CGFloat = 5
+        static let targetLineWidth: CGFloat = 5
+        static let powerLineWidth: CGFloat = 5
+        static let controlTrackLineWidth: CGFloat = 3
+        static let controlTrackOpacity = 0.22
+        static let thumbDiameter: CGFloat = 14
+        static let activeThumbDiameter: CGFloat = 18
+        static let thumbBorderWidth: CGFloat = 2
         static let glowOpacity = 0.42
         static let glowRadius: CGFloat = 14
         static let animationDuration = 0.22

@@ -1,5 +1,4 @@
 import DesignSystem
-import RuntimeConfiguration
 import SwiftUI
 
 struct DashboardClock: View {
@@ -19,6 +18,6 @@ struct DashboardClock: View {
 
     private enum Constants {
         static let fontSize: CGFloat = 22
-        static let refreshInterval = FENRRuntimeConstants.RideDashboard.clockRefreshInterval
+        static let refreshInterval: TimeInterval = 30
     }
 }

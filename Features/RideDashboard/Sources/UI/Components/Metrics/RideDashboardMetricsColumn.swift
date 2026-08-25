@@ -3,7 +3,7 @@ import SwiftUI
 
 struct RideDashboardMetricsColumn: View {
     let batteryPercent: Int?
-    let odometer: RideDashboardMeasurement?
+    let odometer: DashboardMetricViewData
     let compact: Bool
 
     var body: some View {
@@ -14,8 +14,7 @@ struct RideDashboardMetricsColumn: View {
                 separator
                 DashboardMetricPanel(
                     title: "ODOMETER",
-                    measurement: odometer,
-                    fractionDigits: 1,
+                    metric: odometer,
                     tint: DesignColor.primaryText,
                     alignment: .leading
                 )

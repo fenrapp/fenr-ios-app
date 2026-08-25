@@ -1,59 +1,30 @@
-import BikeDomain
-import MeasurementPresentation
-
 public struct RideDashboardViewState: Equatable, Sendable {
-    public var speed: RideDashboardMeasurement?
-    public var speedometerMaximum: RideDashboardMeasurement
-    public var batteryPercent: Int?
-    public var odometer: RideDashboardMeasurement?
-    public var modeIndex: Int?
-    public var runState: RideDashboardRunState
-    public var connectionDetail: String
-    public var hasTelemetry: Bool
-    public var isHighBeamOn: Bool
-    public var isLeftBlinkerOn: Bool
-    public var isRightBlinkerOn: Bool
-    public var isBrakeActive: Bool
-    public var isFaultActive: Bool
+    public let speedometer: DashboardSpeedometerViewData
+    public let batteryPercent: Int?
+    public let odometer: DashboardMetricViewData
+    public let gear: DashboardGearViewData
+    public let isCharging: Bool
+    public let connectionDetail: String
+    public let hasTelemetry: Bool
+    public let indicators: [DashboardIndicatorViewData]
 
     public init(
-        speed: RideDashboardMeasurement? = nil,
-        speedometerMaximum: RideDashboardMeasurement = RideDashboardMeasurement(value: 180, unit: "km/h"),
+        speedometer: DashboardSpeedometerViewData = .init(),
         batteryPercent: Int? = nil,
-        odometer: RideDashboardMeasurement? = nil,
-        modeIndex: Int? = nil,
-        runState: RideDashboardRunState = .offline,
+        odometer: DashboardMetricViewData = .init(),
+        gear: DashboardGearViewData = .init(),
+        isCharging: Bool = false,
         connectionDetail: String = "Connect your bike from Diagnostics.",
         hasTelemetry: Bool = false,
-        isHighBeamOn: Bool = false,
-        isLeftBlinkerOn: Bool = false,
-        isRightBlinkerOn: Bool = false,
-        isBrakeActive: Bool = false,
-        isFaultActive: Bool = false
+        indicators: [DashboardIndicatorViewData] = []
     ) {
-        self.speed = speed
-        self.speedometerMaximum = speedometerMaximum
+        self.speedometer = speedometer
         self.batteryPercent = batteryPercent
         self.odometer = odometer
-        self.modeIndex = modeIndex
-        self.runState = runState
+        self.gear = gear
+        self.isCharging = isCharging
         self.connectionDetail = connectionDetail
         self.hasTelemetry = hasTelemetry
-        self.isHighBeamOn = isHighBeamOn
-        self.isLeftBlinkerOn = isLeftBlinkerOn
-        self.isRightBlinkerOn = isRightBlinkerOn
-        self.isBrakeActive = isBrakeActive
-        self.isFaultActive = isFaultActive
+        self.indicators = indicators
     }
-}
-
-public enum RideDashboardRunState: Equatable, Sendable {
-    case offline
-    case off
-    case neutral
-    case ride
-    case charging
-    case crawlForward
-    case crawlReverse
-
 }

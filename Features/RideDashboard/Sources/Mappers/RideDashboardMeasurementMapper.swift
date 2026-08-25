@@ -1,18 +1,16 @@
 import Foundation
 import MeasurementPresentation
-import SettingsDomain
 
 public struct RideDashboardMeasurementMapper: Sendable {
     private let measurementMapper: VehicleMeasurementMapper
+    private let textFormatter: VehicleMeasurementTextFormatter
 
-    public init(measurementSystem: MeasurementSystem = .system, locale: Locale = .autoupdatingCurrent) {
-        measurementMapper = VehicleMeasurementMapper(
-            measurementSystem: measurementSystem.resolved(for: locale)
-        )
-    }
-
-    public init(locale: Locale) {
-        self.init(measurementSystem: .system, locale: locale)
+    public init(
+        measurementMapper: VehicleMeasurementMapper,
+        textFormatter: VehicleMeasurementTextFormatter
+    ) {
+        self.measurementMapper = measurementMapper
+        self.textFormatter = textFormatter
     }
 
     public func speed(kilometersPerHour: Double) -> RideDashboardMeasurement {
@@ -39,6 +37,17 @@ public struct RideDashboardMeasurementMapper: Sendable {
         speed(kilometersPerHour: RideDashboardConstants.maximumSpeedKilometersPerHour)
     }
 
+    public func metric(
+        _ measurement: RideDashboardMeasurement?,
+        fractionDigits: Int
+    ) -> DashboardMetricViewData {
+        guard let measurement else { return .init() }
+        return .init(
+            valueText: textFormatter.number(measurement.value, fractionDigits: fractionDigits),
+            unitText: measurement.unit,
+            animationValue: measurement.value
+        )
+    }
 }
 
 public typealias RideDashboardMeasurement = VehicleMeasurement

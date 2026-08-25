@@ -18,6 +18,8 @@ actor ChargingDashboardRepository: BikeRepository, BikeBatteryHealthRepository {
     private let batteryHealthHub = TestEventHub<BikeBatteryHealth>()
     private var starts = 0
     private var stops = 0
+    private var stopsAreSuspended = false
+    private var stopWaiters: [CheckedContinuation<Void, Never>] = []
 
     func start() async {}
     func stop() async {}
@@ -44,6 +46,9 @@ actor ChargingDashboardRepository: BikeRepository, BikeBatteryHealthRepository {
 
     func stopBatteryHealthMonitoring() async {
         stops += 1
+        if stopsAreSuspended {
+            await withCheckedContinuation { stopWaiters.append($0) }
+        }
     }
 
     func observeBatteryHealth() async -> AsyncStream<BikeBatteryHealth> {
@@ -54,11 +59,48 @@ actor ChargingDashboardRepository: BikeRepository, BikeBatteryHealthRepository {
         AsyncStream { _ in }
     }
 
+    func prepareChargePowerControl(
+        chargingStatus: BikeChargingStatus
+    ) async throws -> BikeChargePowerControlSnapshot {
+        .init(
+            vcuFirmware: "1.12.0",
+            isFirmwareCompatible: true,
+            readRequestHex: "00 04",
+            readResponseHex: "01 04",
+            parsedConfig: .init(
+                chargeCurrentDeciAmperes: 20,
+                chargePowerWatts: Int(chargingStatus.maximumPowerWatts),
+                maximumStateOfChargeDeciPercent: chargingStatus.maximumStateOfChargePercent * 10,
+                standardChargerMaximumPowerWatts: 3_300,
+                backpackChargerMaximumPowerWatts: 3_300
+            ),
+            lastWriteHex: "01 04 01",
+            didPassNoOpWrite: true,
+            logLines: []
+        )
+    }
+
     func sendTelemetry(_ telemetry: BikeTelemetry) async {
         await telemetryHub.waitForSubscriber()
         await telemetryHub.send(telemetry)
     }
 
+    func sendBatteryHealth(_ health: BikeBatteryHealth) async {
+        await batteryHealthHub.waitForSubscriber()
+        await batteryHealthHub.send(health)
+    }
+
     func monitoringStartCount() -> Int { starts }
     func monitoringStopCount() -> Int { stops }
+
+    func suspendMonitoringStops() {
+        stopsAreSuspended = true
+    }
+
+    func resumeMonitoringStops() {
+        stopsAreSuspended = false
+        let waiters = stopWaiters
+        stopWaiters.removeAll()
+        waiters.forEach { $0.resume() }
+    }
 }

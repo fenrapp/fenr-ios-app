@@ -6,16 +6,14 @@ import Testing
 
 @Suite("Device speed resolver")
 struct DeviceSpeedResolverTests {
-    private let resolver = DeviceSpeedResolver()
     private let now = Date(timeIntervalSinceReferenceDate: 100)
 
     @Test("Uses motorcycle telemetry in motorcycle mode")
     func usesMotorcycleSpeed() {
-        let speed = resolver.resolvedSpeed(
+        let speed = makeResolver().resolvedSpeed(
             motorcycleKilometersPerHour: 42,
             deviceSample: validSample(speed: 60),
-            source: .motorcycle,
-            now: now
+            source: .motorcycle
         )
 
         #expect(speed == 42)
@@ -24,23 +22,23 @@ struct DeviceSpeedResolverTests {
     @Test("Uses an accurate, recent GPS sample in GPS and hybrid modes")
     func usesValidDeviceSpeed() {
         let sample = validSample(speed: 60)
+        let resolver = makeResolver()
 
         #expect(resolver.resolvedSpeed(
             motorcycleKilometersPerHour: 42,
             deviceSample: sample,
-            source: .gps,
-            now: now
+            source: .gps
         ) == 60)
         #expect(resolver.resolvedSpeed(
             motorcycleKilometersPerHour: 42,
             deviceSample: sample,
-            source: .hybrid,
-            now: now
+            source: .hybrid
         ) == 60)
     }
 
     @Test("Rejects stale, imprecise, and negative GPS samples")
     func rejectsInvalidDeviceSpeed() {
+        let resolver = makeResolver()
         let invalidSamples = [
             DeviceSpeedSample(kilometersPerHour: 60, accuracyMetersPerSecond: 5.1, observedAt: now),
             DeviceSpeedSample(
@@ -55,19 +53,26 @@ struct DeviceSpeedResolverTests {
             #expect(resolver.resolvedSpeed(
                 motorcycleKilometersPerHour: 42,
                 deviceSample: sample,
-                source: .gps,
-                now: now
+                source: .gps
             ) == nil)
             #expect(resolver.resolvedSpeed(
                 motorcycleKilometersPerHour: 42,
                 deviceSample: sample,
-                source: .hybrid,
-                now: now
+                source: .hybrid
             ) == 42)
         }
     }
 
     private func validSample(speed: Double) -> DeviceSpeedSample {
         DeviceSpeedSample(kilometersPerHour: speed, accuracyMetersPerSecond: 5, observedAt: now)
+    }
+
+    private func makeResolver() -> DeviceSpeedResolver {
+        let now = now
+        return DeviceSpeedResolver(
+            now: { now },
+            maximumAccuracyMetersPerSecond: 5,
+            maximumSampleAge: 3
+        )
     }
 }

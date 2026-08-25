@@ -50,7 +50,7 @@ public struct RideDashboardView: View {
 
     private func liveDashboard(layout: RideDashboardLayout) -> some View {
         ZStack {
-            if viewModel.viewState.runState == .charging {
+            if viewModel.viewState.isCharging {
                 ChargingDashboardBackground()
                     .transition(.opacity)
             }
@@ -65,13 +65,13 @@ public struct RideDashboardView: View {
                 response: RideDashboardLayout.Constants.liveTransitionResponse,
                 dampingFraction: RideDashboardLayout.Constants.liveTransitionDamping
             ),
-            value: viewModel.viewState.runState == .charging
+            value: viewModel.viewState.isCharging
         )
     }
 
     @ViewBuilder
     private func dashboardContent(layout: RideDashboardLayout) -> some View {
-        if viewModel.viewState.runState == .charging {
+        if viewModel.viewState.isCharging {
             DashboardShell(
                 layout: layout,
                 sideMetrics: {
@@ -82,19 +82,15 @@ public struct RideDashboardView: View {
                 },
                 gear: {
                     DashboardGearColumn(
-                        runState: viewModel.viewState.runState,
-                        modeIndex: viewModel.viewState.modeIndex
+                        state: viewModel.viewState.gear
                     )
                 },
                 instrument: {
-                    DashboardGauge(
-                        mode: .charging(
-                            percentage: chargingViewModel.viewState.batteryPercent,
-                            targetPercentage: chargingViewModel.viewState.targetStateOfChargePercent,
-                            estimatedTimeRemaining: chargingViewModel.viewState.estimatedTimeRemaining,
-                            isBalancingAtFullCharge: chargingViewModel.viewState.isBalancingAtFullCharge
-                        ),
-                        reduceMotion: reduceMotion
+                    DashboardChargingGauge(
+                        state: chargingViewModel.viewState.gauge,
+                        reduceMotion: reduceMotion,
+                        setPowerLimit: chargingViewModel.setChargePowerLimit(watts:),
+                        setChargeTarget: chargingViewModel.setChargeTarget(percent:)
                     )
                 },
                 indicators: { indicatorRail }
@@ -113,14 +109,12 @@ public struct RideDashboardView: View {
                 },
                 gear: {
                     DashboardGearColumn(
-                        runState: viewModel.viewState.runState,
-                        modeIndex: viewModel.viewState.modeIndex
+                        state: viewModel.viewState.gear
                     )
                 },
                 instrument: {
                     DashboardSpeedometer(
-                        speed: viewModel.viewState.speed,
-                        maximum: viewModel.viewState.speedometerMaximum,
+                        state: viewModel.viewState.speedometer,
                         reduceMotion: reduceMotion
                     )
                 },
@@ -146,12 +140,6 @@ public struct RideDashboardView: View {
     }
 
     private var indicatorRail: DashboardIndicatorRail {
-        DashboardIndicatorRail(
-            isHighBeamOn: viewModel.viewState.isHighBeamOn,
-            isLeftBlinkerOn: viewModel.viewState.isLeftBlinkerOn,
-            isBrakeActive: viewModel.viewState.isBrakeActive,
-            isRightBlinkerOn: viewModel.viewState.isRightBlinkerOn,
-            isFaultActive: viewModel.viewState.isFaultActive
-        )
+        DashboardIndicatorRail(indicators: viewModel.viewState.indicators)
     }
 }

@@ -3,10 +3,12 @@ import Foundation
 import SettingsDomain
 
 public struct RideDashboardMapper: Sendable {
-    private let locale: Locale
+    private let makeMeasurementMapper: @Sendable (MeasurementSystem) -> RideDashboardMeasurementMapper
 
-    public init(locale: Locale = .autoupdatingCurrent) {
-        self.locale = locale
+    public init(
+        makeMeasurementMapper: @escaping @Sendable (MeasurementSystem) -> RideDashboardMeasurementMapper
+    ) {
+        self.makeMeasurementMapper = makeMeasurementMapper
     }
 
     public func map(
@@ -15,10 +17,7 @@ public struct RideDashboardMapper: Sendable {
         speedKilometersPerHour: Double?,
         measurementSystem: MeasurementSystem
     ) -> RideDashboardViewState {
-        let measurementMapper = RideDashboardMeasurementMapper(
-            measurementSystem: measurementSystem,
-            locale: locale
-        )
+        let measurementMapper = makeMeasurementMapper(measurementSystem)
         let isReceivingTelemetry: Bool
         if case .receivingTelemetry = connection.state {
             isReceivingTelemetry = true
@@ -28,42 +27,135 @@ public struct RideDashboardMapper: Sendable {
         let hasTelemetry = isReceivingTelemetry && (telemetry.speed.kmh != nil
             || telemetry.batteryLevel.percent != nil
             || telemetry.odometer.kilometers != nil)
-        return RideDashboardViewState(
-            speed: hasTelemetry
-                ? speedKilometersPerHour.map {
-                    measurementMapper.speed(
-                        kilometersPerHour: displaySpeed(
-                            $0,
-                            runState: telemetry.runState
-                        )
+        let speed = hasTelemetry
+            ? speedKilometersPerHour.map {
+                measurementMapper.speed(
+                    kilometersPerHour: displaySpeed(
+                        $0,
+                        runState: telemetry.runState
                     )
-                }
-                : nil,
-            speedometerMaximum: measurementMapper.speedometerMaximum(),
+                )
+            }
+            : nil
+        let maximumSpeed = measurementMapper.speedometerMaximum()
+        let odometer = hasTelemetry
+            ? telemetry.odometer.kilometers.map(measurementMapper.distance)
+            : nil
+        return RideDashboardViewState(
+            speedometer: speedometer(speed: speed, maximum: maximumSpeed),
             batteryPercent: hasTelemetry ? telemetry.batteryLevel.percent : nil,
-            odometer: hasTelemetry ? telemetry.odometer.kilometers.map(measurementMapper.distance) : nil,
-            modeIndex: hasTelemetry ? telemetry.mode.displayIndex : nil,
-            runState: hasTelemetry ? runState(telemetry.runState) : .offline,
+            odometer: measurementMapper.metric(odometer, fractionDigits: 1),
+            gear: gear(
+                runState: hasTelemetry ? telemetry.runState : .unknown,
+                modeIndex: hasTelemetry ? telemetry.mode.displayIndex : nil
+            ),
+            isCharging: hasTelemetry && telemetry.runState == .charging,
             connectionDetail: connectionText(connection.state),
             hasTelemetry: hasTelemetry,
-            isHighBeamOn: hasTelemetry && telemetry.statusFlags.indicatorState.isHighBeamOn,
-            isLeftBlinkerOn: hasTelemetry && telemetry.statusFlags.indicatorState.isLeftBlinkerOn,
-            isRightBlinkerOn: hasTelemetry && telemetry.statusFlags.indicatorState.isRightBlinkerOn,
-            isBrakeActive: hasTelemetry && telemetry.statusFlags.isBrakeActive,
-            isFaultActive: hasTelemetry && telemetry.statusFlags.isFaultActive
+            indicators: indicators(flags: telemetry.statusFlags, hasTelemetry: hasTelemetry)
         )
     }
 
-    private func runState(_ state: BikeRunState) -> RideDashboardRunState {
-        switch state {
-        case .unknown: .offline
-        case .off: .off
-        case .neutral: .neutral
-        case .on: .ride
-        case .charging: .charging
-        case .crawlForward: .crawlForward
-        case .crawlReverse: .crawlReverse
+    private func speedometer(
+        speed: RideDashboardMeasurement?,
+        maximum: RideDashboardMeasurement
+    ) -> DashboardSpeedometerViewData {
+        let value = speed?.value ?? .zero
+        let progress = maximum.value > .zero
+            ? min(max(value / maximum.value, .zero), 1)
+            : .zero
+        let emphasis: DashboardGaugeEmphasis = switch progress {
+        case ..<Constants.moderateSpeedProgress: .informational
+        case ..<Constants.fastSpeedProgress: .positive
+        default: .warning
         }
+        let unit = speed?.unit ?? maximum.unit
+        let formattedValue = Int(value.rounded())
+        return .init(
+            value: value,
+            unit: unit,
+            progress: progress,
+            emphasis: emphasis,
+            accessibilityLabel: "Speed \(formattedValue) \(unit)"
+        )
+    }
+
+    private func gear(runState: BikeRunState, modeIndex: Int?) -> DashboardGearViewData {
+        switch runState {
+        case .unknown:
+            .init(display: .text("--"), isActive: false, accessibilityLabel: "Gear unavailable")
+        case .off:
+            .init(display: .text("OFF"), isActive: false, accessibilityLabel: "Gear off")
+        case .neutral, .charging:
+            .init(display: .text("N"), isActive: true, accessibilityLabel: "Gear neutral")
+        case .on:
+            .init(
+                display: .text(modeIndex.map(String.init) ?? "--"),
+                isActive: true,
+                accessibilityLabel: modeIndex.map { "Gear \($0)" } ?? "Gear unavailable"
+            )
+        case .crawlForward:
+            .init(display: .crawlForward, isActive: true, accessibilityLabel: "Crawl forward")
+        case .crawlReverse:
+            .init(display: .crawlReverse, isActive: true, accessibilityLabel: "Crawl reverse")
+        }
+    }
+
+    private func indicators(flags: BikeStatusFlags, hasTelemetry: Bool) -> [DashboardIndicatorViewData] {
+        [
+            indicator(
+                id: "highBeam",
+                symbolName: "headlight.high.beam",
+                label: "High beam",
+                isActive: hasTelemetry && flags.indicatorState.isHighBeamOn,
+                emphasis: .informational
+            ),
+            indicator(
+                id: "leftTurn",
+                symbolName: "arrow.left",
+                label: "Left turn",
+                isActive: hasTelemetry && flags.indicatorState.isLeftBlinkerOn,
+                emphasis: .positive
+            ),
+            indicator(
+                id: "brake",
+                symbolName: "hand.raised.fill",
+                label: "Brake",
+                isActive: hasTelemetry && flags.isBrakeActive,
+                emphasis: .warning
+            ),
+            indicator(
+                id: "rightTurn",
+                symbolName: "arrow.right",
+                label: "Right turn",
+                isActive: hasTelemetry && flags.indicatorState.isRightBlinkerOn,
+                emphasis: .positive
+            ),
+            indicator(
+                id: "fault",
+                symbolName: "exclamationmark.triangle.fill",
+                label: "Fault",
+                isActive: hasTelemetry && flags.isFaultActive,
+                emphasis: .critical
+            )
+        ]
+    }
+
+    private func indicator(
+        id: String,
+        symbolName: String,
+        label: String,
+        isActive: Bool,
+        emphasis: DashboardIndicatorEmphasis
+    ) -> DashboardIndicatorViewData {
+        .init(
+            id: id,
+            symbolName: symbolName,
+            accessibilityLabel: label,
+            accessibilityValue: isActive ? "On" : "Off",
+            isActive: isActive,
+            emphasis: emphasis
+        )
     }
 
     private func displaySpeed(_ speed: Double, runState: BikeRunState) -> Double {
@@ -85,5 +177,10 @@ public struct RideDashboardMapper: Sendable {
         case .bluetoothUnauthorized: "Bluetooth access is required"
         default: "Connect your bike from Diagnostics."
         }
+    }
+
+    private enum Constants {
+        static let moderateSpeedProgress = 0.45
+        static let fastSpeedProgress = 0.72
     }
 }

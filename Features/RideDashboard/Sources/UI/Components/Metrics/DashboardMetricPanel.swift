@@ -1,15 +1,11 @@
 import DesignSystem
-import MeasurementPresentation
 import SwiftUI
 
 struct DashboardMetricPanel: View {
     let title: String
-    let measurement: RideDashboardMeasurement?
-    let fractionDigits: Int
+    let metric: DashboardMetricViewData
     let tint: Color
     let alignment: HorizontalAlignment
-
-    private let measurementTextFormatter = VehicleMeasurementTextFormatter()
 
     var body: some View {
         VStack(alignment: alignment, spacing: DesignSpace.extraSmall) {
@@ -17,14 +13,14 @@ struct DashboardMetricPanel: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(DesignColor.secondaryText)
             HStack(alignment: .firstTextBaseline, spacing: DesignSpace.extraExtraSmall) {
-                Text(formattedValue)
+                Text(metric.valueText)
                     .font(.system(.title2, design: .rounded, weight: .bold))
                     .foregroundStyle(tint)
                     .lineLimit(1)
                     .minimumScaleFactor(Constants.minimumScaleFactor)
                     .contentTransition(.numericText())
-                    .animation(Constants.valueAnimation, value: measurement?.value)
-                if let unit = measurement?.unit {
+                    .animation(Constants.valueAnimation, value: metric.animationValue)
+                if let unit = metric.unitText {
                     Text(unit)
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(DesignColor.secondaryText)
@@ -32,11 +28,6 @@ struct DashboardMetricPanel: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: alignment == .leading ? .leading : .trailing)
-    }
-
-    private var formattedValue: String {
-        guard let measurement else { return "—" }
-        return measurementTextFormatter.number(measurement.value, fractionDigits: fractionDigits)
     }
 
     private enum Constants {

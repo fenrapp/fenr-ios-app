@@ -1,30 +1,24 @@
 import SwiftUI
 
-struct DashboardGauge: View {
-    let mode: DashboardGaugeMode
-    let reduceMotion: Bool
+struct DashboardGauge<Arc: View, Readout: View>: View {
+    let arc: Arc
+    let readout: Readout
 
-    private var progress: Double {
-        min(max(mode.value / mode.maximumValue, .zero), 1)
+    init(
+        @ViewBuilder arc: () -> Arc,
+        @ViewBuilder readout: () -> Readout
+    ) {
+        self.arc = arc()
+        self.readout = readout()
     }
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            DashboardGaugeArc(
-                progress: progress,
-                color: mode.progressColor,
-                showsTicks: mode.showsTicks,
-                targetProgress: mode.targetProgress,
-                reduceMotion: reduceMotion
-            )
-            DashboardGaugeReadout(mode: mode, reduceMotion: reduceMotion)
-                .padding(.bottom, Constants.readoutBottomInset)
+            arc
+            readout
+                .padding(.bottom, readoutBottomInset)
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(mode.accessibilityLabel)
     }
 
-    private enum Constants {
-        static let readoutBottomInset: CGFloat = 16
-    }
+    private var readoutBottomInset: CGFloat { 16 }
 }

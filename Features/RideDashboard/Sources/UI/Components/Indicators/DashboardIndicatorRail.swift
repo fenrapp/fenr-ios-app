@@ -2,28 +2,16 @@ import DesignSystem
 import SwiftUI
 
 struct DashboardIndicatorRail: View {
-    let isHighBeamOn: Bool
-    let isLeftBlinkerOn: Bool
-    let isBrakeActive: Bool
-    let isRightBlinkerOn: Bool
-    let isFaultActive: Bool
+    let indicators: [DashboardIndicatorViewData]
 
     var body: some View {
         HStack(spacing: .zero) {
-            indicator("headlight.high.beam", active: isHighBeamOn, label: "High beam", tint: DesignColor.informational)
-            divider
-            indicator("arrow.left", active: isLeftBlinkerOn, label: "Left turn", tint: DesignColor.positive)
-            divider
-            indicator("hand.raised.fill", active: isBrakeActive, label: "Brake", tint: DesignColor.warning)
-            divider
-            indicator("arrow.right", active: isRightBlinkerOn, label: "Right turn", tint: DesignColor.positive)
-            divider
-            indicator(
-                "exclamationmark.triangle.fill",
-                active: isFaultActive,
-                label: "Fault",
-                tint: DesignColor.critical
-            )
+            ForEach(indicators) { indicator in
+                if indicator.id != indicators.first?.id {
+                    divider
+                }
+                indicatorView(indicator)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, DesignSpace.extraSmall)
@@ -41,13 +29,22 @@ struct DashboardIndicatorRail: View {
             .padding(.horizontal, Constants.dividerHorizontalPadding)
     }
 
-    private func indicator(_ symbol: String, active: Bool, label: String, tint: Color) -> some View {
-        Image(systemName: symbol)
+    private func indicatorView(_ indicator: DashboardIndicatorViewData) -> some View {
+        Image(systemName: indicator.symbolName)
             .font(.system(size: Constants.iconSize, weight: .semibold))
-            .foregroundStyle(active ? tint : DesignColor.inactive)
+            .foregroundStyle(indicator.isActive ? tint(for: indicator.emphasis) : DesignColor.inactive)
             .frame(maxWidth: .infinity)
-            .accessibilityLabel(label)
-            .accessibilityValue(active ? "On" : "Off")
+            .accessibilityLabel(indicator.accessibilityLabel)
+            .accessibilityValue(indicator.accessibilityValue)
+    }
+
+    private func tint(for emphasis: DashboardIndicatorEmphasis) -> Color {
+        switch emphasis {
+        case .informational: DesignColor.informational
+        case .positive: DesignColor.positive
+        case .warning: DesignColor.warning
+        case .critical: DesignColor.critical
+        }
     }
 
     private enum Constants {

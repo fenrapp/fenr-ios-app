@@ -2,22 +2,7 @@ import DesignSystem
 import SwiftUI
 
 struct DashboardGearPanel: View {
-    enum Display {
-        case text(String)
-        case crawlForward
-        case crawlReverse
-
-        var accessibilityLabel: String {
-            switch self {
-            case let .text(value): value
-            case .crawlForward: "Crawl forward"
-            case .crawlReverse: "Crawl reverse"
-            }
-        }
-    }
-
-    let display: Display
-    let tint: Color
+    let state: DashboardGearViewData
 
     var body: some View {
         VStack(spacing: .zero) {
@@ -29,12 +14,12 @@ struct DashboardGearPanel: View {
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Gear \(display.accessibilityLabel)")
+        .accessibilityLabel(state.accessibilityLabel)
     }
 
     private var gearValue: some View {
         Group {
-            switch display {
+            switch state.display {
             case let .text(value):
                 Text(value)
                     .font(.system(size: Constants.valueFontSize, weight: .medium, design: .rounded))
@@ -55,7 +40,7 @@ struct DashboardGearPanel: View {
                 }
             }
         }
-        .foregroundStyle(tint)
+        .foregroundStyle(state.isActive ? DesignColor.positive : Color.primary)
     }
 
     private enum Constants {

@@ -9,11 +9,11 @@ struct ChargingDashboardMetricsColumn: View {
         VStack(spacing: .zero) {
             Spacer(minLength: .zero)
             VStack(alignment: .leading, spacing: .zero) {
-                metric(title: "MAX POWER", measurement: viewState.maximumPower, fractionDigits: 1)
+                metric(title: "MAX POWER", metric: viewState.maximumPower)
                 separator
-                metric(title: "CURRENT", measurement: viewState.reportedCurrent, fractionDigits: 1)
+                metric(title: "CURRENT", metric: viewState.reportedCurrent)
                 separator
-                metric(title: "BATTERY TEMP", measurement: viewState.batteryTemperature, fractionDigits: 0)
+                metric(title: "BATTERY TEMP", metric: viewState.batteryTemperature)
             }
             Spacer(minLength: .zero)
         }
@@ -29,13 +29,11 @@ struct ChargingDashboardMetricsColumn: View {
 
     private func metric(
         title: String,
-        measurement: RideDashboardMeasurement?,
-        fractionDigits: Int
+        metric: DashboardMetricViewData
     ) -> some View {
         DashboardMetricPanel(
             title: title,
-            measurement: measurement,
-            fractionDigits: fractionDigits,
+            metric: metric,
             tint: DesignColor.primaryText,
             alignment: .leading
         )

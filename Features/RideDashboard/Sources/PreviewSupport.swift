@@ -1,5 +1,8 @@
 import BikeDomain
+import ChargeControl
 import EnvironmentDomain
+import Foundation
+import RuntimeConfiguration
 import SettingsDomain
 
 #if DEBUG
@@ -14,7 +17,14 @@ enum RideDashboardPreviewFactory {
                 observeSettings: .init(repository: PreviewAppSettingsRepository()),
                 observeDeviceSpeed: .init(repository: PreviewDeviceSpeedRepository()),
                 readBikeStatusSnapshot: .init(repository: repository)
-            )
+            ),
+            mapper: RideDashboardMapperFactory.makeRideMapper(locale: .autoupdatingCurrent),
+            deviceSpeedResolver: DeviceSpeedResolver(
+                now: Date.init,
+                maximumAccuracyMetersPerSecond: 5,
+                maximumSampleAge: FENRRuntimeConstants.RideDashboard.deviceSpeedMaximumSampleAge
+            ),
+            reconnectionGracePeriod: FENRRuntimeConstants.RideDashboard.reconnectionGracePeriod
         )
         viewModel.setPreviewState(state)
         return viewModel
@@ -25,6 +35,10 @@ enum RideDashboardPreviewFactory {
 enum ChargingDashboardPreviewFactory {
     static func makeViewModel(state: ChargingDashboardViewState) -> ChargingDashboardViewModel {
         let repository = RideDashboardPreviewRepository()
+        let locale = Locale.autoupdatingCurrent
+        let makeMapper: @Sendable (AppSettings) -> ChargingDashboardMapper = { settings in
+            RideDashboardMapperFactory.makeChargingMapper(settings: settings, locale: locale)
+        }
         let viewModel = ChargingDashboardViewModel(
             useCases: .init(
                 observeTelemetry: .init(repository: repository),
@@ -32,7 +46,19 @@ enum ChargingDashboardPreviewFactory {
                 startBatteryHealthMonitoring: .init(repository: repository),
                 stopBatteryHealthMonitoring: .init(repository: repository),
                 observeSettings: .init(repository: PreviewAppSettingsRepository())
-            )
+            ),
+            chargeControl: ChargeControlSession(
+                useCases: .init(
+                    prepare: .init(repository: repository),
+                    setPowerLimit: .init(repository: repository),
+                    setTarget: .init(repository: repository)
+                ),
+                logger: ChargeControlLogStore(),
+                stateUpdater: ChargeControlStateUpdater(normalizer: ChargeControlNormalizer()),
+                taskScheduler: ChargeControlTaskScheduler()
+            ),
+            mapper: makeMapper(AppSettings()),
+            makeMapper: makeMapper
         )
         viewModel.setPreviewState(state)
         return viewModel

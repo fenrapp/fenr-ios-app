@@ -10,6 +10,7 @@ public final class RideDashboardViewModel: ObservableObject {
 
     private let useCases: RideDashboardUseCases
     private let mapper: RideDashboardMapper
+    private let deviceSpeedResolver: DeviceSpeedResolver
     private var telemetry = BikeTelemetry()
     private var connection = BikeConnection()
     private var settings = AppSettings()
@@ -23,11 +24,13 @@ public final class RideDashboardViewModel: ObservableObject {
 
     public init(
         useCases: RideDashboardUseCases,
-        mapper: RideDashboardMapper = .init(),
-        reconnectionGracePeriod: Duration = FENRRuntimeConstants.RideDashboard.reconnectionGracePeriod
+        mapper: RideDashboardMapper,
+        deviceSpeedResolver: DeviceSpeedResolver,
+        reconnectionGracePeriod: Duration
     ) {
         self.useCases = useCases
         self.mapper = mapper
+        self.deviceSpeedResolver = deviceSpeedResolver
         self.reconnectionGracePeriod = reconnectionGracePeriod
     }
 
@@ -92,7 +95,7 @@ public final class RideDashboardViewModel: ObservableObject {
         let mappedViewState = mapper.map(
             telemetry: telemetry,
             connection: connection,
-            speedKilometersPerHour: DeviceSpeedResolver().resolvedSpeed(
+            speedKilometersPerHour: deviceSpeedResolver.resolvedSpeed(
                 motorcycleKilometersPerHour: telemetry.speed.kmh,
                 deviceSample: deviceSpeedSample,
                 source: settings.speedSource
