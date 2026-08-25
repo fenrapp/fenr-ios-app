@@ -141,6 +141,20 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "931A1BAD235C51A938DCADCD"
+               BuildableName = "ChargeControlTests.xctest"
+               BlueprintName = "ChargeControlTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "8B64EFEC5B4B812005ECE6B9"
                BuildableName = "DesignSystemTests.xctest"
                BlueprintName = "DesignSystemTests"
@@ -329,6 +343,17 @@
                BlueprintIdentifier = "BB55B55EC6FA739D0C8DD1CE"
                BuildableName = "BikeEmulatorTests.xctest"
                BlueprintName = "BikeEmulatorTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "931A1BAD235C51A938DCADCD"
+               BuildableName = "ChargeControlTests.xctest"
+               BlueprintName = "ChargeControlTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </TestableReference>

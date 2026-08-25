@@ -91,6 +91,16 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikeemulator
+  ChargeControl:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/ChargeControl/Sources
+    dependencies:
+      - target: BikeDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.chargecontrol
   EnvironmentDomain:
     type: framework
     platform: auto
@@ -197,6 +207,7 @@ targets:
       - target: DesignSystem
       - target: MeasurementPresentation
       - target: RuntimeConfiguration
+      - target: ChargeControl
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.dashboard
@@ -211,6 +222,7 @@ targets:
       - target: DesignSystem
       - target: MeasurementPresentation
       - target: RuntimeConfiguration
+      - target: ChargeControl
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.batteryhealth
@@ -300,6 +312,7 @@ targets:
       - target: MeasurementPresentation
         embed: true
       - target: BatteryHealth
+      - target: ChargeControl
       - target: AppSettings
       - target: BikeData
       - target: EnvironmentDomain
@@ -387,6 +400,7 @@ targets:
       - target: MeasurementPresentation
         embed: true
       - target: BatteryHealth
+      - target: ChargeControl
       - target: AppSettings
       - target: BikeDomain
       - target: EnvironmentDomain
@@ -597,6 +611,18 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikeemulator.tests
+  ChargeControlTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/ChargeControl/Tests
+    dependencies:
+      - target: ChargeControl
+      - target: BikeDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.chargecontrol.tests
   SettingsDataTests:
     type: bundle.unit-test
     platform: iOS
@@ -664,6 +690,7 @@ targets:
       - target: EnvironmentDomain
       - target: SettingsDomain
       - target: TestSupport
+      - target: ChargeControl
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.dashboard.tests
@@ -704,6 +731,7 @@ targets:
       - target: BikeDomain
       - target: SettingsDomain
       - target: TestSupport
+      - target: ChargeControl
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.batteryhealth.tests
@@ -801,6 +829,7 @@ schemes:
         BikeDomainTests: [test]
         BikeDataTests: [test]
         BikeEmulatorTests: [test]
+        ChargeControlTests: [test]
         SettingsDataTests: [test]
         DesignSystemTests: [test]
         MeasurementPresentationTests: [test]
@@ -819,6 +848,7 @@ schemes:
         - BikeDomainTests
         - BikeDataTests
         - BikeEmulatorTests
+        - ChargeControlTests
         - SettingsDataTests
         - DesignSystemTests
         - MeasurementPresentationTests
