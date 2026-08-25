@@ -12,6 +12,8 @@ public struct BikeTelemetry: Equatable, Sendable {
     public var inverterTemperaturesCelsius: [Double?]
     public var statusFlags: BikeStatusFlags
     public var rawStatusFlags: BikeRawStatusFlags
+    public var powerModeConfigurations: [Int: BikePowerModeConfiguration]
+    public var detectedPowerTier: BikeDetectedPowerTier
     public var lastUpdated: Date?
 
     public init(
@@ -26,6 +28,8 @@ public struct BikeTelemetry: Equatable, Sendable {
         inverterTemperaturesCelsius: [Double?] = [],
         statusFlags: BikeStatusFlags = .unknown,
         rawStatusFlags: BikeRawStatusFlags = .unknown,
+        powerModeConfigurations: [Int: BikePowerModeConfiguration] = [:],
+        detectedPowerTier: BikeDetectedPowerTier = .standardBaseline,
         lastUpdated: Date? = nil
     ) {
         self.vin = vin
@@ -39,7 +43,14 @@ public struct BikeTelemetry: Equatable, Sendable {
         self.inverterTemperaturesCelsius = inverterTemperaturesCelsius
         self.statusFlags = statusFlags
         self.rawStatusFlags = rawStatusFlags
+        self.powerModeConfigurations = powerModeConfigurations
+        self.detectedPowerTier = detectedPowerTier
         self.lastUpdated = lastUpdated
+    }
+
+    public var activePowerModeConfiguration: BikePowerModeConfiguration? {
+        guard let index = mode.powerModeConfigurationIndex else { return nil }
+        return powerModeConfigurations[index]
     }
 
     public var runState: BikeRunState {

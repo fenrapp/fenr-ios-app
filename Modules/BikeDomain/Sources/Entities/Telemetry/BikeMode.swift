@@ -10,4 +10,9 @@ public enum BikeMode: Equatable, Sendable {
             value
         }
     }
+
+    public var powerModeConfigurationIndex: Int? {
+        guard let displayIndex, 1 ... 5 ~= displayIndex else { return nil }
+        return displayIndex - 1
+    }
 }

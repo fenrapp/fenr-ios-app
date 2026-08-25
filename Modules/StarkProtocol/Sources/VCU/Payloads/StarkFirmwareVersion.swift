@@ -2,6 +2,7 @@ import Foundation
 
 public struct StarkFirmwareVersion: Comparable, Equatable, Sendable {
     public static let minimumChargePowerControl = StarkFirmwareVersion(major: 1, minor: 9, patch: 1)
+    public static let minimumTractionControl = StarkFirmwareVersion(major: 1, minor: 10, patch: 1)
 
     public let major: Int
     public let minor: Int
@@ -33,6 +34,10 @@ public struct StarkFirmwareVersion: Comparable, Equatable, Sendable {
 
     public var isChargePowerControlCompatible: Bool {
         self >= Self.minimumChargePowerControl
+    }
+
+    public var isTractionControlCompatible: Bool {
+        self >= Self.minimumTractionControl
     }
 
     public var description: String {

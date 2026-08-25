@@ -6,6 +6,7 @@ public protocol BikeRepository: Sendable {
     func retrySecurityHandshake() async throws
     func readTelemetrySnapshot() async throws
     func readBikeStatusSnapshot() async throws
+    func refreshPowerModeConfigurations() async throws
     func observeTelemetry() async -> AsyncStream<BikeTelemetry>
     func observeConnection() async -> AsyncStream<BikeConnection>
     func observeDebugEvents() async -> AsyncStream<BikeDebugEvent>
@@ -13,4 +14,5 @@ public protocol BikeRepository: Sendable {
 
 public extension BikeRepository {
     func readBikeStatusSnapshot() async throws {}
+    func refreshPowerModeConfigurations() async throws {}
 }
