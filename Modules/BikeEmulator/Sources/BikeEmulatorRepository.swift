@@ -3,21 +3,29 @@ import Foundation
 import RuntimeConfiguration
 
 public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository, BikeDiscoveryRepository {
-    private let telemetryHub = BikeEmulatorEventHub<BikeTelemetry>(replaysLatestValue: true)
-    private let connectionHub = BikeEmulatorEventHub<BikeConnection>(replaysLatestValue: true)
-    private let debugEventHub = BikeEmulatorEventHub<BikeDebugEvent>(replaysLatestValue: true)
-    private let batteryHealthHub = BikeEmulatorEventHub<BikeBatteryHealth>(replaysLatestValue: true)
-    private let captureHub = BikeEmulatorCaptureHub()
-    private let discoveredBikesHub = BikeEmulatorEventHub<[DiscoveredBike]>(replaysLatestValue: true)
+    private let telemetryHub: BikeEmulatorEventHub<BikeTelemetry>
+    private let connectionHub: BikeEmulatorEventHub<BikeConnection>
+    private let debugEventHub: BikeEmulatorEventHub<BikeDebugEvent>
+    private let batteryHealthHub: BikeEmulatorEventHub<BikeBatteryHealth>
+    private let captureHub: BikeEmulatorCaptureHub
+    private let discoveredBikesHub: BikeEmulatorEventHub<[DiscoveredBike]>
 
     private var scenario: BikeEmulatorScenario
     private var tick = 0
     private var isStarted = false
-    private var isBatteryHealthMonitoring = false
+    private var batteryHealthMonitoringLeaseCount = 0
+    private var chargePowerLimitWatts = Constants.defaultChargePowerWatts
+    private var chargeTargetPercent = Constants.defaultChargeTargetPercent
     private var updateTask: Task<Void, Never>?
 
-    public init(scenario: BikeEmulatorScenario = .charging) {
+    init(scenario: BikeEmulatorScenario, channels: BikeEmulatorChannels) {
         self.scenario = scenario
+        telemetryHub = channels.telemetry
+        connectionHub = channels.connection
+        debugEventHub = channels.debugEvent
+        batteryHealthHub = channels.batteryHealth
+        captureHub = channels.capture
+        discoveredBikesHub = channels.discoveredBikes
     }
 
     deinit {
@@ -79,13 +87,13 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     }
 
     public func startBatteryHealthMonitoring() async throws {
-        isBatteryHealthMonitoring = true
+        batteryHealthMonitoringLeaseCount += 1
         await publishBatteryHealth()
         await captureHub.replace(with: makeCaptures(date: Date()))
     }
 
     public func stopBatteryHealthMonitoring() async {
-        isBatteryHealthMonitoring = false
+        batteryHealthMonitoringLeaseCount = max(0, batteryHealthMonitoringLeaseCount - 1)
     }
 
     public func observeBatteryHealth() async -> AsyncStream<BikeBatteryHealth> {
@@ -96,9 +104,50 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
         await captureHub.stream()
     }
 
+    public func prepareChargePowerControl(
+        chargingStatus: BikeChargingStatus
+    ) async throws -> BikeChargePowerControlSnapshot {
+        guard scenario == .charging else { throw BikeEmulatorChargeControlError.chargerUnavailable }
+        return makeChargeControlSnapshot(
+            watts: Int(chargingStatus.maximumPowerWatts.rounded()),
+            targetPercent: chargingStatus.maximumStateOfChargePercent,
+            lastWriteHex: Constants.noOpWriteHex
+        )
+    }
+
+    public func setChargePowerLimit(watts: Int) async throws -> BikeChargePowerControlSnapshot {
+        guard scenario == .charging else { throw BikeEmulatorChargeControlError.chargerUnavailable }
+        guard Constants.minimumChargePowerWatts ... Constants.maximumChargePowerWatts ~= watts else {
+            throw BikeEmulatorChargeControlError.invalidPower
+        }
+        chargePowerLimitWatts = watts
+        await publishBatteryHealth()
+        return makeChargeControlSnapshot(
+            watts: watts,
+            targetPercent: chargeTargetPercent,
+            lastWriteHex: "DEBUG POWER \(watts)"
+        )
+    }
+
+    public func setChargeTarget(percent: Int) async throws -> BikeChargePowerControlSnapshot {
+        guard scenario == .charging else { throw BikeEmulatorChargeControlError.chargerUnavailable }
+        guard Constants.minimumChargeTargetPercent ... Constants.maximumChargeTargetPercent ~= percent else {
+            throw BikeEmulatorChargeControlError.invalidTarget
+        }
+        chargeTargetPercent = percent
+        await publishBatteryHealth()
+        return makeChargeControlSnapshot(
+            watts: chargePowerLimitWatts,
+            targetPercent: percent,
+            lastWriteHex: "DEBUG TARGET \(percent)"
+        )
+    }
+
     public func setScenario(_ scenario: BikeEmulatorScenario) async {
         self.scenario = scenario
         tick = 0
+        chargePowerLimitWatts = Constants.defaultChargePowerWatts
+        chargeTargetPercent = Constants.defaultChargeTargetPercent
         await publishCurrentState()
         await publishDebugEvent(title: "Emulator", detail: "Scenario: \(scenario.displayName)")
     }
@@ -128,7 +177,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
         let date = Date()
         await connectionHub.send(makeConnection())
         await telemetryHub.send(makeTelemetry(date: date))
-        guard isBatteryHealthMonitoring else { return }
+        guard batteryHealthMonitoringLeaseCount > 0 else { return }
         await publishBatteryHealth(date: date)
         await captureHub.replace(with: makeCaptures(date: date))
     }
@@ -150,10 +199,56 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     }
 
     private func makeBatteryHealth(date: Date) -> BikeBatteryHealth {
-        BikeEmulatorPayloadFactory.makeBatteryHealth(scenario: scenario, tick: tick, date: date)
+        BikeEmulatorPayloadFactory.makeBatteryHealth(
+            scenario: scenario,
+            tick: tick,
+            date: date,
+            chargePowerLimitWatts: chargePowerLimitWatts,
+            chargeTargetPercent: chargeTargetPercent
+        )
     }
 
     private func makeCaptures(date: Date) -> [BatteryDatasetCapture] {
         BikeEmulatorPayloadFactory.makeCaptures(scenario: scenario, tick: tick, date: date)
     }
+
+    private func makeChargeControlSnapshot(
+        watts: Int,
+        targetPercent: Int,
+        lastWriteHex: String
+    ) -> BikeChargePowerControlSnapshot {
+        .init(
+            vcuFirmware: "1.12.0",
+            isFirmwareCompatible: true,
+            readRequestHex: "DEBUG READ 4005",
+            readResponseHex: "DEBUG POWER \(watts) TARGET \(targetPercent)",
+            parsedConfig: .init(
+                chargeCurrentDeciAmperes: Int((Double(watts) / Constants.chargingBusVoltage * 10).rounded()),
+                chargePowerWatts: watts,
+                maximumStateOfChargeDeciPercent: targetPercent * 10,
+                standardChargerMaximumPowerWatts: Constants.maximumChargePowerWatts,
+                backpackChargerMaximumPowerWatts: Constants.maximumChargePowerWatts
+            ),
+            lastWriteHex: lastWriteHex,
+            didPassNoOpWrite: true,
+            logLines: ["Debug charge control confirmed"]
+        )
+    }
+
+    private enum Constants {
+        static let defaultChargePowerWatts = 1_000
+        static let defaultChargeTargetPercent = 100
+        static let minimumChargePowerWatts = 300
+        static let maximumChargePowerWatts = 3_300
+        static let minimumChargeTargetPercent = 1
+        static let maximumChargeTargetPercent = 100
+        static let chargingBusVoltage = 388.4
+        static let noOpWriteHex = "DEBUG NO-OP 4005"
+    }
+}
+
+private enum BikeEmulatorChargeControlError: Error {
+    case chargerUnavailable
+    case invalidPower
+    case invalidTarget
 }

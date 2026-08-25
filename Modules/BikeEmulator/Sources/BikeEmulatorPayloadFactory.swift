@@ -49,7 +49,9 @@ enum BikeEmulatorPayloadFactory {
     static func makeBatteryHealth(
         scenario: BikeEmulatorScenario,
         tick: Int,
-        date: Date
+        date: Date,
+        chargePowerLimitWatts: Int = 1_000,
+        chargeTargetPercent: Int = 100
     ) -> BikeBatteryHealth {
         let isCharging = scenario == .charging
         return BikeBatteryHealth(
@@ -61,7 +63,13 @@ enum BikeEmulatorPayloadFactory {
             cellVoltages: makeCellVoltages(scenario: scenario, tick: tick),
             balancingCellIndexes: isCharging ? Constants.balancingCells : [],
             temperatures: makeTemperatures(tick: tick),
-            chargingStatus: isCharging ? makeChargingStatus(tick: tick) : nil,
+            chargingStatus: isCharging
+                ? makeChargingStatus(
+                    tick: tick,
+                    chargePowerLimitWatts: chargePowerLimitWatts,
+                    chargeTargetPercent: chargeTargetPercent
+                )
+                : nil,
             lastUpdated: date
         )
     }
@@ -141,20 +149,25 @@ enum BikeEmulatorPayloadFactory {
         scenario == .riding && tick % Constants.brakeCycleTicks >= Constants.brakeActiveStartTick
     }
 
-    private static func makeChargingStatus(tick: Int) -> BikeChargingStatus {
+    private static func makeChargingStatus(
+        tick: Int,
+        chargePowerLimitWatts: Int,
+        chargeTargetPercent: Int
+    ) -> BikeChargingStatus {
         let chargeLoad = abs(sin(Double(tick) * Constants.chargingLoadWaveRadians))
-        let reportedCurrent = Constants.chargeCurrent + chargeLoad * Constants.chargingCurrentAmplitude
-        let maximumPower = max(
-            Constants.maximumPower,
-            reportedCurrent * Constants.chargingBusVoltage
+        let requestedCurrent = Constants.chargeCurrent + chargeLoad * Constants.chargingCurrentAmplitude
+        let reportedCurrent = min(
+            requestedCurrent,
+            Double(chargePowerLimitWatts) / Constants.chargingBusVoltage
         )
         return BikeChargingStatus(
-            requestedCurrentAmperes: reportedCurrent,
+            requestedCurrentAmperes: requestedCurrent,
             reportedCurrentAmperes: reportedCurrent,
             maximumCurrentAmperes: Constants.maximumCurrent,
-            maximumPowerWatts: maximumPower,
+            maximumPowerWatts: Double(chargePowerLimitWatts),
             targetCellVoltageVolts: Constants.targetCellVoltage,
-            maximumStateOfChargePercent: Constants.maximumStateOfCharge
+            maximumStateOfChargePercent: chargeTargetPercent,
+            chargerType: .backpack
         )
     }
 
@@ -250,9 +263,7 @@ private extension BikeEmulatorPayloadFactory {
         static let chargingCurrentAmplitude = 12.0
         static let chargingLoadWaveRadians = 0.14
         static let maximumCurrent = 20.0
-        static let maximumPower = 1_000.0
         static let targetCellVoltage = 4.275
-        static let maximumStateOfCharge = 100
         static let balancingCells: Set<Int> = [12, 57]
         static let firstCellPosition = 1
         static let cellCount = 100

@@ -6,7 +6,7 @@ import Testing
 struct BikeEmulatorRepositoryTests {
     @Test("Charging scenario publishes connected telemetry and charging health")
     func chargingScenarioPublishesChargingData() async throws {
-        let repository = BikeEmulatorRepository(scenario: .charging)
+        let repository = BikeEmulatorRepositoryFactory.make(scenario: .charging)
 
         await repository.start()
         let telemetry = try await nextValue(from: await repository.observeTelemetry())
@@ -24,7 +24,7 @@ struct BikeEmulatorRepositoryTests {
 
     @Test("Scenario changes publish cell anomalies to active observers")
     func scenarioChangesPublishCellAnomalies() async throws {
-        let repository = BikeEmulatorRepository(scenario: .charging)
+        let repository = BikeEmulatorRepositoryFactory.make(scenario: .charging)
         try await repository.startBatteryHealthMonitoring()
         let stream = await repository.observeBatteryHealth()
         var iterator = stream.makeAsyncIterator()
@@ -42,7 +42,7 @@ struct BikeEmulatorRepositoryTests {
 
     @Test("New observers receive the latest capture for every dataset")
     func newObserversReceiveLatestCaptures() async throws {
-        let repository = BikeEmulatorRepository()
+        let repository = BikeEmulatorRepositoryFactory.make()
         try await repository.startBatteryHealthMonitoring()
 
         let stream = await repository.observeBatteryDatasetCaptures()
@@ -58,7 +58,7 @@ struct BikeEmulatorRepositoryTests {
 
     @Test("Riding scenario publishes moving telemetry")
     func ridingScenarioPublishesMovingTelemetry() async throws {
-        let repository = BikeEmulatorRepository(scenario: .riding)
+        let repository = BikeEmulatorRepositoryFactory.make(scenario: .riding)
 
         await repository.start()
         let telemetry = try await nextValue(from: await repository.observeTelemetry())
@@ -74,7 +74,7 @@ struct BikeEmulatorRepositoryTests {
 
     @Test("Debug scenarios evolve their live dashboard values")
     func debugScenariosEvolveTheirLiveDashboardValues() async throws {
-        let chargingRepository = BikeEmulatorRepository(scenario: .charging)
+        let chargingRepository = BikeEmulatorRepositoryFactory.make(scenario: .charging)
         try await chargingRepository.startBatteryHealthMonitoring()
         await chargingRepository.start()
         let chargingStream = await chargingRepository.observeBatteryHealth()
@@ -88,12 +88,9 @@ struct BikeEmulatorRepositoryTests {
             updatedChargingHealth.chargingStatus?.reportedCurrentAmperes
                 != initialChargingHealth.chargingStatus?.reportedCurrentAmperes
         )
-        #expect(
-            updatedChargingHealth.chargingStatus?.maximumPowerWatts
-                != initialChargingHealth.chargingStatus?.maximumPowerWatts
-        )
+        #expect(updatedChargingHealth.chargingStatus?.maximumPowerWatts == 1_000)
 
-        let ridingRepository = BikeEmulatorRepository(scenario: .riding)
+        let ridingRepository = BikeEmulatorRepositoryFactory.make(scenario: .riding)
         await ridingRepository.start()
         let telemetryStream = await ridingRepository.observeTelemetry()
         var telemetryIterator = telemetryStream.makeAsyncIterator()
@@ -105,9 +102,78 @@ struct BikeEmulatorRepositoryTests {
         #expect(updatedTelemetry.statusFlags.indicatorState != initialTelemetry.statusFlags.indicatorState)
     }
 
+    @Test("Charge controls publish and preserve debug values")
+    func chargeControlsPublishAndPreserveValues() async throws {
+        let repository = BikeEmulatorRepositoryFactory.make(scenario: .charging)
+        try await repository.startBatteryHealthMonitoring()
+        let stream = await repository.observeBatteryHealth()
+        var iterator = stream.makeAsyncIterator()
+        let initial = try await nextValue(from: &iterator)
+
+        let preparation = try await repository.prepareChargePowerControl(
+            chargingStatus: try #require(initial.chargingStatus)
+        )
+        #expect(preparation.didPassNoOpWrite)
+        #expect(preparation.isFirmwareCompatible)
+
+        _ = try await repository.setChargePowerLimit(watts: 1_700)
+        let powerUpdate = try await nextValue(from: &iterator)
+        #expect(powerUpdate.chargingStatus?.maximumPowerWatts == 1_700)
+        #expect((powerUpdate.chargingStatus?.reportedCurrentAmperes ?? .infinity) <= 1_700 / 388.4)
+
+        _ = try await repository.setChargeTarget(percent: 82)
+        let targetUpdate = try await nextValue(from: &iterator)
+        #expect(targetUpdate.chargingStatus?.maximumPowerWatts == 1_700)
+        #expect(targetUpdate.chargingStatus?.maximumStateOfChargePercent == 82)
+
+        await repository.start()
+        _ = try await nextValue(from: &iterator)
+        try await Task.sleep(for: .milliseconds(600))
+        let tickUpdate = try await nextValue(from: &iterator)
+        #expect(tickUpdate.chargingStatus?.maximumPowerWatts == 1_700)
+        #expect(tickUpdate.chargingStatus?.maximumStateOfChargePercent == 82)
+    }
+
+    @Test("Battery health monitoring remains active until every consumer releases its lease")
+    func batteryHealthMonitoringUsesSharedLeases() async throws {
+        let repository = BikeEmulatorRepositoryFactory.make(scenario: .charging)
+        try await repository.startBatteryHealthMonitoring()
+        try await repository.startBatteryHealthMonitoring()
+        await repository.start()
+        let initial = try await nextValue(from: await repository.observeBatteryHealth())
+        let initialDate = try #require(initial.lastUpdated)
+
+        await repository.stopBatteryHealthMonitoring()
+        try await Task.sleep(for: .milliseconds(600))
+        let updateWithOneLease = try await nextValue(from: await repository.observeBatteryHealth())
+
+        #expect(updateWithOneLease.chargeState == .charging)
+        #expect(try #require(updateWithOneLease.lastUpdated) > initialDate)
+    }
+
+    @Test("Selecting a scenario restores deterministic charge control values")
+    func selectingScenarioRestoresChargeControlDefaults() async throws {
+        let repository = BikeEmulatorRepositoryFactory.make(scenario: .charging)
+        try await repository.startBatteryHealthMonitoring()
+        let stream = await repository.observeBatteryHealth()
+        var iterator = stream.makeAsyncIterator()
+        _ = try await nextValue(from: &iterator)
+
+        _ = try await repository.setChargePowerLimit(watts: 1_700)
+        _ = try await nextValue(from: &iterator)
+        _ = try await repository.setChargeTarget(percent: 82)
+        _ = try await nextValue(from: &iterator)
+
+        await repository.setScenario(.charging)
+        let reset = try await nextValue(from: &iterator)
+
+        #expect(reset.chargingStatus?.maximumPowerWatts == 1_000)
+        #expect(reset.chargingStatus?.maximumStateOfChargePercent == 100)
+    }
+
     @Test("Connection advertises the VIN used by onboarding")
     func connectionAdvertisesTelemetryVIN() async throws {
-        let repository = BikeEmulatorRepository()
+        let repository = BikeEmulatorRepositoryFactory.make()
 
         await repository.start()
         let telemetry = try await nextValue(from: await repository.observeTelemetry())
