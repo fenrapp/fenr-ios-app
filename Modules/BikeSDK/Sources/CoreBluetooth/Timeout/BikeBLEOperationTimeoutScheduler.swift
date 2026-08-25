@@ -7,19 +7,24 @@ public final class BikeBLEOperationTimeoutScheduler: BikeBLETimeoutScheduling {
         self.duration = duration
     }
 
+    var hasPendingOperation: Bool {
+        task != nil
+    }
+
     deinit {
         task?.cancel()
     }
 
     public func schedule(operation: @escaping @MainActor @Sendable () async -> Void) {
         task?.cancel()
-        task = Task { @MainActor [duration] in
+        task = Task { @MainActor [weak self, duration] in
             do {
                 try await Task.sleep(for: duration)
             } catch {
                 return
             }
-            guard !Task.isCancelled else { return }
+            guard let self, !Task.isCancelled else { return }
+            self.task = nil
             await operation()
         }
     }

@@ -15,7 +15,7 @@ public final class BikeBLESecurityCoordinator {
         eventEmitter: BikeBLEEventEmitter,
         watchdog: BikeBLESecurityWatchdog,
         handshake: BikeBLESecurityHandshake,
-        pairingRetryController: BikeBLEPairingRetryController? = nil
+        pairingRetryController: BikeBLEPairingRetryController?
     ) {
         self.sessionStore = sessionStore
         self.eventEmitter = eventEmitter
@@ -29,6 +29,11 @@ public final class BikeBLESecurityCoordinator {
     }
 
     public func cancelPendingRetry() {
+        pairingRetryController?.reset()
+    }
+
+    func resetSession() {
+        watchdog.cancel()
         pairingRetryController?.reset()
     }
 
@@ -205,7 +210,9 @@ public final class BikeBLESecurityCoordinator {
         let shouldRetryPairing = pairingRetryController != nil && error.requiresPairingOrEncryption
         await watchdog.handle(error: error, characteristicUUID: characteristic.uuid.uuidString)
         guard shouldRetryPairing else { return }
-        pairingRetryController?.schedule(characteristicUUID: characteristic.uuid) { [weak self] attempt, uuid in
+        await pairingRetryController?.schedule(
+            characteristicUUID: characteristic.uuid
+        ) { [weak self] attempt, uuid in
             await self?.retryAfterPairingDelay(attempt: attempt, characteristicUUID: uuid)
         }
     }

@@ -18,7 +18,8 @@ struct BikeBLETimeoutRecoveryTests {
         let watchdog = BikeBLESecurityWatchdog(
             sessionStore: sessionStore,
             eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
-            timeoutScheduler: scheduler
+            timeoutScheduler: scheduler,
+            timeoutRecoveryHandler: {}
         )
 
         watchdog.watch(expectedState: .readingNonce, operation: "nonce read")
@@ -62,7 +63,8 @@ struct BikeBLETimeoutRecoveryTests {
         let watchdog = BikeBLESecurityWatchdog(
             sessionStore: sessionStore,
             eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
-            timeoutScheduler: scheduler
+            timeoutScheduler: scheduler,
+            timeoutRecoveryHandler: {}
         )
 
         watchdog.watch(expectedState: .readingNonce, operation: "nonce read")
@@ -82,7 +84,8 @@ struct BikeBLETimeoutRecoveryTests {
         let watchdog = BikeBLESecurityWatchdog(
             sessionStore: sessionStore,
             eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
-            timeoutScheduler: scheduler
+            timeoutScheduler: scheduler,
+            timeoutRecoveryHandler: {}
         )
 
         watchdog.watch(expectedState: .readingNonce, operation: "nonce read")
@@ -128,6 +131,53 @@ struct BikeBLETimeoutRecoveryTests {
         #expect(await waitUntil { recorder.values.count == 1 })
 
         #expect(recorder.values == [1])
+        #expect(!scheduler.hasPendingOperation)
+    }
+
+    @Test("Security session reset cancels watchdog and pairing retry work")
+    func securitySessionResetCancelsPendingWork() async {
+        let eventHub = AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
+        let sessionStore = BLESessionStore()
+        let eventEmitter = BikeBLEEventEmitter(eventHub: eventHub)
+        let securityScheduler = FakeBikeBLETimeoutScheduler()
+        let watchdog = BikeBLESecurityWatchdog(
+            sessionStore: sessionStore,
+            eventEmitter: eventEmitter,
+            timeoutScheduler: securityScheduler,
+            timeoutRecoveryHandler: {}
+        )
+        let notificationCoordinator = makeNotificationCoordinator(
+            sessionStore: sessionStore,
+            eventHub: eventHub,
+            timeoutScheduler: FakeBikeBLETimeoutScheduler()
+        )
+        let handshake = BikeBLESecurityHandshake(
+            sessionStore: sessionStore,
+            eventEmitter: eventEmitter,
+            payloadBuilder: StarkAuthenticationPayloadBuilder(),
+            configuration: BikeSecurityConfiguration(pairingDate: StarkPinConstants.fallbackPairingDate),
+            notificationCoordinator: notificationCoordinator,
+            watchdog: watchdog
+        )
+        let retryController = BikeBLEPairingRetryController(
+            eventEmitter: eventEmitter,
+            recoveryHandler: nil,
+            policy: .init(maximumAttempts: 1, delay: .seconds(60))
+        )
+        let coordinator = BikeBLESecurityCoordinator(
+            sessionStore: sessionStore,
+            eventEmitter: eventEmitter,
+            watchdog: watchdog,
+            handshake: handshake,
+            pairingRetryController: retryController
+        )
+        watchdog.watch(expectedState: .readingNonce, operation: "nonce read")
+        await retryController.schedule(characteristicUUID: CBUUID(string: "1001")) { _, _ in }
+
+        coordinator.resetSession()
+
+        #expect(!securityScheduler.hasPendingOperation)
+        #expect(!retryController.hasPendingRetry)
     }
 
 }

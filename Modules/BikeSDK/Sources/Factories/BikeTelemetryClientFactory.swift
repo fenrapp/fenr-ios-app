@@ -62,9 +62,8 @@ public enum BikeTelemetryClientFactory {
                 peripheralDelegate: peripheralDelegate,
                 reconnectPolicy: runtimeConfiguration.reconnectPolicy
             ),
-            sessionResetHandler: { [notificationCoordinator] in
-                notificationCoordinator.resetSession()
-            }
+            notificationCoordinator: notificationCoordinator,
+            securityCoordinator: securityCoordinator
         )
         let centralDelegate = makeCentralDelegate(connectionCoordinator, callbackQueue: callbackQueue)
         return makeClient(.init(
@@ -111,7 +110,7 @@ public enum BikeTelemetryClientFactory {
                 duration: runtimeConfiguration.securityOperationTimeout
             ),
             timeoutRecoveryHandler: { [pairingRetryController] in
-                pairingRetryController?.recoverIfNeeded()
+                await pairingRetryController?.recoverIfNeeded()
             }
         )
         let handshake = BikeBLESecurityHandshake(
@@ -133,7 +132,8 @@ public enum BikeTelemetryClientFactory {
 
     private static func makeConnectionCoordinator(
         _ input: ConnectionCoordinatorInput,
-        sessionResetHandler: @escaping @MainActor () -> Void
+        notificationCoordinator: BikeBLENotificationCoordinator,
+        securityCoordinator: BikeBLESecurityCoordinator
     ) -> BikeBLEConnectionCoordinator {
         BikeBLECoordinatorAssembly.makeConnectionCoordinator(
             dependencies: .init(
@@ -144,7 +144,10 @@ public enum BikeTelemetryClientFactory {
                 reconnectDelay: BikeBLEReconnectDelay(),
                 reconnectPolicy: input.reconnectPolicy
             ),
-            sessionResetHandler: sessionResetHandler
+            sessionResetHandler: { [notificationCoordinator, securityCoordinator] in
+                notificationCoordinator.resetSession()
+                securityCoordinator.resetSession()
+            }
         )
     }
 
@@ -177,7 +180,11 @@ public enum BikeTelemetryClientFactory {
         }
         return BikeBLEPairingRetryController(
             eventEmitter: eventEmitter,
-            recoveryHandler: recoveryHandler
+            recoveryHandler: recoveryHandler,
+            policy: BikeBLEPairingRetryPolicy(
+                maximumAttempts: 3,
+                delay: .seconds(3)
+            )
         )
     }
 

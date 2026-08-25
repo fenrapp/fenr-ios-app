@@ -164,8 +164,9 @@ func makeTelemetryClient(
             reconnectDelay: BikeBLEReconnectDelay(),
             reconnectPolicy: .init(delays: [.zero])
         ),
-        sessionResetHandler: { [notificationCoordinator] in
+        sessionResetHandler: { [notificationCoordinator, securityCoordinator] in
             notificationCoordinator.resetSession()
+            securityCoordinator.resetSession()
         }
     )
     return CoreBluetoothBikeTelemetryClient(
@@ -195,7 +196,8 @@ private func makeSecurityCoordinator(
         eventEmitter: eventEmitter,
         timeoutScheduler: BikeBLEOperationTimeoutScheduler(
             duration: runtimeConfiguration.securityOperationTimeout
-        )
+        ),
+        timeoutRecoveryHandler: {}
     )
     let handshake = BikeBLESecurityHandshake(
         sessionStore: sessionStore,
@@ -209,6 +211,7 @@ private func makeSecurityCoordinator(
         sessionStore: sessionStore,
         eventEmitter: eventEmitter,
         watchdog: watchdog,
-        handshake: handshake
+        handshake: handshake,
+        pairingRetryController: nil
     )
 }

@@ -42,7 +42,6 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
 
     public func stop() async {
         callbackQueue.cancelPending()
-        securityCoordinator.cancelPendingRetry()
         await connectionCoordinator.stop()
     }
 

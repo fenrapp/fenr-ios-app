@@ -50,7 +50,7 @@ enum BikeBLECoordinatorAssembly {
 
     static func makeConnectionCoordinator(
         dependencies: ConnectionDependencies,
-        sessionResetHandler: @escaping @MainActor () -> Void = {}
+        sessionResetHandler: @escaping @MainActor () -> Void
     ) -> BikeBLEConnectionCoordinator {
         let reconnectController = BikeBLEReconnectController(
             delay: dependencies.reconnectDelay,

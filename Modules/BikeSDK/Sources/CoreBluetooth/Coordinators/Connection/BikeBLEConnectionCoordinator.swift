@@ -19,7 +19,7 @@ public final class BikeBLEConnectionCoordinator {
         peripheralDelegate: CBPeripheralDelegate,
         reconnectController: BikeBLEReconnectController,
         scanner: BikeBLEConnectionScanner,
-        sessionResetHandler: @escaping @MainActor () -> Void = {}
+        sessionResetHandler: @escaping @MainActor () -> Void
     ) {
         self.adapter = adapter
         self.sessionStore = sessionStore

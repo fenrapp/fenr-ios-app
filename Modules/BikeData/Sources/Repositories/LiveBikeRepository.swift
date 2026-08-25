@@ -13,7 +13,7 @@ public actor LiveBikeRepository: BikeRepository, BikeBatteryHealthRepository, Bi
     private let batteryHealthHub: AsyncEventHub<BikeBatteryHealth>
     private let batteryCaptureHub: AsyncEventHub<BatteryDatasetCapture>
     private let discoveredBikesHub: AsyncEventHub<[DiscoveredBike]>
-    private let chargePowerMapper = BikeSDKChargePowerControlToDomainMapper()
+    private let chargePowerMapper: BikeSDKChargePowerControlToDomainMapper
     private var task: Task<Void, Never>?
 
     public init(
@@ -26,7 +26,8 @@ public actor LiveBikeRepository: BikeRepository, BikeBatteryHealthRepository, Bi
         batteryHealthStore: BatteryHealthStateStore,
         batteryHealthHub: AsyncEventHub<BikeBatteryHealth>,
         batteryCaptureHub: AsyncEventHub<BatteryDatasetCapture>,
-        discoveredBikesHub: AsyncEventHub<[DiscoveredBike]>
+        discoveredBikesHub: AsyncEventHub<[DiscoveredBike]>,
+        chargePowerMapper: BikeSDKChargePowerControlToDomainMapper
     ) {
         self.client = client
         self.stateStore = stateStore
@@ -37,6 +38,7 @@ public actor LiveBikeRepository: BikeRepository, BikeBatteryHealthRepository, Bi
         self.batteryHealthHub = batteryHealthHub
         self.batteryCaptureHub = batteryCaptureHub
         self.discoveredBikesHub = discoveredBikesHub
+        self.chargePowerMapper = chargePowerMapper
         self.eventHandler = eventHandler
     }
 

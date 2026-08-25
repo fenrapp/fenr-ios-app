@@ -13,7 +13,8 @@ func makeRepository(client: BikeTelemetryClient) -> LiveBikeRepository {
         batteryHealthStore: .init(),
         batteryHealthHub: .init(bufferingPolicy: .unbounded),
         batteryCaptureHub: .init(bufferingPolicy: .unbounded),
-        discoveredBikesHub: .init(bufferingPolicy: .unbounded)
+        discoveredBikesHub: .init(bufferingPolicy: .unbounded),
+        chargePowerMapper: .init()
     )
 }
 

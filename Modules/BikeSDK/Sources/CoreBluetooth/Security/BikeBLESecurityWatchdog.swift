@@ -11,7 +11,7 @@ public final class BikeBLESecurityWatchdog {
         sessionStore: BLESessionStore,
         eventEmitter: BikeBLEEventEmitter,
         timeoutScheduler: any BikeBLETimeoutScheduling,
-        timeoutRecoveryHandler: @escaping @MainActor @Sendable () async -> Void = {}
+        timeoutRecoveryHandler: @escaping @MainActor @Sendable () async -> Void
     ) {
         self.sessionStore = sessionStore
         self.eventEmitter = eventEmitter
