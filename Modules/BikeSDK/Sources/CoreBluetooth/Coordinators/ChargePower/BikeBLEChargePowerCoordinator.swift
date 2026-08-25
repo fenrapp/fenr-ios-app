@@ -4,13 +4,13 @@ import StarkProtocol
 
 @MainActor
 final class BikeBLEChargePowerCoordinator {
-    private let transport: BikeBLEChargePowerTransport
+    private let transport: BikeBLEVCUConfigurationTransport
     private var cachedChargePowerConfiguration: StarkChargerConfiguration?
     private var cachedChargePowerReadResponseHex: String?
     private var cachedChargePowerFirmware: String?
     private var didPassChargePowerNoOp = false
 
-    init(transport: BikeBLEChargePowerTransport) {
+    init(transport: BikeBLEVCUConfigurationTransport) {
         self.transport = transport
     }
 
@@ -19,9 +19,8 @@ final class BikeBLEChargePowerCoordinator {
     ) async throws -> BikeSDKChargePowerControlSnapshot {
         try transport.ensureReady()
         clearGuardState()
-        let peripheral = try transport.authenticatedPeripheral()
         let configCharacteristic = try transport.configurationCharacteristic()
-        let firmwareRead = try await readVCUFirmware(peripheral: peripheral)
+        let firmwareRead = try await readVCUFirmware()
         let firmware = firmwareRead.version
         let isCompatible = firmware?.isChargePowerControlCompatible == true
         let parsedVersions = firmwareRead.versionDescriptions.joined(separator: ",")
@@ -35,17 +34,12 @@ final class BikeBLEChargePowerCoordinator {
         }
 
         let readResult = try await readChargeConfigurationIfPermitted(
-            peripheral: peripheral,
             characteristic: configCharacteristic,
             context: context
         )
         let configuration = readResult.configuration
         let noOpWrite = try StarkChargerConfigurationCommand.encodeWrite(configuration)
-        try await writeChargeConfiguration(
-            noOpWrite,
-            peripheral: peripheral,
-            characteristic: configCharacteristic
-        )
+        try await transport.writeConfiguration(noOpWrite)
 
         cachedChargePowerConfiguration = configuration
         cachedChargePowerReadResponseHex = readResult.responseHex
@@ -71,19 +65,14 @@ final class BikeBLEChargePowerCoordinator {
     }
 
     func setChargePowerLimit(watts: Int) async throws -> BikeSDKChargePowerControlSnapshot {
-        let peripheral = try transport.authenticatedPeripheral()
-        let configCharacteristic = try transport.configurationCharacteristic()
+        _ = try transport.configurationCharacteristic()
         guard didPassChargePowerNoOp, let configuration = cachedChargePowerConfiguration else {
             throw BikeSDKError.operationFailed("Charge power control has not passed the no-op guard")
         }
 
         let nextConfiguration = configuration.settingChargePower(watts)
         let writePayload = try StarkChargerConfigurationCommand.encodeWrite(nextConfiguration)
-        try await writeChargeConfiguration(
-            writePayload,
-            peripheral: peripheral,
-            characteristic: configCharacteristic
-        )
+        try await transport.writeConfiguration(writePayload)
         cachedChargePowerConfiguration = nextConfiguration
 
         return BikeSDKChargePowerControlSnapshot(
@@ -99,8 +88,7 @@ final class BikeBLEChargePowerCoordinator {
     }
 
     func setChargeTarget(percent: Int) async throws -> BikeSDKChargePowerControlSnapshot {
-        let peripheral = try transport.authenticatedPeripheral()
-        let configCharacteristic = try transport.configurationCharacteristic()
+        _ = try transport.configurationCharacteristic()
         guard didPassChargePowerNoOp, let configuration = cachedChargePowerConfiguration else {
             throw BikeSDKError.operationFailed("Charge target control has not passed the no-op guard")
         }
@@ -108,11 +96,7 @@ final class BikeBLEChargePowerCoordinator {
         let targetPercent = max(1, min(100, percent))
         let nextConfiguration = configuration.settingMaximumStateOfCharge(percent: targetPercent)
         let writePayload = try StarkChargerConfigurationCommand.encodeWrite(nextConfiguration)
-        try await writeChargeConfiguration(
-            writePayload,
-            peripheral: peripheral,
-            characteristic: configCharacteristic
-        )
+        try await transport.writeConfiguration(writePayload)
         cachedChargePowerConfiguration = nextConfiguration
 
         return BikeSDKChargePowerControlSnapshot(
@@ -139,17 +123,11 @@ final class BikeBLEChargePowerCoordinator {
     }
 
     func reset() {
-        transport.reset()
         clearGuardState()
     }
 
-    private func readVCUFirmware(peripheral: CBPeripheral) async throws -> BikeBLEVCUFirmwareRead {
-        let characteristic = try transport.versionsCharacteristic()
-        let data = try await transport.read(
-            peripheral: peripheral,
-            characteristic: characteristic,
-            operationName: "4001 read"
-        )
+    private func readVCUFirmware() async throws -> BikeBLEVCUFirmwareRead {
+        let data = try await transport.readVersions()
         return BikeBLEVCUFirmwareRead(
             rawHex: data.bikeSDKHexString,
             version: StarkFirmwareVersionParser.parseVCUPic(from: data),
@@ -157,24 +135,7 @@ final class BikeBLEChargePowerCoordinator {
         )
     }
 
-    private func requestChargeConfiguration(
-        peripheral: CBPeripheral,
-        characteristic: CBCharacteristic
-    ) async throws -> Data {
-        try await transport.write(
-            StarkChargerConfigurationCommand.readPacket,
-            peripheral: peripheral,
-            characteristic: characteristic
-        )
-        return try await transport.read(
-            peripheral: peripheral,
-            characteristic: characteristic,
-            operationName: "4005 read"
-        )
-    }
-
     private func readChargeConfigurationIfPermitted(
-        peripheral: CBPeripheral,
         characteristic: CBCharacteristic,
         context: BikeSDKChargePowerTelemetryContext
     ) async throws -> BikeBLEChargePowerConfigurationReadResult {
@@ -185,9 +146,9 @@ final class BikeBLEChargePowerCoordinator {
             )
         }
         do {
-            let data = try await requestChargeConfiguration(
-                peripheral: peripheral,
-                characteristic: characteristic
+            let data = try await transport.readConfiguration(
+                request: StarkChargerConfigurationCommand.readPacket,
+                operationName: "4005 charge configuration read"
             )
             return .init(
                 configuration: try StarkChargerConfigurationCommand.decodeResponse(data),
@@ -232,14 +193,6 @@ final class BikeBLEChargePowerCoordinator {
                 + "maximum=\(Int((context.maximumCurrentAmperes * 10).rounded())) dA "
                 + "type=\(chargerType.displayName) raw=\(context.chargerTypeRaw)"
         )
-    }
-
-    private func writeChargeConfiguration(
-        _ payload: Data,
-        peripheral: CBPeripheral,
-        characteristic: CBCharacteristic
-    ) async throws {
-        try await transport.write(payload, peripheral: peripheral, characteristic: characteristic)
     }
 
     private func clearGuardState() {

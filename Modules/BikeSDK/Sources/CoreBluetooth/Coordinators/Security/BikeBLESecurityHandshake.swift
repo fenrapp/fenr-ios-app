@@ -100,6 +100,7 @@ final class BikeBLESecurityHandshake {
         }
         watchdog.cancel()
         sessionStore.setAuthenticationState(.authenticated)
+        BikePowerModeDebugLog.log("Stark authentication succeeded")
         await eventEmitter.send(.debug(.init(
             title: BikeSDKText.securityTitle,
             detail: BikeSDKText.securityAuthenticated

@@ -2,7 +2,10 @@ import BikeDomain
 import BikeSDK
 
 public enum LiveBikeRepositoryFactory {
-    public static func makeDefault(client: BikeTelemetryClient) -> LiveBikeRepository {
+    public static func makeDefault(
+        client: BikeTelemetryClient,
+        profileRepository: (any BikeProfileRepository)? = nil
+    ) -> LiveBikeRepository {
         let configuration = BikeRepositoryStreamConfiguration()
         return LiveBikeRepository(
             client: client,
@@ -15,7 +18,8 @@ public enum LiveBikeRepositoryFactory {
                 ),
                 batteryHealthMapper: BikeSDKTelemetryPayloadToBatteryHealthMapper(),
                 batteryDatasetMapper: BikeSDKBatteryDatasetToDomainMapper(),
-                connectionSessionPolicy: BikeConnectionSessionPolicy()
+                connectionSessionPolicy: BikeConnectionSessionPolicy(),
+                profileRepository: profileRepository
             ),
             stateStore: BikeRepositoryStateStore(),
             telemetryHub: AsyncEventHub(

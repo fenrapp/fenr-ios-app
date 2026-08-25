@@ -1,6 +1,7 @@
 @testable import BikeData
 import BikeDomain
 import BikeSDK
+import Foundation
 import Testing
 
 @Suite("Bike data repository")
@@ -175,5 +176,63 @@ struct BikeDataRepositoryTests {
             mapper.map(.receivingTelemetry(peripheralName: "VIN"))
                 == .receivingTelemetry(peripheralName: "VIN")
         )
+    }
+
+    @Test("Restores persisted Alpha evidence when the matching VIN returns")
+    func restoresPersistedAlphaEvidence() async throws {
+        let suiteName = "fenr.alpha-restore.\(UUID().uuidString)"
+        let profileRepository = UserDefaultsBikeProfileRepository(suiteName: suiteName)
+        await profileRepository.saveProfile(.init(
+            vin: "FENRTEST000000001",
+            alphaEvidence: [.powerAboveStandard],
+            alphaDetectedAt: .now
+        ))
+        let client = FakeBikeTelemetryClient()
+        let repository = makeRepository(client: client, profileRepository: profileRepository)
+        await repository.start()
+        let stream = await repository.observeTelemetry()
+        var iterator = stream.makeAsyncIterator()
+        _ = await iterator.next()
+
+        await client.send(.telemetry(.vin("FENRTEST000000001")))
+        let telemetry = try #require(await iterator.next())
+
+        #expect(telemetry.detectedPowerTier.alphaEvidence == [.powerAboveStandard])
+        UserDefaults.standard.removePersistentDomain(forName: suiteName)
+    }
+
+    @Test("Persists new Alpha evidence without later Standard data removing it")
+    func persistsAlphaEvidence() async throws {
+        let suiteName = "fenr.alpha-persist.\(UUID().uuidString)"
+        let profileRepository = UserDefaultsBikeProfileRepository(suiteName: suiteName)
+        await profileRepository.saveProfile(.init(vin: "FENRTEST000000001"))
+        let client = FakeBikeTelemetryClient()
+        let repository = makeRepository(client: client, profileRepository: profileRepository)
+        await repository.start()
+        let stream = await repository.observeTelemetry()
+        var iterator = stream.makeAsyncIterator()
+        _ = await iterator.next()
+
+        await client.send(.telemetry(.vin("FENRTEST000000001")))
+        _ = await iterator.next()
+        await client.send(.telemetry(.powerModeConfiguration(.init(
+            mapIndex: 4,
+            torqueRaw: 100,
+            regenerationRaw: 0,
+            curve: 0
+        ))))
+        _ = await iterator.next()
+        await client.send(.telemetry(.powerModeConfiguration(.init(
+            mapIndex: 4,
+            torqueRaw: 75,
+            regenerationRaw: 0,
+            curve: 0
+        ))))
+        _ = await iterator.next()
+
+        let profile = try #require(await profileRepository.loadProfile())
+        #expect(profile.alphaEvidence == [.powerAboveStandard])
+        #expect(profile.alphaDetectedAt != nil)
+        UserDefaults.standard.removePersistentDomain(forName: suiteName)
     }
 }

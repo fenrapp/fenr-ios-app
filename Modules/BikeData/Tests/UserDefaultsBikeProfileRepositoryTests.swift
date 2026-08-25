@@ -42,6 +42,24 @@ struct UserDefaultsBikeProfileRepositoryTests {
         clearUserDefaults(suiteName: suiteName)
     }
 
+    @Test("Persists declared tier and positive Alpha evidence by VIN")
+    func persistsPowerTierEvidence() async {
+        let suiteName = makeSuiteName()
+        let repository = UserDefaultsBikeProfileRepository(suiteName: suiteName)
+        let detectedAt = Date(timeIntervalSince1970: 1_700_000_000)
+        let profile = BikeProfile(
+            vin: "FENRTEST000000001",
+            declaredPowerTier: .alpha,
+            alphaEvidence: [.powerAboveStandard, .tractionControlConfigured],
+            alphaDetectedAt: detectedAt
+        )
+
+        await repository.saveProfile(profile)
+
+        #expect(await repository.loadProfile() == profile)
+        clearUserDefaults(suiteName: suiteName)
+    }
+
     private func makeSuiteName() -> String {
         "fenr.bike-profile.tests.\(UUID().uuidString)"
     }

@@ -1,6 +1,6 @@
 import Foundation
 
-public enum BikeSDKError: Error, Equatable, Sendable {
+public enum BikeSDKError: Error, Equatable, LocalizedError, Sendable {
     case notStarted
     case emptyVIN
     case bluetoothUnavailable
@@ -21,4 +21,6 @@ public enum BikeSDKError: Error, Equatable, Sendable {
             "Decode failed \(characteristic.uuidString): \(message)"
         }
     }
+
+    public var errorDescription: String? { message }
 }

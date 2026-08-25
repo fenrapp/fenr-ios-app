@@ -53,7 +53,8 @@ public struct BikeSDKTelemetryPayloadToBatteryHealthMapper: Sendable {
                 chargerType: BikeChargerType(rawValue: payload.typeRaw)
             )
             health.lastUpdated = date
-        case .vcuBrake, .map, .speed, .throttle, .imu, .liveTotals, .inverterTemperatures, .vin:
+        case .vcuBrake, .map, .powerModeConfiguration, .tractionControlConfiguration,
+             .speed, .throttle, .imu, .liveTotals, .inverterTemperatures, .vin:
             break
         }
     }

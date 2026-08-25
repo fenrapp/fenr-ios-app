@@ -100,6 +100,9 @@ public final class BikeBLEConnectionCoordinator {
             title: "BLE",
             detail: "central state \(scanner.centralStateDescription)"
         )))
+        if await scanner.resumePendingRestorationIfNeeded() {
+            return
+        }
         guard sessionStore.peripheral == nil else { return }
         if sessionStore.shouldConnectWhenPoweredOn {
             guard !reconnectController.hasPendingReconnect else { return }

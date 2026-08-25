@@ -8,19 +8,22 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
     private let batteryHealthMapper: BikeSDKTelemetryPayloadToBatteryHealthMapper
     private let batteryDatasetMapper: BikeSDKBatteryDatasetToDomainMapper
     private let connectionSessionPolicy: BikeConnectionSessionPolicy
+    private let profileRepository: (any BikeProfileRepository)?
 
     public init(
         telemetryMapper: BikeSDKTelemetryPayloadToDomainMapper,
         eventMapper: BikeSDKEventToDomainMapper,
         batteryHealthMapper: BikeSDKTelemetryPayloadToBatteryHealthMapper,
         batteryDatasetMapper: BikeSDKBatteryDatasetToDomainMapper,
-        connectionSessionPolicy: BikeConnectionSessionPolicy
+        connectionSessionPolicy: BikeConnectionSessionPolicy,
+        profileRepository: (any BikeProfileRepository)? = nil
     ) {
         self.telemetryMapper = telemetryMapper
         self.eventMapper = eventMapper
         self.batteryHealthMapper = batteryHealthMapper
         self.batteryDatasetMapper = batteryDatasetMapper
         self.connectionSessionPolicy = connectionSessionPolicy
+        self.profileRepository = profileRepository
     }
 
     func handle(
@@ -46,14 +49,18 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
             }
             await targets.debugHub.send(eventMapper.connectionDebug(from: status))
         case .telemetry(let payload):
+            let persistedEvidence = await persistedAlphaEvidence(for: payload)
             let telemetry = await targets.stateStore.updateTelemetry {
                 telemetryMapper.apply(payload, to: &$0, date: Date())
+                if !persistedEvidence.isEmpty {
+                    $0.detectedPowerTier = .alpha(
+                        evidence: $0.detectedPowerTier.alphaEvidence.union(persistedEvidence)
+                    )
+                }
             }
             await targets.telemetryHub.send(telemetry)
-            let health = await targets.batteryHealthStore.updateHealth {
-                batteryHealthMapper.apply(payload, to: &$0, date: Date())
-            }
-            await targets.batteryHealthHub.send(health)
+            await persistAlphaEvidenceIfNeeded(from: telemetry)
+            await updateBatteryHealth(payload, targets: targets)
         case .batteryDatasetCapture(let capture):
             let mappedCapture = BatteryDatasetCapture(
                 dataset: batteryDatasetMapper.map(capture.dataset),
@@ -81,5 +88,40 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
         case .error(let error):
             await targets.debugHub.send(eventMapper.errorDebug(error))
         }
+    }
+
+    private func persistAlphaEvidenceIfNeeded(from telemetry: BikeTelemetry) async {
+        guard let profileRepository,
+              case .alpha(let evidence) = telemetry.detectedPowerTier,
+              !evidence.isEmpty,
+              var profile = await profileRepository.loadProfile(),
+              telemetry.vin.isEmpty || telemetry.vin == profile.vin
+        else { return }
+        let mergedEvidence = profile.alphaEvidence.union(evidence)
+        guard mergedEvidence != profile.alphaEvidence else { return }
+        profile.alphaEvidence = mergedEvidence
+        profile.alphaDetectedAt = Date()
+        await profileRepository.saveProfile(profile)
+    }
+
+    private func updateBatteryHealth(
+        _ payload: BikeSDKTelemetryPayload,
+        targets: LiveBikeRepositoryEventTargets
+    ) async {
+        let health = await targets.batteryHealthStore.updateHealth {
+            batteryHealthMapper.apply(payload, to: &$0, date: Date())
+        }
+        await targets.batteryHealthHub.send(health)
+    }
+
+    private func persistedAlphaEvidence(
+        for payload: BikeSDKTelemetryPayload
+    ) async -> Set<BikeAlphaEvidence> {
+        guard case .vin(let vin) = payload,
+              let profileRepository,
+              let profile = await profileRepository.loadProfile(),
+              profile.vin == vin
+        else { return [] }
+        return profile.alphaEvidence
     }
 }

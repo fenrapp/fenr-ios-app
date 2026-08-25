@@ -18,10 +18,19 @@ enum BikeBLECoordinatorAssembly {
         timeoutScheduler: any BikeBLETimeoutScheduling
     ) -> BikeBLENotificationCoordinator {
         let notificationPreparer = BikeBLENotificationPreparer(eventEmitter: eventEmitter)
+        let configurationTransport = BikeBLEVCUConfigurationTransport(
+            sessionStore: sessionStore,
+            eventEmitter: eventEmitter
+        )
         let experimentalCaptureCoordinator = BikeBLEExperimentalCaptureCoordinator(
             sessionStore: sessionStore,
             eventEmitter: eventEmitter,
             notificationPreparer: notificationPreparer
+        )
+        let powerModeCoordinator = BikeBLEPowerModeConfigurationCoordinator(
+            transport: configurationTransport,
+            eventEmitter: eventEmitter,
+            sessionStore: sessionStore
         )
         let subscriptionQueue = BikeBLESubscriptionQueue(
             sessionStore: sessionStore,
@@ -34,17 +43,25 @@ enum BikeBLECoordinatorAssembly {
             eventEmitter: eventEmitter,
             notificationPreparer: notificationPreparer,
             experimentalCaptureCoordinator: experimentalCaptureCoordinator,
-            queue: subscriptionQueue
+            queue: subscriptionQueue,
+            requiredSubscriptionsDidComplete: {
+                powerModeCoordinator.startAutomaticRefreshIfNeeded()
+            },
+            configSubscriptionDidComplete: {
+                powerModeCoordinator.startAutomaticRefreshIfNeeded()
+            }
         )
         let chargePowerCoordinator = BikeBLEChargePowerCoordinator(
-            transport: BikeBLEChargePowerTransport(sessionStore: sessionStore)
+            transport: configurationTransport
         )
         return BikeBLENotificationCoordinator(
             sessionStore: sessionStore,
             eventEmitter: eventEmitter,
             notificationProcessor: notificationProcessor,
             subscriptionCoordinator: subscriptionCoordinator,
-            chargePowerCoordinator: chargePowerCoordinator
+            chargePowerCoordinator: chargePowerCoordinator,
+            powerModeCoordinator: powerModeCoordinator,
+            configurationTransport: configurationTransport
         )
     }
 

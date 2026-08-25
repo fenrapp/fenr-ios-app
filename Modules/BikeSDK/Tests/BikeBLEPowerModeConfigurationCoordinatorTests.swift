@@ -1,0 +1,58 @@
+@testable import BikeSDK
+import Foundation
+import Testing
+
+@Suite("BLE power mode configuration coordinator")
+@MainActor
+struct BikeBLEPowerModeConfigurationCoordinatorTests {
+    @Test("Reads all power maps before all traction maps through the live session")
+    func readsAllConfigurationsInOrder() async throws {
+        let transport = FakeBikeBLEPowerModeConfigurationTransport()
+        let coordinator = makeCoordinator(transport: transport)
+
+        try await coordinator.refresh()
+
+        #expect(transport.requests == expectedRequests)
+        #expect(transport.allowedLiveTelemetrySessionValues == Array(repeating: true, count: 10))
+    }
+
+    @Test("Keeps a successful power refresh when every traction request fails")
+    func toleratesUnavailableTractionControl() async throws {
+        let transport = FakeBikeBLEPowerModeConfigurationTransport()
+        transport.failingRequests = Set((0 ... 4).map { Data([0, 8, UInt8($0)]) })
+        let coordinator = makeCoordinator(transport: transport)
+
+        try await coordinator.refresh()
+
+        #expect(transport.requests == expectedRequests)
+    }
+
+    @Test("Fails verification when no power configuration is received")
+    func requiresAtLeastOnePowerConfiguration() async {
+        let transport = FakeBikeBLEPowerModeConfigurationTransport()
+        transport.failingRequests = Set((0 ... 4).map { Data([0, 0, UInt8($0)]) })
+        let coordinator = makeCoordinator(transport: transport)
+
+        await #expect(throws: BikeSDKError.self) {
+            try await coordinator.refresh()
+        }
+        #expect(transport.requests == Array(expectedRequests.prefix(5)))
+    }
+
+    private var expectedRequests: [Data] {
+        (0 ... 4).map { Data([0, 0, UInt8($0)]) }
+            + (0 ... 4).map { Data([0, 8, UInt8($0)]) }
+    }
+
+    private func makeCoordinator(
+        transport: FakeBikeBLEPowerModeConfigurationTransport
+    ) -> BikeBLEPowerModeConfigurationCoordinator {
+        BikeBLEPowerModeConfigurationCoordinator(
+            transport: transport,
+            eventEmitter: BikeBLEEventEmitter(
+                eventHub: AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
+            ),
+            sessionStore: BLESessionStore()
+        )
+    }
+}

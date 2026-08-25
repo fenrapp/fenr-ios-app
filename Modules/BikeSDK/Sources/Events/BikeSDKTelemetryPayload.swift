@@ -9,6 +9,8 @@ public enum BikeSDKTelemetryPayload: Equatable, Sendable {
     case status(StarkStatusPayload)
     case vcuBrake(StarkVCUBrakePayload)
     case map(Int)
+    case powerModeConfiguration(StarkPowerModeConfigurationPayload)
+    case tractionControlConfiguration(StarkTractionControlConfigurationPayload)
     case speed(StarkSpeedPayload)
     case throttle(StarkThrottlePayload)
     case imu(StarkIMUPayload)

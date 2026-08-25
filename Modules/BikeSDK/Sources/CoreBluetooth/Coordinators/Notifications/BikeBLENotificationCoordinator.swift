@@ -8,19 +8,25 @@ public struct BikeBLENotificationCoordinator {
     private let notificationProcessor: BikeBLENotificationProcessor
     private let subscriptionCoordinator: BikeBLESubscriptionCoordinator
     private let chargePowerCoordinator: BikeBLEChargePowerCoordinator
+    private let powerModeCoordinator: BikeBLEPowerModeConfigurationCoordinator
+    private let configurationTransport: BikeBLEVCUConfigurationTransport
 
     init(
         sessionStore: BLESessionStore,
         eventEmitter: BikeBLEEventEmitter,
         notificationProcessor: BikeBLENotificationProcessor,
         subscriptionCoordinator: BikeBLESubscriptionCoordinator,
-        chargePowerCoordinator: BikeBLEChargePowerCoordinator
+        chargePowerCoordinator: BikeBLEChargePowerCoordinator,
+        powerModeCoordinator: BikeBLEPowerModeConfigurationCoordinator,
+        configurationTransport: BikeBLEVCUConfigurationTransport
     ) {
         self.sessionStore = sessionStore
         self.eventEmitter = eventEmitter
         self.notificationProcessor = notificationProcessor
         self.subscriptionCoordinator = subscriptionCoordinator
         self.chargePowerCoordinator = chargePowerCoordinator
+        self.powerModeCoordinator = powerModeCoordinator
+        self.configurationTransport = configurationTransport
     }
 
     public func discovered(characteristic: CBCharacteristic, peripheral: CBPeripheral) async {
@@ -33,6 +39,9 @@ public struct BikeBLENotificationCoordinator {
             characteristic: characteristic,
             peripheral: peripheral
         )
+        if characteristic.uuid == BikeSDKConstants.vcuBikeConfigurationUUID {
+            powerModeCoordinator.startAutomaticRefreshIfNeeded()
+        }
     }
 
     public func didDiscoverDescriptors(
@@ -61,7 +70,7 @@ public struct BikeBLENotificationCoordinator {
 
     public func didUpdateValue(peripheral: CBPeripheral, characteristic: CBCharacteristic, error: Error?) async {
         let characteristicUUIDString = characteristic.uuid.uuidString
-        if chargePowerCoordinator.completeChargePowerReadIfNeeded(characteristic: characteristic, error: error) {
+        if configurationTransport.completeReadIfNeeded(characteristic: characteristic, error: error) {
             return
         }
         if let error {
@@ -87,6 +96,9 @@ public struct BikeBLENotificationCoordinator {
         ) {
             await eventEmitter.send(.connection(.receivingTelemetry(peripheralName: peripheral.name)))
         }
+        if didDecodeTelemetry {
+            powerModeCoordinator.startAutomaticRefreshIfNeeded()
+        }
     }
 
     public func didReadRSSI(_ rssi: Int, error: Error?) async {
@@ -97,6 +109,7 @@ public struct BikeBLENotificationCoordinator {
     public func authenticationDidSucceed(peripheral: CBPeripheral) async {
         notificationProcessor.resetDebugSampling()
         await subscriptionCoordinator.authenticationDidSucceed(peripheral: peripheral)
+        powerModeCoordinator.startAutomaticRefreshIfNeeded()
     }
 
     public func startBatteryHealthMonitoring() async throws {
@@ -121,13 +134,19 @@ public struct BikeBLENotificationCoordinator {
         try await chargePowerCoordinator.setChargeTarget(percent: percent)
     }
 
+    public func refreshPowerModeConfigurations() async throws {
+        try await powerModeCoordinator.refresh()
+    }
+
     public func didWriteValue(characteristic: CBCharacteristic, error: Error?) async {
-        chargePowerCoordinator.didWriteValue(characteristic: characteristic, error: error)
+        configurationTransport.completeWriteIfNeeded(characteristic: characteristic, error: error)
     }
 
     public func resetSession() {
         subscriptionCoordinator.reset()
         chargePowerCoordinator.reset()
+        powerModeCoordinator.reset()
+        configurationTransport.reset()
     }
 
     public func readTelemetrySnapshot() async throws {

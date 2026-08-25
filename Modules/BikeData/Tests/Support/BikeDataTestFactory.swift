@@ -2,10 +2,13 @@
 import BikeDomain
 import BikeSDK
 
-func makeRepository(client: BikeTelemetryClient) -> LiveBikeRepository {
+func makeRepository(
+    client: BikeTelemetryClient,
+    profileRepository: (any BikeProfileRepository)? = nil
+) -> LiveBikeRepository {
     LiveBikeRepository(
         client: client,
-        eventHandler: makeEventHandler(),
+        eventHandler: makeEventHandler(profileRepository: profileRepository),
         stateStore: .init(),
         telemetryHub: .init(bufferingPolicy: .unbounded),
         connectionHub: .init(bufferingPolicy: .unbounded),
@@ -18,7 +21,9 @@ func makeRepository(client: BikeTelemetryClient) -> LiveBikeRepository {
     )
 }
 
-private func makeEventHandler() -> LiveBikeRepositoryEventHandler {
+private func makeEventHandler(
+    profileRepository: (any BikeProfileRepository)?
+) -> LiveBikeRepositoryEventHandler {
     LiveBikeRepositoryEventHandler(
         telemetryMapper: .init(),
         eventMapper: .init(
@@ -28,6 +33,7 @@ private func makeEventHandler() -> LiveBikeRepositoryEventHandler {
         ),
         batteryHealthMapper: .init(),
         batteryDatasetMapper: .init(),
-        connectionSessionPolicy: .init()
+        connectionSessionPolicy: .init(),
+        profileRepository: profileRepository
     )
 }

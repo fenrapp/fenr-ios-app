@@ -7,23 +7,29 @@ struct BikeBLESubscriptionCoordinator {
     private let notificationPreparer: BikeBLENotificationPreparer
     private let experimentalCaptureCoordinator: BikeBLEExperimentalCaptureCoordinator
     private let queue: BikeBLESubscriptionQueue
+    private let requiredSubscriptionsDidComplete: @MainActor () -> Void
+    private let configSubscriptionDidComplete: @MainActor () -> Void
 
     init(
         sessionStore: BLESessionStore,
         eventEmitter: BikeBLEEventEmitter,
         notificationPreparer: BikeBLENotificationPreparer,
         experimentalCaptureCoordinator: BikeBLEExperimentalCaptureCoordinator,
-        queue: BikeBLESubscriptionQueue
+        queue: BikeBLESubscriptionQueue,
+        requiredSubscriptionsDidComplete: @escaping @MainActor () -> Void = {},
+        configSubscriptionDidComplete: @escaping @MainActor () -> Void = {}
     ) {
         self.sessionStore = sessionStore
         self.eventEmitter = eventEmitter
         self.notificationPreparer = notificationPreparer
         self.experimentalCaptureCoordinator = experimentalCaptureCoordinator
         self.queue = queue
+        self.requiredSubscriptionsDidComplete = requiredSubscriptionsDidComplete
+        self.configSubscriptionDidComplete = configSubscriptionDidComplete
     }
 
     func prepareIfNeeded(characteristic: CBCharacteristic, peripheral: CBPeripheral) async {
-        guard shouldPrepareNotification(for: characteristic.uuid) else { return }
+        guard shouldPrepareNotification(for: characteristic) else { return }
         await notificationPreparer.prepare(characteristic: characteristic, peripheral: peripheral)
     }
 
@@ -52,7 +58,7 @@ struct BikeBLESubscriptionCoordinator {
             await experimentalCaptureCoordinator.advance(after: characteristic.uuid, peripheral: peripheral)
             return
         }
-        guard shouldQueueNotification(for: characteristic.uuid) else {
+        guard shouldQueueNotification(for: characteristic) else {
             await experimentalCaptureCoordinator.advance(after: characteristic.uuid, peripheral: peripheral)
             return
         }
@@ -114,23 +120,28 @@ struct BikeBLESubscriptionCoordinator {
             await experimentalCaptureCoordinator.advance(after: characteristic.uuid, peripheral: peripheral)
             return
         }
-        sessionStore.setSubscribed(characteristic.uuid)
-        await eventEmitter.send(.debug(.init(
-            title: BikeSDKText.subscriptionTitle,
-            detail: "Enabled \(characteristicUUID)"
-        )))
-        if BikeSDKConstants.batteryHealthMonitoringUUIDs.contains(characteristic.uuid),
-           !sessionStore.isBatteryHealthMonitoringActive() {
-            sessionStore.enqueueUnsubscriptionCharacteristic(characteristic)
-        }
+        await completeSubscription(characteristic: characteristic, restored: false)
         await queue.processNext(peripheral: peripheral)
         await experimentalCaptureCoordinator.advance(after: characteristic.uuid, peripheral: peripheral)
+        await reportRequiredSubscriptionsIfNeeded(peripheral: peripheral, after: characteristic.uuid)
+    }
+
+    private func reportRequiredSubscriptionsIfNeeded(peripheral: CBPeripheral, after uuid: CBUUID) async {
+        guard !sessionStore.hasReportedRequiredSubscriptions else { return }
         if sessionStore.markRequiredSubscriptionsCompleted(
             requiredUUIDs: BikeSDKConstants.requiredTelemetryNotifyUUIDs
         ) {
+            BikePowerModeDebugLog.log("required telemetry subscriptions completed")
             await eventEmitter.send(.connection(.subscribed(peripheralName: peripheral.name)))
-            await experimentalCaptureCoordinator.start(peripheral: peripheral)
+            requiredSubscriptionsDidComplete()
+            await prepareConfigurationNotificationIfAvailable(peripheral: peripheral)
+            return
         }
+        let missing = BikeSDKConstants.requiredTelemetryNotifyUUIDs
+            .filter { !sessionStore.subscribedCharacteristics.contains($0) }
+            .map(\.uuidString)
+            .joined(separator: ",")
+        BikePowerModeDebugLog.log("subscription progress after \(uuid.uuidString); missing=\(missing)")
     }
 
     func authenticationDidSucceed(peripheral: CBPeripheral) async {
@@ -178,15 +189,49 @@ struct BikeBLESubscriptionCoordinator {
 
     func reset() { queue.reset() }
 
-    private func shouldPrepareNotification(for uuid: CBUUID) -> Bool {
-        BikeSDKConstants.telemetryCharacteristicUUIDs.contains(uuid)
+    private func completeSubscription(characteristic: CBCharacteristic, restored: Bool) async {
+        sessionStore.setSubscribed(characteristic.uuid)
+        await eventEmitter.send(.debug(.init(
+            title: BikeSDKText.subscriptionTitle,
+            detail: "Enabled \(characteristic.uuid.uuidString)\(restored ? " (restored)" : "")"
+        )))
+        BikePowerModeDebugLog.log(
+            "subscription recorded uuid=\(characteristic.uuid.uuidString) restored=\(restored)"
+        )
+        if characteristic.uuid == BikeSDKConstants.vcuBikeConfigurationUUID {
+            BikePowerModeDebugLog.log("4005 notification subscription enabled")
+            configSubscriptionDidComplete()
+        }
+        if BikeSDKConstants.batteryHealthMonitoringUUIDs.contains(characteristic.uuid),
+           !sessionStore.isBatteryHealthMonitoringActive() {
+            sessionStore.enqueueUnsubscriptionCharacteristic(characteristic)
+        }
+    }
+
+    private func prepareConfigurationNotificationIfAvailable(peripheral: CBPeripheral) async {
+        guard let characteristic = sessionStore.discoveredCharacteristics[
+            BikeSDKConstants.vcuBikeConfigurationUUID
+        ] else {
+            return
+        }
+        if characteristic.isNotifying {
+            await completeSubscription(characteristic: characteristic, restored: true)
+            return
+        }
+        await notificationPreparer.prepare(characteristic: characteristic, peripheral: peripheral)
+    }
+
+    private func shouldPrepareNotification(for characteristic: CBCharacteristic) -> Bool {
+        let uuid = characteristic.uuid
+        return BikeSDKConstants.telemetryCharacteristicUUIDs.contains(uuid)
             || (BikeSDKConstants.batteryHealthMonitoringUUIDs.contains(uuid)
                 && sessionStore.isBatteryHealthMonitoringActive())
     }
 
-    private func shouldQueueNotification(for uuid: CBUUID) -> Bool {
-        shouldPrepareNotification(for: uuid)
-            || (BikeSDKConstants.experimentalCaptureUUIDs.contains(uuid)
+    private func shouldQueueNotification(for characteristic: CBCharacteristic) -> Bool {
+        shouldPrepareNotification(for: characteristic)
+            || characteristic.uuid == BikeSDKConstants.vcuBikeConfigurationUUID
+            || (BikeSDKConstants.experimentalCaptureUUIDs.contains(characteristic.uuid)
                 && sessionStore.hasStartedExperimentalCapture)
     }
 

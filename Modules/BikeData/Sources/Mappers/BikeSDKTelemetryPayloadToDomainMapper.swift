@@ -1,6 +1,7 @@
 import BikeDomain
 import BikeSDK
 import Foundation
+import StarkProtocol
 
 public struct BikeSDKTelemetryPayloadToDomainMapper: Sendable {
     public init() {}
@@ -46,9 +47,12 @@ public struct BikeSDKTelemetryPayloadToDomainMapper: Sendable {
             )
         case .map(let map):
             telemetry.mode = .index(map)
+        case .powerModeConfiguration(let configuration):
+            apply(configuration, to: &telemetry)
+        case .tractionControlConfiguration(let configuration):
+            apply(configuration, to: &telemetry)
         case .speed(let speed):
-            telemetry.speed = .known(kmh: speed.speedKmh, kmhX10: speed.speedKmhX10)
-            telemetry.motorRPM = .known(speed.motorRPM)
+            apply(speed, to: &telemetry)
         case .liveTotals(let totals):
             telemetry.odometer = .known(
                 kilometers: totals.odometerKilometers,
@@ -63,6 +67,59 @@ public struct BikeSDKTelemetryPayloadToDomainMapper: Sendable {
             break
         }
         telemetry.lastUpdated = date
+    }
+
+    private func apply(_ speed: StarkSpeedPayload, to telemetry: inout BikeTelemetry) {
+        telemetry.speed = .known(kmh: speed.speedKmh, kmhX10: speed.speedKmhX10)
+        telemetry.motorRPM = .known(speed.motorRPM)
+    }
+
+    private func apply(
+        _ configuration: StarkPowerModeConfigurationPayload,
+        to telemetry: inout BikeTelemetry
+    ) {
+        var current = telemetry.powerModeConfigurations[configuration.mapIndex]
+            ?? BikePowerModeConfiguration(mapIndex: configuration.mapIndex)
+        current.horsepower = configuration.horsepower
+        current.regenerativeBrakingPercent = configuration.regenerativeBrakingPercent
+        telemetry.powerModeConfigurations[configuration.mapIndex] = current
+        console(
+            "domain power map=\(configuration.mapIndex) "
+                + "active=\(telemetry.mode.displayIndex.map(String.init) ?? "unknown") "
+                + "activeConfig=\(telemetry.mode.powerModeConfigurationIndex.map(String.init) ?? "unknown")"
+        )
+        if configuration.horsepower > 60 {
+            promoteAlpha(evidence: .powerAboveStandard, telemetry: &telemetry)
+        }
+    }
+
+    private func apply(
+        _ configuration: StarkTractionControlConfigurationPayload,
+        to telemetry: inout BikeTelemetry
+    ) {
+        var current = telemetry.powerModeConfigurations[configuration.mapIndex]
+            ?? BikePowerModeConfiguration(mapIndex: configuration.mapIndex)
+        current.powerTractionPercent = configuration.powerPercent
+        current.brakingTractionPercent = configuration.brakingPercent
+        telemetry.powerModeConfigurations[configuration.mapIndex] = current
+        console(
+            "domain TC map=\(configuration.mapIndex) "
+                + "active=\(telemetry.mode.displayIndex.map(String.init) ?? "unknown") "
+                + "activeConfig=\(telemetry.mode.powerModeConfigurationIndex.map(String.init) ?? "unknown")"
+        )
+        if configuration.powerRaw != 0 || configuration.brakingRaw != 0 {
+            promoteAlpha(evidence: .tractionControlConfigured, telemetry: &telemetry)
+        }
+    }
+
+    private func promoteAlpha(evidence: BikeAlphaEvidence, telemetry: inout BikeTelemetry) {
+        var evidenceSet = telemetry.detectedPowerTier.alphaEvidence
+        evidenceSet.insert(evidence)
+        telemetry.detectedPowerTier = .alpha(evidence: evidenceSet)
+    }
+
+    private func console(_ message: String) {
+        BikePowerModeDebugLog.log(message)
     }
 
     private func crawlState(isActive: Bool, isForward: Bool) -> BikeCrawlState {

@@ -1,3 +1,5 @@
+import Foundation
+
 enum BikeSDKText {
     static let disconnectedByUser = "Disconnected by user"
     static let connectFailed = "Failed to connect"
@@ -38,4 +40,22 @@ enum BikeSDKText {
     static let noReadableCharacteristics = "SOC characteristic is not available or readable"
     static let noProperties = "noProperties"
     static let noDescriptors = "noDescriptors"
+}
+
+public enum BikePowerModeDebugLog {
+    public static let launchArgument = "-debugPowerModeLogs"
+
+    public static var isEnabled: Bool {
+        ProcessInfo.processInfo.arguments.contains(launchArgument)
+            || ProcessInfo.processInfo.environment["FENR_POWER_MODE_LOGS"] == "1"
+    }
+
+    public static func log(_ message: String) {
+        guard isEnabled else { return }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "HH:mm:ss.SSS"
+        let timestamp = formatter.string(from: Date())
+        print("[PowerModes][\(timestamp)] \(message)")
+    }
 }

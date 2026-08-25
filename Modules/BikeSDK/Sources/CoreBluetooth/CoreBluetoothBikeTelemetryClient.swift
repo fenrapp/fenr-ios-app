@@ -97,6 +97,10 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
         try await notificationCoordinator.setChargeTarget(percent: percent)
     }
 
+    public func refreshPowerModeConfigurations() async throws {
+        try await notificationCoordinator.refreshPowerModeConfigurations()
+    }
+
     private func startRuntimeIfNeeded() {
         callbackQueue.start()
         guard !isCentralStarted else { return }

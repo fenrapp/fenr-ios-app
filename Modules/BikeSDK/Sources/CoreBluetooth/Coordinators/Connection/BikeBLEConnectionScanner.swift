@@ -8,6 +8,7 @@ final class BikeBLEConnectionScanner {
     private let eventEmitter: BikeBLEEventEmitter
     private let peripheralDelegate: CBPeripheralDelegate
     private let reconnectController: BikeBLEReconnectController
+    private var pendingRestoredPeripherals: [CBPeripheral] = []
 
     init(
         adapter: CoreBluetoothAdapter,
@@ -74,6 +75,11 @@ final class BikeBLEConnectionScanner {
     }
 
     func restore(peripherals: [CBPeripheral]) async {
+        guard adapter.state == .poweredOn else {
+            pendingRestoredPeripherals = peripherals
+            return
+        }
+        pendingRestoredPeripherals.removeAll()
         guard sessionStore.peripheral == nil else { return }
         guard let peripheral = restoredPeripheral(from: peripherals) else { return }
         await eventEmitter.send(.debug(.init(
@@ -95,6 +101,14 @@ final class BikeBLEConnectionScanner {
         peripheral.delegate = peripheralDelegate
         await eventEmitter.send(.peripheral(name: peripheral.name, identifier: peripheral.identifier))
         await resume(peripheral: peripheral)
+    }
+
+    func resumePendingRestorationIfNeeded() async -> Bool {
+        guard adapter.state == .poweredOn, !pendingRestoredPeripherals.isEmpty else { return false }
+        let peripherals = pendingRestoredPeripherals
+        pendingRestoredPeripherals.removeAll()
+        await restore(peripherals: peripherals)
+        return sessionStore.peripheral != nil
     }
 
     func emitBluetoothAvailability() async {

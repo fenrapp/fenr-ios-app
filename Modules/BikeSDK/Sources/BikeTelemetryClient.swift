@@ -15,6 +15,7 @@ public protocol BikeTelemetryClient: AnyObject, Sendable {
     ) async throws -> BikeSDKChargePowerControlSnapshot
     func setChargePowerLimit(watts: Int) async throws -> BikeSDKChargePowerControlSnapshot
     func setChargeTarget(percent: Int) async throws -> BikeSDKChargePowerControlSnapshot
+    func refreshPowerModeConfigurations() async throws
     func events() async -> AsyncStream<BikeSDKEvent>
 }
 
@@ -30,5 +31,8 @@ public extension BikeTelemetryClient {
     }
     func setChargeTarget(percent: Int) async throws -> BikeSDKChargePowerControlSnapshot {
         throw BikeSDKError.operationFailed("Charge target control is unavailable")
+    }
+    func refreshPowerModeConfigurations() async throws {
+        throw BikeSDKError.operationFailed("Power mode configuration refresh is unavailable")
     }
 }
