@@ -40,7 +40,8 @@ public enum RideDashboardMapperFactory {
                 zeroValueUnits: .hide,
                 fractionalPart: .hide(rounded: .towardZero)
             ).locale(locale),
-            batteryPackCapacity: settings.batteryPackCapacity
+            batteryPackCapacity: settings.batteryPackCapacity,
+            controlStatusMapper: ChargingDashboardControlStatusMapper()
         )
     }
 }

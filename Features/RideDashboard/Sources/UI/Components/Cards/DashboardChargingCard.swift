@@ -12,6 +12,7 @@ struct DashboardChargingCard: View {
     @State private var displayedTargetPercent: Double
     @State private var isEditingPower = false
     @State private var isEditingTarget = false
+    @State private var selectionFeedbackTrigger = 0
 
     init(
         viewState: ChargingDashboardViewState,
@@ -80,41 +81,36 @@ struct DashboardChargingCard: View {
             displayedTargetPercent = value
         }
         .animation(.easeInOut(duration: Constants.statusAnimationDuration), value: viewState.control.status)
+        .dashboardChargingHapticFeedback(
+            selectionTrigger: selectionFeedbackTrigger,
+            status: viewState.control.status
+        )
         .accessibilityElement(children: .contain)
     }
 
     private var chargingStatus: some View {
         HStack(spacing: DesignSpace.medium) {
-            ZStack {
-                Circle()
-                    .fill(chargingIconColor.opacity(Constants.iconBackgroundOpacity))
-                Image(systemName: viewState.readout.systemImage)
-                    .font(.system(size: Constants.iconSize, weight: .bold))
-                    .foregroundStyle(chargingIconColor)
-            }
-            .frame(width: Constants.iconContainerSize, height: Constants.iconContainerSize)
-            .accessibilityHidden(true)
+            DashboardChargingHeaderIcon(
+                systemImage: chargingSystemImage,
+                color: chargingIconColor,
+                showsActivityIndicator: viewState.control.status?.showsActivityIndicator == true
+            )
 
-            VStack(alignment: .leading, spacing: Constants.readoutSpacing) {
+            VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
                 Text(viewState.readout.title)
                     .font(.system(size: Constants.readoutFontSize, weight: .semibold, design: .rounded))
                     .foregroundStyle(readoutColor)
                     .monospacedDigit()
                     .lineLimit(1)
                     .minimumScaleFactor(Constants.readoutMinimumScaleFactor)
-                if let subtitle = viewState.readout.subtitle {
+                if let subtitle = chargingSubtitle {
                     Text(subtitle)
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(readoutColor)
+                        .foregroundStyle(chargingSubtitleColor)
                         .lineLimit(1)
                 }
             }
-
-            Spacer(minLength: .zero)
-
-            if let status = viewState.control.status {
-                DashboardChargingControlStatusBadge(status: status)
-            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .ignore)
@@ -127,7 +123,8 @@ struct DashboardChargingCard: View {
         isEditing: Binding<Bool>,
         commit: @escaping (Double) -> Void
     ) -> some View {
-        VStack(spacing: Constants.controlSpacing) {
+        let isEnabled = controlIsEnabled(configuration.adjustment)
+        return VStack(spacing: Constants.controlSpacing) {
             HStack(alignment: .firstTextBaseline) {
                 Text(configuration.title)
                     .font(.callout.weight(.semibold))
@@ -147,14 +144,15 @@ struct DashboardChargingCard: View {
                     isEditing.wrappedValue = editing
                     guard
                         !editing,
-                        controlsAreEnabled,
+                        isEnabled,
                         value.wrappedValue != configuration.adjustment.selected
                     else { return }
+                    selectionFeedbackTrigger += 1
                     commit(value.wrappedValue)
                 }
             )
             .tint(configuration.tint)
-            .disabled(!controlsAreEnabled)
+            .disabled(!isEnabled)
 
             HStack {
                 limitLabel(
@@ -168,12 +166,13 @@ struct DashboardChargingCard: View {
                 )
             }
         }
-        .opacity(controlsAreEnabled ? 1 : Constants.disabledOpacity)
+        .opacity(isEnabled ? 1 : Constants.disabledOpacity)
         .accessibilityElement(children: .contain)
     }
 
-    private var controlsAreEnabled: Bool {
+    private func controlIsEnabled(_ adjustment: ChargingDashboardAdjustmentViewState) -> Bool {
         viewState.control.isEnabled
+            && adjustment.isEnabled
             && viewState.readout.allowsControl
             && !viewState.isBalancingAtFullCharge
     }
@@ -186,7 +185,7 @@ struct DashboardChargingCard: View {
     }
 
     private var readoutColor: Color {
-        switch viewState.readout.emphasis {
+        return switch viewState.readout.emphasis {
         case .charging, .balancing: DesignColor.secondaryText
         case .warning: DesignColor.warning
         case .critical: DesignColor.critical
@@ -194,11 +193,35 @@ struct DashboardChargingCard: View {
     }
 
     private var chargingIconColor: Color {
-        switch viewState.readout.emphasis {
+        if let status = viewState.control.status {
+            return statusColor(status.emphasis)
+        }
+        return switch viewState.readout.emphasis {
         case .charging: DesignColor.positive
         case .balancing: colorScheme == .dark ? Color.cyan : Constants.lightBalancingAccent
         case .warning: DesignColor.warning
         case .critical: DesignColor.critical
+        }
+    }
+
+    private var chargingSystemImage: String {
+        viewState.control.status?.systemImage ?? viewState.readout.systemImage
+    }
+
+    private var chargingSubtitle: String? {
+        viewState.control.status?.text ?? viewState.readout.subtitle
+    }
+
+    private var chargingSubtitleColor: Color {
+        guard let status = viewState.control.status else { return readoutColor }
+        return statusColor(status.emphasis)
+    }
+
+    private func statusColor(_ emphasis: ChargingDashboardStatusViewData.Emphasis) -> Color {
+        switch emphasis {
+        case .power, .general: DesignColor.informational
+        case .target: DesignColor.positive
+        case .failure: DesignColor.critical
         }
     }
 
@@ -240,11 +263,7 @@ struct DashboardChargingCard: View {
         static let horizontalInset: CGFloat = 8
         static let verticalInset: CGFloat = 16
         static let cornerRadius: CGFloat = 30
-        static let iconContainerSize: CGFloat = 68
-        static let iconSize: CGFloat = 30
-        static let iconBackgroundOpacity = 0.14
         static let readoutFontSize: CGFloat = 32
-        static let readoutSpacing: CGFloat = 1
         static let readoutMinimumScaleFactor = 0.7
         static let disabledOpacity = 0.55
         static let wattsPerKilowatt = 1_000.0

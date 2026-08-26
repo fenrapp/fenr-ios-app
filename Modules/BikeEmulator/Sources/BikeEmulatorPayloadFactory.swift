@@ -16,11 +16,16 @@ enum BikeEmulatorPayloadFactory {
         powerModePreset: BikeEmulatorPowerModePreset,
         activeMapNumber: Int,
         tick: Int,
+        chargeTargetPercent: Int = 100,
         date: Date
     ) -> BikeTelemetry {
-        let isCharging = scenario.isCharging
-        let isRiding = scenario == .riding
         let batteryPercent = batteryPercent(for: scenario, tick: tick)
+        let isCharging = shouldSupplyChargeCurrent(
+            scenario: scenario,
+            batteryPercent: batteryPercent,
+            chargeTargetPercent: chargeTargetPercent
+        )
+        let isRiding = scenario == .riding
         let speed = isRiding ? ridingSpeed(for: tick) : .zero
         let ridingGear = ridingGearState(for: tick, fallbackMapNumber: activeMapNumber)
         let indicators = indicatorState(for: scenario, tick: tick)
@@ -70,10 +75,15 @@ enum BikeEmulatorPayloadFactory {
             return BikeBatteryHealth(lastUpdated: date)
         }
 
-        let isCharging = scenario.isCharging
+        let batteryPercent = batteryPercent(for: scenario, tick: tick)
+        let isCharging = shouldSupplyChargeCurrent(
+            scenario: scenario,
+            batteryPercent: batteryPercent,
+            chargeTargetPercent: chargeTargetPercent
+        )
         let isChargerConnected = scenario.isChargerConnected
         return BikeBatteryHealth(
-            stateOfCharge: .known(percent: batteryPercent(for: scenario, tick: tick)),
+            stateOfCharge: .known(percent: batteryPercent),
             stateOfHealth: .known(percent: Constants.healthPercent),
             dcBusVoltage: .known(
                 volts: isChargerConnected ? Constants.chargingBusVoltage : Constants.stationaryBusVoltage
@@ -265,6 +275,15 @@ private struct RidingGearState {
 }
 
 private extension BikeEmulatorPayloadFactory {
+    static func shouldSupplyChargeCurrent(
+        scenario: BikeEmulatorScenario,
+        batteryPercent: Int,
+        chargeTargetPercent: Int
+    ) -> Bool {
+        scenario == .cellBalancing
+            || (scenario.isCharging && batteryPercent < chargeTargetPercent)
+    }
+
     static func powerModeConfigurations(
         preset: BikeEmulatorPowerModePreset,
         activeMapNumber: Int

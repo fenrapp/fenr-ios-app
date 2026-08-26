@@ -152,7 +152,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
             throw BikeEmulatorChargeControlError.invalidTarget
         }
         chargeTargetPercent = percent
-        await publishBatteryHealth()
+        await publishCurrentState()
         return makeChargeControlSnapshot(
             watts: chargePowerLimitWatts,
             targetPercent: percent,
@@ -229,6 +229,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
             powerModePreset: powerModePreset,
             activeMapNumber: activeMapNumber,
             tick: tick,
+            chargeTargetPercent: chargeTargetPercent,
             date: date
         )
     }

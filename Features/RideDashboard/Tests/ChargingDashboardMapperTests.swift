@@ -156,7 +156,12 @@ struct ChargingDashboardMapperTests {
             isEnabled: true,
             power: .init(selected: 1_700, minimum: 300, maximum: 3_300, step: 100),
             target: .init(selected: 78, minimum: 1, maximum: 100, step: 1),
-            status: .init(text: "UPDATING", isError: false)
+            status: .init(
+                text: "UPDATING CHARGE SETTINGS",
+                systemImage: "slider.horizontal.3",
+                emphasis: .general,
+                showsActivityIndicator: true
+            )
         )
         #expect(state.control == expectedControl)
     }
@@ -169,7 +174,12 @@ struct ChargingDashboardMapperTests {
             chargeControl: ChargeControlState(phase: .failed)
         )
 
-        #expect(state.control.status == .init(text: "UPDATE FAILED", isError: true))
+        #expect(state.control.status == .init(
+            text: "UPDATE FAILED",
+            systemImage: "exclamationmark.triangle.fill",
+            emphasis: .failure,
+            showsActivityIndicator: false
+        ))
     }
 
     @Test("Represents a connected idle charger")
@@ -270,5 +280,46 @@ struct ChargingDashboardMapperTests {
             settings: AppSettings(batteryPackCapacity: batteryPackCapacity),
             locale: locale
         )
+    }
+}
+
+extension ChargingDashboardMapperTests {
+    @Test("Keeps the charge limit editable after the battery reaches it")
+    func mapsReachedChargeLimit() {
+        let state = makeMapper(locale: Locale(identifier: "en_US")).map(
+            telemetry: chargingTelemetry(percent: 88),
+            batteryHealth: BikeBatteryHealth(
+                dcBusVoltage: .known(volts: 400),
+                chargeState: .connected,
+                chargingStatus: BikeChargingStatus(
+                    requestedCurrentAmperes: 10,
+                    reportedCurrentAmperes: 10,
+                    maximumCurrentAmperes: 10,
+                    maximumPowerWatts: 2_000,
+                    targetCellVoltageVolts: 4.2,
+                    maximumStateOfChargePercent: 80
+                ),
+                lastUpdated: Date()
+            ),
+            chargeControl: ChargeControlState(
+                isVisible: true,
+                isEnabled: true,
+                selectedWatts: 2_000,
+                confirmedWatts: 2_000,
+                selectedTargetPercent: 80,
+                confirmedTargetPercent: 80,
+                phase: .ready
+            )
+        )
+
+        #expect(state.readout.title == "LIMIT REACHED")
+        #expect(state.readout.subtitle == "TARGET 80% · BATTERY 88%")
+        #expect(state.readout.systemImage == "checkmark.circle.fill")
+        #expect(state.readout.allowsControl)
+        #expect(state.estimatedTimeRemaining == nil)
+        #expect(state.chargingPower == .init(valueText: "0", unitText: "kW", animationValue: 0))
+        #expect(state.reportedCurrent == .init(valueText: "0", unitText: "A", animationValue: 0))
+        #expect(!state.control.power.isEnabled)
+        #expect(state.control.target.isEnabled)
     }
 }

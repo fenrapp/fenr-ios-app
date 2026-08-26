@@ -138,6 +138,31 @@ struct BikeEmulatorRepositoryTests {
         #expect(tickUpdate.chargingStatus?.maximumStateOfChargePercent == 82)
     }
 
+    @Test("Charging stops when the target is below the current battery level")
+    func lowerChargeTargetStopsCharging() async throws {
+        let repository = BikeEmulatorRepositoryFactory.make(scenario: .charging)
+        await repository.start()
+
+        let telemetryStream = await repository.observeTelemetry()
+        var telemetryIterator = telemetryStream.makeAsyncIterator()
+        _ = try await nextValue(from: &telemetryIterator)
+
+        try await repository.startBatteryHealthMonitoring()
+        let healthStream = await repository.observeBatteryHealth()
+        var healthIterator = healthStream.makeAsyncIterator()
+        _ = try await nextValue(from: &healthIterator)
+
+        _ = try await repository.setChargeTarget(percent: 60)
+        let telemetry = try await nextValue(from: &telemetryIterator)
+        let health = try await nextValue(from: &healthIterator)
+
+        #expect(!telemetry.statusFlags.isCharging)
+        #expect(telemetry.statusFlags.isChargerConnected)
+        #expect(health.chargeState == .connected)
+        #expect(health.chargingStatus?.reportedCurrentAmperes == .zero)
+        #expect(health.chargingStatus?.maximumStateOfChargePercent == 60)
+    }
+
     @Test("Battery health monitoring remains active until every consumer releases its lease")
     func batteryHealthMonitoringUsesSharedLeases() async throws {
         let repository = BikeEmulatorRepositoryFactory.make(scenario: .charging)
