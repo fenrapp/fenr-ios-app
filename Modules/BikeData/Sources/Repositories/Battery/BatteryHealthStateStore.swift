@@ -14,8 +14,12 @@ public actor BatteryHealthStateStore {
         BatteryDataset.allCases.compactMap { captures[$0] }
     }
 
-    public func updateHealth(_ update: (inout BikeBatteryHealth) -> Void) -> BikeBatteryHealth {
-        update(&health)
+    public func updateHealthIf(
+        _ update: (inout BikeBatteryHealth) -> Bool
+    ) -> BikeBatteryHealth? {
+        var candidate = health
+        guard update(&candidate) else { return nil }
+        health = candidate
         return health
     }
 

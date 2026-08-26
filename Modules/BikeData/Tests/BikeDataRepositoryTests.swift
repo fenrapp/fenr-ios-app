@@ -3,6 +3,7 @@ import BikeDomain
 import BikeSDK
 import Foundation
 import Testing
+import TestSupport
 
 @Suite("Bike data repository")
 struct BikeDataRepositoryTests {
@@ -79,6 +80,20 @@ struct BikeDataRepositoryTests {
         #expect(await client.eventStreamCount() == 0)
     }
 
+    @Test("Multiple domain observers share one SDK event stream")
+    func observersShareSDKStream() async {
+        let client = FakeBikeTelemetryClient()
+        let repository = makeRepository(client: client)
+
+        await repository.start()
+        _ = await repository.observeTelemetry()
+        _ = await repository.observeTelemetry()
+        _ = await repository.observeBatteryHealth()
+        _ = await repository.observeConnection()
+
+        #expect(await client.eventStreamCount() == 1)
+    }
+
     @Test("Battery Health uses the shared repository and maps confirmed SOC data")
     func mapsBatteryHealth() async throws {
         let client = FakeBikeTelemetryClient()
@@ -95,6 +110,36 @@ struct BikeDataRepositoryTests {
         #expect(await client.batteryHealthStartCount() == 1)
         #expect(health.stateOfCharge == .known(percent: 76))
         #expect(health.dcBusVoltage == .known(volts: 394.8))
+    }
+
+    @Test("Battery Health does not emit for unrelated telemetry payloads")
+    func skipsUnrelatedBatteryHealthUpdates() async {
+        let client = FakeBikeTelemetryClient()
+        let repository = makeRepository(client: client)
+        let recorder = BatteryHealthEmissionRecorder()
+        await repository.start()
+        let healthStream = await repository.observeBatteryHealth()
+        let healthTask = Task {
+            for await health in healthStream {
+                await recorder.append(health)
+            }
+        }
+        #expect(await waitUntil { await recorder.count == 1 })
+
+        let telemetryStream = await repository.observeTelemetry()
+        var telemetryIterator = telemetryStream.makeAsyncIterator()
+        _ = await telemetryIterator.next()
+        let connectionStream = await repository.observeConnection()
+        var connectionIterator = connectionStream.makeAsyncIterator()
+        _ = await connectionIterator.next()
+
+        await client.send(.telemetry(BikeDataTelemetryFixtures.speed))
+        _ = await telemetryIterator.next()
+        await client.send(.rssi(-42))
+        _ = await connectionIterator.next()
+
+        #expect(await recorder.count == 1)
+        healthTask.cancel()
     }
 
     @Test("Battery Health maps confirmed charger limits into the domain")
@@ -176,6 +221,10 @@ struct BikeDataRepositoryTests {
             mapper.map(.receivingTelemetry(peripheralName: "VIN"))
                 == .receivingTelemetry(peripheralName: "VIN")
         )
+        #expect(
+            mapper.map(.pairingResetRequired(message: "Forget and re-pair"))
+                == .pairingResetRequired(message: "Forget and re-pair")
+        )
     }
 
     @Test("Restores persisted Alpha evidence when the matching VIN returns")
@@ -234,5 +283,47 @@ struct BikeDataRepositoryTests {
         #expect(profile.alphaEvidence == [.powerAboveStandard])
         #expect(profile.alphaDetectedAt != nil)
         UserDefaults.standard.removePersistentDomain(forName: suiteName)
+    }
+}
+
+extension BikeDataRepositoryTests {
+    @Test("Connection observers do not receive unchanged state")
+    func skipsDuplicateConnectionUpdates() async {
+        let client = FakeBikeTelemetryClient()
+        let repository = makeRepository(client: client)
+        let recorder = ConnectionEmissionRecorder()
+        await repository.start()
+        let connectionStream = await repository.observeConnection()
+        let connectionTask = Task {
+            for await connection in connectionStream {
+                await recorder.append(connection)
+            }
+        }
+        #expect(await waitUntil { await recorder.count == 1 })
+
+        await client.send(.rssi(-42))
+        #expect(await waitUntil { await recorder.count == 2 })
+        await client.send(.rssi(-42))
+        await client.send(.peripheral(name: "Bike", identifier: UUID()))
+        #expect(await waitUntil { await recorder.count >= 3 })
+
+        #expect(await recorder.count == 3)
+        connectionTask.cancel()
+    }
+}
+
+private actor BatteryHealthEmissionRecorder {
+    private(set) var count = 0
+
+    func append(_: BikeBatteryHealth) {
+        count += 1
+    }
+}
+
+private actor ConnectionEmissionRecorder {
+    private(set) var count = 0
+
+    func append(_: BikeConnection) {
+        count += 1
     }
 }

@@ -34,33 +34,9 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
         case .discoveredBike(let bike):
             await targets.discoveredBikesHub.send([.init(vin: bike.vin, rssi: bike.rssi)])
         case .connection(let status):
-            let connectionState = eventMapper.connectionState(from: status)
-            if connectionSessionPolicy.shouldResetSession(for: connectionState) {
-                let state = await targets.stateStore.resetSession(connectionState: connectionState)
-                await targets.telemetryHub.send(state.telemetry)
-                await targets.connectionHub.send(state.connection)
-                await targets.batteryHealthStore.reset()
-                await targets.batteryHealthHub.send(BikeBatteryHealth())
-            } else {
-                let connection = await targets.stateStore.updateConnection {
-                    $0.state = connectionState
-                }
-                await targets.connectionHub.send(connection)
-            }
-            await targets.debugHub.send(eventMapper.connectionDebug(from: status))
+            await handleConnection(status, targets: targets)
         case .telemetry(let payload):
-            let persistedEvidence = await persistedAlphaEvidence(for: payload)
-            let telemetry = await targets.stateStore.updateTelemetry {
-                telemetryMapper.apply(payload, to: &$0, date: Date())
-                if !persistedEvidence.isEmpty {
-                    $0.detectedPowerTier = .alpha(
-                        evidence: $0.detectedPowerTier.alphaEvidence.union(persistedEvidence)
-                    )
-                }
-            }
-            await targets.telemetryHub.send(telemetry)
-            await persistAlphaEvidenceIfNeeded(from: telemetry)
-            await updateBatteryHealth(payload, targets: targets)
+            await handleTelemetry(payload, targets: targets)
         case .batteryDatasetCapture(let capture):
             let mappedCapture = BatteryDatasetCapture(
                 dataset: batteryDatasetMapper.map(capture.dataset),
@@ -71,15 +47,18 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
             await targets.batteryHealthStore.storeCapture(mappedCapture)
             await targets.batteryCaptureHub.send(mappedCapture)
         case .rssi(let rssi):
-            let connection = await targets.stateStore.updateConnection { $0.rssi = rssi }
-            await targets.connectionHub.send(connection)
+            if let connection = await targets.stateStore.updateConnectionIfChanged({ $0.rssi = rssi }) {
+                await targets.connectionHub.send(connection)
+            }
             await targets.debugHub.send(eventMapper.rssiDebug(rssi))
         case .peripheral(let name, let identifier):
-            let connection = await targets.stateStore.updateConnection {
+            let connection = await targets.stateStore.updateConnectionIfChanged {
                 $0.peripheralName = name
                 $0.peripheralIdentifier = identifier
             }
-            await targets.connectionHub.send(connection)
+            if let connection {
+                await targets.connectionHub.send(connection)
+            }
             await targets.debugHub.send(eventMapper.peripheralDebug(name: name, identifier: identifier))
         case .notification(let notification):
             await targets.debugHub.send(eventMapper.notificationDebug(notification))
@@ -88,6 +67,50 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
         case .error(let error):
             await targets.debugHub.send(eventMapper.errorDebug(error))
         }
+    }
+
+    private func handleConnection(
+        _ status: BikeSDKConnectionStatus,
+        targets: LiveBikeRepositoryEventTargets
+    ) async {
+        let connectionState = eventMapper.connectionState(from: status)
+        if connectionSessionPolicy.shouldResetSession(for: connectionState) {
+            let state = await targets.stateStore.resetSession(connectionState: connectionState)
+            await targets.telemetryHub.send(state.telemetry)
+            await targets.connectionHub.send(state.connection)
+            await targets.batteryHealthStore.reset()
+            await targets.batteryHealthHub.send(BikeBatteryHealth())
+        } else {
+            let connection = await targets.stateStore.updateConnectionIfChanged {
+                $0.state = connectionState
+            }
+            if let connection {
+                await targets.connectionHub.send(connection)
+            }
+        }
+        await targets.debugHub.send(eventMapper.connectionDebug(from: status))
+    }
+
+    private func handleTelemetry(
+        _ payload: BikeSDKTelemetryPayload,
+        targets: LiveBikeRepositoryEventTargets
+    ) async {
+        let date = Date()
+        let persistedEvidence = await persistedAlphaEvidence(for: payload)
+        let telemetry = await targets.stateStore.updateTelemetryIf {
+            let didApply = telemetryMapper.apply(payload, to: &$0, date: date)
+            if !persistedEvidence.isEmpty {
+                $0.detectedPowerTier = .alpha(
+                    evidence: $0.detectedPowerTier.alphaEvidence.union(persistedEvidence)
+                )
+            }
+            return didApply || !persistedEvidence.isEmpty
+        }
+        if let telemetry {
+            await targets.telemetryHub.send(telemetry)
+            await persistAlphaEvidenceIfNeeded(from: telemetry)
+        }
+        await updateBatteryHealth(payload, targets: targets, date: date)
     }
 
     private func persistAlphaEvidenceIfNeeded(from telemetry: BikeTelemetry) async {
@@ -106,12 +129,15 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
 
     private func updateBatteryHealth(
         _ payload: BikeSDKTelemetryPayload,
-        targets: LiveBikeRepositoryEventTargets
+        targets: LiveBikeRepositoryEventTargets,
+        date: Date
     ) async {
-        let health = await targets.batteryHealthStore.updateHealth {
-            batteryHealthMapper.apply(payload, to: &$0, date: Date())
+        let health = await targets.batteryHealthStore.updateHealthIf {
+            batteryHealthMapper.apply(payload, to: &$0, date: date)
         }
-        await targets.batteryHealthHub.send(health)
+        if let health {
+            await targets.batteryHealthHub.send(health)
+        }
     }
 
     private func persistedAlphaEvidence(

@@ -25,7 +25,7 @@ private func makeEventHandler(
     profileRepository: (any BikeProfileRepository)?
 ) -> LiveBikeRepositoryEventHandler {
     LiveBikeRepositoryEventHandler(
-        telemetryMapper: .init(),
+        telemetryMapper: .init(powerCalculator: .init()),
         eventMapper: .init(
             connectionMapper: .init(),
             connectionDebugMapper: .init(),
