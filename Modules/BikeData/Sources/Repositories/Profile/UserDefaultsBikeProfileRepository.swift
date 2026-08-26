@@ -10,7 +10,7 @@ public actor UserDefaultsBikeProfileRepository: BikeProfileRepository {
     }
 
     private let userDefaults: UserDefaults
-    private var observers: [UUID: AsyncStream<BikeProfile?>.Continuation] = [:]
+    private var observers: [UUID: AsyncStream<BikeProfileState>.Continuation] = [:]
 
     public init() {
         userDefaults = .standard
@@ -37,30 +37,32 @@ public actor UserDefaultsBikeProfileRepository: BikeProfileRepository {
     }
 
     public func saveProfile(_ profile: BikeProfile) {
+        guard profile != loadProfile() else { return }
         userDefaults.set(profile.vin, forKey: Constants.profileVINKey)
         userDefaults.set(profile.declaredPowerTier.rawValue, forKey: Constants.declaredPowerTierKey)
         userDefaults.set(profile.alphaEvidence.map(\.rawValue).sorted(), forKey: Constants.alphaEvidenceKey)
         userDefaults.set(profile.alphaDetectedAt, forKey: Constants.alphaDetectedAtKey)
-        observers.values.forEach { $0.yield(profile) }
+        observers.values.forEach { $0.yield(BikeProfileState(profile: profile)) }
     }
 
     public func clearProfile() {
+        guard loadProfile() != nil else { return }
         userDefaults.removeObject(forKey: Constants.profileVINKey)
         userDefaults.removeObject(forKey: Constants.declaredPowerTierKey)
         userDefaults.removeObject(forKey: Constants.alphaEvidenceKey)
         userDefaults.removeObject(forKey: Constants.alphaDetectedAtKey)
-        observers.values.forEach { $0.yield(nil) }
+        observers.values.forEach { $0.yield(BikeProfileState(profile: nil)) }
     }
 
-    public func observeProfile() -> AsyncStream<BikeProfile?> {
+    public func observeProfile() async -> AsyncStream<BikeProfileState> {
         let identifier = UUID()
-        return AsyncStream { continuation in
-            observers[identifier] = continuation
-            continuation.yield(loadProfile())
-            continuation.onTermination = { [weak self] _ in
-                Task { await self?.removeObserver(identifier) }
-            }
+        let (stream, continuation) = AsyncStream<BikeProfileState>.makeStream()
+        observers[identifier] = continuation
+        continuation.yield(BikeProfileState(profile: loadProfile()))
+        continuation.onTermination = { [weak self] _ in
+            Task { await self?.removeObserver(identifier) }
         }
+        return stream
     }
 
     private func removeObserver(_ identifier: UUID) {
