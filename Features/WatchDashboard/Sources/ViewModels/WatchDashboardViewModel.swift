@@ -123,7 +123,7 @@ public final class WatchDashboardViewModel: ObservableObject {
             updateViewState()
             return
         }
-        viewState = mapper.unavailable(connectionState: connection.state)
+        publish(mapper.unavailable(connectionState: connection.state))
     }
 
     private func receive(_ event: BikeDebugEvent) {
@@ -204,10 +204,15 @@ public final class WatchDashboardViewModel: ObservableObject {
     }
 
     private func updateViewState() {
-        viewState = mapper.map(
+        publish(mapper.map(
             telemetry: telemetry,
             batteryHealth: batteryHealth,
             settings: settings
-        )
+        ))
+    }
+
+    private func publish(_ nextViewState: WatchDashboardViewState) {
+        guard nextViewState != viewState else { return }
+        viewState = nextViewState
     }
 }

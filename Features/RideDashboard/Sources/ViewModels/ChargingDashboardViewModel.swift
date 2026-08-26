@@ -186,10 +186,12 @@ public final class ChargingDashboardViewModel: ObservableObject {
     }
 
     private func render() {
-        viewState = mapper.map(
+        let nextViewState = mapper.map(
             telemetry: telemetry,
             batteryHealth: batteryHealth,
             chargeControl: chargeControl.state
         )
+        guard nextViewState != viewState else { return }
+        viewState = nextViewState
     }
 }
