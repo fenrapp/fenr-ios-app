@@ -39,19 +39,40 @@ struct BikeBLEPowerModeConfigurationCoordinatorTests {
         #expect(transport.requests == Array(expectedRequests.prefix(5)))
     }
 
+    @Test("Publishes each decoded map to the diagnostics event stream")
+    func publishesMapDiagnostics() async throws {
+        let transport = FakeBikeBLEPowerModeConfigurationTransport()
+        let eventHub = AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
+        let stream = await eventHub.stream()
+        var iterator = stream.makeAsyncIterator()
+        let coordinator = makeCoordinator(transport: transport, eventHub: eventHub)
+
+        try await coordinator.refresh()
+
+        var details: [String] = []
+        for _ in 0 ..< 20 {
+            let event = try #require(await iterator.next())
+            if case .debug(let debug) = event {
+                details.append(debug.detail)
+            }
+        }
+        #expect(details.count == 10)
+        #expect(details.contains { $0.contains("power map 4 decoded") })
+        #expect(details.contains { $0.contains("TC map 4 decoded") })
+    }
+
     private var expectedRequests: [Data] {
         (0 ... 4).map { Data([0, 0, UInt8($0)]) }
             + (0 ... 4).map { Data([0, 8, UInt8($0)]) }
     }
 
     private func makeCoordinator(
-        transport: FakeBikeBLEPowerModeConfigurationTransport
+        transport: FakeBikeBLEPowerModeConfigurationTransport,
+        eventHub: AsyncEventHub<BikeSDKEvent> = .init(bufferingPolicy: .unbounded)
     ) -> BikeBLEPowerModeConfigurationCoordinator {
         BikeBLEPowerModeConfigurationCoordinator(
             transport: transport,
-            eventEmitter: BikeBLEEventEmitter(
-                eventHub: AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
-            ),
+            eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
             sessionStore: BLESessionStore()
         )
     }
