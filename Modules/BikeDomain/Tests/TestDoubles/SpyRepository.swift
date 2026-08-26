@@ -1,7 +1,9 @@
 import BikeDomain
+import TestSupport
 
 actor SpyRepository: BikeRepository {
     private let state = SpyRepositoryState()
+    private let telemetry = TestEventHub<BikeTelemetry>()
 
     func start() async {}
     func stop() async {}
@@ -31,11 +33,15 @@ actor SpyRepository: BikeRepository {
         await state.setDidReadBikeStatusSnapshot()
     }
 
-    func observeTelemetry() async -> AsyncStream<BikeTelemetry> { AsyncStream { _ in } }
+    func observeTelemetry() async -> AsyncStream<BikeTelemetry> { await telemetry.stream() }
     func observeConnection() async -> AsyncStream<BikeConnection> { AsyncStream { _ in } }
     func observeDebugEvents() async -> AsyncStream<BikeDebugEvent> { AsyncStream { _ in } }
 
     func setError(_ error: SpyError) async { await state.setError(error) }
+    func sendTelemetry(_ value: BikeTelemetry) async {
+        await telemetry.waitForSubscriber()
+        await telemetry.send(value)
+    }
     func connectedVIN() async -> String? { await state.connectedVIN }
     func didDisconnect() async -> Bool { await state.didDisconnect }
     func didRetrySecurityHandshake() async -> Bool { await state.didRetrySecurityHandshake }
