@@ -1,4 +1,6 @@
 @testable import BikeSDK
+import CoreBluetooth
+import Foundation
 import RuntimeConfiguration
 import Testing
 
@@ -148,6 +150,42 @@ struct BikeSDKConnectionTests {
             nextNonDebugEvent(&iterator)
                 == .error(.operationFailed(BikeSDKText.connectionAlreadyActive))
         )
+        #expect(adapter.scanCount == 1)
+    }
+
+    @MainActor
+    @Test("Pairing reset stops automatic reconnect and reports actionable guidance")
+    func pairingResetStopsReconnect() async throws {
+        let adapter = FakeCoreBluetoothAdapter()
+        adapter.state = .poweredOn
+        let hub = AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
+        let stream = await hub.stream()
+        var iterator = stream.makeAsyncIterator()
+        var sessionResetCount = 0
+        let coordinator = makeConnectionCoordinator(
+            adapter: adapter,
+            eventHub: hub,
+            sessionResetHandler: { sessionResetCount += 1 }
+        )
+        try await coordinator.connect(to: "VIN123")
+        _ = await nextNonDebugEvent(&iterator)
+
+        let error = NSError(
+            domain: CBErrorDomain,
+            code: CBError.peerRemovedPairingInformation.rawValue,
+            userInfo: [NSLocalizedDescriptionKey: "Peer removed pairing information"]
+        )
+        await coordinator.stopForPairingReset(error)
+
+        await #expect(
+            nextNonDebugEvent(&iterator)
+                == .connection(.pairingResetRequired(message: BikeSDKText.pairingResetRequired))
+        )
+        #expect(sessionResetCount == 1)
+
+        await coordinator.centralDidUpdateState()
+
+        await #expect(nextNonDebugEvent(&iterator) == .connection(.idle))
         #expect(adapter.scanCount == 1)
     }
 

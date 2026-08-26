@@ -10,6 +10,7 @@ public final class BikeBLEConnectionCoordinator {
     private let reconnectController: BikeBLEReconnectController
     private let scanner: BikeBLEConnectionScanner
     private let sessionResetHandler: @MainActor () -> Void
+    private let connectionErrorClassifier: BikeBLEConnectionErrorClassifier
     private var isDiscoveringBikes = false
 
     init(
@@ -19,6 +20,7 @@ public final class BikeBLEConnectionCoordinator {
         peripheralDelegate: CBPeripheralDelegate,
         reconnectController: BikeBLEReconnectController,
         scanner: BikeBLEConnectionScanner,
+        connectionErrorClassifier: BikeBLEConnectionErrorClassifier,
         sessionResetHandler: @escaping @MainActor () -> Void
     ) {
         self.adapter = adapter
@@ -27,6 +29,7 @@ public final class BikeBLEConnectionCoordinator {
         self.peripheralDelegate = peripheralDelegate
         self.reconnectController = reconnectController
         self.scanner = scanner
+        self.connectionErrorClassifier = connectionErrorClassifier
         self.sessionResetHandler = sessionResetHandler
     }
 
@@ -172,6 +175,10 @@ public final class BikeBLEConnectionCoordinator {
 
     public func didFailToConnect(_ peripheral: CBPeripheral, error: Error?) async {
         guard sessionStore.isActive(peripheral) else { return }
+        if connectionErrorClassifier.requiresPairingReset(error) {
+            await stopForPairingReset(error)
+            return
+        }
         let message = error?.localizedDescription ?? BikeSDKText.connectFailed
         await eventEmitter.send(.connection(.failed(message: message)))
         resetSession()
@@ -180,6 +187,10 @@ public final class BikeBLEConnectionCoordinator {
 
     public func didDisconnect(_ peripheral: CBPeripheral, error: Error?) async {
         guard sessionStore.isActive(peripheral) else { return }
+        if connectionErrorClassifier.requiresPairingReset(error) {
+            await stopForPairingReset(error)
+            return
+        }
         await eventEmitter.send(.connection(.disconnected(reason: error?.localizedDescription)))
         resetSession()
         await reconnectIfNeeded()
@@ -214,6 +225,21 @@ public final class BikeBLEConnectionCoordinator {
             )))
             return
         }
+    }
+
+    func stopForPairingReset(_ error: Error?) async {
+        reconnectController.reset()
+        sessionStore.setReconnectIntent(false)
+        adapter.stopScan()
+        await eventEmitter.send(.debug(.init(
+            title: BikeSDKText.pairingTitle,
+            detail: "Pairing reset required; automatic reconnect stopped; "
+                + connectionErrorClassifier.diagnosticDetail(error)
+        )))
+        resetSession()
+        await eventEmitter.send(.connection(.pairingResetRequired(
+            message: BikeSDKText.pairingResetRequired
+        )))
     }
 
     private func resetSession() {

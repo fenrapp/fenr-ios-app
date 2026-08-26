@@ -8,12 +8,13 @@ enum BikeSDKText {
     static let serviceTitle = "Service"
     static let descriptorTitle = "Descriptor"
     static let pairingTitle = "Pairing"
+    static let pairingResetRequired =
+        "Forget this bike in iPhone Settings > Bluetooth, then reconnect to create a new pairing."
     static let securityTitle = "Security"
     static let readTitle = "Read"
     static let subscriptionTitle = "Subscription"
     static let securityAlreadyRunning = "Security authentication already running"
     static let securityAlreadyAuthenticated = "Security session already authenticated"
-    static let manualSOCRead = "Manual SOC"
     static let manualSecurityRetry = "Manual security retry"
     static let securityChallenge = "Security challenge"
     static let securityChallengeGuidance =
@@ -37,7 +38,7 @@ enum BikeSDKText {
     static let requiredCharacteristicsMissing = "Required diagnostics characteristics missing"
     static let authenticationRequired = "Stark authentication must succeed before reading telemetry"
     static let noActivePeripheral = "No active peripheral"
-    static let noReadableCharacteristics = "SOC characteristic is not available or readable"
+    static let noReadableCharacteristics = "No readable telemetry characteristic is available"
     static let noProperties = "noProperties"
     static let noDescriptors = "noDescriptors"
 }
@@ -52,10 +53,14 @@ public enum BikePowerModeDebugLog {
 
     public static func log(_ message: String) {
         guard isEnabled else { return }
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "HH:mm:ss.SSS"
-        let timestamp = formatter.string(from: Date())
+        let timestamp = Date().formatted(
+            .dateTime
+                .locale(Locale(identifier: "en_US_POSIX"))
+                .hour(.twoDigits(amPM: .omitted))
+                .minute(.twoDigits)
+                .second(.twoDigits)
+                .secondFraction(.fractional(3))
+        )
         print("[PowerModes][\(timestamp)] \(message)")
     }
 }
