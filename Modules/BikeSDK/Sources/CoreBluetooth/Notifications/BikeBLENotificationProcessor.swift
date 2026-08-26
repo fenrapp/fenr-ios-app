@@ -17,34 +17,39 @@ public struct BikeBLENotificationProcessor {
     }
 
     public func process(characteristic: UUID, data: Data, date: Date) async -> Bool {
-        let didDecodeTelemetry = await sendTelemetry(characteristic: characteristic, data: data)
+        let payload = await sendTelemetry(characteristic: characteristic, data: data)
         if debugSampler.shouldEmit(characteristic: characteristic, date: date) {
-            let debug = notificationMapper.debug(characteristic: characteristic, data: data, date: date)
+            let debug = notificationMapper.debug(
+                characteristic: characteristic,
+                data: data,
+                payload: payload,
+                date: date
+            )
             await eventEmitter.send(.notification(debug))
         }
-        return didDecodeTelemetry
+        return payload != nil
     }
 
     public func resetDebugSampling() {
         debugSampler.reset()
     }
 
-    private func sendTelemetry(characteristic: UUID, data: Data) async -> Bool {
+    private func sendTelemetry(characteristic: UUID, data: Data) async -> BikeSDKTelemetryPayload? {
         do {
             guard let payload = try notificationMapper.telemetryPayload(
                 characteristic: characteristic,
                 data: data
             ) else {
-                return false
+                return nil
             }
             await eventEmitter.send(.telemetry(payload))
-            return true
+            return payload
         } catch {
             await eventEmitter.send(.error(.decodeFailed(
                 characteristic: characteristic,
                 message: String(describing: error)
             )))
-            return false
+            return nil
         }
     }
 }

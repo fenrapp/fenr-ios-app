@@ -37,6 +37,14 @@ private func makeProtocolNotificationDecoders() -> [UUID: StarkNotificationDecod
             decoder: StarkBatteryDecoder(),
             transform: BikeSDKTelemetryPayload.battery
         ),
+        StarkUUIDs.batteryParams: .adapting(
+            decoder: StarkBatteryParametersDecoder(),
+            transform: BikeSDKTelemetryPayload.batteryParameters
+        ),
+        StarkUUIDs.batterySignals: .adapting(
+            decoder: StarkBatterySignalsDecoder(),
+            transform: BikeSDKTelemetryPayload.batterySignals
+        ),
         StarkUUIDs.batteryCellVoltages: .adapting(
             decoder: StarkCellVoltagesDecoder(),
             transform: BikeSDKTelemetryPayload.cellVoltages
@@ -88,6 +96,10 @@ private func makeLiveNotificationDecoders() -> [UUID: StarkNotificationDecoder] 
         StarkUUIDs.liveTotals: .adapting(
             decoder: StarkLiveTotalsDecoder(),
             transform: BikeSDKTelemetryPayload.liveTotals
+        ),
+        StarkUUIDs.liveEstimation: .adapting(
+            decoder: StarkLiveEstimationsDecoder(),
+            transform: BikeSDKTelemetryPayload.liveEstimations
         ),
         StarkUUIDs.inverterTemperatures: .adapting(
             decoder: StarkInverterTemperaturesDecoder(),

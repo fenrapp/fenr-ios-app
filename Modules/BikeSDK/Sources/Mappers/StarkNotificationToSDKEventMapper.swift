@@ -1,4 +1,5 @@
 import Foundation
+import StarkProtocol
 
 public struct StarkNotificationToSDKEventMapper: Sendable {
     private let decoderRegistry: StarkNotificationDecoderRegistry
@@ -11,12 +12,47 @@ public struct StarkNotificationToSDKEventMapper: Sendable {
         try decoderRegistry.decode(characteristic: characteristic, data: data)
     }
 
-    public func debug(characteristic: UUID, data: Data, date: Date) -> BikeSDKNotificationDebug {
+    public func debug(
+        characteristic: UUID,
+        data: Data,
+        payload: BikeSDKTelemetryPayload? = nil,
+        date: Date
+    ) -> BikeSDKNotificationDebug {
         BikeSDKNotificationDebug(
             characteristic: characteristic,
             byteCount: data.count,
             hex: data.bikeSDKHexString,
+            decodedDetail: payload.map(decodedDetail),
             date: date
         )
+    }
+
+    private func decodedDetail(_ payload: BikeSDKTelemetryPayload) -> String {
+        switch payload {
+        case .battery(let value):
+            let dcBus = value.dcBusRaw.map(String.init) ?? "nil"
+            let dcBusVolts = value.dcBusVolts.map { String($0) } ?? "nil"
+            let stateOfHealth = value.stateOfHealthPercent.map(String.init) ?? "nil"
+            return "soc=\(value.stateOfChargePercent) soh=\(stateOfHealth) "
+                + "dcBusRaw=\(dcBus) dcBusVolts=\(dcBusVolts) conversion=dcBusRaw/10"
+        case .batteryParameters(let value):
+            return "series=\(value.seriesCount) parallel=\(value.parallelCount) capacityRaw=\(value.capacityRaw)"
+        case .batterySignals(let value):
+            return "currentRaw=\(value.currentRaw) currentA=\(value.currentAmperes) "
+                + "pos=[\(bmsDetail(value.positive))] neg=[\(bmsDetail(value.negative))] "
+                + "formula=electricalPowerW(latest6004.dcBusRaw/10*currentA);starkHP(electricalPowerW*0.0011)"
+        case .liveEstimations(let value):
+            return "rangeRaw=\(value.estimatedRangeRaw) timeRaw=\(value.estimatedTimeRaw) "
+                + "motorPowerRaw=\(value.nativeMotorPowerRaw)"
+        default:
+            return String(describing: payload)
+        }
+    }
+
+    private func bmsDetail(_ value: StarkBMSSignalsPayload) -> String {
+        "dcBusRaw=\(value.dcBusRaw) dcBusV=\(value.dcBusVolts) "
+            + "tempRaw=\(value.temperatureRaw) tempC=\(value.temperatureCelsius) "
+            + "humidityRaw=\(value.humidityRaw) humidityPercent=\(value.humidityPercent) "
+            + "control=\(value.controlFlags)"
     }
 }

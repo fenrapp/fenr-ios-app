@@ -39,6 +39,20 @@ enum BikeBLEDiagnosticsProfile {
         }
     }
 
+    static var requiredTelemetryNotifyUUIDs: [CBUUID] {
+        switch firmware {
+        case .currentObserved:
+            BikeBLECurrentObservedFirmwareProfile.requiredTelemetryNotifyUUIDs
+        }
+    }
+
+    static var telemetrySnapshotUUIDs: [CBUUID] {
+        switch firmware {
+        case .currentObserved:
+            BikeBLECurrentObservedFirmwareProfile.telemetrySnapshotUUIDs
+        }
+    }
+
     static var experimentalCaptureUUIDs: [CBUUID] {
         switch firmware {
         case .currentObserved:

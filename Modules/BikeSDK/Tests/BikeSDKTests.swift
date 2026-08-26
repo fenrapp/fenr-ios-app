@@ -15,6 +15,58 @@ struct BikeSDKMappingTests {
         #expect(event == .battery(.init(stateOfChargePercent: 91, stateOfHealthPercent: 99, dcBusRaw: nil)))
     }
 
+    @Test("Notification mapper emits the optional power and battery payloads")
+    func mapsPowerAndBatteryPayloads() throws {
+        let mapper = makeNotificationMapper()
+
+        let parameters = try mapper.telemetryPayload(
+            characteristic: StarkUUIDs.batteryParams,
+            data: BikeSDKPayloadFixtures.batteryParameters
+        )
+        let signals = try mapper.telemetryPayload(
+            characteristic: StarkUUIDs.batterySignals,
+            data: BikeSDKPayloadFixtures.batterySignals
+        )
+        let estimations = try mapper.telemetryPayload(
+            characteristic: StarkUUIDs.liveEstimation,
+            data: BikeSDKPayloadFixtures.liveEstimations
+        )
+
+        #expect(parameters == .batteryParameters(.init(seriesCount: 100, parallelCount: 2, capacityRaw: 6_900)))
+        #expect(signals == .batterySignals(.init(
+            positive: .init(dcBusRaw: 4_000, temperatureRaw: 2_534, humidityRaw: 5_012, controlFlags: 1),
+            negative: .init(dcBusRaw: 3_995, temperatureRaw: 2_450, humidityRaw: 4_899, controlFlags: 2),
+            currentRaw: 25
+        )))
+        #expect(estimations == .liveEstimations(.init(
+            estimatedRangeRaw: 300,
+            estimatedTimeRaw: 45,
+            nativeMotorPowerRaw: -123
+        )))
+    }
+
+    @Test("Notification debug includes decoded conversions and power calculations")
+    func debugIncludesPowerConversions() throws {
+        let mapper = makeNotificationMapper()
+        let payload = try mapper.telemetryPayload(
+            characteristic: StarkUUIDs.batterySignals,
+            data: BikeSDKPayloadFixtures.batterySignals
+        )
+
+        let debug = mapper.debug(
+            characteristic: StarkUUIDs.batterySignals,
+            data: BikeSDKPayloadFixtures.batterySignals,
+            payload: payload,
+            date: Date(timeIntervalSince1970: 0)
+        )
+
+        #expect(debug.decodedDetail?.contains("currentRaw=25 currentA=25.0") == true)
+        #expect(debug.decodedDetail?.contains("dcBusV=400.0") == true)
+        #expect(debug.decodedDetail?.contains("tempC=25.34") == true)
+        #expect(debug.decodedDetail?.contains("electricalPowerW") == true)
+        #expect(debug.decodedDetail?.contains("starkHP") == true)
+    }
+
     @Test("Notification mapper emits speed payload")
     func mapsSpeed() throws {
         let mapper = makeNotificationMapper()

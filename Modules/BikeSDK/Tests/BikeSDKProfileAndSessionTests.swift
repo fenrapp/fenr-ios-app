@@ -43,7 +43,7 @@ struct BikeSDKProfileAndSessionTests {
         #expect(!BikeSDKConstants.experimentalCaptureUUIDs.contains(
             CBUUID(nsuuid: StarkUUIDs.liveRacing)
         ))
-        #expect(!BikeSDKConstants.characteristicUUIDs.contains(
+        #expect(BikeSDKConstants.characteristicUUIDs.contains(
             CBUUID(nsuuid: StarkUUIDs.liveEstimation)
         ))
         #expect(!BikeSDKConstants.characteristicUUIDs.contains(
@@ -71,6 +71,21 @@ struct BikeSDKProfileAndSessionTests {
         #expect(BikeSDKConstants.requiredCharacteristicUUIDs(
             for: CBUUID(nsuuid: StarkUUIDs.batteryService)
         ) == [CBUUID(nsuuid: StarkUUIDs.batterySOC)])
+    }
+
+    @Test("New electrical characteristics are readable and optional")
+    func electricalCharacteristicsAreOptional() {
+        let optionalUUIDs = [
+            CBUUID(nsuuid: StarkUUIDs.liveEstimation),
+            CBUUID(nsuuid: StarkUUIDs.batteryParams),
+            CBUUID(nsuuid: StarkUUIDs.batterySignals)
+        ]
+
+        #expect(BikeSDKConstants.telemetrySnapshotUUIDs == [
+            CBUUID(nsuuid: StarkUUIDs.batterySOC)
+        ] + optionalUUIDs)
+        #expect(optionalUUIDs.allSatisfy(BikeSDKConstants.characteristicUUIDs.contains))
+        #expect(optionalUUIDs.allSatisfy { !BikeSDKConstants.requiredTelemetryNotifyUUIDs.contains($0) })
     }
 
     private var expectedServiceUUIDs: [CBUUID] {
