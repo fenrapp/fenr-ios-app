@@ -57,6 +57,7 @@ struct AppRootView: View {
                         currentTripViewModel: currentTripCardViewModel,
                         tripStatisticsViewModel: tripStatisticsViewModel,
                         chargingViewModel: chargingDashboardViewModel,
+                        showsTelemetryButton: Constants.showsDashboardTelemetryButton,
                         onDiagnostics: { path.append(.diagnostics) }
                     )
                     .overlay(alignment: .topTrailing) {
@@ -209,5 +210,10 @@ struct AppRootView: View {
 
     private enum Constants {
         static let dashboardAccessoryPadding: CGFloat = 8
+#if DEBUG
+        static let showsDashboardTelemetryButton = true
+#else
+        static let showsDashboardTelemetryButton = false
+#endif
     }
 }

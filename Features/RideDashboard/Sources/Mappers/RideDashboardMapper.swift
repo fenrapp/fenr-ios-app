@@ -76,18 +76,20 @@ public struct RideDashboardMapper: Sendable {
             hasTelemetry,
             telemetry.runState == .on,
             let mapNumber = telemetry.mode.displayIndex,
-            Constants.validPowerModeRange.contains(mapNumber)
+            Constants.validPowerModeRange.contains(mapNumber),
+            let configuration = telemetry.activePowerModeConfiguration,
+            let horsepower = configuration.horsepower,
+            let regenerativeBrakingPercent = configuration.regenerativeBrakingPercent
         else {
             return .init()
         }
-        let configuration = telemetry.activePowerModeConfiguration
         return .init(
             map: String(mapNumber),
-            horsepower: configuration?.horsepower.map(String.init) ?? "--",
-            regenerativeBraking: percent(configuration?.regenerativeBrakingPercent),
-            powerTraction: percent(configuration?.powerTractionPercent),
-            brakingTraction: percent(configuration?.brakingTractionPercent),
-            showsTractionControl: configuration?.powerTractionPercent != nil,
+            horsepower: String(horsepower),
+            regenerativeBraking: percent(regenerativeBrakingPercent),
+            powerTraction: percent(configuration.powerTractionPercent),
+            brakingTraction: percent(configuration.brakingTractionPercent),
+            showsTractionControl: configuration.powerTractionPercent != nil,
             isVisible: true
         )
     }
@@ -229,6 +231,7 @@ public struct RideDashboardMapper: Sendable {
     private func connectionText(_ state: ConnectionState) -> String {
         switch state {
         case .reconnecting(_, let attempt, let maximumAttempts): "Reconnecting (\(attempt)/\(maximumAttempts))"
+        case .pairingResetRequired(let message): message
         case .scanning: "Scanning for bike"
         case .connecting: "Connecting"
         case .authenticating: "Authenticating"
