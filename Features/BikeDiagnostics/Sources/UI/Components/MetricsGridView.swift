@@ -2,14 +2,20 @@ import DesignSystem
 import SwiftUI
 
 struct MetricsGridView: View {
+    let title: String
     let metrics: [BikeDiagnosticsMetricViewData]
+
+    init(title: String = "Telemetry", metrics: [BikeDiagnosticsMetricViewData]) {
+        self.title = title
+        self.metrics = metrics
+    }
 
     private let columns = [
         GridItem(.adaptive(minimum: Constants.minimumColumnWidth), spacing: Constants.gridSpacing)
     ]
 
     var body: some View {
-        SurfacePanel(title: "Telemetry") {
+        SurfacePanel(title: title) {
             if metrics.isEmpty {
                 Text("Waiting for telemetry")
                     .font(.callout)

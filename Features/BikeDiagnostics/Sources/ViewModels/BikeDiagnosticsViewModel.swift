@@ -102,7 +102,7 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
     }
 
     public func debugLogText() -> String {
-        mappers.viewState.exportDebugLog(debugLogEvents)
+        mappers.viewState.exportDebugLog(snapshot, events: debugLogEvents)
     }
 
     private func bindStreams() {
@@ -208,5 +208,4 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
         streamTasks.forEach { $0.cancel() }
         streamTasks.removeAll()
     }
-
 }

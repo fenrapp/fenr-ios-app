@@ -233,10 +233,14 @@ struct BikeDiagnosticsTests {
             viewModel.viewState.debugEvents.first?.detail == finalPacketDetail
         })
 
-        let exportedLines = viewModel.debugLogText()
+        let exportedLog = viewModel.debugLogText()
+        let exportedLines = exportedLog
             .components(separatedBy: BikeDiagnosticsConstants.debugLogLineSeparator)
         #expect(viewModel.viewState.debugEvents.count == BikeDiagnosticsConstants.maxVisibleDebugEvents)
-        #expect(exportedLines.count == eventCount)
+        #expect(exportedLog.contains("[Power Telemetry]"))
+        #expect(exportedLog.contains("[Battery Telemetry]"))
+        #expect(exportedLines.filter { $0.contains(" | Notification | ") }.count == eventCount)
+        #expect(exportedLines.contains { $0.contains(finalPacketDetail) })
     }
 
     @Test("Stop delegates lifecycle cleanup")
@@ -262,5 +266,11 @@ struct BikeDiagnosticsTests {
         #expect(mapper.isActive(.receivingTelemetry(peripheralName: "VIN")))
         #expect(!connectionMapper.isVINEditingEnabled(.init(state: .receivingTelemetry(peripheralName: "VIN"))))
         #expect(connectionMapper.isVINEditingEnabled(.init(state: .disconnected(reason: nil))))
+
+        let pairingReset = ConnectionState.pairingResetRequired(message: "Forget and re-pair")
+        #expect(mapper.title(for: pairingReset) == "Pairing reset required")
+        #expect(mapper.detail(for: pairingReset) == "Forget and re-pair")
+        #expect(!mapper.isActive(pairingReset))
+        #expect(!connectionMapper.isPairRetryEnabled(.init(state: pairingReset)))
     }
 }

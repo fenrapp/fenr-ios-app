@@ -48,6 +48,14 @@ func makeMappers() -> BikeDiagnosticsMappers {
                 speedFormatter: speedFormatter,
                 measurementTextFormatter: .init(locale: locale)
             ),
+            powerMetricsMapper: .init(
+                dateFormatStyle: dateFormatStyle,
+                measurementTextFormatter: .init(locale: locale)
+            ),
+            batteryMetricsMapper: .init(
+                dateFormatStyle: dateFormatStyle,
+                measurementTextFormatter: .init(locale: locale)
+            ),
             badgesMapper: .init(runStateMapper: .init()),
             rawFlagsMapper: .init(),
             debugEventMapper: .init(dateFormatStyle: dateFormatStyle)

@@ -39,32 +39,18 @@ public struct BikeDiagnosticsView: View {
                     if landscape {
                         HStack(alignment: .top, spacing: Constants.columnSpacing) {
                             VStack(spacing: Constants.sectionSpacing) {
-                                ConnectionPanelView(model: viewModel.viewState.connection)
-                                BadgeRowView(badges: viewModel.viewState.badges)
-                                MetricsGridView(metrics: viewModel.viewState.metrics)
+                                telemetryPanels
                             }
                             .frame(maxWidth: Constants.primaryColumnMaxWidth)
                             VStack(spacing: Constants.sectionSpacing) {
-                                RawFlagsView(flags: viewModel.viewState.rawFlags)
-                                DebugEventsView(
-                                    events: viewModel.viewState.debugEvents,
-                                    hasLog: viewModel.viewState.hasDebugLog,
-                                    logTextProvider: viewModel.debugLogText
-                                )
+                                diagnosticPanels
                             }
                             .frame(maxWidth: .infinity)
                         }
                     } else {
                         VStack(spacing: Constants.sectionSpacing) {
-                            ConnectionPanelView(model: viewModel.viewState.connection)
-                            BadgeRowView(badges: viewModel.viewState.badges)
-                            MetricsGridView(metrics: viewModel.viewState.metrics)
-                            RawFlagsView(flags: viewModel.viewState.rawFlags)
-                            DebugEventsView(
-                                events: viewModel.viewState.debugEvents,
-                                hasLog: viewModel.viewState.hasDebugLog,
-                                logTextProvider: viewModel.debugLogText
-                            )
+                            telemetryPanels
+                            diagnosticPanels
                         }
                     }
                 }
@@ -84,6 +70,31 @@ public struct BikeDiagnosticsView: View {
         }
         .task { viewModel.startObserving() }
         .onDisappear { viewModel.stopObserving() }
+    }
+
+    @ViewBuilder
+    private var telemetryPanels: some View {
+        ConnectionPanelView(model: viewModel.viewState.connection)
+        BadgeRowView(badges: viewModel.viewState.badges)
+        MetricsGridView(metrics: viewModel.viewState.metrics)
+        MetricsGridView(
+            title: "Power Telemetry",
+            metrics: viewModel.viewState.powerMetrics
+        )
+        MetricsGridView(
+            title: "Battery Telemetry",
+            metrics: viewModel.viewState.batteryMetrics
+        )
+    }
+
+    @ViewBuilder
+    private var diagnosticPanels: some View {
+        RawFlagsView(flags: viewModel.viewState.rawFlags)
+        DebugEventsView(
+            events: viewModel.viewState.debugEvents,
+            hasLog: viewModel.viewState.hasDebugLog,
+            logTextProvider: viewModel.debugLogText
+        )
     }
 
     private enum Constants {

@@ -3,6 +3,8 @@ public struct BikeDiagnosticsViewState: Equatable, Sendable {
     public var pin: String
     public var connection: ConnectionPanelViewData
     public var metrics: [BikeDiagnosticsMetricViewData]
+    public var powerMetrics: [BikeDiagnosticsMetricViewData]
+    public var batteryMetrics: [BikeDiagnosticsMetricViewData]
     public var badges: [String]
     public var rawFlags: [BikeDiagnosticsMetricViewData]
     public var debugEvents: [DebugEventViewData]
@@ -24,6 +26,8 @@ public struct BikeDiagnosticsViewState: Equatable, Sendable {
             peripheral: BikeDiagnosticsText.noPeripheral
         ),
         metrics: [BikeDiagnosticsMetricViewData] = [],
+        powerMetrics: [BikeDiagnosticsMetricViewData] = [],
+        batteryMetrics: [BikeDiagnosticsMetricViewData] = [],
         badges: [String] = [],
         rawFlags: [BikeDiagnosticsMetricViewData] = [],
         debugEvents: [DebugEventViewData] = [],
@@ -39,6 +43,8 @@ public struct BikeDiagnosticsViewState: Equatable, Sendable {
         self.pin = pin
         self.connection = connection
         self.metrics = metrics
+        self.powerMetrics = powerMetrics
+        self.batteryMetrics = batteryMetrics
         self.badges = badges
         self.rawFlags = rawFlags
         self.debugEvents = debugEvents
