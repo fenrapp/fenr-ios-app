@@ -9,6 +9,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     private let batteryHealthHub: BikeEmulatorEventHub<BikeBatteryHealth>
     private let captureHub: BikeEmulatorCaptureHub
     private let discoveredBikesHub: BikeEmulatorEventHub<[DiscoveredBike]>
+    private let powerCalculator: BikePowerTelemetryCalculator
 
     private var scenario: BikeEmulatorScenario
     private var powerModePreset: BikeEmulatorPowerModePreset
@@ -18,13 +19,15 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     private var batteryHealthMonitoringLeaseCount = 0
     private var chargePowerLimitWatts = Constants.defaultChargePowerWatts
     private var chargeTargetPercent = Constants.defaultChargeTargetPercent
+    private var lastPublishedConnection: BikeConnection?
     private var updateTask: Task<Void, Never>?
 
     init(
         scenario: BikeEmulatorScenario,
         powerModePreset: BikeEmulatorPowerModePreset,
         activeMapNumber: Int,
-        channels: BikeEmulatorChannels
+        channels: BikeEmulatorChannels,
+        powerCalculator: BikePowerTelemetryCalculator
     ) {
         self.scenario = scenario
         self.powerModePreset = powerModePreset
@@ -35,6 +38,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
         batteryHealthHub = channels.batteryHealth
         captureHub = channels.capture
         discoveredBikesHub = channels.discoveredBikes
+        self.powerCalculator = powerCalculator
     }
 
     deinit {
@@ -70,7 +74,9 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     }
 
     public func disconnect() async throws {
-        await connectionHub.send(BikeConnection(state: .disconnected(reason: "Debug disconnect")))
+        await publishConnectionIfChanged(
+            BikeConnection(state: .disconnected(reason: "Debug disconnect"))
+        )
         await publishDebugEvent(title: "Emulator", detail: "Disconnected")
     }
 
@@ -204,7 +210,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
 
     private func publishCurrentState() async {
         let date = Date()
-        await connectionHub.send(makeConnection())
+        await publishConnectionIfChanged(makeConnection())
         await telemetryHub.send(makeTelemetry(date: date))
         guard batteryHealthMonitoringLeaseCount > 0 else { return }
         await publishBatteryHealth(date: date)
@@ -226,11 +232,14 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     private func makeTelemetry(date: Date) -> BikeTelemetry {
         BikeEmulatorPayloadFactory.makeTelemetry(
             scenario: scenario,
-            powerModePreset: powerModePreset,
-            activeMapNumber: activeMapNumber,
             tick: tick,
-            chargeTargetPercent: chargeTargetPercent,
-            date: date
+            context: .init(
+                powerModePreset: powerModePreset,
+                activeMapNumber: activeMapNumber,
+                chargeTargetPercent: chargeTargetPercent,
+                date: date
+            ),
+            powerCalculator: powerCalculator
         )
     }
 
@@ -280,6 +289,14 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
         static let maximumChargeTargetPercent = 100
         static let chargingBusVoltage = 388.4
         static let noOpWriteHex = "DEBUG NO-OP 4005"
+    }
+}
+
+private extension BikeEmulatorRepository {
+    func publishConnectionIfChanged(_ connection: BikeConnection) async {
+        guard connection != lastPublishedConnection else { return }
+        lastPublishedConnection = connection
+        await connectionHub.send(connection)
     }
 }
 

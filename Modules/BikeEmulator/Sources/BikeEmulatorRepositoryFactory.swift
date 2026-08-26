@@ -17,7 +17,8 @@ public enum BikeEmulatorRepositoryFactory {
                 batteryHealth: BikeEmulatorEventHub<BikeBatteryHealth>(replaysLatestValue: true),
                 capture: BikeEmulatorCaptureHub(),
                 discoveredBikes: BikeEmulatorEventHub<[DiscoveredBike]>(replaysLatestValue: true)
-            )
+            ),
+            powerCalculator: BikePowerTelemetryCalculator()
         )
     }
 }
