@@ -608,6 +608,7 @@ targets:
       - path: Modules/BikeDomain/Tests
     dependencies:
       - target: BikeDomain
+      - target: TestSupport
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikedomain.tests
