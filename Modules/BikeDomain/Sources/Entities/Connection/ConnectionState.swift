@@ -11,6 +11,7 @@ public enum ConnectionState: Equatable, Sendable {
     case subscribed(peripheralName: String?)
     case receivingTelemetry(peripheralName: String?)
     case reconnecting(vin: String, attempt: Int, maximumAttempts: Int)
+    case pairingResetRequired(message: String)
     case disconnected(reason: String?)
     case failed(message: String)
 }

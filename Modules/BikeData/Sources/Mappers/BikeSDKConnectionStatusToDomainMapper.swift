@@ -30,6 +30,8 @@ public struct BikeSDKConnectionStatusToDomainMapper: Sendable {
             .receivingTelemetry(peripheralName: peripheralName)
         case .reconnecting(let vin, let attempt, let maximumAttempts):
             .reconnecting(vin: vin, attempt: attempt, maximumAttempts: maximumAttempts)
+        case .pairingResetRequired(let message):
+            .pairingResetRequired(message: message)
         case .disconnected(let reason):
             .disconnected(reason: reason)
         case .failed(let message):
