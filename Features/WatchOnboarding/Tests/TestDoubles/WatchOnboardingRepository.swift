@@ -1,30 +1,16 @@
 import BikeDomain
+import TestSupport
 
 actor WatchOnboardingRepository: BikeRepository, BikeDiscoveryRepository, BikeProfileRepository {
-    private let connectionStream: AsyncStream<BikeConnection>
-    private let connectionContinuation: AsyncStream<BikeConnection>.Continuation
-    private let discoveredBikesStream: AsyncStream<[DiscoveredBike]>
-    private let discoveredBikesContinuation: AsyncStream<[DiscoveredBike]>.Continuation
-    private let debugEventsStream: AsyncStream<BikeDebugEvent>
-    private let debugEventsContinuation: AsyncStream<BikeDebugEvent>.Continuation
+    private let connections = TestEventHub<BikeConnection>()
+    private let discoveredBikes = TestEventHub<[DiscoveredBike]>()
+    private let debugEvents = TestEventHub<BikeDebugEvent>()
     private var profile: BikeProfile?
     private(set) var connectedVIN: String?
     private var discoveryStarts = 0
     private var discoveryStops = 0
     private var suspendsDiscoveryStop = false
     private var discoveryStopContinuations: [CheckedContinuation<Void, Never>] = []
-
-    init() {
-        let connections = AsyncStream.makeStream(of: BikeConnection.self)
-        connectionStream = connections.stream
-        connectionContinuation = connections.continuation
-        let discoveredBikes = AsyncStream.makeStream(of: [DiscoveredBike].self)
-        discoveredBikesStream = discoveredBikes.stream
-        discoveredBikesContinuation = discoveredBikes.continuation
-        let debugEvents = AsyncStream.makeStream(of: BikeDebugEvent.self)
-        debugEventsStream = debugEvents.stream
-        debugEventsContinuation = debugEvents.continuation
-    }
 
     func start() async {}
     func stop() async {}
@@ -33,8 +19,8 @@ actor WatchOnboardingRepository: BikeRepository, BikeDiscoveryRepository, BikePr
     func retrySecurityHandshake() async throws {}
     func readTelemetrySnapshot() async throws {}
     func observeTelemetry() async -> AsyncStream<BikeTelemetry> { AsyncStream { _ in } }
-    func observeConnection() async -> AsyncStream<BikeConnection> { connectionStream }
-    func observeDebugEvents() async -> AsyncStream<BikeDebugEvent> { debugEventsStream }
+    func observeConnection() async -> AsyncStream<BikeConnection> { await connections.stream() }
+    func observeDebugEvents() async -> AsyncStream<BikeDebugEvent> { await debugEvents.stream() }
     func startBikeDiscovery() async { discoveryStarts += 1 }
 
     func stopBikeDiscovery() async {
@@ -44,7 +30,7 @@ actor WatchOnboardingRepository: BikeRepository, BikeDiscoveryRepository, BikePr
             discoveryStopContinuations.append(continuation)
         }
     }
-    func observeDiscoveredBikes() async -> AsyncStream<[DiscoveredBike]> { discoveredBikesStream }
+    func observeDiscoveredBikes() async -> AsyncStream<[DiscoveredBike]> { await discoveredBikes.stream() }
     func loadProfile() async -> BikeProfile? { profile }
     func saveProfile(_ profile: BikeProfile) async { self.profile = profile }
     func clearProfile() async { profile = nil }
@@ -59,7 +45,18 @@ actor WatchOnboardingRepository: BikeRepository, BikeDiscoveryRepository, BikePr
         continuations.forEach { $0.resume() }
     }
 
-    func sendConnection(_ connection: BikeConnection) { connectionContinuation.yield(connection) }
-    func sendDebugEvent(_ event: BikeDebugEvent) { debugEventsContinuation.yield(event) }
-    func sendDiscoveredBikes(_ bikes: [DiscoveredBike]) { discoveredBikesContinuation.yield(bikes) }
+    func sendConnection(_ connection: BikeConnection) async {
+        await connections.waitForSubscriber()
+        await connections.send(connection)
+    }
+
+    func sendDebugEvent(_ event: BikeDebugEvent) async {
+        await debugEvents.waitForSubscriber()
+        await debugEvents.send(event)
+    }
+
+    func sendDiscoveredBikes(_ bikes: [DiscoveredBike]) async {
+        await discoveredBikes.waitForSubscriber()
+        await discoveredBikes.send(bikes)
+    }
 }
