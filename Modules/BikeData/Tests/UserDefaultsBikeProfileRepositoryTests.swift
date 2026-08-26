@@ -19,12 +19,13 @@ struct UserDefaultsBikeProfileRepositoryTests {
     func savesAndReloadsProfile() async {
         let suiteName = makeSuiteName()
         let repository = UserDefaultsBikeProfileRepository(suiteName: suiteName)
-        let profile = BikeProfile(vin: "FENRTEST000000001")
+        let profile = BikeProfile(vin: "UDUSMTEST00000001")
 
         await repository.saveProfile(profile)
 
         let reloadedRepository = UserDefaultsBikeProfileRepository(suiteName: suiteName)
         #expect(await reloadedRepository.loadProfile() == profile)
+        #expect(await reloadedRepository.loadProfile()?.variant == .sm)
 
         clearUserDefaults(suiteName: suiteName)
     }
