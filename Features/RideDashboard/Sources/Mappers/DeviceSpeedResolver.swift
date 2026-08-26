@@ -30,6 +30,10 @@ public struct DeviceSpeedResolver: Sendable {
         }
     }
 
+    public func hasValidDeviceSpeed(_ sample: DeviceSpeedSample?) -> Bool {
+        validSpeed(from: sample) != nil
+    }
+
     private func validSpeed(from sample: DeviceSpeedSample?) -> Double? {
         guard
             let sample,

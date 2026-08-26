@@ -54,8 +54,8 @@ struct DashboardChargingProgressBorder: View {
             value: isBalancing
         )
         .onAppear(perform: updateBalancingPulse)
-        .onChange(of: isBalancing) { _ in updateBalancingPulse() }
-        .onChange(of: reduceMotion) { _ in updateBalancingPulse() }
+        .onChange(of: isBalancing) { updateBalancingPulse() }
+        .onChange(of: reduceMotion) { updateBalancingPulse() }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }

@@ -4,6 +4,7 @@ import BikeDomain
 import CoreLocation
 import EnvironmentData
 import Foundation
+import RideSessionData
 import SettingsData
 
 @MainActor
@@ -32,10 +33,22 @@ enum ProductionAppDependencyContainerFactory {
             deviceSpeedRepository: CoreLocationDeviceSpeedRepository(
                 locationManager: CLLocationManager()
             ),
+            rideTripRepository: makeRideTripRepository(),
             onboardingContainer: BikeOnboardingDependencyContainer(),
             dashboardContainer: RideDashboardDependencyContainer(),
+            currentTripCardContainer: CurrentTripCardDependencyContainer(),
             chargingDashboardContainer: ChargingDashboardDependencyContainer(),
             appSettingsContainer: AppSettingsDependencyContainer()
         )
+    }
+
+    private static func makeRideTripRepository() -> SwiftDataRideTripRepository {
+        do {
+            return try SwiftDataRideTripRepository(
+                mapper: RideTripRecordMapper()
+            )
+        } catch {
+            preconditionFailure("Unable to create the ride trip store: \(error)")
+        }
     }
 }

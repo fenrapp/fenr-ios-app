@@ -4,12 +4,15 @@ import BikeDiagnostics
 import BikeOnboarding
 import RideDashboard
 import SwiftUI
+import UIKit
 
 struct AppRootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var diagnosticsViewModel: BikeDiagnosticsViewModel
     @StateObject private var batteryHealthViewModel: BatteryHealthViewModel
     @StateObject private var dashboardViewModel: RideDashboardViewModel
+    @StateObject private var currentTripCardViewModel: CurrentTripCardViewModel
+    @StateObject private var tripStatisticsViewModel: TripStatisticsCardViewModel
     @StateObject private var chargingDashboardViewModel: ChargingDashboardViewModel
     @StateObject private var onboardingViewModel: BikeOnboardingViewModel
     @StateObject private var appSettingsViewModel: AppSettingsViewModel
@@ -30,6 +33,8 @@ struct AppRootView: View {
         _diagnosticsViewModel = StateObject(wrappedValue: dependencies.diagnosticsViewModel)
         _batteryHealthViewModel = StateObject(wrappedValue: dependencies.batteryHealthViewModel)
         _dashboardViewModel = StateObject(wrappedValue: dependencies.dashboardViewModel)
+        _currentTripCardViewModel = StateObject(wrappedValue: dependencies.currentTripCardViewModel)
+        _tripStatisticsViewModel = StateObject(wrappedValue: dependencies.tripStatisticsViewModel)
         _chargingDashboardViewModel = StateObject(wrappedValue: dependencies.chargingDashboardViewModel)
         _onboardingViewModel = StateObject(wrappedValue: dependencies.onboardingViewModel)
         _appSettingsViewModel = StateObject(wrappedValue: dependencies.appSettingsViewModel)
@@ -49,6 +54,8 @@ struct AppRootView: View {
                 } else if setupFlow.isCompleted {
                     RideDashboardView(
                         viewModel: dashboardViewModel,
+                        currentTripViewModel: currentTripCardViewModel,
+                        tripStatisticsViewModel: tripStatisticsViewModel,
                         chargingViewModel: chargingDashboardViewModel,
                         onDiagnostics: { path.append(.diagnostics) }
                     )
@@ -100,7 +107,7 @@ struct AppRootView: View {
             updateInterfaceOrientation()
         }
         .onAppear(perform: updateInterfaceOrientation)
-        .onChange(of: setupFlow.isCompleted) { _ in
+        .onChange(of: setupFlow.isCompleted) {
             if setupFlow.isCompleted {
                 path.removeAll()
             }
@@ -108,22 +115,29 @@ struct AppRootView: View {
             synchronizeOnboardingObservation()
             updateInterfaceOrientation()
         }
-        .onChange(of: setupFlow.isLoaded) { _ in
+        .onChange(of: setupFlow.isLoaded) {
             synchronizeOnboardingObservation()
             updateInterfaceOrientation()
         }
-        .onChange(of: path) { _ in
+        .onChange(of: path) {
             updateInterfaceOrientation()
             synchronizeOnboardingBackNavigation()
         }
-        .onChange(of: onboardingViewModel.viewState.step) { _ in
+        .onChange(of: onboardingViewModel.viewState.step) {
             navigateToCurrentOnboardingStep()
         }
-        .onChange(of: scenePhase) { phase in
-            lifecycleController.setCanShowLiveActivity(phase != .active)
+        .onChange(of: scenePhase) {
+            lifecycleController.setCanShowLiveActivity(scenePhase != .active)
+            if scenePhase != .active {
+                currentTripCardViewModel.persistCurrentTrip()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willTerminateNotification)) { _ in
+            currentTripCardViewModel.completeCurrentTrip()
         }
         .onDisappear {
             onboardingViewModel.stopObserving()
+            currentTripCardViewModel.completeCurrentTrip()
             lifecycleController.stop()
         }
     }

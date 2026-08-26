@@ -103,7 +103,7 @@ public struct AppSettingsViewStateMapper: Sendable {
         switch source {
         case .motorcycle: "Bike"
         case .gps: "GPS"
-        case .hybrid: "Hybrid"
+        case .hybrid: "GPS+"
         }
     }
 

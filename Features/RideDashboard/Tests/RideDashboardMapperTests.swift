@@ -53,15 +53,61 @@ struct RideDashboardMapperTests {
         #expect(state.speedometer.valueText == "42")
         #expect(state.speedometer.unit == "km/h")
         #expect(abs(state.speedometer.progress - (42.0 / 180.0)) < 0.001)
+        #expect(state.speedometer.sourceIndicator == nil)
         #expect(state.speedometer.accessibilityLabel == "Speed 42 km/h")
         #expect(state.battery.percentageText == "60%")
         #expect(state.battery.emphasis == .positive)
         #expect(state.gear == .init(display: .text("3"), isActive: true, accessibilityLabel: "Gear 3"))
-        #expect(state.centerCard == .speedometer)
+        #expect(state.centerMode == .riding)
         #expect(state.indicators.first(where: { $0.id == "highBeam" })?.isActive == true)
         #expect(state.indicators.first(where: { $0.id == "leftTurn" })?.isActive == true)
         #expect(state.indicators.first(where: { $0.id == "brake" })?.isActive == true)
         #expect(state.indicators.first(where: { $0.id == "fault" })?.isActive == true)
+    }
+
+    @Test("Shows a source chip only for GPS-assisted speed modes")
+    func mapsSpeedSourceIndicator() {
+        let mapper = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_GB"))
+        let telemetry = BikeTelemetry(speed: .known(kmh: 42, kmhX10: 420))
+        let connection = BikeConnection(state: .receivingTelemetry(peripheralName: "SYNTHETIC"))
+
+        let gpsState = mapper.map(
+            telemetry: telemetry,
+            connection: connection,
+            speedKilometersPerHour: 42,
+            speedSource: .gps,
+            measurementSystem: .metric
+        )
+        let hybridState = mapper.map(
+            telemetry: telemetry,
+            connection: connection,
+            speedKilometersPerHour: 42,
+            speedSource: .hybrid,
+            measurementSystem: .metric
+        )
+        let unavailableState = mapper.map(
+            telemetry: telemetry,
+            connection: connection,
+            speedKilometersPerHour: 42,
+            speedSource: .hybrid,
+            measurementSystem: .metric,
+            isGPSAvailable: false
+        )
+
+        #expect(gpsState.speedometer.sourceIndicator == .init(
+            text: "GPS",
+            systemImage: "location.fill"
+        ))
+        #expect(hybridState.speedometer.sourceIndicator == .init(
+            text: "GPS+",
+            systemImage: "arrow.triangle.branch"
+        ))
+        #expect(gpsState.speedometer.accessibilityLabel.contains("GPS speed source"))
+        #expect(unavailableState.speedometer.sourceIndicator == .init(
+            text: "NO GPS",
+            systemImage: "location.slash.fill",
+            emphasis: .warning
+        ))
     }
 
     @Test("Clamps negative speed")
@@ -129,7 +175,7 @@ struct RideDashboardMapperTests {
             measurementSystem: .metric
         )
 
-        #expect(state.centerCard == .charging)
+        #expect(state.centerMode == .charging)
         #expect(state.gear == .init(display: .text("N"), isActive: true, accessibilityLabel: "Gear neutral"))
     }
 
@@ -145,7 +191,7 @@ struct RideDashboardMapperTests {
             measurementSystem: .metric
         )
 
-        #expect(state.centerCard == .charging)
+        #expect(state.centerMode == .charging)
     }
 
     @Test("Maps active mode HP, regen and signed TC without exposing the bike tier")

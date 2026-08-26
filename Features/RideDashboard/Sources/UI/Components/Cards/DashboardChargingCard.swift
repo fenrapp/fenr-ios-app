@@ -72,11 +72,11 @@ struct DashboardChargingCard: View {
         }
         .padding(.horizontal, Constants.horizontalInset)
         .padding(.vertical, Constants.verticalInset)
-        .onChange(of: viewState.control.power.selected) { value in
+        .onChange(of: viewState.control.power.selected) { _, value in
             guard !isEditingPower else { return }
             displayedPowerWatts = value
         }
-        .onChange(of: viewState.control.target.selected) { value in
+        .onChange(of: viewState.control.target.selected) { _, value in
             guard !isEditingTarget else { return }
             displayedTargetPercent = value
         }

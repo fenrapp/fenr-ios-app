@@ -4,18 +4,23 @@ import SettingsDomain
 
 public struct RideDashboardMapper: Sendable {
     private let makeMeasurementMapper: @Sendable (MeasurementSystem) -> RideDashboardMeasurementMapper
+    private let speedSourceIndicatorMapper: DashboardSpeedSourceIndicatorMapper
 
     public init(
-        makeMeasurementMapper: @escaping @Sendable (MeasurementSystem) -> RideDashboardMeasurementMapper
+        makeMeasurementMapper: @escaping @Sendable (MeasurementSystem) -> RideDashboardMeasurementMapper,
+        speedSourceIndicatorMapper: DashboardSpeedSourceIndicatorMapper
     ) {
         self.makeMeasurementMapper = makeMeasurementMapper
+        self.speedSourceIndicatorMapper = speedSourceIndicatorMapper
     }
 
     public func map(
         telemetry: BikeTelemetry,
         connection: BikeConnection,
         speedKilometersPerHour: Double?,
-        measurementSystem: MeasurementSystem
+        speedSource: SpeedSource = .motorcycle,
+        measurementSystem: MeasurementSystem,
+        isGPSAvailable: Bool = true
     ) -> RideDashboardViewState {
         let measurementMapper = makeMeasurementMapper(measurementSystem)
         let isReceivingTelemetry: Bool
@@ -42,6 +47,8 @@ public struct RideDashboardMapper: Sendable {
             speedometer: speedometer(
                 speed: speed,
                 maximum: maximumSpeed,
+                source: speedSource,
+                isGPSAvailable: isGPSAvailable,
                 measurementMapper: measurementMapper
             ),
             battery: battery(
@@ -52,9 +59,9 @@ public struct RideDashboardMapper: Sendable {
                 modeIndex: hasTelemetry ? telemetry.mode.displayIndex : nil
             ),
             powerMode: powerMode(telemetry: telemetry, hasTelemetry: hasTelemetry),
-            centerCard: hasTelemetry && telemetry.statusFlags.isChargerConnected
+            centerMode: hasTelemetry && telemetry.statusFlags.isChargerConnected
                 ? .charging
-                : .speedometer,
+                : .riding,
             connectionDetail: connectionText(connection.state),
             hasTelemetry: hasTelemetry,
             indicators: indicators(flags: telemetry.statusFlags, hasTelemetry: hasTelemetry)
@@ -110,6 +117,8 @@ public struct RideDashboardMapper: Sendable {
     private func speedometer(
         speed: RideDashboardMeasurement?,
         maximum: RideDashboardMeasurement,
+        source: SpeedSource,
+        isGPSAvailable: Bool,
         measurementMapper: RideDashboardMeasurementMapper
     ) -> DashboardSpeedometerViewData {
         let value = speed?.value ?? .zero
@@ -118,11 +127,17 @@ public struct RideDashboardMapper: Sendable {
             : .zero
         let unit = speed?.unit ?? maximum.unit
         let valueText = measurementMapper.number(value, fractionDigits: .zero)
+        let sourceIndicator = speedSourceIndicatorMapper.map(
+            source,
+            isGPSAvailable: isGPSAvailable
+        )
+        let sourceAccessibility = sourceIndicator.map { ", \($0.text) speed source" } ?? ""
         return .init(
             valueText: valueText,
             unit: unit,
             progress: progress,
-            accessibilityLabel: "Speed \(valueText) \(unit)"
+            sourceIndicator: sourceIndicator,
+            accessibilityLabel: "Speed \(valueText) \(unit)\(sourceAccessibility)"
         )
     }
 

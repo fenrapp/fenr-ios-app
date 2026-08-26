@@ -2,7 +2,6 @@ import SwiftUI
 import UIKit
 import VisionKit
 
-@available(iOS 16.0, *)
 struct VINScannerView: UIViewControllerRepresentable {
     let onVIN: (String) -> Void
     let onUnavailable: () -> Void

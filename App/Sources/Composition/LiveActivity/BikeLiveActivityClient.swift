@@ -9,14 +9,12 @@ protocol BikeLiveActivityClient: AnyObject {
     func end(state: BikeLiveActivityContentState) async
 }
 
-@available(iOS 16.1, *)
 @MainActor
 final class ActivityKitBikeLiveActivityClient: BikeLiveActivityClient {
     private var activity: Activity<BikeLiveActivityAttributes>?
 
     var isActive: Bool {
-        guard #available(iOS 16.1, *) else { return false }
-        return activity != nil || !Activity<BikeLiveActivityAttributes>.activities.isEmpty
+        activity != nil || !Activity<BikeLiveActivityAttributes>.activities.isEmpty
     }
 
     func start(vin: String, state: BikeLiveActivityContentState) async throws {
@@ -30,19 +28,19 @@ final class ActivityKitBikeLiveActivityClient: BikeLiveActivityClient {
         }
         activity = try Activity.request(
             attributes: BikeLiveActivityAttributes(vin: vin),
-            contentState: state,
+            content: activityContent(for: state),
             pushType: nil
         )
     }
 
     func update(state: BikeLiveActivityContentState) async {
         guard let activity = currentActivity() else { return }
-        await activity.update(using: state)
+        await activity.update(activityContent(for: state))
     }
 
     func end(state: BikeLiveActivityContentState) async {
         guard let activity = currentActivity() else { return }
-        await activity.end(using: state, dismissalPolicy: .default)
+        await activity.end(activityContent(for: state), dismissalPolicy: .default)
         self.activity = nil
     }
 
@@ -51,16 +49,12 @@ final class ActivityKitBikeLiveActivityClient: BikeLiveActivityClient {
         activity = Activity<BikeLiveActivityAttributes>.activities.first
         return activity
     }
-}
 
-@MainActor
-final class NoOpBikeLiveActivityClient: BikeLiveActivityClient {
-    var isActive: Bool { false }
-    func start(vin: String, state: BikeLiveActivityContentState) async throws {
-        throw BikeLiveActivityClientError.unavailable
+    private func activityContent(
+        for state: BikeLiveActivityContentState
+    ) -> ActivityContent<BikeLiveActivityContentState> {
+        ActivityContent(state: state, staleDate: nil)
     }
-    func update(state: BikeLiveActivityContentState) async {}
-    func end(state: BikeLiveActivityContentState) async {}
 }
 
 enum BikeLiveActivityClientError: Error {

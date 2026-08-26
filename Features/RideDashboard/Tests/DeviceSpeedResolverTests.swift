@@ -63,6 +63,19 @@ struct DeviceSpeedResolverTests {
         }
     }
 
+    @Test("Reports whether a current GPS sample is usable")
+    func reportsGPSAvailability() {
+        let resolver = makeResolver()
+
+        #expect(resolver.hasValidDeviceSpeed(validSample(speed: 60)))
+        #expect(!resolver.hasValidDeviceSpeed(nil))
+        #expect(!resolver.hasValidDeviceSpeed(DeviceSpeedSample(
+            kilometersPerHour: 60,
+            accuracyMetersPerSecond: 5,
+            observedAt: now.addingTimeInterval(-3.1)
+        )))
+    }
+
     private func validSample(speed: Double) -> DeviceSpeedSample {
         DeviceSpeedSample(kilometersPerHour: speed, accuracyMetersPerSecond: 5, observedAt: now)
     }

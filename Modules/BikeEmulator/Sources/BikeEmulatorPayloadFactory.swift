@@ -25,7 +25,7 @@ enum BikeEmulatorPayloadFactory {
             batteryPercent: batteryPercent,
             chargeTargetPercent: chargeTargetPercent
         )
-        let isRiding = scenario == .riding
+        let isRiding = scenario.isRiding
         let speed = isRiding ? ridingSpeed(for: tick) : .zero
         let ridingGear = ridingGearState(for: tick, fallbackMapNumber: activeMapNumber)
         let indicators = indicatorState(for: scenario, tick: tick)
@@ -132,7 +132,7 @@ enum BikeEmulatorPayloadFactory {
             return Constants.fullBatteryPercent
         case .chargerIdle, .chargingDataUnavailable:
             return Constants.stationaryBatteryPercent
-        case .riding:
+        case .riding, .ridingClean:
             return ridingBatteryPercent(for: tick)
         case .cellAnomaly:
             return Constants.stationaryBatteryPercent
@@ -172,44 +172,6 @@ enum BikeEmulatorPayloadFactory {
                 crawlState: .inactive
             )
         }
-    }
-
-    private static func indicatorState(
-        for scenario: BikeEmulatorScenario,
-        tick: Int
-    ) -> BikeIndicatorState {
-        let isBlinking = tick.isMultiple(of: Constants.blinkIntervalTicks)
-        switch scenario {
-        case .riding:
-            switch (tick / Constants.indicatorCycleTicks) % Constants.indicatorCycleCount {
-            case .zero:
-                return BikeIndicatorState(
-                    isHighBeamOn: tick % Constants.highBeamCycleTicks < Constants.highBeamOnTicks,
-                    isLeftBlinkerOn: isBlinking
-                )
-            case 1:
-                return BikeIndicatorState(
-                    isHighBeamOn: tick % Constants.highBeamCycleTicks < Constants.highBeamOnTicks,
-                    isRightBlinkerOn: isBlinking
-                )
-            default:
-                return BikeIndicatorState(
-                    isHighBeamOn: tick % Constants.highBeamCycleTicks < Constants.highBeamOnTicks
-                )
-            }
-        case .cellAnomaly:
-            return BikeIndicatorState(
-                isRightBlinkerOn: isBlinking,
-                isLeftBlinkerOn: isBlinking,
-                isCheckEngineLightOn: true
-            )
-        case .charging, .cellBalancing, .chargerIdle, .chargingDataUnavailable:
-            return .init()
-        }
-    }
-
-    private static func isBrakeActive(for scenario: BikeEmulatorScenario, tick: Int) -> Bool {
-        scenario == .riding && tick % Constants.brakeCycleTicks >= Constants.brakeActiveStartTick
     }
 
     private static func makeCellVoltages(
@@ -275,6 +237,46 @@ private struct RidingGearState {
 }
 
 private extension BikeEmulatorPayloadFactory {
+    static func indicatorState(
+        for scenario: BikeEmulatorScenario,
+        tick: Int
+    ) -> BikeIndicatorState {
+        let isBlinking = tick.isMultiple(of: Constants.blinkIntervalTicks)
+        switch scenario {
+        case .riding:
+            switch (tick / Constants.indicatorCycleTicks) % Constants.indicatorCycleCount {
+            case .zero:
+                return BikeIndicatorState(
+                    isHighBeamOn: tick % Constants.highBeamCycleTicks < Constants.highBeamOnTicks,
+                    isLeftBlinkerOn: isBlinking
+                )
+            case 1:
+                return BikeIndicatorState(
+                    isHighBeamOn: tick % Constants.highBeamCycleTicks < Constants.highBeamOnTicks,
+                    isRightBlinkerOn: isBlinking
+                )
+            default:
+                return BikeIndicatorState(
+                    isHighBeamOn: tick % Constants.highBeamCycleTicks < Constants.highBeamOnTicks
+                )
+            }
+        case .ridingClean:
+            return .init()
+        case .cellAnomaly:
+            return BikeIndicatorState(
+                isRightBlinkerOn: isBlinking,
+                isLeftBlinkerOn: isBlinking,
+                isCheckEngineLightOn: true
+            )
+        case .charging, .cellBalancing, .chargerIdle, .chargingDataUnavailable:
+            return .init()
+        }
+    }
+
+    static func isBrakeActive(for scenario: BikeEmulatorScenario, tick: Int) -> Bool {
+        scenario == .riding && tick % Constants.brakeCycleTicks >= Constants.brakeActiveStartTick
+    }
+
     static func shouldSupplyChargeCurrent(
         scenario: BikeEmulatorScenario,
         batteryPercent: Int,

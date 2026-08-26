@@ -14,8 +14,10 @@ struct UserDefaultsAppSettingsRepositoryTests {
 
     @Test("Persists selected speed source, units, and battery capacity")
     func persistsSettings() async {
-        let defaults = makeDefaults()
-        let repository = UserDefaultsAppSettingsRepository(userDefaults: defaults)
+        let suiteName = makeSuiteName()
+        let repository = UserDefaultsAppSettingsRepository(
+            userDefaults: makeDefaults(suiteName: suiteName)
+        )
         let expected = AppSettings(
             speedSource: .hybrid,
             measurementSystem: .imperial,
@@ -24,13 +26,24 @@ struct UserDefaultsAppSettingsRepositoryTests {
 
         await repository.save(expected)
 
-        #expect(await UserDefaultsAppSettingsRepository(userDefaults: defaults).load() == expected)
+        let reloadedRepository = UserDefaultsAppSettingsRepository(
+            userDefaults: makeDefaults(suiteName: suiteName, clearsDomain: false)
+        )
+        #expect(await reloadedRepository.load() == expected)
     }
 
-    private func makeDefaults() -> UserDefaults {
-        let name = "UserDefaultsAppSettingsRepositoryTests.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: name)!
-        defaults.removePersistentDomain(forName: name)
+    nonisolated private func makeSuiteName() -> String {
+        "UserDefaultsAppSettingsRepositoryTests.\(UUID().uuidString)"
+    }
+
+    nonisolated private func makeDefaults(
+        suiteName: String = "UserDefaultsAppSettingsRepositoryTests.\(UUID().uuidString)",
+        clearsDomain: Bool = true
+    ) -> UserDefaults {
+        let defaults = UserDefaults(suiteName: suiteName)!
+        if clearsDomain {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
         return defaults
     }
 }

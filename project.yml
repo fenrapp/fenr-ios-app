@@ -3,7 +3,7 @@ options:
   minimumXcodeGenVersion: 2.42.0
   createIntermediateGroups: true
   deploymentTarget:
-    iOS: "16.0"
+    iOS: "17.0"
     watchOS: "10.0"
 settings:
   base:
@@ -11,7 +11,7 @@ settings:
     DEVELOPMENT_TEAM: ""
     CODE_SIGN_STYLE: Automatic
     GENERATE_INFOPLIST_FILE: YES
-    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
 targets:
@@ -121,6 +121,24 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.environmentdata
+  RideSessionDomain:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/RideSessionDomain/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesessiondomain
+  RideSessionData:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/RideSessionData/Sources
+    dependencies:
+      - target: RideSessionDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesessiondata
   SettingsDomain:
     type: framework
     platform: auto
@@ -203,6 +221,7 @@ targets:
     dependencies:
       - target: BikeDomain
       - target: EnvironmentDomain
+      - target: RideSessionDomain
       - target: SettingsDomain
       - target: DesignSystem
       - target: MeasurementPresentation
@@ -318,6 +337,8 @@ targets:
       - target: BikeData
       - target: EnvironmentDomain
       - target: EnvironmentData
+      - target: RideSessionDomain
+      - target: RideSessionData
       - target: SettingsDomain
       - target: SettingsData
       - target: BikeDomain
@@ -406,6 +427,8 @@ targets:
       - target: BikeDomain
       - target: EnvironmentDomain
       - target: EnvironmentData
+      - target: RideSessionDomain
+      - target: RideSessionData
       - target: SettingsDomain
       - target: SettingsData
       - target: RuntimeConfiguration
@@ -433,7 +456,7 @@ targets:
   ChargingLiveActivityExtension:
     type: app-extension
     platform: iOS
-    deploymentTarget: "16.1"
+    deploymentTarget: "17.0"
     sources:
       - path: LiveActivityExtension/Sources
       - path: App/Sources/Composition/LiveActivity/BikeLiveActivityAttributes.swift
@@ -447,7 +470,7 @@ targets:
   ChargingLiveActivityDebugExtension:
     type: app-extension
     platform: iOS
-    deploymentTarget: "16.1"
+    deploymentTarget: "17.0"
     sources:
       - path: LiveActivityExtension/Sources
       - path: App/Sources/Composition/LiveActivity/BikeLiveActivityAttributes.swift
@@ -635,6 +658,27 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.settingsdata.tests
+  RideSessionDomainTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/RideSessionDomain/Tests
+    dependencies:
+      - target: RideSessionDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesessiondomain.tests
+  RideSessionDataTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/RideSessionData/Tests
+    dependencies:
+      - target: RideSessionData
+      - target: RideSessionDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesessiondata.tests
   DesignSystemTests:
     type: bundle.unit-test
     platform: iOS
@@ -689,6 +733,7 @@ targets:
       - target: RideDashboard
       - target: BikeDomain
       - target: EnvironmentDomain
+      - target: RideSessionDomain
       - target: SettingsDomain
       - target: TestSupport
       - target: ChargeControl
@@ -774,6 +819,8 @@ targets:
       - target: BikeData
       - target: EnvironmentDomain
       - target: EnvironmentData
+      - target: RideSessionDomain
+      - target: RideSessionData
       - target: SettingsDomain
       - target: SettingsData
       - target: BikeDomain
@@ -809,6 +856,8 @@ targets:
       - target: BikeEmulator
       - target: EnvironmentDomain
       - target: EnvironmentData
+      - target: RideSessionDomain
+      - target: RideSessionData
       - target: SettingsDomain
       - target: SettingsData
       - target: RuntimeConfiguration
@@ -832,6 +881,8 @@ schemes:
         BikeEmulatorTests: [test]
         ChargeControlTests: [test]
         SettingsDataTests: [test]
+        RideSessionDomainTests: [test]
+        RideSessionDataTests: [test]
         DesignSystemTests: [test]
         MeasurementPresentationTests: [test]
         BikeDiagnosticsTests: [test]
@@ -851,6 +902,8 @@ schemes:
         - BikeEmulatorTests
         - ChargeControlTests
         - SettingsDataTests
+        - RideSessionDomainTests
+        - RideSessionDataTests
         - DesignSystemTests
         - MeasurementPresentationTests
         - BikeDiagnosticsTests
@@ -872,6 +925,10 @@ schemes:
     test:
       targets:
         - FENRDebugTests
+    run:
+      config: Debug
+      commandLineArguments:
+        "-skipOnboarding": true
   FENRWatch:
     management:
       shared: true

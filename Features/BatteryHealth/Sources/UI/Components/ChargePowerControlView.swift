@@ -111,11 +111,11 @@ struct ChargePowerControlView: View {
                     .foregroundStyle(.red)
             }
         }
-        .onChange(of: state.power.selected) { value in
+        .onChange(of: state.power.selected) { _, value in
             guard !isEditingPower else { return }
             displayedPowerWatts = value
         }
-        .onChange(of: state.target.selected) { value in
+        .onChange(of: state.target.selected) { _, value in
             guard !isEditingTarget else { return }
             displayedTargetPercent = value
         }

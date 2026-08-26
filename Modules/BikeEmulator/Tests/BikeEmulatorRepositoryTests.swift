@@ -285,6 +285,25 @@ struct BikeEmulatorRepositoryTests {
     }
 }
 
+extension BikeEmulatorRepositoryTests {
+    @Test("Clean riding scenario moves without activating indicators")
+    func cleanRidingScenarioHasNoIndicators() async throws {
+        let repository = BikeEmulatorRepositoryFactory.make(scenario: .ridingClean)
+
+        await repository.start()
+        let stream = await repository.observeTelemetry()
+        var iterator = stream.makeAsyncIterator()
+        _ = try await nextValue(from: &iterator)
+        try await Task.sleep(for: .milliseconds(600))
+        let telemetry = try await nextValue(from: &iterator)
+
+        #expect(telemetry.speed.kmh ?? .zero > .zero)
+        #expect(telemetry.statusFlags.indicatorState == .init())
+        #expect(!telemetry.statusFlags.isBrakeActive)
+        #expect(!telemetry.statusFlags.isFaultActive)
+    }
+}
+
 private enum EmulatorTestError: Error {
     case streamFinished
 }

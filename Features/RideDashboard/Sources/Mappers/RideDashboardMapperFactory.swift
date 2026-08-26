@@ -16,12 +16,50 @@ public enum RideDashboardMapperFactory {
     }
 
     public static func makeRideMapper(locale: Locale) -> RideDashboardMapper {
-        RideDashboardMapper { measurementSystem in
-            makeMeasurementMapper(
-                measurementSystem: measurementSystem,
-                locale: locale
-            )
-        }
+        RideDashboardMapper(
+            makeMeasurementMapper: { measurementSystem in
+                makeMeasurementMapper(
+                    measurementSystem: measurementSystem,
+                    locale: locale
+                )
+            },
+            speedSourceIndicatorMapper: DashboardSpeedSourceIndicatorMapper()
+        )
+    }
+
+    public static func makeCurrentTripMapper(locale: Locale) -> CurrentTripCardMapper {
+        CurrentTripCardMapper(
+            makeMeasurementMapper: { measurementSystem in
+                makeMeasurementMapper(
+                    measurementSystem: measurementSystem,
+                    locale: locale
+                )
+            },
+            durationFormatStyle: Duration.TimeFormatStyle(
+                pattern: .hourMinuteSecond(
+                    padHourToLength: 2,
+                    fractionalSecondsLength: 0
+                )
+            ).locale(locale),
+            speedSourceIndicatorMapper: DashboardSpeedSourceIndicatorMapper()
+        )
+    }
+
+    public static func makeTripStatisticsMapper(locale: Locale) -> TripStatisticsCardMapper {
+        TripStatisticsCardMapper(
+            makeMeasurementMapper: { measurementSystem in
+                makeMeasurementMapper(
+                    measurementSystem: measurementSystem,
+                    locale: locale
+                )
+            },
+            durationFormatStyle: Duration.TimeFormatStyle(
+                pattern: .hourMinute(
+                    padHourToLength: 2,
+                    roundSeconds: .towardZero
+                )
+            ).locale(locale)
+        )
     }
 
     public static func makeChargingMapper(

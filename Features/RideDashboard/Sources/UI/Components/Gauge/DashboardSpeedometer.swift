@@ -3,14 +3,17 @@ import SwiftUI
 
 struct DashboardSpeedometer: View {
     let state: DashboardSpeedometerViewData
+    private let showsSourceIndicator: Bool
     private let referenceSize: CGSize?
     @ScaledMetric(relativeTo: .body) private var dynamicTypeScale: CGFloat = 1
 
     init(
         state: DashboardSpeedometerViewData,
+        showsSourceIndicator: Bool = true,
         referenceSize: CGSize? = nil
     ) {
         self.state = state
+        self.showsSourceIndicator = showsSourceIndicator
         self.referenceSize = referenceSize
     }
 
@@ -29,6 +32,17 @@ struct DashboardSpeedometer: View {
             )
             VStack(spacing: Constants.valueToUnitSpacing) {
                 speedValue(fontSize: valueFontSize)
+                    .overlay(alignment: .top) {
+                        if showsSourceIndicator,
+                           let sourceIndicator = state.sourceIndicator {
+                            DashboardSpeedSourceChip(state: sourceIndicator)
+                                .offset(y: -Constants.chipVerticalOffset)
+                                .transition(
+                                    .scale(scale: Constants.chipTransitionScale)
+                                        .combined(with: .opacity)
+                                )
+                        }
+                    }
                 Text(state.unit)
                     .font(
                         .system(
@@ -45,6 +59,8 @@ struct DashboardSpeedometer: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(state.accessibilityLabel)
+        .animation(.easeInOut(duration: Constants.chipAnimationDuration), value: state.sourceIndicator)
+        .animation(.easeInOut(duration: Constants.chipAnimationDuration), value: showsSourceIndicator)
     }
 
     private func speedValue(fontSize: CGFloat) -> some View {
@@ -111,5 +127,8 @@ struct DashboardSpeedometer: View {
         static let unitWidthRatio: CGFloat = 0.035
         static let unitHeightRatio: CGFloat = 0.075
         static let maximumUnitHeightRatio: CGFloat = 0.16
+        static let chipVerticalOffset: CGFloat = 24
+        static let chipTransitionScale = 0.92
+        static let chipAnimationDuration = 0.16
     }
 }

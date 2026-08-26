@@ -35,9 +35,15 @@ struct DashboardIndicatorStatus: View {
     }
 
     private var activeIndicators: [DashboardIndicatorViewData] {
-        indicators.filter {
-            $0.isActive && IndicatorID(rawValue: $0.id) != nil
-        }
+        indicators.filter(Self.isDisplayed)
+    }
+
+    static func hasActiveIndicators(_ indicators: [DashboardIndicatorViewData]) -> Bool {
+        indicators.contains(where: Self.isDisplayed)
+    }
+
+    private static func isDisplayed(_ indicator: DashboardIndicatorViewData) -> Bool {
+        indicator.isActive && IndicatorID(rawValue: indicator.id) != nil
     }
 
     private func tint(for emphasis: DashboardIndicatorEmphasis) -> Color {

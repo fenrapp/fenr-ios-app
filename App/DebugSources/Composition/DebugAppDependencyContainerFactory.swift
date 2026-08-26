@@ -3,6 +3,7 @@ import BikeDomain
 import BikeEmulator
 import EnvironmentData
 import Foundation
+import RideSessionData
 import SettingsData
 
 @MainActor
@@ -48,8 +49,10 @@ enum DebugAppDependencyContainerFactory {
             profileRepository: profileRepository,
             settingsRepository: UserDefaultsAppSettingsRepository(),
             deviceSpeedRepository: DebugDeviceSpeedRepository(),
+            rideTripRepository: makeRideTripRepository(),
             onboardingContainer: BikeOnboardingDependencyContainer(),
             dashboardContainer: RideDashboardDependencyContainer(),
+            currentTripCardContainer: CurrentTripCardDependencyContainer(),
             chargingDashboardContainer: ChargingDashboardDependencyContainer(),
             appSettingsContainer: AppSettingsDependencyContainer(),
             initialOnboardingVIN: BikeEmulatorIdentity.vin,
@@ -85,6 +88,16 @@ enum DebugAppDependencyContainerFactory {
             alphaEvidence: evidence,
             alphaDetectedAt: evidence.isEmpty ? nil : Date()
         )
+    }
+
+    private static func makeRideTripRepository() -> SwiftDataRideTripRepository {
+        do {
+            return try SwiftDataRideTripRepository(
+                mapper: RideTripRecordMapper()
+            )
+        } catch {
+            preconditionFailure("Unable to create the debug ride trip store: \(error)")
+        }
     }
 
     private enum Constants {

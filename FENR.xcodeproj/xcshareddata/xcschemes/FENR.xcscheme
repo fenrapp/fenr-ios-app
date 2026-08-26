@@ -239,6 +239,34 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "B8906249B93AD993A468E8C1"
+               BuildableName = "RideSessionDataTests.xctest"
+               BlueprintName = "RideSessionDataTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "356DDF7D3F812ECC21EBADB7"
+               BuildableName = "RideSessionDomainTests.xctest"
+               BlueprintName = "RideSessionDomainTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "4F60C80AD9FE8D96269B7741"
                BuildableName = "SettingsDataTests.xctest"
                BlueprintName = "SettingsDataTests"
@@ -365,6 +393,28 @@
                BlueprintIdentifier = "4F60C80AD9FE8D96269B7741"
                BuildableName = "SettingsDataTests.xctest"
                BlueprintName = "SettingsDataTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "356DDF7D3F812ECC21EBADB7"
+               BuildableName = "RideSessionDomainTests.xctest"
+               BlueprintName = "RideSessionDomainTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "B8906249B93AD993A468E8C1"
+               BuildableName = "RideSessionDataTests.xctest"
+               BlueprintName = "RideSessionDataTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </TestableReference>

@@ -19,6 +19,8 @@ private enum DashboardPreviewConstants {
                     indicators: previewIndicators(highBeam: true, brake: true)
                 )
             ),
+            currentTripViewModel: previewCurrentTripViewModel(),
+            tripStatisticsViewModel: previewTripStatisticsViewModel(),
             chargingViewModel: previewChargingViewModel(),
             onDiagnostics: {}
         )
@@ -39,6 +41,8 @@ private enum DashboardPreviewConstants {
                     indicators: previewIndicators(rightTurn: true)
                 )
             ),
+            currentTripViewModel: previewCurrentTripViewModel(),
+            tripStatisticsViewModel: previewTripStatisticsViewModel(),
             chargingViewModel: previewChargingViewModel(),
             onDiagnostics: {}
         )
@@ -61,6 +65,8 @@ private enum DashboardPreviewConstants {
                     indicators: previewIndicators(fault: true)
                 )
             ),
+            currentTripViewModel: previewCurrentTripViewModel(),
+            tripStatisticsViewModel: previewTripStatisticsViewModel(),
             chargingViewModel: previewChargingViewModel(),
             onDiagnostics: {}
         )
@@ -72,6 +78,8 @@ private enum DashboardPreviewConstants {
     NavigationStack {
         RideDashboardView(
             viewModel: RideDashboardPreviewFactory.makeViewModel(state: .init()),
+            currentTripViewModel: previewCurrentTripViewModel(),
+            tripStatisticsViewModel: previewTripStatisticsViewModel(),
             chargingViewModel: previewChargingViewModel(),
             onDiagnostics: {}
         )
@@ -83,12 +91,14 @@ private enum DashboardPreviewConstants {
         viewModel: RideDashboardPreviewFactory.makeViewModel(
             state: .init(
                 gear: previewGear("N"),
-                centerCard: .charging,
+                centerMode: .charging,
                 connectionDetail: "Live telemetry active",
                 hasTelemetry: true,
                 indicators: previewIndicators()
             )
         ),
+        currentTripViewModel: previewCurrentTripViewModel(),
+        tripStatisticsViewModel: previewTripStatisticsViewModel(),
         chargingViewModel: previewChargingViewModel(
             state: .init(
                 batteryPercent: 68,
@@ -111,6 +121,35 @@ private func previewChargingViewModel(
     state: ChargingDashboardViewState = .init()
 ) -> ChargingDashboardViewModel {
     ChargingDashboardPreviewFactory.makeViewModel(state: state)
+}
+
+@MainActor
+private func previewCurrentTripViewModel() -> CurrentTripCardViewModel {
+    CurrentTripCardPreviewFactory.makeViewModel(
+        state: .init(
+            durationText: "00:42:18",
+            statusText: "IN PROGRESS",
+            distance: .init(label: "DISTANCE", valueText: "32.4", unit: "km", systemImage: "location"),
+            averageSpeed: .init(label: "AVERAGE", valueText: "46", unit: "km/h", systemImage: "speedometer"),
+            maximumSpeed: .init(label: "MAX SPEED", valueText: "91", unit: "km/h", systemImage: "arrow.up.right"),
+            isActive: true,
+            accessibilityLabel: "Current trip preview"
+        )
+    )
+}
+
+@MainActor
+private func previewTripStatisticsViewModel() -> TripStatisticsCardViewModel {
+    TripStatisticsCardPreviewFactory.makeViewModel(
+        state: .init(
+            statusText: "42 SAVED TRIPS",
+            totalDistance: .init(label: "TOTAL DISTANCE", valueText: "1,284.6", unit: "km"),
+            totalDuration: .init(label: "RIDE TIME", valueText: "38:24"),
+            averageSpeed: .init(label: "AVERAGE", valueText: "41", unit: "km/h"),
+            maximumSpeed: .init(label: "MAX SPEED", valueText: "137", unit: "km/h"),
+            accessibilityLabel: "Ride statistics preview"
+        )
+    )
 }
 
 private func previewSpeedometer(value: Double) -> DashboardSpeedometerViewData {

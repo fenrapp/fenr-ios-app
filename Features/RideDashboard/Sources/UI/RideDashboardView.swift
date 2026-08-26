@@ -4,16 +4,25 @@ import UIKit
 public struct RideDashboardView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ObservedObject private var viewModel: RideDashboardViewModel
+    @ObservedObject private var currentTripViewModel: CurrentTripCardViewModel
+    @ObservedObject private var tripStatisticsViewModel: TripStatisticsCardViewModel
     @ObservedObject private var chargingViewModel: ChargingDashboardViewModel
     @ScaledMetric(relativeTo: .body) private var speedometerTypeScale: CGFloat = 1
+    @State private var selectedRidingCard = RidingDashboardCard.speedometer
+    @State private var selectedCurrentTripPage = CurrentTripDashboardPage.current
+    @State private var currentTripPageResetTask: Task<Void, Never>?
     private let onDiagnostics: () -> Void
 
     public init(
         viewModel: RideDashboardViewModel,
+        currentTripViewModel: CurrentTripCardViewModel,
+        tripStatisticsViewModel: TripStatisticsCardViewModel,
         chargingViewModel: ChargingDashboardViewModel,
         onDiagnostics: @escaping () -> Void
     ) {
         self.viewModel = viewModel
+        self.currentTripViewModel = currentTripViewModel
+        self.tripStatisticsViewModel = tripStatisticsViewModel
         self.chargingViewModel = chargingViewModel
         self.onDiagnostics = onDiagnostics
     }
@@ -36,17 +45,26 @@ public struct RideDashboardView: View {
 
                             ZStack(alignment: .bottom) {
                                 DashboardCenterCard(
-                                    activeCard: viewModel.viewState.centerCard,
+                                    centerMode: viewModel.viewState.centerMode,
+                                    selectedRidingCard: $selectedRidingCard,
                                     speedometer: viewModel.viewState.speedometer,
+                                    showsSpeedSourceIndicator: !DashboardIndicatorStatus.hasActiveIndicators(
+                                        viewModel.viewState.indicators
+                                    ),
+                                    currentTrip: currentTripViewModel.viewState,
+                                    selectedCurrentTripPage: $selectedCurrentTripPage,
+                                    tripStatistics: tripStatisticsViewModel.viewState,
                                     charging: chargingViewModel.viewState,
                                     referenceSize: proxy.size,
                                     reduceMotion: reduceMotion,
+                                    toggleCurrentTripPause: currentTripViewModel.togglePauseCurrentTrip,
+                                    resetCurrentTrip: currentTripViewModel.resetCurrentTrip,
                                     setChargePowerLimit: chargingViewModel.setChargePowerLimit(watts:),
                                     setChargeTarget: chargingViewModel.setChargeTarget(percent:)
                                 )
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .offset(
-                                    y: viewModel.viewState.centerCard == .charging
+                                    y: viewModel.viewState.centerMode == .charging
                                         ? physicalCenterOffset(for: proxy.safeAreaInsets)
                                         : .zero
                                 )
@@ -55,8 +73,11 @@ public struct RideDashboardView: View {
                                     .frame(maxHeight: .infinity, alignment: .top)
                                     .padding(.top, Constants.accessoryEdgePadding)
 
-                                DashboardPowerModeSummary(state: viewModel.viewState.powerMode)
-                                    .padding(.bottom, Constants.accessoryEdgePadding)
+                                if viewModel.viewState.centerMode == .riding,
+                                   selectedRidingCard == .speedometer {
+                                    DashboardPowerModeSummary(state: viewModel.viewState.powerMode)
+                                        .padding(.bottom, Constants.accessoryEdgePadding)
+                                }
                             }
                             .frame(width: centerWidth)
 
@@ -66,7 +87,8 @@ public struct RideDashboardView: View {
 
                     }
                     .overlay(alignment: .bottom) {
-                        if viewModel.viewState.centerCard == .speedometer {
+                        if viewModel.viewState.centerMode == .riding,
+                           selectedRidingCard == .speedometer {
                             DashboardSpeedProgressBar(
                                 progress: viewModel.viewState.speedometer.progress
                             )
@@ -87,24 +109,76 @@ public struct RideDashboardView: View {
         .toolbar(.hidden, for: .navigationBar)
         .task {
             viewModel.startObserving()
-            synchronizeChargingObservation(centerCard: viewModel.viewState.centerCard)
+            currentTripViewModel.start()
+            synchronizeCardLifecycles()
         }
-        .onChange(of: viewModel.viewState.centerCard) { centerCard in
-            synchronizeChargingObservation(centerCard: centerCard)
+        .onChange(of: viewModel.viewState.centerMode) {
+            if viewModel.viewState.centerMode == .riding {
+                selectedRidingCard = .speedometer
+            }
+            scheduleCurrentTripPageResetIfNeeded()
+            synchronizeCardLifecycles()
         }
-        .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
+        .onChange(of: selectedRidingCard) {
+            scheduleCurrentTripPageResetIfNeeded()
+            synchronizeCardLifecycles()
+        }
+        .onChange(of: selectedCurrentTripPage) {
+            synchronizeCardLifecycles()
+        }
+        .onAppear {
+            selectedRidingCard = .speedometer
+            selectedCurrentTripPage = .current
+            UIApplication.shared.isIdleTimerDisabled = true
+        }
         .onDisappear {
+            currentTripPageResetTask?.cancel()
+            currentTripPageResetTask = nil
             UIApplication.shared.isIdleTimerDisabled = false
             viewModel.stopObserving()
             chargingViewModel.stop()
+            currentTripViewModel.setIsVisible(false)
+            tripStatisticsViewModel.stop()
         }
     }
 
-    private func synchronizeChargingObservation(centerCard: RideDashboardViewState.CenterCard) {
-        if centerCard == .charging {
+    private func synchronizeCardLifecycles() {
+        if viewModel.viewState.centerMode == .charging {
             chargingViewModel.start()
         } else {
             chargingViewModel.stop()
+        }
+        let isCurrentTripCardVisible = viewModel.viewState.centerMode == .riding
+            && selectedRidingCard == .currentTrip
+        currentTripViewModel.setIsVisible(
+            isCurrentTripCardVisible && selectedCurrentTripPage == .current
+        )
+        tripStatisticsViewModel.setIsVisible(
+            isCurrentTripCardVisible && selectedCurrentTripPage == .statistics
+        )
+    }
+
+    private func scheduleCurrentTripPageResetIfNeeded() {
+        currentTripPageResetTask?.cancel()
+        currentTripPageResetTask = nil
+        let isCurrentTripCardVisible = viewModel.viewState.centerMode == .riding
+            && selectedRidingCard == .currentTrip
+        guard !isCurrentTripCardVisible, selectedCurrentTripPage != .current else { return }
+        currentTripPageResetTask = Task { @MainActor in
+            do {
+                try await Task.sleep(for: Constants.currentTripPageResetDelay)
+            } catch {
+                return
+            }
+            guard !Task.isCancelled,
+                  viewModel.viewState.centerMode != .riding
+                    || selectedRidingCard != .currentTrip else { return }
+            var transaction = Transaction()
+            transaction.animation = nil
+            withTransaction(transaction) {
+                selectedCurrentTripPage = .current
+            }
+            currentTripPageResetTask = nil
         }
     }
 
@@ -138,5 +212,6 @@ public struct RideDashboardView: View {
         static let minimumCenterColumnWidth: CGFloat = 360
         static let minimumSideColumnWidth: CGFloat = 124
         static let accessoryEdgePadding: CGFloat = 16
+        static let currentTripPageResetDelay = Duration.milliseconds(500)
     }
 }

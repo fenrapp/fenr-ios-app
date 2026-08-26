@@ -1,7 +1,6 @@
 import ActivityKit
 import Foundation
 
-@available(iOS 16.1, *)
 struct BikeLiveActivityAttributes: ActivityAttributes {
     typealias ContentState = BikeLiveActivityContentState
 

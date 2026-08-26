@@ -2,6 +2,7 @@ import BikeDomain
 import ChargeControl
 import EnvironmentDomain
 import Foundation
+import RideSessionDomain
 import RuntimeConfiguration
 import SettingsDomain
 
@@ -65,6 +66,59 @@ enum ChargingDashboardPreviewFactory {
     }
 }
 
+@MainActor
+enum CurrentTripCardPreviewFactory {
+    static func makeViewModel(state: DashboardCurrentTripViewData) -> CurrentTripCardViewModel {
+        let bikeRepository = RideDashboardPreviewRepository()
+        let tripRepository = PreviewRideTripRepository()
+        let viewModel = CurrentTripCardViewModel(
+            useCases: .init(
+                observeTelemetry: .init(repository: bikeRepository),
+                observeConnection: .init(repository: bikeRepository),
+                observeSettings: .init(repository: PreviewAppSettingsRepository()),
+                observeDeviceSpeed: .init(repository: PreviewDeviceSpeedRepository()),
+                prepareRideTripSession: .init(repository: tripRepository),
+                saveActiveRideTrip: .init(repository: tripRepository),
+                completeRideTrip: .init(repository: tripRepository)
+            ),
+            mapper: RideDashboardMapperFactory.makeCurrentTripMapper(locale: .autoupdatingCurrent),
+            deviceSpeedResolver: DeviceSpeedResolver(
+                now: Date.init,
+                maximumAccuracyMetersPerSecond: 5,
+                maximumSampleAge: FENRRuntimeConstants.RideDashboard.deviceSpeedMaximumSampleAge
+            ),
+            applicationSessionID: UUID(),
+            now: Date.init,
+            onHistoryChanged: {}
+        )
+        viewModel.setPreviewState(state)
+        return viewModel
+    }
+}
+
+@MainActor
+enum TripStatisticsCardPreviewFactory {
+    static func makeViewModel(
+        state: DashboardTripStatisticsViewData
+    ) -> TripStatisticsCardViewModel {
+        let repository = PreviewRideTripRepository()
+        let viewModel = TripStatisticsCardViewModel(
+            useCases: .init(
+                loadStatistics: .init(
+                    repository: repository,
+                    aggregator: RideTripStatisticsAggregator()
+                ),
+                observeSettings: .init(repository: PreviewAppSettingsRepository())
+            ),
+            mapper: RideDashboardMapperFactory.makeTripStatisticsMapper(
+                locale: .autoupdatingCurrent
+            )
+        )
+        viewModel.setPreviewState(state)
+        return viewModel
+    }
+}
+
 private actor PreviewAppSettingsRepository: AppSettingsRepository {
     func load() -> AppSettings { .init() }
     func save(_: AppSettings) {}
@@ -75,6 +129,13 @@ private actor PreviewDeviceSpeedRepository: DeviceSpeedRepository {
     func observeDeviceSpeed() -> AsyncStream<DeviceSpeedSample> { .init { $0.finish() } }
     func locationAuthorizationStatus() -> LocationAuthorizationStatus { .authorized }
     func requestLocationAuthorization() {}
+}
+
+private actor PreviewRideTripRepository: RideTripRepository {
+    func prepare(applicationSessionID _: UUID) -> RideTrip? { nil }
+    func saveActiveTrip(_: RideTrip) {}
+    func completeTrip(_: RideTrip, at _: Date) {}
+    func loadCompletedTrips() -> [RideTrip] { [] }
 }
 
 private actor RideDashboardPreviewRepository: BikeRepository, BikeBatteryHealthRepository {

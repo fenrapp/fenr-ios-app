@@ -100,7 +100,9 @@ public final class RideDashboardViewModel: ObservableObject {
                 deviceSample: deviceSpeedSample,
                 source: settings.speedSource
             ),
-            measurementSystem: settings.measurementSystem
+            speedSource: settings.speedSource,
+            measurementSystem: settings.measurementSystem,
+            isGPSAvailable: deviceSpeedResolver.hasValidDeviceSpeed(deviceSpeedSample)
         )
         updateViewState(with: mappedViewState)
         updateDeviceSpeedObservation()

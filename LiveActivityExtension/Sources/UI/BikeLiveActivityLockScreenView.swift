@@ -3,7 +3,6 @@ import DesignSystem
 import SwiftUI
 import WidgetKit
 
-@available(iOSApplicationExtension 16.1, *)
 struct BikeLiveActivityLockScreenView: View {
     let context: ActivityViewContext<BikeLiveActivityAttributes>
 

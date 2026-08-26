@@ -3,7 +3,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
     public let battery: Battery
     public let gear: DashboardGearViewData
     public let powerMode: DashboardPowerModeViewData
-    public let centerCard: CenterCard
+    public let centerMode: CenterMode
     public let connectionDetail: String
     public let hasTelemetry: Bool
     public let indicators: [DashboardIndicatorViewData]
@@ -13,7 +13,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
         battery: Battery = .init(),
         gear: DashboardGearViewData = .init(),
         powerMode: DashboardPowerModeViewData = .init(),
-        centerCard: CenterCard = .speedometer,
+        centerMode: CenterMode = .riding,
         connectionDetail: String = "Connect your bike from Diagnostics.",
         hasTelemetry: Bool = false,
         indicators: [DashboardIndicatorViewData] = []
@@ -22,14 +22,14 @@ public struct RideDashboardViewState: Equatable, Sendable {
         self.battery = battery
         self.gear = gear
         self.powerMode = powerMode
-        self.centerCard = centerCard
+        self.centerMode = centerMode
         self.connectionDetail = connectionDetail
         self.hasTelemetry = hasTelemetry
         self.indicators = indicators
     }
 
-    public enum CenterCard: Hashable, Sendable {
-        case speedometer
+    public enum CenterMode: Hashable, Sendable {
+        case riding
         case charging
     }
 

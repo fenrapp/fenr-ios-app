@@ -47,6 +47,7 @@ struct AppSettingsViewModelTests {
         })
 
         #expect(viewModel.viewState.speedSource.selection.selectedID == SpeedSource.gps.rawValue)
+        #expect(viewModel.viewState.speedSource.selection.options.map(\.title) == ["Bike", "GPS", "GPS+"])
         #expect(viewModel.viewState.speedSource.description.contains("phone GPS"))
         #expect(viewModel.viewState.speedSource.locationPermission == .authorized)
         #expect(viewModel.viewState.measurementSystem.options.map(\.title) == ["System", "Metric", "Imperial"])
