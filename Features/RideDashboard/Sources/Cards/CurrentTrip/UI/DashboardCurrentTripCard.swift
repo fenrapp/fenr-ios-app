@@ -36,10 +36,9 @@ struct DashboardCurrentTripCard: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(state.accessibilityLabel)
-        .confirmationDialog(
+        .alert(
             "Reset current trip?",
-            isPresented: $showsResetConfirmation,
-            titleVisibility: .visible
+            isPresented: $showsResetConfirmation
         ) {
             Button("Reset Trip", role: .destructive, action: reset)
             Button("Cancel", role: .cancel) {}
