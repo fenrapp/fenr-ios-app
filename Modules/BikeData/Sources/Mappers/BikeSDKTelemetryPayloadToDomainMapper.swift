@@ -4,36 +4,17 @@ import Foundation
 import StarkProtocol
 
 public struct BikeSDKTelemetryPayloadToDomainMapper: Sendable {
-    public init() {}
+    private let powerCalculator: BikePowerTelemetryCalculator
 
-    public func apply(_ payload: BikeSDKTelemetryPayload, to telemetry: inout BikeTelemetry, date: Date) {
+    public init(powerCalculator: BikePowerTelemetryCalculator) {
+        self.powerCalculator = powerCalculator
+    }
+
+    @discardableResult
+    public func apply(_ payload: BikeSDKTelemetryPayload, to telemetry: inout BikeTelemetry, date: Date) -> Bool {
         switch payload {
-        case .battery(let battery):
-            telemetry.batteryLevel = .known(percent: battery.stateOfChargePercent)
-            telemetry.healthLevel = healthLevel(percent: battery.stateOfHealthPercent)
         case .status(let status):
-            telemetry.statusFlags = BikeStatusFlags(
-                isOn: status.isOn,
-                isCharging: status.isCharging,
-                isChargerConnected: status.isChargerConnected,
-                isInGear: status.isInGear,
-                isFaultActive: status.isFaultActive,
-                isBrakeActive: telemetry.statusFlags.isBrakeActive,
-                crawlState: crawlState(isActive: status.isCrawlActive, isForward: status.isCrawlForward),
-                indicatorState: .init(
-                    isHighBeamOn: status.isHighBeamOn,
-                    isRightBlinkerOn: status.isRightBlinkerOn,
-                    isLeftBlinkerOn: status.isLeftBlinkerOn,
-                    isCheckEngineLightOn: status.isCheckEngineLightOn
-                )
-            )
-            telemetry.rawStatusFlags = BikeRawStatusFlags(
-                misc: Int(status.miscBits),
-                indicator: Int(status.indicatorBits),
-                alert: Int(status.alertBits),
-                fault: Int(status.faultBits),
-                info: Int(status.infoBits)
-            )
+            apply(status, to: &telemetry)
         case .vcuBrake(let brake):
             telemetry.statusFlags = BikeStatusFlags(
                 isOn: telemetry.statusFlags.isOn,
@@ -54,24 +35,85 @@ public struct BikeSDKTelemetryPayloadToDomainMapper: Sendable {
         case .speed(let speed):
             apply(speed, to: &telemetry)
         case .liveTotals(let totals):
-            telemetry.odometer = .known(
-                kilometers: totals.odometerKilometers,
-                centiKilometers: totals.odometerCentiKilometers
-            )
+            apply(totals, to: &telemetry)
         case .inverterTemperatures(let temperatures):
             telemetry.inverterTemperatureRawValues = temperatures.rawValues
             telemetry.inverterTemperaturesCelsius = temperatures.celsius
         case .vin(let vin):
             telemetry.vin = vin
-        case .cellVoltages, .batteryTemperatures, .batteryBalancing, .charger, .throttle, .imu:
-            break
+        case .battery(let battery):
+            apply(battery, to: &telemetry, date: date)
+        case .batterySignals(let signals):
+            apply(signals, to: &telemetry, date: date)
+        case .batteryParameters, .liveEstimations,
+             .cellVoltages, .batteryTemperatures, .batteryBalancing, .charger, .throttle, .imu:
+            return false
         }
         telemetry.lastUpdated = date
+        return true
+    }
+
+    private func apply(_ status: StarkStatusPayload, to telemetry: inout BikeTelemetry) {
+        telemetry.statusFlags = BikeStatusFlags(
+            isOn: status.isOn,
+            isCharging: status.isCharging,
+            isChargerConnected: status.isChargerConnected,
+            isInGear: status.isInGear,
+            isFaultActive: status.isFaultActive,
+            isBrakeActive: telemetry.statusFlags.isBrakeActive,
+            crawlState: crawlState(isActive: status.isCrawlActive, isForward: status.isCrawlForward),
+            indicatorState: .init(
+                isHighBeamOn: status.isHighBeamOn,
+                isRightBlinkerOn: status.isRightBlinkerOn,
+                isLeftBlinkerOn: status.isLeftBlinkerOn,
+                isCheckEngineLightOn: status.isCheckEngineLightOn
+            )
+        )
+        telemetry.rawStatusFlags = BikeRawStatusFlags(
+            misc: Int(status.miscBits),
+            indicator: Int(status.indicatorBits),
+            alert: Int(status.alertBits),
+            fault: Int(status.faultBits),
+            info: Int(status.infoBits)
+        )
+    }
+
+    private func apply(
+        _ battery: StarkBatteryPayload,
+        to telemetry: inout BikeTelemetry,
+        date: Date
+    ) {
+        telemetry.batteryTelemetry.stateOfCharge = .known(percent: battery.stateOfChargePercent)
+        telemetry.batteryTelemetry.stateOfHealth = healthLevel(percent: battery.stateOfHealthPercent)
+        telemetry.batteryTelemetry.dcBusRaw = battery.dcBusRaw
+        telemetry.batteryTelemetry.dcBusVolts = battery.dcBusVolts
+        telemetry.batteryTelemetry.stateUpdatedAt = date
+        recalculatePower(in: &telemetry, date: date)
+    }
+
+    private func apply(
+        _ signals: StarkBatterySignalsPayload,
+        to telemetry: inout BikeTelemetry,
+        date: Date
+    ) {
+        telemetry.batteryTelemetry.currentRaw = signals.currentRaw
+        telemetry.batteryTelemetry.currentAmperes = signals.currentAmperes
+        telemetry.batteryTelemetry.positiveBMS = bmsTelemetry(signals.positive)
+        telemetry.batteryTelemetry.negativeBMS = bmsTelemetry(signals.negative)
+        telemetry.batteryTelemetry.signalsUpdatedAt = date
+        recalculatePower(in: &telemetry, date: date)
     }
 
     private func apply(_ speed: StarkSpeedPayload, to telemetry: inout BikeTelemetry) {
         telemetry.speed = .known(kmh: speed.speedKmh, kmhX10: speed.speedKmhX10)
         telemetry.motorRPM = .known(speed.motorRPM)
+    }
+
+    private func apply(_ totals: StarkLiveTotalsPayload, to telemetry: inout BikeTelemetry) {
+        telemetry.odometer = .known(
+            kilometers: totals.odometerKilometers,
+            centiKilometers: totals.odometerCentiKilometers
+        )
     }
 
     private func apply(
@@ -130,5 +172,32 @@ public struct BikeSDKTelemetryPayloadToDomainMapper: Sendable {
     private func healthLevel(percent: Int?) -> HealthLevel {
         guard let percent else { return .unknown }
         return .known(percent: percent)
+    }
+
+    private func bmsTelemetry(_ payload: StarkBMSSignalsPayload) -> BikeBMSSignalsTelemetry {
+        BikeBMSSignalsTelemetry(
+            dcBusRaw: payload.dcBusRaw,
+            dcBusVolts: payload.dcBusVolts,
+            temperatureRaw: payload.temperatureRaw,
+            temperatureCelsius: payload.temperatureCelsius,
+            humidityRaw: payload.humidityRaw,
+            humidityPercent: payload.humidityPercent
+        )
+    }
+
+    private func recalculatePower(in telemetry: inout BikeTelemetry, date: Date) {
+        guard let dcBusVolts = telemetry.batteryTelemetry.dcBusVolts,
+              let currentAmperes = telemetry.batteryTelemetry.currentAmperes
+        else {
+            telemetry.powerTelemetry.electricalPowerWatts = nil
+            telemetry.powerTelemetry.calculatedPowerUpdatedAt = nil
+            return
+        }
+        let calculation = powerCalculator.calculate(
+            dcBusVolts: dcBusVolts,
+            batteryCurrentAmperes: currentAmperes
+        )
+        telemetry.powerTelemetry.electricalPowerWatts = calculation.electricalPowerWatts
+        telemetry.powerTelemetry.calculatedPowerUpdatedAt = date
     }
 }

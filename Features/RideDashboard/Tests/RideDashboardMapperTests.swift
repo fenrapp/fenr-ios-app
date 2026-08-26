@@ -231,7 +231,7 @@ struct RideDashboardMapperTests {
         ))
     }
 
-    @Test("Keeps unknown active configuration as placeholders")
+    @Test("Hides the power mode chip without confirmed HP and regen")
     func mapsPartialPowerModePresentation() {
         let telemetry = BikeTelemetry(
             batteryLevel: .known(percent: 60),
@@ -246,11 +246,7 @@ struct RideDashboardMapperTests {
             measurementSystem: .metric
         )
 
-        #expect(state.powerMode.horsepower == "--")
-        #expect(state.powerMode.regenerativeBraking == "--")
-        #expect(state.powerMode.powerTraction == "20")
-        #expect(state.powerMode.brakingTraction == "--")
-        #expect(state.powerMode.showsTractionControl)
+        #expect(state.powerMode == .init())
     }
 
     @Test("Keeps power and regen available while hiding unavailable TC")

@@ -5,16 +5,17 @@ import Foundation
 public struct BikeSDKTelemetryPayloadToBatteryHealthMapper: Sendable {
     public init() {}
 
+    @discardableResult
     public func apply(
         _ payload: BikeSDKTelemetryPayload,
         to health: inout BikeBatteryHealth,
         date: Date
-    ) {
+    ) -> Bool {
         switch payload {
         case .battery(let battery):
             health.stateOfCharge = .known(percent: battery.stateOfChargePercent)
             health.stateOfHealth = healthLevel(percent: battery.stateOfHealthPercent)
-            health.dcBusVoltage = dcBusVoltage(rawValue: battery.dcBusRaw)
+            health.dcBusVoltage = dcBusVoltage(volts: battery.dcBusVolts)
             health.lastUpdated = date
         case .status(let status):
             health.chargeState = chargeState(
@@ -53,10 +54,12 @@ public struct BikeSDKTelemetryPayloadToBatteryHealthMapper: Sendable {
                 chargerType: BikeChargerType(rawValue: payload.typeRaw)
             )
             health.lastUpdated = date
-        case .vcuBrake, .map, .powerModeConfiguration, .tractionControlConfiguration,
-             .speed, .throttle, .imu, .liveTotals, .inverterTemperatures, .vin:
-            break
+        case .batteryParameters, .batterySignals, .vcuBrake, .map,
+             .powerModeConfiguration, .tractionControlConfiguration, .speed,
+             .throttle, .imu, .liveTotals, .liveEstimations, .inverterTemperatures, .vin:
+            return false
         }
+        return true
     }
 
     private func healthLevel(percent: Int?) -> HealthLevel {
@@ -64,9 +67,9 @@ public struct BikeSDKTelemetryPayloadToBatteryHealthMapper: Sendable {
         return .known(percent: percent)
     }
 
-    private func dcBusVoltage(rawValue: Int?) -> BatteryVoltage {
-        guard let rawValue else { return .unknown }
-        return .known(volts: Double(rawValue) / BatteryHealthConstants.dcBusScale)
+    private func dcBusVoltage(volts: Double?) -> BatteryVoltage {
+        guard let volts else { return .unknown }
+        return .known(volts: volts)
     }
 
     private func chargeState(isCharging: Bool, isChargerConnected: Bool) -> BatteryChargeState {
@@ -76,7 +79,6 @@ public struct BikeSDKTelemetryPayloadToBatteryHealthMapper: Sendable {
 }
 
 private enum BatteryHealthConstants {
-    static let dcBusScale = 10.0
     static let firstCellPosition = 1
     static let firstTemperaturePosition = 1
 }

@@ -11,6 +11,7 @@ public struct BikeConnectionSessionPolicy: Sendable {
              .bluetoothPoweredOff,
              .scanning,
              .reconnecting,
+             .pairingResetRequired,
              .disconnected,
              .failed:
             true

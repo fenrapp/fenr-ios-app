@@ -45,10 +45,11 @@ public final class AppSettingsViewModel: ObservableObject {
         observationTask = Task { [weak self] in
             let stream = await observeSettings.execute()
             for await settings in stream {
-                guard !Task.isCancelled else { return }
-                self?.settings = settings
-                self?.render()
-                await self?.refreshLocationAuthorizationStatus()
+                guard !Task.isCancelled, let self else { return }
+                guard self.settings != settings else { continue }
+                self.settings = settings
+                self.render()
+                await self.refreshLocationAuthorizationStatus()
             }
         }
         locationAuthorizationTask?.cancel()
@@ -155,10 +156,12 @@ public final class AppSettingsViewModel: ObservableObject {
         guard let observe = useCases.observeBikeProfile else { return }
         profileTask?.cancel()
         profileTask = Task { [weak self] in
-            for await profile in await observe.execute() {
-                guard !Task.isCancelled else { return }
-                self?.profile = profile
-                self?.render()
+            for await state in await observe.execute() {
+                guard !Task.isCancelled, let self else { return }
+                let profile = state.profile
+                guard self.profile != profile else { continue }
+                self.profile = profile
+                self.render()
             }
         }
     }
@@ -185,7 +188,7 @@ public final class AppSettingsViewModel: ObservableObject {
     }
 
     private func render() {
-        viewState = mapper.map(
+        let nextViewState = mapper.map(
             settings: settings,
             locationAuthorizationStatus: locationAuthorizationStatus,
             profile: profile,
@@ -193,5 +196,7 @@ public final class AppSettingsViewModel: ObservableObject {
             isVerifying: isVerifyingPowerTier,
             verificationMessage: powerTierVerificationMessage
         )
+        guard nextViewState != viewState else { return }
+        viewState = nextViewState
     }
 }

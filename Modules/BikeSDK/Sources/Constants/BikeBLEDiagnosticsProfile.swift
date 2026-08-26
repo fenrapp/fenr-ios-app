@@ -15,7 +15,25 @@ enum BikeBLECurrentObservedFirmwareProfile {
     }
 
     static var telemetryCharacteristicUUIDs: [CBUUID] {
+        [
+            statusUUID,
+            speedUUID,
+            mapUUID,
+            liveTotalsUUID,
+            liveEstimationsUUID,
+            batterySOCUUID,
+            batteryParamsUUID,
+            batterySignalsUUID,
+            vcuTelemetryTLVUUID
+        ]
+    }
+
+    static var requiredTelemetryNotifyUUIDs: [CBUUID] {
         [statusUUID, speedUUID, mapUUID, liveTotalsUUID, batterySOCUUID, vcuTelemetryTLVUUID]
+    }
+
+    static var telemetrySnapshotUUIDs: [CBUUID] {
+        [batterySOCUUID, liveEstimationsUUID, batteryParamsUUID, batterySignalsUUID]
     }
 
     // These UUIDs still need protocol characterization. Charge power control uses only 4005 after prepare guards.
@@ -105,9 +123,11 @@ enum BikeBLECurrentObservedFirmwareProfile {
     private static var liveThrottleUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.liveThrottle) }
     private static var liveIMUUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.liveIMU) }
     private static var liveTotalsUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.liveTotals) }
+    private static var liveEstimationsUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.liveEstimation) }
     private static var liveTelemetryTLVUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.liveTelemetryTLV) }
 
     private static var batteryStatusUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.batteryStatus) }
+    private static var batteryParamsUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.batteryParams) }
     private static var batteryTemperaturesUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.batteryTemperatures) }
     private static var batteryDCBusUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.batteryDCBus) }
     private static var batteryCellVoltagesUUID: CBUUID { CBUUID(nsuuid: StarkUUIDs.batteryCellVoltages) }
@@ -141,6 +161,7 @@ enum BikeBLECurrentObservedFirmwareProfile {
                 liveIMUUUID,
                 mapUUID,
                 liveTotalsUUID,
+                liveEstimationsUUID,
                 liveTelemetryTLVUUID
             ]
         )
@@ -151,6 +172,7 @@ enum BikeBLECurrentObservedFirmwareProfile {
             serviceUUID: CBUUID(nsuuid: StarkUUIDs.batteryService),
             characteristicUUIDs: [
                 batteryStatusUUID,
+                batteryParamsUUID,
                 batterySOCUUID,
                 batteryTemperaturesUUID,
                 batteryDCBusUUID,

@@ -286,6 +286,26 @@ struct BikeEmulatorRepositoryTests {
 }
 
 extension BikeEmulatorRepositoryTests {
+    @Test("Periodic telemetry does not repeat an unchanged connection")
+    func periodicUpdatesSkipUnchangedConnection() async throws {
+        let repository = BikeEmulatorRepositoryFactory.make(scenario: .riding)
+        let recorder = EmulatorConnectionRecorder()
+
+        await repository.start()
+        let stream = await repository.observeConnection()
+        let task = Task {
+            for await connection in stream {
+                await recorder.append(connection)
+            }
+        }
+
+        try await Task.sleep(for: .milliseconds(600))
+
+        #expect(await recorder.count == 1)
+        task.cancel()
+        await repository.stop()
+    }
+
     @Test("Clean riding scenario moves without activating indicators")
     func cleanRidingScenarioHasNoIndicators() async throws {
         let repository = BikeEmulatorRepositoryFactory.make(scenario: .ridingClean)
@@ -306,4 +326,12 @@ extension BikeEmulatorRepositoryTests {
 
 private enum EmulatorTestError: Error {
     case streamFinished
+}
+
+private actor EmulatorConnectionRecorder {
+    private(set) var count = 0
+
+    func append(_: BikeConnection) {
+        count += 1
+    }
 }

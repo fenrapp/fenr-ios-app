@@ -14,13 +14,22 @@ public actor BikeRepositoryStateStore {
         connection
     }
 
-    public func updateTelemetry(_ update: (inout BikeTelemetry) -> Void) -> BikeTelemetry {
-        update(&telemetry)
+    public func updateTelemetryIf(
+        _ update: (inout BikeTelemetry) -> Bool
+    ) -> BikeTelemetry? {
+        var candidate = telemetry
+        guard update(&candidate) else { return nil }
+        telemetry = candidate
         return telemetry
     }
 
-    public func updateConnection(_ update: (inout BikeConnection) -> Void) -> BikeConnection {
-        update(&connection)
+    public func updateConnectionIfChanged(
+        _ update: (inout BikeConnection) -> Void
+    ) -> BikeConnection? {
+        var candidate = connection
+        update(&candidate)
+        guard candidate != connection else { return nil }
+        connection = candidate
         return connection
     }
 

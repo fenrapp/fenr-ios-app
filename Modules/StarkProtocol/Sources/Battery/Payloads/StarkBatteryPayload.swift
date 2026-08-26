@@ -8,4 +8,8 @@ public struct StarkBatteryPayload: StarkPayload {
         self.stateOfHealthPercent = stateOfHealthPercent
         self.dcBusRaw = dcBusRaw
     }
+
+    public var dcBusVolts: Double? {
+        dcBusRaw.map { Double($0) / StarkBatteryElectricalScale.dcBus }
+    }
 }

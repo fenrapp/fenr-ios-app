@@ -10,7 +10,9 @@ public enum LiveBikeRepositoryFactory {
         return LiveBikeRepository(
             client: client,
             eventHandler: LiveBikeRepositoryEventHandler(
-                telemetryMapper: BikeSDKTelemetryPayloadToDomainMapper(),
+                telemetryMapper: BikeSDKTelemetryPayloadToDomainMapper(
+                    powerCalculator: BikePowerTelemetryCalculator()
+                ),
                 eventMapper: BikeSDKEventToDomainMapper(
                     connectionMapper: BikeSDKConnectionStatusToDomainMapper(),
                     connectionDebugMapper: BikeSDKConnectionStatusDebugMapper(),

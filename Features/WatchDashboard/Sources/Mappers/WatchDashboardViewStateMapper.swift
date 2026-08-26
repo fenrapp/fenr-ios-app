@@ -139,6 +139,7 @@ public struct WatchDashboardViewStateMapper: Sendable {
         case .connecting, .discovering, .authenticating, .authenticated, .subscribed: "Connecting"
         case .bluetoothPoweredOff: "Bluetooth is off"
         case .bluetoothUnauthorized: "Bluetooth permission required"
+        case .pairingResetRequired: "Forget and re-pair the bike on iPhone"
         case .failed(let message): message
         case .disconnected(let reason): reason ?? "Disconnected"
         default: "Waiting for telemetry"

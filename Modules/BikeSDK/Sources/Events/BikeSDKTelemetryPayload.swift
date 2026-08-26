@@ -2,6 +2,8 @@ import StarkProtocol
 
 public enum BikeSDKTelemetryPayload: Equatable, Sendable {
     case battery(StarkBatteryPayload)
+    case batteryParameters(StarkBatteryParametersPayload)
+    case batterySignals(StarkBatterySignalsPayload)
     case cellVoltages(StarkCellVoltagesPayload)
     case batteryTemperatures(StarkBatteryTemperaturesPayload)
     case batteryBalancing(StarkBatteryBalancingPayload)
@@ -15,6 +17,7 @@ public enum BikeSDKTelemetryPayload: Equatable, Sendable {
     case throttle(StarkThrottlePayload)
     case imu(StarkIMUPayload)
     case liveTotals(StarkLiveTotalsPayload)
+    case liveEstimations(StarkLiveEstimationsPayload)
     case inverterTemperatures(StarkInverterTemperaturesPayload)
     case vin(String)
 }

@@ -29,6 +29,8 @@ public struct ConnectionStateToDisplayMapper: Sendable {
             "Receiving telemetry"
         case .reconnecting:
             "Reconnecting"
+        case .pairingResetRequired:
+            "Pairing reset required"
         case .disconnected:
             "Disconnected"
         case .failed:
@@ -62,6 +64,8 @@ public struct ConnectionStateToDisplayMapper: Sendable {
             "Secure telemetry active \(peripheralName ?? "")"
         case .reconnecting(let vin, let attempt, let maximumAttempts):
             "Retrying \(vin) (\(attempt)/\(maximumAttempts))"
+        case .pairingResetRequired(let message):
+            message
         case .disconnected(let reason):
             reason ?? "No active connection"
         case .failed(let message):

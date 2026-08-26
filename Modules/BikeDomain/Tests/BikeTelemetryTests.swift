@@ -16,4 +16,21 @@ struct BikeTelemetryTests {
 
         #expect(telemetry.runState == .off)
     }
+
+    @Test("Battery aliases and focused telemetry share one source of truth")
+    func batteryAliasesUseFocusedTelemetryStorage() {
+        var telemetry = BikeTelemetry(
+            batteryLevel: .known(percent: 70),
+            healthLevel: .known(percent: 96)
+        )
+
+        #expect(telemetry.batteryTelemetry.stateOfCharge == .known(percent: 70))
+        #expect(telemetry.batteryTelemetry.stateOfHealth == .known(percent: 96))
+
+        telemetry.batteryTelemetry.stateOfCharge = .known(percent: 69)
+        telemetry.healthLevel = .known(percent: 95)
+
+        #expect(telemetry.batteryLevel == .known(percent: 69))
+        #expect(telemetry.batteryTelemetry.stateOfHealth == .known(percent: 95))
+    }
 }

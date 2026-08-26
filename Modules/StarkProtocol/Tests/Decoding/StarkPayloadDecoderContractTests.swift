@@ -24,6 +24,18 @@ struct StarkPayloadDecoderContractTests {
             StarkInverterTemperaturesDecoder(),
             data: StarkProtocolFixtures.observedInverterTemperatures
         )
+        let estimations = try decode(
+            StarkLiveEstimationsDecoder(),
+            data: StarkProtocolFixtures.liveEstimationsNegativePower
+        )
+        let batteryParameters = try decode(
+            StarkBatteryParametersDecoder(),
+            data: StarkProtocolFixtures.batteryParameters
+        )
+        let batterySignals = try decode(
+            StarkBatterySignalsDecoder(),
+            data: StarkProtocolFixtures.batterySignalsNegativeCurrent
+        )
 
         #expect(battery.stateOfChargePercent == 91)
         #expect(status.isCrawlActive)
@@ -34,6 +46,9 @@ struct StarkPayloadDecoderContractTests {
         #expect(temperatures.celsius.count == StarkBatteryPayloadLayout.temperatureCount)
         #expect(balancing.activeCellIndexes.isEmpty)
         #expect(inverterTemperatures.rawValues.count == StarkInverterTemperaturesPayloadLayout.temperatureCount)
+        #expect(estimations.nativeMotorPowerRaw == -100)
+        #expect(batteryParameters.capacityRaw == 0x1234)
+        #expect(batterySignals.currentRaw == -25)
     }
 
     @Test("Payload constants match decoder contracts")
@@ -46,6 +61,9 @@ struct StarkPayloadDecoderContractTests {
         #expect(StarkBatteryPayloadLayout.temperaturesLength == 27)
         #expect(StarkBatteryPayloadLayout.balancingLength == 13)
         #expect(StarkInverterTemperaturesPayloadLayout.requiredLength == 16)
+        #expect(StarkLiveEstimationsPayloadLayout.requiredLength == 6)
+        #expect(StarkBatteryParametersPayloadLayout.requiredLength == 4)
+        #expect(StarkBatterySignalsPayloadLayout.requiredLength == 18)
     }
 
     private func decode<Decoder: StarkPayloadDecoding>(

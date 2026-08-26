@@ -38,16 +38,14 @@ final class BikeBLEPowerModeConfigurationCoordinator {
                 return
             }
             console("automatic 4005 refresh starting; auth=\(sessionStore.authenticationState)")
-            await emitDebug("Automatic 4005 refresh started")
+            await report("Automatic 4005 refresh started")
             do {
                 try await refresh()
-                console("automatic 4005 refresh completed")
-                await emitDebug("Automatic 4005 refresh completed")
+                await report("Automatic 4005 refresh completed")
             } catch is CancellationError {
                 console("automatic 4005 refresh cancelled")
             } catch {
-                console("automatic 4005 refresh failed: \(error.localizedDescription)")
-                await emitDebug("Automatic 4005 refresh failed: \(error.localizedDescription)")
+                await report("Automatic 4005 refresh failed: \(error.localizedDescription)")
             }
         }
     }
@@ -96,8 +94,8 @@ final class BikeBLEPowerModeConfigurationCoordinator {
                     expectedMapIndex: mapIndex
                 )
                 receivedMapCount += 1
-                console(
-                    "power map \(mapIndex) decoded hp=\(payload.horsepower) "
+                await report(
+                    "4005 power map \(mapIndex) decoded hp=\(payload.horsepower) "
                         + "regen=\(payload.regenerativeBrakingPercent)%"
                 )
                 await eventEmitter.send(.telemetry(.powerModeConfiguration(payload)))
@@ -108,7 +106,6 @@ final class BikeBLEPowerModeConfigurationCoordinator {
                 if firstFailure == nil {
                     firstFailure = error
                 }
-                console("power map \(mapIndex) failed: \(error.localizedDescription)")
                 await emitMapFailure(kind: "power", mapIndex: mapIndex, error: error)
             }
         }
@@ -119,7 +116,10 @@ final class BikeBLEPowerModeConfigurationCoordinator {
                 "No power mode configuration was received from 4005.\(detail)"
             )
         }
-        console("power configurations received \(receivedMapCount)/5")
+        console(
+            "power configurations received \(receivedMapCount)/"
+                + "\(StarkPowerModeConfigurationCommand.mapIndexes.count)"
+        )
     }
 
     private func readTractionControlConfigurations() async throws {
@@ -141,8 +141,8 @@ final class BikeBLEPowerModeConfigurationCoordinator {
                     expectedMapIndex: mapIndex
                 )
                 receivedMapCount += 1
-                console(
-                    "TC map \(mapIndex) decoded power=\(payload.powerPercent)% "
+                await report(
+                    "4005 TC map \(mapIndex) decoded power=\(payload.powerPercent)% "
                         + "braking=\(payload.brakingPercent)%"
                 )
                 await eventEmitter.send(.telemetry(.tractionControlConfiguration(payload)))
@@ -150,21 +150,27 @@ final class BikeBLEPowerModeConfigurationCoordinator {
             } catch is CancellationError {
                 throw CancellationError()
             } catch {
-                console("TC map \(mapIndex) failed: \(error.localizedDescription)")
                 await emitMapFailure(kind: "TC", mapIndex: mapIndex, error: error)
             }
         }
-        console("TC configurations received \(receivedMapCount)/5")
+        console(
+            "TC configurations received \(receivedMapCount)/"
+                + "\(StarkPowerModeConfigurationCommand.mapIndexes.count)"
+        )
     }
 
     private func emitMapFailure(kind: String, mapIndex: Int, error: Error) async {
-        await emitDebug(
+        await report(
             "4005 \(kind) map \(mapIndex) failed: \(error.localizedDescription)"
         )
     }
 
+    private func report(_ detail: String) async {
+        console(detail)
+        await emitDebug(detail)
+    }
+
     private func emitDebug(_ detail: String) async {
-        guard BikePowerModeDebugLog.isEnabled else { return }
         await eventEmitter.send(.debug(.init(title: "Power modes", detail: detail)))
     }
 

@@ -4,7 +4,7 @@ import Foundation
 
 actor DebugBikeProfileRepository: BikeProfileRepository {
     private var profile: BikeProfile?
-    private var observers: [UUID: AsyncStream<BikeProfile?>.Continuation] = [:]
+    private var observers: [UUID: AsyncStream<BikeProfileState>.Continuation] = [:]
 
     init(initialProfile: BikeProfile? = nil) {
         profile = initialProfile
@@ -15,13 +15,15 @@ actor DebugBikeProfileRepository: BikeProfileRepository {
     }
 
     func saveProfile(_ profile: BikeProfile) async {
+        guard profile != self.profile else { return }
         self.profile = profile
-        observers.values.forEach { $0.yield(profile) }
+        observers.values.forEach { $0.yield(BikeProfileState(profile: profile)) }
     }
 
     func clearProfile() async {
+        guard profile != nil else { return }
         profile = nil
-        observers.values.forEach { $0.yield(nil) }
+        observers.values.forEach { $0.yield(BikeProfileState(profile: nil)) }
     }
 
     func apply(preset: BikeEmulatorPowerModePreset) {
@@ -36,18 +38,18 @@ actor DebugBikeProfileRepository: BikeProfileRepository {
             profile.alphaDetectedAt = nil
         }
         self.profile = profile
-        observers.values.forEach { $0.yield(profile) }
+        observers.values.forEach { $0.yield(BikeProfileState(profile: profile)) }
     }
 
-    func observeProfile() -> AsyncStream<BikeProfile?> {
+    func observeProfile() async -> AsyncStream<BikeProfileState> {
         let identifier = UUID()
-        return AsyncStream { continuation in
-            observers[identifier] = continuation
-            continuation.yield(profile)
-            continuation.onTermination = { [weak self] _ in
-                Task { await self?.removeObserver(identifier) }
-            }
+        let (stream, continuation) = AsyncStream<BikeProfileState>.makeStream()
+        observers[identifier] = continuation
+        continuation.yield(BikeProfileState(profile: profile))
+        continuation.onTermination = { [weak self] _ in
+            Task { await self?.removeObserver(identifier) }
         }
+        return stream
     }
 
     private func removeObserver(_ identifier: UUID) {

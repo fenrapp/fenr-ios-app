@@ -53,10 +53,14 @@ struct BikeDiagnosticsTelemetryRegressionTests {
             viewModel.viewState.debugEvents.first?.detail == "Packet 2"
         })
 
-        let exportedLines = viewModel.debugLogText()
+        let exportedLog = viewModel.debugLogText()
+        let exportedLines = exportedLog
             .components(separatedBy: BikeDiagnosticsConstants.debugLogLineSeparator)
         #expect(viewModel.viewState.debugEvents.count == 1)
-        #expect(exportedLines.count == eventCount)
+        #expect(exportedLog.contains("[Power Telemetry]"))
+        #expect(exportedLog.contains("[Battery Telemetry]"))
+        #expect(exportedLines.filter { $0.contains(" | Notification | ") }.count == eventCount)
+        #expect(exportedLines.contains { $0.contains("Packet 2") })
     }
 
     private func telemetry(soc: Int, isOn: Bool) -> BikeTelemetry {

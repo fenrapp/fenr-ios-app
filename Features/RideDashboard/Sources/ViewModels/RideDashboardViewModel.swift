@@ -114,7 +114,7 @@ public final class RideDashboardViewModel: ObservableObject {
             reconnectionGraceTask?.cancel()
             reconnectionGraceTask = nil
             lastLiveViewState = mappedViewState
-            viewState = mappedViewState
+            publish(mappedViewState)
             return
         }
 
@@ -125,12 +125,17 @@ public final class RideDashboardViewModel: ObservableObject {
             reconnectionGraceTask?.cancel()
             reconnectionGraceTask = nil
             self.lastLiveViewState = nil
-            viewState = mappedViewState
+            publish(mappedViewState)
             return
         }
 
-        viewState = lastLiveViewState
+        publish(lastLiveViewState)
         startReconnectionGracePeriod()
+    }
+
+    private func publish(_ nextViewState: RideDashboardViewState) {
+        guard nextViewState != viewState else { return }
+        viewState = nextViewState
     }
 
     private func startReconnectionGracePeriod() {
@@ -159,7 +164,7 @@ public final class RideDashboardViewModel: ObservableObject {
              .disconnected:
             true
         case .idle, .bluetoothUnavailable, .bluetoothUnauthorized, .bluetoothPoweredOff, .receivingTelemetry,
-             .failed:
+             .pairingResetRequired, .failed:
             false
         }
     }

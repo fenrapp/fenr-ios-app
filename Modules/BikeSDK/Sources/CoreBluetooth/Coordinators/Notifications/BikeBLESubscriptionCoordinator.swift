@@ -176,6 +176,7 @@ struct BikeBLESubscriptionCoordinator {
             return
         }
         for uuid in BikeSDKConstants.batteryHealthMonitoringUUIDs {
+            guard !BikeSDKConstants.telemetryCharacteristicUUIDs.contains(uuid) else { continue }
             sessionStore.removePendingNotificationCharacteristic(uuid: uuid)
             guard let characteristic = sessionStore.discoveredCharacteristics[uuid] else { continue }
             sessionStore.enqueueUnsubscriptionCharacteristic(characteristic)
@@ -203,6 +204,7 @@ struct BikeBLESubscriptionCoordinator {
             configSubscriptionDidComplete()
         }
         if BikeSDKConstants.batteryHealthMonitoringUUIDs.contains(characteristic.uuid),
+           !BikeSDKConstants.telemetryCharacteristicUUIDs.contains(characteristic.uuid),
            !sessionStore.isBatteryHealthMonitoringActive() {
             sessionStore.enqueueUnsubscriptionCharacteristic(characteristic)
         }

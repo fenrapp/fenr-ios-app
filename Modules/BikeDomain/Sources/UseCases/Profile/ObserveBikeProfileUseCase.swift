@@ -5,7 +5,7 @@ public struct ObserveBikeProfileUseCase: Sendable {
         self.repository = repository
     }
 
-    public func execute() async -> AsyncStream<BikeProfile?> {
+    public func execute() async -> AsyncStream<BikeProfileState> {
         await repository.observeProfile()
     }
 }

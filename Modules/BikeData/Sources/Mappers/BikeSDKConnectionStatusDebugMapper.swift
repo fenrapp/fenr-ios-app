@@ -29,6 +29,8 @@ public struct BikeSDKConnectionStatusDebugMapper: Sendable {
             "Receiving telemetry from \(peripheralName ?? "bike")"
         case .reconnecting(let vin, let attempt, let maximumAttempts):
             "Reconnecting to \(vin) (\(attempt)/\(maximumAttempts))"
+        case .pairingResetRequired(let message):
+            "Pairing reset required: \(message)"
         case .disconnected(let reason):
             "Disconnected \(reason ?? "")"
         case .failed(let message):

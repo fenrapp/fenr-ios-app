@@ -62,6 +62,14 @@ enum BikeDiagnosticsPreviewFactory {
                     speedFormatter: speedFormatter,
                     measurementTextFormatter: .init(locale: locale)
                 ),
+                powerMetricsMapper: .init(
+                    dateFormatStyle: dateFormatStyle,
+                    measurementTextFormatter: .init(locale: locale)
+                ),
+                batteryMetricsMapper: .init(
+                    dateFormatStyle: dateFormatStyle,
+                    measurementTextFormatter: .init(locale: locale)
+                ),
                 badgesMapper: .init(runStateMapper: .init()),
                 rawFlagsMapper: .init(),
                 debugEventMapper: .init(dateFormatStyle: dateFormatStyle)
@@ -126,9 +134,36 @@ private actor PreviewBikeRepository: BikeRepository {
                 indicatorState: .init(isRightBlinkerOn: true)
             ),
             rawStatusFlags: .init(misc: 0, indicator: 4, alert: 0, fault: 0, info: 0x0018),
+            powerTelemetry: .init(
+                electricalPowerWatts: 10_000,
+                calculatedPowerUpdatedAt: Date()
+            ),
+            batteryTelemetry: .init(
+                stateOfCharge: .known(percent: 91),
+                stateOfHealth: .known(percent: 99),
+                dcBusRaw: 4_000,
+                dcBusVolts: 400,
+                currentRaw: 25,
+                currentAmperes: 25,
+                positiveBMS: previewBMS(dcBusRaw: 4_000),
+                negativeBMS: previewBMS(dcBusRaw: 3_995),
+                stateUpdatedAt: Date(),
+                signalsUpdatedAt: Date()
+            ),
             lastUpdated: Date()
         ))
         await debug.send(.init(title: "Notification", detail: "00006004-5374-6172-4B20-467574757265 4b 5B 00 63 00"))
+    }
+
+    private func previewBMS(dcBusRaw: Int) -> BikeBMSSignalsTelemetry {
+        .init(
+            dcBusRaw: dcBusRaw,
+            dcBusVolts: Double(dcBusRaw) / 10,
+            temperatureRaw: 2_534,
+            temperatureCelsius: 25.34,
+            humidityRaw: 5_012,
+            humidityPercent: 50.12
+        )
     }
 }
 

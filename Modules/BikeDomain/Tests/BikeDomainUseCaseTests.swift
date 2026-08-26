@@ -38,4 +38,29 @@ struct BikeDomainUseCaseTests {
         let pinDeriver = SpyBikePinDeriver()
         #expect(DeriveBikePinUseCase(pinDeriver: pinDeriver).execute(vin: "VIN") == "123456")
     }
+
+    @Test("Focused telemetry use cases project and deduplicate domain values")
+    func focusedTelemetryUseCases() async throws {
+        let powerRepository = SpyRepository()
+        let powerStream = await ObserveBikePowerTelemetryUseCase(repository: powerRepository).execute()
+        var powerIterator = powerStream.makeAsyncIterator()
+        let firstPower = BikePowerTelemetry(electricalPowerWatts: 10_000)
+        await powerRepository.sendTelemetry(BikeTelemetry(powerTelemetry: firstPower))
+        await powerRepository.sendTelemetry(BikeTelemetry(powerTelemetry: firstPower))
+        await powerRepository.sendTelemetry(BikeTelemetry(
+            powerTelemetry: .init(electricalPowerWatts: 11_000)
+        ))
+
+        #expect(await powerIterator.next()?.electricalPowerWatts == 10_000)
+        #expect(await powerIterator.next()?.electricalPowerWatts == 11_000)
+
+        let batteryRepository = SpyRepository()
+        let batteryStream = await ObserveBikeBatteryTelemetryUseCase(repository: batteryRepository).execute()
+        var batteryIterator = batteryStream.makeAsyncIterator()
+        await batteryRepository.sendTelemetry(BikeTelemetry(
+            batteryTelemetry: .init(dcBusRaw: 4_000, dcBusVolts: 400)
+        ))
+
+        #expect(await batteryIterator.next()?.dcBusVolts == 400)
+    }
 }

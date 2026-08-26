@@ -68,6 +68,14 @@ struct BikeDiagnosticsDependencyContainer {
                     speedFormatter: speedFormatter,
                     measurementTextFormatter: VehicleMeasurementTextFormatter(locale: locale)
                 ),
+                powerMetricsMapper: BikePowerTelemetryToMetricsMapper(
+                    dateFormatStyle: dateFormatStyle,
+                    measurementTextFormatter: VehicleMeasurementTextFormatter(locale: locale)
+                ),
+                batteryMetricsMapper: BikeBatteryTelemetryToMetricsMapper(
+                    dateFormatStyle: dateFormatStyle,
+                    measurementTextFormatter: VehicleMeasurementTextFormatter(locale: locale)
+                ),
                 badgesMapper: BikeTelemetryToBadgesMapper(
                     runStateMapper: BikeRunStateToBadgeMapper()
                 ),

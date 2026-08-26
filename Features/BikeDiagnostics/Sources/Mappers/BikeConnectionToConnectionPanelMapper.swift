@@ -40,6 +40,7 @@ public struct BikeConnectionToConnectionPanelMapper: Sendable {
              .scanning,
              .connecting,
              .reconnecting,
+             .pairingResetRequired,
              .disconnected,
              .failed:
             false

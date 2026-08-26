@@ -31,7 +31,13 @@ enum BikeSDKConstants {
         BikeBLEDiagnosticsProfile.telemetryCharacteristicUUIDs
     }
 
-    static var requiredTelemetryNotifyUUIDs: [CBUUID] { telemetryCharacteristicUUIDs }
+    static var requiredTelemetryNotifyUUIDs: [CBUUID] {
+        BikeBLEDiagnosticsProfile.requiredTelemetryNotifyUUIDs
+    }
+
+    static var telemetrySnapshotUUIDs: [CBUUID] {
+        BikeBLEDiagnosticsProfile.telemetrySnapshotUUIDs
+    }
 
     static var batteryHealthMonitoringUUIDs: [CBUUID] {
         BikeBLEDiagnosticsProfile.batteryHealthMonitoringUUIDs

@@ -11,6 +11,7 @@ public struct RideDashboardView: View {
     @State private var selectedRidingCard = RidingDashboardCard.speedometer
     @State private var selectedCurrentTripPage = CurrentTripDashboardPage.current
     @State private var currentTripPageResetTask: Task<Void, Never>?
+    private let showsTelemetryButton: Bool
     private let onDiagnostics: () -> Void
 
     public init(
@@ -18,12 +19,14 @@ public struct RideDashboardView: View {
         currentTripViewModel: CurrentTripCardViewModel,
         tripStatisticsViewModel: TripStatisticsCardViewModel,
         chargingViewModel: ChargingDashboardViewModel,
+        showsTelemetryButton: Bool = false,
         onDiagnostics: @escaping () -> Void
     ) {
         self.viewModel = viewModel
         self.currentTripViewModel = currentTripViewModel
         self.tripStatisticsViewModel = tripStatisticsViewModel
         self.chargingViewModel = chargingViewModel
+        self.showsTelemetryButton = showsTelemetryButton
         self.onDiagnostics = onDiagnostics
     }
 
@@ -104,6 +107,17 @@ public struct RideDashboardView: View {
                 }
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
+            .overlay(alignment: .topTrailing) {
+                if showsTelemetryButton {
+                    Button(action: onDiagnostics) {
+                        Label("Telemetry", systemImage: "waveform.path.ecg")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                    .padding(Constants.accessoryEdgePadding)
+                    .accessibilityIdentifier("dashboard.telemetry")
+                }
+            }
         }
         .background(Color(uiColor: .systemBackground).ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)

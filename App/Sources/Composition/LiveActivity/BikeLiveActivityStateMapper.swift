@@ -151,7 +151,8 @@ struct BikeLiveActivityStateMapper {
 
     private func isConnectionLost(_ state: ConnectionState) -> Bool {
         switch state {
-        case .bluetoothUnavailable, .bluetoothUnauthorized, .bluetoothPoweredOff, .disconnected, .failed:
+        case .bluetoothUnavailable, .bluetoothUnauthorized, .bluetoothPoweredOff, .pairingResetRequired,
+             .disconnected, .failed:
             true
         default:
             false

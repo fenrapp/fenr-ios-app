@@ -314,6 +314,11 @@ private extension BikeOnboardingViewModel {
             viewState.connectionPhase = nil
             viewState.errorMessage = message
             viewState.showsBluetoothSettingsButton = false
+        case .pairingResetRequired(let message):
+            viewState.isConnecting = false
+            viewState.connectionPhase = nil
+            viewState.errorMessage = message
+            viewState.showsBluetoothSettingsButton = false
         case .bluetoothPoweredOff:
             bluetoothAccessTask?.cancel()
             bluetoothAccessTask = nil

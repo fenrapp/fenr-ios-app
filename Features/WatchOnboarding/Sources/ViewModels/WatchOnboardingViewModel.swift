@@ -149,6 +149,9 @@ public final class WatchOnboardingViewModel: ObservableObject {
         case .failed(let message):
             viewState.isConnecting = false
             viewState.errorMessage = message
+        case .pairingResetRequired(let message):
+            viewState.isConnecting = false
+            viewState.errorMessage = message
         case .bluetoothPoweredOff:
             viewState.isConnecting = false
             viewState.errorMessage = "Turn on Bluetooth to continue."
@@ -189,6 +192,7 @@ public final class WatchOnboardingViewModel: ObservableObject {
         case .authenticating: "Authenticating"
         case .authenticated, .subscribed: "Starting telemetry"
         case .reconnecting: "Reconnecting"
+        case .pairingResetRequired: "Forget and re-pair the bike on iPhone"
         default: viewState.detail
         }
     }

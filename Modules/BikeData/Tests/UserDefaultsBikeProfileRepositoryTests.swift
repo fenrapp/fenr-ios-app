@@ -61,6 +61,28 @@ struct UserDefaultsBikeProfileRepositoryTests {
         clearUserDefaults(suiteName: suiteName)
     }
 
+    @Test("Does not notify observers when the saved profile is unchanged")
+    func skipsDuplicateProfileNotifications() async {
+        let suiteName = makeSuiteName()
+        let repository = UserDefaultsBikeProfileRepository(suiteName: suiteName)
+        let stream = await repository.observeProfile()
+        var iterator = stream.makeAsyncIterator()
+        let standard = BikeProfile(vin: "FENRTEST000000001")
+        let alpha = BikeProfile(vin: "FENRTEST000000001", declaredPowerTier: .alpha)
+
+        let initialState = await iterator.next()
+        #expect(initialState == BikeProfileState(profile: nil))
+        await repository.saveProfile(standard)
+        let savedState = await iterator.next()
+        #expect(savedState == BikeProfileState(profile: standard))
+        await repository.saveProfile(standard)
+        await repository.saveProfile(alpha)
+
+        let updatedState = await iterator.next()
+        #expect(updatedState == BikeProfileState(profile: alpha))
+        clearUserDefaults(suiteName: suiteName)
+    }
+
     private func makeSuiteName() -> String {
         "fenr.bike-profile.tests.\(UUID().uuidString)"
     }

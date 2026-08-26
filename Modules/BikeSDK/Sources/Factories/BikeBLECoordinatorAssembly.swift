@@ -87,6 +87,7 @@ enum BikeBLECoordinatorAssembly {
             peripheralDelegate: dependencies.peripheralDelegate,
             reconnectController: reconnectController,
             scanner: scanner,
+            connectionErrorClassifier: BikeBLEConnectionErrorClassifier(),
             sessionResetHandler: sessionResetHandler
         )
     }

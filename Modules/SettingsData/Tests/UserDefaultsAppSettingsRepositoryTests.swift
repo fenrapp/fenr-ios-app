@@ -32,6 +32,23 @@ struct UserDefaultsAppSettingsRepositoryTests {
         #expect(await reloadedRepository.load() == expected)
     }
 
+    @Test("Does not notify observers when the saved settings are unchanged")
+    func skipsDuplicateSettingsNotifications() async {
+        let repository = UserDefaultsAppSettingsRepository(userDefaults: makeDefaults())
+        let stream = await repository.observe()
+        var iterator = stream.makeAsyncIterator()
+        _ = await iterator.next()
+        let metric = AppSettings(measurementSystem: .metric)
+        let imperial = AppSettings(measurementSystem: .imperial)
+
+        await repository.save(metric)
+        #expect(await iterator.next() == metric)
+        await repository.save(metric)
+        await repository.save(imperial)
+
+        #expect(await iterator.next() == imperial)
+    }
+
     nonisolated private func makeSuiteName() -> String {
         "UserDefaultsAppSettingsRepositoryTests.\(UUID().uuidString)"
     }

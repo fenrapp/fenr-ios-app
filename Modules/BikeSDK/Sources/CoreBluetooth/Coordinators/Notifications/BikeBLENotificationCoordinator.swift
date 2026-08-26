@@ -81,7 +81,8 @@ public struct BikeBLENotificationCoordinator {
         guard let data = characteristic.value else { return }
         let uuid = characteristic.uuid.foundationUUID
         let date = Date()
-        if let dataset = BikeSDKConstants.batteryDataset(for: characteristic.uuid) {
+        if sessionStore.isBatteryHealthMonitoringActive(),
+           let dataset = BikeSDKConstants.batteryDataset(for: characteristic.uuid) {
             await eventEmitter.send(.batteryDatasetCapture(.init(
                 dataset: dataset,
                 byteCount: data.count,
@@ -109,6 +110,7 @@ public struct BikeBLENotificationCoordinator {
     public func authenticationDidSucceed(peripheral: CBPeripheral) async {
         notificationProcessor.resetDebugSampling()
         await subscriptionCoordinator.authenticationDidSucceed(peripheral: peripheral)
+        await readAvailableTelemetrySnapshot(peripheral: peripheral, logsEveryRead: false)
         powerModeCoordinator.startAutomaticRefreshIfNeeded()
     }
 
@@ -150,30 +152,45 @@ public struct BikeBLENotificationCoordinator {
     }
 
     public func readTelemetrySnapshot() async throws {
-        try await readSnapshot(
-            characteristicUUID: BikeSDKConstants.batterySOCCharacteristicUUID,
-            debugPrefix: BikeSDKText.manualSOCRead
-        )
+        let peripheral = try await requirePeripheralForRead()
+        guard await readAvailableTelemetrySnapshot(peripheral: peripheral, logsEveryRead: true) else {
+            try await failRead(BikeSDKText.noReadableCharacteristics)
+        }
     }
 
     public func readBikeStatusSnapshot() async throws {
         try await readSnapshot(characteristicUUID: BikeSDKConstants.bikeStatusCharacteristicUUID)
     }
 
-    private func readSnapshot(characteristicUUID: CBUUID, debugPrefix: String? = nil) async throws {
+    private func readSnapshot(characteristicUUID: CBUUID) async throws {
         let peripheral = try await requirePeripheralForRead()
         guard let characteristic = sessionStore.discoveredCharacteristics[characteristicUUID],
               characteristic.properties.contains(.read)
         else {
             try await failRead(BikeSDKText.noReadableCharacteristics)
         }
-        if let debugPrefix {
-            await eventEmitter.send(.debug(.init(
-                title: BikeSDKText.readTitle,
-                detail: "\(debugPrefix) \(characteristic.uuid.uuidString)"
-            )))
-        }
         peripheral.readValue(for: characteristic)
+    }
+
+    @discardableResult
+    private func readAvailableTelemetrySnapshot(
+        peripheral: CBPeripheral,
+        logsEveryRead: Bool
+    ) async -> Bool {
+        let characteristics = BikeSDKConstants.telemetrySnapshotUUIDs.compactMap {
+            sessionStore.discoveredCharacteristics[$0]
+        }.filter { $0.properties.contains(.read) }
+        guard !characteristics.isEmpty else { return false }
+        for characteristic in characteristics {
+            if logsEveryRead || characteristic.uuid == BikeSDKConstants.batterySOCCharacteristicUUID {
+                await eventEmitter.send(.debug(.init(
+                    title: BikeSDKText.readTitle,
+                    detail: "Telemetry snapshot \(characteristic.uuid.uuidString)"
+                )))
+            }
+            peripheral.readValue(for: characteristic)
+        }
+        return true
     }
 
     func subscriptionDidTimeOut(characteristicUUID: CBUUID) async {

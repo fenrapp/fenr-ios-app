@@ -20,6 +20,7 @@ public actor UserDefaultsAppSettingsRepository: AppSettingsRepository {
     }
 
     public func save(_ settings: AppSettings) {
+        guard settings != load() else { return }
         guard let data = try? JSONEncoder().encode(settings) else { return }
         userDefaults.set(data, forKey: Constants.settingsKey)
         continuations.values.forEach { $0.yield(settings) }
