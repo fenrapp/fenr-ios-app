@@ -30,7 +30,7 @@ struct DashboardChargingCard: View {
             chargingStatus
             chargeControl(
                 configuration: .init(
-                    title: "Power",
+                    title: "Max Charging Power",
                     adjustment: viewState.control.power,
                     tint: DesignColor.informational,
                     valueFormatter: formattedPower
@@ -41,7 +41,7 @@ struct DashboardChargingCard: View {
             )
             chargeControl(
                 configuration: .init(
-                    title: "Target",
+                    title: "Charge Limit",
                     adjustment: viewState.control.target,
                     tint: DesignColor.positive,
                     valueFormatter: formattedPercentage
