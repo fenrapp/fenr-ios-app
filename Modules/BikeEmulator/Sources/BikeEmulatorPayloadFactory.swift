@@ -32,6 +32,7 @@ enum BikeEmulatorPayloadFactory {
                 batteryPercent: batteryPercent,
                 isCharging: isCharging,
                 isRiding: isRiding,
+                tick: tick,
                 date: context.date
             ),
             powerCalculator: powerCalculator
@@ -43,10 +44,7 @@ enum BikeEmulatorPayloadFactory {
             mode: .index(isRiding ? ridingGear.mapNumber : context.activeMapNumber),
             speed: .known(kmh: speed, kmhX10: Int(speed * Constants.speedScale)),
             motorRPM: .known(isRiding ? Int(speed * Constants.rpmPerKmh) : .zero),
-            odometer: .known(
-                kilometers: Constants.odometerKilometers,
-                centiKilometers: Constants.odometerCentiKilometers
-            ),
+            odometer: odometer(for: scenario, tick: tick),
             statusFlags: BikeStatusFlags(
                 isOn: !scenario.isChargerConnected,
                 isCharging: isCharging,
@@ -162,6 +160,15 @@ enum BikeEmulatorPayloadFactory {
         let cycleTick = tick % (ascentTickCount * 2)
         let distanceFromZero = min(cycleTick, (ascentTickCount * 2) - cycleTick)
         return Double(distanceFromZero) * Constants.ridingSpeedStep
+    }
+
+    private static func odometer(for scenario: BikeEmulatorScenario, tick: Int) -> BikeOdometer {
+        let kilometers = Constants.odometerKilometers
+            + (scenario.isRiding ? Double(tick) * Constants.ridingOdometerStepKilometers : .zero)
+        return .known(
+            kilometers: kilometers,
+            centiKilometers: UInt32((kilometers * 100).rounded())
+        )
     }
 
     private static func ridingGearState(
@@ -326,7 +333,7 @@ private extension BikeEmulatorPayloadFactory {
         static let speedScale = 10.0
         static let rpmPerKmh = 75.0
         static let odometerKilometers = 1_842.7
-        static let odometerCentiKilometers: UInt32 = 184_270
+        static let ridingOdometerStepKilometers = 0.05
         static let anomalyAlertFlag = 1
         static let anomalyFaultFlag = 1
         static let chargingInfoFlag = 0x0414

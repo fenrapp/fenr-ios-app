@@ -1,4 +1,5 @@
 import AppSettings
+import BikeDomain
 import EnvironmentDomain
 import SettingsDomain
 import Testing
@@ -16,13 +17,17 @@ struct AppSettingsViewModelTests {
         )
 
         viewModel.start()
+        try? await Task.sleep(for: .milliseconds(10))
         viewModel.selectSpeedSource(id: SpeedSource.hybrid.rawValue)
         viewModel.selectMeasurementSystem(id: MeasurementSystem.imperial.rawValue)
         viewModel.selectBatteryPackCapacity(id: BatteryPackCapacity.sixPointEightKilowattHours.rawValue)
-        let expectedSettings = AppSettings(
+        var expectedSettings = AppSettings(
             speedSource: .hybrid,
-            measurementSystem: .imperial,
-            batteryPackCapacity: .sixPointEightKilowattHours
+            measurementSystem: .imperial
+        )
+        expectedSettings.setBatteryPackCapacity(
+            .sixPointEightKilowattHours,
+            forVIN: TestProfileRepository.vin
         )
         let didSave = await waitUntil {
             await repository.settings == expectedSettings
@@ -62,8 +67,18 @@ struct AppSettingsViewModelTests {
             saveSettings: .init(repository: repository),
             observeSettings: .init(repository: repository),
             locationAuthorizationStatus: .init(repository: repository),
-            requestLocationAuthorization: .init(repository: repository)
+            requestLocationAuthorization: .init(repository: repository),
+            loadBikeProfile: .init(repository: TestProfileRepository()),
+            observeBikeProfile: .init(repository: TestProfileRepository())
         )
     }
 
+}
+
+private actor TestProfileRepository: BikeProfileRepository {
+    static let vin = "TESTVIN0000000001"
+
+    func loadProfile() -> BikeProfile? { .init(vin: Self.vin) }
+    func saveProfile(_: BikeProfile) {}
+    func clearProfile() {}
 }

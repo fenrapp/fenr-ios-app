@@ -10,6 +10,7 @@ struct BikeEmulatorElectricalTelemetryContext {
     let batteryPercent: Int
     let isCharging: Bool
     let isRiding: Bool
+    let tick: Int
     let date: Date
 }
 
@@ -18,7 +19,7 @@ enum BikeEmulatorElectricalTelemetryFactory {
         context: BikeEmulatorElectricalTelemetryContext,
         powerCalculator: BikePowerTelemetryCalculator
     ) -> BikeEmulatorElectricalTelemetry {
-        let currentRaw = context.isRiding ? Constants.ridingCurrentRaw : (
+        let currentRaw = context.isRiding ? ridingCurrentRaw(at: context.tick) : (
             context.isCharging ? Constants.chargingCurrentRaw : .zero
         )
         let calculation = powerCalculator.calculate(
@@ -53,6 +54,11 @@ enum BikeEmulatorElectricalTelemetryFactory {
         )
     }
 
+    private static func ridingCurrentRaw(at tick: Int) -> Int {
+        Int((Constants.ridingCurrentOffset
+            + Constants.ridingCurrentAmplitude * sin(Double(tick) * Constants.ridingCurrentWaveRadians)).rounded())
+    }
+
     private static func makeBMS(
         dcBusRaw: Int,
         temperatureRaw: Int,
@@ -73,7 +79,9 @@ enum BikeEmulatorElectricalTelemetryFactory {
         static let dcBusRaw = 4_000
         static let dcBusVolts = 400.0
         static let negativeDCBusRaw = 3_995
-        static let ridingCurrentRaw = 25
+        static let ridingCurrentOffset = 18.0
+        static let ridingCurrentAmplitude = 30.0
+        static let ridingCurrentWaveRadians = 0.45
         static let chargingCurrentRaw = -5
         static let positiveTemperatureRaw = 2_534
         static let negativeTemperatureRaw = 2_450

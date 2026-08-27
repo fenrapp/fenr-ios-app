@@ -10,7 +10,7 @@ public struct LoadRideTripStatisticsUseCase: Sendable {
         self.aggregator = aggregator
     }
 
-    public func execute() async -> RideTripStatistics {
-        aggregator.aggregate(await repository.loadCompletedTrips())
+    public func execute(vin: String) async -> RideTripStatistics {
+        aggregator.aggregate(await repository.loadCompletedTrips(vin: vin))
     }
 }

@@ -88,9 +88,9 @@ public final class AppSettingsViewModel: ObservableObject {
     }
 
     public func selectBatteryPackCapacity(id: String) {
-        guard let batteryPackCapacity = BatteryPackCapacity(rawValue: id) else { return }
+        guard let batteryPackCapacity = BatteryPackCapacity(rawValue: id), let vin = profile?.vin else { return }
         var updated = settings
-        updated.batteryPackCapacity = batteryPackCapacity
+        updated.setBatteryPackCapacity(batteryPackCapacity, forVIN: vin)
         settings = updated
         save(updated)
     }

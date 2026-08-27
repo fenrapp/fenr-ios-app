@@ -8,6 +8,7 @@ struct RideTripTests {
     func updatesMetrics() {
         let startedAt = Date(timeIntervalSince1970: 1_000)
         let trip = RideTrip(
+            vehicleIdentity: .vin("TESTVIN0000000001"),
             applicationSessionID: UUID(),
             startedAt: startedAt,
             startingOdometerKilometers: 100,
@@ -34,6 +35,7 @@ struct RideTripTests {
     func averagesResolvedSpeedSamples() {
         let startedAt = Date(timeIntervalSince1970: 1_000)
         let initialSample = RideTrip(
+            vehicleIdentity: .vin("TESTVIN0000000001"),
             applicationSessionID: UUID(),
             startedAt: startedAt
         ).updating(
@@ -67,6 +69,7 @@ struct RideTripTests {
     func ignoresInvalidReadings() {
         let startedAt = Date(timeIntervalSince1970: 1_000)
         let trip = RideTrip(
+            vehicleIdentity: .vin("TESTVIN0000000001"),
             applicationSessionID: UUID(),
             startedAt: startedAt,
             startingOdometerKilometers: 100,
@@ -92,6 +95,7 @@ struct RideTripTests {
         let startedAt = Date(timeIntervalSince1970: 1_000)
         let endedAt = startedAt.addingTimeInterval(90)
         let completed = RideTrip(
+            vehicleIdentity: .vin("TESTVIN0000000001"),
             applicationSessionID: UUID(),
             startedAt: startedAt
         ).completed(at: endedAt)
@@ -109,6 +113,7 @@ struct RideTripTests {
     func pausesAndResumesTrip() {
         let startedAt = Date(timeIntervalSince1970: 1_000)
         let beforePause = RideTrip(
+            vehicleIdentity: .vin("TESTVIN0000000001"),
             applicationSessionID: UUID(),
             startedAt: startedAt,
             startingOdometerKilometers: 100
@@ -151,6 +156,7 @@ struct RideTripTests {
     func completesPausedTrip() {
         let startedAt = Date(timeIntervalSince1970: 1_000)
         let paused = RideTrip(
+            vehicleIdentity: .vin("TESTVIN0000000001"),
             applicationSessionID: UUID(),
             startedAt: startedAt
         ).paused(at: startedAt.addingTimeInterval(30))
@@ -160,5 +166,96 @@ struct RideTripTests {
         #expect(completed.endedAt == startedAt.addingTimeInterval(90))
         #expect(completed.elapsedSeconds == 30)
         #expect(!completed.isPaused)
+    }
+
+    @Test("Integrates consumption and regeneration across a zero crossing")
+    func integratesSignedElectricalPower() {
+        let date = Date(timeIntervalSince1970: 2_000)
+        let base = RideTrip(
+            vehicleIdentity: .vin("TESTVIN0000000001"),
+            applicationSessionID: UUID(),
+            startedAt: date,
+            distanceKilometers: 2,
+            electricalExpectedSeconds: 10
+        ).updatingElectrical(at: date, powerWatts: 1_000)
+
+        let integrated = base.updatingElectrical(
+            at: date.addingTimeInterval(10),
+            powerWatts: -1_000,
+            maximumSampleGap: 10
+        )
+
+        #expect(abs(integrated.consumedEnergyWattHours - 0.694_444) < 0.000_01)
+        #expect(abs(integrated.recoveredEnergyWattHours - 0.694_444) < 0.000_01)
+        #expect(integrated.electricalObservedSeconds == 10)
+        #expect(integrated.maximumDischargePowerWatts == 1_000)
+        #expect(integrated.maximumRegenerationPowerWatts == 1_000)
+    }
+
+    @Test("Does not bridge missing electrical intervals and rebases after pause")
+    func rebasesElectricalIntegration() {
+        let date = Date(timeIntervalSince1970: 3_000)
+        let base = RideTrip(
+            vehicleIdentity: .vin("TESTVIN0000000001"),
+            applicationSessionID: UUID(),
+            startedAt: date
+        ).updatingElectrical(at: date, powerWatts: 2_000)
+        let afterGap = base.updatingElectrical(at: date.addingTimeInterval(6), powerWatts: 2_000)
+        let paused = afterGap.paused(at: date.addingTimeInterval(7))
+        let resumed = paused.resumed(
+            at: date.addingTimeInterval(10),
+            odometerKilometers: nil,
+            speedKilometersPerHour: nil
+        ).updatingElectrical(at: date.addingTimeInterval(11), powerWatts: 2_000)
+
+        #expect(afterGap.consumedEnergyWattHours == .zero)
+        #expect(afterGap.electricalObservedSeconds == .zero)
+        #expect(resumed.consumedEnergyWattHours == .zero)
+        #expect(!resumed.isAwaitingElectricalRebase)
+    }
+
+    @Test("Allows net recovery but excludes partial trips from history")
+    func evaluatesEfficiencyEligibility() {
+        let date = Date(timeIntervalSince1970: 4_000)
+        let recovering = RideTrip(
+            vehicleIdentity: .vin("TESTVIN0000000001"),
+            applicationSessionID: UUID(),
+            startedAt: date,
+            distanceKilometers: 2,
+            consumedEnergyWattHours: 20,
+            recoveredEnergyWattHours: 30,
+            electricalObservedSeconds: 90,
+            electricalExpectedSeconds: 100
+        )
+        let partial = RideTrip(
+            vehicleIdentity: .vin("TESTVIN0000000001"),
+            applicationSessionID: UUID(),
+            startedAt: date,
+            distanceKilometers: 2,
+            consumedEnergyWattHours: 20,
+            electricalObservedSeconds: 89,
+            electricalExpectedSeconds: 100
+        )
+
+        #expect(recovering.efficiencyWattHoursPerKilometer == -5)
+        #expect(recovering.isEfficiencyEligibleForHistory)
+        #expect(!partial.isEfficiencyEligibleForHistory)
+    }
+
+    @Test("Rejects non-finite efficiency and coverage inputs")
+    func rejectsNonFiniteEfficiencyInputs() {
+        let trip = RideTrip(
+            vehicleIdentity: .vin("TESTVIN0000000001"),
+            applicationSessionID: UUID(),
+            startedAt: Date(timeIntervalSince1970: 5_000),
+            distanceKilometers: .infinity,
+            consumedEnergyWattHours: 20,
+            electricalObservedSeconds: .infinity,
+            electricalExpectedSeconds: 100
+        )
+
+        #expect(trip.efficiencyWattHoursPerKilometer == nil)
+        #expect(trip.electricalCoverage == .zero)
+        #expect(!trip.isEfficiencyEligibleForHistory)
     }
 }

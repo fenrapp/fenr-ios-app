@@ -24,12 +24,14 @@ struct RideTripStatisticsAggregatorTests {
     func supportsLegacyTrips() {
         let trips = [
             RideTrip(
+                vehicleIdentity: .vin("TESTVIN0000000001"),
                 applicationSessionID: UUID(),
                 startedAt: .distantPast,
                 elapsedSeconds: 60,
                 averageSpeedKilometersPerHour: 20
             ),
             RideTrip(
+                vehicleIdentity: .vin("TESTVIN0000000001"),
                 applicationSessionID: UUID(),
                 startedAt: .distantPast,
                 elapsedSeconds: 180,
@@ -46,6 +48,7 @@ struct RideTripStatisticsAggregatorTests {
         let numericIndex = Double(index)
         let elapsedSeconds = numericIndex * 60
         return RideTrip(
+            vehicleIdentity: .vin("TESTVIN0000000001"),
             applicationSessionID: UUID(),
             startedAt: Date(timeIntervalSinceReferenceDate: numericIndex),
             endedAt: Date(timeIntervalSinceReferenceDate: numericIndex + 1),

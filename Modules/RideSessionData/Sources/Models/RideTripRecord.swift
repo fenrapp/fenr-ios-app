@@ -4,6 +4,8 @@ import SwiftData
 @Model
 final class RideTripRecord {
     @Attribute(.unique) var id: UUID
+    var vehicleIdentityKind: String
+    var vehicleIdentityValue: String
     var applicationSessionID: UUID
     var startedAt: Date
     var updatedAt: Date
@@ -13,46 +15,56 @@ final class RideTripRecord {
     var elapsedSeconds: TimeInterval
     var averageSpeedKilometersPerHour: Double
     var maximumSpeedKilometersPerHour: Double
-    var accumulatedSpeedKilometersPerHourSeconds: Double = 0
-    var speedSampleDurationSeconds: TimeInterval = 0
+    var accumulatedSpeedKilometersPerHourSeconds: Double
+    var speedSampleDurationSeconds: TimeInterval
     var lastSpeedKilometersPerHour: Double?
     var pausedAt: Date?
-    var accumulatedPausedSeconds: TimeInterval = 0
-    var isAwaitingOdometerRebase = false
+    var accumulatedPausedSeconds: TimeInterval
+    var isAwaitingOdometerRebase: Bool
+    var consumedEnergyWattHours: Double
+    var recoveredEnergyWattHours: Double
+    var electricalObservedSeconds: TimeInterval
+    var electricalExpectedSeconds: TimeInterval
+    var maximumDischargePowerWatts: Double
+    var maximumRegenerationPowerWatts: Double
+    var lastElectricalPowerWatts: Double?
+    var lastElectricalSampleAt: Date?
+    var isAwaitingElectricalRebase: Bool
 
     init(
         id: UUID,
+        vehicleIdentityKind: String,
+        vehicleIdentityValue: String,
         applicationSessionID: UUID,
         startedAt: Date,
-        updatedAt: Date,
-        endedAt: Date?,
-        startingOdometerKilometers: Double?,
-        distanceKilometers: Double,
-        elapsedSeconds: TimeInterval,
-        averageSpeedKilometersPerHour: Double,
-        maximumSpeedKilometersPerHour: Double,
-        accumulatedSpeedKilometersPerHourSeconds: Double,
-        speedSampleDurationSeconds: TimeInterval,
-        lastSpeedKilometersPerHour: Double?,
-        pausedAt: Date?,
-        accumulatedPausedSeconds: TimeInterval,
-        isAwaitingOdometerRebase: Bool
+        updatedAt: Date
     ) {
         self.id = id
+        self.vehicleIdentityKind = vehicleIdentityKind
+        self.vehicleIdentityValue = vehicleIdentityValue
         self.applicationSessionID = applicationSessionID
         self.startedAt = startedAt
         self.updatedAt = updatedAt
-        self.endedAt = endedAt
-        self.startingOdometerKilometers = startingOdometerKilometers
-        self.distanceKilometers = distanceKilometers
-        self.elapsedSeconds = elapsedSeconds
-        self.averageSpeedKilometersPerHour = averageSpeedKilometersPerHour
-        self.maximumSpeedKilometersPerHour = maximumSpeedKilometersPerHour
-        self.accumulatedSpeedKilometersPerHourSeconds = accumulatedSpeedKilometersPerHourSeconds
-        self.speedSampleDurationSeconds = speedSampleDurationSeconds
-        self.lastSpeedKilometersPerHour = lastSpeedKilometersPerHour
-        self.pausedAt = pausedAt
-        self.accumulatedPausedSeconds = accumulatedPausedSeconds
-        self.isAwaitingOdometerRebase = isAwaitingOdometerRebase
+        endedAt = nil
+        startingOdometerKilometers = nil
+        distanceKilometers = .zero
+        elapsedSeconds = .zero
+        averageSpeedKilometersPerHour = .zero
+        maximumSpeedKilometersPerHour = .zero
+        accumulatedSpeedKilometersPerHourSeconds = .zero
+        speedSampleDurationSeconds = .zero
+        lastSpeedKilometersPerHour = nil
+        pausedAt = nil
+        accumulatedPausedSeconds = .zero
+        isAwaitingOdometerRebase = false
+        consumedEnergyWattHours = .zero
+        recoveredEnergyWattHours = .zero
+        electricalObservedSeconds = .zero
+        electricalExpectedSeconds = .zero
+        maximumDischargePowerWatts = .zero
+        maximumRegenerationPowerWatts = .zero
+        lastElectricalPowerWatts = nil
+        lastElectricalSampleAt = nil
+        isAwaitingElectricalRebase = true
     }
 }

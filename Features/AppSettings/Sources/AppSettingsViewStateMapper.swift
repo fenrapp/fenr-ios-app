@@ -33,7 +33,7 @@ public struct AppSettingsViewStateMapper: Sendable {
                 }
             ),
             batteryCapacity: .init(
-                selectedID: settings.batteryPackCapacity.rawValue,
+                selectedID: settings.batteryPackCapacity(forVIN: profile?.vin).rawValue,
                 options: BatteryPackCapacity.allCases.map {
                     .init(id: $0.rawValue, title: $0.displayName)
                 }

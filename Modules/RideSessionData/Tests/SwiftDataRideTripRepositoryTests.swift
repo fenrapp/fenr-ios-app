@@ -4,106 +4,133 @@ import RideSessionDomain
 import Testing
 
 @Suite("SwiftData ride trip repository")
-@MainActor
 struct SwiftDataRideTripRepositoryTests {
-    @Test("Restores an active trip within the same application session")
-    func restoresSameSession() async throws {
+    @Test("Restores a temporary trip only within its application session")
+    func restoresTemporaryIdentityInSameSession() async throws {
         let repository = try makeRepository()
-        let sessionID = UUID()
-        let trip = RideTrip(
-            applicationSessionID: sessionID,
-            startedAt: Date(timeIntervalSince1970: 1_000),
-            elapsedSeconds: 30,
-            averageSpeedKilometersPerHour: 42,
-            maximumSpeedKilometersPerHour: 60,
-            accumulatedSpeedKilometersPerHourSeconds: 1_260,
-            speedSampleDurationSeconds: 30
+        let context = BikeSessionContext(
+            applicationSessionID: UUID(),
+            vehicleIdentity: .temporary(UUID())
         )
-
+        let trip = makeTrip(identity: context.vehicleIdentity, sessionID: context.applicationSessionID)
         await repository.saveActiveTrip(trip)
 
-        #expect(await repository.prepare(applicationSessionID: sessionID) == trip)
-        #expect(await repository.loadCompletedTrips().isEmpty)
+        let restored = await repository.prepare(context: context)
+
+        #expect(restored?.id == trip.id)
+        #expect(restored?.isAwaitingElectricalRebase == true)
     }
 
-    @Test("Archives an abandoned trip when a new application session starts")
-    func archivesPreviousSession() async throws {
+    @Test("Deletes temporary data from previous application sessions")
+    func deletesExpiredTemporaryIdentity() async throws {
         let repository = try makeRepository()
-        let trip = RideTrip(
-            applicationSessionID: UUID(),
-            startedAt: Date(timeIntervalSince1970: 1_000),
-            updatedAt: Date(timeIntervalSince1970: 1_120),
-            elapsedSeconds: 120
-        )
+        let trip = makeTrip(identity: .temporary(UUID()), sessionID: UUID())
         await repository.saveActiveTrip(trip)
 
-        let restored = await repository.prepare(applicationSessionID: UUID())
-        let completed = await repository.loadCompletedTrips()
+        let context = BikeSessionContext(
+            applicationSessionID: UUID(),
+            vehicleIdentity: .temporary(UUID())
+        )
+        let restored = await repository.prepare(context: context)
 
         #expect(restored == nil)
-        #expect(completed.count == 1)
-        #expect(completed.first?.id == trip.id)
-        #expect(completed.first?.endedAt == trip.updatedAt)
+        #expect(await repository.loadCompletedTrips(vin: Constants.firstVIN).isEmpty)
     }
 
-    @Test("Completing the same trip twice does not duplicate history")
-    func completionIsIdempotent() async throws {
+    @Test("Promotes all matching temporary records atomically")
+    func promotesTemporaryIdentity() async throws {
         let repository = try makeRepository()
-        let trip = RideTrip(
-            applicationSessionID: UUID(),
-            startedAt: Date(timeIntervalSince1970: 1_000)
-        )
-        let endedAt = Date(timeIntervalSince1970: 1_100)
+        let temporaryID = UUID()
+        let trip = makeTrip(identity: .temporary(temporaryID), sessionID: UUID(), distance: 4)
+        await repository.completeTrip(trip, at: trip.updatedAt)
 
-        await repository.saveActiveTrip(trip)
-        await repository.completeTrip(trip, at: endedAt)
-        await repository.completeTrip(trip, at: endedAt)
+        await repository.promoteTemporaryIdentity(temporaryID, toVIN: Constants.firstVIN)
 
-        let completed = await repository.loadCompletedTrips()
-        #expect(completed.count == 1)
-        #expect(completed.first?.endedAt == endedAt)
+        let completed = await repository.loadCompletedTrips(vin: Constants.firstVIN)
+        #expect(completed.map(\.id) == [trip.id])
+        #expect(completed.first?.vehicleIdentity == .vin(Constants.firstVIN))
     }
 
-    @Test("Persists trips across repository contexts")
-    func persistsAcrossRepositoryContexts() async throws {
-        let container = try SwiftDataRideTripRepository.makeModelContainer(
-            isStoredInMemoryOnly: true
-        )
-        let mapper = RideTripRecordMapper()
-        let writer = SwiftDataRideTripRepository(
-            modelContainer: container,
-            mapper: mapper
-        )
-        let sessionID = UUID()
-        let trip = RideTrip(
-            applicationSessionID: sessionID,
-            startedAt: Date(timeIntervalSince1970: 1_000)
-        )
-        await writer.saveActiveTrip(trip)
+    @Test("Isolates history by VIN")
+    func isolatesTwoVehicles() async throws {
+        let repository = try makeRepository()
+        let first = makeTrip(identity: .vin(Constants.firstVIN), sessionID: UUID(), distance: 4)
+        let second = makeTrip(identity: .vin(Constants.secondVIN), sessionID: UUID(), distance: 8)
+        await repository.completeTrip(first, at: first.updatedAt)
+        await repository.completeTrip(second, at: second.updatedAt)
 
-        let reader = SwiftDataRideTripRepository(
-            modelContainer: container,
-            mapper: mapper
-        )
+        let firstHistory = await repository.loadCompletedTrips(vin: Constants.firstVIN)
+        let secondHistory = await repository.loadCompletedTrips(vin: Constants.secondVIN)
 
-        #expect(await reader.prepare(applicationSessionID: sessionID) == trip)
+        #expect(firstHistory.map(\.id) == [first.id])
+        #expect(secondHistory.map(\.id) == [second.id])
     }
 
-    @Test("Persists paused trip state")
-    func persistsPausedState() async throws {
+    @Test("Keeps only the newest one hundred trips for each VIN")
+    func limitsHistoryPerVIN() async throws {
+        let repository = try makeRepository()
+        for index in 0 ... 100 {
+            let date = Date(timeIntervalSince1970: Double(index))
+            let trip = makeTrip(
+                identity: .vin(Constants.firstVIN),
+                sessionID: UUID(),
+                startedAt: date,
+                distance: 2
+            )
+            await repository.completeTrip(trip, at: date.addingTimeInterval(1))
+        }
+
+        let history = await repository.loadCompletedTrips(vin: Constants.firstVIN)
+        #expect(history.count == 100)
+        #expect(history.first?.startedAt == Date(timeIntervalSince1970: 100))
+        #expect(history.last?.startedAt == Date(timeIntervalSince1970: 1))
+    }
+
+    @Test("Atomically archives a reset trip and stores its replacement")
+    func resetsTripAtomically() async throws {
         let repository = try makeRepository()
         let sessionID = UUID()
-        let date = Date(timeIntervalSince1970: 1_000)
-        let pausedTrip = RideTrip(
+        let identity = RideVehicleIdentity.vin(Constants.firstVIN)
+        let original = makeTrip(identity: identity, sessionID: sessionID)
+        let replacement = RideTrip(
+            vehicleIdentity: identity,
             applicationSessionID: sessionID,
-            startedAt: date
-        ).paused(at: date.addingTimeInterval(30))
+            startedAt: original.updatedAt
+        )
 
-        await repository.saveActiveTrip(pausedTrip)
+        await repository.resetTrip(
+            completing: original,
+            starting: replacement,
+            at: original.updatedAt
+        )
 
-        let restored = await repository.prepare(applicationSessionID: sessionID)
-        #expect(restored == pausedTrip)
-        #expect(restored?.isPaused == true)
+        let history = await repository.loadCompletedTrips(vin: Constants.firstVIN)
+        let restored = await repository.prepare(context: .init(
+            applicationSessionID: sessionID,
+            vehicleIdentity: identity
+        ))
+        #expect(history.map(\.id) == [original.id])
+        #expect(restored?.id == replacement.id)
+    }
+
+    private func makeTrip(
+        identity: RideVehicleIdentity,
+        sessionID: UUID,
+        startedAt: Date = Date(timeIntervalSince1970: 1_000),
+        distance: Double = 2
+    ) -> RideTrip {
+        RideTrip(
+            vehicleIdentity: identity,
+            applicationSessionID: sessionID,
+            startedAt: startedAt,
+            updatedAt: startedAt.addingTimeInterval(100),
+            distanceKilometers: distance,
+            elapsedSeconds: 100,
+            consumedEnergyWattHours: distance * 70,
+            recoveredEnergyWattHours: 10,
+            electricalObservedSeconds: 95,
+            electricalExpectedSeconds: 100
+        )
     }
 
     private func makeRepository() throws -> SwiftDataRideTripRepository {
@@ -111,5 +138,10 @@ struct SwiftDataRideTripRepositoryTests {
             mapper: RideTripRecordMapper(),
             isStoredInMemoryOnly: true
         )
+    }
+
+    private enum Constants {
+        static let firstVIN = "TESTVIN0000000001"
+        static let secondVIN = "TESTVIN0000000002"
     }
 }

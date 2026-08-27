@@ -7,7 +7,7 @@ public struct PrepareRideTripSessionUseCase: Sendable {
         self.repository = repository
     }
 
-    public func execute(applicationSessionID: UUID) async -> RideTrip? {
-        await repository.prepare(applicationSessionID: applicationSessionID)
+    public func execute(context: BikeSessionContext) async -> RideTrip? {
+        await repository.prepare(context: context)
     }
 }
