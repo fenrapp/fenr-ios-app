@@ -15,7 +15,9 @@ struct BatteryHealthViewModelTests {
         #expect(!(await repository.monitoringStarted()))
 
         viewModel.start()
-        #expect(await waitUntil { await repository.monitoringStarted() })
+        #expect(await waitUntil {
+            await repository.monitoringStarted() && viewModel.viewState.isMonitoring
+        })
 
         #expect(await repository.monitoringStarted())
         #expect(viewModel.viewState.isMonitoring)
@@ -45,6 +47,21 @@ struct BatteryHealthViewModelTests {
         #expect(viewModel.viewState.summary.contains(.init(id: "charge", title: "Charge", value: "Charging")))
         #expect(viewModel.viewState.summary.contains(.init(id: "dcBus", title: "DC bus", value: "394.8 V")))
         viewModel.stop()
+    }
+
+    @Test("Stopping while BMS startup is pending releases monitoring in order")
+    func stopDuringPendingMonitoringStart() async {
+        let repository = FakeBatteryHealthRepository()
+        await repository.delayNextMonitoringStart()
+        let viewModel = makeBatteryHealthViewModel(repository: repository)
+
+        viewModel.start()
+        viewModel.stop()
+
+        #expect(await waitUntil { await repository.monitoringStopped() })
+        #expect(await repository.monitoringStarted())
+        #expect(await repository.monitoringStopped())
+        #expect(!viewModel.viewState.isMonitoring)
     }
 
     @Test("Unknown data remains a placeholder and captures never become numeric health values")

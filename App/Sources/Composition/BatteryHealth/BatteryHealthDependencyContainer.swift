@@ -4,33 +4,31 @@ import ChargeControl
 import Foundation
 import MeasurementPresentation
 import SettingsDomain
+import VehicleSession
 
 @MainActor
 struct BatteryHealthDependencyContainer {
     func makeBatteryHealthViewModel(
         repository: any BikeBatteryHealthRepository,
-        settingsRepository: AppSettingsRepository,
+        vehicleSession: any VehicleSessionService,
         chargeControl: ChargeControlSession
     ) -> BatteryHealthViewModel {
         let locale = Locale.autoupdatingCurrent
         return BatteryHealthViewModel(
             useCases: .init(
-                startMonitoring: StartBatteryHealthMonitoringUseCase(repository: repository),
-                stopMonitoring: StopBatteryHealthMonitoringUseCase(repository: repository),
-                observeHealth: ObserveBikeBatteryHealthUseCase(repository: repository),
-                observeCaptures: ObserveBatteryDatasetCapturesUseCase(repository: repository),
-                observeSettings: ObserveAppSettingsUseCase(repository: settingsRepository)
+                observeCaptures: ObserveBatteryDatasetCapturesUseCase(repository: repository)
             ),
-            mapper: makeMapper(measurementSystem: .system, locale: locale),
-            makeMapper: { [self] measurementSystem in
-                makeMapper(measurementSystem: measurementSystem, locale: locale)
+            vehicleSession: vehicleSession,
+            mapper: Self.makeMapper(measurementSystem: .system, locale: locale),
+            makeMapper: { measurementSystem in
+                Self.makeMapper(measurementSystem: measurementSystem, locale: locale)
             },
             chargeControl: chargeControl,
             captureTimeFormatStyle: Date.FormatStyle(date: .omitted, time: .standard)
         )
     }
 
-    private func makeMapper(
+    private static func makeMapper(
         measurementSystem: MeasurementSystem,
         locale: Locale
     ) -> BikeBatteryHealthToViewStateMapper {

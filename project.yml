@@ -129,6 +129,31 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesessiondomain
+  VehicleSession:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/VehicleSession/Sources
+    dependencies:
+      - target: BikeDomain
+      - target: EnvironmentDomain
+      - target: SettingsDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.vehiclesession
+  RideSession:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/RideSession/Sources
+    dependencies:
+      - target: BikeDomain
+      - target: RideSessionDomain
+      - target: SettingsDomain
+      - target: VehicleSession
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesession
   RideSessionData:
     type: framework
     platform: iOS
@@ -220,8 +245,9 @@ targets:
       - path: Features/RideDashboard/Sources
     dependencies:
       - target: BikeDomain
-      - target: EnvironmentDomain
+      - target: RideSession
       - target: RideSessionDomain
+      - target: VehicleSession
       - target: SettingsDomain
       - target: DesignSystem
       - target: MeasurementPresentation
@@ -242,6 +268,7 @@ targets:
       - target: MeasurementPresentation
       - target: RuntimeConfiguration
       - target: ChargeControl
+      - target: VehicleSession
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.batteryhealth
@@ -337,6 +364,8 @@ targets:
       - target: BikeData
       - target: EnvironmentDomain
       - target: EnvironmentData
+      - target: RideSession
+      - target: VehicleSession
       - target: RideSessionDomain
       - target: RideSessionData
       - target: SettingsDomain
@@ -427,6 +456,8 @@ targets:
       - target: BikeDomain
       - target: EnvironmentDomain
       - target: EnvironmentData
+      - target: RideSession
+      - target: VehicleSession
       - target: RideSessionDomain
       - target: RideSessionData
       - target: SettingsDomain
@@ -669,6 +700,36 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesessiondomain.tests
+  RideSessionTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/RideSession/Tests
+    dependencies:
+      - target: RideSession
+      - target: RideSessionDomain
+      - target: BikeDomain
+      - target: EnvironmentDomain
+      - target: SettingsDomain
+      - target: TestSupport
+      - target: VehicleSession
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesession.tests
+  VehicleSessionTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/VehicleSession/Tests
+    dependencies:
+      - target: VehicleSession
+      - target: BikeDomain
+      - target: EnvironmentDomain
+      - target: SettingsDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.vehiclesession.tests
   RideSessionDataTests:
     type: bundle.unit-test
     platform: iOS
@@ -820,6 +881,8 @@ targets:
       - target: BikeData
       - target: EnvironmentDomain
       - target: EnvironmentData
+      - target: RideSession
+      - target: VehicleSession
       - target: RideSessionDomain
       - target: RideSessionData
       - target: SettingsDomain
@@ -857,6 +920,8 @@ targets:
       - target: BikeEmulator
       - target: EnvironmentDomain
       - target: EnvironmentData
+      - target: RideSession
+      - target: VehicleSession
       - target: RideSessionDomain
       - target: RideSessionData
       - target: SettingsDomain
@@ -883,6 +948,8 @@ schemes:
         ChargeControlTests: [test]
         SettingsDataTests: [test]
         RideSessionDomainTests: [test]
+        RideSessionTests: [test]
+        VehicleSessionTests: [test]
         RideSessionDataTests: [test]
         DesignSystemTests: [test]
         MeasurementPresentationTests: [test]
@@ -904,6 +971,8 @@ schemes:
         - ChargeControlTests
         - SettingsDataTests
         - RideSessionDomainTests
+        - RideSessionTests
+        - VehicleSessionTests
         - RideSessionDataTests
         - DesignSystemTests
         - MeasurementPresentationTests

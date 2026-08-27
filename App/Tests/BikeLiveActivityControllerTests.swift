@@ -8,7 +8,7 @@ struct BikeLiveActivityControllerTests {
     func doesNotStartWithDefaultTelemetry() async {
         let fixture = BikeLiveActivityControllerFixture()
 
-        fixture.controller.start()
+        await fixture.start()
         await settle()
         fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
@@ -24,7 +24,7 @@ struct BikeLiveActivityControllerTests {
     func doesNotStartDuringOnboarding() async {
         let fixture = BikeLiveActivityControllerFixture()
 
-        fixture.controller.start()
+        await fixture.start()
         await settle()
         fixture.controller.setCanShowLiveActivity(true)
         await fixture.repository.sendConnection(.receivingTelemetry)
@@ -38,7 +38,7 @@ struct BikeLiveActivityControllerTests {
     func doesNotStartInForeground() async {
         let fixture = BikeLiveActivityControllerFixture()
 
-        fixture.controller.start()
+        await fixture.start()
         await settle()
         fixture.controller.setIsSetupCompleted(true)
         await fixture.repository.sendConnection(.receivingTelemetry)
@@ -52,7 +52,7 @@ struct BikeLiveActivityControllerTests {
     func startsInBackgroundWhileCharging() async {
         let fixture = BikeLiveActivityControllerFixture()
 
-        fixture.controller.start()
+        await fixture.start()
         await settle()
         fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
@@ -70,7 +70,7 @@ struct BikeLiveActivityControllerTests {
     func startsInBackgroundWhileRiding() async {
         let fixture = BikeLiveActivityControllerFixture()
 
-        fixture.controller.start()
+        await fixture.start()
         await settle()
         fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
@@ -88,7 +88,7 @@ struct BikeLiveActivityControllerTests {
     func startsOnFirstBackgroundTransitionAfterChargingWasObserved() async {
         let fixture = BikeLiveActivityControllerFixture()
 
-        fixture.controller.start()
+        await fixture.start()
         await settle()
         fixture.controller.setIsSetupCompleted(true)
         await fixture.repository.sendConnection(.receivingTelemetry)
@@ -106,7 +106,7 @@ struct BikeLiveActivityControllerTests {
     func requestsActivityBeforeBatteryHealthMonitoringCompletes() async {
         let fixture = BikeLiveActivityControllerFixture()
 
-        fixture.controller.start()
+        await fixture.start()
         await settle()
         fixture.controller.setIsSetupCompleted(true)
         await fixture.repository.delayNextMonitoringStart()
@@ -119,12 +119,16 @@ struct BikeLiveActivityControllerTests {
         #expect(fixture.activityClient.startCount == 1)
         #expect(await fixture.repository.monitoringStartCount() == 0)
     }
+}
 
+@MainActor
+@Suite("Bike Live Activity updates and teardown")
+struct BikeLiveActivityUpdateTests {
     @Test("Stops delayed monitoring if charge ends before monitoring starts")
     func stopsDelayedMonitoringWhenChargeEndsBeforeMonitoringStarts() async {
         let fixture = BikeLiveActivityControllerFixture()
 
-        fixture.controller.start()
+        await fixture.start()
         await settle()
         fixture.controller.setIsSetupCompleted(true)
         await fixture.repository.delayNextMonitoringStart()
@@ -146,7 +150,7 @@ struct BikeLiveActivityControllerTests {
     func doesNotDuplicateActivities() async {
         let fixture = BikeLiveActivityControllerFixture()
 
-        fixture.controller.start()
+        await fixture.start()
         await settle()
         fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
@@ -161,11 +165,32 @@ struct BikeLiveActivityControllerTests {
         #expect(fixture.activityClient.startCount == 1)
     }
 
+    @Test("Serializes evaluations while an activity request is suspended")
+    func serializesEvaluationsDuringActivityStart() async {
+        let fixture = BikeLiveActivityControllerFixture()
+
+        await fixture.start()
+        await settle()
+        fixture.controller.setIsSetupCompleted(true)
+        await fixture.repository.sendConnection(.receivingTelemetry)
+        await fixture.repository.sendTelemetry(chargingTelemetry(percent: 62))
+        await settle()
+        fixture.activityClient.delayNextStart()
+
+        fixture.controller.setCanShowLiveActivity(true)
+        await fixture.repository.sendTelemetry(chargingTelemetry(percent: 63))
+        await settle(milliseconds: 140)
+
+        #expect(fixture.activityClient.startCount == 1)
+        #expect(fixture.activityClient.lastStartedState?.batteryPercent == 62)
+        #expect(await fixture.repository.monitoringStartCount() == 1)
+    }
+
     @Test("Throttles non-critical updates to thirty seconds")
     func throttlesUpdates() async {
         let fixture = BikeLiveActivityControllerFixture()
 
-        fixture.controller.start()
+        await fixture.start()
         await settle()
         fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
@@ -187,7 +212,7 @@ struct BikeLiveActivityControllerTests {
     func updatesCriticalPhaseImmediately() async {
         let fixture = BikeLiveActivityControllerFixture()
 
-        fixture.controller.start()
+        await fixture.start()
         await settle()
         fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
@@ -205,7 +230,7 @@ struct BikeLiveActivityControllerTests {
     func updatesImmediatelyWhenRidingModeChanges() async {
         let fixture = BikeLiveActivityControllerFixture()
 
-        fixture.controller.start()
+        await fixture.start()
         await settle()
         fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
@@ -224,7 +249,7 @@ struct BikeLiveActivityControllerTests {
     func switchesFromRidingToChargingWithoutDuplicateActivity() async {
         let fixture = BikeLiveActivityControllerFixture()
 
-        fixture.controller.start()
+        await fixture.start()
         await settle()
         fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
@@ -244,7 +269,7 @@ struct BikeLiveActivityControllerTests {
     func endsWhenRidingTurnsOff() async {
         let fixture = BikeLiveActivityControllerFixture()
 
-        fixture.controller.start()
+        await fixture.start()
         await settle()
         fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
@@ -261,12 +286,14 @@ struct BikeLiveActivityControllerTests {
     func endsAtChargeTarget() async {
         let fixture = BikeLiveActivityControllerFixture()
 
-        fixture.controller.start()
+        await fixture.start()
         await settle()
         fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
         await fixture.repository.sendConnection(.receivingTelemetry)
         await fixture.repository.sendTelemetry(chargingTelemetry(percent: 79))
+        await settle()
+        #expect(await fixture.repository.monitoringStartCount() == 1)
         await fixture.repository.sendBatteryHealth(chargingHealth(target: 80, current: 5))
         await settle()
         await fixture.repository.sendTelemetry(chargingTelemetry(percent: 80))
@@ -277,7 +304,26 @@ struct BikeLiveActivityControllerTests {
         #expect(await fixture.repository.monitoringStopCount() == 1)
     }
 
+    @Test("Stopping the controller releases charging monitoring")
+    func stopReleasesChargingMonitoring() async {
+        let fixture = BikeLiveActivityControllerFixture()
+
+        await fixture.start()
+        await settle()
+        fixture.controller.setIsSetupCompleted(true)
+        fixture.controller.setCanShowLiveActivity(true)
+        await fixture.repository.sendConnection(.receivingTelemetry)
+        await fixture.repository.sendTelemetry(chargingTelemetry(percent: 62))
+        await settle()
+        #expect(await fixture.repository.monitoringStartCount() == 1)
+
+        await fixture.controller.stop()
+
+        #expect(await fixture.repository.monitoringStopCount() == 1)
+    }
+
 }
+
 private func settle() async {
     await settle(milliseconds: 20)
 }

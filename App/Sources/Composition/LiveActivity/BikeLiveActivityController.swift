@@ -1,46 +1,34 @@
-import BikeDomain
 import Foundation
-import SettingsDomain
-
-struct BikeLiveActivityUseCases {
-    let observeTelemetry: ObserveBikeTelemetryUseCase
-    let observeBatteryHealth: ObserveBikeBatteryHealthUseCase
-    let observeConnection: ObserveBikeConnectionUseCase
-    let observeSettings: ObserveAppSettingsUseCase
-    let startBatteryHealthMonitoring: StartBatteryHealthMonitoringUseCase
-    let stopBatteryHealthMonitoring: StopBatteryHealthMonitoringUseCase
-}
+import VehicleSession
 
 @MainActor
 final class BikeLiveActivityController {
-    private let useCases: BikeLiveActivityUseCases
+    private let vehicleSession: any VehicleSessionService
     private let activityClient: BikeLiveActivityClient
     private let clock: any BikeLiveActivityClock
     private let updateInterval: TimeInterval
     private let stateMapper: BikeLiveActivityStateMapper
 
-    private var telemetry = BikeTelemetry()
-    private var batteryHealth = BikeBatteryHealth()
-    private var connection = BikeConnection()
-    private var settings = AppSettings()
-    private var tasks: [Task<Void, Never>] = []
+    private var snapshot = VehicleSessionSnapshot()
+    private var observationTask: Task<Void, Never>?
     private var evaluationTask: Task<Void, Never>?
-    private var stopTask: Task<Void, Never>?
+    private var needsEvaluation = false
+    private var isStarted = false
     private var canShowLiveActivity = false
     private var isSetupCompleted = false
-    private var isStartingBatteryHealthMonitoring = false
-    private var isMonitoringBatteryHealth = false
+    private let batteryHealthConsumerID = UUID()
+    private var isRequestingBatteryHealth = false
     private var lastContentState: BikeLiveActivityContentState?
     private var lastUpdateDate: Date?
 
     init(
-        useCases: BikeLiveActivityUseCases,
+        vehicleSession: any VehicleSessionService,
         activityClient: BikeLiveActivityClient,
         clock: any BikeLiveActivityClock,
         updateInterval: TimeInterval,
         stateMapper: BikeLiveActivityStateMapper
     ) {
-        self.useCases = useCases
+        self.vehicleSession = vehicleSession
         self.activityClient = activityClient
         self.clock = clock
         self.updateInterval = updateInterval
@@ -48,61 +36,33 @@ final class BikeLiveActivityController {
     }
 
     deinit {
-        tasks.forEach { $0.cancel() }
+        observationTask?.cancel()
         evaluationTask?.cancel()
-        stopTask?.cancel()
     }
 
     func start() {
-        guard tasks.isEmpty else { return }
-        stopTask?.cancel()
-        stopTask = nil
-        let observeTelemetry = useCases.observeTelemetry
-        tasks.append(Task { [weak self] in
-            let stream = await observeTelemetry.execute()
-            for await telemetry in stream {
+        guard observationTask == nil else { return }
+        isStarted = true
+        let vehicleSession = vehicleSession
+        observationTask = Task { [weak self] in
+            let stream = await vehicleSession.observe()
+            for await snapshot in stream {
                 guard !Task.isCancelled, let self else { return }
-                self.telemetry = telemetry
-                await self.evaluate()
+                self.snapshot = snapshot
+                self.scheduleEvaluation()
             }
-        })
-        let observeBatteryHealth = useCases.observeBatteryHealth
-        tasks.append(Task { [weak self] in
-            let stream = await observeBatteryHealth.execute()
-            for await batteryHealth in stream {
-                guard !Task.isCancelled, let self else { return }
-                self.batteryHealth = batteryHealth
-                await self.evaluate()
-            }
-        })
-        let observeConnection = useCases.observeConnection
-        tasks.append(Task { [weak self] in
-            let stream = await observeConnection.execute()
-            for await connection in stream {
-                guard !Task.isCancelled, let self else { return }
-                self.connection = connection
-                await self.evaluate()
-            }
-        })
-        let observeSettings = useCases.observeSettings
-        tasks.append(Task { [weak self] in
-            let stream = await observeSettings.execute()
-            for await settings in stream {
-                guard !Task.isCancelled, let self else { return }
-                self.settings = settings
-                await self.evaluate()
-            }
-        })
+        }
     }
 
-    func stop() {
-        tasks.forEach { $0.cancel() }
-        tasks.removeAll()
+    func stop() async {
+        isStarted = false
+        observationTask?.cancel()
+        observationTask = nil
         evaluationTask?.cancel()
-        stopTask?.cancel()
-        stopTask = Task { [weak self] in
-            await self?.stopMonitoringIfNeeded()
-        }
+        await evaluationTask?.value
+        evaluationTask = nil
+        needsEvaluation = false
+        await setBatteryHealthRequired(false)
     }
 
     func setCanShowLiveActivity(_ canShow: Bool) {
@@ -116,19 +76,29 @@ final class BikeLiveActivityController {
     }
 
     private func scheduleEvaluation() {
-        evaluationTask?.cancel()
+        needsEvaluation = true
+        guard evaluationTask == nil, isStarted else { return }
         evaluationTask = Task { [weak self] in
-            await self?.evaluate()
+            await self?.runEvaluationLoop()
+        }
+    }
+
+    private func runEvaluationLoop() async {
+        while isStarted, needsEvaluation, !Task.isCancelled {
+            needsEvaluation = false
+            await evaluate()
+        }
+        evaluationTask = nil
+        if isStarted, needsEvaluation {
+            scheduleEvaluation()
         }
     }
 
     private func evaluate() async {
+        guard isStarted, !Task.isCancelled else { return }
         guard canShowLiveActivity || activityClient.isActive else { return }
         let snapshot = stateMapper.map(
-            telemetry: telemetry,
-            batteryHealth: batteryHealth,
-            connection: connection,
-            settings: settings,
+            snapshot: snapshot,
             now: clock.now
         )
         let state = snapshot.contentState
@@ -138,26 +108,30 @@ final class BikeLiveActivityController {
             guard canStartActivity(with: snapshot) else { return }
             do {
                 try await activityClient.start(vin: activityVIN, state: state)
+                guard isStarted, !Task.isCancelled else { return }
                 lastContentState = state
                 lastUpdateDate = clock.now
                 await updateBatteryHealthMonitoring(for: state)
             } catch {
-                await stopMonitoringIfNeeded()
+                await setBatteryHealthRequired(false)
             }
             return
         }
 
         if shouldEndActivity(with: snapshot) {
             await activityClient.end(state: state)
-            await stopMonitoringIfNeeded()
+            guard isStarted, !Task.isCancelled else { return }
+            await setBatteryHealthRequired(false)
             lastContentState = nil
             lastUpdateDate = nil
             return
         }
 
         await updateBatteryHealthMonitoring(for: state)
+        guard isStarted, !Task.isCancelled else { return }
         guard shouldUpdate(with: state) else { return }
         await activityClient.update(state: state)
+        guard isStarted, !Task.isCancelled else { return }
         lastContentState = state
         lastUpdateDate = clock.now
     }
@@ -175,33 +149,19 @@ final class BikeLiveActivityController {
 
     private func updateBatteryHealthMonitoring(for state: BikeLiveActivityContentState) async {
         if state.mode == .charging {
-            await startMonitoringIfNeeded()
+            await setBatteryHealthRequired(true)
         } else {
-            await stopMonitoringIfNeeded()
+            await setBatteryHealthRequired(false)
         }
     }
 
-    private func startMonitoringIfNeeded() async {
-        guard !isMonitoringBatteryHealth, !isStartingBatteryHealthMonitoring else { return }
-        isStartingBatteryHealthMonitoring = true
-        do {
-            try await useCases.startBatteryHealthMonitoring.execute()
-            isStartingBatteryHealthMonitoring = false
-            guard activityClient.isActive, telemetry.runState == .charging else {
-                await useCases.stopBatteryHealthMonitoring.execute()
-                return
-            }
-            isMonitoringBatteryHealth = true
-        } catch {
-            isStartingBatteryHealthMonitoring = false
-            isMonitoringBatteryHealth = false
-        }
-    }
-
-    private func stopMonitoringIfNeeded() async {
-        guard isMonitoringBatteryHealth else { return }
-        isMonitoringBatteryHealth = false
-        await useCases.stopBatteryHealthMonitoring.execute()
+    private func setBatteryHealthRequired(_ required: Bool) async {
+        guard required != isRequestingBatteryHealth else { return }
+        isRequestingBatteryHealth = required
+        await vehicleSession.setBatteryHealthMonitoringRequired(
+            required,
+            consumerID: batteryHealthConsumerID
+        )
     }
 
     private func shouldUpdate(with state: BikeLiveActivityContentState) -> Bool {
@@ -232,7 +192,8 @@ final class BikeLiveActivityController {
     }
 
     private var activityVIN: String {
-        let vin = telemetry.vin.trimmingCharacters(in: .whitespacesAndNewlines)
+        let preferredVIN = snapshot.profile?.vin ?? snapshot.telemetry.vin
+        let vin = preferredVIN.trimmingCharacters(in: .whitespacesAndNewlines)
         return vin.isEmpty ? "Stark Varg" : vin
     }
 }

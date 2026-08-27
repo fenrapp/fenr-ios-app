@@ -8,10 +8,7 @@ import RideDashboard
 struct AppRootDependencies {
     let diagnosticsViewModel: BikeDiagnosticsViewModel
     let batteryHealthViewModel: BatteryHealthViewModel
-    let dashboardViewModel: RideDashboardViewModel
-    let currentTripCardViewModel: CurrentTripCardViewModel
-    let tripStatisticsViewModel: TripStatisticsCardViewModel
-    let chargingDashboardViewModel: ChargingDashboardViewModel
+    let rideDashboardFactory: any RideDashboardFeatureBuilding
     let onboardingViewModel: BikeOnboardingViewModel
     let appSettingsViewModel: AppSettingsViewModel
     let setupFlow: BikeSetupFlowController

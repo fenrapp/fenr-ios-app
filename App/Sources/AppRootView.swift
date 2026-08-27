@@ -10,15 +10,12 @@ struct AppRootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var diagnosticsViewModel: BikeDiagnosticsViewModel
     @StateObject private var batteryHealthViewModel: BatteryHealthViewModel
-    @StateObject private var dashboardViewModel: RideDashboardViewModel
-    @StateObject private var currentTripCardViewModel: CurrentTripCardViewModel
-    @StateObject private var tripStatisticsViewModel: TripStatisticsCardViewModel
-    @StateObject private var chargingDashboardViewModel: ChargingDashboardViewModel
     @StateObject private var onboardingViewModel: BikeOnboardingViewModel
     @StateObject private var appSettingsViewModel: AppSettingsViewModel
     @StateObject private var setupFlow: BikeSetupFlowController
     @State private var path: [Route] = []
     private let lifecycleController: AppLifecycleController
+    private let rideDashboardFactory: any RideDashboardFeatureBuilding
     private let interfaceOrientationController: InterfaceOrientationController
     private let dashboardAccessory: () -> AnyView
     private let batteryHealthAccessory: () -> AnyView
@@ -32,14 +29,11 @@ struct AppRootView: View {
     ) {
         _diagnosticsViewModel = StateObject(wrappedValue: dependencies.diagnosticsViewModel)
         _batteryHealthViewModel = StateObject(wrappedValue: dependencies.batteryHealthViewModel)
-        _dashboardViewModel = StateObject(wrappedValue: dependencies.dashboardViewModel)
-        _currentTripCardViewModel = StateObject(wrappedValue: dependencies.currentTripCardViewModel)
-        _tripStatisticsViewModel = StateObject(wrappedValue: dependencies.tripStatisticsViewModel)
-        _chargingDashboardViewModel = StateObject(wrappedValue: dependencies.chargingDashboardViewModel)
         _onboardingViewModel = StateObject(wrappedValue: dependencies.onboardingViewModel)
         _appSettingsViewModel = StateObject(wrappedValue: dependencies.appSettingsViewModel)
         _setupFlow = StateObject(wrappedValue: dependencies.setupFlow)
         lifecycleController = dependencies.lifecycleController
+        rideDashboardFactory = dependencies.rideDashboardFactory
         interfaceOrientationController = dependencies.interfaceOrientationController
         self.dashboardAccessory = dashboardAccessory
         self.batteryHealthAccessory = batteryHealthAccessory
@@ -52,11 +46,8 @@ struct AppRootView: View {
                 if !setupFlow.isLoaded {
                     ProgressView()
                 } else if setupFlow.isCompleted {
-                    RideDashboardView(
-                        viewModel: dashboardViewModel,
-                        currentTripViewModel: currentTripCardViewModel,
-                        tripStatisticsViewModel: tripStatisticsViewModel,
-                        chargingViewModel: chargingDashboardViewModel,
+                    RideDashboardScene(
+                        factory: rideDashboardFactory,
                         showsTelemetryButton: Constants.showsDashboardTelemetryButton,
                         onDiagnostics: { path.append(.diagnostics) }
                     )
@@ -130,15 +121,14 @@ struct AppRootView: View {
         .onChange(of: scenePhase) {
             lifecycleController.setCanShowLiveActivity(scenePhase != .active)
             if scenePhase != .active {
-                currentTripCardViewModel.persistCurrentTrip()
+                lifecycleController.persistRideSession()
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willTerminateNotification)) { _ in
-            currentTripCardViewModel.completeCurrentTrip()
+            lifecycleController.terminate()
         }
         .onDisappear {
             onboardingViewModel.stopObserving()
-            currentTripCardViewModel.completeCurrentTrip()
             lifecycleController.stop()
         }
     }

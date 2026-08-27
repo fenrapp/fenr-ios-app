@@ -3,6 +3,7 @@ import ChargeControl
 import Foundation
 import MeasurementPresentation
 import SettingsDomain
+import VehicleSession
 
 enum BatteryHealthPreviewFactory {
     @MainActor
@@ -11,12 +12,9 @@ enum BatteryHealthPreviewFactory {
         let repository = BatteryHealthPreviewRepository()
         return BatteryHealthViewModel(
             useCases: .init(
-                startMonitoring: .init(repository: repository),
-                stopMonitoring: .init(repository: repository),
-                observeHealth: .init(repository: repository),
-                observeCaptures: .init(repository: repository),
-                observeSettings: .init(repository: BatteryHealthPreviewSettingsRepository())
+                observeCaptures: .init(repository: repository)
             ),
+            vehicleSession: BatteryHealthPreviewVehicleSession(),
             mapper: .init(formatter: formatter),
             makeMapper: { _ in .init(formatter: makeFormatter()) },
             chargeControl: ChargeControlSession(
@@ -44,14 +42,26 @@ enum BatteryHealthPreviewFactory {
     }
 }
 
-private actor BatteryHealthPreviewSettingsRepository: AppSettingsRepository {
-    func load() async -> AppSettings { .init() }
-    func save(_: AppSettings) async {}
-    func observe() async -> AsyncStream<AppSettings> {
+private actor BatteryHealthPreviewVehicleSession: VehicleSessionService {
+    func observe() -> AsyncStream<VehicleSessionSnapshot> {
         AsyncStream { continuation in
-            continuation.yield(.init())
+            continuation.yield(.init(
+                batteryHealth: .init(
+                    stateOfCharge: .known(percent: 76),
+                    stateOfHealth: .known(percent: 94),
+                    dcBusVoltage: .known(volts: 394.8),
+                    chargeState: .charging,
+                    lastUpdated: Date()
+                ),
+                batteryHealthMonitoringState: .active
+            ))
         }
     }
+
+    func start() {}
+    func stop() {}
+    func refreshBikeStatus() {}
+    func setBatteryHealthMonitoringRequired(_: Bool, consumerID _: UUID) {}
 }
 
 private struct BatteryHealthPreviewRepository: BikeBatteryHealthRepository {

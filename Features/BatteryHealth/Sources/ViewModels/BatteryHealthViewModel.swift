@@ -4,18 +4,14 @@ import Combine
 import Foundation
 import RuntimeConfiguration
 import SettingsDomain
+import VehicleSession
 
 @MainActor
 public final class BatteryHealthViewModel: ObservableObject {
     @Published public private(set) var viewState = BatteryHealthViewState()
 
-#if DEBUG
-    var chargeControlSessionIdentity: ObjectIdentifier {
-        ObjectIdentifier(chargeControl)
-    }
-#endif
-
     private let useCases: BatteryHealthUseCases
+    private let vehicleSession: any VehicleSessionService
     private var mapper: BikeBatteryHealthToViewStateMapper
     private let makeMapper: (MeasurementSystem) -> BikeBatteryHealthToViewStateMapper
     private let chargeControl: ChargeControlSession
@@ -23,7 +19,8 @@ public final class BatteryHealthViewModel: ObservableObject {
     private var health = BikeBatteryHealth()
     private var captures: [BatteryDataset: BatteryDatasetCapture] = [:]
     private var streamTasks: [Task<Void, Never>] = []
-    private var monitoringTask: Task<Void, Never>?
+    private let batteryHealthConsumerID = UUID()
+    private var monitoringRequestTask: Task<Void, Never>?
     private var renderTask: Task<Void, Never>?
     private var chargeControlCancellable: AnyCancellable?
     private var isStarted = false
@@ -32,12 +29,14 @@ public final class BatteryHealthViewModel: ObservableObject {
 
     public init(
         useCases: BatteryHealthUseCases,
+        vehicleSession: any VehicleSessionService,
         mapper: BikeBatteryHealthToViewStateMapper,
         makeMapper: @escaping (MeasurementSystem) -> BikeBatteryHealthToViewStateMapper,
         chargeControl: ChargeControlSession,
         captureTimeFormatStyle: Date.FormatStyle
     ) {
         self.useCases = useCases
+        self.vehicleSession = vehicleSession
         self.mapper = mapper
         self.makeMapper = makeMapper
         self.chargeControl = chargeControl
@@ -49,7 +48,7 @@ public final class BatteryHealthViewModel: ObservableObject {
 
     deinit {
         streamTasks.forEach { $0.cancel() }
-        monitoringTask?.cancel()
+        monitoringRequestTask?.cancel()
         renderTask?.cancel()
     }
 
@@ -57,20 +56,7 @@ public final class BatteryHealthViewModel: ObservableObject {
         guard !isStarted else { return }
         isStarted = true
         bindStreams()
-        monitoringTask = Task { @MainActor [weak self] in
-            guard let self else { return }
-            do {
-                try await useCases.startMonitoring.execute()
-                guard !Task.isCancelled else { return }
-                isMonitoring = true
-                render()
-            } catch is CancellationError {
-                return
-            } catch {
-                monitorError = String(describing: error)
-                render()
-            }
-        }
+        setBatteryHealthMonitoringRequired(true)
         render()
     }
 
@@ -79,13 +65,9 @@ public final class BatteryHealthViewModel: ObservableObject {
         isStarted = false
         streamTasks.forEach { $0.cancel() }
         streamTasks.removeAll()
-        monitoringTask?.cancel()
         renderTask?.cancel()
         renderTask = nil
-        monitoringTask = Task {
-            let stopMonitoring = useCases.stopMonitoring
-            await stopMonitoring.execute()
-        }
+        setBatteryHealthMonitoringRequired(false)
         isMonitoring = false
         render()
     }
@@ -110,21 +92,12 @@ public final class BatteryHealthViewModel: ObservableObject {
     }
 
     private func bindStreams() {
-        let observeHealth = useCases.observeHealth
+        let vehicleSession = vehicleSession
         streamTasks.append(Task { [weak self] in
-            let stream = await observeHealth.execute()
-            for await health in stream {
+            let stream = await vehicleSession.observe()
+            for await snapshot in stream {
                 guard !Task.isCancelled else { return }
-                self?.receive(health)
-            }
-        })
-        let observeSettings = useCases.observeSettings
-        streamTasks.append(Task { [weak self] in
-            let stream = await observeSettings.execute()
-            for await settings in stream {
-                guard !Task.isCancelled, let self else { return }
-                self.mapper = self.makeMapper(settings.measurementSystem)
-                self.scheduleRender()
+                self?.receive(snapshot)
             }
         })
         let observeCaptures = useCases.observeCaptures
@@ -137,9 +110,40 @@ public final class BatteryHealthViewModel: ObservableObject {
         })
     }
 
+    private func setBatteryHealthMonitoringRequired(_ required: Bool) {
+        let previousRequest = monitoringRequestTask
+        let vehicleSession = vehicleSession
+        let consumerID = batteryHealthConsumerID
+        monitoringRequestTask = Task {
+            await previousRequest?.value
+            guard !Task.isCancelled else { return }
+            await vehicleSession.setBatteryHealthMonitoringRequired(
+                required,
+                consumerID: consumerID
+            )
+        }
+    }
+
     private func receive(_ health: BikeBatteryHealth) {
         self.health = health
         chargeControl.receive(health)
+        scheduleRender()
+    }
+
+    private func receive(_ snapshot: VehicleSessionSnapshot) {
+        mapper = makeMapper(snapshot.settings.measurementSystem)
+        receive(snapshot.batteryHealth)
+        switch snapshot.batteryHealthMonitoringState {
+        case .inactive, .starting:
+            isMonitoring = false
+            monitorError = nil
+        case .active:
+            isMonitoring = true
+            monitorError = nil
+        case .failed(let message):
+            isMonitoring = false
+            monitorError = message
+        }
         scheduleRender()
     }
 

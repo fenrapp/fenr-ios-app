@@ -1,5 +1,4 @@
 import ActivityKit
-import Foundation
 
 struct BikeLiveActivityAttributes: ActivityAttributes {
     typealias ContentState = BikeLiveActivityContentState
@@ -41,20 +40,13 @@ enum BikeLiveActivityRunState: String, Codable, Hashable {
 
     var displayTitle: String {
         switch self {
-        case .unknown:
-            "Unknown"
-        case .off:
-            "Off"
-        case .neutral:
-            "Neutral"
-        case .ride:
-            "Ride"
-        case .charging:
-            "Charging"
-        case .crawlForward:
-            "Crawl"
-        case .crawlReverse:
-            "Reverse"
+        case .unknown: "Unknown"
+        case .off: "Off"
+        case .neutral: "Neutral"
+        case .ride: "Ride"
+        case .charging: "Charging"
+        case .crawlForward: "Crawl"
+        case .crawlReverse: "Reverse"
         }
     }
 }
@@ -72,24 +64,15 @@ enum BikeLiveActivityPhase: String, Codable, Hashable {
 
     var displayTitle: String {
         switch self {
-        case .charging:
-            "Charging"
-        case .balancing:
-            "Balancing"
-        case .complete:
-            "Charge complete"
-        case .riding:
-            "Riding"
-        case .neutral:
-            "Neutral"
-        case .crawl:
-            "Crawl"
-        case .fault:
-            "Fault active"
-        case .stale:
-            "Waiting for update"
-        case .connectionLost:
-            "Connection lost"
+        case .charging: "Charging"
+        case .balancing: "Balancing"
+        case .complete: "Charge complete"
+        case .riding: "Riding"
+        case .neutral: "Neutral"
+        case .crawl: "Crawl"
+        case .fault: "Fault active"
+        case .stale: "Waiting for update"
+        case .connectionLost: "Connection lost"
         }
     }
 }

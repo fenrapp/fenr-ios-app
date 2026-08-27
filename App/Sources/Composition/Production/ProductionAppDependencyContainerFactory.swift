@@ -23,21 +23,30 @@ enum ProductionAppDependencyContainerFactory {
             pinDeriver: bikeDataContainer.makeBikePinDeriver()
         )
         let chargeControl = ChargeControlDependencyContainer().makeSession(repository: repository)
+        let settingsRepository = UserDefaultsAppSettingsRepository()
+        let deviceSpeedRepository = CoreLocationDeviceSpeedRepository(
+            locationManager: CLLocationManager()
+        )
+        let rideTripRepository = makeRideTripRepository()
+        let sessionServices = AppSessionDependencyContainer.makeServices(
+            repository: repository,
+            profileRepository: profileRepository,
+            settingsRepository: settingsRepository,
+            deviceSpeedRepository: deviceSpeedRepository,
+            rideTripRepository: rideTripRepository
+        )
         return AppDependencyContainer(
             diagnosticsContainer: BikeDiagnosticsDependencyContainer(),
             batteryHealthContainer: BatteryHealthDependencyContainer(),
             session: session,
             chargeControlSession: chargeControl,
             profileRepository: profileRepository,
-            settingsRepository: UserDefaultsAppSettingsRepository(),
-            deviceSpeedRepository: CoreLocationDeviceSpeedRepository(
-                locationManager: CLLocationManager()
-            ),
-            rideTripRepository: makeRideTripRepository(),
+            settingsRepository: settingsRepository,
+            deviceSpeedRepository: deviceSpeedRepository,
+            rideTripRepository: rideTripRepository,
+            sessionServices: sessionServices,
             onboardingContainer: BikeOnboardingDependencyContainer(),
             dashboardContainer: RideDashboardDependencyContainer(),
-            currentTripCardContainer: CurrentTripCardDependencyContainer(),
-            chargingDashboardContainer: ChargingDashboardDependencyContainer(),
             appSettingsContainer: AppSettingsDependencyContainer()
         )
     }

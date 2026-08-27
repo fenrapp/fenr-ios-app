@@ -8,12 +8,9 @@ import MeasurementPresentation
 func makeBatteryHealthViewModel(repository: any BikeBatteryHealthRepository) -> BatteryHealthViewModel {
     BatteryHealthViewModel(
         useCases: .init(
-            startMonitoring: .init(repository: repository),
-            stopMonitoring: .init(repository: repository),
-            observeHealth: .init(repository: repository),
-            observeCaptures: .init(repository: repository),
-            observeSettings: .init(repository: FakeAppSettingsRepository())
+            observeCaptures: .init(repository: repository)
         ),
+        vehicleSession: FakeBatteryHealthVehicleSession(repository: repository),
         mapper: .init(formatter: makeBatteryHealthFormatter()),
         makeMapper: { _ in .init(formatter: makeBatteryHealthFormatter()) },
         chargeControl: makeChargeControlSession(repository: repository),

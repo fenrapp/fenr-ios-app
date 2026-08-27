@@ -2,6 +2,7 @@ import BikeDomain
 import Foundation
 import RideDashboard
 import SettingsDomain
+import VehicleSession
 
 struct BikeLiveActivitySnapshot {
     let contentState: BikeLiveActivityContentState
@@ -30,15 +31,15 @@ struct BikeLiveActivityStateMapper {
     }
 
     func map(
-        telemetry: BikeTelemetry,
-        batteryHealth: BikeBatteryHealth,
-        connection: BikeConnection,
-        settings: AppSettings,
+        snapshot: VehicleSessionSnapshot,
         now: Date
     ) -> BikeLiveActivitySnapshot {
+        let telemetry = snapshot.telemetry
+        let connection = snapshot.connection
+        let settings = snapshot.settings
         let dashboardState = makeDashboardMapper(settings).map(
             telemetry: telemetry,
-            batteryHealth: batteryHealth
+            batteryHealth: snapshot.batteryHealth
         )
         let isConnectionLost = isConnectionLost(connection.state)
         let hasRecentTelemetry = telemetry.lastUpdated.map {
@@ -59,7 +60,7 @@ struct BikeLiveActivityStateMapper {
             currentText: metricText(dashboardState.reportedCurrent),
             temperatureText: metricText(dashboardState.batteryTemperature),
             modeIndex: telemetry.mode.displayIndex,
-            speedText: speedText(telemetry: telemetry, settings: settings),
+            speedText: speedText(snapshot: snapshot),
             runState: runState,
             mode: liveActivityMode(phase: phase, runState: runState),
             phase: phase,
@@ -129,11 +130,11 @@ struct BikeLiveActivityStateMapper {
         }
     }
 
-    private func speedText(telemetry: BikeTelemetry, settings: AppSettings) -> String? {
-        guard let kilometersPerHour = telemetry.speed.kmh else { return nil }
-        let mapper = makeSpeedMapper(settings.measurementSystem)
+    private func speedText(snapshot: VehicleSessionSnapshot) -> String? {
+        guard let kilometersPerHour = snapshot.resolvedSpeedKilometersPerHour else { return nil }
+        let mapper = makeSpeedMapper(snapshot.settings.measurementSystem)
         let measurement = mapper.speed(
-            kilometersPerHour: displaySpeed(kilometersPerHour, runState: telemetry.runState)
+            kilometersPerHour: displaySpeed(kilometersPerHour, runState: snapshot.telemetry.runState)
         )
         return metricText(mapper.metric(measurement, fractionDigits: 0))
     }

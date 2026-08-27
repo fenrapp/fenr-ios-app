@@ -7,9 +7,42 @@ import ChargeControl
 import EnvironmentDomain
 import Foundation
 import RideDashboard
+import RideSession
 import RideSessionDomain
 import RuntimeConfiguration
 import SettingsDomain
+import VehicleSession
+
+struct AppSessionServices {
+    let vehicle: any VehicleSessionService
+    let ride: any RideSessionService
+}
+
+enum AppSessionDependencyContainer {
+    static func makeServices(
+        repository: any BikeRepository & BikeBatteryHealthRepository,
+        profileRepository: any BikeProfileRepository,
+        settingsRepository: any AppSettingsRepository,
+        deviceSpeedRepository: any DeviceSpeedRepository,
+        rideTripRepository: any RideTripRepository,
+        applicationSessionID: UUID = UUID()
+    ) -> AppSessionServices {
+        let vehicleSession = VehicleSessionDependencyContainer.makeService(
+            repository: repository,
+            profileRepository: profileRepository,
+            settingsRepository: settingsRepository,
+            deviceSpeedRepository: deviceSpeedRepository
+        )
+        let rideSession = RideSessionDependencyContainer.makeService(
+            dependencies: .init(
+                rideTripRepository: rideTripRepository,
+                applicationSessionID: applicationSessionID
+            ),
+            vehicleSession: vehicleSession
+        )
+        return AppSessionServices(vehicle: vehicleSession, ride: rideSession)
+    }
+}
 
 @MainActor
 struct AppDependencyContainer {
@@ -17,8 +50,6 @@ struct AppDependencyContainer {
     private let batteryHealthContainer: BatteryHealthDependencyContainer
     private let onboardingContainer: BikeOnboardingDependencyContainer
     private let dashboardContainer: RideDashboardDependencyContainer
-    private let currentTripCardContainer: CurrentTripCardDependencyContainer
-    private let chargingDashboardContainer: ChargingDashboardDependencyContainer
     private let appSettingsContainer: AppSettingsDependencyContainer
     private let session: BikeSession
     private let chargeControlSession: ChargeControlSession
@@ -26,9 +57,10 @@ struct AppDependencyContainer {
     private let settingsRepository: any AppSettingsRepository
     private let deviceSpeedRepository: any DeviceSpeedRepository
     private let rideTripRepository: any RideTripRepository
+    private let rideSession: any RideSessionService
+    private let vehicleSession: any VehicleSessionService
     private let initialOnboardingVIN: String?
     private let forceOnboarding: Bool
-    private let applicationSessionID: UUID
 
     init(
         diagnosticsContainer: BikeDiagnosticsDependencyContainer,
@@ -39,10 +71,9 @@ struct AppDependencyContainer {
         settingsRepository: any AppSettingsRepository,
         deviceSpeedRepository: any DeviceSpeedRepository,
         rideTripRepository: any RideTripRepository,
+        sessionServices: AppSessionServices,
         onboardingContainer: BikeOnboardingDependencyContainer,
         dashboardContainer: RideDashboardDependencyContainer,
-        currentTripCardContainer: CurrentTripCardDependencyContainer,
-        chargingDashboardContainer: ChargingDashboardDependencyContainer,
         appSettingsContainer: AppSettingsDependencyContainer,
         initialOnboardingVIN: String? = nil,
         forceOnboarding: Bool = false
@@ -51,8 +82,6 @@ struct AppDependencyContainer {
         self.batteryHealthContainer = batteryHealthContainer
         self.onboardingContainer = onboardingContainer
         self.dashboardContainer = dashboardContainer
-        self.currentTripCardContainer = currentTripCardContainer
-        self.chargingDashboardContainer = chargingDashboardContainer
         self.appSettingsContainer = appSettingsContainer
         self.session = session
         self.chargeControlSession = chargeControlSession
@@ -60,13 +89,10 @@ struct AppDependencyContainer {
         self.settingsRepository = settingsRepository
         self.deviceSpeedRepository = deviceSpeedRepository
         self.rideTripRepository = rideTripRepository
+        vehicleSession = sessionServices.vehicle
+        rideSession = sessionServices.ride
         self.initialOnboardingVIN = initialOnboardingVIN
         self.forceOnboarding = forceOnboarding
-        applicationSessionID = UUID()
-    }
-
-    func makeBikeDiagnosticsViewModel() -> BikeDiagnosticsViewModel {
-        makeBikeDiagnosticsViewModel(session: session)
     }
 
     func makeRootDependencies() -> AppRootDependencies {
@@ -82,21 +108,20 @@ struct AppDependencyContainer {
                 disconnectFromBike: .init(repository: session.repository)
             )
         )
-        let bikeLiveActivityController = makeBikeLiveActivityController(session: session)
-        let currentTripViewModels = currentTripCardContainer.makeViewModels(
-            repository: session.repository,
-            settingsRepository: settingsRepository,
-            deviceSpeedRepository: deviceSpeedRepository,
-            rideTripRepository: rideTripRepository,
-            applicationSessionID: applicationSessionID
+        let bikeLiveActivityController = makeBikeLiveActivityController()
+        let rideDashboardFactory = AppRideDashboardFeatureFactory(
+            container: dashboardContainer,
+            dependencies: .init(
+                rideTripRepository: rideTripRepository,
+                chargeControl: chargeControlSession,
+                rideSession: rideSession,
+                vehicleSession: vehicleSession
+            )
         )
         return AppRootDependencies(
             diagnosticsViewModel: makeBikeDiagnosticsViewModel(session: session),
             batteryHealthViewModel: makeBatteryHealthViewModel(session: session),
-            dashboardViewModel: makeRideDashboardViewModel(session: session),
-            currentTripCardViewModel: currentTripViewModels.currentTrip,
-            tripStatisticsViewModel: currentTripViewModels.statistics,
-            chargingDashboardViewModel: makeChargingDashboardViewModel(session: session),
+            rideDashboardFactory: rideDashboardFactory,
             onboardingViewModel: makeOnboardingViewModel { vin in
                 setupFlow.complete(vin: vin)
             },
@@ -105,7 +130,9 @@ struct AppDependencyContainer {
             lifecycleController: AppLifecycleController(
                 sessionController: sessionController,
                 setupFlow: setupFlow,
-                bikeLiveActivityController: bikeLiveActivityController
+                bikeLiveActivityController: bikeLiveActivityController,
+                rideSession: rideSession,
+                vehicleSession: vehicleSession
             ),
             interfaceOrientationController: .shared
         )
@@ -130,7 +157,7 @@ struct AppDependencyContainer {
     func makeBatteryHealthViewModel(session: BikeSession) -> BatteryHealthViewModel {
         batteryHealthContainer.makeBatteryHealthViewModel(
             repository: session.repository,
-            settingsRepository: settingsRepository,
+            vehicleSession: vehicleSession,
             chargeControl: chargeControlSession
         )
     }
@@ -144,14 +171,6 @@ struct AppDependencyContainer {
         )
     }
 
-    func makeRideDashboardViewModel(session: BikeSession) -> RideDashboardViewModel {
-        dashboardContainer.makeViewModel(
-            repository: session.repository,
-            settingsRepository: settingsRepository,
-            deviceSpeedRepository: deviceSpeedRepository
-        )
-    }
-
     func makeAppSettingsViewModel() -> AppSettingsViewModel {
         appSettingsContainer.makeViewModel(
             settingsRepository: settingsRepository,
@@ -161,26 +180,11 @@ struct AppDependencyContainer {
         )
     }
 
-    func makeChargingDashboardViewModel(session: BikeSession) -> ChargingDashboardViewModel {
-        chargingDashboardContainer.makeViewModel(
-            repository: session.repository,
-            settingsRepository: settingsRepository,
-            chargeControl: chargeControlSession
-        )
-    }
-
-    func makeBikeLiveActivityController(session: BikeSession) -> BikeLiveActivityController {
+    func makeBikeLiveActivityController() -> BikeLiveActivityController {
         let activityClient = ActivityKitBikeLiveActivityClient()
         let locale = Locale.autoupdatingCurrent
         return BikeLiveActivityController(
-            useCases: .init(
-                observeTelemetry: .init(repository: session.repository),
-                observeBatteryHealth: .init(repository: session.repository),
-                observeConnection: .init(repository: session.repository),
-                observeSettings: .init(repository: settingsRepository),
-                startBatteryHealthMonitoring: .init(repository: session.repository),
-                stopBatteryHealthMonitoring: .init(repository: session.repository)
-            ),
+            vehicleSession: vehicleSession,
             activityClient: activityClient,
             clock: SystemBikeLiveActivityClock(),
             updateInterval: FENRRuntimeConstants.LiveActivity.chargingUpdateInterval,

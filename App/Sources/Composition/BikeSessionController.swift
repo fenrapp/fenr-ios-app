@@ -1,6 +1,5 @@
 import BikeDomain
 import Combine
-import Foundation
 
 struct BikeSessionControllerUseCases {
     let startRepository: StartBikeRepositoryUseCase

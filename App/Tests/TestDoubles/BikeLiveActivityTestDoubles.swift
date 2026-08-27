@@ -94,10 +94,15 @@ final class FakeBikeLiveActivityClient: BikeLiveActivityClient {
     private(set) var updatedStates: [BikeLiveActivityContentState] = []
     private(set) var endedStates: [BikeLiveActivityContentState] = []
     private var active = false
+    private var delaysNextStart = false
 
     var isActive: Bool { active }
 
     func start(vin: String, state: BikeLiveActivityContentState) async throws {
+        if delaysNextStart {
+            delaysNextStart = false
+            try? await Task.sleep(for: Constants.delayedStartDuration)
+        }
         startCount += 1
         lastStartedVIN = vin
         lastStartedState = state
@@ -113,6 +118,14 @@ final class FakeBikeLiveActivityClient: BikeLiveActivityClient {
         endCount += 1
         endedStates.append(state)
         active = false
+    }
+
+    func delayNextStart() {
+        delaysNextStart = true
+    }
+
+    private enum Constants {
+        static let delayedStartDuration: Duration = .milliseconds(100)
     }
 }
 

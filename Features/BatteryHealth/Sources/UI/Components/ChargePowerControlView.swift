@@ -127,3 +127,19 @@ struct ChargePowerControlView: View {
         static let labelSpacing: CGFloat = 2
     }
 }
+
+#Preview("Charge power control") {
+    ChargePowerControlView(
+        state: .init(
+            isVisible: true,
+            isEnabled: true,
+            power: .init(selected: 1_800, minimum: 300, maximum: 3_300, step: 100),
+            target: .init(selected: 80, minimum: 1, maximum: 100, step: 1),
+            chargerText: "Standard charger",
+            statusText: "Ready"
+        ),
+        setPowerLimit: { _ in },
+        setChargeTarget: { _ in }
+    )
+    .padding()
+}

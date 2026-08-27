@@ -1,30 +1,23 @@
-import BikeDomain
 import ChargeControl
 import Foundation
 import RideDashboard
 import SettingsDomain
+import VehicleSession
 
 @MainActor
 struct ChargingDashboardDependencyContainer {
     func makeViewModel(
-        repository: any BikeRepository & BikeBatteryHealthRepository,
-        settingsRepository: AppSettingsRepository,
+        vehicleSession: any VehicleSessionService,
         chargeControl: ChargeControlSession
     ) -> ChargingDashboardViewModel {
         let locale = Locale.autoupdatingCurrent
-        let makeMapper: @Sendable (AppSettings) -> ChargingDashboardMapper = { settings in
-            RideDashboardMapperFactory.makeChargingMapper(settings: settings, locale: locale)
+        let makeMapper: @Sendable (AppSettings, String?) -> ChargingDashboardMapper = { settings, vin in
+            RideDashboardMapperFactory.makeChargingMapper(settings: settings, locale: locale, vin: vin)
         }
         return ChargingDashboardViewModel(
-            useCases: .init(
-                observeTelemetry: ObserveBikeTelemetryUseCase(repository: repository),
-                observeBatteryHealth: ObserveBikeBatteryHealthUseCase(repository: repository),
-                startBatteryHealthMonitoring: StartBatteryHealthMonitoringUseCase(repository: repository),
-                stopBatteryHealthMonitoring: StopBatteryHealthMonitoringUseCase(repository: repository),
-                observeSettings: ObserveAppSettingsUseCase(repository: settingsRepository)
-            ),
+            vehicleSession: vehicleSession,
             chargeControl: chargeControl,
-            mapper: makeMapper(AppSettings()),
+            mapper: makeMapper(AppSettings(), nil),
             makeMapper: makeMapper
         )
     }

@@ -8,11 +8,16 @@ actor FakeBatteryHealthRepository: BikeBatteryHealthRepository {
     private var latestHealth = BikeBatteryHealth()
     private var didStartMonitoring = false
     private var didStopMonitoring = false
+    private var delaysNextMonitoringStart = false
     private var prepareCount = 0
     private var writtenWatts: [Int] = []
     private var writtenTargetPercents: [Int] = []
 
     func startBatteryHealthMonitoring() async throws {
+        if delaysNextMonitoringStart {
+            delaysNextMonitoringStart = false
+            try? await Task.sleep(for: Constants.delayedMonitoringStartDuration)
+        }
         didStartMonitoring = true
     }
 
@@ -61,6 +66,7 @@ actor FakeBatteryHealthRepository: BikeBatteryHealthRepository {
 
     func monitoringStarted() -> Bool { didStartMonitoring }
     func monitoringStopped() -> Bool { didStopMonitoring }
+    func delayNextMonitoringStart() { delaysNextMonitoringStart = true }
     func chargePowerPrepareCount() -> Int { prepareCount }
     func chargePowerWrites() -> [Int] { writtenWatts }
     func chargeTargetWrites() -> [Int] { writtenTargetPercents }
@@ -86,5 +92,9 @@ actor FakeBatteryHealthRepository: BikeBatteryHealthRepository {
             didPassNoOpWrite: true,
             logLines: ["test snapshot"]
         )
+    }
+
+    private enum Constants {
+        static let delayedMonitoringStartDuration: Duration = .milliseconds(100)
     }
 }

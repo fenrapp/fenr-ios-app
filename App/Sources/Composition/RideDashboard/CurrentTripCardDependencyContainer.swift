@@ -1,71 +1,48 @@
-import BikeDomain
-import EnvironmentDomain
 import Foundation
 import RideDashboard
+import RideSession
 import RideSessionDomain
-import RuntimeConfiguration
-import SettingsDomain
 
 @MainActor
 struct CurrentTripCardDependencyContainer {
     func makeViewModels(
-        repository: BikeRepository,
-        settingsRepository: AppSettingsRepository,
-        deviceSpeedRepository: DeviceSpeedRepository,
-        rideTripRepository: RideTripRepository,
-        applicationSessionID: UUID
+        dependencies: CurrentTripCardDependencies
     ) -> CurrentTripCardViewModels {
-        let statisticsViewModel = makeStatisticsViewModel(
-            settingsRepository: settingsRepository,
-            rideTripRepository: rideTripRepository
-        )
-        let currentTripViewModel = CurrentTripCardViewModel(
-            useCases: .init(
-                observeTelemetry: .init(repository: repository),
-                observeConnection: .init(repository: repository),
-                observeSettings: .init(repository: settingsRepository),
-                observeDeviceSpeed: .init(repository: deviceSpeedRepository),
-                prepareRideTripSession: .init(repository: rideTripRepository),
-                saveActiveRideTrip: .init(repository: rideTripRepository),
-                completeRideTrip: .init(repository: rideTripRepository)
-            ),
-            mapper: RideDashboardMapperFactory.makeCurrentTripMapper(locale: .autoupdatingCurrent),
-            deviceSpeedResolver: DeviceSpeedResolver(
-                now: Date.init,
-                maximumAccuracyMetersPerSecond: 5,
-                maximumSampleAge: FENRRuntimeConstants.RideDashboard.deviceSpeedMaximumSampleAge
-            ),
-            applicationSessionID: applicationSessionID,
-            now: Date.init,
-            onHistoryChanged: statisticsViewModel.invalidate
-        )
+        let rideTripRepository = dependencies.rideTripRepository
         return CurrentTripCardViewModels(
-            currentTrip: currentTripViewModel,
-            statistics: statisticsViewModel
-        )
-    }
-
-    private func makeStatisticsViewModel(
-        settingsRepository: AppSettingsRepository,
-        rideTripRepository: RideTripRepository
-    ) -> TripStatisticsCardViewModel {
-        TripStatisticsCardViewModel(
-            useCases: .init(
-                loadStatistics: .init(
-                    repository: rideTripRepository,
-                    aggregator: RideTripStatisticsAggregator()
-                ),
-                observeSettings: .init(repository: settingsRepository)
+            currentTrip: CurrentTripCardViewModel(
+                session: dependencies.rideSession,
+                mapper: RideDashboardMapperFactory.makeCurrentTripMapper(locale: .autoupdatingCurrent)
             ),
-            mapper: RideDashboardMapperFactory.makeTripStatisticsMapper(
-                locale: .autoupdatingCurrent
+            statistics: TripStatisticsCardViewModel(
+                useCases: .init(
+                    loadStatistics: .init(
+                        repository: rideTripRepository,
+                        aggregator: RideTripStatisticsAggregator()
+                    )
+                ),
+                mapper: RideDashboardMapperFactory.makeTripStatisticsMapper(locale: .autoupdatingCurrent),
+                session: dependencies.rideSession
+            ),
+            efficiency: EfficiencyCardViewModel(
+                useCases: .init(
+                    loadTrend: .init(repository: rideTripRepository)
+                ),
+                mapper: RideDashboardMapperFactory.makeEfficiencyMapper(locale: .autoupdatingCurrent),
+                session: dependencies.rideSession
             )
         )
     }
+}
+
+struct CurrentTripCardDependencies {
+    let rideTripRepository: any RideTripRepository
+    let rideSession: any RideSessionService
 }
 
 @MainActor
 struct CurrentTripCardViewModels {
     let currentTrip: CurrentTripCardViewModel
     let statistics: TripStatisticsCardViewModel
+    let efficiency: EfficiencyCardViewModel
 }

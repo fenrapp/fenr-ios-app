@@ -1,32 +1,55 @@
 import BikeDomain
-import EnvironmentDomain
+import ChargeControl
 import Foundation
 import RideDashboard
+import RideSession
+import RideSessionDomain
 import RuntimeConfiguration
 import SettingsDomain
+import VehicleSession
 
 @MainActor
 struct RideDashboardDependencyContainer {
-    func makeViewModel(
-        repository: BikeRepository,
-        settingsRepository: AppSettingsRepository,
-        deviceSpeedRepository: DeviceSpeedRepository
+    private let currentTripContainer = CurrentTripCardDependencyContainer()
+    private let chargingContainer = ChargingDashboardDependencyContainer()
+
+    func makeFeature(
+        dependencies: RideDashboardFeatureDependencies
+    ) -> RideDashboardFeatureModel {
+        let tripViewModels = currentTripContainer.makeViewModels(
+            dependencies: .init(
+                rideTripRepository: dependencies.rideTripRepository,
+                rideSession: dependencies.rideSession
+            )
+        )
+        return RideDashboardFeatureModel(
+            dashboardViewModel: makeViewModel(
+                vehicleSession: dependencies.vehicleSession
+            ),
+            currentTripViewModel: tripViewModels.currentTrip,
+            tripStatisticsViewModel: tripViewModels.statistics,
+            efficiencyViewModel: tripViewModels.efficiency,
+            chargingViewModel: chargingContainer.makeViewModel(
+                vehicleSession: dependencies.vehicleSession,
+                chargeControl: dependencies.chargeControl
+            )
+        )
+    }
+
+    private func makeViewModel(
+        vehicleSession: any VehicleSessionService
     ) -> RideDashboardViewModel {
         RideDashboardViewModel(
-            useCases: .init(
-                observeTelemetry: ObserveBikeTelemetryUseCase(repository: repository),
-                observeConnection: ObserveBikeConnectionUseCase(repository: repository),
-                observeSettings: ObserveAppSettingsUseCase(repository: settingsRepository),
-                observeDeviceSpeed: ObserveDeviceSpeedUseCase(repository: deviceSpeedRepository),
-                readBikeStatusSnapshot: ReadBikeStatusSnapshotUseCase(repository: repository)
-            ),
             mapper: RideDashboardMapperFactory.makeRideMapper(locale: .autoupdatingCurrent),
-            deviceSpeedResolver: DeviceSpeedResolver(
-                now: Date.init,
-                maximumAccuracyMetersPerSecond: 5,
-                maximumSampleAge: FENRRuntimeConstants.RideDashboard.deviceSpeedMaximumSampleAge
-            ),
+            vehicleSession: vehicleSession,
             reconnectionGracePeriod: FENRRuntimeConstants.RideDashboard.reconnectionGracePeriod
         )
     }
+}
+
+struct RideDashboardFeatureDependencies {
+    let rideTripRepository: any RideTripRepository
+    let chargeControl: ChargeControlSession
+    let rideSession: any RideSessionService
+    let vehicleSession: any VehicleSessionService
 }
