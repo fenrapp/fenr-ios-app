@@ -1,4 +1,3 @@
-import DesignSystem
 import SwiftUI
 
 struct DashboardCurrentTripPager: View {
@@ -13,10 +12,9 @@ struct DashboardCurrentTripPager: View {
     @State private var durationReleaseTask: Task<Void, Never>?
 
     var body: some View {
-        DashboardPager(
+        DashboardHorizontalCardPager(
             pages: CurrentTripDashboardPage.allCases,
             selection: $selection,
-            axis: .horizontal,
             reduceMotion: reduceMotion,
             accessibilityLabel: "Current trip pages",
             accessibilityValue: \.accessibilityLabel,
@@ -33,15 +31,6 @@ struct DashboardCurrentTripPager: View {
             case .statistics:
                 DashboardTripStatisticsCard(state: statistics)
             }
-        }
-        .overlay(alignment: .bottom) {
-            DashboardPageIndicator(
-                pages: CurrentTripDashboardPage.allCases,
-                selection: selection,
-                axis: .horizontal,
-                activeColor: DesignColor.informational
-            )
-            .padding(.bottom, Constants.indicatorBottomPadding)
         }
         .onDisappear {
             durationReleaseTask?.cancel()
@@ -78,7 +67,6 @@ struct DashboardCurrentTripPager: View {
     }
 
     private enum Constants {
-        static let indicatorBottomPadding: CGFloat = 10
         static let durationReleaseDelay = Duration.milliseconds(1_400)
     }
 }

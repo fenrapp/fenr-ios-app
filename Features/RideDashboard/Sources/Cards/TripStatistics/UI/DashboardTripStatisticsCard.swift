@@ -31,16 +31,10 @@ struct DashboardTripStatisticsCard: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
-            Text("RIDE STATS")
-                .font(.caption.weight(.bold))
-                .tracking(Constants.titleTracking)
-                .foregroundStyle(DesignColor.informational)
-            Text(state.statusText)
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(DesignColor.secondaryText)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        DashboardTripCardHeader(
+            title: "RIDE STATS",
+            subtitle: state.statusText
+        )
     }
 
     private var totalDistance: some View {
@@ -73,7 +67,6 @@ struct DashboardTripStatisticsCard: View {
 
     private enum Constants {
         static let sectionSpacing: CGFloat = 10
-        static let titleTracking: CGFloat = 1.1
         static let heroFontSize: CGFloat = 34
     }
 }

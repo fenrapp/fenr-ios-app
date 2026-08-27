@@ -8,6 +8,8 @@ struct DashboardCenterCard: View {
     let currentTrip: DashboardCurrentTripViewData
     @Binding var selectedCurrentTripPage: CurrentTripDashboardPage
     let tripStatistics: DashboardTripStatisticsViewData
+    @Binding var selectedEfficiencyPage: EfficiencyDashboardPage
+    let efficiency: DashboardEfficiencyViewData
     let charging: ChargingDashboardViewState
     let referenceSize: CGSize
     let reduceMotion: Bool
@@ -64,6 +66,13 @@ struct DashboardCenterCard: View {
                 reduceMotion: reduceMotion,
                 togglePause: toggleCurrentTripPause,
                 reset: resetCurrentTrip
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        case .efficiency:
+            DashboardEfficiencyPager(
+                selection: $selectedEfficiencyPage,
+                state: efficiency,
+                reduceMotion: reduceMotion
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }

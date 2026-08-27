@@ -1,31 +1,19 @@
 import BikeDomain
 import ChargeControl
-import EnvironmentDomain
 import Foundation
+import RideSession
 import RideSessionDomain
-import RuntimeConfiguration
 import SettingsDomain
+import VehicleSession
 
 #if DEBUG
 @MainActor
 enum RideDashboardPreviewFactory {
     static func makeViewModel(state: RideDashboardViewState) -> RideDashboardViewModel {
-        let repository = RideDashboardPreviewRepository()
         let viewModel = RideDashboardViewModel(
-            useCases: .init(
-                observeTelemetry: .init(repository: repository),
-                observeConnection: .init(repository: repository),
-                observeSettings: .init(repository: PreviewAppSettingsRepository()),
-                observeDeviceSpeed: .init(repository: PreviewDeviceSpeedRepository()),
-                readBikeStatusSnapshot: .init(repository: repository)
-            ),
             mapper: RideDashboardMapperFactory.makeRideMapper(locale: .autoupdatingCurrent),
-            deviceSpeedResolver: DeviceSpeedResolver(
-                now: Date.init,
-                maximumAccuracyMetersPerSecond: 5,
-                maximumSampleAge: FENRRuntimeConstants.RideDashboard.deviceSpeedMaximumSampleAge
-            ),
-            reconnectionGracePeriod: FENRRuntimeConstants.RideDashboard.reconnectionGracePeriod
+            vehicleSession: PreviewVehicleSessionService(),
+            reconnectionGracePeriod: .seconds(30)
         )
         viewModel.setPreviewState(state)
         return viewModel
@@ -37,17 +25,11 @@ enum ChargingDashboardPreviewFactory {
     static func makeViewModel(state: ChargingDashboardViewState) -> ChargingDashboardViewModel {
         let repository = RideDashboardPreviewRepository()
         let locale = Locale.autoupdatingCurrent
-        let makeMapper: @Sendable (AppSettings) -> ChargingDashboardMapper = { settings in
-            RideDashboardMapperFactory.makeChargingMapper(settings: settings, locale: locale)
+        let makeMapper: @Sendable (AppSettings, String?) -> ChargingDashboardMapper = { settings, vin in
+            RideDashboardMapperFactory.makeChargingMapper(settings: settings, locale: locale, vin: vin)
         }
         let viewModel = ChargingDashboardViewModel(
-            useCases: .init(
-                observeTelemetry: .init(repository: repository),
-                observeBatteryHealth: .init(repository: repository),
-                startBatteryHealthMonitoring: .init(repository: repository),
-                stopBatteryHealthMonitoring: .init(repository: repository),
-                observeSettings: .init(repository: PreviewAppSettingsRepository())
-            ),
+            vehicleSession: PreviewVehicleSessionService(),
             chargeControl: ChargeControlSession(
                 useCases: .init(
                     prepare: .init(repository: repository),
@@ -58,7 +40,7 @@ enum ChargingDashboardPreviewFactory {
                 stateUpdater: ChargeControlStateUpdater(normalizer: ChargeControlNormalizer()),
                 taskScheduler: ChargeControlTaskScheduler()
             ),
-            mapper: makeMapper(AppSettings()),
+            mapper: makeMapper(AppSettings(), nil),
             makeMapper: makeMapper
         )
         viewModel.setPreviewState(state)
@@ -69,27 +51,10 @@ enum ChargingDashboardPreviewFactory {
 @MainActor
 enum CurrentTripCardPreviewFactory {
     static func makeViewModel(state: DashboardCurrentTripViewData) -> CurrentTripCardViewModel {
-        let bikeRepository = RideDashboardPreviewRepository()
-        let tripRepository = PreviewRideTripRepository()
+        let dependencies = makePreviewTripDependencies()
         let viewModel = CurrentTripCardViewModel(
-            useCases: .init(
-                observeTelemetry: .init(repository: bikeRepository),
-                observeConnection: .init(repository: bikeRepository),
-                observeSettings: .init(repository: PreviewAppSettingsRepository()),
-                observeDeviceSpeed: .init(repository: PreviewDeviceSpeedRepository()),
-                prepareRideTripSession: .init(repository: tripRepository),
-                saveActiveRideTrip: .init(repository: tripRepository),
-                completeRideTrip: .init(repository: tripRepository)
-            ),
-            mapper: RideDashboardMapperFactory.makeCurrentTripMapper(locale: .autoupdatingCurrent),
-            deviceSpeedResolver: DeviceSpeedResolver(
-                now: Date.init,
-                maximumAccuracyMetersPerSecond: 5,
-                maximumSampleAge: FENRRuntimeConstants.RideDashboard.deviceSpeedMaximumSampleAge
-            ),
-            applicationSessionID: UUID(),
-            now: Date.init,
-            onHistoryChanged: {}
+            session: dependencies.session,
+            mapper: RideDashboardMapperFactory.makeCurrentTripMapper(locale: .autoupdatingCurrent)
         )
         viewModel.setPreviewState(state)
         return viewModel
@@ -101,41 +66,90 @@ enum TripStatisticsCardPreviewFactory {
     static func makeViewModel(
         state: DashboardTripStatisticsViewData
     ) -> TripStatisticsCardViewModel {
-        let repository = PreviewRideTripRepository()
+        let dependencies = makePreviewTripDependencies()
         let viewModel = TripStatisticsCardViewModel(
             useCases: .init(
                 loadStatistics: .init(
-                    repository: repository,
+                    repository: dependencies.tripRepository,
                     aggregator: RideTripStatisticsAggregator()
-                ),
-                observeSettings: .init(repository: PreviewAppSettingsRepository())
+                )
             ),
             mapper: RideDashboardMapperFactory.makeTripStatisticsMapper(
                 locale: .autoupdatingCurrent
-            )
+            ),
+            session: dependencies.session
         )
         viewModel.setPreviewState(state)
         return viewModel
     }
 }
 
-private actor PreviewAppSettingsRepository: AppSettingsRepository {
-    func load() -> AppSettings { .init() }
-    func save(_: AppSettings) {}
-    func observe() -> AsyncStream<AppSettings> { .init { $0.finish() } }
-}
-
-private actor PreviewDeviceSpeedRepository: DeviceSpeedRepository {
-    func observeDeviceSpeed() -> AsyncStream<DeviceSpeedSample> { .init { $0.finish() } }
-    func locationAuthorizationStatus() -> LocationAuthorizationStatus { .authorized }
-    func requestLocationAuthorization() {}
+@MainActor
+enum EfficiencyCardPreviewFactory {
+    static func makeViewModel(state: DashboardEfficiencyViewData) -> EfficiencyCardViewModel {
+        let dependencies = makePreviewTripDependencies()
+        let viewModel = EfficiencyCardViewModel(
+            useCases: .init(
+                loadTrend: .init(repository: dependencies.tripRepository)
+            ),
+            mapper: RideDashboardMapperFactory.makeEfficiencyMapper(locale: .autoupdatingCurrent),
+            session: dependencies.session
+        )
+        viewModel.setPreviewState(state)
+        return viewModel
+    }
 }
 
 private actor PreviewRideTripRepository: RideTripRepository {
-    func prepare(applicationSessionID _: UUID) -> RideTrip? { nil }
-    func saveActiveTrip(_: RideTrip) {}
-    func completeTrip(_: RideTrip, at _: Date) {}
-    func loadCompletedTrips() -> [RideTrip] { [] }
+    func prepare(context _: BikeSessionContext) -> RideTrip? { nil }
+    func saveActiveTrip(_: RideTrip) -> Bool { true }
+    func completeTrip(_: RideTrip, at _: Date) -> Bool { true }
+    func loadCompletedTrips(vin _: String) -> [RideTrip] { [] }
+    func promoteTemporaryIdentity(_: UUID, toVIN _: String) -> Bool { true }
+}
+
+@MainActor
+private func makePreviewTripDependencies() -> PreviewTripDependencies {
+    let tripRepository = PreviewRideTripRepository()
+    return PreviewTripDependencies(
+        session: PreviewRideSessionService(),
+        tripRepository: tripRepository
+    )
+}
+
+private struct PreviewTripDependencies {
+    let session: PreviewRideSessionService
+    let tripRepository: PreviewRideTripRepository
+}
+
+private actor PreviewRideSessionService: RideSessionService {
+    private let snapshot = RideSessionSnapshot(vehicleIdentity: .temporary(UUID()))
+
+    func observe() -> AsyncStream<RideSessionSnapshot> {
+        AsyncStream { continuation in
+            continuation.yield(snapshot)
+            continuation.finish()
+        }
+    }
+
+    func start() {}
+    func stop() {}
+    func persistCurrentTrip() {}
+    func completeCurrentTrip() {}
+    func flush() {}
+    func togglePauseCurrentTrip() {}
+    func resetCurrentTrip() {}
+}
+
+private actor PreviewVehicleSessionService: VehicleSessionService {
+    func observe() -> AsyncStream<VehicleSessionSnapshot> {
+        AsyncStream { $0.yield(.init()) }
+    }
+
+    func start() {}
+    func stop() {}
+    func refreshBikeStatus() {}
+    func setBatteryHealthMonitoringRequired(_: Bool, consumerID _: UUID) {}
 }
 
 private actor RideDashboardPreviewRepository: BikeRepository, BikeBatteryHealthRepository {

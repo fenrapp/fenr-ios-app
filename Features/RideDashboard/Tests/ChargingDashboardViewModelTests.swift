@@ -5,84 +5,77 @@ import Foundation
 import SettingsDomain
 import Testing
 import TestSupport
+import VehicleSession
 
 @MainActor
 @Suite("Charging dashboard view model")
 struct ChargingDashboardViewModelTests {
-    @Test("Monitors battery health while a charger is connected")
+    @Test("Requests battery health only while a charger is connected")
     func monitorsWhileChargerIsConnected() async {
+        let fixture = makeFixture()
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(.init())
+        #expect(await fixture.vehicleSession.requirements().isEmpty)
+
+        await fixture.vehicleSession.send(chargingSnapshot(health: chargingHealth()))
+        #expect(await waitUntil { await fixture.vehicleSession.requirements() == [true] })
+        #expect(await waitUntil { fixture.chargeControl.state.isEnabled })
+
+        await fixture.vehicleSession.send(.init())
+        #expect(await waitUntil { await fixture.vehicleSession.requirements() == [true, false] })
+        #expect(!fixture.chargeControl.state.isVisible)
+        fixture.viewModel.stop()
+    }
+
+    @Test("Repeated charging snapshots do not duplicate monitoring requests")
+    func coalescesMonitoringRequests() async {
+        let fixture = makeFixture()
+        fixture.viewModel.start()
+        let snapshot = chargingSnapshot(health: chargingHealth())
+        await fixture.vehicleSession.send(snapshot)
+        await fixture.vehicleSession.send(snapshot)
+
+        #expect(await waitUntil { await fixture.vehicleSession.requirements() == [true] })
+        fixture.viewModel.stop()
+        #expect(await waitUntil { await fixture.vehicleSession.requirements() == [true, false] })
+    }
+
+    @Test("Serializes monitoring acquisition and release")
+    func serializesMonitoringRequirements() async {
+        let vehicleSession = ChargingDashboardVehicleSession(
+            monitoringEnableDelay: .milliseconds(20)
+        )
+        let fixture = makeFixture(vehicleSession: vehicleSession)
+        fixture.viewModel.start()
+        await vehicleSession.send(chargingSnapshot(health: chargingHealth()))
+        #expect(await waitUntil {
+            await vehicleSession.startedRequirements() == [true]
+        })
+        fixture.viewModel.stop()
+
+        #expect(await waitUntil {
+            await vehicleSession.requirements() == [true, false]
+        })
+    }
+
+    private func makeFixture(
+        vehicleSession: ChargingDashboardVehicleSession = .init()
+    ) -> Fixture {
         let repository = ChargingDashboardRepository()
         let chargeControl = makeChargeControl(repository: repository)
         let locale = Locale(identifier: "en_US")
-        let makeMapper: @Sendable (AppSettings) -> ChargingDashboardMapper = { settings in
-            RideDashboardMapperFactory.makeChargingMapper(settings: settings, locale: locale)
+        let makeMapper: @Sendable (AppSettings, String?) -> ChargingDashboardMapper = { settings, vin in
+            RideDashboardMapperFactory.makeChargingMapper(settings: settings, locale: locale, vin: vin)
         }
-        let viewModel = ChargingDashboardViewModel(
-            useCases: makeUseCases(repository: repository),
-            chargeControl: chargeControl,
-            mapper: makeMapper(AppSettings()),
-            makeMapper: makeMapper
-        )
-
-        viewModel.start()
-        await repository.sendTelemetry(BikeTelemetry())
-        await Task.yield()
-        #expect(await repository.monitoringStartCount() == 0)
-
-        await repository.sendTelemetry(BikeTelemetry(statusFlags: .init(isChargerConnected: true)))
-        #expect(await waitUntil { await repository.monitoringStartCount() == 1 })
-        #expect(await repository.monitoringStartCount() == 1)
-        await repository.sendBatteryHealth(chargingHealth())
-        #expect(await waitUntil { chargeControl.state.isEnabled })
-
-        await repository.sendTelemetry(BikeTelemetry())
-        #expect(await waitUntil { await repository.monitoringStopCount() == 1 })
-        #expect(await repository.monitoringStopCount() == 1)
-        #expect(!chargeControl.state.isVisible)
-        viewModel.stop()
-    }
-
-    @Test("Waits for monitoring to stop before restarting it")
-    func serializesMonitoringRestart() async {
-        let repository = ChargingDashboardRepository()
-        let viewModel = makeViewModel(repository: repository)
-        await repository.suspendMonitoringStops()
-
-        viewModel.start()
-        await repository.sendTelemetry(BikeTelemetry(statusFlags: .init(isChargerConnected: true)))
-        #expect(await waitUntil { await repository.monitoringStartCount() == 1 })
-
-        await repository.sendTelemetry(BikeTelemetry())
-        #expect(await waitUntil { await repository.monitoringStopCount() == 1 })
-        await repository.sendTelemetry(BikeTelemetry(statusFlags: .init(isChargerConnected: true)))
-        try? await Task.sleep(for: .milliseconds(30))
-        #expect(await repository.monitoringStartCount() == 1)
-
-        await repository.resumeMonitoringStops()
-        #expect(await waitUntil { await repository.monitoringStartCount() == 2 })
-        viewModel.stop()
-    }
-
-    private func makeViewModel(repository: ChargingDashboardRepository) -> ChargingDashboardViewModel {
-        let locale = Locale(identifier: "en_US")
-        let makeMapper: @Sendable (AppSettings) -> ChargingDashboardMapper = { settings in
-            RideDashboardMapperFactory.makeChargingMapper(settings: settings, locale: locale)
-        }
-        return ChargingDashboardViewModel(
-            useCases: makeUseCases(repository: repository),
-            chargeControl: makeChargeControl(repository: repository),
-            mapper: makeMapper(AppSettings()),
-            makeMapper: makeMapper
-        )
-    }
-
-    private func makeUseCases(repository: ChargingDashboardRepository) -> ChargingDashboardUseCases {
-        .init(
-            observeTelemetry: .init(repository: repository),
-            observeBatteryHealth: .init(repository: repository),
-            startBatteryHealthMonitoring: .init(repository: repository),
-            stopBatteryHealthMonitoring: .init(repository: repository),
-            observeSettings: .init(repository: ChargingDashboardSettingsRepository())
+        return Fixture(
+            viewModel: ChargingDashboardViewModel(
+                vehicleSession: vehicleSession,
+                chargeControl: chargeControl,
+                mapper: makeMapper(AppSettings(), nil),
+                makeMapper: makeMapper
+            ),
+            vehicleSession: vehicleSession,
+            chargeControl: chargeControl
         )
     }
 
@@ -96,6 +89,14 @@ struct ChargingDashboardViewModelTests {
             logger: ChargeControlLogStore(),
             stateUpdater: ChargeControlStateUpdater(normalizer: ChargeControlNormalizer()),
             taskScheduler: ChargeControlTaskScheduler()
+        )
+    }
+
+    private func chargingSnapshot(health: BikeBatteryHealth) -> VehicleSessionSnapshot {
+        .init(
+            telemetry: .init(statusFlags: .init(isChargerConnected: true)),
+            batteryHealth: health,
+            batteryHealthMonitoringState: .active
         )
     }
 
@@ -114,4 +115,9 @@ struct ChargingDashboardViewModelTests {
         )
     }
 
+    private struct Fixture {
+        let viewModel: ChargingDashboardViewModel
+        let vehicleSession: ChargingDashboardVehicleSession
+        let chargeControl: ChargeControlSession
+    }
 }

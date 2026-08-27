@@ -62,9 +62,14 @@ public enum RideDashboardMapperFactory {
         )
     }
 
+    public static func makeEfficiencyMapper(locale: Locale) -> EfficiencyCardMapper {
+        EfficiencyCardMapper(locale: locale)
+    }
+
     public static func makeChargingMapper(
         settings: AppSettings,
-        locale: Locale
+        locale: Locale,
+        vin: String? = nil
     ) -> ChargingDashboardMapper {
         ChargingDashboardMapper(
             measurementMapper: makeMeasurementMapper(
@@ -78,7 +83,7 @@ public enum RideDashboardMapperFactory {
                 zeroValueUnits: .hide,
                 fractionalPart: .hide(rounded: .towardZero)
             ).locale(locale),
-            batteryPackCapacity: settings.batteryPackCapacity,
+            batteryPackCapacity: settings.batteryPackCapacity(forVIN: vin),
             controlStatusMapper: ChargingDashboardControlStatusMapper()
         )
     }

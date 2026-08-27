@@ -1,78 +1,8 @@
 import BikeDomain
-import EnvironmentDomain
 import Foundation
+@testable import RideDashboard
+import RideSession
 import RideSessionDomain
-import SettingsDomain
-import TestSupport
-
-actor CurrentTripCardBikeRepository: BikeRepository {
-    private let telemetryHub = TestEventHub<BikeTelemetry>()
-    private let connectionHub = TestEventHub<BikeConnection>()
-
-    func start() async {}
-    func stop() async {}
-    func connect(vin _: String) async throws {}
-    func disconnect() async throws {}
-    func retrySecurityHandshake() async throws {}
-    func readTelemetrySnapshot() async throws {}
-
-    func observeTelemetry() async -> AsyncStream<BikeTelemetry> {
-        await telemetryHub.stream()
-    }
-
-    func observeConnection() async -> AsyncStream<BikeConnection> {
-        await connectionHub.stream()
-    }
-
-    func observeDebugEvents() async -> AsyncStream<BikeDebugEvent> {
-        AsyncStream { _ in }
-    }
-
-    func sendTelemetry(_ telemetry: BikeTelemetry) async {
-        await telemetryHub.waitForSubscriber()
-        await telemetryHub.send(telemetry)
-    }
-
-    func sendConnection(_ connection: BikeConnection) async {
-        await connectionHub.waitForSubscriber()
-        await connectionHub.send(connection)
-    }
-}
-
-actor CurrentTripCardSettingsRepository: AppSettingsRepository {
-    private let settings: AppSettings
-
-    init(speedSource: SpeedSource = .motorcycle) {
-        settings = .init(
-            speedSource: speedSource,
-            measurementSystem: .metric
-        )
-    }
-
-    func load() -> AppSettings { settings }
-    func save(_: AppSettings) {}
-    func observe() -> AsyncStream<AppSettings> {
-        AsyncStream { continuation in
-            continuation.yield(settings)
-        }
-    }
-}
-
-actor CurrentTripCardDeviceSpeedRepository: DeviceSpeedRepository {
-    private let speedHub = TestEventHub<DeviceSpeedSample>()
-
-    func observeDeviceSpeed() async -> AsyncStream<DeviceSpeedSample> {
-        await speedHub.stream()
-    }
-
-    func locationAuthorizationStatus() -> LocationAuthorizationStatus { .authorized }
-    func requestLocationAuthorization() {}
-
-    func send(_ sample: DeviceSpeedSample) async {
-        await speedHub.waitForSubscriber()
-        await speedHub.send(sample)
-    }
-}
 
 actor CurrentTripCardTripRepository: RideTripRepository {
     private var activeTrip: RideTrip?
@@ -83,40 +13,119 @@ actor CurrentTripCardTripRepository: RideTripRepository {
         self.completedTrips = completedTrips
     }
 
-    func prepare(applicationSessionID: UUID) -> RideTrip? {
-        guard activeTrip?.applicationSessionID == applicationSessionID else { return nil }
+    func prepare(context: BikeSessionContext) -> RideTrip? {
+        guard activeTrip?.applicationSessionID == context.applicationSessionID,
+              activeTrip?.vehicleIdentity == context.vehicleIdentity else { return nil }
         return activeTrip
     }
 
-    func saveActiveTrip(_ trip: RideTrip) {
+    func saveActiveTrip(_ trip: RideTrip) -> Bool {
         activeTrip = trip
+        return true
     }
 
-    func completeTrip(_ trip: RideTrip, at date: Date) {
+    func completeTrip(_ trip: RideTrip, at date: Date) -> Bool {
         activeTrip = nil
         completedTrips.removeAll { $0.id == trip.id }
         completedTrips.append(trip.completed(at: date))
+        return true
     }
 
-    func loadCompletedTrips() -> [RideTrip] {
+    func loadCompletedTrips(vin: String) -> [RideTrip] {
         completedTripLoadCount += 1
-        return completedTrips
+        return completedTrips.filter { $0.confirmedVIN == vin }
+    }
+
+    func promoteTemporaryIdentity(_ temporaryID: UUID, toVIN vin: String) -> Bool {
+        if activeTrip?.vehicleIdentity == .temporary(temporaryID) {
+            activeTrip = activeTrip?.promotingVehicleIdentity(to: vin)
+        }
+        completedTrips = completedTrips.map {
+            $0.vehicleIdentity == .temporary(temporaryID) ? $0.promotingVehicleIdentity(to: vin) : $0
+        }
+        return true
     }
 
     func currentActiveTrip() -> RideTrip? { activeTrip }
     func completionCount() -> Int { completedTrips.count }
     func loadCount() -> Int { completedTripLoadCount }
+    func replaceCompletedTrips(with trips: [RideTrip]) { completedTrips = trips }
 
-    func replaceCompletedTrips(_ trips: [RideTrip]) {
-        completedTrips = trips
+}
+
+actor CurrentTripCardProfileRepository: BikeProfileRepository {
+    func loadProfile() -> BikeProfile? { .init(vin: CurrentTripTestIdentity.vin) }
+    func saveProfile(_: BikeProfile) {}
+    func clearProfile() {}
+}
+
+enum CurrentTripTestIdentity {
+    static let vin = "TESTVIN0000000001"
+}
+
+actor TestRideSessionService: RideSessionService {
+    private var snapshot: RideSessionSnapshot
+    private var observers: [UUID: AsyncStream<RideSessionSnapshot>.Continuation] = [:]
+    private var pauseToggleCount = 0
+    private var resetCount = 0
+    private var recordedCommands: [TestRideSessionCommand] = []
+    private let pauseCommandDelay: Duration
+
+    init(
+        snapshot: RideSessionSnapshot = .init(
+            vehicleIdentity: .vin(CurrentTripTestIdentity.vin)
+        ),
+        pauseCommandDelay: Duration = .zero
+    ) {
+        self.snapshot = snapshot
+        self.pauseCommandDelay = pauseCommandDelay
+    }
+
+    func observe() -> AsyncStream<RideSessionSnapshot> {
+        let id = UUID()
+        return AsyncStream { continuation in
+            observers[id] = continuation
+            continuation.yield(snapshot)
+            continuation.onTermination = { [weak self] _ in
+                Task { await self?.removeObserver(id) }
+            }
+        }
+    }
+
+    func start() {}
+    func stop() {}
+    func persistCurrentTrip() {}
+    func completeCurrentTrip() {}
+    func flush() {}
+
+    func togglePauseCurrentTrip() async {
+        if pauseCommandDelay > .zero {
+            try? await Task.sleep(for: pauseCommandDelay)
+        }
+        pauseToggleCount += 1
+        recordedCommands.append(.togglePause)
+    }
+
+    func resetCurrentTrip() {
+        resetCount += 1
+        recordedCommands.append(.reset)
+    }
+
+    func send(_ snapshot: RideSessionSnapshot) {
+        self.snapshot = snapshot
+        observers.values.forEach { $0.yield(snapshot) }
+    }
+
+    func pauseCommands() -> Int { pauseToggleCount }
+    func resetCommands() -> Int { resetCount }
+    func commands() -> [TestRideSessionCommand] { recordedCommands }
+
+    private func removeObserver(_ id: UUID) {
+        observers[id] = nil
     }
 }
 
-@MainActor
-final class CurrentTripHistoryChangeRecorder {
-    private(set) var count = 0
-
-    func record() {
-        count += 1
-    }
+enum TestRideSessionCommand: Equatable {
+    case togglePause
+    case reset
 }

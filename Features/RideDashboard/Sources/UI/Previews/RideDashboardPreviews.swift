@@ -9,8 +9,8 @@ private enum DashboardPreviewConstants {
 #Preview("Dashboard portrait") {
     NavigationStack {
         RideDashboardView(
-            viewModel: RideDashboardPreviewFactory.makeViewModel(
-                state: .init(
+            feature: previewFeature(
+                dashboardState: .init(
                     speedometer: previewSpeedometer(value: 20),
                     battery: previewBattery(percentage: 78, emphasis: .positive),
                     gear: previewGear("2"),
@@ -19,9 +19,6 @@ private enum DashboardPreviewConstants {
                     indicators: previewIndicators(highBeam: true, brake: true)
                 )
             ),
-            currentTripViewModel: previewCurrentTripViewModel(),
-            tripStatisticsViewModel: previewTripStatisticsViewModel(),
-            chargingViewModel: previewChargingViewModel(),
             onDiagnostics: {}
         )
     }
@@ -30,8 +27,8 @@ private enum DashboardPreviewConstants {
 #Preview("Dashboard landscape") {
     NavigationStack {
         RideDashboardView(
-            viewModel: RideDashboardPreviewFactory.makeViewModel(
-                state: .init(
+            feature: previewFeature(
+                dashboardState: .init(
                     speedometer: previewSpeedometer(value: 142),
                     battery: previewBattery(percentage: 34, emphasis: .warning),
                     gear: previewGear("3"),
@@ -41,9 +38,6 @@ private enum DashboardPreviewConstants {
                     indicators: previewIndicators(rightTurn: true)
                 )
             ),
-            currentTripViewModel: previewCurrentTripViewModel(),
-            tripStatisticsViewModel: previewTripStatisticsViewModel(),
-            chargingViewModel: previewChargingViewModel(),
             onDiagnostics: {}
         )
     }
@@ -54,8 +48,8 @@ private enum DashboardPreviewConstants {
 #Preview("Dashboard low battery") {
     NavigationStack {
         RideDashboardView(
-            viewModel: RideDashboardPreviewFactory.makeViewModel(
-                state: .init(
+            feature: previewFeature(
+                dashboardState: .init(
                     speedometer: previewSpeedometer(value: 96),
                     battery: previewBattery(percentage: 12, emphasis: .critical),
                     gear: previewGear("4"),
@@ -65,9 +59,6 @@ private enum DashboardPreviewConstants {
                     indicators: previewIndicators(fault: true)
                 )
             ),
-            currentTripViewModel: previewCurrentTripViewModel(),
-            tripStatisticsViewModel: previewTripStatisticsViewModel(),
-            chargingViewModel: previewChargingViewModel(),
             onDiagnostics: {}
         )
     }
@@ -77,10 +68,7 @@ private enum DashboardPreviewConstants {
 #Preview("Dashboard disconnected") {
     NavigationStack {
         RideDashboardView(
-            viewModel: RideDashboardPreviewFactory.makeViewModel(state: .init()),
-            currentTripViewModel: previewCurrentTripViewModel(),
-            tripStatisticsViewModel: previewTripStatisticsViewModel(),
-            chargingViewModel: previewChargingViewModel(),
+            feature: previewFeature(dashboardState: .init()),
             onDiagnostics: {}
         )
     }
@@ -88,19 +76,15 @@ private enum DashboardPreviewConstants {
 
 #Preview("Dashboard charging") {
     RideDashboardView(
-        viewModel: RideDashboardPreviewFactory.makeViewModel(
-            state: .init(
+        feature: previewFeature(
+            dashboardState: .init(
                 gear: previewGear("N"),
                 centerMode: .charging,
                 connectionDetail: "Live telemetry active",
                 hasTelemetry: true,
                 indicators: previewIndicators()
-            )
-        ),
-        currentTripViewModel: previewCurrentTripViewModel(),
-        tripStatisticsViewModel: previewTripStatisticsViewModel(),
-        chargingViewModel: previewChargingViewModel(
-            state: .init(
+            ),
+            chargingState: .init(
                 batteryPercent: 68,
                 targetPercent: 90,
                 estimatedTimeRemaining: "45 min",
@@ -121,6 +105,20 @@ private func previewChargingViewModel(
     state: ChargingDashboardViewState = .init()
 ) -> ChargingDashboardViewModel {
     ChargingDashboardPreviewFactory.makeViewModel(state: state)
+}
+
+@MainActor
+private func previewFeature(
+    dashboardState: RideDashboardViewState,
+    chargingState: ChargingDashboardViewState = .init()
+) -> RideDashboardFeatureModel {
+    RideDashboardFeatureModel(
+        dashboardViewModel: RideDashboardPreviewFactory.makeViewModel(state: dashboardState),
+        currentTripViewModel: previewCurrentTripViewModel(),
+        tripStatisticsViewModel: previewTripStatisticsViewModel(),
+        efficiencyViewModel: previewEfficiencyViewModel(),
+        chargingViewModel: previewChargingViewModel(state: chargingState)
+    )
 }
 
 @MainActor
@@ -148,6 +146,18 @@ private func previewTripStatisticsViewModel() -> TripStatisticsCardViewModel {
             averageSpeed: .init(label: "AVERAGE", valueText: "41", unit: "km/h"),
             maximumSpeed: .init(label: "MAX SPEED", valueText: "137", unit: "km/h"),
             accessibilityLabel: "Ride statistics preview"
+        )
+    )
+}
+
+@MainActor
+private func previewEfficiencyViewModel() -> EfficiencyCardViewModel {
+    EfficiencyCardPreviewFactory.makeViewModel(
+        state: DashboardEfficiencyViewData(
+            valueText: "72",
+            status: .calculated,
+            usedEnergyText: "1.2 kWh",
+            recoveredEnergyText: "180 Wh"
         )
     )
 }

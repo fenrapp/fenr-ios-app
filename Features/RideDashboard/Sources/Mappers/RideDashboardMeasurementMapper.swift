@@ -1,4 +1,3 @@
-import Foundation
 import MeasurementPresentation
 
 public struct RideDashboardMeasurementMapper: Sendable {

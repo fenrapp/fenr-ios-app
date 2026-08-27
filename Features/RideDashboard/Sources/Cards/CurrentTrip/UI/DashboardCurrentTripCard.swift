@@ -54,17 +54,10 @@ struct DashboardCurrentTripCard: View {
     }
 
     private var header: some View {
-        HStack(spacing: DesignSpace.small) {
-            VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
-                Text("CURRENT TRIP")
-                    .font(.caption.weight(.bold))
-                    .tracking(Constants.titleTracking)
-                    .foregroundStyle(DesignColor.informational)
-                Text(state.statusText)
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(DesignColor.secondaryText)
-            }
-            Spacer()
+        DashboardTripCardHeader(
+            title: "CURRENT TRIP",
+            subtitle: state.statusText
+        ) {
             if state.isActive {
                 HStack(spacing: DesignSpace.small) {
                     Button(action: togglePause) {
@@ -140,7 +133,6 @@ struct DashboardCurrentTripCard: View {
 
     private enum Constants {
         static let sectionSpacing: CGFloat = 10
-        static let titleTracking: CGFloat = 1.1
         static let durationFontSize: CGFloat = 34
         static let durationMinimumScaleFactor: CGFloat = 0.72
         static let controlButtonSize: CGFloat = 36

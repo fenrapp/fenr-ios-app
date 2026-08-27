@@ -1,40 +1,31 @@
-import BikeDomain
 import ChargeControl
 import Combine
+import Foundation
 import SettingsDomain
+import VehicleSession
 
 @MainActor
 public final class ChargingDashboardViewModel: ObservableObject {
     @Published public private(set) var viewState = ChargingDashboardViewState()
 
-#if DEBUG
-    var chargeControlSessionIdentity: ObjectIdentifier {
-        ObjectIdentifier(chargeControl)
-    }
-#endif
-
-    private let useCases: ChargingDashboardUseCases
+    private let vehicleSession: any VehicleSessionService
     private let chargeControl: ChargeControlSession
-    private let makeMapper: @Sendable (AppSettings) -> ChargingDashboardMapper
+    private let makeMapper: @Sendable (AppSettings, String?) -> ChargingDashboardMapper
     private var mapper: ChargingDashboardMapper
-    private var telemetry = BikeTelemetry()
-    private var batteryHealth = BikeBatteryHealth()
-    private var telemetryTask: Task<Void, Never>?
-    private var batteryHealthTask: Task<Void, Never>?
-    private var settingsTask: Task<Void, Never>?
-    private var monitoringTask: Task<Void, Never>?
-    private var monitoringStopTask: Task<Void, Never>?
-    private var isMonitoringBatteryHealth = false
-    private var monitoringGeneration = 0
+    private var snapshot = VehicleSessionSnapshot()
+    private var observationTask: Task<Void, Never>?
+    private let batteryHealthConsumerID = UUID()
+    private var isRequestingBatteryHealth = false
+    private var batteryHealthRequirementTask: Task<Void, Never>?
     private var chargeControlCancellable: AnyCancellable?
 
     public init(
-        useCases: ChargingDashboardUseCases,
+        vehicleSession: any VehicleSessionService,
         chargeControl: ChargeControlSession,
         mapper: ChargingDashboardMapper,
-        makeMapper: @escaping @Sendable (AppSettings) -> ChargingDashboardMapper
+        makeMapper: @escaping @Sendable (AppSettings, String?) -> ChargingDashboardMapper
     ) {
-        self.useCases = useCases
+        self.vehicleSession = vehicleSession
         self.chargeControl = chargeControl
         self.mapper = mapper
         self.makeMapper = makeMapper
@@ -44,48 +35,42 @@ public final class ChargingDashboardViewModel: ObservableObject {
     }
 
     deinit {
-        telemetryTask?.cancel()
-        batteryHealthTask?.cancel()
-        settingsTask?.cancel()
-        monitoringTask?.cancel()
-        monitoringStopTask?.cancel()
+        observationTask?.cancel()
+        guard isRequestingBatteryHealth else { return }
+        let previousRequirement = batteryHealthRequirementTask
+        let vehicleSession = vehicleSession
+        let consumerID = batteryHealthConsumerID
+        Task {
+            await previousRequirement?.value
+            await vehicleSession.setBatteryHealthMonitoringRequired(false, consumerID: consumerID)
+        }
     }
 
-    public func start() {
-        guard telemetryTask == nil else { return }
-        let observeTelemetry = useCases.observeTelemetry
-        telemetryTask = Task { [weak self] in
-            let stream = await observeTelemetry.execute()
-            for await telemetry in stream {
+    func start() {
+        guard observationTask == nil else { return }
+        let vehicleSession = vehicleSession
+        observationTask = Task { [weak self] in
+            let stream = await vehicleSession.observe()
+            for await snapshot in stream {
                 guard !Task.isCancelled else { return }
-                self?.receive(telemetry)
-            }
-        }
-        let observeSettings = useCases.observeSettings
-        settingsTask = Task { [weak self] in
-            let stream = await observeSettings.execute()
-            for await settings in stream {
-                guard !Task.isCancelled, let self else { return }
-                self.mapper = self.makeMapper(settings)
-                self.render()
+                self?.receive(snapshot)
             }
         }
     }
 
-    public func stop() {
-        telemetryTask?.cancel()
-        telemetryTask = nil
-        settingsTask?.cancel()
-        settingsTask = nil
-        stopBatteryHealthMonitoring()
-        viewState = ChargingDashboardViewState()
+    func stop() {
+        observationTask?.cancel()
+        observationTask = nil
+        setBatteryHealthRequired(false)
+        chargeControl.receive(.init())
+        viewState = .init()
     }
 
-    public func setChargePowerLimit(watts: Double) {
+    func setChargePowerLimit(watts: Double) {
         chargeControl.setPowerLimit(watts: watts)
     }
 
-    public func setChargeTarget(percent: Double) {
+    func setChargeTarget(percent: Double) {
         chargeControl.setTarget(percent: percent)
     }
 
@@ -95,100 +80,30 @@ public final class ChargingDashboardViewModel: ObservableObject {
     }
 #endif
 
-    private func receive(_ telemetry: BikeTelemetry) {
-        self.telemetry = telemetry
-        updateBatteryHealthMonitoring()
+    private func receive(_ snapshot: VehicleSessionSnapshot) {
+        self.snapshot = snapshot
+        mapper = makeMapper(snapshot.settings, snapshot.profile?.vin)
+        chargeControl.receive(snapshot.batteryHealth)
+        setBatteryHealthRequired(snapshot.telemetry.statusFlags.isChargerConnected)
         render()
     }
 
-    private func receive(_ health: BikeBatteryHealth) {
-        batteryHealth = health
-        chargeControl.receive(health)
-        render()
-    }
-
-    private func updateBatteryHealthMonitoring() {
-        guard telemetry.statusFlags.isChargerConnected else {
-            stopBatteryHealthMonitoring(resetsChargeControl: true)
-            return
-        }
-        guard !isMonitoringBatteryHealth, monitoringTask == nil else { return }
-
-        let startMonitoring = useCases.startBatteryHealthMonitoring
-        let stopMonitoring = useCases.stopBatteryHealthMonitoring
-        let pendingStop = monitoringStopTask
-        monitoringGeneration += 1
-        let generation = monitoringGeneration
-        monitoringTask = Task { [weak self] in
-            await pendingStop?.value
-            guard
-                !Task.isCancelled,
-                let self,
-                self.monitoringGeneration == generation,
-                self.telemetry.statusFlags.isChargerConnected
-            else { return }
-            do {
-                try await startMonitoring.execute()
-                guard
-                    !Task.isCancelled,
-                    self.monitoringGeneration == generation,
-                    self.telemetry.statusFlags.isChargerConnected
-                else {
-                    await stopMonitoring.execute()
-                    return
-                }
-                isMonitoringBatteryHealth = true
-                startObservingBatteryHealth()
-                if monitoringGeneration == generation {
-                    monitoringTask = nil
-                }
-            } catch {
-                guard self.monitoringGeneration == generation else { return }
-                self.monitoringTask = nil
-            }
-        }
-    }
-
-    private func startObservingBatteryHealth() {
-        guard batteryHealthTask == nil else { return }
-        let observeBatteryHealth = useCases.observeBatteryHealth
-        batteryHealthTask = Task { [weak self] in
-            let stream = await observeBatteryHealth.execute()
-            for await health in stream {
-                guard !Task.isCancelled else { return }
-                self?.receive(health)
-            }
-        }
-    }
-
-    private func stopBatteryHealthMonitoring(resetsChargeControl: Bool = false) {
-        batteryHealthTask?.cancel()
-        batteryHealthTask = nil
-        let pendingStart = monitoringTask
-        monitoringGeneration += 1
-        pendingStart?.cancel()
-        monitoringTask = nil
-
-        if resetsChargeControl {
-            chargeControl.receive(BikeBatteryHealth())
-        }
-
-        guard isMonitoringBatteryHealth || pendingStart != nil else { return }
-        isMonitoringBatteryHealth = false
-        batteryHealth = BikeBatteryHealth()
-        let stopMonitoring = useCases.stopBatteryHealthMonitoring
-        let previousStop = monitoringStopTask
-        monitoringStopTask = Task {
-            await pendingStart?.value
-            await previousStop?.value
-            await stopMonitoring.execute()
+    private func setBatteryHealthRequired(_ required: Bool) {
+        guard required != isRequestingBatteryHealth else { return }
+        isRequestingBatteryHealth = required
+        let previousRequirement = batteryHealthRequirementTask
+        let vehicleSession = vehicleSession
+        let consumerID = batteryHealthConsumerID
+        batteryHealthRequirementTask = Task {
+            await previousRequirement?.value
+            await vehicleSession.setBatteryHealthMonitoringRequired(required, consumerID: consumerID)
         }
     }
 
     private func render() {
         let nextViewState = mapper.map(
-            telemetry: telemetry,
-            batteryHealth: batteryHealth,
+            telemetry: snapshot.telemetry,
+            batteryHealth: snapshot.batteryHealth,
             chargeControl: chargeControl.state
         )
         guard nextViewState != viewState else { return }

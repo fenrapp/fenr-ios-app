@@ -12,6 +12,7 @@ struct CurrentTripCardMapperTests {
             locale: Locale(identifier: "en_GB")
         )
         let trip = RideTrip(
+            vehicleIdentity: .vin("TESTVIN0000000001"),
             applicationSessionID: UUID(),
             startedAt: Date(timeIntervalSince1970: 1_000),
             updatedAt: Date(timeIntervalSince1970: 4_661),
@@ -44,6 +45,7 @@ struct CurrentTripCardMapperTests {
     func mapsPausedTrip() {
         let date = Date(timeIntervalSince1970: 1_000)
         let trip = RideTrip(
+            vehicleIdentity: .vin("TESTVIN0000000001"),
             applicationSessionID: UUID(),
             startedAt: date,
             pausedAt: date.addingTimeInterval(30)

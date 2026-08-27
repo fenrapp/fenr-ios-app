@@ -1,7 +1,6 @@
-import BikeDomain
-import EnvironmentDomain
 import Foundation
-import RideDashboard
+@testable import RideDashboard
+import RideSession
 import RideSessionDomain
 import SettingsDomain
 import Testing
@@ -10,157 +9,103 @@ import TestSupport
 @Suite("Current trip card view model")
 @MainActor
 struct CurrentTripCardViewModelTests {
-    @Test("Tracks while hidden and publishes when the card becomes visible")
-    func tracksWhileHidden() async {
+    @Test("Does not publish while hidden and catches up when visible")
+    func publishesOnlyWhileVisible() async {
         let fixture = makeFixture()
-        fixture.viewModel.start()
-        await fixture.bikeRepository.sendConnection(
-            BikeConnection(state: .receivingTelemetry(peripheralName: "SYNTHETIC"))
-        )
-        await fixture.bikeRepository.sendTelemetry(driveTelemetry())
+        let trip = makeTrip(maximumSpeed: 42)
+        await fixture.session.send(.init(trip: trip, vehicleIdentity: trip.vehicleIdentity))
 
         #expect(!fixture.viewModel.viewState.isActive)
-        #expect(await waitUntil {
-            await fixture.tripRepository.currentActiveTrip() != nil
-        })
 
         fixture.viewModel.setIsVisible(true)
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.isActive
+                && fixture.viewModel.viewState.maximumSpeed.valueText == "42"
+        })
 
-        #expect(fixture.viewModel.viewState.isActive)
+        fixture.viewModel.setIsVisible(false)
+        await fixture.session.send(.init(
+            trip: makeTrip(maximumSpeed: 67),
+            vehicleIdentity: trip.vehicleIdentity
+        ))
+        await Task.yield()
         #expect(fixture.viewModel.viewState.maximumSpeed.valueText == "42")
+
+        fixture.viewModel.setIsVisible(true)
+        #expect(await waitUntil { fixture.viewModel.viewState.maximumSpeed.valueText == "67" })
     }
 
-    @Test("Reset archives the current trip and starts a replacement while still in gear")
-    func resetsActiveTrip() async {
+    @Test("Forwards reset and pause commands to the shared session")
+    func forwardsCommands() async {
         let fixture = makeFixture()
-        fixture.viewModel.setIsVisible(true)
-        fixture.viewModel.start()
-        await fixture.bikeRepository.sendConnection(
-            BikeConnection(state: .receivingTelemetry(peripheralName: "SYNTHETIC"))
-        )
-        await fixture.bikeRepository.sendTelemetry(driveTelemetry())
-        #expect(await waitUntil {
-            await fixture.tripRepository.currentActiveTrip() != nil
-        })
-        let originalID = await fixture.tripRepository.currentActiveTrip()?.id
 
+        fixture.viewModel.togglePauseCurrentTrip()
         fixture.viewModel.resetCurrentTrip()
 
         #expect(await waitUntil {
-            let completionCount = await fixture.tripRepository.completionCount()
-            let activeTrip = await fixture.tripRepository.currentActiveTrip()
-            return completionCount == 1 && activeTrip?.id != originalID
+            let pauseCommands = await fixture.session.pauseCommands()
+            let resetCommands = await fixture.session.resetCommands()
+            return pauseCommands == 1 && resetCommands == 1
         })
-        #expect(fixture.viewModel.viewState.isActive)
-        #expect(fixture.viewModel.viewState.distance.valueText == "0")
-        #expect(await waitUntil { fixture.historyChangeRecorder.count == 1 })
     }
 
-    @Test("Pause and resume persist the current trip state")
-    func pausesAndResumesTrip() async {
+    @Test("Serializes pause and reset commands")
+    func serializesCommands() async {
+        let session = TestRideSessionService(pauseCommandDelay: .milliseconds(20))
+        let fixture = makeFixture(session: session)
+
+        fixture.viewModel.togglePauseCurrentTrip()
+        fixture.viewModel.resetCurrentTrip()
+
+        #expect(await waitUntil {
+            await session.commands() == [.togglePause, .reset]
+        })
+    }
+
+    @Test("Uses the resolved source and GPS availability from the session")
+    func usesSessionSpeedSource() async {
         let fixture = makeFixture()
         fixture.viewModel.setIsVisible(true)
-        fixture.viewModel.start()
-        await fixture.bikeRepository.sendConnection(
-            BikeConnection(state: .receivingTelemetry(peripheralName: "SYNTHETIC"))
-        )
-        await fixture.bikeRepository.sendTelemetry(driveTelemetry())
+        let trip = makeTrip(maximumSpeed: 67)
+
+        await fixture.session.send(.init(
+            trip: trip,
+            vehicleIdentity: trip.vehicleIdentity,
+            resolvedSpeedKilometersPerHour: 67,
+            speedSource: .gps,
+            isGPSAvailable: true
+        ))
+
         #expect(await waitUntil {
-            await fixture.tripRepository.currentActiveTrip() != nil
-        })
-
-        fixture.viewModel.togglePauseCurrentTrip()
-
-        #expect(fixture.viewModel.viewState.isPaused)
-        #expect(await waitUntil {
-            await fixture.tripRepository.currentActiveTrip()?.isPaused == true
-        })
-
-        fixture.viewModel.togglePauseCurrentTrip()
-
-        #expect(!fixture.viewModel.viewState.isPaused)
-        #expect(await waitUntil {
-            await fixture.tripRepository.currentActiveTrip()?.isPaused == false
+            fixture.viewModel.viewState.speedSourceIndicator?.text == "GPS"
         })
     }
 
-    @Test("Uses the GPS speed selected in settings for trip speed metrics")
-    func usesSelectedGPSSpeed() async {
-        let fixture = makeFixture(speedSource: .gps)
-        fixture.viewModel.setIsVisible(true)
-        fixture.viewModel.start()
-        await fixture.deviceSpeedRepository.send(
-            DeviceSpeedSample(
-                kilometersPerHour: 67,
-                accuracyMetersPerSecond: 2,
-                observedAt: fixture.date
-            )
-        )
-        await fixture.bikeRepository.sendConnection(
-            BikeConnection(state: .receivingTelemetry(peripheralName: "SYNTHETIC"))
-        )
-        await fixture.bikeRepository.sendTelemetry(driveTelemetry())
-
-        #expect(await waitUntil {
-            await fixture.tripRepository.currentActiveTrip()?.maximumSpeedKilometersPerHour == 67
-        })
-        #expect(fixture.viewModel.viewState.maximumSpeed.valueText == "67")
-        #expect(fixture.viewModel.viewState.speedSourceIndicator?.text == "GPS")
-    }
-
-    private func makeFixture(speedSource: SpeedSource = .motorcycle) -> Fixture {
-        let bikeRepository = CurrentTripCardBikeRepository()
-        let tripRepository = CurrentTripCardTripRepository()
-        let settingsRepository = CurrentTripCardSettingsRepository(speedSource: speedSource)
-        let deviceSpeedRepository = CurrentTripCardDeviceSpeedRepository()
-        let historyChangeRecorder = CurrentTripHistoryChangeRecorder()
-        let fixedDate = Date(timeIntervalSince1970: 1_000)
-        let viewModel = CurrentTripCardViewModel(
-            useCases: .init(
-                observeTelemetry: .init(repository: bikeRepository),
-                observeConnection: .init(repository: bikeRepository),
-                observeSettings: .init(repository: settingsRepository),
-                observeDeviceSpeed: .init(repository: deviceSpeedRepository),
-                prepareRideTripSession: .init(repository: tripRepository),
-                saveActiveRideTrip: .init(repository: tripRepository),
-                completeRideTrip: .init(repository: tripRepository)
-            ),
-            mapper: RideDashboardMapperFactory.makeCurrentTripMapper(
-                locale: Locale(identifier: "en_GB")
-            ),
-            deviceSpeedResolver: DeviceSpeedResolver(
-                now: { fixedDate },
-                maximumAccuracyMetersPerSecond: 5,
-                maximumSampleAge: 5
-            ),
-            applicationSessionID: UUID(),
-            now: { fixedDate },
-            onHistoryChanged: historyChangeRecorder.record
-        )
+    private func makeFixture(
+        session: TestRideSessionService = .init()
+    ) -> Fixture {
         return Fixture(
-            viewModel: viewModel,
-            bikeRepository: bikeRepository,
-            tripRepository: tripRepository,
-            deviceSpeedRepository: deviceSpeedRepository,
-            historyChangeRecorder: historyChangeRecorder,
-            date: fixedDate
+            viewModel: CurrentTripCardViewModel(
+                session: session,
+                mapper: RideDashboardMapperFactory.makeCurrentTripMapper(
+                    locale: Locale(identifier: "en_GB")
+                )
+            ),
+            session: session
         )
     }
 
-    private func driveTelemetry() -> BikeTelemetry {
-        BikeTelemetry(
-            speed: .known(kmh: 42, kmhX10: 420),
-            odometer: .known(kilometers: 100, centiKilometers: 10_000),
-            statusFlags: .init(isOn: true, isInGear: true)
+    private func makeTrip(maximumSpeed: Double) -> RideTrip {
+        RideTrip(
+            vehicleIdentity: .vin(CurrentTripTestIdentity.vin),
+            applicationSessionID: UUID(),
+            startedAt: .distantPast,
+            maximumSpeedKilometersPerHour: maximumSpeed
         )
     }
 
     private struct Fixture {
         let viewModel: CurrentTripCardViewModel
-        let bikeRepository: CurrentTripCardBikeRepository
-        let tripRepository: CurrentTripCardTripRepository
-        let deviceSpeedRepository: CurrentTripCardDeviceSpeedRepository
-        let historyChangeRecorder: CurrentTripHistoryChangeRecorder
-        let date: Date
+        let session: TestRideSessionService
     }
 }

@@ -1,7 +1,6 @@
 import BikeDomain
 import ChargeControl
 import Foundation
-import MeasurementPresentation
 import SettingsDomain
 
 public struct ChargingDashboardMapper: Sendable {

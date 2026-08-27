@@ -1,4 +1,5 @@
 import Combine
+import RideSession
 import RideSessionDomain
 import SettingsDomain
 
@@ -8,45 +9,53 @@ public final class TripStatisticsCardViewModel: ObservableObject {
 
     private let useCases: TripStatisticsCardUseCases
     private let mapper: TripStatisticsCardMapper
-    private var settings = AppSettings()
+    private let session: any RideSessionService
+    private var measurementSystem = MeasurementSystem.metric
     private var statistics = RideTripStatistics()
     private var loadTask: Task<Void, Never>?
-    private var settingsTask: Task<Void, Never>?
+    private var sessionTask: Task<Void, Never>?
+    private var activeVIN: String?
     private var requestedRevision = 0
-    private var loadedRevision: Int?
+    private var loadedKey: DashboardRideHistoryKey?
     private var isVisible = false
 
     public init(
         useCases: TripStatisticsCardUseCases,
-        mapper: TripStatisticsCardMapper
+        mapper: TripStatisticsCardMapper,
+        session: any RideSessionService
     ) {
         self.useCases = useCases
         self.mapper = mapper
+        self.session = session
     }
 
     deinit {
         loadTask?.cancel()
-        settingsTask?.cancel()
+        sessionTask?.cancel()
     }
 
-    public func setIsVisible(_ isVisible: Bool) {
+    func setIsVisible(_ isVisible: Bool) {
         self.isVisible = isVisible
-        guard isVisible else { return }
-        startObservingSettingsIfNeeded()
+        guard isVisible else {
+            pauseObservation()
+            return
+        }
+        startObservingSessionIfNeeded()
         loadIfNeeded()
     }
 
-    public func invalidate() {
-        requestedRevision += 1
-        loadIfNeeded()
-    }
-
-    public func stop() {
+    func stop() {
         isVisible = false
+        pauseObservation()
+        loadedKey = nil
+        statistics = .init()
+    }
+
+    private func pauseObservation() {
         loadTask?.cancel()
         loadTask = nil
-        settingsTask?.cancel()
-        settingsTask = nil
+        sessionTask?.cancel()
+        sessionTask = nil
     }
 
 #if DEBUG
@@ -57,46 +66,60 @@ public final class TripStatisticsCardViewModel: ObservableObject {
 }
 
 private extension TripStatisticsCardViewModel {
-    func startObservingSettingsIfNeeded() {
-        guard settingsTask == nil else { return }
-        let observeSettings = useCases.observeSettings
-        settingsTask = Task { [weak self] in
-            let stream = await observeSettings.execute()
-            for await settings in stream {
-                guard !Task.isCancelled else { return }
-                self?.settings = settings
-                self?.render()
-            }
-        }
-    }
-
     func loadIfNeeded() {
-        guard isVisible, loadTask == nil, loadedRevision != requestedRevision else { return }
-        let revision = requestedRevision
+        guard isVisible, let activeVIN, loadTask == nil else { return }
+        let key = DashboardRideHistoryKey(vin: activeVIN, revision: requestedRevision)
+        guard loadedKey != key else { return }
         let loadStatistics = useCases.loadStatistics
-        if loadedRevision == nil {
+        if loadedKey == nil {
             viewState = DashboardTripStatisticsViewData(isLoading: true)
         }
         loadTask = Task { [weak self] in
-            let statistics = await loadStatistics.execute()
+            let statistics = await loadStatistics.execute(vin: activeVIN)
             guard !Task.isCancelled else { return }
-            self?.finishLoading(statistics, revision: revision)
+            self?.finishLoading(statistics, key: key)
         }
     }
 
-    func finishLoading(_ statistics: RideTripStatistics, revision: Int) {
+    func finishLoading(_ statistics: RideTripStatistics, key: DashboardRideHistoryKey) {
         self.statistics = statistics
-        loadedRevision = revision
+        loadedKey = key
         loadTask = nil
         render()
         loadIfNeeded()
     }
 
     func render() {
-        guard loadedRevision != nil else { return }
+        guard isVisible, loadedKey != nil else { return }
         viewState = mapper.map(
             statistics,
-            measurementSystem: settings.measurementSystem
+            measurementSystem: measurementSystem
         )
+    }
+
+    func startObservingSessionIfNeeded() {
+        guard sessionTask == nil else { return }
+        sessionTask = Task { [weak self, session] in
+            let stream = await session.observe()
+            for await snapshot in stream {
+                guard !Task.isCancelled else { return }
+                self?.receive(snapshot)
+            }
+        }
+    }
+
+    func receive(_ snapshot: RideSessionSnapshot) {
+        measurementSystem = snapshot.measurementSystem
+        let vin = snapshot.vehicleIdentity.confirmedVIN
+        if vin != activeVIN {
+            activeVIN = vin
+            requestedRevision = snapshot.historyRevision
+            loadedKey = nil
+            loadTask?.cancel()
+            loadTask = nil
+        } else {
+            requestedRevision = max(requestedRevision, snapshot.historyRevision)
+        }
+        loadIfNeeded()
     }
 }

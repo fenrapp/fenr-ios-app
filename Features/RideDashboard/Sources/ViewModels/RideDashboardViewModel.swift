@@ -1,85 +1,56 @@
 import BikeDomain
 import Combine
-import EnvironmentDomain
+import Foundation
 import RuntimeConfiguration
-import SettingsDomain
+import VehicleSession
 
 @MainActor
 public final class RideDashboardViewModel: ObservableObject {
     @Published public private(set) var viewState = RideDashboardViewState()
 
-    private let useCases: RideDashboardUseCases
     private let mapper: RideDashboardMapper
-    private let deviceSpeedResolver: DeviceSpeedResolver
-    private var telemetry = BikeTelemetry()
-    private var connection = BikeConnection()
-    private var settings = AppSettings()
-    private var deviceSpeedSample: DeviceSpeedSample?
-    private var tasks: [Task<Void, Never>] = []
-    private var deviceSpeedTask: Task<Void, Never>?
+    private let vehicleSession: any VehicleSessionService
+    private var snapshot = VehicleSessionSnapshot()
+    private var observationTask: Task<Void, Never>?
     private var statusSnapshotRefreshTask: Task<Void, Never>?
     private var reconnectionGraceTask: Task<Void, Never>?
     private var lastLiveViewState: RideDashboardViewState?
     private let reconnectionGracePeriod: Duration
 
     public init(
-        useCases: RideDashboardUseCases,
         mapper: RideDashboardMapper,
-        deviceSpeedResolver: DeviceSpeedResolver,
+        vehicleSession: any VehicleSessionService,
         reconnectionGracePeriod: Duration
     ) {
-        self.useCases = useCases
         self.mapper = mapper
-        self.deviceSpeedResolver = deviceSpeedResolver
+        self.vehicleSession = vehicleSession
         self.reconnectionGracePeriod = reconnectionGracePeriod
     }
 
     deinit {
-        tasks.forEach { $0.cancel() }
-        deviceSpeedTask?.cancel()
+        observationTask?.cancel()
         statusSnapshotRefreshTask?.cancel()
         reconnectionGraceTask?.cancel()
     }
 
-    public func startObserving() {
-        guard tasks.isEmpty else { return }
-        let observeTelemetry = useCases.observeTelemetry
-        tasks.append(Task { [weak self] in
-            let stream = await observeTelemetry.execute()
-            for await telemetry in stream {
+    func startObserving() {
+        guard observationTask == nil else { return }
+        let vehicleSession = vehicleSession
+        observationTask = Task { [weak self] in
+            let stream = await vehicleSession.observe()
+            for await snapshot in stream {
                 guard !Task.isCancelled else { return }
-                self?.telemetry = telemetry
+                self?.snapshot = snapshot
                 self?.render()
             }
-        })
-        let observeConnection = useCases.observeConnection
-        tasks.append(Task { [weak self] in
-            let stream = await observeConnection.execute()
-            for await connection in stream {
-                guard !Task.isCancelled else { return }
-                self?.connection = connection
-                self?.render()
-            }
-        })
-        let observeSettings = useCases.observeSettings
-        tasks.append(Task { [weak self] in
-            let stream = await observeSettings.execute()
-            for await settings in stream {
-                guard !Task.isCancelled else { return }
-                self?.settings = settings
-                self?.render()
-            }
-        })
+        }
     }
 
-    public func stopObserving() {
-        tasks.forEach { $0.cancel() }
-        tasks.removeAll()
-        deviceSpeedTask?.cancel()
-        deviceSpeedTask = nil
+    func stopObserving() {
+        observationTask?.cancel()
+        observationTask = nil
         statusSnapshotRefreshTask?.cancel()
         statusSnapshotRefreshTask = nil
-        deviceSpeedSample = nil
         reconnectionGraceTask?.cancel()
         reconnectionGraceTask = nil
         lastLiveViewState = nil
@@ -93,19 +64,14 @@ public final class RideDashboardViewModel: ObservableObject {
 
     private func render() {
         let mappedViewState = mapper.map(
-            telemetry: telemetry,
-            connection: connection,
-            speedKilometersPerHour: deviceSpeedResolver.resolvedSpeed(
-                motorcycleKilometersPerHour: telemetry.speed.kmh,
-                deviceSample: deviceSpeedSample,
-                source: settings.speedSource
-            ),
-            speedSource: settings.speedSource,
-            measurementSystem: settings.measurementSystem,
-            isGPSAvailable: deviceSpeedResolver.hasValidDeviceSpeed(deviceSpeedSample)
+            telemetry: snapshot.telemetry,
+            connection: snapshot.connection,
+            speedKilometersPerHour: snapshot.resolvedSpeedKilometersPerHour,
+            speedSource: snapshot.speedSource,
+            measurementSystem: snapshot.settings.measurementSystem,
+            isGPSAvailable: snapshot.isGPSAvailable
         )
         updateViewState(with: mappedViewState)
-        updateDeviceSpeedObservation()
         updateStatusSnapshotRefresh()
     }
 
@@ -119,7 +85,7 @@ public final class RideDashboardViewModel: ObservableObject {
         }
 
         guard
-            isTransientReconnectionState(connection.state),
+            isTransientReconnectionState(snapshot.connection.state),
             let lastLiveViewState
         else {
             reconnectionGraceTask?.cancel()
@@ -169,26 +135,6 @@ public final class RideDashboardViewModel: ObservableObject {
         }
     }
 
-    private func updateDeviceSpeedObservation() {
-        guard settings.speedSource.usesDeviceLocation, deviceSpeedTask == nil else {
-            if !settings.speedSource.usesDeviceLocation {
-                deviceSpeedTask?.cancel()
-                deviceSpeedTask = nil
-                deviceSpeedSample = nil
-            }
-            return
-        }
-        let observeDeviceSpeed = useCases.observeDeviceSpeed
-        deviceSpeedTask = Task { [weak self] in
-            let stream = await observeDeviceSpeed.execute()
-            for await sample in stream {
-                guard !Task.isCancelled else { return }
-                self?.deviceSpeedSample = sample
-                self?.render()
-            }
-        }
-    }
-
     private func updateStatusSnapshotRefresh() {
         guard isReceivingTelemetry else {
             statusSnapshotRefreshTask?.cancel()
@@ -197,10 +143,10 @@ public final class RideDashboardViewModel: ObservableObject {
         }
         guard statusSnapshotRefreshTask == nil else { return }
 
-        let readBikeStatusSnapshot = useCases.readBikeStatusSnapshot
+        let vehicleSession = vehicleSession
         statusSnapshotRefreshTask = Task {
             while !Task.isCancelled {
-                try? await readBikeStatusSnapshot.execute()
+                await vehicleSession.refreshBikeStatus()
                 do {
                     try await Task.sleep(for: Constants.statusSnapshotRefreshInterval)
                 } catch {
@@ -211,7 +157,7 @@ public final class RideDashboardViewModel: ObservableObject {
     }
 
     private var isReceivingTelemetry: Bool {
-        if case .receivingTelemetry = connection.state {
+        if case .receivingTelemetry = snapshot.connection.state {
             true
         } else {
             false

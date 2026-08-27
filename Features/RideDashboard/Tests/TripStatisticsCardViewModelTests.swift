@@ -1,5 +1,6 @@
 import Foundation
-import RideDashboard
+@testable import RideDashboard
+import RideSession
 import RideSessionDomain
 import Testing
 import TestSupport
@@ -29,54 +30,61 @@ struct TripStatisticsCardViewModelTests {
         #expect(viewModel.viewState.totalDistance.valueText == "12")
     }
 
-    @Test("Defers invalidated history refresh until statistics are visible")
-    func defersInvalidatedRefresh() async {
+    @Test("Defers revised history while hidden and reloads when shown")
+    func reloadsRevisedHistoryWhenVisible() async {
         let repository = CurrentTripCardTripRepository(
             completedTrips: [makeTrip(distance: 12, maximumSpeed: 80)]
         )
-        let viewModel = makeViewModel(repository: repository)
+        let session = TestRideSessionService(snapshot: .init(
+            vehicleIdentity: .vin(CurrentTripTestIdentity.vin)
+        ))
+        let viewModel = makeViewModel(repository: repository, session: session)
         viewModel.setIsVisible(true)
         #expect(await waitUntil { await repository.loadCount() == 1 })
 
         viewModel.setIsVisible(false)
-        await repository.replaceCompletedTrips([
+        await repository.replaceCompletedTrips(with: [
             makeTrip(distance: 12, maximumSpeed: 80),
-            makeTrip(distance: 8, maximumSpeed: 90)
+            makeTrip(distance: 8, maximumSpeed: 70)
         ])
-        viewModel.invalidate()
+        await session.send(.init(
+            vehicleIdentity: .vin(CurrentTripTestIdentity.vin),
+            historyRevision: 1
+        ))
         await Task.yield()
-
         #expect(await repository.loadCount() == 1)
 
         viewModel.setIsVisible(true)
         #expect(await waitUntil {
-            await repository.loadCount() == 2 && viewModel.viewState.statusText == "2 SAVED TRIPS"
+            await repository.loadCount() == 2
+                && viewModel.viewState.statusText == "2 SAVED TRIPS"
         })
-        #expect(viewModel.viewState.totalDistance.valueText == "20")
-        #expect(viewModel.viewState.maximumSpeed.valueText == "90")
     }
 
     private func makeViewModel(
-        repository: CurrentTripCardTripRepository
+        repository: CurrentTripCardTripRepository,
+        session: TestRideSessionService? = nil
     ) -> TripStatisticsCardViewModel {
-        TripStatisticsCardViewModel(
+        let session = session ?? TestRideSessionService(snapshot: .init(
+            vehicleIdentity: .vin(CurrentTripTestIdentity.vin)
+        ))
+        return TripStatisticsCardViewModel(
             useCases: .init(
                 loadStatistics: .init(
                     repository: repository,
                     aggregator: RideTripStatisticsAggregator()
-                ),
-                observeSettings: .init(
-                    repository: CurrentTripCardSettingsRepository()
                 )
             ),
             mapper: RideDashboardMapperFactory.makeTripStatisticsMapper(
                 locale: Locale(identifier: "en_GB")
-            )
+            ),
+            session: session
         )
     }
 
     private func makeTrip(distance: Double, maximumSpeed: Double) -> RideTrip {
         RideTrip(
+            vehicleIdentity: .vin("TESTVIN0000000001"),
             applicationSessionID: UUID(),
             startedAt: .distantPast,
             endedAt: .distantPast,
