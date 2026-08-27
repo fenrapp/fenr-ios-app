@@ -12,7 +12,7 @@ struct UserDefaultsAppSettingsRepositoryTests {
         #expect(await repository.load() == AppSettings())
     }
 
-    @Test("Persists selected speed source, units, and battery capacity")
+    @Test("Persists selected dashboard, speed, units, and battery settings")
     func persistsSettings() async {
         let suiteName = makeSuiteName()
         let repository = UserDefaultsAppSettingsRepository(
@@ -20,6 +20,7 @@ struct UserDefaultsAppSettingsRepositoryTests {
         )
         let expected = AppSettings(
             speedSource: .hybrid,
+            dashboardProgressBarMode: .speed,
             measurementSystem: .imperial,
             batteryPackCapacity: .sixPointEightKilowattHours
         )
@@ -30,6 +31,25 @@ struct UserDefaultsAppSettingsRepositoryTests {
             userDefaults: makeDefaults(suiteName: suiteName, clearsDomain: false)
         )
         #expect(await reloadedRepository.load() == expected)
+    }
+
+    @Test("Decodes legacy settings with the energy progress bar default")
+    func decodesLegacySettings() async throws {
+        let suiteName = makeSuiteName()
+        let defaults = makeDefaults(suiteName: suiteName)
+        defaults.set(
+            try JSONSerialization.data(withJSONObject: [
+                "speedSource": "gps",
+                "measurementSystem": "metric",
+                "defaultBatteryPackCapacity": "sevenPointTwoKilowattHours",
+                "batteryPackCapacitiesByVIN": [:]
+            ]),
+            forKey: "fenr.app.settings"
+        )
+
+        let repository = UserDefaultsAppSettingsRepository(userDefaults: defaults)
+
+        #expect(await repository.load().dashboardProgressBarMode == .energy)
     }
 
     @Test("Does not notify observers when the saved settings are unchanged")

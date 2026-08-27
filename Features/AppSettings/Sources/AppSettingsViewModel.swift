@@ -79,6 +79,14 @@ public final class AppSettingsViewModel: ObservableObject {
         save(updated)
     }
 
+    public func selectDashboardProgressBarMode(id: String) {
+        guard let mode = DashboardProgressBarMode(rawValue: id) else { return }
+        var updated = settings
+        updated.dashboardProgressBarMode = mode
+        settings = updated
+        save(updated)
+    }
+
     public func selectMeasurementSystem(id: String) {
         guard let measurementSystem = MeasurementSystem(rawValue: id) else { return }
         var updated = settings

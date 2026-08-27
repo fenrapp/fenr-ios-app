@@ -20,6 +20,17 @@ public struct AppSettingsView: View {
         Form {
             #if os(iOS)
             Section("Ride dashboard") {
+                Picker("Progress bar", selection: dashboardProgressBarModeBinding) {
+                    ForEach(viewModel.viewState.dashboardProgressBarMode.selection.options) { option in
+                        Text(option.title).tag(option.id)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                Text(viewModel.viewState.dashboardProgressBarMode.description)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
                 Picker("Speed source", selection: speedSourceBinding) {
                     ForEach(viewModel.viewState.speedSource.selection.options) { option in
                         Text(option.title).tag(option.id)
@@ -116,6 +127,13 @@ public struct AppSettingsView: View {
         .init(
             get: { viewModel.viewState.speedSource.selection.selectedID },
             set: { viewModel.selectSpeedSource(id: $0) }
+        )
+    }
+
+    private var dashboardProgressBarModeBinding: Binding<String> {
+        .init(
+            get: { viewModel.viewState.dashboardProgressBarMode.selection.selectedID },
+            set: { viewModel.selectDashboardProgressBarMode(id: $0) }
         )
     }
 

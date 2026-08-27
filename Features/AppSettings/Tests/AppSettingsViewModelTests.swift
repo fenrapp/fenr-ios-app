@@ -19,10 +19,12 @@ struct AppSettingsViewModelTests {
         viewModel.start()
         try? await Task.sleep(for: .milliseconds(10))
         viewModel.selectSpeedSource(id: SpeedSource.hybrid.rawValue)
+        viewModel.selectDashboardProgressBarMode(id: DashboardProgressBarMode.hidden.rawValue)
         viewModel.selectMeasurementSystem(id: MeasurementSystem.imperial.rawValue)
         viewModel.selectBatteryPackCapacity(id: BatteryPackCapacity.sixPointEightKilowattHours.rawValue)
         var expectedSettings = AppSettings(
             speedSource: .hybrid,
+            dashboardProgressBarMode: .hidden,
             measurementSystem: .imperial
         )
         expectedSettings.setBatteryPackCapacity(
@@ -55,6 +57,12 @@ struct AppSettingsViewModelTests {
         #expect(viewModel.viewState.speedSource.selection.options.map(\.title) == ["Bike", "GPS", "GPS+"])
         #expect(viewModel.viewState.speedSource.description.contains("phone GPS"))
         #expect(viewModel.viewState.speedSource.locationPermission == .authorized)
+        #expect(viewModel.viewState.dashboardProgressBarMode.selection.selectedID == "energy")
+        #expect(
+            viewModel.viewState.dashboardProgressBarMode.selection.options.map(\.title)
+                == ["Energy", "Speed", "Hidden"]
+        )
+        #expect(viewModel.viewState.dashboardProgressBarMode.description.contains("Regeneration"))
         #expect(viewModel.viewState.measurementSystem.options.map(\.title) == ["System", "Metric", "Imperial"])
 
         viewModel.selectSpeedSource(id: SpeedSource.motorcycle.rawValue)

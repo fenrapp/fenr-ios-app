@@ -26,6 +26,15 @@ public struct AppSettingsViewStateMapper: Sendable {
                     ? locationPermission(locationAuthorizationStatus)
                     : nil
             ),
+            dashboardProgressBarMode: .init(
+                selection: .init(
+                    selectedID: settings.dashboardProgressBarMode.rawValue,
+                    options: DashboardProgressBarMode.allCases.map {
+                        .init(id: $0.rawValue, title: dashboardProgressBarModeTitle($0))
+                    }
+                ),
+                description: dashboardProgressBarModeDescription(settings.dashboardProgressBarMode)
+            ),
             measurementSystem: .init(
                 selectedID: settings.measurementSystem.rawValue,
                 options: MeasurementSystem.allCases.map {
@@ -104,6 +113,22 @@ public struct AppSettingsViewStateMapper: Sendable {
         case .motorcycle: "Bike"
         case .gps: "GPS"
         case .hybrid: "GPS+"
+        }
+    }
+
+    private func dashboardProgressBarModeTitle(_ mode: DashboardProgressBarMode) -> String {
+        switch mode {
+        case .energy: "Energy"
+        case .speed: "Speed"
+        case .hidden: "Hidden"
+        }
+    }
+
+    private func dashboardProgressBarModeDescription(_ mode: DashboardProgressBarMode) -> String {
+        switch mode {
+        case .energy: "Regeneration fills left from the center; consumption fills right."
+        case .speed: "Fills from left to right as speed increases."
+        case .hidden: "Hides the progress bar from the ride dashboard."
         }
     }
 
