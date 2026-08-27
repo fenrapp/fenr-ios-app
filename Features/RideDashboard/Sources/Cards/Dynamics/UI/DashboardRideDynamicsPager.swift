@@ -16,8 +16,8 @@ struct DashboardRideDynamicsPager: View {
             indicatorVerticalOffset: Constants.indicatorVerticalOffset
         ) { page in
             switch page {
-            case .lean: DashboardLeanCard(state: state, calibrate: calibrate)
-            case .pitch: DashboardPitchCard(state: state, calibrate: calibrate)
+            case .lean: DashboardLeanCard(state: state, reduceMotion: reduceMotion, calibrate: calibrate)
+            case .pitch: DashboardPitchCard(state: state, reduceMotion: reduceMotion, calibrate: calibrate)
             case .course: DashboardCourseCard(state: state, reduceMotion: reduceMotion)
             }
         }

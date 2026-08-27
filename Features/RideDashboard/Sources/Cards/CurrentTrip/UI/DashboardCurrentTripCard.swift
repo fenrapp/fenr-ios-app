@@ -116,7 +116,7 @@ struct DashboardCurrentTripCard: View {
             systemImage: metric.systemImage
         ) {
             if let sourceIndicator {
-                DashboardSpeedSourceChip(state: sourceIndicator)
+                DashboardSpeedSourceChip(state: sourceIndicator, isCompact: true)
             }
         }
     }

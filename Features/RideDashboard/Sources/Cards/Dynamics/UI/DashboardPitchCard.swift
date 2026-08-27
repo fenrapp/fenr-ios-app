@@ -2,11 +2,12 @@ import SwiftUI
 
 struct DashboardPitchCard: View {
     let state: DashboardRideDynamicsViewData
+    let reduceMotion: Bool
     let calibrate: () -> Void
 
     var body: some View {
-        DashboardDynamicsAngleCard(
-            title: "RIDE DYNAMICS · PITCH",
+        DashboardDynamicsInstrumentCard(
+            title: "PITCH",
             status: state.status,
             angleDegrees: state.pitchDegrees,
             maximumAngleDegrees: Constants.maximumPitchDegrees,
@@ -15,9 +16,10 @@ struct DashboardPitchCard: View {
             directionText: state.pitchDirectionText,
             maximums: [
                 .init(label: "MAX UP", value: state.maximumUphillPitchText),
-                .init(label: "MAX DOWN", value: state.maximumDownhillPitchText)
+                .init(label: "MAX DOWN", value: state.maximumDownhillPitchText, trailing: true)
             ],
             canCalibrate: state.canCalibrate,
+            reduceMotion: reduceMotion,
             calibrate: calibrate
         )
     }

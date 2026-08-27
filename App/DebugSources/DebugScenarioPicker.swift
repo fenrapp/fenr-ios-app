@@ -17,7 +17,7 @@ struct DebugScenarioPicker: View {
             }
         } label: {
             Label(
-                "Debug: \(controller.selectedScenario.displayName)",
+                "Debug: \(controller.selectedScenario.compactDisplayName)",
                 systemImage: "wrench.and.screwdriver"
             )
             .font(.footnote.weight(.semibold))
@@ -26,6 +26,7 @@ struct DebugScenarioPicker: View {
         .padding(.vertical, Constants.verticalPadding)
         .background(.regularMaterial, in: Capsule())
         .padding(Constants.outerPadding)
+        .accessibilityLabel("Debug scenario: \(controller.selectedScenario.displayName)")
         .accessibilityIdentifier("debug.scenarioPicker")
     }
 
@@ -42,5 +43,19 @@ struct DebugScenarioPicker: View {
         static let horizontalPadding: CGFloat = 12
         static let verticalPadding: CGFloat = 8
         static let outerPadding: CGFloat = 8
+    }
+}
+
+private extension BikeEmulatorScenario {
+    var compactDisplayName: String {
+        switch self {
+        case .riding: "Riding"
+        case .ridingClean: "Clean ride"
+        case .charging: "Charging"
+        case .cellBalancing: "Balancing"
+        case .chargerIdle: "Idle"
+        case .chargingDataUnavailable: "No data"
+        case .cellAnomaly: "Cell fault"
+        }
     }
 }
