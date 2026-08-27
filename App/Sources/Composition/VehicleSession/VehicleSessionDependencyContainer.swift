@@ -7,18 +7,19 @@ import VehicleSession
 
 enum VehicleSessionDependencyContainer {
     static func makeService(
-        repository: any BikeRepository & BikeBatteryHealthRepository,
-        profileRepository: any BikeProfileRepository,
-        settingsRepository: any AppSettingsRepository,
-        deviceSpeedRepository: any DeviceSpeedRepository
+        dependencies: VehicleSessionDependencies
     ) -> any VehicleSessionService {
-        LiveVehicleSessionService(
+        let repository = dependencies.repository
+        return LiveVehicleSessionService(
             useCases: .init(
                 observeTelemetry: .init(repository: repository),
                 observeConnection: .init(repository: repository),
-                observeSettings: .init(repository: settingsRepository),
-                observeDeviceSpeed: .init(repository: deviceSpeedRepository),
-                observeBikeProfile: .init(repository: profileRepository),
+                observeSettings: .init(repository: dependencies.settingsRepository),
+                observeDeviceSpeed: .init(repository: dependencies.deviceSpeedRepository),
+                observeDeviceMotion: .init(repository: dependencies.deviceMotionRepository),
+                loadMotionCalibration: .init(repository: dependencies.motionCalibrationRepository),
+                saveMotionCalibration: .init(repository: dependencies.motionCalibrationRepository),
+                observeBikeProfile: .init(repository: dependencies.profileRepository),
                 observeBatteryHealth: .init(repository: repository),
                 startBatteryHealthMonitoring: .init(repository: repository),
                 stopBatteryHealthMonitoring: .init(repository: repository),
@@ -28,13 +29,33 @@ enum VehicleSessionDependencyContainer {
                 now: Date.init,
                 maximumAccuracyMetersPerSecond: Constants.maximumGPSAccuracyMetersPerSecond,
                 maximumSampleAge: FENRRuntimeConstants.RideDashboard.deviceSpeedMaximumSampleAge
+            ),
+            motionEstimator: .init(
+                now: Date.init,
+                maximumSampleAge: Constants.maximumMotionSampleAge,
+                minimumGPSCourseSpeedKilometersPerHour: Constants.minimumGPSCourseSpeedKilometersPerHour,
+                maximumGPSCourseAccuracyDegrees: Constants.maximumGPSCourseAccuracyDegrees,
+                smoothingFactor: Constants.motionSmoothingFactor
             )
         )
     }
 }
 
+struct VehicleSessionDependencies {
+    let repository: any BikeRepository & BikeBatteryHealthRepository
+    let profileRepository: any BikeProfileRepository
+    let settingsRepository: any AppSettingsRepository
+    let deviceSpeedRepository: any DeviceSpeedRepository
+    let deviceMotionRepository: any DeviceMotionRepository
+    let motionCalibrationRepository: any VehicleMotionCalibrationRepository
+}
+
 private extension VehicleSessionDependencyContainer {
     enum Constants {
         static let maximumGPSAccuracyMetersPerSecond: Double = 5
+        static let maximumMotionSampleAge: TimeInterval = 0.75
+        static let minimumGPSCourseSpeedKilometersPerHour: Double = 5
+        static let maximumGPSCourseAccuracyDegrees: Double = 35
+        static let motionSmoothingFactor: Double = 0.18
     }
 }

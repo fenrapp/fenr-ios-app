@@ -2,6 +2,7 @@ import BikeData
 import BikeDiagnostics
 import BikeDomain
 import CoreLocation
+import CoreMotion
 import EnvironmentData
 import Foundation
 import RideSessionData
@@ -27,13 +28,23 @@ enum ProductionAppDependencyContainerFactory {
         let deviceSpeedRepository = CoreLocationDeviceSpeedRepository(
             locationManager: CLLocationManager()
         )
+        let deviceMotionRepository = CoreMotionDeviceMotionRepository(
+            motionManager: CMMotionManager(),
+            operationQueue: OperationQueue(),
+            now: Date.init
+        )
+        let motionCalibrationRepository = makeMotionCalibrationRepository()
         let rideTripRepository = makeRideTripRepository()
         let sessionServices = AppSessionDependencyContainer.makeServices(
-            repository: repository,
-            profileRepository: profileRepository,
-            settingsRepository: settingsRepository,
-            deviceSpeedRepository: deviceSpeedRepository,
-            rideTripRepository: rideTripRepository
+            dependencies: .init(
+                repository: repository,
+                profileRepository: profileRepository,
+                settingsRepository: settingsRepository,
+                deviceSpeedRepository: deviceSpeedRepository,
+                deviceMotionRepository: deviceMotionRepository,
+                motionCalibrationRepository: motionCalibrationRepository,
+                rideTripRepository: rideTripRepository
+            )
         )
         return AppDependencyContainer(
             diagnosticsContainer: BikeDiagnosticsDependencyContainer(),
@@ -59,6 +70,16 @@ enum ProductionAppDependencyContainerFactory {
             )
         } catch {
             preconditionFailure("Unable to create the ride trip store: \(error)")
+        }
+    }
+
+    private static func makeMotionCalibrationRepository() -> SwiftDataVehicleMotionCalibrationRepository {
+        do {
+            return try SwiftDataVehicleMotionCalibrationRepository(
+                mapper: VehicleMotionCalibrationRecordMapper()
+            )
+        } catch {
+            preconditionFailure("Unable to create the motion calibration store: \(error)")
         }
     }
 }

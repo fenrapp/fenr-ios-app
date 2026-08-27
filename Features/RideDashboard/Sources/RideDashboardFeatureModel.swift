@@ -7,6 +7,7 @@ public final class RideDashboardFeatureModel: ObservableObject {
     let tripStatisticsViewModel: TripStatisticsCardViewModel
     let efficiencyViewModel: EfficiencyCardViewModel
     let rangeViewModel: RangeCardViewModel
+    let dynamicsViewModel: RideDynamicsCardViewModel
     let chargingViewModel: ChargingDashboardViewModel
 
     public init(
@@ -15,6 +16,7 @@ public final class RideDashboardFeatureModel: ObservableObject {
         tripStatisticsViewModel: TripStatisticsCardViewModel,
         efficiencyViewModel: EfficiencyCardViewModel,
         rangeViewModel: RangeCardViewModel,
+        dynamicsViewModel: RideDynamicsCardViewModel,
         chargingViewModel: ChargingDashboardViewModel
     ) {
         self.dashboardViewModel = dashboardViewModel
@@ -22,6 +24,7 @@ public final class RideDashboardFeatureModel: ObservableObject {
         self.tripStatisticsViewModel = tripStatisticsViewModel
         self.efficiencyViewModel = efficiencyViewModel
         self.rangeViewModel = rangeViewModel
+        self.dynamicsViewModel = dynamicsViewModel
         self.chargingViewModel = chargingViewModel
     }
 
@@ -36,6 +39,7 @@ public final class RideDashboardFeatureModel: ObservableObject {
         tripStatisticsViewModel.stop()
         efficiencyViewModel.stop()
         rangeViewModel.stop()
+        dynamicsViewModel.setIsVisible(false)
     }
 
     func synchronizeCardLifecycles(
@@ -60,5 +64,6 @@ public final class RideDashboardFeatureModel: ObservableObject {
             page: selection.efficiencyPage
         )
         rangeViewModel.setIsVisible(selection.isRangeVisible(in: centerMode))
+        dynamicsViewModel.setIsVisible(selection.isDynamicsVisible(in: centerMode))
     }
 }

@@ -20,28 +20,38 @@ struct AppSessionServices {
 
 enum AppSessionDependencyContainer {
     static func makeServices(
-        repository: any BikeRepository & BikeBatteryHealthRepository,
-        profileRepository: any BikeProfileRepository,
-        settingsRepository: any AppSettingsRepository,
-        deviceSpeedRepository: any DeviceSpeedRepository,
-        rideTripRepository: any RideTripRepository,
+        dependencies: AppSessionDependencies,
         applicationSessionID: UUID = UUID()
     ) -> AppSessionServices {
         let vehicleSession = VehicleSessionDependencyContainer.makeService(
-            repository: repository,
-            profileRepository: profileRepository,
-            settingsRepository: settingsRepository,
-            deviceSpeedRepository: deviceSpeedRepository
+            dependencies: .init(
+                repository: dependencies.repository,
+                profileRepository: dependencies.profileRepository,
+                settingsRepository: dependencies.settingsRepository,
+                deviceSpeedRepository: dependencies.deviceSpeedRepository,
+                deviceMotionRepository: dependencies.deviceMotionRepository,
+                motionCalibrationRepository: dependencies.motionCalibrationRepository
+            )
         )
         let rideSession = RideSessionDependencyContainer.makeService(
             dependencies: .init(
-                rideTripRepository: rideTripRepository,
+                rideTripRepository: dependencies.rideTripRepository,
                 applicationSessionID: applicationSessionID
             ),
             vehicleSession: vehicleSession
         )
         return AppSessionServices(vehicle: vehicleSession, ride: rideSession)
     }
+}
+
+struct AppSessionDependencies {
+    let repository: any BikeRepository & BikeBatteryHealthRepository
+    let profileRepository: any BikeProfileRepository
+    let settingsRepository: any AppSettingsRepository
+    let deviceSpeedRepository: any DeviceSpeedRepository
+    let deviceMotionRepository: any DeviceMotionRepository
+    let motionCalibrationRepository: any VehicleMotionCalibrationRepository
+    let rideTripRepository: any RideTripRepository
 }
 
 @MainActor

@@ -61,6 +61,10 @@ extension RideTrip {
         lastElectricalPowerWatts: Double?? = nil,
         lastElectricalSampleAt: Date?? = nil,
         isAwaitingElectricalRebase: Bool? = nil,
+        maximumLeftLeanDegrees: Double? = nil,
+        maximumRightLeanDegrees: Double? = nil,
+        maximumUphillPitchDegrees: Double? = nil,
+        maximumDownhillPitchDegrees: Double? = nil,
         energyBuckets: [RideEnergyBucket]? = nil
     ) -> Self {
         Self(
@@ -92,6 +96,10 @@ extension RideTrip {
             lastElectricalPowerWatts: lastElectricalPowerWatts ?? self.lastElectricalPowerWatts,
             lastElectricalSampleAt: lastElectricalSampleAt ?? self.lastElectricalSampleAt,
             isAwaitingElectricalRebase: isAwaitingElectricalRebase ?? self.isAwaitingElectricalRebase,
+            maximumLeftLeanDegrees: maximumLeftLeanDegrees ?? self.maximumLeftLeanDegrees,
+            maximumRightLeanDegrees: maximumRightLeanDegrees ?? self.maximumRightLeanDegrees,
+            maximumUphillPitchDegrees: maximumUphillPitchDegrees ?? self.maximumUphillPitchDegrees,
+            maximumDownhillPitchDegrees: maximumDownhillPitchDegrees ?? self.maximumDownhillPitchDegrees,
             energyBuckets: energyBuckets ?? self.energyBuckets
         )
     }

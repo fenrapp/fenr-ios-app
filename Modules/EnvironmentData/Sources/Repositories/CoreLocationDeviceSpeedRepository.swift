@@ -71,6 +71,11 @@ public final class CoreLocationDeviceSpeedRepository: NSObject, DeviceSpeedRepos
         let sample = DeviceSpeedSample(
             kilometersPerHour: location.speed * Constants.metersPerSecondToKilometersPerHour,
             accuracyMetersPerSecond: location.speedAccuracy,
+            courseDegrees: location.course >= .zero ? location.course : nil,
+            courseAccuracyDegrees: location.courseAccuracy >= .zero ? location.courseAccuracy : nil,
+            altitudeMeters: location.verticalAccuracy >= .zero ? location.altitude : nil,
+            verticalAccuracyMeters: location.verticalAccuracy >= .zero ? location.verticalAccuracy : nil,
+            coordinate: coordinate(from: location),
             observedAt: location.timestamp
         )
         continuations.values.forEach { $0.yield(sample) }
@@ -80,5 +85,15 @@ public final class CoreLocationDeviceSpeedRepository: NSObject, DeviceSpeedRepos
 
     private enum Constants {
         static let metersPerSecondToKilometersPerHour = 3.6
+    }
+
+    private func coordinate(from location: CLLocation) -> GeographicCoordinate? {
+        guard location.horizontalAccuracy.isFinite,
+              location.horizontalAccuracy >= .zero,
+              CLLocationCoordinate2DIsValid(location.coordinate) else { return nil }
+        return GeographicCoordinate(
+            latitudeDegrees: location.coordinate.latitude,
+            longitudeDegrees: location.coordinate.longitude
+        )
     }
 }

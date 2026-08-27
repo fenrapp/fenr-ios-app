@@ -61,6 +61,15 @@ actor SessionDeviceSpeedRepository: DeviceSpeedRepository {
     func send(_ sample: DeviceSpeedSample) async { await hub.send(sample) }
 }
 
+actor SessionDeviceMotionRepository: DeviceMotionRepository {
+    func observeDeviceMotion() -> AsyncStream<DeviceMotionSample> { .init { _ in } }
+}
+
+actor SessionMotionCalibrationRepository: VehicleMotionCalibrationRepository {
+    func load(vin _: String) -> VehicleMotionCalibration? { nil }
+    func save(_: VehicleMotionCalibration) {}
+}
+
 actor SessionProfileRepository: BikeProfileRepository {
     func loadProfile() -> BikeProfile? { .init(vin: "TESTVIN0000000001") }
     func saveProfile(_: BikeProfile) {}

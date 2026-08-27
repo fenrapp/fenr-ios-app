@@ -68,6 +68,7 @@ public final class RideDashboardViewModel: ObservableObject {
             connection: snapshot.connection,
             speedKilometersPerHour: snapshot.resolvedSpeedKilometersPerHour,
             speedSource: snapshot.speedSource,
+            progressBarMode: snapshot.settings.dashboardProgressBarMode,
             measurementSystem: snapshot.settings.measurementSystem,
             isGPSAvailable: snapshot.isGPSAvailable
         )

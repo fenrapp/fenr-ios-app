@@ -46,6 +46,10 @@ public struct RideTripRecordMapper: Sendable {
         record.lastElectricalPowerWatts = trip.lastElectricalPowerWatts
         record.lastElectricalSampleAt = trip.lastElectricalSampleAt
         record.isAwaitingElectricalRebase = trip.isAwaitingElectricalRebase
+        record.maximumLeftLeanDegrees = trip.maximumLeftLeanDegrees
+        record.maximumRightLeanDegrees = trip.maximumRightLeanDegrees
+        record.maximumUphillPitchDegrees = trip.maximumUphillPitchDegrees
+        record.maximumDownhillPitchDegrees = trip.maximumDownhillPitchDegrees
     }
 
     func mapToDomain(_ record: RideTripRecord) -> RideTrip? {
@@ -76,7 +80,11 @@ public struct RideTripRecordMapper: Sendable {
             maximumRegenerationPowerWatts: record.maximumRegenerationPowerWatts,
             lastElectricalPowerWatts: record.lastElectricalPowerWatts,
             lastElectricalSampleAt: record.lastElectricalSampleAt,
-            isAwaitingElectricalRebase: record.isAwaitingElectricalRebase
+            isAwaitingElectricalRebase: record.isAwaitingElectricalRebase,
+            maximumLeftLeanDegrees: record.maximumLeftLeanDegrees,
+            maximumRightLeanDegrees: record.maximumRightLeanDegrees,
+            maximumUphillPitchDegrees: record.maximumUphillPitchDegrees,
+            maximumDownhillPitchDegrees: record.maximumDownhillPitchDegrees
         )
     }
 

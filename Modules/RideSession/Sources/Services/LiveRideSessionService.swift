@@ -18,6 +18,7 @@ public actor LiveRideSessionService: RideSessionService {
     var isPrepared = false
     var lastPersistenceDate: Date?
     var lastElectricalSampleDate: Date?
+    var lastMotionSampleDate: Date?
     var historyRevision = 0
     var livePowerSamples: [RideElectricalPowerSample] = []
     var observers: [UUID: AsyncStream<RideSessionSnapshot>.Continuation] = [:]
@@ -86,6 +87,7 @@ public actor LiveRideSessionService: RideSessionService {
         }
         recorder.clear()
         livePowerSamples.removeAll()
+        lastMotionSampleDate = nil
         tickerTask?.cancel()
         tickerTask = nil
         publish()
@@ -137,6 +139,7 @@ public actor LiveRideSessionService: RideSessionService {
         recorder.clear()
         livePowerSamples.removeAll()
         lastElectricalSampleDate = nil
+        lastMotionSampleDate = nil
         let replacement = isReceivingTelemetry
             ? recorder.record(
                 runState: vehicleSnapshot.telemetry.runState,
@@ -174,7 +177,8 @@ extension LiveRideSessionService {
             batteryStateOfChargePercent: vehicleSnapshot.telemetry.batteryLevel.percent,
             batteryCapacityWattHours: vehicleSnapshot.settings.batteryPackCapacity(
                 forVIN: recorder.context.vehicleIdentity.confirmedVIN
-            ).wattHours
+            ).wattHours,
+            motion: vehicleSnapshot.motion
         )
     }
 

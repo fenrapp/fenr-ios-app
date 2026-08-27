@@ -17,9 +17,28 @@ import SwiftUI
 }
 
 #Preview("Speed progress bar") {
-    DashboardSpeedProgressBar(progress: 0.65)
-        .frame(width: 844, height: 3)
+    DashboardProgressBar(state: .speed(progress: 0.65))
+        .frame(width: 844, height: 7)
         .background(Color.black)
+}
+
+#Preview("Energy progress bar") {
+    VStack(spacing: DesignSpace.large) {
+        DashboardProgressBar(state: .energy(
+            regenerationProgress: 0.62,
+            consumptionProgress: .zero,
+            accessibilityLabel: "Regenerating 6.2 kW"
+        ))
+        DashboardProgressBar(state: .neutralEnergy)
+        DashboardProgressBar(state: .energy(
+            regenerationProgress: .zero,
+            consumptionProgress: 0.72,
+            accessibilityLabel: "Consuming 32.0 kW"
+        ))
+    }
+    .frame(width: 844)
+    .padding(.vertical)
+    .background(Color.black)
 }
 
 #Preview("Battery panel") {

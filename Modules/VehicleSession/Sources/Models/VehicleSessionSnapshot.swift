@@ -11,6 +11,7 @@ public struct VehicleSessionSnapshot: Equatable, Sendable {
     public let isGPSAvailable: Bool
     public let batteryHealth: BikeBatteryHealth
     public let batteryHealthMonitoringState: VehicleBatteryHealthMonitoringState
+    public let motion: VehicleMotionSnapshot
     public let hasReceivedSettings: Bool
     public let hasReceivedProfile: Bool
 
@@ -24,6 +25,7 @@ public struct VehicleSessionSnapshot: Equatable, Sendable {
         isGPSAvailable: Bool = false,
         batteryHealth: BikeBatteryHealth = .init(),
         batteryHealthMonitoringState: VehicleBatteryHealthMonitoringState = .inactive,
+        motion: VehicleMotionSnapshot = .init(),
         hasReceivedSettings: Bool = false,
         hasReceivedProfile: Bool = false
     ) {
@@ -36,6 +38,7 @@ public struct VehicleSessionSnapshot: Equatable, Sendable {
         self.isGPSAvailable = isGPSAvailable
         self.batteryHealth = batteryHealth
         self.batteryHealthMonitoringState = batteryHealthMonitoringState
+        self.motion = motion
         self.hasReceivedSettings = hasReceivedSettings
         self.hasReceivedProfile = hasReceivedProfile
     }

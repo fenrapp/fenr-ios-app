@@ -137,6 +137,8 @@ struct LiveVehicleSessionServiceTests {
         let settings = VehicleSessionTestSettingsRepository(speedSource: speedSource)
         let profile = VehicleSessionTestProfileRepository()
         let deviceSpeed = VehicleSessionTestDeviceSpeedRepository()
+        let deviceMotion = VehicleSessionTestDeviceMotionRepository()
+        let motionCalibration = VehicleSessionTestMotionCalibrationRepository()
         let fixtureDate = now()
         let service = LiveVehicleSessionService(
             useCases: .init(
@@ -144,6 +146,9 @@ struct LiveVehicleSessionServiceTests {
                 observeConnection: .init(repository: repository),
                 observeSettings: .init(repository: settings),
                 observeDeviceSpeed: .init(repository: deviceSpeed),
+                observeDeviceMotion: .init(repository: deviceMotion),
+                loadMotionCalibration: .init(repository: motionCalibration),
+                saveMotionCalibration: .init(repository: motionCalibration),
                 observeBikeProfile: .init(repository: profile),
                 observeBatteryHealth: .init(repository: repository),
                 startBatteryHealthMonitoring: .init(repository: repository),
@@ -154,6 +159,13 @@ struct LiveVehicleSessionServiceTests {
                 now: now,
                 maximumAccuracyMetersPerSecond: 5,
                 maximumSampleAge: maximumSampleAge
+            ),
+            motionEstimator: .init(
+                now: now,
+                maximumSampleAge: maximumSampleAge,
+                minimumGPSCourseSpeedKilometersPerHour: 5,
+                maximumGPSCourseAccuracyDegrees: 35,
+                smoothingFactor: 1
             )
         )
         return Fixture(

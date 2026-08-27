@@ -83,6 +83,31 @@ import SwiftUI
         .dashboardCardPreviewCanvas()
 }
 
+#Preview("Ride dynamics lean") {
+    DashboardLeanCard(state: previewDynamicsState, calibrate: {})
+        .dashboardCardPreviewCanvas()
+}
+
+#Preview("Ride dynamics pitch") {
+    DashboardPitchCard(state: previewDynamicsState, calibrate: {})
+        .dashboardCardPreviewCanvas()
+}
+
+#Preview("Ride dynamics course") {
+    DashboardCourseCard(state: previewDynamicsState, reduceMotion: false)
+        .dashboardCardPreviewCanvas()
+}
+
+#Preview("Ride dynamics course without location") {
+    DashboardCourseCard(state: previewCompassWithoutLocationState, reduceMotion: false)
+        .dashboardCardPreviewCanvas()
+}
+
+#Preview("Ride dynamics course unavailable") {
+    DashboardCourseCard(state: .init(), reduceMotion: false)
+        .dashboardCardPreviewCanvas()
+}
+
 private let previewPowerPoints: [DashboardEfficiencyViewData.PowerPoint] = {
     let now = Date(timeIntervalSinceReferenceDate: 1_000)
     return stride(from: -60, through: 0, by: 5).map { offset in
@@ -120,6 +145,40 @@ private let previewRangeState = DashboardRangeViewData(
     },
     peakDischargeText: "18.4 kW",
     peakRegenerationText: "6.2 kW"
+)
+
+private let previewDynamicsState = DashboardRideDynamicsViewData(
+    status: .live,
+    leanDegrees: -18,
+    leanText: "18°",
+    leanDirectionText: "LEFT",
+    maximumLeftLeanText: "34°",
+    maximumRightLeanText: "29°",
+    pitchDegrees: 6,
+    pitchText: "6°",
+    pitchDirectionText: "UP",
+    maximumUphillPitchText: "14°",
+    maximumDownhillPitchText: "11°",
+    headingDegrees: 336,
+    isHeadingAvailable: true,
+    headingText: "336°",
+    cardinalDirectionText: "NNW",
+    headingSourceText: "GPS",
+    altitudeText: "1,045 m",
+    latitudeText: "40°25′35″ N",
+    longitudeText: "3°42′14″ W",
+    canCalibrate: true
+)
+
+private let previewCompassWithoutLocationState = DashboardRideDynamicsViewData(
+    status: .live,
+    headingDegrees: 74,
+    isHeadingAvailable: true,
+    headingText: "74°",
+    cardinalDirectionText: "ENE",
+    headingSourceText: "COMPASS",
+    altitudeText: nil,
+    canCalibrate: true
 )
 
 private extension View {

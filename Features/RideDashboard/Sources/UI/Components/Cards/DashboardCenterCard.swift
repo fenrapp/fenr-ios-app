@@ -12,11 +12,14 @@ struct DashboardCenterCard: View {
     let efficiency: DashboardEfficiencyViewData
     @Binding var selectedRangePage: RangeDashboardPage
     let range: DashboardRangeViewData
+    @Binding var selectedDynamicsPage: RideDynamicsDashboardPage
+    let dynamics: DashboardRideDynamicsViewData
     let charging: ChargingDashboardViewState
     let referenceSize: CGSize
     let reduceMotion: Bool
     let toggleCurrentTripPause: () -> Void
     let resetCurrentTrip: () -> Void
+    let calibrateDynamics: () -> Void
     let setChargePowerLimit: (Double) -> Void
     let setChargeTarget: (Double) -> Void
 
@@ -82,6 +85,14 @@ struct DashboardCenterCard: View {
                 selection: $selectedRangePage,
                 state: range,
                 reduceMotion: reduceMotion
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        case .dynamics:
+            DashboardRideDynamicsPager(
+                selection: $selectedDynamicsPage,
+                state: dynamics,
+                reduceMotion: reduceMotion,
+                calibrate: calibrateDynamics
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }

@@ -3,6 +3,7 @@ struct DashboardCardSelectionState: Equatable {
     var currentTripPage = CurrentTripDashboardPage.current
     var efficiencyPage = EfficiencyDashboardPage.live
     var rangePage = RangeDashboardPage.range
+    var dynamicsPage = RideDynamicsDashboardPage.lean
 
     func isSpeedometerVisible(in centerMode: RideDashboardViewState.CenterMode) -> Bool {
         centerMode == .riding && ridingCard == .speedometer
@@ -20,10 +21,15 @@ struct DashboardCardSelectionState: Equatable {
         centerMode == .riding && ridingCard == .range
     }
 
+    func isDynamicsVisible(in centerMode: RideDashboardViewState.CenterMode) -> Bool {
+        centerMode == .riding && ridingCard == .dynamics
+    }
+
     func needsHiddenPageReset(in centerMode: RideDashboardViewState.CenterMode) -> Bool {
         (!isCurrentTripVisible(in: centerMode) && currentTripPage != .current)
             || (!isEfficiencyVisible(in: centerMode) && efficiencyPage != .live)
             || (!isRangeVisible(in: centerMode) && rangePage != .range)
+            || (!isDynamicsVisible(in: centerMode) && dynamicsPage != .lean)
     }
 
     mutating func selectSpeedometer() {
@@ -39,6 +45,9 @@ struct DashboardCardSelectionState: Equatable {
         }
         if !isRangeVisible(in: centerMode) {
             rangePage = .range
+        }
+        if !isDynamicsVisible(in: centerMode) {
+            dynamicsPage = .lean
         }
     }
 }

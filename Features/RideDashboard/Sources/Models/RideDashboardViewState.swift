@@ -1,5 +1,6 @@
 public struct RideDashboardViewState: Equatable, Sendable {
     public let speedometer: DashboardSpeedometerViewData
+    public let progressBar: DashboardProgressBarViewData
     public let battery: Battery
     public let gear: DashboardGearViewData
     public let powerMode: DashboardPowerModeViewData
@@ -10,6 +11,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
 
     public init(
         speedometer: DashboardSpeedometerViewData = .init(),
+        progressBar: DashboardProgressBarViewData = .neutralEnergy,
         battery: Battery = .init(),
         gear: DashboardGearViewData = .init(),
         powerMode: DashboardPowerModeViewData = .init(),
@@ -19,6 +21,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
         indicators: [DashboardIndicatorViewData] = []
     ) {
         self.speedometer = speedometer
+        self.progressBar = progressBar
         self.battery = battery
         self.gear = gear
         self.powerMode = powerMode

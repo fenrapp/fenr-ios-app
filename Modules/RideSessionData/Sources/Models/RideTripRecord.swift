@@ -30,6 +30,10 @@ final class RideTripRecord {
     var lastElectricalPowerWatts: Double?
     var lastElectricalSampleAt: Date?
     var isAwaitingElectricalRebase: Bool
+    var maximumLeftLeanDegrees: Double
+    var maximumRightLeanDegrees: Double
+    var maximumUphillPitchDegrees: Double
+    var maximumDownhillPitchDegrees: Double
 
     init(
         id: UUID,
@@ -66,5 +70,9 @@ final class RideTripRecord {
         lastElectricalPowerWatts = nil
         lastElectricalSampleAt = nil
         isAwaitingElectricalRebase = true
+        maximumLeftLeanDegrees = .zero
+        maximumRightLeanDegrees = .zero
+        maximumUphillPitchDegrees = .zero
+        maximumDownhillPitchDegrees = .zero
     }
 }

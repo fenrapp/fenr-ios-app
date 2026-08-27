@@ -8,6 +8,7 @@ struct DashboardHorizontalCardPager<Page: Hashable, Content: View>: View {
     let accessibilityLabel: String
     let accessibilityValue: (Page) -> String
     let onInteractionChanged: (Bool) -> Void
+    let indicatorVerticalOffset: CGFloat
     private let content: (Page) -> Content
 
     init(
@@ -17,6 +18,7 @@ struct DashboardHorizontalCardPager<Page: Hashable, Content: View>: View {
         accessibilityLabel: String,
         accessibilityValue: @escaping (Page) -> String,
         onInteractionChanged: @escaping (Bool) -> Void = { _ in },
+        indicatorVerticalOffset: CGFloat = .zero,
         @ViewBuilder content: @escaping (Page) -> Content
     ) {
         self.pages = pages
@@ -25,6 +27,7 @@ struct DashboardHorizontalCardPager<Page: Hashable, Content: View>: View {
         self.accessibilityLabel = accessibilityLabel
         self.accessibilityValue = accessibilityValue
         self.onInteractionChanged = onInteractionChanged
+        self.indicatorVerticalOffset = indicatorVerticalOffset
         self.content = content
     }
 
@@ -47,6 +50,7 @@ struct DashboardHorizontalCardPager<Page: Hashable, Content: View>: View {
                 activeColor: DesignColor.informational
             )
             .padding(.bottom, DashboardHorizontalCardPagerConstants.indicatorBottomPadding)
+            .offset(y: indicatorVerticalOffset)
         }
     }
 }

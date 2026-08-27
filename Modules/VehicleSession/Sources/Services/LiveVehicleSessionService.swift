@@ -6,11 +6,15 @@ import SettingsDomain
 public actor LiveVehicleSessionService: VehicleSessionService {
     let useCases: VehicleSessionUseCases
     let speedResolver: VehicleSpeedResolver
+    var motionEstimator: VehicleMotionEstimator
     var telemetry = BikeTelemetry()
     var connection = BikeConnection()
     var settings = AppSettings()
     var profile: BikeProfile?
     var deviceSpeedSample: DeviceSpeedSample?
+    var deviceMotionSample: DeviceMotionSample?
+    var motionCalibration: VehicleMotionCalibration?
+    var motion = VehicleMotionSnapshot()
     var batteryHealth = BikeBatteryHealth()
     var batteryHealthMonitoringState = VehicleBatteryHealthMonitoringState.inactive
     var hasReceivedSettings = false
@@ -18,21 +22,32 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     var observationTasks: [Task<Void, Never>] = []
     var deviceSpeedTask: Task<Void, Never>?
     var deviceSpeedExpiryTask: Task<Void, Never>?
+    var deviceMotionTask: Task<Void, Never>?
+    var deviceMotionExpiryTask: Task<Void, Never>?
+    var motionCalibrationTask: Task<Void, Never>?
     var batteryHealthTask: Task<Void, Never>?
     var batteryHealthStartTask: Task<Void, Never>?
     var batteryHealthStopTask: Task<Void, Never>?
     var batteryHealthConsumers: Set<UUID> = []
     var observers: [UUID: AsyncStream<VehicleSessionSnapshot>.Continuation] = [:]
 
-    public init(useCases: VehicleSessionUseCases, speedResolver: VehicleSpeedResolver) {
+    public init(
+        useCases: VehicleSessionUseCases,
+        speedResolver: VehicleSpeedResolver,
+        motionEstimator: VehicleMotionEstimator
+    ) {
         self.useCases = useCases
         self.speedResolver = speedResolver
+        self.motionEstimator = motionEstimator
     }
 
     deinit {
         observationTasks.forEach { $0.cancel() }
         deviceSpeedTask?.cancel()
         deviceSpeedExpiryTask?.cancel()
+        deviceMotionTask?.cancel()
+        deviceMotionExpiryTask?.cancel()
+        motionCalibrationTask?.cancel()
         batteryHealthTask?.cancel()
         batteryHealthStartTask?.cancel()
         batteryHealthStopTask?.cancel()
@@ -62,6 +77,16 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         deviceSpeedExpiryTask?.cancel()
         deviceSpeedExpiryTask = nil
         deviceSpeedSample = nil
+        deviceMotionTask?.cancel()
+        deviceMotionTask = nil
+        deviceMotionExpiryTask?.cancel()
+        deviceMotionExpiryTask = nil
+        motionCalibrationTask?.cancel()
+        motionCalibrationTask = nil
+        deviceMotionSample = nil
+        motionCalibration = nil
+        motionEstimator.reset()
+        motion = .init()
         batteryHealthConsumers.removeAll()
         if let batteryHealthStartTask {
             await batteryHealthStartTask.value
@@ -80,6 +105,19 @@ public actor LiveVehicleSessionService: VehicleSessionService {
 
     public func refreshBikeStatus() async {
         try? await useCases.readBikeStatusSnapshot.execute()
+    }
+
+    public func calibrateDeviceMotion() async {
+        guard let profile, let sample = deviceMotionSample else { return }
+        let calibration = VehicleMotionCalibration(
+            vin: profile.vin,
+            referenceAttitude: sample.attitude,
+            calibratedAt: sample.observedAt
+        )
+        await useCases.saveMotionCalibration.execute(calibration)
+        motionCalibration = calibration
+        refreshMotion()
+        publish()
     }
 
     public func setBatteryHealthMonitoringRequired(_ required: Bool, consumerID: UUID) async {
@@ -118,6 +156,7 @@ extension LiveVehicleSessionService {
             isGPSAvailable: speedResolver.hasValidDeviceSpeed(deviceSpeedSample),
             batteryHealth: batteryHealth,
             batteryHealthMonitoringState: batteryHealthMonitoringState,
+            motion: motion,
             hasReceivedSettings: hasReceivedSettings,
             hasReceivedProfile: hasReceivedProfile
         )

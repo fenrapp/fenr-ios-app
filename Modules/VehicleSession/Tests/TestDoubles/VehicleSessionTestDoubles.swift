@@ -114,6 +114,18 @@ actor VehicleSessionTestDeviceSpeedRepository: DeviceSpeedRepository {
     func subscriptionCount() -> Int { subscriptions }
 }
 
+actor VehicleSessionTestDeviceMotionRepository: DeviceMotionRepository {
+    private let hub = VehicleSessionTestHub<DeviceMotionSample>()
+    func observeDeviceMotion() async -> AsyncStream<DeviceMotionSample> { await hub.stream() }
+    func send(_ value: DeviceMotionSample) async { await hub.send(value) }
+}
+
+actor VehicleSessionTestMotionCalibrationRepository: VehicleMotionCalibrationRepository {
+    private var value: VehicleMotionCalibration?
+    func load(vin _: String) -> VehicleMotionCalibration? { value }
+    func save(_ calibration: VehicleMotionCalibration) { value = calibration }
+}
+
 private actor VehicleSessionTestHub<Element: Sendable> {
     private var continuations: [UUID: AsyncStream<Element>.Continuation] = [:]
 

@@ -9,7 +9,8 @@ struct DashboardCardSelectionStateTests {
             ridingCard: .currentTrip,
             currentTripPage: .statistics,
             efficiencyPage: .trend,
-            rangePage: .battery
+            rangePage: .battery,
+            dynamicsPage: .course
         )
 
         selection.resetHiddenPages(in: .riding)
@@ -17,6 +18,7 @@ struct DashboardCardSelectionStateTests {
         #expect(selection.currentTripPage == .statistics)
         #expect(selection.efficiencyPage == .live)
         #expect(selection.rangePage == .range)
+        #expect(selection.dynamicsPage == .lean)
         #expect(!selection.needsHiddenPageReset(in: .riding))
     }
 
@@ -26,7 +28,8 @@ struct DashboardCardSelectionStateTests {
             ridingCard: .efficiency,
             currentTripPage: .statistics,
             efficiencyPage: .trend,
-            rangePage: .battery
+            rangePage: .battery,
+            dynamicsPage: .pitch
         )
 
         #expect(selection.needsHiddenPageReset(in: .charging))
@@ -35,5 +38,6 @@ struct DashboardCardSelectionStateTests {
         #expect(selection.currentTripPage == .current)
         #expect(selection.efficiencyPage == .live)
         #expect(selection.rangePage == .range)
+        #expect(selection.dynamicsPage == .lean)
     }
 }

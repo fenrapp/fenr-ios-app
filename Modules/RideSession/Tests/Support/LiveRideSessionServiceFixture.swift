@@ -20,6 +20,9 @@ func makeLiveRideSessionServiceFixture(
             observeConnection: .init(repository: bikeRepository),
             observeSettings: .init(repository: settingsRepository),
             observeDeviceSpeed: .init(repository: deviceSpeedRepository),
+            observeDeviceMotion: .init(repository: SessionDeviceMotionRepository()),
+            loadMotionCalibration: .init(repository: SessionMotionCalibrationRepository()),
+            saveMotionCalibration: .init(repository: SessionMotionCalibrationRepository()),
             observeBikeProfile: .init(repository: profileRepository),
             observeBatteryHealth: .init(repository: batteryHealthRepository),
             startBatteryHealthMonitoring: .init(repository: batteryHealthRepository),
@@ -30,6 +33,13 @@ func makeLiveRideSessionServiceFixture(
             now: { date },
             maximumAccuracyMetersPerSecond: 5,
             maximumSampleAge: 5
+        ),
+        motionEstimator: .init(
+            now: { date },
+            maximumSampleAge: 5,
+            minimumGPSCourseSpeedKilometersPerHour: 5,
+            maximumGPSCourseAccuracyDegrees: 35,
+            smoothingFactor: 1
         )
     )
     let service = LiveRideSessionService(

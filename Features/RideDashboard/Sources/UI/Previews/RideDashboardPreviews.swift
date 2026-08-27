@@ -30,6 +30,11 @@ private enum DashboardPreviewConstants {
             feature: previewFeature(
                 dashboardState: .init(
                     speedometer: previewSpeedometer(value: 142),
+                    progressBar: .energy(
+                        regenerationProgress: .zero,
+                        consumptionProgress: 0.72,
+                        accessibilityLabel: "Consuming 32.0 kW"
+                    ),
                     battery: previewBattery(percentage: 34, emphasis: .warning),
                     gear: previewGear("3"),
                     powerMode: previewPowerMode(horsepower: "40", regen: "30"),
@@ -51,6 +56,11 @@ private enum DashboardPreviewConstants {
             feature: previewFeature(
                 dashboardState: .init(
                     speedometer: previewSpeedometer(value: 96),
+                    progressBar: .energy(
+                        regenerationProgress: 0.62,
+                        consumptionProgress: .zero,
+                        accessibilityLabel: "Regenerating 6.2 kW"
+                    ),
                     battery: previewBattery(percentage: 12, emphasis: .critical),
                     gear: previewGear("4"),
                     powerMode: previewPowerMode(horsepower: "50", regen: "40"),
@@ -118,6 +128,30 @@ private func previewFeature(
         tripStatisticsViewModel: previewTripStatisticsViewModel(),
         efficiencyViewModel: previewEfficiencyViewModel(),
         rangeViewModel: previewRangeViewModel(),
+        dynamicsViewModel: RideDynamicsCardPreviewFactory.makeViewModel(
+            state: .init(
+                status: .live,
+                leanDegrees: -18,
+                leanText: "18°",
+                leanDirectionText: "LEFT",
+                maximumLeftLeanText: "34°",
+                maximumRightLeanText: "29°",
+                pitchDegrees: 6,
+                pitchText: "6°",
+                pitchDirectionText: "UP",
+                maximumUphillPitchText: "14°",
+                maximumDownhillPitchText: "11°",
+                headingDegrees: 336,
+                isHeadingAvailable: true,
+                headingText: "336°",
+                cardinalDirectionText: "NNW",
+                headingSourceText: "GPS",
+                altitudeText: "1,045 m",
+                latitudeText: "40°25′35″ N",
+                longitudeText: "3°42′14″ W",
+                canCalibrate: true
+            )
+        ),
         chargingViewModel: previewChargingViewModel(state: chargingState)
     )
 }

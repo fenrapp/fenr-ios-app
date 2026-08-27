@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct DashboardLayoutMetrics {
     let size: CGSize
     let safeAreaInsets: EdgeInsets

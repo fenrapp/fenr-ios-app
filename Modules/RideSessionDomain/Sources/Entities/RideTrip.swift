@@ -27,6 +27,10 @@ public struct RideTrip: Equatable, Identifiable, Sendable {
     public let lastElectricalPowerWatts: Double?
     public let lastElectricalSampleAt: Date?
     public let isAwaitingElectricalRebase: Bool
+    public let maximumLeftLeanDegrees: Double
+    public let maximumRightLeanDegrees: Double
+    public let maximumUphillPitchDegrees: Double
+    public let maximumDownhillPitchDegrees: Double
     public let energyBuckets: [RideEnergyBucket]
 
     public var isPaused: Bool { pausedAt != nil }
@@ -81,6 +85,10 @@ public struct RideTrip: Equatable, Identifiable, Sendable {
         lastElectricalPowerWatts: Double? = nil,
         lastElectricalSampleAt: Date? = nil,
         isAwaitingElectricalRebase: Bool = true,
+        maximumLeftLeanDegrees: Double = .zero,
+        maximumRightLeanDegrees: Double = .zero,
+        maximumUphillPitchDegrees: Double = .zero,
+        maximumDownhillPitchDegrees: Double = .zero,
         energyBuckets: [RideEnergyBucket] = []
     ) {
         self.id = id
@@ -109,6 +117,10 @@ public struct RideTrip: Equatable, Identifiable, Sendable {
         self.lastElectricalPowerWatts = lastElectricalPowerWatts
         self.lastElectricalSampleAt = lastElectricalSampleAt
         self.isAwaitingElectricalRebase = isAwaitingElectricalRebase
+        self.maximumLeftLeanDegrees = maximumLeftLeanDegrees
+        self.maximumRightLeanDegrees = maximumRightLeanDegrees
+        self.maximumUphillPitchDegrees = maximumUphillPitchDegrees
+        self.maximumDownhillPitchDegrees = maximumDownhillPitchDegrees
         self.energyBuckets = energyBuckets
     }
 
@@ -210,6 +222,19 @@ public struct RideTrip: Equatable, Identifiable, Sendable {
 
     public func promotingVehicleIdentity(to vin: String) -> Self {
         copy(vehicleIdentity: .vin(vin))
+    }
+
+    public func updatingMotion(rollDegrees: Double, pitchDegrees: Double) -> Self {
+        guard endedAt == nil,
+              !isPaused,
+              rollDegrees.isFinite,
+              pitchDegrees.isFinite else { return self }
+        return copy(
+            maximumLeftLeanDegrees: max(maximumLeftLeanDegrees, max(-rollDegrees, .zero)),
+            maximumRightLeanDegrees: max(maximumRightLeanDegrees, max(rollDegrees, .zero)),
+            maximumUphillPitchDegrees: max(maximumUphillPitchDegrees, max(pitchDegrees, .zero)),
+            maximumDownhillPitchDegrees: max(maximumDownhillPitchDegrees, max(-pitchDegrees, .zero))
+        )
     }
 
 }

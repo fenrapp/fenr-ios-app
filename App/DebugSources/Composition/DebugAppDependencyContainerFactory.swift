@@ -67,13 +67,19 @@ enum DebugAppDependencyContainerFactory {
     ) -> AppDependencyContainer {
         let settingsRepository = UserDefaultsAppSettingsRepository()
         let deviceSpeedRepository = DebugDeviceSpeedRepository()
+        let deviceMotionRepository = DebugDeviceMotionRepository()
+        let motionCalibrationRepository = DebugVehicleMotionCalibrationRepository()
         let rideTripRepository = makeRideTripRepository()
         let sessionServices = AppSessionDependencyContainer.makeServices(
-            repository: repository,
-            profileRepository: profileRepository,
-            settingsRepository: settingsRepository,
-            deviceSpeedRepository: deviceSpeedRepository,
-            rideTripRepository: rideTripRepository
+            dependencies: .init(
+                repository: repository,
+                profileRepository: profileRepository,
+                settingsRepository: settingsRepository,
+                deviceSpeedRepository: deviceSpeedRepository,
+                deviceMotionRepository: deviceMotionRepository,
+                motionCalibrationRepository: motionCalibrationRepository,
+                rideTripRepository: rideTripRepository
+            )
         )
         return AppDependencyContainer(
             diagnosticsContainer: BikeDiagnosticsDependencyContainer(),

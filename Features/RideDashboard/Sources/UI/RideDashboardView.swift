@@ -34,6 +34,7 @@ public struct RideDashboardView: View {
     @ObservedObject private var tripStatisticsViewModel: TripStatisticsCardViewModel
     @ObservedObject private var efficiencyViewModel: EfficiencyCardViewModel
     @ObservedObject private var rangeViewModel: RangeCardViewModel
+    @ObservedObject private var dynamicsViewModel: RideDynamicsCardViewModel
     @ObservedObject private var chargingViewModel: ChargingDashboardViewModel
     @ScaledMetric(relativeTo: .body) private var speedometerTypeScale: CGFloat = 1
     @State private var cardSelection = DashboardCardSelectionState()
@@ -52,6 +53,7 @@ public struct RideDashboardView: View {
         _tripStatisticsViewModel = ObservedObject(wrappedValue: feature.tripStatisticsViewModel)
         _efficiencyViewModel = ObservedObject(wrappedValue: feature.efficiencyViewModel)
         _rangeViewModel = ObservedObject(wrappedValue: feature.rangeViewModel)
+        _dynamicsViewModel = ObservedObject(wrappedValue: feature.dynamicsViewModel)
         _chargingViewModel = ObservedObject(wrappedValue: feature.chargingViewModel)
         self.showsTelemetryButton = showsTelemetryButton
         self.onDiagnostics = onDiagnostics
@@ -91,11 +93,14 @@ public struct RideDashboardView: View {
                                     efficiency: efficiencyViewModel.viewState,
                                     selectedRangePage: $cardSelection.rangePage,
                                     range: rangeViewModel.viewState,
+                                    selectedDynamicsPage: $cardSelection.dynamicsPage,
+                                    dynamics: dynamicsViewModel.viewState,
                                     charging: chargingViewModel.viewState,
                                     referenceSize: proxy.size,
                                     reduceMotion: reduceMotion,
                                     toggleCurrentTripPause: currentTripViewModel.togglePauseCurrentTrip,
                                     resetCurrentTrip: currentTripViewModel.resetCurrentTrip,
+                                    calibrateDynamics: dynamicsViewModel.calibrate,
                                     setChargePowerLimit: chargingViewModel.setChargePowerLimit(watts:),
                                     setChargeTarget: chargingViewModel.setChargeTarget(percent:)
                                 )
@@ -126,9 +131,7 @@ public struct RideDashboardView: View {
                     .overlay(alignment: .bottom) {
                         if viewModel.viewState.centerMode == .riding,
                            cardSelection.ridingCard == .speedometer {
-                            DashboardSpeedProgressBar(
-                                progress: viewModel.viewState.speedometer.progress
-                            )
+                            DashboardProgressBar(state: viewModel.viewState.progressBar)
                             .offset(y: proxy.safeAreaInsets.bottom)
                             .allowsHitTesting(false)
                         }

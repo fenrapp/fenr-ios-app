@@ -9,6 +9,7 @@ extension LiveRideSessionService {
             vehicleIdentity: identity
         ))
         lastElectricalSampleDate = nil
+        lastMotionSampleDate = nil
         lastPersistenceDate = nil
         isPrepared = false
     }
@@ -70,6 +71,16 @@ extension LiveRideSessionService {
             appendLivePowerSample(date: sampleDate, powerWatts: powerWatts)
         }
 
+        if let sampleDate = vehicleSnapshot.motion.observedAt,
+           sampleDate != lastMotionSampleDate,
+           vehicleSnapshot.motion.availability == .available,
+           let roll = vehicleSnapshot.motion.rollDegrees,
+           let pitch = vehicleSnapshot.motion.pitchDegrees {
+            trip = trip.updatingMotion(rollDegrees: roll, pitchDegrees: pitch)
+            recorder.restore(trip)
+            lastMotionSampleDate = sampleDate
+        }
+
         if previousTripID == nil {
             startTickerIfNeeded()
             await persistIfNeeded(force: true)
@@ -121,6 +132,7 @@ extension LiveRideSessionService {
         if let restoredTrip {
             lastPersistenceDate = restoredTrip.updatedAt
             lastElectricalSampleDate = nil
+            lastMotionSampleDate = nil
             if !restoredTrip.isPaused { startTickerIfNeeded() }
         }
         await updateCurrentTrip()

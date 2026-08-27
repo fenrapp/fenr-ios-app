@@ -23,6 +23,9 @@ final class BikeLiveActivityControllerFixture {
                 observeConnection: .init(repository: repository),
                 observeSettings: .init(repository: settingsRepository),
                 observeDeviceSpeed: .init(repository: BikeLiveActivityDeviceSpeedRepository()),
+                observeDeviceMotion: .init(repository: BikeLiveActivityDeviceMotionRepository()),
+                loadMotionCalibration: .init(repository: BikeLiveActivityMotionCalibrationRepository()),
+                saveMotionCalibration: .init(repository: BikeLiveActivityMotionCalibrationRepository()),
                 observeBikeProfile: .init(repository: BikeLiveActivityProfileRepository()),
                 observeBatteryHealth: .init(repository: repository),
                 startBatteryHealthMonitoring: .init(repository: repository),
@@ -33,6 +36,13 @@ final class BikeLiveActivityControllerFixture {
                 now: { Date() },
                 maximumAccuracyMetersPerSecond: 5,
                 maximumSampleAge: 5
+            ),
+            motionEstimator: .init(
+                now: Date.init,
+                maximumSampleAge: 5,
+                minimumGPSCourseSpeedKilometersPerHour: 5,
+                maximumGPSCourseAccuracyDegrees: 35,
+                smoothingFactor: 1
             )
         )
         controller = BikeLiveActivityController(
@@ -134,4 +144,13 @@ private actor BikeLiveActivityProfileRepository: BikeProfileRepository {
     func loadProfile() -> BikeProfile? { nil }
     func saveProfile(_: BikeProfile) {}
     func clearProfile() {}
+}
+
+private actor BikeLiveActivityDeviceMotionRepository: DeviceMotionRepository {
+    func observeDeviceMotion() -> AsyncStream<DeviceMotionSample> { .init { _ in } }
+}
+
+private actor BikeLiveActivityMotionCalibrationRepository: VehicleMotionCalibrationRepository {
+    func load(vin _: String) -> VehicleMotionCalibration? { nil }
+    func save(_: VehicleMotionCalibration) {}
 }

@@ -1,6 +1,7 @@
 import Foundation
 import RideSessionDomain
 import SettingsDomain
+import VehicleSession
 
 public struct RideElectricalPowerSample: Equatable, Identifiable, Sendable {
     public let id: Date
@@ -25,6 +26,7 @@ public struct RideSessionSnapshot: Equatable, Sendable {
     public let historyRevision: Int
     public let batteryStateOfChargePercent: Int?
     public let batteryCapacityWattHours: Double
+    public let motion: VehicleMotionSnapshot
 
     public init(
         trip: RideTrip? = nil,
@@ -36,7 +38,8 @@ public struct RideSessionSnapshot: Equatable, Sendable {
         livePowerSamples: [RideElectricalPowerSample] = [],
         historyRevision: Int = .zero,
         batteryStateOfChargePercent: Int? = nil,
-        batteryCapacityWattHours: Double = .zero
+        batteryCapacityWattHours: Double = .zero,
+        motion: VehicleMotionSnapshot = .init()
     ) {
         self.trip = trip
         self.vehicleIdentity = vehicleIdentity
@@ -48,5 +51,6 @@ public struct RideSessionSnapshot: Equatable, Sendable {
         self.historyRevision = historyRevision
         self.batteryStateOfChargePercent = batteryStateOfChargePercent
         self.batteryCapacityWattHours = batteryCapacityWattHours
+        self.motion = motion
     }
 }

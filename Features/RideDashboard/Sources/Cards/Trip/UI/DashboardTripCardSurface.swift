@@ -10,32 +10,23 @@ struct DashboardTripCardSurface<Content: View>: View {
 
     var body: some View {
         content
-            .padding(DashboardTripCardSurfaceConstants.contentPadding)
+            .padding(DashboardCardSurfaceStyle.contentPadding)
             .background(cardShape.fill(DesignColor.groupedSurface))
             .overlay(
                 cardShape.stroke(
                     DesignColor.border,
-                    lineWidth: DashboardTripCardSurfaceConstants.borderWidth
+                    lineWidth: DashboardCardSurfaceStyle.borderWidth
                 )
             )
-            .padding(.horizontal, DashboardTripCardSurfaceConstants.horizontalInset)
-            .padding(.top, DashboardTripCardSurfaceConstants.topInset)
-            .padding(.bottom, DashboardTripCardSurfaceConstants.bottomInset)
+            .padding(.horizontal, DashboardCardSurfaceStyle.horizontalInset)
+            .padding(.top, DashboardCardSurfaceStyle.topInset)
+            .padding(.bottom, DashboardCardSurfaceStyle.bottomInset)
     }
 
     private var cardShape: RoundedRectangle {
         RoundedRectangle(
-            cornerRadius: DashboardTripCardSurfaceConstants.cornerRadius,
+            cornerRadius: DashboardCardSurfaceStyle.cornerRadius,
             style: .continuous
         )
     }
-}
-
-private enum DashboardTripCardSurfaceConstants {
-    static let contentPadding: CGFloat = 18
-    static let horizontalInset: CGFloat = 22
-    static let topInset: CGFloat = 86
-    static let bottomInset: CGFloat = 50
-    static let cornerRadius: CGFloat = 24
-    static let borderWidth: CGFloat = 1
 }

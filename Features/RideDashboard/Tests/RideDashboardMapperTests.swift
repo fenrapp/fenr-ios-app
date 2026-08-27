@@ -270,4 +270,5 @@ struct RideDashboardMapperTests {
         #expect(state.powerMode.regenerativeBraking == "50")
         #expect(!state.powerMode.showsTractionControl)
     }
+
 }

@@ -61,6 +61,7 @@ private actor BatteryHealthPreviewVehicleSession: VehicleSessionService {
     func start() {}
     func stop() {}
     func refreshBikeStatus() {}
+    func calibrateDeviceMotion() {}
     func setBatteryHealthMonitoringRequired(_: Bool, consumerID _: UUID) {}
 }
 

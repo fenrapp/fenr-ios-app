@@ -4,6 +4,21 @@ import Testing
 
 @Suite("Ride trip")
 struct RideTripTests {
+    @Test("Keeps independent peak lean and pitch values")
+    func recordsMotionPeaks() {
+        let trip = RideTrip(
+            vehicleIdentity: .vin("FENRTEST000000001"),
+            applicationSessionID: UUID(),
+            startedAt: .now
+        )
+            .updatingMotion(rollDegrees: -31, pitchDegrees: 8)
+            .updatingMotion(rollDegrees: 24, pitchDegrees: -12)
+
+        #expect(trip.maximumLeftLeanDegrees == 31)
+        #expect(trip.maximumRightLeanDegrees == 24)
+        #expect(trip.maximumUphillPitchDegrees == 8)
+        #expect(trip.maximumDownhillPitchDegrees == 12)
+    }
     @Test("Uses odometer for distance and the resolved speed sample for speed metrics")
     func updatesMetrics() {
         let startedAt = Date(timeIntervalSince1970: 1_000)

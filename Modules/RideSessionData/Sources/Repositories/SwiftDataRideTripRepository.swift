@@ -84,6 +84,6 @@ public final class SwiftDataRideTripRepository: RideTripRepository, Sendable {
 
 private extension SwiftDataRideTripRepository {
     enum Constants {
-        static let storeName = "RideTripsV3"
+        static let storeName = "RideTripsV4"
     }
 }

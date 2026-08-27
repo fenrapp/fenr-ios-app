@@ -5,13 +5,16 @@ import SettingsDomain
 public struct RideDashboardMapper: Sendable {
     private let makeMeasurementMapper: @Sendable (MeasurementSystem) -> RideDashboardMeasurementMapper
     private let speedSourceIndicatorMapper: DashboardSpeedSourceIndicatorMapper
+    private let progressBarMapper: DashboardProgressBarMapper
 
     public init(
         makeMeasurementMapper: @escaping @Sendable (MeasurementSystem) -> RideDashboardMeasurementMapper,
-        speedSourceIndicatorMapper: DashboardSpeedSourceIndicatorMapper
+        speedSourceIndicatorMapper: DashboardSpeedSourceIndicatorMapper,
+        progressBarMapper: DashboardProgressBarMapper
     ) {
         self.makeMeasurementMapper = makeMeasurementMapper
         self.speedSourceIndicatorMapper = speedSourceIndicatorMapper
+        self.progressBarMapper = progressBarMapper
     }
 
     public func map(
@@ -19,6 +22,7 @@ public struct RideDashboardMapper: Sendable {
         connection: BikeConnection,
         speedKilometersPerHour: Double?,
         speedSource: SpeedSource = .motorcycle,
+        progressBarMode: DashboardProgressBarMode = .energy,
         measurementSystem: MeasurementSystem,
         isGPSAvailable: Bool = true
     ) -> RideDashboardViewState {
@@ -43,12 +47,20 @@ public struct RideDashboardMapper: Sendable {
             }
             : nil
         let maximumSpeed = measurementMapper.speedometerMaximum()
+        let speedometer = speedometer(
+            speed: speed,
+            maximum: maximumSpeed,
+            source: speedSource,
+            isGPSAvailable: isGPSAvailable,
+            measurementMapper: measurementMapper
+        )
         return RideDashboardViewState(
-            speedometer: speedometer(
-                speed: speed,
-                maximum: maximumSpeed,
-                source: speedSource,
-                isGPSAvailable: isGPSAvailable,
+            speedometer: speedometer,
+            progressBar: progressBarMapper.map(
+                mode: progressBarMode,
+                speedProgress: speedometer.progress,
+                telemetry: telemetry,
+                hasTelemetry: hasTelemetry,
                 measurementMapper: measurementMapper
             ),
             battery: battery(

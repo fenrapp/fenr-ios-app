@@ -19,6 +19,8 @@ struct SwiftDataRideTripRepositoryTests {
 
         #expect(restored?.id == trip.id)
         #expect(restored?.isAwaitingElectricalRebase == true)
+        #expect(restored?.maximumLeftLeanDegrees == 31)
+        #expect(restored?.maximumUphillPitchDegrees == 12)
     }
 
     @Test("Deletes temporary data from previous application sessions")
@@ -158,7 +160,11 @@ struct SwiftDataRideTripRepositoryTests {
             consumedEnergyWattHours: distance * 70,
             recoveredEnergyWattHours: 10,
             electricalObservedSeconds: 95,
-            electricalExpectedSeconds: 100
+            electricalExpectedSeconds: 100,
+            maximumLeftLeanDegrees: 31,
+            maximumRightLeanDegrees: 26,
+            maximumUphillPitchDegrees: 12,
+            maximumDownhillPitchDegrees: 9
         )
     }
 

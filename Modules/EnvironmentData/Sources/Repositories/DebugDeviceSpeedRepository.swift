@@ -18,6 +18,14 @@ public actor DebugDeviceSpeedRepository: DeviceSpeedRepository {
                     continuation.yield(DeviceSpeedSample(
                         kilometersPerHour: speeds[index % speeds.count],
                         accuracyMetersPerSecond: 2,
+                        courseDegrees: Double((index * 17) % 360),
+                        courseAccuracyDegrees: 4,
+                        altitudeMeters: 420 + sin(Double(index) * 0.2) * 12,
+                        verticalAccuracyMeters: 3,
+                        coordinate: GeographicCoordinate(
+                            latitudeDegrees: 40.426_389,
+                            longitudeDegrees: -3.703_889
+                        ),
                         observedAt: .now
                     ))
                     index += 1

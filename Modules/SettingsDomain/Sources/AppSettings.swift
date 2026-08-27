@@ -2,6 +2,7 @@ import Foundation
 
 public struct AppSettings: Codable, Equatable, Sendable {
     public var speedSource: SpeedSource
+    public var dashboardProgressBarMode: DashboardProgressBarMode
     public var measurementSystem: MeasurementSystem
     public var defaultBatteryPackCapacity: BatteryPackCapacity
     public var batteryPackCapacitiesByVIN: [String: BatteryPackCapacity]
@@ -12,11 +13,13 @@ public struct AppSettings: Codable, Equatable, Sendable {
 
     public init(
         speedSource: SpeedSource = .motorcycle,
+        dashboardProgressBarMode: DashboardProgressBarMode = .energy,
         measurementSystem: MeasurementSystem = .system,
         batteryPackCapacity: BatteryPackCapacity = .sevenPointTwoKilowattHours,
         batteryPackCapacitiesByVIN: [String: BatteryPackCapacity] = [:]
     ) {
         self.speedSource = speedSource
+        self.dashboardProgressBarMode = dashboardProgressBarMode
         self.measurementSystem = measurementSystem
         defaultBatteryPackCapacity = batteryPackCapacity
         self.batteryPackCapacitiesByVIN = batteryPackCapacitiesByVIN
@@ -24,6 +27,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case speedSource
+        case dashboardProgressBarMode
         case measurementSystem
         case defaultBatteryPackCapacity
         case batteryPackCapacitiesByVIN
@@ -32,6 +36,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         speedSource = try container.decodeIfPresent(SpeedSource.self, forKey: .speedSource) ?? .motorcycle
+        dashboardProgressBarMode = try container.decodeIfPresent(
+            DashboardProgressBarMode.self,
+            forKey: .dashboardProgressBarMode
+        ) ?? .energy
         measurementSystem = try container.decodeIfPresent(MeasurementSystem.self, forKey: .measurementSystem) ?? .system
         defaultBatteryPackCapacity = try container.decodeIfPresent(
             BatteryPackCapacity.self,
@@ -52,6 +60,12 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public mutating func setBatteryPackCapacity(_ capacity: BatteryPackCapacity, forVIN vin: String) {
         batteryPackCapacitiesByVIN[vin] = capacity
     }
+}
+
+public enum DashboardProgressBarMode: String, Codable, CaseIterable, Sendable {
+    case energy
+    case speed
+    case hidden
 }
 
 public enum SpeedSource: String, Codable, CaseIterable, Sendable {

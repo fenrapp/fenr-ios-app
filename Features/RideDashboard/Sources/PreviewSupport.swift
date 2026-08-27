@@ -116,6 +116,19 @@ enum RangeCardPreviewFactory {
     }
 }
 
+@MainActor
+enum RideDynamicsCardPreviewFactory {
+    static func makeViewModel(state: DashboardRideDynamicsViewData) -> RideDynamicsCardViewModel {
+        let viewModel = RideDynamicsCardViewModel(
+            rideSession: PreviewRideSessionService(),
+            vehicleSession: PreviewVehicleSessionService(),
+            mapper: RideDashboardMapperFactory.makeRideDynamicsMapper(locale: .autoupdatingCurrent)
+        )
+        viewModel.setPreviewState(state)
+        return viewModel
+    }
+}
+
 private actor PreviewRideTripRepository: RideTripRepository {
     func prepare(context _: BikeSessionContext) -> RideTrip? { nil }
     func saveActiveTrip(_: RideTrip) -> Bool { true }
@@ -165,6 +178,7 @@ private actor PreviewVehicleSessionService: VehicleSessionService {
     func start() {}
     func stop() {}
     func refreshBikeStatus() {}
+    func calibrateDeviceMotion() {}
     func setBatteryHealthMonitoringRequired(_: Bool, consumerID _: UUID) {}
 }
 

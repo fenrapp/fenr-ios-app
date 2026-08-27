@@ -24,7 +24,8 @@ public enum RideDashboardMapperFactory {
                     locale: locale
                 )
             },
-            speedSourceIndicatorMapper: DashboardSpeedSourceIndicatorMapper()
+            speedSourceIndicatorMapper: DashboardSpeedSourceIndicatorMapper(),
+            progressBarMapper: DashboardProgressBarMapper()
         )
     }
 
@@ -69,6 +70,10 @@ public enum RideDashboardMapperFactory {
 
     public static func makeRangeMapper(locale: Locale) -> RangeCardMapper {
         RangeCardMapper(locale: locale, estimator: RideRangeEstimator())
+    }
+
+    public static func makeRideDynamicsMapper(locale: Locale) -> RideDynamicsCardMapper {
+        RideDynamicsCardMapper(locale: locale)
     }
 
     public static func makeChargingMapper(
