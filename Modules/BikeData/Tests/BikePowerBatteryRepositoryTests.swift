@@ -6,7 +6,7 @@ import Testing
 
 @Suite("Bike data power and battery telemetry")
 struct BikePowerBatteryRepositoryTests {
-    @Test("Repository exposes confirmed power and battery telemetry")
+    @Test("Repository exposes validated battery state and electrical candidates")
     func mapsPowerAndBatteryTelemetry() async throws {
         let client = FakeBikeTelemetryClient()
         let repository = makeRepository(client: client)
@@ -23,7 +23,7 @@ struct BikePowerBatteryRepositoryTests {
         #expect(telemetry.batteryTelemetry.dcBusRaw == 4_000)
         #expect(telemetry.batteryTelemetry.dcBusVolts == 400)
         #expect(telemetry.batteryTelemetry.currentRaw == 25)
-        #expect(telemetry.batteryTelemetry.currentAmperes == 25)
+        #expect(telemetry.batteryTelemetry.currentCandidateAmperes == 25)
         #expect(telemetry.batteryTelemetry.positiveBMS?.temperatureCelsius == 25.34)
         #expect(telemetry.batteryTelemetry.negativeBMS?.humidityPercent == 48.99)
         #expect(telemetry.powerTelemetry.electricalPowerWatts == 10_000)
@@ -32,7 +32,10 @@ struct BikePowerBatteryRepositoryTests {
 
     @Test("Unconfirmed raw payloads do not enter domain telemetry")
     func keepsUnconfirmedPayloadsInData() async {
-        let mapper = BikeSDKTelemetryPayloadToDomainMapper(powerCalculator: .init())
+        let mapper = BikeSDKTelemetryPayloadToDomainMapper(
+            powerCalculator: .init(),
+            maximumPowerInputSkew: 2
+        )
         let stateStore = BikeRepositoryStateStore()
 
         let parameters = await stateStore.updateTelemetryIf {
@@ -63,6 +66,38 @@ struct BikePowerBatteryRepositoryTests {
 
         #expect(telemetry.powerTelemetry.electricalPowerWatts == -10_000)
         #expect(telemetry.powerTelemetry.starkMotorPowerHorsepower == -11)
+    }
+
+    @Test("Estimated power requires temporally aligned battery inputs")
+    func requiresFreshPowerInputs() {
+        let mapper = BikeSDKTelemetryPayloadToDomainMapper(
+            powerCalculator: .init(),
+            maximumPowerInputSkew: 2
+        )
+        var telemetry = BikeTelemetry()
+
+        mapper.apply(
+            BikeDataTelemetryFixtures.batteryForPower,
+            to: &telemetry,
+            date: Date(timeIntervalSince1970: 0)
+        )
+        mapper.apply(
+            BikeDataTelemetryFixtures.batterySignals,
+            to: &telemetry,
+            date: Date(timeIntervalSince1970: 3)
+        )
+
+        #expect(telemetry.powerTelemetry.electricalPowerWatts == nil)
+        #expect(telemetry.powerTelemetry.calculatedPowerUpdatedAt == nil)
+
+        mapper.apply(
+            BikeDataTelemetryFixtures.batteryForPower,
+            to: &telemetry,
+            date: Date(timeIntervalSince1970: 4)
+        )
+
+        #expect(telemetry.powerTelemetry.electricalPowerWatts == 10_000)
+        #expect(telemetry.powerTelemetry.calculatedPowerUpdatedAt == Date(timeIntervalSince1970: 4))
     }
 
     @Test("Ending the BLE session clears all power and battery telemetry")
@@ -100,15 +135,15 @@ struct BikePowerBatteryRepositoryTests {
             characteristic: characteristic,
             byteCount: 2,
             hex: "19 00",
-            decodedDetail: "currentRaw=25 currentA=25.0 formula=electricalPowerW*0.0011",
+            decodedDetail: "currentCandidateRaw=25 candidateA=25.0 candidateFormula=electricalPowerW*0.0011",
             date: Date(timeIntervalSince1970: 0)
         )))
         let event = try #require(await iterator.next())
 
         #expect(event.detail.contains(characteristic.uuidString))
         #expect(event.detail.contains("19 00"))
-        #expect(event.detail.contains("currentRaw=25"))
-        #expect(event.detail.contains("formula="))
+        #expect(event.detail.contains("currentCandidateRaw=25"))
+        #expect(event.detail.contains("candidateFormula="))
     }
 
 }

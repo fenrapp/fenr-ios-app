@@ -24,7 +24,7 @@ enum BikeEmulatorElectricalTelemetryFactory {
         )
         let calculation = powerCalculator.calculate(
             dcBusVolts: Constants.dcBusVolts,
-            batteryCurrentAmperes: Double(currentRaw)
+            batteryCurrentCandidateAmperes: Double(currentRaw)
         )
         return BikeEmulatorElectricalTelemetry(
             power: .init(
@@ -37,14 +37,14 @@ enum BikeEmulatorElectricalTelemetryFactory {
                 dcBusRaw: Constants.dcBusRaw,
                 dcBusVolts: Constants.dcBusVolts,
                 currentRaw: currentRaw,
-                currentAmperes: Double(currentRaw),
+                currentCandidateAmperes: Double(currentRaw),
                 positiveBMS: makeBMS(
-                    dcBusRaw: Constants.dcBusRaw,
+                    voltageCandidateRaw: Constants.positiveVoltageCandidateRaw,
                     temperatureRaw: Constants.positiveTemperatureRaw,
                     humidityRaw: Constants.positiveHumidityRaw
                 ),
                 negativeBMS: makeBMS(
-                    dcBusRaw: Constants.negativeDCBusRaw,
+                    voltageCandidateRaw: Constants.negativeVoltageCandidateRaw,
                     temperatureRaw: Constants.negativeTemperatureRaw,
                     humidityRaw: Constants.negativeHumidityRaw
                 ),
@@ -60,13 +60,12 @@ enum BikeEmulatorElectricalTelemetryFactory {
     }
 
     private static func makeBMS(
-        dcBusRaw: Int,
+        voltageCandidateRaw: Int,
         temperatureRaw: Int,
         humidityRaw: Int
     ) -> BikeBMSSignalsTelemetry {
         .init(
-            dcBusRaw: dcBusRaw,
-            dcBusVolts: Double(dcBusRaw) / Constants.dcBusScale,
+            voltageCandidateRaw: voltageCandidateRaw,
             temperatureRaw: temperatureRaw,
             temperatureCelsius: Double(temperatureRaw) / Constants.environmentScale,
             humidityRaw: humidityRaw,
@@ -78,7 +77,8 @@ enum BikeEmulatorElectricalTelemetryFactory {
         static let healthPercent = 94
         static let dcBusRaw = 4_000
         static let dcBusVolts = 400.0
-        static let negativeDCBusRaw = 3_995
+        static let positiveVoltageCandidateRaw = 408
+        static let negativeVoltageCandidateRaw = 403
         static let ridingCurrentOffset = 18.0
         static let ridingCurrentAmplitude = 30.0
         static let ridingCurrentWaveRadians = 0.45
@@ -87,7 +87,6 @@ enum BikeEmulatorElectricalTelemetryFactory {
         static let negativeTemperatureRaw = 2_450
         static let positiveHumidityRaw = 5_012
         static let negativeHumidityRaw = 4_899
-        static let dcBusScale = 10.0
         static let environmentScale = 100.0
     }
 }

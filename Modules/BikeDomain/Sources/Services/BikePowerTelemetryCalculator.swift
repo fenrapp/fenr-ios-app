@@ -15,9 +15,9 @@ public struct BikePowerTelemetryCalculator: Sendable {
 
     public func calculate(
         dcBusVolts: Double,
-        batteryCurrentAmperes: Double
+        batteryCurrentCandidateAmperes: Double
     ) -> BikePowerTelemetryCalculation {
-        let electricalPowerWatts = dcBusVolts * batteryCurrentAmperes
+        let electricalPowerWatts = dcBusVolts * batteryCurrentCandidateAmperes
         return BikePowerTelemetryCalculation(electricalPowerWatts: electricalPowerWatts)
     }
 

@@ -16,7 +16,9 @@ public struct StarkBatterySignalsDecoder: StarkPayloadDecoding {
 
     private func decodeBMS(reader: StarkByteReader, offset: Int) -> StarkBMSSignalsPayload {
         StarkBMSSignalsPayload(
-            dcBusRaw: Int(reader.u16(at: offset + StarkBatterySignalsPayloadLayout.dcBusOffset)),
+            voltageCandidateRaw: Int(
+                reader.u16(at: offset + StarkBatterySignalsPayloadLayout.voltageCandidateOffset)
+            ),
             temperatureRaw: Int(reader.u16(at: offset + StarkBatterySignalsPayloadLayout.temperatureOffset)),
             humidityRaw: Int(reader.u16(at: offset + StarkBatterySignalsPayloadLayout.humidityOffset)),
             controlFlags: Int(reader.u16(at: offset + StarkBatterySignalsPayloadLayout.controlFlagsOffset))

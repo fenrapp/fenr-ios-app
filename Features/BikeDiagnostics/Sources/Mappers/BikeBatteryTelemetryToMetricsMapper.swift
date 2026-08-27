@@ -26,32 +26,40 @@ public struct BikeBatteryTelemetryToMetricsMapper {
             ),
             metric(
                 "batteryCurrent",
-                "Battery current",
-                current(telemetry.currentAmperes, raw: telemetry.currentRaw)
+                "Battery current candidate",
+                current(telemetry.currentCandidateAmperes, raw: telemetry.currentRaw)
             ),
-            bmsMetric("positiveBus", "Positive BMS DC bus", telemetry.positiveBMS, kind: .dcBus),
+            bmsVoltageCandidateMetric(
+                "positiveVoltageCandidate",
+                "Positive BMS voltage candidate",
+                telemetry.positiveBMS
+            ),
             bmsMetric(
                 "positiveTemp",
-                "Positive BMS temperature",
+                "Positive BMS temperature candidate",
                 telemetry.positiveBMS,
                 kind: .temperature
             ),
             bmsMetric(
                 "positiveHumidity",
-                "Positive BMS humidity",
+                "Positive BMS humidity candidate",
                 telemetry.positiveBMS,
                 kind: .humidity
             ),
-            bmsMetric("negativeBus", "Negative BMS DC bus", telemetry.negativeBMS, kind: .dcBus),
+            bmsVoltageCandidateMetric(
+                "negativeVoltageCandidate",
+                "Negative BMS voltage candidate",
+                telemetry.negativeBMS
+            ),
             bmsMetric(
                 "negativeTemp",
-                "Negative BMS temperature",
+                "Negative BMS temperature candidate",
                 telemetry.negativeBMS,
                 kind: .temperature
             ),
             bmsMetric(
                 "negativeHumidity",
-                "Negative BMS humidity",
+                "Negative BMS humidity candidate",
                 telemetry.negativeBMS,
                 kind: .humidity
             ),
@@ -97,18 +105,25 @@ public struct BikeBatteryTelemetryToMetricsMapper {
         )
     }
 
+    private func bmsVoltageCandidateMetric(
+        _ id: String,
+        _ title: String,
+        _ telemetry: BikeBMSSignalsTelemetry?
+    ) -> BikeDiagnosticsMetricViewData {
+        guard let telemetry else { return metric(id, title, BikeDiagnosticsText.placeholder) }
+        return metric(id, title, "raw \(telemetry.voltageCandidateRaw)")
+    }
+
     private func date(_ value: Date?) -> String {
         value?.formatted(dateFormatStyle) ?? BikeDiagnosticsText.placeholder
     }
 
     private enum BMSMetricKind {
-        case dcBus
         case temperature
         case humidity
 
         func components(from telemetry: BikeBMSSignalsTelemetry) -> BMSMetricComponents {
             switch self {
-            case .dcBus: .init(value: telemetry.dcBusVolts, raw: telemetry.dcBusRaw, unit: "V")
             case .temperature:
                 .init(value: telemetry.temperatureCelsius, raw: telemetry.temperatureRaw, unit: "C")
             case .humidity:

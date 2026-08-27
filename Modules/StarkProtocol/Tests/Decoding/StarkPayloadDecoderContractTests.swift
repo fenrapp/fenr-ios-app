@@ -48,7 +48,7 @@ struct StarkPayloadDecoderContractTests {
         #expect(inverterTemperatures.rawValues.count == StarkInverterTemperaturesPayloadLayout.temperatureCount)
         #expect(estimations.nativeMotorPowerRaw == -100)
         #expect(batteryParameters.capacityRaw == 0x1234)
-        #expect(batterySignals.currentRaw == -25)
+        #expect(batterySignals.currentRaw == -8)
     }
 
     @Test("Payload constants match decoder contracts")

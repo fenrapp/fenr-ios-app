@@ -1,18 +1,19 @@
 public struct StarkBMSSignalsPayload: Equatable, Sendable {
-    public let dcBusRaw: Int
+    public let voltageCandidateRaw: Int
     public let temperatureRaw: Int
     public let humidityRaw: Int
     public let controlFlags: Int
 
-    public init(dcBusRaw: Int, temperatureRaw: Int, humidityRaw: Int, controlFlags: Int) {
-        self.dcBusRaw = dcBusRaw
+    public init(
+        voltageCandidateRaw: Int,
+        temperatureRaw: Int,
+        humidityRaw: Int,
+        controlFlags: Int
+    ) {
+        self.voltageCandidateRaw = voltageCandidateRaw
         self.temperatureRaw = temperatureRaw
         self.humidityRaw = humidityRaw
         self.controlFlags = controlFlags
-    }
-
-    public var dcBusVolts: Double {
-        Double(dcBusRaw) / StarkBatteryElectricalScale.dcBus
     }
 
     public var temperatureCelsius: Double {
@@ -35,7 +36,7 @@ public struct StarkBatterySignalsPayload: StarkPayload {
         self.currentRaw = currentRaw
     }
 
-    public var currentAmperes: Double {
+    public var currentCandidateAmperes: Double {
         Double(currentRaw)
     }
 }

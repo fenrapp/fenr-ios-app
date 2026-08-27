@@ -5,9 +5,14 @@ import StarkProtocol
 
 public struct BikeSDKTelemetryPayloadToDomainMapper: Sendable {
     private let powerCalculator: BikePowerTelemetryCalculator
+    private let maximumPowerInputSkew: TimeInterval
 
-    public init(powerCalculator: BikePowerTelemetryCalculator) {
+    public init(
+        powerCalculator: BikePowerTelemetryCalculator,
+        maximumPowerInputSkew: TimeInterval
+    ) {
         self.powerCalculator = powerCalculator
+        self.maximumPowerInputSkew = maximumPowerInputSkew
     }
 
     @discardableResult
@@ -97,7 +102,7 @@ public struct BikeSDKTelemetryPayloadToDomainMapper: Sendable {
         date: Date
     ) {
         telemetry.batteryTelemetry.currentRaw = signals.currentRaw
-        telemetry.batteryTelemetry.currentAmperes = signals.currentAmperes
+        telemetry.batteryTelemetry.currentCandidateAmperes = signals.currentCandidateAmperes
         telemetry.batteryTelemetry.positiveBMS = bmsTelemetry(signals.positive)
         telemetry.batteryTelemetry.negativeBMS = bmsTelemetry(signals.negative)
         telemetry.batteryTelemetry.signalsUpdatedAt = date
@@ -176,8 +181,7 @@ public struct BikeSDKTelemetryPayloadToDomainMapper: Sendable {
 
     private func bmsTelemetry(_ payload: StarkBMSSignalsPayload) -> BikeBMSSignalsTelemetry {
         BikeBMSSignalsTelemetry(
-            dcBusRaw: payload.dcBusRaw,
-            dcBusVolts: payload.dcBusVolts,
+            voltageCandidateRaw: payload.voltageCandidateRaw,
             temperatureRaw: payload.temperatureRaw,
             temperatureCelsius: payload.temperatureCelsius,
             humidityRaw: payload.humidityRaw,
@@ -187,7 +191,10 @@ public struct BikeSDKTelemetryPayloadToDomainMapper: Sendable {
 
     private func recalculatePower(in telemetry: inout BikeTelemetry, date: Date) {
         guard let dcBusVolts = telemetry.batteryTelemetry.dcBusVolts,
-              let currentAmperes = telemetry.batteryTelemetry.currentAmperes
+              let currentCandidateAmperes = telemetry.batteryTelemetry.currentCandidateAmperes,
+              let stateUpdatedAt = telemetry.batteryTelemetry.stateUpdatedAt,
+              let signalsUpdatedAt = telemetry.batteryTelemetry.signalsUpdatedAt,
+              abs(stateUpdatedAt.timeIntervalSince(signalsUpdatedAt)) <= maximumPowerInputSkew
         else {
             telemetry.powerTelemetry.electricalPowerWatts = nil
             telemetry.powerTelemetry.calculatedPowerUpdatedAt = nil
@@ -195,7 +202,7 @@ public struct BikeSDKTelemetryPayloadToDomainMapper: Sendable {
         }
         let calculation = powerCalculator.calculate(
             dcBusVolts: dcBusVolts,
-            batteryCurrentAmperes: currentAmperes
+            batteryCurrentCandidateAmperes: currentCandidateAmperes
         )
         telemetry.powerTelemetry.electricalPowerWatts = calculation.electricalPowerWatts
         telemetry.powerTelemetry.calculatedPowerUpdatedAt = date

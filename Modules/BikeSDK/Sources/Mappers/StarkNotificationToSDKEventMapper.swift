@@ -38,9 +38,10 @@ public struct StarkNotificationToSDKEventMapper: Sendable {
         case .batteryParameters(let value):
             return "series=\(value.seriesCount) parallel=\(value.parallelCount) capacityRaw=\(value.capacityRaw)"
         case .batterySignals(let value):
-            return "currentRaw=\(value.currentRaw) currentA=\(value.currentAmperes) "
+            return "currentCandidateRaw=\(value.currentRaw) candidateA=\(value.currentCandidateAmperes) "
                 + "pos=[\(bmsDetail(value.positive))] neg=[\(bmsDetail(value.negative))] "
-                + "formula=electricalPowerW(latest6004.dcBusRaw/10*currentA);starkHP(electricalPowerW*0.0011)"
+                + "candidateFormula=electricalPowerW(latest6004.dcBusRaw/10*candidateA);"
+                + "starkHP(electricalPowerW*0.0011)"
         case .liveEstimations(let value):
             return "rangeRaw=\(value.estimatedRangeRaw) timeRaw=\(value.estimatedTimeRaw) "
                 + "motorPowerRaw=\(value.nativeMotorPowerRaw)"
@@ -50,9 +51,9 @@ public struct StarkNotificationToSDKEventMapper: Sendable {
     }
 
     private func bmsDetail(_ value: StarkBMSSignalsPayload) -> String {
-        "dcBusRaw=\(value.dcBusRaw) dcBusV=\(value.dcBusVolts) "
-            + "tempRaw=\(value.temperatureRaw) tempC=\(value.temperatureCelsius) "
-            + "humidityRaw=\(value.humidityRaw) humidityPercent=\(value.humidityPercent) "
+        "voltageCandidateRaw=\(value.voltageCandidateRaw) "
+            + "tempRaw=\(value.temperatureRaw) tempCandidateC=\(value.temperatureCelsius) "
+            + "humidityRaw=\(value.humidityRaw) humidityCandidatePercent=\(value.humidityPercent) "
             + "control=\(value.controlFlags)"
     }
 }

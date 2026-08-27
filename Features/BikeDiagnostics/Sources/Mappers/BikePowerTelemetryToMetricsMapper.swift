@@ -19,11 +19,11 @@ public struct BikePowerTelemetryToMetricsMapper {
         [
             metric(
                 "electricalPower",
-                "Electrical power",
+                "Estimated electrical power",
                 power(watts: telemetry.electricalPowerWatts, kilowatts: telemetry.electricalPowerKilowatts)
             ),
-            metric("starkHorsepower", "Stark calculated power", horsepower(telemetry.starkMotorPowerHorsepower)),
-            metric("calculatedPowerUpdated", "Calculated power updated", date(telemetry.calculatedPowerUpdatedAt))
+            metric("starkHorsepower", "Estimated Stark power", horsepower(telemetry.starkMotorPowerHorsepower)),
+            metric("calculatedPowerUpdated", "Estimated power updated", date(telemetry.calculatedPowerUpdatedAt))
         ]
     }
 

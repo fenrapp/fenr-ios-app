@@ -1,5 +1,6 @@
 import BikeDomain
 import BikeSDK
+import Foundation
 
 public enum LiveBikeRepositoryFactory {
     public static func makeDefault(
@@ -11,7 +12,8 @@ public enum LiveBikeRepositoryFactory {
             client: client,
             eventHandler: LiveBikeRepositoryEventHandler(
                 telemetryMapper: BikeSDKTelemetryPayloadToDomainMapper(
-                    powerCalculator: BikePowerTelemetryCalculator()
+                    powerCalculator: BikePowerTelemetryCalculator(),
+                    maximumPowerInputSkew: Constants.maximumPowerInputSkew
                 ),
                 eventMapper: BikeSDKEventToDomainMapper(
                     connectionMapper: BikeSDKConnectionStatusToDomainMapper(),
@@ -49,5 +51,9 @@ public enum LiveBikeRepositoryFactory {
 
     public static func makePinDeriver() -> any BikePinDeriving {
         StarkBikePinDeriver()
+    }
+
+    private enum Constants {
+        static let maximumPowerInputSkew: TimeInterval = 2
     }
 }

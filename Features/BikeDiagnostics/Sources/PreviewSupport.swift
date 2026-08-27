@@ -144,9 +144,9 @@ private actor PreviewBikeRepository: BikeRepository {
                 dcBusRaw: 4_000,
                 dcBusVolts: 400,
                 currentRaw: 25,
-                currentAmperes: 25,
-                positiveBMS: previewBMS(dcBusRaw: 4_000),
-                negativeBMS: previewBMS(dcBusRaw: 3_995),
+                currentCandidateAmperes: 25,
+                positiveBMS: previewBMS(voltageCandidateRaw: 408),
+                negativeBMS: previewBMS(voltageCandidateRaw: 403),
                 stateUpdatedAt: Date(),
                 signalsUpdatedAt: Date()
             ),
@@ -155,10 +155,9 @@ private actor PreviewBikeRepository: BikeRepository {
         await debug.send(.init(title: "Notification", detail: "00006004-5374-6172-4B20-467574757265 4b 5B 00 63 00"))
     }
 
-    private func previewBMS(dcBusRaw: Int) -> BikeBMSSignalsTelemetry {
+    private func previewBMS(voltageCandidateRaw: Int) -> BikeBMSSignalsTelemetry {
         .init(
-            dcBusRaw: dcBusRaw,
-            dcBusVolts: Double(dcBusRaw) / 10,
+            voltageCandidateRaw: voltageCandidateRaw,
             temperatureRaw: 2_534,
             temperatureCelsius: 25.34,
             humidityRaw: 5_012,

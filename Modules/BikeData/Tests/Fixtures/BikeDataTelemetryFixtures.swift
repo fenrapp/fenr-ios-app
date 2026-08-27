@@ -17,13 +17,33 @@ enum BikeDataTelemetryFixtures {
         capacityRaw: 6_900
     ))
     static let batterySignals = BikeSDKTelemetryPayload.batterySignals(.init(
-        positive: .init(dcBusRaw: 4_000, temperatureRaw: 2_534, humidityRaw: 5_012, controlFlags: 1),
-        negative: .init(dcBusRaw: 3_995, temperatureRaw: 2_450, humidityRaw: 4_899, controlFlags: 2),
+        positive: .init(
+            voltageCandidateRaw: 408,
+            temperatureRaw: 2_534,
+            humidityRaw: 5_012,
+            controlFlags: 1
+        ),
+        negative: .init(
+            voltageCandidateRaw: 403,
+            temperatureRaw: 2_450,
+            humidityRaw: 4_899,
+            controlFlags: 2
+        ),
         currentRaw: 25
     ))
     static let negativeBatterySignals = BikeSDKTelemetryPayload.batterySignals(.init(
-        positive: .init(dcBusRaw: 4_000, temperatureRaw: 2_534, humidityRaw: 5_012, controlFlags: 1),
-        negative: .init(dcBusRaw: 3_995, temperatureRaw: 2_450, humidityRaw: 4_899, controlFlags: 2),
+        positive: .init(
+            voltageCandidateRaw: 408,
+            temperatureRaw: 2_534,
+            humidityRaw: 5_012,
+            controlFlags: 1
+        ),
+        negative: .init(
+            voltageCandidateRaw: 403,
+            temperatureRaw: 2_450,
+            humidityRaw: 4_899,
+            controlFlags: 2
+        ),
         currentRaw: -25
     ))
     static let liveEstimations = BikeSDKTelemetryPayload.liveEstimations(.init(

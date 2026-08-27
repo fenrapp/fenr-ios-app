@@ -19,19 +19,30 @@ struct StarkBatteryElectricalDecoderTests {
             StarkProtocolFixtures.batterySignalsNegativeCurrent
         )
 
-        #expect(payload.positive.dcBusRaw == 4_000)
-        #expect(payload.positive.temperatureRaw == 2_534)
-        #expect(payload.positive.humidityRaw == 5_012)
-        #expect(payload.positive.controlFlags == 0x1234)
-        #expect(payload.negative.dcBusRaw == 3_995)
-        #expect(payload.negative.temperatureRaw == 2_450)
-        #expect(payload.negative.humidityRaw == 4_899)
-        #expect(payload.negative.controlFlags == 0xABCD)
-        #expect(payload.currentRaw == -25)
-        #expect(payload.currentAmperes == -25)
-        #expect(payload.positive.dcBusVolts == 400)
-        #expect(payload.positive.temperatureCelsius == 25.34)
-        #expect(payload.positive.humidityPercent == 50.12)
+        #expect(payload.positive.voltageCandidateRaw == 409)
+        #expect(payload.positive.temperatureRaw == 3_069)
+        #expect(payload.positive.humidityRaw == 5_219)
+        #expect(payload.positive.controlFlags == 0)
+        #expect(payload.negative.voltageCandidateRaw == 405)
+        #expect(payload.negative.temperatureRaw == 2_919)
+        #expect(payload.negative.humidityRaw == 4_853)
+        #expect(payload.negative.controlFlags == 0)
+        #expect(payload.currentRaw == -8)
+        #expect(payload.currentCandidateAmperes == -8)
+        #expect(payload.positive.temperatureCelsius == 30.69)
+        #expect(payload.positive.humidityPercent == 52.19)
+    }
+
+    @Test("Battery signals preserve a positive current candidate")
+    func batterySignalsPositiveCurrent() throws {
+        let payload = try StarkBatterySignalsDecoder().decode(
+            StarkProtocolFixtures.batterySignalsPositiveCurrent
+        )
+
+        #expect(payload.positive.voltageCandidateRaw == 406)
+        #expect(payload.negative.voltageCandidateRaw == 402)
+        #expect(payload.currentRaw == 3)
+        #expect(payload.currentCandidateAmperes == 3)
     }
 
     @Test("Battery electrical payloads reject short data")

@@ -34,8 +34,18 @@ struct BikeSDKMappingTests {
 
         #expect(parameters == .batteryParameters(.init(seriesCount: 100, parallelCount: 2, capacityRaw: 6_900)))
         #expect(signals == .batterySignals(.init(
-            positive: .init(dcBusRaw: 4_000, temperatureRaw: 2_534, humidityRaw: 5_012, controlFlags: 1),
-            negative: .init(dcBusRaw: 3_995, temperatureRaw: 2_450, humidityRaw: 4_899, controlFlags: 2),
+            positive: .init(
+                voltageCandidateRaw: 4_000,
+                temperatureRaw: 2_534,
+                humidityRaw: 5_012,
+                controlFlags: 1
+            ),
+            negative: .init(
+                voltageCandidateRaw: 3_995,
+                temperatureRaw: 2_450,
+                humidityRaw: 4_899,
+                controlFlags: 2
+            ),
             currentRaw: 25
         )))
         #expect(estimations == .liveEstimations(.init(
@@ -45,7 +55,7 @@ struct BikeSDKMappingTests {
         )))
     }
 
-    @Test("Notification debug includes decoded conversions and power calculations")
+    @Test("Notification debug distinguishes candidates from validated conversions")
     func debugIncludesPowerConversions() throws {
         let mapper = makeNotificationMapper()
         let payload = try mapper.telemetryPayload(
@@ -60,9 +70,10 @@ struct BikeSDKMappingTests {
             date: Date(timeIntervalSince1970: 0)
         )
 
-        #expect(debug.decodedDetail?.contains("currentRaw=25 currentA=25.0") == true)
-        #expect(debug.decodedDetail?.contains("dcBusV=400.0") == true)
-        #expect(debug.decodedDetail?.contains("tempC=25.34") == true)
+        #expect(debug.decodedDetail?.contains("currentCandidateRaw=25 candidateA=25.0") == true)
+        #expect(debug.decodedDetail?.contains("voltageCandidateRaw=4000") == true)
+        #expect(debug.decodedDetail?.contains("dcBusV=") == false)
+        #expect(debug.decodedDetail?.contains("tempCandidateC=25.34") == true)
         #expect(debug.decodedDetail?.contains("electricalPowerW") == true)
         #expect(debug.decodedDetail?.contains("starkHP") == true)
     }

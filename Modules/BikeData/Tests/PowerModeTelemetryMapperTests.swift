@@ -9,7 +9,10 @@ import Testing
 struct PowerModeTelemetryMapperTests {
     @Test("Merges power and traction by map and promotes Alpha from positive evidence")
     func mergesConfigurationsAndDetectsAlpha() {
-        let mapper = BikeSDKTelemetryPayloadToDomainMapper(powerCalculator: .init())
+        let mapper = BikeSDKTelemetryPayloadToDomainMapper(
+            powerCalculator: .init(),
+            maximumPowerInputSkew: 2
+        )
         var telemetry = BikeTelemetry(mode: .index(5))
 
         mapper.apply(
@@ -35,7 +38,10 @@ struct PowerModeTelemetryMapperTests {
 
     @Test("Normal regen with zero TC and 60 HP remains Standard")
     func zerosDoNotDetectAlpha() {
-        let mapper = BikeSDKTelemetryPayloadToDomainMapper(powerCalculator: .init())
+        let mapper = BikeSDKTelemetryPayloadToDomainMapper(
+            powerCalculator: .init(),
+            maximumPowerInputSkew: 2
+        )
         var telemetry = BikeTelemetry()
 
         mapper.apply(

@@ -1,23 +1,20 @@
 import Foundation
 
 public struct BikeBMSSignalsTelemetry: Equatable, Sendable {
-    public let dcBusRaw: Int
-    public let dcBusVolts: Double
+    public let voltageCandidateRaw: Int
     public let temperatureRaw: Int
     public let temperatureCelsius: Double
     public let humidityRaw: Int
     public let humidityPercent: Double
 
     public init(
-        dcBusRaw: Int,
-        dcBusVolts: Double,
+        voltageCandidateRaw: Int,
         temperatureRaw: Int,
         temperatureCelsius: Double,
         humidityRaw: Int,
         humidityPercent: Double
     ) {
-        self.dcBusRaw = dcBusRaw
-        self.dcBusVolts = dcBusVolts
+        self.voltageCandidateRaw = voltageCandidateRaw
         self.temperatureRaw = temperatureRaw
         self.temperatureCelsius = temperatureCelsius
         self.humidityRaw = humidityRaw
@@ -31,7 +28,7 @@ public struct BikeBatteryTelemetry: Equatable, Sendable {
     public var dcBusRaw: Int?
     public var dcBusVolts: Double?
     public var currentRaw: Int?
-    public var currentAmperes: Double?
+    public var currentCandidateAmperes: Double?
     public var positiveBMS: BikeBMSSignalsTelemetry?
     public var negativeBMS: BikeBMSSignalsTelemetry?
     public var stateUpdatedAt: Date?
@@ -43,7 +40,7 @@ public struct BikeBatteryTelemetry: Equatable, Sendable {
         dcBusRaw: Int? = nil,
         dcBusVolts: Double? = nil,
         currentRaw: Int? = nil,
-        currentAmperes: Double? = nil,
+        currentCandidateAmperes: Double? = nil,
         positiveBMS: BikeBMSSignalsTelemetry? = nil,
         negativeBMS: BikeBMSSignalsTelemetry? = nil,
         stateUpdatedAt: Date? = nil,
@@ -54,7 +51,7 @@ public struct BikeBatteryTelemetry: Equatable, Sendable {
         self.dcBusRaw = dcBusRaw
         self.dcBusVolts = dcBusVolts
         self.currentRaw = currentRaw
-        self.currentAmperes = currentAmperes
+        self.currentCandidateAmperes = currentCandidateAmperes
         self.positiveBMS = positiveBMS
         self.negativeBMS = negativeBMS
         self.stateUpdatedAt = stateUpdatedAt
