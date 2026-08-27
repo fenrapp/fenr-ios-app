@@ -42,7 +42,8 @@ public struct RideDynamicsCardMapper: Sendable {
             longitudeText: coordinate.map {
                 coordinateText($0.longitudeDegrees, positiveHemisphere: "E", negativeHemisphere: "W")
             },
-            canCalibrate: motion.availability == .available || motion.availability == .uncalibrated
+            canCalibrate: snapshot.vehicleIdentity.confirmedVIN != nil
+                && (motion.availability == .available || motion.availability == .uncalibrated)
         )
     }
 }

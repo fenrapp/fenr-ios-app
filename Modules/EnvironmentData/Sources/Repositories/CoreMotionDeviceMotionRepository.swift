@@ -1,6 +1,7 @@
 @preconcurrency import CoreMotion
 import EnvironmentDomain
 import Foundation
+import OSLog
 
 public actor CoreMotionDeviceMotionRepository: DeviceMotionRepository {
     private let motionManager: CMMotionManager
@@ -39,13 +40,20 @@ public actor CoreMotionDeviceMotionRepository: DeviceMotionRepository {
 
 private extension CoreMotionDeviceMotionRepository {
     func startUpdatesIfNeeded() {
-        guard !motionManager.isDeviceMotionActive,
-              motionManager.isDeviceMotionAvailable else { return }
+        guard !motionManager.isDeviceMotionActive else { return }
+        guard motionManager.isDeviceMotionAvailable else {
+            Constants.logger.error("Device motion is unavailable on this device")
+            return
+        }
         motionManager.deviceMotionUpdateInterval = Constants.updateInterval
         motionManager.startDeviceMotionUpdates(
             using: preferredReferenceFrame,
             to: operationQueue
-        ) { [weak self] motion, _ in
+        ) { [weak self] motion, error in
+            if let error {
+                Constants.logger.error("Device motion update failed: \(error.localizedDescription, privacy: .public)")
+                return
+            }
             guard let motion else { return }
             Task { await self?.receive(motion) }
         }
@@ -101,5 +109,6 @@ private extension CoreMotionDeviceMotionRepository {
 
     enum Constants {
         static let updateInterval: TimeInterval = 1.0 / 20.0
+        static let logger = Logger(subsystem: "com.fenr.app", category: "DeviceMotion")
     }
 }

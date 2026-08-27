@@ -1,5 +1,6 @@
 import BikeDomain
 import BikeEmulator
+import CoreMotion
 import EnvironmentData
 import Foundation
 import RideSessionData
@@ -67,8 +68,17 @@ enum DebugAppDependencyContainerFactory {
     ) -> AppDependencyContainer {
         let settingsRepository = UserDefaultsAppSettingsRepository()
         let deviceSpeedRepository = DebugDeviceSpeedRepository()
+#if targetEnvironment(simulator)
         let deviceMotionRepository = DebugDeviceMotionRepository()
         let motionCalibrationRepository = DebugVehicleMotionCalibrationRepository()
+#else
+        let deviceMotionRepository = CoreMotionDeviceMotionRepository(
+            motionManager: CMMotionManager(),
+            operationQueue: OperationQueue(),
+            now: Date.init
+        )
+        let motionCalibrationRepository = makeMotionCalibrationRepository()
+#endif
         let rideTripRepository = makeRideTripRepository()
         let sessionServices = AppSessionDependencyContainer.makeServices(
             dependencies: .init(
@@ -129,6 +139,16 @@ enum DebugAppDependencyContainerFactory {
             return repository
         } catch {
             preconditionFailure("Unable to create the debug ride trip store: \(error)")
+        }
+    }
+
+    private static func makeMotionCalibrationRepository() -> SwiftDataVehicleMotionCalibrationRepository {
+        do {
+            return try SwiftDataVehicleMotionCalibrationRepository(
+                mapper: VehicleMotionCalibrationRecordMapper()
+            )
+        } catch {
+            preconditionFailure("Unable to create the debug motion calibration store: \(error)")
         }
     }
 

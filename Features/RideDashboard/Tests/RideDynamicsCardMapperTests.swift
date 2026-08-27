@@ -51,6 +51,7 @@ struct RideDynamicsCardMapperTests {
         #expect(state.altitudeText == "1,045 m")
         #expect(state.latitudeText == "40°25′35″ N")
         #expect(state.longitudeText == "3°42′14″ W")
+        #expect(state.canCalibrate)
     }
 
     @Test("Formats coordinate hemispheres and carries rounded seconds")
@@ -72,5 +73,42 @@ struct RideDynamicsCardMapperTests {
         #expect(!state.isHeadingAvailable)
         #expect(state.headingSourceText == "NO COURSE")
         #expect(state.altitudeText == nil)
+    }
+
+    @Test("Requires a confirmed VIN before enabling calibration")
+    func requiresConfirmedVINForCalibration() {
+        let snapshot = RideSessionSnapshot(
+            vehicleIdentity: .temporary(UUID()),
+            motion: .init(
+                headingSource: .magnetic,
+                availability: .uncalibrated,
+                observedAt: .now
+            )
+        )
+
+        let state = RideDynamicsCardMapper(locale: .init(identifier: "en_GB")).map(snapshot)
+
+        #expect(state.status == .calibrationRequired)
+        #expect(!state.canCalibrate)
+    }
+
+    @Test("Maps every motion availability to a distinct instrument state")
+    func mapsMotionAvailabilityStates() {
+        let mapper = RideDynamicsCardMapper(locale: .init(identifier: "en_GB"))
+        let cases: [(VehicleMotionAvailability, DashboardRideDynamicsViewData.Status)] = [
+            (.unavailable, .unavailable),
+            (.uncalibrated, .calibrationRequired),
+            (.available, .live),
+            (.stale, .signalLost)
+        ]
+
+        for (availability, expectedStatus) in cases {
+            let snapshot = RideSessionSnapshot(
+                vehicleIdentity: .temporary(UUID()),
+                motion: .init(availability: availability)
+            )
+
+            #expect(mapper.map(snapshot).status == expectedStatus)
+        }
     }
 }

@@ -108,7 +108,9 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     }
 
     public func calibrateDeviceMotion() async {
-        guard let profile, let sample = deviceMotionSample else { return }
+        guard let profile,
+              let sample = deviceMotionSample,
+              motion.availability == .uncalibrated || motion.availability == .available else { return }
         let calibration = VehicleMotionCalibration(
             vin: profile.vin,
             referenceAttitude: sample.attitude,
