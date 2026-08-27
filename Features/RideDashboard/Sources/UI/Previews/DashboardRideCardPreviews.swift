@@ -73,6 +73,16 @@ import SwiftUI
     .dashboardCardPreviewCanvas()
 }
 
+#Preview("Range live card") {
+    DashboardRangeLiveCard(state: previewRangeState)
+        .dashboardCardPreviewCanvas()
+}
+
+#Preview("Battery trip card") {
+    DashboardBatteryTripCard(state: previewRangeState)
+        .dashboardCardPreviewCanvas()
+}
+
 private let previewPowerPoints: [DashboardEfficiencyViewData.PowerPoint] = {
     let now = Date(timeIntervalSinceReferenceDate: 1_000)
     return stride(from: -60, through: 0, by: 5).map { offset in
@@ -93,6 +103,24 @@ private let previewTrendPoints: [DashboardEfficiencyViewData.TrendPoint] = {
         )
     }
 }()
+
+private let previewRangeState = DashboardRangeViewData(
+    rangeText: "64",
+    status: .stable,
+    typicalRangeText: "71",
+    currentRangeText: "58",
+    batteryText: "66%",
+    remainingEnergyText: "4.5 kWh",
+    typicalEfficiency: 72,
+    consumptionPoints: [68, 84, 63, -18, 91, 74].enumerated().map { index, efficiency in
+        .init(id: UUID(), distance: Double(index) * 1.5, efficiency: Double(efficiency))
+    },
+    batteryPoints: [72, 71, 70, 68, 67, 66].enumerated().map { index, percentage in
+        .init(id: UUID(), distance: Double(index) * 1.5, percentage: Double(percentage))
+    },
+    peakDischargeText: "18.4 kW",
+    peakRegenerationText: "6.2 kW"
+)
 
 private extension View {
     func dashboardCardPreviewCanvas() -> some View {

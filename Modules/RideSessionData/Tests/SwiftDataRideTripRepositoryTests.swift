@@ -113,6 +113,35 @@ struct SwiftDataRideTripRepositoryTests {
         #expect(restored?.id == replacement.id)
     }
 
+    @Test("Persists compact energy buckets with the active trip")
+    func persistsEnergyBuckets() async throws {
+        let repository = try makeRepository()
+        let context = BikeSessionContext(
+            applicationSessionID: UUID(),
+            vehicleIdentity: .vin(Constants.firstVIN)
+        )
+        let bucket = RideEnergyBucket(
+            startedAt: .distantPast,
+            updatedAt: .distantFuture,
+            startDistanceKilometers: 1,
+            endDistanceKilometers: 1.25,
+            stateOfChargePercent: 79,
+            consumedEnergyWattHours: 22,
+            recoveredEnergyWattHours: 3
+        )
+        let trip = RideTrip(
+            vehicleIdentity: context.vehicleIdentity,
+            applicationSessionID: context.applicationSessionID,
+            startedAt: .distantPast,
+            energyBuckets: [bucket]
+        )
+
+        await repository.saveActiveTrip(trip)
+        let restored = await repository.prepare(context: context)
+
+        #expect(restored?.energyBuckets == [bucket])
+    }
+
     private func makeTrip(
         identity: RideVehicleIdentity,
         sessionID: UUID,
@@ -136,6 +165,7 @@ struct SwiftDataRideTripRepositoryTests {
     private func makeRepository() throws -> SwiftDataRideTripRepository {
         try SwiftDataRideTripRepository(
             mapper: RideTripRecordMapper(),
+            energyBucketMapper: RideEnergyBucketRecordMapper(),
             isStoredInMemoryOnly: true
         )
     }

@@ -29,6 +29,7 @@ struct RideDashboardDependencyContainer {
             currentTripViewModel: tripViewModels.currentTrip,
             tripStatisticsViewModel: tripViewModels.statistics,
             efficiencyViewModel: tripViewModels.efficiency,
+            rangeViewModel: tripViewModels.range,
             chargingViewModel: chargingContainer.makeViewModel(
                 vehicleSession: dependencies.vehicleSession,
                 chargeControl: dependencies.chargeControl

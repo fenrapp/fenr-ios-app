@@ -54,7 +54,8 @@ enum ProductionAppDependencyContainerFactory {
     private static func makeRideTripRepository() -> SwiftDataRideTripRepository {
         do {
             return try SwiftDataRideTripRepository(
-                mapper: RideTripRecordMapper()
+                mapper: RideTripRecordMapper(),
+                energyBucketMapper: RideEnergyBucketRecordMapper()
             )
         } catch {
             preconditionFailure("Unable to create the ride trip store: \(error)")

@@ -116,7 +116,8 @@ enum DebugAppDependencyContainerFactory {
     private static func makeRideTripRepository() -> SwiftDataRideTripRepository {
         do {
             let repository = try SwiftDataRideTripRepository(
-                mapper: RideTripRecordMapper()
+                mapper: RideTripRecordMapper(),
+                energyBucketMapper: RideEnergyBucketRecordMapper()
             )
             Task { await seedEfficiencyHistoryIfNeeded(repository) }
             return repository

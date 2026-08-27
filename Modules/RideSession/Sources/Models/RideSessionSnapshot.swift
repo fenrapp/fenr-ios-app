@@ -23,6 +23,8 @@ public struct RideSessionSnapshot: Equatable, Sendable {
     public let isGPSAvailable: Bool
     public let livePowerSamples: [RideElectricalPowerSample]
     public let historyRevision: Int
+    public let batteryStateOfChargePercent: Int?
+    public let batteryCapacityWattHours: Double
 
     public init(
         trip: RideTrip? = nil,
@@ -32,7 +34,9 @@ public struct RideSessionSnapshot: Equatable, Sendable {
         measurementSystem: MeasurementSystem = .metric,
         isGPSAvailable: Bool = false,
         livePowerSamples: [RideElectricalPowerSample] = [],
-        historyRevision: Int = .zero
+        historyRevision: Int = .zero,
+        batteryStateOfChargePercent: Int? = nil,
+        batteryCapacityWattHours: Double = .zero
     ) {
         self.trip = trip
         self.vehicleIdentity = vehicleIdentity
@@ -42,5 +46,7 @@ public struct RideSessionSnapshot: Equatable, Sendable {
         self.isGPSAvailable = isGPSAvailable
         self.livePowerSamples = livePowerSamples
         self.historyRevision = historyRevision
+        self.batteryStateOfChargePercent = batteryStateOfChargePercent
+        self.batteryCapacityWattHours = batteryCapacityWattHours
     }
 }

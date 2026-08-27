@@ -60,7 +60,11 @@ extension LiveRideSessionService {
         if let sampleDate = vehicleSnapshot.telemetry.batteryTelemetry.signalsUpdatedAt,
            sampleDate != lastElectricalSampleDate,
            let powerWatts = vehicleSnapshot.telemetry.powerTelemetry.electricalPowerWatts {
-            trip = trip.updatingElectrical(at: sampleDate, powerWatts: powerWatts)
+            trip = trip.updatingElectrical(
+                at: sampleDate,
+                powerWatts: powerWatts,
+                stateOfChargePercent: vehicleSnapshot.telemetry.batteryLevel.percent
+            )
             recorder.restore(trip)
             lastElectricalSampleDate = sampleDate
             appendLivePowerSample(date: sampleDate, powerWatts: powerWatts)

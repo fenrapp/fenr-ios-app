@@ -100,6 +100,22 @@ enum EfficiencyCardPreviewFactory {
     }
 }
 
+@MainActor
+enum RangeCardPreviewFactory {
+    static func makeViewModel(state: DashboardRangeViewData) -> RangeCardViewModel {
+        let dependencies = makePreviewTripDependencies()
+        let viewModel = RangeCardViewModel(
+            useCases: .init(
+                loadHistory: .init(repository: dependencies.tripRepository)
+            ),
+            mapper: RideDashboardMapperFactory.makeRangeMapper(locale: .autoupdatingCurrent),
+            session: dependencies.session
+        )
+        viewModel.setPreviewState(state)
+        return viewModel
+    }
+}
+
 private actor PreviewRideTripRepository: RideTripRepository {
     func prepare(context _: BikeSessionContext) -> RideTrip? { nil }
     func saveActiveTrip(_: RideTrip) -> Bool { true }

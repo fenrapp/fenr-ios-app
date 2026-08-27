@@ -1,5 +1,6 @@
 import Foundation
 import MeasurementPresentation
+import RideSessionDomain
 import SettingsDomain
 
 public enum RideDashboardMapperFactory {
@@ -64,6 +65,10 @@ public enum RideDashboardMapperFactory {
 
     public static func makeEfficiencyMapper(locale: Locale) -> EfficiencyCardMapper {
         EfficiencyCardMapper(locale: locale)
+    }
+
+    public static func makeRangeMapper(locale: Locale) -> RangeCardMapper {
+        RangeCardMapper(locale: locale, estimator: RideRangeEstimator())
     }
 
     public static func makeChargingMapper(

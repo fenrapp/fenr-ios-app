@@ -1,0 +1,92 @@
+import Charts
+import DesignSystem
+import SwiftUI
+
+struct DashboardBatteryTripCard: View {
+    let state: DashboardRangeViewData
+
+    var body: some View {
+        DashboardTripCardSurface {
+            VStack(alignment: .leading, spacing: Constants.spacing) {
+                DashboardTripCardHeader(title: "BATTERY · TRIP")
+                hero
+                batteryChart
+                peakSummary
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Trip battery, \(state.batteryText), \(state.remainingEnergyText) remaining")
+    }
+
+    private var hero: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(state.batteryText)
+                .font(.system(size: Constants.heroFontSize, weight: .medium, design: .rounded))
+                .monospacedDigit()
+            Spacer(minLength: DesignSpace.medium)
+            VStack(alignment: .trailing, spacing: DesignSpace.extraExtraSmall) {
+                Text("ENERGY LEFT")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(DesignColor.secondaryText)
+                Text(state.remainingEnergyText)
+                    .font(.subheadline.weight(.semibold))
+                    .monospacedDigit()
+            }
+        }
+    }
+
+    private var batteryChart: some View {
+        Chart {
+            ForEach(state.batteryPoints) { point in
+                AreaMark(
+                    x: .value("Distance", point.distance),
+                    y: .value("Battery", point.percentage)
+                )
+                .foregroundStyle(DesignColor.positive.opacity(0.16))
+                LineMark(
+                    x: .value("Distance", point.distance),
+                    y: .value("Battery", point.percentage)
+                )
+                .foregroundStyle(DesignColor.positive)
+                .lineStyle(.init(lineWidth: 2.25, lineCap: .round, lineJoin: .round))
+            }
+        }
+        .chartXAxis(.hidden)
+        .chartYAxis(.hidden)
+        .chartYScale(domain: 0 ... 100)
+        .frame(maxWidth: .infinity, minHeight: Constants.chartHeight)
+        .overlay {
+            if state.batteryPoints.isEmpty {
+                Text("WAITING FOR TRIP DATA")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(DesignColor.secondaryText)
+            }
+        }
+        .accessibilityLabel("Battery use over the current trip")
+    }
+
+    private var peakSummary: some View {
+        HStack(spacing: DesignSpace.large) {
+            peak(title: "PEAK USE", value: state.peakDischargeText, color: DesignColor.informational)
+            peak(title: "PEAK REGEN", value: state.peakRegenerationText, color: DesignColor.positive)
+        }
+    }
+
+    private func peak(title: String, value: String, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(color)
+            Text(value)
+                .font(.subheadline.weight(.semibold))
+                .monospacedDigit()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private enum Constants {
+        static let spacing: CGFloat = 8
+        static let heroFontSize: CGFloat = 44
+        static let chartHeight: CGFloat = 120
+    }
+}

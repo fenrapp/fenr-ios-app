@@ -7,7 +7,8 @@ import SwiftData
 actor RideTripStore {
     func prepare(
         context: BikeSessionContext,
-        mapper: RideTripRecordMapper
+        mapper: RideTripRecordMapper,
+        energyBucketMapper: RideEnergyBucketRecordMapper
     ) -> RideTrip? {
         do {
             try purgeExpiredTemporaryRecords(applicationSessionID: context.applicationSessionID)
@@ -20,7 +21,13 @@ actor RideTripStore {
                 if trip.applicationSessionID == context.applicationSessionID,
                    trip.vehicleIdentity == context.vehicleIdentity,
                    restoredTrip == nil {
-                    let restored = trip.rebasingElectrical()
+                    let buckets = try fetchEnergyBuckets(
+                        tripID: trip.id,
+                        mapper: energyBucketMapper
+                    )
+                    let restored = trip
+                        .restoringEnergyBuckets(buckets)
+                        .rebasingElectrical()
                     restoredTrip = restored
                     mapper.update(record, from: restored)
                 } else if trip.confirmedVIN != nil {
@@ -38,10 +45,15 @@ actor RideTripStore {
         }
     }
 
-    func saveActiveTrip(_ trip: RideTrip, mapper: RideTripRecordMapper) -> Bool {
+    func saveActiveTrip(
+        _ trip: RideTrip,
+        mapper: RideTripRecordMapper,
+        energyBucketMapper: RideEnergyBucketRecordMapper
+    ) -> Bool {
         guard trip.endedAt == nil else { return false }
         do {
             try upsert(trip, mapper: mapper)
+            try syncEnergyBuckets(trip, mapper: energyBucketMapper)
             try modelContext.save()
             return true
         } catch {
@@ -53,11 +65,13 @@ actor RideTripStore {
     func completeTrip(
         _ trip: RideTrip,
         at date: Date,
-        mapper: RideTripRecordMapper
+        mapper: RideTripRecordMapper,
+        energyBucketMapper: RideEnergyBucketRecordMapper
     ) -> Bool {
         do {
             let completed = trip.completed(at: date)
             try upsert(completed, mapper: mapper)
+            try syncEnergyBuckets(completed, mapper: energyBucketMapper)
             try modelContext.save()
             if let vin = completed.confirmedVIN {
                 try trimHistory(vin: vin)
@@ -73,13 +87,16 @@ actor RideTripStore {
         completing trip: RideTrip,
         starting replacement: RideTrip?,
         at date: Date,
-        mapper: RideTripRecordMapper
+        mapper: RideTripRecordMapper,
+        energyBucketMapper: RideEnergyBucketRecordMapper
     ) -> Bool {
         do {
             let completed = trip.completed(at: date)
             try upsert(completed, mapper: mapper)
+            try syncEnergyBuckets(completed, mapper: energyBucketMapper)
             if let replacement {
                 try upsert(replacement, mapper: mapper)
+                try syncEnergyBuckets(replacement, mapper: energyBucketMapper)
             }
             try modelContext.save()
             if let vin = completed.confirmedVIN {
@@ -126,6 +143,14 @@ actor RideTripStore {
                 record.vehicleIdentityKind = RideTripRecordMapper.Constants.vinKind
                 record.vehicleIdentityValue = vin
             }
+            let bucketDescriptor = FetchDescriptor<RideEnergyBucketRecord>(predicate: #Predicate {
+                $0.vehicleIdentityKind == temporaryKind
+                    && $0.vehicleIdentityValue == temporaryValue
+            })
+            for record in try modelContext.fetch(bucketDescriptor) {
+                record.vehicleIdentityKind = RideTripRecordMapper.Constants.vinKind
+                record.vehicleIdentityValue = vin
+            }
             try modelContext.save()
             try trimHistory(vin: vin)
             return true
@@ -144,6 +169,11 @@ private extension RideTripStore {
                 && $0.applicationSessionID != applicationSessionID
         })
         try modelContext.fetch(descriptor).forEach(modelContext.delete)
+        let bucketDescriptor = FetchDescriptor<RideEnergyBucketRecord>(predicate: #Predicate {
+            $0.vehicleIdentityKind == temporaryKind
+                && $0.applicationSessionID != applicationSessionID
+        })
+        try modelContext.fetch(bucketDescriptor).forEach(modelContext.delete)
     }
 
     func fetchActiveRecords() throws -> [RideTripRecord] {
@@ -165,6 +195,60 @@ private extension RideTripStore {
             mapper.update(record, from: trip)
         } else {
             modelContext.insert(mapper.makeRecord(from: trip))
+        }
+    }
+
+    func fetchEnergyBuckets(
+        tripID: UUID,
+        mapper: RideEnergyBucketRecordMapper
+    ) throws -> [RideEnergyBucket] {
+        let descriptor = FetchDescriptor<RideEnergyBucketRecord>(
+            predicate: #Predicate { $0.tripID == tripID },
+            sortBy: [SortDescriptor(\.startedAt)]
+        )
+        return try modelContext.fetch(descriptor).map(mapper.mapToDomain)
+    }
+
+    func syncEnergyBuckets(
+        _ trip: RideTrip,
+        mapper: RideEnergyBucketRecordMapper
+    ) throws {
+        let tripID = trip.id
+        var latestDescriptor = FetchDescriptor<RideEnergyBucketRecord>(
+            predicate: #Predicate { $0.tripID == tripID },
+            sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
+        )
+        latestDescriptor.fetchLimit = 1
+        let latestRecord = try modelContext.fetch(latestDescriptor).first
+        let candidates = trip.energyBuckets.filter { bucket in
+            guard let latestRecord else { return true }
+            return bucket.startedAt >= latestRecord.startedAt
+        }
+        for bucket in candidates {
+            if bucket.id == latestRecord?.id, let latestRecord {
+                mapper.update(latestRecord, from: bucket, trip: trip)
+            } else if let record = try fetchEnergyBucket(id: bucket.id) {
+                mapper.update(record, from: bucket, trip: trip)
+            } else {
+                modelContext.insert(mapper.makeRecord(from: bucket, trip: trip))
+            }
+        }
+    }
+
+    func fetchEnergyBucket(id: UUID) throws -> RideEnergyBucketRecord? {
+        var descriptor = FetchDescriptor<RideEnergyBucketRecord>(
+            predicate: #Predicate { $0.id == id }
+        )
+        descriptor.fetchLimit = 1
+        return try modelContext.fetch(descriptor).first
+    }
+
+    func deleteEnergyBuckets(tripIDs: [UUID]) throws {
+        for tripID in tripIDs {
+            let descriptor = FetchDescriptor<RideEnergyBucketRecord>(
+                predicate: #Predicate { $0.tripID == tripID }
+            )
+            try modelContext.fetch(descriptor).forEach(modelContext.delete)
         }
     }
 
@@ -191,7 +275,9 @@ private extension RideTripStore {
         )
         let records = try modelContext.fetch(descriptor)
         guard records.count > Constants.maximumStoredTripsPerVIN else { return }
-        records.dropFirst(Constants.maximumStoredTripsPerVIN).forEach(modelContext.delete)
+        let discardedRecords = Array(records.dropFirst(Constants.maximumStoredTripsPerVIN))
+        try deleteEnergyBuckets(tripIDs: discardedRecords.map(\.id))
+        discardedRecords.forEach(modelContext.delete)
         try modelContext.save()
     }
 

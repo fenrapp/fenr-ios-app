@@ -30,6 +30,13 @@ struct CurrentTripCardDependencyContainer {
                 ),
                 mapper: RideDashboardMapperFactory.makeEfficiencyMapper(locale: .autoupdatingCurrent),
                 session: dependencies.rideSession
+            ),
+            range: RangeCardViewModel(
+                useCases: .init(
+                    loadHistory: .init(repository: rideTripRepository)
+                ),
+                mapper: RideDashboardMapperFactory.makeRangeMapper(locale: .autoupdatingCurrent),
+                session: dependencies.rideSession
             )
         )
     }
@@ -45,4 +52,5 @@ struct CurrentTripCardViewModels {
     let currentTrip: CurrentTripCardViewModel
     let statistics: TripStatisticsCardViewModel
     let efficiency: EfficiencyCardViewModel
+    let range: RangeCardViewModel
 }

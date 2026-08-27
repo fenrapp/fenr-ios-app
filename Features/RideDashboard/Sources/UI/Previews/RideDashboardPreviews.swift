@@ -117,6 +117,7 @@ private func previewFeature(
         currentTripViewModel: previewCurrentTripViewModel(),
         tripStatisticsViewModel: previewTripStatisticsViewModel(),
         efficiencyViewModel: previewEfficiencyViewModel(),
+        rangeViewModel: previewRangeViewModel(),
         chargingViewModel: previewChargingViewModel(state: chargingState)
     )
 }
@@ -158,6 +159,20 @@ private func previewEfficiencyViewModel() -> EfficiencyCardViewModel {
             status: .calculated,
             usedEnergyText: "1.2 kWh",
             recoveredEnergyText: "180 Wh"
+        )
+    )
+}
+
+@MainActor
+private func previewRangeViewModel() -> RangeCardViewModel {
+    RangeCardPreviewFactory.makeViewModel(
+        state: .init(
+            rangeText: "64",
+            status: .stable,
+            typicalRangeText: "71",
+            currentRangeText: "58",
+            batteryText: "66%",
+            remainingEnergyText: "4.5 kWh"
         )
     )
 }

@@ -170,7 +170,11 @@ extension LiveRideSessionService {
             measurementSystem: vehicleSnapshot.settings.measurementSystem,
             isGPSAvailable: vehicleSnapshot.isGPSAvailable,
             livePowerSamples: livePowerSamples,
-            historyRevision: historyRevision
+            historyRevision: historyRevision,
+            batteryStateOfChargePercent: vehicleSnapshot.telemetry.batteryLevel.percent,
+            batteryCapacityWattHours: vehicleSnapshot.settings.batteryPackCapacity(
+                forVIN: recorder.context.vehicleIdentity.confirmedVIN
+            ).wattHours
         )
     }
 

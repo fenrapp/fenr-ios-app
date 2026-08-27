@@ -41,6 +41,7 @@
 		0581EC9E0E9D75BCC4C9EF51 /* OnboardingCompletionRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 784929ACCAFF5CA067DBA806 /* OnboardingCompletionRecorder.swift */; };
 		058AD5355CB571171A15C5B7 /* BatteryHealthChargeControlViewState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40288ACDF33CC0299A4256F6 /* BatteryHealthChargeControlViewState.swift */; };
 		05C67BC3E22490DAED421BD5 /* StarkIMUPayloadLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = F03347A26AB9D398A2859B93 /* StarkIMUPayloadLayout.swift */; };
+		060CE3B738EE23C0C9A84181 /* RangeCardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEEFCDB05A010FAF184F99CF /* RangeCardTests.swift */; };
 		060D34CF4DCAE14F682BE48E /* PrepareRideTripSessionUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58BBBA4C051266A28C89B508 /* PrepareRideTripSessionUseCase.swift */; };
 		061872FDB45E89C776D167B5 /* BikeDiagnostics.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 86BBE9CEB6A949807ED2A9A7 /* BikeDiagnostics.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		0624831E16E58757F639841C /* DashboardCurrentTripPager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C22197187FE591E463AEF21B /* DashboardCurrentTripPager.swift */; };
@@ -77,6 +78,7 @@
 		09CA663E4937232495E8198A /* DebugPowerModeControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49C493839E1D659F8590A1BC /* DebugPowerModeControls.swift */; };
 		0A2B3C8C8E3A03BC0DAAC959 /* AsyncSupport.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 307B01E584E7F27278D08FF8 /* AsyncSupport.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		0A3539102D8B104DA82F3B6B /* RideSessionSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D86761FCE3404D310D46B6C4 /* RideSessionSnapshotTests.swift */; };
+		0A74C4A6D3DFF3C90874F536 /* DashboardRangeLiveCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5225A3399D0E5B612E61A6C9 /* DashboardRangeLiveCard.swift */; };
 		0AEE95B5725E2392660D9173 /* BikeDiagnosticsUseCases.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E58CDE94825969867391298 /* BikeDiagnosticsUseCases.swift */; };
 		0B0873654C9BFE1C63B943F0 /* EnvironmentData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E7632D61C9EB2B79730F4FBE /* EnvironmentData.framework */; };
 		0B3BC198D59671CC0687D5FF /* DashboardCardSelectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A53EB849199F315FD95F9706 /* DashboardCardSelectionState.swift */; };
@@ -161,6 +163,7 @@
 		1C4C39C56C65350BCD7B9A4F /* BikeDomain.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 66791CC3437C3C3CF15B7DC3 /* BikeDomain.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		1C60C4B68393A11CA9EDE511 /* StarkBatterySignalsDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C508EF3C8ACC01C6078C638C /* StarkBatterySignalsDecoder.swift */; };
 		1C7AB82F9F59EE1FE42CAEE8 /* BatteryCellVoltage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3963CBD4200A823228339957 /* BatteryCellVoltage.swift */; };
+		1CCA6E953251A5B293BE66D0 /* RangeCardUseCases.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D642CC8A75D6EC8B4C68532 /* RangeCardUseCases.swift */; };
 		1CD0216B18192624E9083E82 /* BikeDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66791CC3437C3C3CF15B7DC3 /* BikeDomain.framework */; };
 		1CD41F66D6BC60AE4F56515A /* StarkSpeedPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2809E6ECF1216FFD4BB2CC8 /* StarkSpeedPayload.swift */; };
 		1D52C61FABE52BADE2DCE84A /* TripStatisticsCardMapperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BB90B7435427EFC3703F1C /* TripStatisticsCardMapperTests.swift */; };
@@ -188,12 +191,14 @@
 		21E4120FDB6B2CB8CC5ED54A /* ChargeControl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C95CACF5899CD0CDBF110A05 /* ChargeControl.framework */; };
 		224698E08F22D45C300355AC /* BikeOnboarding.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E4C74D3505D3D6172B4A6CF /* BikeOnboarding.framework */; };
 		226912859B41BF6B04CA7FA1 /* BatteryHealthDatasetListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D28750B4D002204A90C6EB21 /* BatteryHealthDatasetListView.swift */; };
+		234EA9A6E5E50E8B70E22C47 /* RideEnergyBucketRecordMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1E20636A9B25583BC304331 /* RideEnergyBucketRecordMapper.swift */; };
 		234FC002C4F9B34259628E72 /* TestSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1D674CFDAA4FD88EF70612B /* TestSupport.framework */; };
 		2366B76F59D38CD5F94FFDBC /* StarkByteReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A47CB24BCFF482492C8AE055 /* StarkByteReader.swift */; };
 		2377E795BF9D2B4B77A347DE /* BikeBLEReconnectPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8374B70D533207202DFC4877 /* BikeBLEReconnectPolicy.swift */; };
 		239E3EB38713388962E8FE32 /* BikeOnboardingDependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B913A11D4216685306248DF /* BikeOnboardingDependencyContainer.swift */; };
 		239FB8F947AC9327F2076B5D /* BikeBLEConnectionErrorClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCFBBD7CC8D905B51E364106 /* BikeBLEConnectionErrorClassifier.swift */; };
 		23DB04E427730A85B867B409 /* SettingsData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE69387F1BF8B3E7428562EC /* SettingsData.framework */; };
+		23F041DCD543EB791D77BE69 /* RangeCardMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5DAF4B222806FFF1A894BF1 /* RangeCardMapper.swift */; };
 		23F7012B3ABEFED5627C2535 /* BikeLiveActivityPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A144C59C7B2202540E48508C /* BikeLiveActivityPresentation.swift */; };
 		2448D96A7EF7B722D6DBA437 /* EfficiencyDashboardPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B62478398760614189D1840F /* EfficiencyDashboardPage.swift */; };
 		24C188FA7783BD665B0E3545 /* BikeEmulator.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 49DF0EE96831A7B7D71AD094 /* BikeEmulator.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -260,6 +265,7 @@
 		319E6D95CD330A554FDA9420 /* BikeSDKBatteryDatasetCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F4B8D9287ECA6DBA5C8A12B /* BikeSDKBatteryDatasetCapture.swift */; };
 		31EB98E66FBF108C4664A57E /* BatteryHealth.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 64D59938EBF7C84CFB5B7EB9 /* BatteryHealth.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		31EFA96749146430DD5123F4 /* BikeBLECallbackQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01B13F32A0262E528F179B7A /* BikeBLECallbackQueue.swift */; };
+		31FBE0412A543029B8BD30B8 /* DashboardRangePager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCAE28E1A2C109DA30F2B3AB /* DashboardRangePager.swift */; };
 		3228241EFB5CDFC1127F6F1B /* WatchOnboardingUseCases.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECCF0FDF15F4CB34580EB91F /* WatchOnboardingUseCases.swift */; };
 		32571EB5C214909C4B4B85F3 /* WatchOnboarding.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6CB85B166FC389710EC1B007 /* WatchOnboarding.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		325E00F684F7B463BF0FB793 /* BikeOnboardingViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3314BA28F8F578ACBC0380F /* BikeOnboardingViewModelTests.swift */; };
@@ -364,6 +370,7 @@
 		4611D12EF7F9EE82B0CDDCBE /* SettingsData.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = CE69387F1BF8B3E7428562EC /* SettingsData.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		4628C020C7844BB0B1E9E34A /* BikeLiveActivityStateMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7F79F80AB53F1B8475886A2 /* BikeLiveActivityStateMapper.swift */; };
 		463BAF22FD5AE454E28AE007 /* StartBikeDiscoveryUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C06B51C4E6648EA56973CB7 /* StartBikeDiscoveryUseCase.swift */; };
+		4665CD220D221C8204501C13 /* RideTrip+Electrical.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1BE2679863EAEB22034EC3A /* RideTrip+Electrical.swift */; };
 		468565105227271B1B652A2B /* RideDashboard.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FCFDA89DBB393339BA333DC /* RideDashboard.framework */; };
 		4696AD1E4FD304CF639A2E47 /* BikeEmulatorRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7B347EB16EBDEFDCCE2B9B /* BikeEmulatorRepositoryTests.swift */; };
 		46E90F30C04EF0F4A1A64315 /* BikeBLECoordinatorAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D93A9838855A322DECC23AC /* BikeBLECoordinatorAssembly.swift */; };
@@ -393,6 +400,7 @@
 		4DD9ECD5B56E94EC9F93BE10 /* EnvironmentDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 67E788861D8D9D6A5E754217 /* EnvironmentDomain.framework */; };
 		4DE5431EA45EDCFBC63601CB /* LiveRideSessionServiceFixture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3898B5C4887DC75C64200432 /* LiveRideSessionServiceFixture.swift */; };
 		4E08850313086FE42C88EF49 /* BatteryHealthStatusViewData.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABA27C2343DDB6B4D1F97DE2 /* BatteryHealthStatusViewData.swift */; };
+		4E0DD11BB6F8593827A2C9F1 /* RideEnergyBucket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 429971505B49EFD36C7D91AF /* RideEnergyBucket.swift */; };
 		4E16B38337FB3565D2A1367D /* AppSettings.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 49668E4387B4AC244E634570 /* AppSettings.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		4E40FDBC9D870C84FEBF3C38 /* RideDashboardDependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9839C3B64B47BBE9BBB7319E /* RideDashboardDependencyContainer.swift */; };
 		4E83635612E451AE74BA4A00 /* DesignRadius.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22D643F6789AF9559710A03F /* DesignRadius.swift */; };
@@ -472,6 +480,7 @@
 		5ECF173A6A84DD747757B3DD /* BikeSDKChargePowerControlToDomainMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F743EBC22616F98C69B9AA3 /* BikeSDKChargePowerControlToDomainMapper.swift */; };
 		5ED629D64489CF776B1E41F7 /* WatchDebugEventViewData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FC801419913E14DBDF8CA89 /* WatchDebugEventViewData.swift */; };
 		5EFE6BACE0595BB65E73EE3F /* StarkVCUBrakePayloadLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C33C5DF1CD5636CAC2A3E08 /* StarkVCUBrakePayloadLayout.swift */; };
+		5F9C524DC1FEE84D0B4AEEB0 /* RideRangeEstimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6657A806A7EDA790D1CB4AC9 /* RideRangeEstimator.swift */; };
 		5FCF65481CE29C2FB2710EE9 /* DesignSystem.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1A1B178C8151F119B97D8663 /* DesignSystem.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		5FFA61C5E9C8C9B5DA6BFB12 /* StarkPowerModeConfigurationCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D1DAB1D3D73F2A775E05BA3 /* StarkPowerModeConfigurationCommand.swift */; };
 		5FFEA6266BE5319B8325C7DC /* BikeSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33A8FD3F7C3E5BD58FAC0E6 /* BikeSession.swift */; };
@@ -544,6 +553,7 @@
 		6E4BC14014404841ACB02CCF /* BikeOnboardingDependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B913A11D4216685306248DF /* BikeOnboardingDependencyContainer.swift */; };
 		6E522B82A42C1919405FF7DD /* BikeLiveActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100450D34D6FB5E56A6D5AF9 /* BikeLiveActivityController.swift */; };
 		6E9B997122F3BCB0ABF087E8 /* TestSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1D674CFDAA4FD88EF70612B /* TestSupport.framework */; };
+		6E9C68166E875339CF253CC6 /* RangeDashboardPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17AF6A4EE3087F0212900F31 /* RangeDashboardPage.swift */; };
 		6EB7C0F9F5F02CDC17D21F45 /* RideDashboardMapperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D0868D6C76BAD556EF0DBE /* RideDashboardMapperTests.swift */; };
 		6EC98A7AF852E38BB5BE6E2D /* LiveBikeRepositoryFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A9031D9580AF5F2B60B2DC /* LiveBikeRepositoryFactory.swift */; };
 		6EDEE4C841B6FB231744CA16 /* BikeDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66791CC3437C3C3CF15B7DC3 /* BikeDomain.framework */; };
@@ -687,6 +697,7 @@
 		8EB39C4FEB044A093A5C7D35 /* VehicleSession.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1FE18F8A14143E0B067D34D6 /* VehicleSession.framework */; };
 		8EF63783CC617B5A4959E7E1 /* LiveWatchAppDependencyContainerFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29DE766687AD97742BD81D9A /* LiveWatchAppDependencyContainerFactory.swift */; };
 		8F0B3D4E53844BF433EA786C /* SettingsDomain.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A9A16741AABDA8641A96BF6E /* SettingsDomain.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		8F1789C7CB1594FB0CD9F81C /* LoadRideTripRangeHistoryUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADD265338C776F15673F34EB /* LoadRideTripRangeHistoryUseCase.swift */; };
 		8F7032F1F0B46AB92445864D /* BikeSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33A8FD3F7C3E5BD58FAC0E6 /* BikeSession.swift */; };
 		8F728E1A4EA4913F7DC430DB /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D152D37658EE1DC1CB585657 /* AppRootView.swift */; };
 		8F7F49F39D4D0D2E4DF4DCCB /* BikeSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49C8A294F5FCCF6DA2312AB7 /* BikeSDK.framework */; };
@@ -720,6 +731,7 @@
 		974A9E66AABDFD269E18C7EF /* TestSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1D674CFDAA4FD88EF70612B /* TestSupport.framework */; };
 		975841CC332815543E327735 /* RideSession.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 879D7A57C54EF7AEE4903432 /* RideSession.framework */; };
 		97E99CEBB3F1A5301823FE18 /* BikeLiveActivityText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A50C6B6214049055F73401C /* BikeLiveActivityText.swift */; };
+		9829D189D05A41C1C4178CC3 /* DashboardRangeViewData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A76F55551537BD4BBC2CDE97 /* DashboardRangeViewData.swift */; };
 		987EC40640F6D03627FB00DB /* AppSettings.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49668E4387B4AC244E634570 /* AppSettings.framework */; };
 		9880A5C852B29F74F4D73317 /* ChargingDashboardViewState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF1E9A60C979480DD69E7C60 /* ChargingDashboardViewState.swift */; };
 		9892588255DF28281B2314F3 /* StarkInverterUUIDs.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3518EC55424C326D37993A6 /* StarkInverterUUIDs.swift */; };
@@ -803,6 +815,7 @@
 		A9FD27C111B345F67F81ECE0 /* BikeBLEConnectionScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F36828CFBE8D3CEFEF3CE957 /* BikeBLEConnectionScanner.swift */; };
 		AA15B8B84CB4013B714DBDAF /* LiveBikeRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935973B4B79C48C653BE8B6E /* LiveBikeRepository.swift */; };
 		AA1CFFB2A2F2AD4C6850C22C /* RideSessionDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 13D0C261004C18366F249EB8 /* RideSessionDomain.framework */; };
+		AA4CAB5F14E079ECA41F3FC4 /* RangeCardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEB00C2452E056303C6A3A31 /* RangeCardViewModel.swift */; };
 		AA9996FF00B4C86458BBBC2B /* BikeBLEOperationTimeoutScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 186034A4E33F822024CB04A5 /* BikeBLEOperationTimeoutScheduler.swift */; };
 		AB7033AB8F79E0C8FA1953A6 /* TestSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1D674CFDAA4FD88EF70612B /* TestSupport.framework */; };
 		AB8763EEA5BF9864E8DCA9CE /* BikeLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3410DF8E130073FA398C3807 /* BikeLiveActivityAttributes.swift */; };
@@ -827,6 +840,7 @@
 		AF18AB45E351F9705A8013C9 /* AsyncSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 307B01E584E7F27278D08FF8 /* AsyncSupport.framework */; };
 		AF1BE450C7AAA39176FF8CB7 /* StarkThrottleDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA6BDA3FE56D75FD60DF954 /* StarkThrottleDecoder.swift */; };
 		AF25FC313E700641EF6EDF1E /* ChargingDashboardMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 576A3845ED07E52F380E1758 /* ChargingDashboardMapper.swift */; };
+		AF8FFA34D7B018E8268A4918 /* RideEnergyBucketRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = F516065FBAE938E47EC78648 /* RideEnergyBucketRecord.swift */; };
 		AFC72820C862B243CE89AAA5 /* VehicleSessionDependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1DC0B2345D0E51FAA60364A /* VehicleSessionDependencyContainer.swift */; };
 		AFF6FF9446F3E3C3AF4A044B /* BikeDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66791CC3437C3C3CF15B7DC3 /* BikeDomain.framework */; };
 		B009D5C91759A36ADD5E8B70 /* RuntimeConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4B6E1FF0AFD3619BD8C8E82 /* RuntimeConfiguration.framework */; };
@@ -853,6 +867,7 @@
 		B34E3B2E27D521ADC8A021AD /* BikeDomainUseCaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E21E4B579B625E9CAF2A1C8B /* BikeDomainUseCaseTests.swift */; };
 		B39A9F4D3510E54A1FE54102 /* BatteryHealth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64D59938EBF7C84CFB5B7EB9 /* BatteryHealth.framework */; };
 		B3A232A70853093507DAE578 /* DashboardComponentPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518345DD2DB25AABC590B540 /* DashboardComponentPreviews.swift */; };
+		B3CC69C641C4EE55ACA69973 /* RideRangeEstimatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CCB0D0E0D8C86612E113960 /* RideRangeEstimatorTests.swift */; };
 		B416D448C4B2F5F4A3055EE0 /* SettingsDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9A16741AABDA8641A96BF6E /* SettingsDomain.framework */; };
 		B470001B0BC4FC1FD48882ED /* StarkFirmwareVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B0BABA9DDFFBF527A8422C9 /* StarkFirmwareVersion.swift */; };
 		B47A477AE8C1AD36D34EF617 /* RideSessionDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 13D0C261004C18366F249EB8 /* RideSessionDomain.framework */; };
@@ -896,6 +911,7 @@
 		BB042F89FF269BF5338FCF5C /* BLEAuthenticationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D369103EE7EE987FC039C0B6 /* BLEAuthenticationState.swift */; };
 		BB3E51F26CF6E5B9DA7D6204 /* StarkVCUBrakeDecoderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F309960EBA6623F7669AEA7 /* StarkVCUBrakeDecoderTests.swift */; };
 		BB4B2CCFDD853932A9A0537A /* BikeChargerType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF9AA6A28A3F5912197DCDD /* BikeChargerType.swift */; };
+		BBBC59FB5D481915049CD60F /* DashboardBatteryTripCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF5900AC71CE35F3CA787F10 /* DashboardBatteryTripCard.swift */; };
 		BBC8D614555831F53FA74400 /* BikeDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66791CC3437C3C3CF15B7DC3 /* BikeDomain.framework */; };
 		BBD236A36F0B7AC5E30AC278 /* DashboardChargingMetricsRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4446847A7F173147711582CE /* DashboardChargingMetricsRow.swift */; };
 		BC0B8C7185F65378B43E9D49 /* RideTripRecordMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C308D21751127FC947E33286 /* RideTripRecordMapper.swift */; };
@@ -956,6 +972,7 @@
 		C6D229859BDD32E89D4AE78C /* ChargingDashboardReadoutViewData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FEDE22EE529357CDA8674AC /* ChargingDashboardReadoutViewData.swift */; };
 		C7D6B6FA0F099F889ED2D638 /* EnvironmentData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E7632D61C9EB2B79730F4FBE /* EnvironmentData.framework */; };
 		C84478BE0529A82C1B6364C8 /* StarkChargerDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 743BBB0B5409428BBDFDDC4C /* StarkChargerDecoder.swift */; };
+		C8AE128FE60E45D9DA75CDE9 /* RideTrip+Support.swift in Sources */ = {isa = PBXBuildFile; fileRef = F044262768E415B69D2076D8 /* RideTrip+Support.swift */; };
 		C8B4F3E724752428AD7C33CF /* StarkBatteryTemperaturesPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = A174BE3C35080E97ECD653A4 /* StarkBatteryTemperaturesPayload.swift */; };
 		C8C0DBB773A38834C9C45B82 /* LoadRideTripStatisticsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEE46C3119C4468592A8829 /* LoadRideTripStatisticsUseCase.swift */; };
 		C8E6EEBBE9E3541B820ABED0 /* AppLifecycleController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24B3F8F6278F3DABEFD0700F /* AppLifecycleController.swift */; };
@@ -3374,6 +3391,7 @@
 		167884828E017A0A6F0DD223 /* WatchDashboardMetric.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchDashboardMetric.swift; sourceTree = "<group>"; };
 		17091C594F091795129A6E99 /* UserDefaultsAppSettingsRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultsAppSettingsRepository.swift; sourceTree = "<group>"; };
 		178FC5DD7F75F424B2359947 /* StarkStatusPayloadLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkStatusPayloadLayout.swift; sourceTree = "<group>"; };
+		17AF6A4EE3087F0212900F31 /* RangeDashboardPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangeDashboardPage.swift; sourceTree = "<group>"; };
 		186034A4E33F822024CB04A5 /* BikeBLEOperationTimeoutScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeBLEOperationTimeoutScheduler.swift; sourceTree = "<group>"; };
 		189138DCACD9932D90A27EB1 /* DeviceSpeedUseCases.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceSpeedUseCases.swift; sourceTree = "<group>"; };
 		18BA8F8BF0C2F555DFFE5A9A /* StarkInverterTemperaturesPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkInverterTemperaturesPayload.swift; sourceTree = "<group>"; };
@@ -3391,6 +3409,7 @@
 		1BEAB846A5817ED4E802A7C8 /* BikeBLEFirmwareProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeBLEFirmwareProfile.swift; sourceTree = "<group>"; };
 		1C1741A365171134A9B8E00F /* WatchAppDependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchAppDependencyContainer.swift; sourceTree = "<group>"; };
 		1C2C8C90E261E9D7664E446C /* BikeLiveActivityLockScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeLiveActivityLockScreenView.swift; sourceTree = "<group>"; };
+		1D642CC8A75D6EC8B4C68532 /* RangeCardUseCases.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangeCardUseCases.swift; sourceTree = "<group>"; };
 		1D6DDED6D0BF179BB91F40DC /* TelemetryActionRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryActionRow.swift; sourceTree = "<group>"; };
 		1DFC90F9CFD8A9B9197688CB /* StarkProtocol.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = StarkProtocol.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		1F743EBC22616F98C69B9AA3 /* BikeSDKChargePowerControlToDomainMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeSDKChargePowerControlToDomainMapper.swift; sourceTree = "<group>"; };
@@ -3503,6 +3522,7 @@
 		413CBF796B98CEC8B9F1CFDF /* ChargeControlState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargeControlState.swift; sourceTree = "<group>"; };
 		42763727530BC940700ECA2B /* StarkNotificationDecoderRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkNotificationDecoderRegistry.swift; sourceTree = "<group>"; };
 		427E6B1FF433ED4C749E747D /* PreviewSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewSupport.swift; sourceTree = "<group>"; };
+		429971505B49EFD36C7D91AF /* RideEnergyBucket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideEnergyBucket.swift; sourceTree = "<group>"; };
 		42B2E7989B88C6EE6D65E76D /* FakeBatteryHealthVehicleSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeBatteryHealthVehicleSession.swift; sourceTree = "<group>"; };
 		42D8BDDE2BD1B69536C22A47 /* PreviewSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewSupport.swift; sourceTree = "<group>"; };
 		43354E4FA85EAA2737238DB5 /* BatteryCellViewData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryCellViewData.swift; sourceTree = "<group>"; };
@@ -3538,6 +3558,7 @@
 		4C397521225D80D000C8A357 /* BikeDiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeDiagnosticsView.swift; sourceTree = "<group>"; };
 		4C6510F4BBC37AEC91ACF096 /* FakeBikeDiagnosticsRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeBikeDiagnosticsRepository.swift; sourceTree = "<group>"; };
 		4CA6BDA3FE56D75FD60DF954 /* StarkThrottleDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkThrottleDecoder.swift; sourceTree = "<group>"; };
+		4CCB0D0E0D8C86612E113960 /* RideRangeEstimatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideRangeEstimatorTests.swift; sourceTree = "<group>"; };
 		4DC3F050F708390A7E32D17E /* WatchOnboardingViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchOnboardingViewModelTests.swift; sourceTree = "<group>"; };
 		4DD333336FE68D5B048AB89A /* AppRideDashboardFeatureFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRideDashboardFeatureFactory.swift; sourceTree = "<group>"; };
 		4E335BF63FE7A5B509C953B3 /* StarkIMUDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkIMUDecoder.swift; sourceTree = "<group>"; };
@@ -3551,6 +3572,7 @@
 		504F718D2146924BF6497DBA /* SpeedSourceSettingsViewState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedSourceSettingsViewState.swift; sourceTree = "<group>"; };
 		50C27C109E00CFC985B6D918 /* BikeMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeMode.swift; sourceTree = "<group>"; };
 		518345DD2DB25AABC590B540 /* DashboardComponentPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardComponentPreviews.swift; sourceTree = "<group>"; };
+		5225A3399D0E5B612E61A6C9 /* DashboardRangeLiveCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardRangeLiveCard.swift; sourceTree = "<group>"; };
 		5263742A79C54CCD78817562 /* BikeConnectionSessionPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeConnectionSessionPolicy.swift; sourceTree = "<group>"; };
 		52956057CBD829CB7A8B1F9B /* StarkVINPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkVINPayload.swift; sourceTree = "<group>"; };
 		52A269B715490F0AF71BF48E /* StarkChargerPayloadLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkChargerPayloadLayout.swift; sourceTree = "<group>"; };
@@ -3599,6 +3621,7 @@
 		65E53568FBBD5BF076132910 /* RawFlagsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RawFlagsView.swift; sourceTree = "<group>"; };
 		65F2E0EE7B07BC91DC762907 /* BatteryCellCondition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryCellCondition.swift; sourceTree = "<group>"; };
 		66381155E1B6AB3E8CE03BE3 /* ChargingLiveActivityDebugExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = ChargingLiveActivityDebugExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		6657A806A7EDA790D1CB4AC9 /* RideRangeEstimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideRangeEstimator.swift; sourceTree = "<group>"; };
 		66791CC3437C3C3CF15B7DC3 /* BikeDomain.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = BikeDomain.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		66A900D24E585E12D0833480 /* BikeLiveActivityWidgetPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeLiveActivityWidgetPreviews.swift; sourceTree = "<group>"; };
 		66AF05B712FE2ED50BB8FBBC /* DebugDeviceSpeedRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugDeviceSpeedRepository.swift; sourceTree = "<group>"; };
@@ -3778,6 +3801,7 @@
 		A5B1FF7143380EA943A46D09 /* TripStatisticsCardMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripStatisticsCardMapper.swift; sourceTree = "<group>"; };
 		A62DFD478FB8ECB9FE784623 /* TestSupportTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TestSupportTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A713550EA563F3B7A7DF449D /* BikePinDeriving.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikePinDeriving.swift; sourceTree = "<group>"; };
+		A76F55551537BD4BBC2CDE97 /* DashboardRangeViewData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardRangeViewData.swift; sourceTree = "<group>"; };
 		A79F95F58E238F74B406F8E2 /* RideSessionTestDoubles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideSessionTestDoubles.swift; sourceTree = "<group>"; };
 		A826F68F5734C74833CB515F /* BikeBLEEventEmitter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeBLEEventEmitter.swift; sourceTree = "<group>"; };
 		A875FD7900967FB42D5ABBD6 /* DashboardChargingHeaderIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardChargingHeaderIcon.swift; sourceTree = "<group>"; };
@@ -3801,9 +3825,11 @@
 		AC2BD6DE30E3C368AB17C8FF /* EfficiencyCardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EfficiencyCardTests.swift; sourceTree = "<group>"; };
 		AC87FECB62D28CCD0D707E18 /* BikeDiagnosticsPowerBatteryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeDiagnosticsPowerBatteryTests.swift; sourceTree = "<group>"; };
 		ACE7BC938D6B8D65CC3627E7 /* BikeSDKEventToDomainMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeSDKEventToDomainMapper.swift; sourceTree = "<group>"; };
+		ADD265338C776F15673F34EB /* LoadRideTripRangeHistoryUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadRideTripRangeHistoryUseCase.swift; sourceTree = "<group>"; };
 		AE3E6A3522DBBF505ECDCA26 /* BikePowerBatteryRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikePowerBatteryRepositoryTests.swift; sourceTree = "<group>"; };
 		AF56BE262A1C368937882CE7 /* BikeSDKConnectionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeSDKConnectionStatus.swift; sourceTree = "<group>"; };
 		B05A29B88600CB70917B401D /* DesignSpace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSpace.swift; sourceTree = "<group>"; };
+		B1E20636A9B25583BC304331 /* RideEnergyBucketRecordMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideEnergyBucketRecordMapper.swift; sourceTree = "<group>"; };
 		B2185360633EF552B0D94128 /* AppDependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDependencyContainer.swift; sourceTree = "<group>"; };
 		B24D86AD986539486F5A668D /* DashboardCurrentTripCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardCurrentTripCard.swift; sourceTree = "<group>"; };
 		B314F869F1BCF3085950C92A /* ChargeControlNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargeControlNormalizer.swift; sourceTree = "<group>"; };
@@ -3837,6 +3863,7 @@
 		BD0BB49B11CB1F0E7BC86318 /* ObserveDiscoveredBikesUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObserveDiscoveredBikesUseCase.swift; sourceTree = "<group>"; };
 		BDA54DCA58EE482BDBE3293E /* StarkStatusDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkStatusDecoder.swift; sourceTree = "<group>"; };
 		BDB21164AB9ADAB09835A34E /* BikeBLESecurityWatchdog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeBLESecurityWatchdog.swift; sourceTree = "<group>"; };
+		BEEFCDB05A010FAF184F99CF /* RangeCardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangeCardTests.swift; sourceTree = "<group>"; };
 		BFA3F46BFB62C812F0CB888A /* VehicleSessionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleSessionService.swift; sourceTree = "<group>"; };
 		C0387105F78C2354FA652750 /* BikeDiagnosticsMappers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeDiagnosticsMappers.swift; sourceTree = "<group>"; };
 		C04CAD792040C4AE67486802 /* BikeProfileUseCases.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeProfileUseCases.swift; sourceTree = "<group>"; };
@@ -3858,6 +3885,7 @@
 		C5592C636C33ABB0AA4913E0 /* AsyncEventHubTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncEventHubTests.swift; sourceTree = "<group>"; };
 		C574713D34B77A192DDD8F93 /* MetricsGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricsGridView.swift; sourceTree = "<group>"; };
 		C59F24421989EF629246F438 /* FakeCoreBluetoothAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeCoreBluetoothAdapter.swift; sourceTree = "<group>"; };
+		C5DAF4B222806FFF1A894BF1 /* RangeCardMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangeCardMapper.swift; sourceTree = "<group>"; };
 		C5F720DFECB6B497FB87A931 /* SettingsRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsRepository.swift; sourceTree = "<group>"; };
 		C5FC68A8519CBC160245F005 /* BikeEmulatorChargingStatusFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeEmulatorChargingStatusFactory.swift; sourceTree = "<group>"; };
 		C647B7DF56D6A7E4006B0F8F /* BikeLiveActivityProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeLiveActivityProgressView.swift; sourceTree = "<group>"; };
@@ -3941,10 +3969,12 @@
 		DB42C6A316E8C7E83E3E1E67 /* StarkInverterTemperaturesDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkInverterTemperaturesDecoder.swift; sourceTree = "<group>"; };
 		DBCAA8C442A5E8B4EB8F3E79 /* StarkBatterySignalsPayloadLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkBatterySignalsPayloadLayout.swift; sourceTree = "<group>"; };
 		DBD5E8D68AC38204654D6BBE /* BikeDomainTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BikeDomainTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DCAE28E1A2C109DA30F2B3AB /* DashboardRangePager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardRangePager.swift; sourceTree = "<group>"; };
 		DCFEFB77C7D2B459AB07C15B /* BikeSDKChargePowerTelemetryContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeSDKChargePowerTelemetryContext.swift; sourceTree = "<group>"; };
 		DD7B347EB16EBDEFDCCE2B9B /* BikeEmulatorRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeEmulatorRepositoryTests.swift; sourceTree = "<group>"; };
 		DDA12F6C2673533373836D2B /* ReadBikeTelemetrySnapshotUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadBikeTelemetrySnapshotUseCase.swift; sourceTree = "<group>"; };
 		DEA92E1EF9D627BE91AC7EEB /* CoreBluetoothPeripheralDelegateProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreBluetoothPeripheralDelegateProxy.swift; sourceTree = "<group>"; };
+		DEB00C2452E056303C6A3A31 /* RangeCardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangeCardViewModel.swift; sourceTree = "<group>"; };
 		DEBE2D3C49F15A1A38902392 /* ObserveBikeTelemetryProjection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObserveBikeTelemetryProjection.swift; sourceTree = "<group>"; };
 		DEC9BBD3AF26BBE0ABFAC3E8 /* RideVehicleIdentityResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideVehicleIdentityResolver.swift; sourceTree = "<group>"; };
 		DF1CD61D26ED8868E9ED02E2 /* ChargeControlSessionTestFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargeControlSessionTestFactory.swift; sourceTree = "<group>"; };
@@ -4005,14 +4035,17 @@
 		EE4B67F2F075F6678A05EB16 /* BikeBatteryHealth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeBatteryHealth.swift; sourceTree = "<group>"; };
 		EF1B8A73088617EFC0875D39 /* BatteryTemperature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryTemperature.swift; sourceTree = "<group>"; };
 		EF326A45949B7D7A0EC8B284 /* RideVehicleIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideVehicleIdentity.swift; sourceTree = "<group>"; };
+		EF5900AC71CE35F3CA787F10 /* DashboardBatteryTripCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardBatteryTripCard.swift; sourceTree = "<group>"; };
 		EF86CC02B037EF0701AC7D03 /* StarkVCUBrakeDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkVCUBrakeDecoder.swift; sourceTree = "<group>"; };
 		EFF481296556E66E1A029EAB /* DashboardPowerModeSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardPowerModeSummary.swift; sourceTree = "<group>"; };
 		F03347A26AB9D398A2859B93 /* StarkIMUPayloadLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkIMUPayloadLayout.swift; sourceTree = "<group>"; };
 		F040B7FA49F153F2BE1CEFF8 /* ChargeControlTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ChargeControlTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F044262768E415B69D2076D8 /* RideTrip+Support.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "RideTrip+Support.swift"; sourceTree = "<group>"; };
 		F0BB6233E4B1113AC741CEA2 /* BatteryHealthFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryHealthFormatter.swift; sourceTree = "<group>"; };
 		F159B5885E5720AEB25CA821 /* BikeBLEVCUConfigurationTransactionGateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeBLEVCUConfigurationTransactionGateTests.swift; sourceTree = "<group>"; };
 		F18DB800983CB1BC057C47C3 /* StarkThrottlePayloadLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkThrottlePayloadLayout.swift; sourceTree = "<group>"; };
 		F1A786872D6676F964303465 /* BikeOnboardingUseCases.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeOnboardingUseCases.swift; sourceTree = "<group>"; };
+		F1BE2679863EAEB22034EC3A /* RideTrip+Electrical.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "RideTrip+Electrical.swift"; sourceTree = "<group>"; };
 		F20AF7E34903EEBB0D59747D /* StarkUUIDFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkUUIDFactory.swift; sourceTree = "<group>"; };
 		F24A09E554BD78511D9084FF /* RideSessionDomainTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RideSessionDomainTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F26447D2D5736325FB8D8C01 /* VehicleSessionTestDoubles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleSessionTestDoubles.swift; sourceTree = "<group>"; };
@@ -4023,6 +4056,7 @@
 		F428F3E87580ED67413A998A /* FENRTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FENRTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4B6E1FF0AFD3619BD8C8E82 /* RuntimeConfiguration.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = RuntimeConfiguration.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4CAD90E2147F98922486232 /* BatteryDataset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryDataset.swift; sourceTree = "<group>"; };
+		F516065FBAE938E47EC78648 /* RideEnergyBucketRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideEnergyBucketRecord.swift; sourceTree = "<group>"; };
 		F51D110C9019426E850B8ACA /* WatchBikeSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBikeSessionController.swift; sourceTree = "<group>"; };
 		F520A9FB7458ED167A9EF76C /* HealthLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthLevel.swift; sourceTree = "<group>"; };
 		F5444BC7E57B524449A7FF9A /* CBCharacteristic+ClientConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CBCharacteristic+ClientConfiguration.swift"; sourceTree = "<group>"; };
@@ -4667,6 +4701,15 @@
 			path = Constants;
 			sourceTree = "<group>";
 		};
+		0623C46F0011A28EC7D413B5 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A76F55551537BD4BBC2CDE97 /* DashboardRangeViewData.swift */,
+				17AF6A4EE3087F0212900F31 /* RangeDashboardPage.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
 		06FAC4A381080573F192D60F /* UseCases */ = {
 			isa = PBXGroup;
 			children = (
@@ -5043,6 +5086,7 @@
 			isa = PBXGroup;
 			children = (
 				798784708A4FD32DF5CEA574 /* LoadRideTripEfficiencyTrendUseCase.swift */,
+				ADD265338C776F15673F34EB /* LoadRideTripRangeHistoryUseCase.swift */,
 				CBEE46C3119C4468592A8829 /* LoadRideTripStatisticsUseCase.swift */,
 				58BBBA4C051266A28C89B508 /* PrepareRideTripSessionUseCase.swift */,
 			);
@@ -5287,6 +5331,14 @@
 			path = AsyncSupport;
 			sourceTree = "<group>";
 		};
+		2D5B7CE9092014147E98F661 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				DEB00C2452E056303C6A3A31 /* RangeCardViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
 		2D8F4828B73572B5A4F4A4D5 /* Payloads */ = {
 			isa = PBXGroup;
 			children = (
@@ -5359,6 +5411,16 @@
 				3F31C932FEBF3FFC872B2757 /* Tests */,
 			);
 			path = RideSession;
+			sourceTree = "<group>";
+		};
+		2F9B5857E5431A4352C5A9FF /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				EF5900AC71CE35F3CA787F10 /* DashboardBatteryTripCard.swift */,
+				5225A3399D0E5B612E61A6C9 /* DashboardRangeLiveCard.swift */,
+				DCAE28E1A2C109DA30F2B3AB /* DashboardRangePager.swift */,
+			);
+			path = UI;
 			sourceTree = "<group>";
 		};
 		2FA657DE4F9A074D86B706D5 /* Sources */ = {
@@ -5580,6 +5642,7 @@
 		4013FFB49EAC25C223856CCC /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				F516065FBAE938E47EC78648 /* RideEnergyBucketRecord.swift */,
 				B95C0534B2C0DD04D373E339 /* RideTripRecord.swift */,
 			);
 			path = Models;
@@ -5881,6 +5944,7 @@
 		5460FE2992572CCBCA0D38A4 /* Mappers */ = {
 			isa = PBXGroup;
 			children = (
+				B1E20636A9B25583BC304331 /* RideEnergyBucketRecordMapper.swift */,
 				C308D21751127FC947E33286 /* RideTripRecordMapper.swift */,
 			);
 			path = Mappers;
@@ -5901,6 +5965,18 @@
 				082ED39306EBDCFCD7F84D44 /* StarkUUIDFixtures.swift */,
 			);
 			path = Fixtures;
+			sourceTree = "<group>";
+		};
+		572D84F5759FA8CC24F30ABB /* Range */ = {
+			isa = PBXGroup;
+			children = (
+				8330EBFD15FB9DD96091269C /* Mappers */,
+				0623C46F0011A28EC7D413B5 /* Models */,
+				2F9B5857E5431A4352C5A9FF /* UI */,
+				91987B7A2457918B7FC2C4A2 /* UseCases */,
+				2D5B7CE9092014147E98F661 /* ViewModels */,
+			);
+			path = Range;
 			sourceTree = "<group>";
 		};
 		58A20E5321C3B4941C358CE1 /* Security */ = {
@@ -5972,6 +6048,7 @@
 				CD59907B652C2D669BD1AEC8 /* CurrentTripCardViewModelTests.swift */,
 				A8B80B61CF0C8BE14356DBE6 /* DashboardCardSelectionStateTests.swift */,
 				AC2BD6DE30E3C368AB17C8FF /* EfficiencyCardTests.swift */,
+				BEEFCDB05A010FAF184F99CF /* RangeCardTests.swift */,
 				93D0868D6C76BAD556EF0DBE /* RideDashboardMapperTests.swift */,
 				BA7228FBC2E304554BFDEFF7 /* RideDashboardViewModelTests.swift */,
 				66BB90B7435427EFC3703F1C /* TripStatisticsCardMapperTests.swift */,
@@ -6193,6 +6270,7 @@
 		70CFBA86DFA7F976C69DD9E7 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				6657A806A7EDA790D1CB4AC9 /* RideRangeEstimator.swift */,
 				8ACBD69556688364247B5CA1 /* RideTripStatisticsAggregator.swift */,
 			);
 			path = Services;
@@ -6416,6 +6494,14 @@
 			path = Telemetry;
 			sourceTree = "<group>";
 		};
+		8330EBFD15FB9DD96091269C /* Mappers */ = {
+			isa = PBXGroup;
+			children = (
+				C5DAF4B222806FFF1A894BF1 /* RangeCardMapper.swift */,
+			);
+			path = Mappers;
+			sourceTree = "<group>";
+		};
 		83CCC45FAF0E4563DBD789E7 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
@@ -6567,6 +6653,14 @@
 				B9189620951CA9B434D74139 /* Support */,
 			);
 			path = UI;
+			sourceTree = "<group>";
+		};
+		91987B7A2457918B7FC2C4A2 /* UseCases */ = {
+			isa = PBXGroup;
+			children = (
+				1D642CC8A75D6EC8B4C68532 /* RangeCardUseCases.swift */,
+			);
+			path = UseCases;
 			sourceTree = "<group>";
 		};
 		947E31208FDE89A8787F8E8F /* Sources */ = {
@@ -7354,7 +7448,10 @@
 		CF6CFB33F58506EA24015AB5 /* Entities */ = {
 			isa = PBXGroup;
 			children = (
+				429971505B49EFD36C7D91AF /* RideEnergyBucket.swift */,
 				092A2166D086B7B3FB5CFC4F /* RideTrip.swift */,
+				F1BE2679863EAEB22034EC3A /* RideTrip+Electrical.swift */,
+				F044262768E415B69D2076D8 /* RideTrip+Support.swift */,
 				26F7B3C294376CD7C2248ECC /* RideTripStatistics.swift */,
 				EF326A45949B7D7A0EC8B284 /* RideVehicleIdentity.swift */,
 			);
@@ -7484,6 +7581,7 @@
 		D850B5C05381E964A53F1BA5 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				4CCB0D0E0D8C86612E113960 /* RideRangeEstimatorTests.swift */,
 				6C9FCA90992BA9DB5303E9FC /* RideTripStatisticsAggregatorTests.swift */,
 				27F647FC74D98765FCCAA61E /* RideTripTests.swift */,
 			);
@@ -7795,6 +7893,7 @@
 				99EBEF13A07066CAB5387B3C /* CurrentTrip */,
 				050AF0F2C9C0E6A75709E567 /* Deck */,
 				1CCDBED4BC8D56C4E53E0AC2 /* Efficiency */,
+				572D84F5759FA8CC24F30ABB /* Range */,
 				EDB3A3C7412DE0AC73D730C3 /* Trip */,
 				E98B93877B534612730026CE /* TripStatistics */,
 			);
@@ -9775,6 +9874,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B3CC69C641C4EE55ACA69973 /* RideRangeEstimatorTests.swift in Sources */,
 				B79F323755840ED8B2D3B5D2 /* RideTripStatisticsAggregatorTests.swift in Sources */,
 				7A658C0257E49E563BD0F30C /* RideTripTests.swift in Sources */,
 			);
@@ -9847,6 +9947,7 @@
 				491EA0D591DE4E3ACADE40D4 /* CurrentTripDashboardPage.swift in Sources */,
 				6FE004CE289038044E2E9E30 /* DashboardAmbientLighting.swift in Sources */,
 				A8300E286659A9733761D5E9 /* DashboardBatteryPanel.swift in Sources */,
+				BBBC59FB5D481915049CD60F /* DashboardBatteryTripCard.swift in Sources */,
 				909967F9FF971C8A5AC17210 /* DashboardCardContainer.swift in Sources */,
 				0B3BC198D59671CC0687D5FF /* DashboardCardSelectionState.swift in Sources */,
 				6C9A8C6403FC421BE9BA0081 /* DashboardCenterCard.swift in Sources */,
@@ -9875,6 +9976,9 @@
 				F5037BF550A60704AEFE4C95 /* DashboardPager.swift in Sources */,
 				1A2A95FA082EFC45B91952C1 /* DashboardPowerModeSummary.swift in Sources */,
 				EAD865043EE3EE568EE0F775 /* DashboardPowerModeViewData.swift in Sources */,
+				0A74C4A6D3DFF3C90874F536 /* DashboardRangeLiveCard.swift in Sources */,
+				31FBE0412A543029B8BD30B8 /* DashboardRangePager.swift in Sources */,
+				9829D189D05A41C1C4178CC3 /* DashboardRangeViewData.swift in Sources */,
 				17626E0E9268E499A8E2CA6A /* DashboardRideCardPreviews.swift in Sources */,
 				B1B586B0A58DBA1471B23A12 /* DashboardRideHistoryKey.swift in Sources */,
 				98C44D4E79B992B10D9A7507 /* DashboardRidingCardDeck.swift in Sources */,
@@ -9895,6 +9999,10 @@
 				DFEB2308D73EE4456867BB39 /* EfficiencyCardViewModel.swift in Sources */,
 				2448D96A7EF7B722D6DBA437 /* EfficiencyDashboardPage.swift in Sources */,
 				D399B65E4D0C170B4658BDBD /* PreviewSupport.swift in Sources */,
+				23F041DCD543EB791D77BE69 /* RangeCardMapper.swift in Sources */,
+				1CCA6E953251A5B293BE66D0 /* RangeCardUseCases.swift in Sources */,
+				AA4CAB5F14E079ECA41F3FC4 /* RangeCardViewModel.swift in Sources */,
+				6E9C68166E875339CF253CC6 /* RangeDashboardPage.swift in Sources */,
 				179A6A054DC195832D7610D4 /* RideDashboardConstants.swift in Sources */,
 				04F4A34AEBC40407B69BAEDA /* RideDashboardFeatureBuilding.swift in Sources */,
 				070E05E72FCE735606F02850 /* RideDashboardFeatureModel.swift in Sources */,
@@ -10137,6 +10245,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AF8FFA34D7B018E8268A4918 /* RideEnergyBucketRecord.swift in Sources */,
+				234EA9A6E5E50E8B70E22C47 /* RideEnergyBucketRecordMapper.swift in Sources */,
 				E6C7C56DDACB827DD57F0111 /* RideTripRecord.swift in Sources */,
 				BC0B8C7185F65378B43E9D49 /* RideTripRecordMapper.swift in Sources */,
 				FBA6D3DF6ACF07789DB51133 /* RideTripStore.swift in Sources */,
@@ -10357,8 +10467,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				D90D32D3F8D2C4F78DB48156 /* LoadRideTripEfficiencyTrendUseCase.swift in Sources */,
+				8F1789C7CB1594FB0CD9F81C /* LoadRideTripRangeHistoryUseCase.swift in Sources */,
 				C8C0DBB773A38834C9C45B82 /* LoadRideTripStatisticsUseCase.swift in Sources */,
 				060D34CF4DCAE14F682BE48E /* PrepareRideTripSessionUseCase.swift in Sources */,
+				4E0DD11BB6F8593827A2C9F1 /* RideEnergyBucket.swift in Sources */,
+				5F9C524DC1FEE84D0B4AEEB0 /* RideRangeEstimator.swift in Sources */,
+				4665CD220D221C8204501C13 /* RideTrip+Electrical.swift in Sources */,
+				C8AE128FE60E45D9DA75CDE9 /* RideTrip+Support.swift in Sources */,
 				08C3134B08071DFCDEE9CEBF /* RideTrip.swift in Sources */,
 				FAF296D5ADD1B8E5F4AD1A52 /* RideTripRepository.swift in Sources */,
 				D3BBDC5023F2B4AC00959850 /* RideTripStatistics.swift in Sources */,
@@ -10800,6 +10915,7 @@
 				CEF53AB7B2CE0AE7498F5171 /* CurrentTripCardViewModelTests.swift in Sources */,
 				26769F940F83FCBFF14A5EA6 /* DashboardCardSelectionStateTests.swift in Sources */,
 				0BBA9E0D1AA0883FADCCFC16 /* EfficiencyCardTests.swift in Sources */,
+				060CE3B738EE23C0C9A84181 /* RangeCardTests.swift in Sources */,
 				6EB7C0F9F5F02CDC17D21F45 /* RideDashboardMapperTests.swift in Sources */,
 				E977E9FE6DA46F39584085EF /* RideDashboardVehicleSession.swift in Sources */,
 				03D84E6AD33D033C234DB1BE /* RideDashboardViewModelTests.swift in Sources */,

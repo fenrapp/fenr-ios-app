@@ -33,6 +33,7 @@ public struct RideDashboardView: View {
     @ObservedObject private var currentTripViewModel: CurrentTripCardViewModel
     @ObservedObject private var tripStatisticsViewModel: TripStatisticsCardViewModel
     @ObservedObject private var efficiencyViewModel: EfficiencyCardViewModel
+    @ObservedObject private var rangeViewModel: RangeCardViewModel
     @ObservedObject private var chargingViewModel: ChargingDashboardViewModel
     @ScaledMetric(relativeTo: .body) private var speedometerTypeScale: CGFloat = 1
     @State private var cardSelection = DashboardCardSelectionState()
@@ -50,6 +51,7 @@ public struct RideDashboardView: View {
         _currentTripViewModel = ObservedObject(wrappedValue: feature.currentTripViewModel)
         _tripStatisticsViewModel = ObservedObject(wrappedValue: feature.tripStatisticsViewModel)
         _efficiencyViewModel = ObservedObject(wrappedValue: feature.efficiencyViewModel)
+        _rangeViewModel = ObservedObject(wrappedValue: feature.rangeViewModel)
         _chargingViewModel = ObservedObject(wrappedValue: feature.chargingViewModel)
         self.showsTelemetryButton = showsTelemetryButton
         self.onDiagnostics = onDiagnostics
@@ -87,6 +89,8 @@ public struct RideDashboardView: View {
                                     tripStatistics: tripStatisticsViewModel.viewState,
                                     selectedEfficiencyPage: $cardSelection.efficiencyPage,
                                     efficiency: efficiencyViewModel.viewState,
+                                    selectedRangePage: $cardSelection.rangePage,
+                                    range: rangeViewModel.viewState,
                                     charging: chargingViewModel.viewState,
                                     referenceSize: proxy.size,
                                     reduceMotion: reduceMotion,

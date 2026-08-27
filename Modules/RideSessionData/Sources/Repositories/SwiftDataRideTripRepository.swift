@@ -5,20 +5,28 @@ import SwiftData
 public final class SwiftDataRideTripRepository: RideTripRepository, Sendable {
     private let store: RideTripStore
     private let mapper: RideTripRecordMapper
+    private let energyBucketMapper: RideEnergyBucketRecordMapper
 
     public convenience init(
         mapper: RideTripRecordMapper,
+        energyBucketMapper: RideEnergyBucketRecordMapper,
         isStoredInMemoryOnly: Bool = false
     ) throws {
         self.init(
             modelContainer: try Self.makeModelContainer(isStoredInMemoryOnly: isStoredInMemoryOnly),
-            mapper: mapper
+            mapper: mapper,
+            energyBucketMapper: energyBucketMapper
         )
     }
 
-    public init(modelContainer: ModelContainer, mapper: RideTripRecordMapper) {
+    public init(
+        modelContainer: ModelContainer,
+        mapper: RideTripRecordMapper,
+        energyBucketMapper: RideEnergyBucketRecordMapper
+    ) {
         store = RideTripStore(modelContainer: modelContainer)
         self.mapper = mapper
+        self.energyBucketMapper = energyBucketMapper
     }
 
     public static func makeModelContainer(
@@ -28,21 +36,25 @@ public final class SwiftDataRideTripRepository: RideTripRepository, Sendable {
             Constants.storeName,
             isStoredInMemoryOnly: isStoredInMemoryOnly
         )
-        return try ModelContainer(for: RideTripRecord.self, configurations: configuration)
+        return try ModelContainer(
+            for: RideTripRecord.self,
+            RideEnergyBucketRecord.self,
+            configurations: configuration
+        )
     }
 
     public func prepare(context: BikeSessionContext) async -> RideTrip? {
-        await store.prepare(context: context, mapper: mapper)
+        await store.prepare(context: context, mapper: mapper, energyBucketMapper: energyBucketMapper)
     }
 
     @discardableResult
     public func saveActiveTrip(_ trip: RideTrip) async -> Bool {
-        await store.saveActiveTrip(trip, mapper: mapper)
+        await store.saveActiveTrip(trip, mapper: mapper, energyBucketMapper: energyBucketMapper)
     }
 
     @discardableResult
     public func completeTrip(_ trip: RideTrip, at date: Date) async -> Bool {
-        await store.completeTrip(trip, at: date, mapper: mapper)
+        await store.completeTrip(trip, at: date, mapper: mapper, energyBucketMapper: energyBucketMapper)
     }
 
     @discardableResult
@@ -55,7 +67,8 @@ public final class SwiftDataRideTripRepository: RideTripRepository, Sendable {
             completing: trip,
             starting: replacement,
             at: date,
-            mapper: mapper
+            mapper: mapper,
+            energyBucketMapper: energyBucketMapper
         )
     }
 
@@ -71,6 +84,6 @@ public final class SwiftDataRideTripRepository: RideTripRepository, Sendable {
 
 private extension SwiftDataRideTripRepository {
     enum Constants {
-        static let storeName = "RideTripsV2"
+        static let storeName = "RideTripsV3"
     }
 }
