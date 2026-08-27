@@ -7,9 +7,9 @@ on:
 
 jobs:
   verify:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install tooling
         run: brew install xcodegen swiftlint
       - name: Generate Xcode project
@@ -19,4 +19,4 @@ jobs:
       - name: Test
         run: >-
           xcodebuild -project FENR.xcodeproj -scheme FENR
-          -destination 'platform=iOS Simulator,name=iPhone 16 Pro' test
+          -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' test
