@@ -42,7 +42,7 @@ struct RideSessionPersistenceCoordinatorTests {
         }
         await Task.yield()
         await repository.releaseBlockedSave()
-        await resetTask.value
+        _ = await resetTask.value
         await coordinator.flush()
 
         #expect(await repository.events() == [.save(active.id), .reset(active.id, replacement.id)])
