@@ -31,6 +31,8 @@ struct DashboardTripMetricRow<Accessory: View>: View {
             Text(label)
                 .font(.callout.weight(.medium))
                 .foregroundStyle(DesignColor.primaryText)
+                .lineLimit(1)
+                .layoutPriority(1)
             accessory
             Spacer(minLength: DesignSpace.small)
             HStack(alignment: .firstTextBaseline, spacing: DesignSpace.extraExtraSmall) {

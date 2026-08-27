@@ -84,12 +84,22 @@ import SwiftUI
 }
 
 #Preview("Ride dynamics lean") {
-    DashboardLeanCard(state: previewDynamicsState, calibrate: {})
+    DashboardLeanCard(state: previewDynamicsState, reduceMotion: false, calibrate: {})
         .dashboardCardPreviewCanvas()
 }
 
 #Preview("Ride dynamics pitch") {
-    DashboardPitchCard(state: previewDynamicsState, calibrate: {})
+    DashboardPitchCard(state: previewDynamicsState, reduceMotion: false, calibrate: {})
+        .dashboardCardPreviewCanvas()
+}
+
+#Preview("Ride dynamics calibration") {
+    DashboardLeanCard(state: previewCalibrationRequiredState, reduceMotion: false, calibrate: {})
+        .dashboardCardPreviewCanvas()
+}
+
+#Preview("Ride dynamics unavailable") {
+    DashboardPitchCard(state: .init(), reduceMotion: false, calibrate: {})
         .dashboardCardPreviewCanvas()
 }
 
@@ -178,6 +188,13 @@ private let previewCompassWithoutLocationState = DashboardRideDynamicsViewData(
     cardinalDirectionText: "ENE",
     headingSourceText: "COMPASS",
     altitudeText: nil,
+    canCalibrate: true
+)
+
+private let previewCalibrationRequiredState = DashboardRideDynamicsViewData(
+    status: .calibrationRequired,
+    maximumLeftLeanText: "34°",
+    maximumRightLeanText: "29°",
     canCalibrate: true
 )
 

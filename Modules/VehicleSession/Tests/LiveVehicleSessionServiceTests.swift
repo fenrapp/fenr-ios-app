@@ -128,6 +128,44 @@ struct LiveVehicleSessionServiceTests {
         await fixture.service.stop()
     }
 
+    @Test("Calibrates fresh device motion for the active VIN")
+    func calibratesDeviceMotion() async {
+        let fixture = makeFixture()
+        await fixture.service.start()
+        #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
+        #expect(await waitUntil { await fixture.deviceMotion.subscriptionCount() == 1 })
+        await fixture.deviceMotion.send(.init(
+            attitude: .init(
+                xComponent: 0.1,
+                yComponent: 0.2,
+                zComponent: 0.3,
+                scalarComponent: 0.9
+            ),
+            observedAt: fixture.now
+        ))
+        #expect(await waitUntil { await fixture.latestSnapshot().motion.availability == .uncalibrated })
+
+        await fixture.service.calibrateDeviceMotion()
+
+        #expect(await waitUntil { await fixture.latestSnapshot().motion.availability == .available })
+        #expect(await fixture.motionCalibration.savedValue()?.vin == "TESTVIN0000000001")
+        await fixture.service.stop()
+    }
+
+    @Test("Does not persist calibration before a device motion sample exists")
+    func ignoresCalibrationWithoutSample() async {
+        let fixture = makeFixture()
+        await fixture.service.start()
+
+        await fixture.service.calibrateDeviceMotion()
+
+        #expect(await fixture.motionCalibration.savedValue() == nil)
+        await fixture.service.stop()
+    }
+
     private func makeFixture(
         speedSource: SpeedSource = .motorcycle,
         now: @escaping @Sendable () -> Date = { Date(timeIntervalSince1970: 1_000) },
@@ -174,6 +212,8 @@ struct LiveVehicleSessionServiceTests {
             settings: settings,
             profile: profile,
             deviceSpeed: deviceSpeed,
+            deviceMotion: deviceMotion,
+            motionCalibration: motionCalibration,
             now: fixtureDate
         )
     }
@@ -184,6 +224,8 @@ struct LiveVehicleSessionServiceTests {
         let settings: VehicleSessionTestSettingsRepository
         let profile: VehicleSessionTestProfileRepository
         let deviceSpeed: VehicleSessionTestDeviceSpeedRepository
+        let deviceMotion: VehicleSessionTestDeviceMotionRepository
+        let motionCalibration: VehicleSessionTestMotionCalibrationRepository
         let now: Date
 
         func latestSnapshot() async -> VehicleSessionSnapshot {
