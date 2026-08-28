@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct DashboardRideDynamicsPager: View {
+    let pages: [RideDynamicsDashboardPage]
     @Binding var selection: RideDynamicsDashboardPage
     let state: DashboardRideDynamicsViewData
     let reduceMotion: Bool
@@ -9,7 +10,7 @@ struct DashboardRideDynamicsPager: View {
     var body: some View {
         GeometryReader { proxy in
             DashboardHorizontalCardPager(
-                pages: RideDynamicsDashboardPage.allCases,
+                pages: pages,
                 selection: $selection,
                 reduceMotion: reduceMotion,
                 accessibilityLabel: "Ride dynamics pages",

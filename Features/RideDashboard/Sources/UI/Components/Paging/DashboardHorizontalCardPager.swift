@@ -31,7 +31,16 @@ struct DashboardHorizontalCardPager<Page: Hashable, Content: View>: View {
         self.content = content
     }
 
-    var body: some View {
+    @ViewBuilder var body: some View {
+        if pages.count == 1, let page = pages.first {
+            content(page)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            pagingContent
+        }
+    }
+
+    private var pagingContent: some View {
         DashboardPager(
             pages: pages,
             selection: $selection,

@@ -5,6 +5,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var dashboardProgressBarMode: DashboardProgressBarMode
     public var dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode
     public var showsDashboardTemperatures: Bool
+    public var dashboardCardConfiguration: DashboardCardConfiguration
     public var measurementSystem: MeasurementSystem
     public var defaultBatteryPackCapacity: BatteryPackCapacity
     public var batteryPackCapacitiesByVIN: [String: BatteryPackCapacity]
@@ -19,6 +20,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         dashboardProgressBarMode: DashboardProgressBarMode = .energy,
         dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
         showsDashboardTemperatures: Bool = false,
+        dashboardCardConfiguration: DashboardCardConfiguration = .init(),
         measurementSystem: MeasurementSystem = .system,
         batteryPackCapacity: BatteryPackCapacity = .sevenPointTwoKilowattHours,
         batteryPackCapacitiesByVIN: [String: BatteryPackCapacity] = [:],
@@ -28,6 +30,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.dashboardProgressBarMode = dashboardProgressBarMode
         self.dashboardBatteryIndicatorMode = dashboardBatteryIndicatorMode
         self.showsDashboardTemperatures = showsDashboardTemperatures
+        self.dashboardCardConfiguration = dashboardCardConfiguration
         self.measurementSystem = measurementSystem
         defaultBatteryPackCapacity = batteryPackCapacity
         self.batteryPackCapacitiesByVIN = batteryPackCapacitiesByVIN
@@ -39,6 +42,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case dashboardProgressBarMode
         case dashboardBatteryIndicatorMode
         case showsDashboardTemperatures
+        case dashboardCardConfiguration
         case measurementSystem
         case defaultBatteryPackCapacity
         case batteryPackCapacitiesByVIN
@@ -60,6 +64,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
             Bool.self,
             forKey: .showsDashboardTemperatures
         ) ?? false
+        dashboardCardConfiguration = try container.decodeIfPresent(
+            DashboardCardConfiguration.self,
+            forKey: .dashboardCardConfiguration
+        ) ?? .init()
         measurementSystem = try container.decodeIfPresent(MeasurementSystem.self, forKey: .measurementSystem) ?? .system
         defaultBatteryPackCapacity = try container.decodeIfPresent(
             BatteryPackCapacity.self,

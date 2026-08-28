@@ -6,8 +6,10 @@ import VehicleSession
 @MainActor
 public final class RideDashboardViewModel: ObservableObject {
     @Published public private(set) var viewState = RideDashboardViewState()
+    @Published private(set) var cardLayout = DashboardCardLayout()
 
     private let mapper: RideDashboardMapper
+    private let cardLayoutMapper: DashboardCardLayoutMapper
     private let vehicleSession: any VehicleSessionService
     private let temperatureMonitoringConsumerID = UUID()
     private var snapshot = VehicleSessionSnapshot()
@@ -25,11 +27,13 @@ public final class RideDashboardViewModel: ObservableObject {
 
     public init(
         mapper: RideDashboardMapper,
+        cardLayoutMapper: DashboardCardLayoutMapper,
         vehicleSession: any VehicleSessionService,
         initialConnectionStabilityPeriod: Duration,
         reconnectionGracePeriod: Duration
     ) {
         self.mapper = mapper
+        self.cardLayoutMapper = cardLayoutMapper
         self.vehicleSession = vehicleSession
         self.initialConnectionStabilityPeriod = initialConnectionStabilityPeriod
         self.reconnectionGracePeriod = reconnectionGracePeriod
@@ -83,6 +87,10 @@ public final class RideDashboardViewModel: ObservableObject {
 #endif
 
     private func render() {
+        let nextCardLayout = cardLayoutMapper.map(snapshot.settings.dashboardCardConfiguration)
+        if nextCardLayout != cardLayout {
+            cardLayout = nextCardLayout
+        }
         let mappedViewState = mapper.map(
             telemetry: snapshot.telemetry,
             connection: snapshot.connection,

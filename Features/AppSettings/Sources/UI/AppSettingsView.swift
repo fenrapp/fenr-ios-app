@@ -4,6 +4,7 @@ import SwiftUI
 public struct AppSettingsView: View {
     @ObservedObject private var viewModel: AppSettingsViewModel
     private let onOpenTelemetry: () -> Void
+    private let onOpenDashboardCards: () -> Void
     private let onOpenPowerModes: () -> Void
     private let onOpenRideHistory: () -> Void
     private let accessory: () -> AnyView
@@ -11,12 +12,14 @@ public struct AppSettingsView: View {
     public init(
         viewModel: AppSettingsViewModel,
         onOpenTelemetry: @escaping () -> Void = {},
+        onOpenDashboardCards: @escaping () -> Void = {},
         onOpenPowerModes: @escaping () -> Void = {},
         onOpenRideHistory: @escaping () -> Void = {},
         accessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
         self.viewModel = viewModel
         self.onOpenTelemetry = onOpenTelemetry
+        self.onOpenDashboardCards = onOpenDashboardCards
         self.onOpenPowerModes = onOpenPowerModes
         self.onOpenRideHistory = onOpenRideHistory
         self.accessory = accessory
@@ -60,6 +63,8 @@ public struct AppSettingsView: View {
                         onRequestAccess: viewModel.requestLocationAccess
                     )
                 }
+
+                DashboardCardsNavigationRow(action: onOpenDashboardCards)
             }
             #endif
 

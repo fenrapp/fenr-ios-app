@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct DashboardCurrentTripPager: View {
+    let pages: [CurrentTripDashboardPage]
     @Binding var selection: CurrentTripDashboardPage
     let currentTrip: DashboardCurrentTripViewData
     let statistics: DashboardTripStatisticsViewData
@@ -13,7 +14,7 @@ struct DashboardCurrentTripPager: View {
 
     var body: some View {
         DashboardHorizontalCardPager(
-            pages: CurrentTripDashboardPage.allCases,
+            pages: pages,
             selection: $selection,
             reduceMotion: reduceMotion,
             accessibilityLabel: "Current trip pages",
