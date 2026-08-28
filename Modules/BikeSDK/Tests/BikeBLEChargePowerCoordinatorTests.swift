@@ -81,6 +81,26 @@ struct BikeBLEChargePowerCoordinatorTests {
         }
     }
 
+    @Test("A stale first read is ignored until the updated charger response arrives")
+    func acceptsDelayedFreshConfirmation() async throws {
+        let transport = FakeBikeBLEChargePowerConfigurationTransport()
+        let coordinator = BikeBLEChargePowerCoordinator(
+            transport: transport,
+            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter()
+        )
+        _ = try await coordinator.prepareChargePowerControl(context: telemetryContext)
+        transport.staleReadCountAfterWrite = 1
+
+        let snapshot = try await coordinator.setChargePowerLimit(watts: 1_500)
+
+        #expect(snapshot.parsedConfig.chargePowerWatts == 1_500)
+        #expect(snapshot.parsedConfig.chargeCurrentDeciAmperes == 200)
+        #expect(transport.requests == Array(
+            repeating: StarkChargerConfigurationCommand.readPacket,
+            count: 4
+        ))
+    }
+
     private var telemetryContext: BikeSDKChargePowerTelemetryContext {
         BikeSDKChargePowerTelemetryContext(
             requestedCurrentAmperes: 2,

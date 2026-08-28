@@ -5,6 +5,9 @@ public struct StarkChargerConfiguration: Equatable, Sendable {
     public let chargeCurrentDeciAmperes: Int
     public let chargePowerWatts: Int
     public let maximumStateOfChargeDeciPercent: Int
+    public let minimumCurrentDeciAmperes: Int
+    public let startTimeRaw: Int
+    public let rampTimeRaw: Int
     public let standardChargerMaximumPowerWatts: Int
     public let backpackChargerMaximumPowerWatts: Int
 
@@ -13,6 +16,9 @@ public struct StarkChargerConfiguration: Equatable, Sendable {
         chargeCurrentDeciAmperes: Int,
         chargePowerWatts: Int,
         maximumStateOfChargeDeciPercent: Int,
+        minimumCurrentDeciAmperes: Int = 0,
+        startTimeRaw: Int = 0,
+        rampTimeRaw: Int = 0,
         standardChargerMaximumPowerWatts: Int,
         backpackChargerMaximumPowerWatts: Int
     ) {
@@ -20,6 +26,9 @@ public struct StarkChargerConfiguration: Equatable, Sendable {
         self.chargeCurrentDeciAmperes = chargeCurrentDeciAmperes
         self.chargePowerWatts = chargePowerWatts
         self.maximumStateOfChargeDeciPercent = maximumStateOfChargeDeciPercent
+        self.minimumCurrentDeciAmperes = minimumCurrentDeciAmperes
+        self.startTimeRaw = startTimeRaw
+        self.rampTimeRaw = rampTimeRaw
         self.standardChargerMaximumPowerWatts = standardChargerMaximumPowerWatts
         self.backpackChargerMaximumPowerWatts = backpackChargerMaximumPowerWatts
     }
@@ -34,6 +43,9 @@ public struct StarkChargerConfiguration: Equatable, Sendable {
             chargeCurrentDeciAmperes: nextCurrentDeciAmperes,
             chargePowerWatts: watts,
             maximumStateOfChargeDeciPercent: maximumStateOfChargeDeciPercent,
+            minimumCurrentDeciAmperes: minimumCurrentDeciAmperes,
+            startTimeRaw: startTimeRaw,
+            rampTimeRaw: rampTimeRaw,
             standardChargerMaximumPowerWatts: standardChargerMaximumPowerWatts,
             backpackChargerMaximumPowerWatts: backpackChargerMaximumPowerWatts
         )
@@ -45,6 +57,9 @@ public struct StarkChargerConfiguration: Equatable, Sendable {
             chargeCurrentDeciAmperes: chargeCurrentDeciAmperes,
             chargePowerWatts: chargePowerWatts,
             maximumStateOfChargeDeciPercent: percent * 10,
+            minimumCurrentDeciAmperes: minimumCurrentDeciAmperes,
+            startTimeRaw: startTimeRaw,
+            rampTimeRaw: rampTimeRaw,
             standardChargerMaximumPowerWatts: standardChargerMaximumPowerWatts,
             backpackChargerMaximumPowerWatts: backpackChargerMaximumPowerWatts
         )
@@ -88,6 +103,9 @@ public enum StarkChargerConfigurationCommand {
             chargeCurrentDeciAmperes: Int(reader.u16(at: 3)),
             chargePowerWatts: Int(reader.u16(at: 5)),
             maximumStateOfChargeDeciPercent: Int(reader.u16(at: 7)),
+            minimumCurrentDeciAmperes: Int(reader.u16(at: 9)),
+            startTimeRaw: Int(reader.u16(at: 11)),
+            rampTimeRaw: Int(reader.u16(at: 13)),
             standardChargerMaximumPowerWatts: Int(reader.u16(at: 15)),
             backpackChargerMaximumPowerWatts: Int(reader.u16(at: 17))
         )

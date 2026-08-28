@@ -42,12 +42,7 @@ final class BikeBLEChargePowerCoordinator {
         let noOpWrite = try StarkChargerConfigurationCommand.encodeWrite(configuration)
         try await transport.writeConfiguration(noOpWrite)
         try await verificationWaiter.wait()
-        let verifiedResult = try await readChargeConfiguration()
-        guard verifiedResult.configuration == configuration else {
-            throw BikeSDKError.operationFailed(
-                "Charge power no-op verification returned different charger values"
-            )
-        }
+        let verifiedResult = try await readChargeConfiguration(matching: configuration)
 
         cachedChargePowerConfiguration = verifiedResult.configuration
         cachedChargerType = StarkChargerType(rawValue: context.chargerTypeRaw)
@@ -85,13 +80,7 @@ final class BikeBLEChargePowerCoordinator {
         let writePayload = try StarkChargerConfigurationCommand.encodeWrite(nextConfiguration)
         try await transport.writeConfiguration(writePayload)
         try await verificationWaiter.wait()
-        let verifiedResult = try await readChargeConfiguration()
-        guard verifiedResult.configuration == nextConfiguration else {
-            clearGuardState()
-            throw BikeSDKError.operationFailed(
-                "Charge power write was not confirmed by the VCU response"
-            )
-        }
+        let verifiedResult = try await readChargeConfiguration(matching: nextConfiguration)
         cachedChargePowerConfiguration = verifiedResult.configuration
 
         return BikeSDKChargePowerControlSnapshot(
@@ -116,13 +105,7 @@ final class BikeBLEChargePowerCoordinator {
         let writePayload = try StarkChargerConfigurationCommand.encodeWrite(nextConfiguration)
         try await transport.writeConfiguration(writePayload)
         try await verificationWaiter.wait()
-        let verifiedResult = try await readChargeConfiguration()
-        guard verifiedResult.configuration == nextConfiguration else {
-            clearGuardState()
-            throw BikeSDKError.operationFailed(
-                "Charge target write was not confirmed by the VCU response"
-            )
-        }
+        let verifiedResult = try await readChargeConfiguration(matching: nextConfiguration)
         cachedChargePowerConfiguration = verifiedResult.configuration
 
         return BikeSDKChargePowerControlSnapshot(
@@ -171,6 +154,29 @@ final class BikeBLEChargePowerCoordinator {
             configuration: try StarkChargerConfigurationCommand.decodeResponse(data),
             responseHex: data.bikeSDKHexString,
             logLine: "4005 read response: \(data.bikeSDKHexString)"
+        )
+    }
+
+    private func readChargeConfiguration(
+        matching expectedConfiguration: StarkChargerConfiguration
+    ) async throws -> BikeBLEChargePowerConfigurationReadResult {
+        let maximumAttempts = 3
+        var lastResult: BikeBLEChargePowerConfigurationReadResult?
+        for attempt in 1...maximumAttempts {
+            let result = try await readChargeConfiguration()
+            if result.configuration == expectedConfiguration {
+                return result
+            }
+            lastResult = result
+            if attempt < maximumAttempts {
+                try await verificationWaiter.wait()
+            }
+        }
+
+        clearGuardState()
+        throw BikeSDKError.operationFailed(
+            "Charge configuration was not confirmed after \(maximumAttempts) fresh reads; "
+                + "expected=\(expectedConfiguration) actual=\(String(describing: lastResult?.configuration))"
         )
     }
 

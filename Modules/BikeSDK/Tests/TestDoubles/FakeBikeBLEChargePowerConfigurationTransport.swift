@@ -21,6 +21,8 @@ final class FakeBikeBLEChargePowerConfigurationTransport:
         0xE4, 0x0C
     ])
     var ignoresWrites = false
+    var staleReadCountAfterWrite = 0
+    private var queuedReadResponses: [Data] = []
 
     func ensureReady() throws {}
 
@@ -34,12 +36,16 @@ final class FakeBikeBLEChargePowerConfigurationTransport:
         allowLiveTelemetrySession: Bool
     ) async throws -> Data {
         requests.append(request)
+        if !queuedReadResponses.isEmpty {
+            return queuedReadResponses.removeFirst()
+        }
         return response
     }
 
     func writeConfiguration(_ payload: Data) async throws {
         writePayloads.append(payload)
         guard !ignoresWrites else { return }
+        let staleResponse = response
         guard payload.count == StarkChargerConfigurationCommand.writePacketLength,
               payload[0] == 1,
               payload[1] == StarkChargerConfigurationCommand.configurationType
@@ -57,6 +63,10 @@ final class FakeBikeBLEChargePowerConfigurationTransport:
             payload[9], payload[10],
             payload[11], payload[12]
         ])
+        queuedReadResponses.append(contentsOf: Array(
+            repeating: staleResponse,
+            count: staleReadCountAfterWrite
+        ))
     }
 
     func completeWriteIfNeeded(characteristic: CBCharacteristic, error: Error?) {}

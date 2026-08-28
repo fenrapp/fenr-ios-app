@@ -163,6 +163,9 @@ struct StarkChargerConfigurationCommandTests {
             chargeCurrentDeciAmperes: 200,
             chargePowerWatts: 3_300,
             maximumStateOfChargeDeciPercent: 1_000,
+            minimumCurrentDeciAmperes: 20,
+            startTimeRaw: 2,
+            rampTimeRaw: 16,
             standardChargerMaximumPowerWatts: 3_300,
             backpackChargerMaximumPowerWatts: 3_300
         ))
