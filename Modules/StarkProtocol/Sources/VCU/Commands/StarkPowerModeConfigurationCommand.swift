@@ -4,12 +4,60 @@ public enum StarkPowerModeConfigurationCommand {
     public static let mapIndexes = 0 ... 4
     public static let configurationType: UInt8 = 0
     public static let responseLength = 9
+    public static let writePacketLength = 9
+    public static let horsepowerRange = 10 ... 80
+    public static let regenerationRange = -100 ... 100
 
     public static func readPacket(mapIndex: Int) throws -> Data {
         guard mapIndexes.contains(mapIndex) else {
             throw StarkProtocolError.invalidMapIndex(mapIndex)
         }
         return Data([0, configurationType, UInt8(mapIndex)])
+    }
+
+    public static func writePacket(
+        mapIndex: Int,
+        horsepower: Int,
+        regenerativeBrakingPercent: Int,
+        curve: Int
+    ) throws -> Data {
+        try requireMapIndex(mapIndex)
+        guard horsepowerRange.contains(horsepower) else {
+            throw StarkProtocolError.invalidPowerModeHorsepower(horsepower)
+        }
+        guard regenerationRange.contains(regenerativeBrakingPercent) else {
+            throw StarkProtocolError.invalidRegenerativeBrakingPercent(regenerativeBrakingPercent)
+        }
+        let torqueRaw = Int((Double(horsepower) * 1.25).rounded())
+        return try writePacket(
+            mapIndex: mapIndex,
+            torqueRaw: torqueRaw,
+            regenerationRaw: regenerativeBrakingPercent,
+            curve: curve
+        )
+    }
+
+    public static func noOpWritePacket(
+        configuration: StarkPowerModeConfigurationPayload
+    ) throws -> Data {
+        try writePacket(
+            mapIndex: configuration.mapIndex,
+            torqueRaw: configuration.torqueRaw,
+            regenerationRaw: configuration.regenerationRaw,
+            curve: normalizedWriteCurve(mapIndex: configuration.mapIndex)
+        )
+    }
+
+    public static func normalizedWriteCurve(mapIndex: Int) throws -> Int {
+        try requireMapIndex(mapIndex)
+        return mapIndex + 1
+    }
+
+    public static func isSupportedReadCurve(_ curve: Int, mapIndex: Int) -> Bool {
+        guard mapIndexes.contains(mapIndex) else {
+            return false
+        }
+        return curve == 0 || curve == mapIndex + 1
     }
 
     public static func decodeResponse(
@@ -49,5 +97,36 @@ public enum StarkPowerModeConfigurationCommand {
         guard mapIndexes.contains(mapIndex) else {
             throw StarkProtocolError.invalidMapIndex(mapIndex)
         }
+    }
+
+    private static func writePacket(
+        mapIndex: Int,
+        torqueRaw: Int,
+        regenerationRaw: Int,
+        curve: Int
+    ) throws -> Data {
+        try requireMapIndex(mapIndex)
+        guard Int(Int16.min) ... Int(Int16.max) ~= torqueRaw else {
+            throw StarkProtocolError.invalidPowerModeTorque(torqueRaw)
+        }
+        guard Int(Int16.min) ... Int(Int16.max) ~= regenerationRaw else {
+            throw StarkProtocolError.invalidRegenerativeBrakingPercent(regenerationRaw)
+        }
+        guard Int(UInt8.min) ... Int(UInt8.max) ~= curve else {
+            throw StarkProtocolError.invalidPowerModeCurve(curve)
+        }
+        let torque = Int16(torqueRaw)
+        let regeneration = Int16(regenerationRaw)
+        return Data([
+            1,
+            configurationType,
+            UInt8(mapIndex),
+            1,
+            UInt8(truncatingIfNeeded: torque),
+            UInt8(truncatingIfNeeded: torque >> 8),
+            UInt8(truncatingIfNeeded: regeneration),
+            UInt8(truncatingIfNeeded: regeneration >> 8),
+            UInt8(curve)
+        ])
     }
 }

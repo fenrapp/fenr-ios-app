@@ -145,6 +145,38 @@ public struct BikeBLENotificationCoordinator {
         try await powerModeCoordinator.refreshPowerModeConfiguration(mapIndex: mapIndex)
     }
 
+    public func preparePowerModeControl(mapIndex: Int) async throws {
+        try await powerModeCoordinator.preparePowerModeControl(mapIndex: mapIndex)
+    }
+
+    public func setPowerModeConfiguration(
+        mapIndex: Int,
+        horsepower: Int,
+        regenerativeBrakingPercent: Int
+    ) async throws {
+        try await powerModeCoordinator.setPowerModeConfiguration(
+            mapIndex: mapIndex,
+            horsepower: horsepower,
+            regenerativeBrakingPercent: regenerativeBrakingPercent
+        )
+    }
+
+    public func prepareTractionControl(mapIndex: Int) async throws {
+        try await powerModeCoordinator.prepareTractionControl(mapIndex: mapIndex)
+    }
+
+    public func setTractionControlConfiguration(
+        mapIndex: Int,
+        powerTractionPercent: Double,
+        brakingTractionPercent: Double
+    ) async throws {
+        try await powerModeCoordinator.setTractionControlConfiguration(
+            mapIndex: mapIndex,
+            powerTractionPercent: powerTractionPercent,
+            brakingTractionPercent: brakingTractionPercent
+        )
+    }
+
     public func refreshTractionControlConfiguration(mapIndex: Int) async throws {
         try await powerModeCoordinator.refreshTractionControlConfiguration(mapIndex: mapIndex)
     }

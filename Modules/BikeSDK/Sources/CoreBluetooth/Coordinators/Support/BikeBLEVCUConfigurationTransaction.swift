@@ -13,6 +13,7 @@ enum BikeBLEVCUConfigurationOperationKind { case read, write, configurationRespo
 struct BikeBLEVCUConfigurationExpectedResponse {
     let type: UInt8
     let mapIndex: UInt8?
+    let allowedOperations: Set<UInt8>
 
     init(request: Data) throws {
         guard (2 ... 3).contains(request.count), request[0] == 0 else {
@@ -20,11 +21,21 @@ struct BikeBLEVCUConfigurationExpectedResponse {
         }
         type = request[1]
         mapIndex = request.count == 3 ? request[2] : nil
+        allowedOperations = [0, 2]
+    }
+
+    init(writeRequest: Data) throws {
+        guard writeRequest.count >= 2, writeRequest[0] == 1 else {
+            throw BikeSDKError.operationFailed("Invalid 4005 write request")
+        }
+        type = writeRequest[1]
+        mapIndex = nil
+        allowedOperations = [1]
     }
 
     func matches(_ response: Data) -> Bool {
         guard response.count >= 2,
-              response[0] == 0 || response[0] == 2,
+              allowedOperations.contains(response[0]),
               response[1] == type
         else {
             return false

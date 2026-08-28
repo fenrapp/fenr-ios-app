@@ -309,6 +309,19 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.appsettings
+  PowerModeSettings:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Features/PowerModeSettings/Sources
+    dependencies:
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: VehicleSession
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.powermodesettings
   WatchDashboard:
     type: framework
     platform: watchOS
@@ -388,6 +401,7 @@ targets:
       - target: BatteryHealth
       - target: ChargeControl
       - target: AppSettings
+      - target: PowerModeSettings
       - target: BikeData
       - target: EnvironmentDomain
       - target: EnvironmentData
@@ -485,6 +499,7 @@ targets:
       - target: BatteryHealth
       - target: ChargeControl
       - target: AppSettings
+      - target: PowerModeSettings
       - target: BikeDomain
       - target: EnvironmentDomain
       - target: EnvironmentData
@@ -905,6 +920,20 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.appsettings.tests
+  PowerModeSettingsTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Features/PowerModeSettings/Tests
+    dependencies:
+      - target: PowerModeSettings
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: VehicleSession
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.powermodesettings.tests
   TestSupportTests:
     type: bundle.unit-test
     platform: iOS
@@ -929,6 +958,7 @@ targets:
       - target: RideDashboard
       - target: MeasurementPresentation
       - target: AppSettings
+      - target: PowerModeSettings
       - target: BikeData
       - target: EnvironmentDomain
       - target: EnvironmentData
@@ -965,6 +995,7 @@ targets:
       - target: BLETraceData
       - target: BLETraceDomain
       - target: AppSettings
+      - target: PowerModeSettings
       - target: BikeDiagnostics
       - target: BikeOnboarding
       - target: RideDashboard
@@ -1012,6 +1043,7 @@ schemes:
         RideDashboardTests: [test]
         BatteryHealthTests: [test]
         AppSettingsTests: [test]
+        PowerModeSettingsTests: [test]
         TestSupportTests: [test]
         FENRTests: [test]
         FENRDebugTests: [test]
@@ -1036,6 +1068,7 @@ schemes:
         - RideDashboardTests
         - BatteryHealthTests
         - AppSettingsTests
+        - PowerModeSettingsTests
         - FENRTests
         - FENRDebugTests
   FENRDebug:

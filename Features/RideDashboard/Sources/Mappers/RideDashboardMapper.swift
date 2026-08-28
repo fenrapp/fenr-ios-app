@@ -26,18 +26,11 @@ public struct RideDashboardMapper: Sendable {
         batteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
         showsTemperatures: Bool = false,
         measurementSystem: MeasurementSystem,
-        isGPSAvailable: Bool = true
+        isGPSAvailable: Bool = true,
+        powerModeNames: [Int: PowerModeName] = [:]
     ) -> RideDashboardViewState {
         let measurementMapper = makeMeasurementMapper(measurementSystem)
-        let isReceivingTelemetry: Bool
-        if case .receivingTelemetry = connection.state {
-            isReceivingTelemetry = true
-        } else {
-            isReceivingTelemetry = false
-        }
-        let hasTelemetry = isReceivingTelemetry && (telemetry.speed.kmh != nil
-            || telemetry.batteryLevel.percent != nil
-            || telemetry.odometer.kilometers != nil)
+        let hasTelemetry = hasTelemetry(telemetry, connection: connection)
         let speed = hasTelemetry
             ? speedKilometersPerHour.map {
                 measurementMapper.speed(
@@ -49,6 +42,8 @@ public struct RideDashboardMapper: Sendable {
             }
             : nil
         let maximumSpeed = measurementMapper.speedometerMaximum()
+        let powerModeName = telemetry.mode.powerModeConfigurationIndex
+            .flatMap { powerModeNames[$0]?.value }
         let speedometer = speedometer(
             speed: speed,
             maximum: maximumSpeed,
@@ -70,11 +65,16 @@ public struct RideDashboardMapper: Sendable {
             temperatureSummary: DashboardTemperatureSummaryMapper.map(
                 telemetry: telemetry, isVisible: hasTelemetry && showsTemperatures, measurementMapper: measurementMapper
             ),
-            gear: gear(
+            gear: DashboardGearMapper.map(
                 runState: hasTelemetry ? telemetry.runState : .unknown,
-                modeIndex: hasTelemetry ? telemetry.mode.displayIndex : nil
+                modeIndex: hasTelemetry ? telemetry.mode.displayIndex : nil,
+                modeName: hasTelemetry ? powerModeName : nil
             ),
-            powerMode: powerMode(telemetry: telemetry, hasTelemetry: hasTelemetry),
+            powerMode: powerMode(
+                telemetry: telemetry,
+                hasTelemetry: hasTelemetry,
+                modeName: powerModeName
+            ),
             centerMode: hasTelemetry && telemetry.statusFlags.isChargerConnected
                 ? .charging
                 : .riding,
@@ -87,7 +87,8 @@ public struct RideDashboardMapper: Sendable {
 
     private func powerMode(
         telemetry: BikeTelemetry,
-        hasTelemetry: Bool
+        hasTelemetry: Bool,
+        modeName: String?
     ) -> DashboardPowerModeViewData {
         guard
             hasTelemetry,
@@ -101,7 +102,7 @@ public struct RideDashboardMapper: Sendable {
             return .init()
         }
         return .init(
-            map: String(mapNumber),
+            map: modeName ?? String(mapNumber),
             horsepower: String(horsepower),
             regenerativeBraking: percent(regenerativeBrakingPercent),
             powerTraction: percent(configuration.powerTractionPercent),
@@ -158,27 +159,6 @@ public struct RideDashboardMapper: Sendable {
             sourceIndicator: sourceIndicator,
             accessibilityLabel: "Speed \(valueText) \(unit)\(sourceAccessibility)"
         )
-    }
-
-    private func gear(runState: BikeRunState, modeIndex: Int?) -> DashboardGearViewData {
-        switch runState {
-        case .unknown:
-            .init(display: .text("--"), isActive: false, accessibilityLabel: "Gear unavailable")
-        case .off:
-            .init(display: .text("OFF"), isActive: false, accessibilityLabel: "Gear off")
-        case .neutral, .charging:
-            .init(display: .text("N"), isActive: true, accessibilityLabel: "Gear neutral")
-        case .on:
-            .init(
-                display: .text(modeIndex.map(String.init) ?? "--"),
-                isActive: true,
-                accessibilityLabel: modeIndex.map { "Gear \($0)" } ?? "Gear unavailable"
-            )
-        case .crawlForward:
-            .init(display: .crawlForward, isActive: true, accessibilityLabel: "Crawl forward")
-        case .crawlReverse:
-            .init(display: .crawlReverse, isActive: true, accessibilityLabel: "Crawl reverse")
-        }
     }
 
     private func indicators(flags: BikeStatusFlags, hasTelemetry: Bool) -> [DashboardIndicatorViewData] {
@@ -243,6 +223,13 @@ public struct RideDashboardMapper: Sendable {
             return speed
         }
         return .zero
+    }
+
+    private func hasTelemetry(_ telemetry: BikeTelemetry, connection: BikeConnection) -> Bool {
+        guard case .receivingTelemetry = connection.state else { return false }
+        return telemetry.speed.kmh != nil
+            || telemetry.batteryLevel.percent != nil
+            || telemetry.odometer.kilometers != nil
     }
 
     private enum Constants {

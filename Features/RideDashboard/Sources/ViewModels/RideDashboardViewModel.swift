@@ -79,7 +79,8 @@ public final class RideDashboardViewModel: ObservableObject {
             batteryIndicatorMode: snapshot.settings.dashboardBatteryIndicatorMode,
             showsTemperatures: snapshot.settings.showsDashboardTemperatures,
             measurementSystem: snapshot.settings.measurementSystem,
-            isGPSAvailable: snapshot.isGPSAvailable
+            isGPSAvailable: snapshot.isGPSAvailable,
+            powerModeNames: snapshot.settings.powerModeNames(forVIN: snapshot.profile?.vin)
         )
         updateViewState(with: mappedViewState)
         updateStatusSnapshotRefresh()

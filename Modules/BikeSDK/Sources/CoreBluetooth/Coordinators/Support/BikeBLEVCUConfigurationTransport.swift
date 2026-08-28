@@ -3,100 +3,30 @@ import Foundation
 
 @MainActor
 final class BikeBLEVCUConfigurationTransport {
-    private let sessionStore: BLESessionStore
+    let sessionStore: BLESessionStore
     private let eventEmitter: BikeBLEEventEmitter
     private let peripheralOperations: BikeBLEPeripheralOperations
+    let configurationReadinessWaiter: BikeBLEConfigurationReadinessWaiter
     private let transactionGate = BikeBLEVCUConfigurationTransactionGate()
-    private var activeOperation: BikeBLEVCUConfigurationOperation?
-    private var expectedConfigurationResponse: BikeBLEVCUConfigurationExpectedResponse?
-    private var bufferedConfigurationResponse: Result<Data, BikeSDKError>?
+    var activeOperation: BikeBLEVCUConfigurationOperation?
+    var expectedConfigurationResponse: BikeBLEVCUConfigurationExpectedResponse?
+    var bufferedConfigurationResponse: Result<Data, BikeSDKError>?
     private var timeoutTask: Task<Void, Never>?
-    private var isDesynchronized = false
+    var isDesynchronized = false
 
     init(
         sessionStore: BLESessionStore,
         eventEmitter: BikeBLEEventEmitter,
-        peripheralOperations: BikeBLEPeripheralOperations
+        peripheralOperations: BikeBLEPeripheralOperations,
+        configurationReadinessWaiter: BikeBLEConfigurationReadinessWaiter
     ) {
         self.sessionStore = sessionStore
         self.eventEmitter = eventEmitter
         self.peripheralOperations = peripheralOperations
+        self.configurationReadinessWaiter = configurationReadinessWaiter
     }
 
-    deinit {
-        timeoutTask?.cancel()
-    }
-    func ensureReady() throws {
-        guard activeOperation == nil else {
-            throw BikeSDKError.operationFailed("VCU configuration operation is already running")
-        }
-        guard !isDesynchronized else {
-            throw BikeSDKError.operationFailed(
-                "VCU configuration transport timed out; reconnect before another transaction"
-            )
-        }
-    }
-    func readVersions() async throws -> Data {
-        try await withTransaction {
-            let peripheral = try authenticatedPeripheral()
-            let characteristic = try versionsCharacteristic()
-            return try await read(
-                peripheral: peripheral,
-                characteristic: characteristic,
-                operationName: "4001 read"
-            )
-        }
-    }
-    func readConfiguration(
-        request: Data,
-        operationName: String,
-        allowLiveTelemetrySession: Bool = false
-    ) async throws -> Data {
-        try await withTransaction {
-            let peripheral = try configurationReadPeripheral(
-                allowLiveTelemetrySession: allowLiveTelemetrySession
-            )
-            let characteristic = try configurationCharacteristic()
-            let expectedResponse = try BikeBLEVCUConfigurationExpectedResponse(request: request)
-            let canRead = characteristic.properties.contains(.read)
-            let canReceiveNotification = characteristic.isNotifying
-                || sessionStore.subscribedCharacteristics.contains(characteristic.uuid)
-            guard canRead || canReceiveNotification else {
-                throw BikeSDKError.operationFailed(
-                    "VCU configuration 4005 cannot return a response: "
-                        + "read is unavailable and notifications are not enabled"
-                )
-            }
-            expectedConfigurationResponse = expectedResponse
-            bufferedConfigurationResponse = nil
-            defer {
-                expectedConfigurationResponse = nil
-                bufferedConfigurationResponse = nil
-            }
-            await emitConfigurationDebug(prefix: "Request", data: request)
-            try await write(request, peripheral: peripheral, characteristic: characteristic)
-            let response: Data
-            if let bufferedConfigurationResponse {
-                response = try bufferedConfigurationResponse.get()
-            } else {
-                response = try await awaitConfigurationResponse(
-                    peripheral: peripheral,
-                    characteristic: characteristic,
-                    operationName: operationName,
-                    shouldRead: canRead
-                )
-            }
-            await emitConfigurationDebug(prefix: "Response", data: response)
-            return response
-        }
-    }
-    func writeConfiguration(_ payload: Data) async throws {
-        try await withTransaction {
-            let peripheral = try authenticatedPeripheral()
-            let characteristic = try configurationCharacteristic()
-            try await write(payload, peripheral: peripheral, characteristic: characteristic)
-        }
-    }
+    deinit { timeoutTask?.cancel() }
     func authenticatedPeripheral() throws -> CBPeripheral {
         guard let peripheral = sessionStore.peripheral else {
             BikePowerModeDebugLog.log("transport rejected operation: no active peripheral")
@@ -111,7 +41,7 @@ final class BikeBLEVCUConfigurationTransport {
         return peripheral
     }
 
-    private func configurationReadPeripheral(
+    func configurationReadPeripheral(
         allowLiveTelemetrySession: Bool
     ) throws -> CBPeripheral {
         guard let peripheral = sessionStore.peripheral else {
@@ -237,8 +167,8 @@ final class BikeBLEVCUConfigurationTransport {
         isDesynchronized = false
     }
 }
-private extension BikeBLEVCUConfigurationTransport {
-    private func awaitConfigurationResponse(
+extension BikeBLEVCUConfigurationTransport {
+    func awaitConfigurationResponse(
         peripheral: CBPeripheral,
         characteristic: CBCharacteristic,
         operationName: String,
@@ -314,10 +244,15 @@ private extension BikeBLEVCUConfigurationTransport {
             }
             return true
         }
+        guard activeOperation != nil else {
+            bufferedConfigurationResponse = result
+            BikePowerModeDebugLog.log("4005 response arrived before response wait; buffering")
+            return true
+        }
         return false
     }
 
-    private func emitConfigurationDebug(prefix: String, data: Data) async {
+    func emitConfigurationDebug(prefix: String, data: Data) async {
         guard BikePowerModeDebugLog.isEnabled else { return }
         BikePowerModeDebugLog.log("4005 \(prefix) \(data.count)b \(data.bikeSDKHexString)")
         await eventEmitter.send(.debug(.init(
@@ -378,7 +313,7 @@ private extension BikeBLEVCUConfigurationTransport {
         }
     }
 
-    private func withTransaction<Value: Sendable>(
+    func withTransaction<Value: Sendable>(
         _ operation: @MainActor () async throws -> Value
     ) async throws -> Value {
         try Task.checkCancellation()

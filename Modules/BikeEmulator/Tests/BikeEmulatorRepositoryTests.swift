@@ -287,6 +287,38 @@ struct BikeEmulatorRepositoryTests {
 }
 
 extension BikeEmulatorRepositoryTests {
+    @Test("Traction controls accept only confirmed whole percentages")
+    func tractionControlWriteRange() async throws {
+        let repository = BikeEmulatorRepositoryFactory.make(
+            scenario: .riding,
+            powerModePreset: .alpha,
+            activeMap: 4
+        )
+        await repository.start()
+        let stream = await repository.observeTelemetry()
+        var iterator = stream.makeAsyncIterator()
+        _ = try await nextValue(from: &iterator)
+
+        try await repository.prepareTractionControl(mapIndex: 3)
+        try await repository.setTractionControlConfiguration(
+            mapIndex: 3,
+            powerTractionPercent: 35,
+            brakingTractionPercent: 15
+        )
+        let confirmed = try await nextValue(from: &iterator)
+
+        #expect(confirmed.powerModeConfigurations[3]?.powerTractionPercent == 35)
+        #expect(confirmed.powerModeConfigurations[3]?.brakingTractionPercent == 15)
+        await #expect(throws: (any Error).self) {
+            try await repository.setTractionControlConfiguration(
+                mapIndex: 3,
+                powerTractionPercent: 35.5,
+                brakingTractionPercent: 15
+            )
+        }
+        await repository.stop()
+    }
+
     @Test("Periodic telemetry does not repeat an unchanged connection")
     func periodicUpdatesSkipUnchangedConnection() async throws {
         let repository = BikeEmulatorRepositoryFactory.make(scenario: .riding)

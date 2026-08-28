@@ -11,6 +11,95 @@ struct StarkPowerModeConfigurationCommandTests {
         #expect(try StarkTractionControlConfigurationCommand.readPacket(mapIndex: 3) == Data([0, 8, 3]))
     }
 
+    @Test("Encodes complete base-map writes with save flag and signed little-endian values")
+    func encodesWrites() throws {
+        #expect(try StarkPowerModeConfigurationCommand.writePacket(
+            mapIndex: 3,
+            horsepower: 80,
+            regenerativeBrakingPercent: -100,
+            curve: 4
+        ) == Data([1, 0, 3, 1, 100, 0, 0x9C, 0xFF, 4]))
+
+        let configuration = StarkPowerModeConfigurationPayload(
+            mapIndex: 1,
+            torqueRaw: 44,
+            regenerationRaw: 35,
+            curve: 0
+        )
+        #expect(try StarkPowerModeConfigurationCommand.noOpWritePacket(
+            configuration: configuration
+        ) == Data([1, 0, 1, 1, 44, 0, 35, 0, 2]))
+    }
+
+    @Test("Accepts observed read selectors and normalizes the write selector")
+    func normalizesCurveSelector() throws {
+        #expect(StarkPowerModeConfigurationCommand.isSupportedReadCurve(0, mapIndex: 2))
+        #expect(StarkPowerModeConfigurationCommand.isSupportedReadCurve(3, mapIndex: 2))
+        #expect(!StarkPowerModeConfigurationCommand.isSupportedReadCurve(9, mapIndex: 2))
+        #expect(try StarkPowerModeConfigurationCommand.normalizedWriteCurve(mapIndex: 2) == 3)
+    }
+
+    @Test("Encodes whole-percent traction writes with the official mode field")
+    func encodesTractionControlWrites() throws {
+        #expect(try StarkTractionControlConfigurationCommand.writePacket(
+            mapIndex: 3,
+            powerTractionPercent: 12,
+            brakingTractionPercent: 30
+        ) == Data([1, 8, 1, 3, 15, 0x78, 0, 0x2C, 0x01]))
+
+        let configuration = StarkTractionControlConfigurationPayload(
+            mapIndex: 1,
+            powerRaw: 200,
+            brakingRaw: 250
+        )
+        #expect(try StarkTractionControlConfigurationCommand.noOpWritePacket(
+            configuration: configuration
+        ) == Data([1, 8, 1, 1, 15, 0xC8, 0, 0xFA, 0]))
+    }
+
+    @Test("Rejects traction-control percentages outside the guarded range")
+    func rejectsInvalidTractionControlWrites() {
+        #expect(throws: StarkProtocolError.invalidTractionControlPercent(100.1)) {
+            try StarkTractionControlConfigurationCommand.writePacket(
+                mapIndex: 0,
+                powerTractionPercent: 100.1,
+                brakingTractionPercent: 0
+            )
+        }
+        #expect(throws: StarkProtocolError.invalidTractionControlPercent(12.5)) {
+            try StarkTractionControlConfigurationCommand.writePacket(
+                mapIndex: 0,
+                powerTractionPercent: 12.5,
+                brakingTractionPercent: 0
+            )
+        }
+        #expect(throws: StarkProtocolError.invalidTractionControlRawValue(125)) {
+            try StarkTractionControlConfigurationCommand.noOpWritePacket(
+                configuration: .init(mapIndex: 0, powerRaw: 125, brakingRaw: 200)
+            )
+        }
+    }
+
+    @Test("Rejects power-mode writes outside the guarded ranges")
+    func rejectsInvalidWrites() {
+        #expect(throws: StarkProtocolError.invalidPowerModeHorsepower(81)) {
+            try StarkPowerModeConfigurationCommand.writePacket(
+                mapIndex: 0,
+                horsepower: 81,
+                regenerativeBrakingPercent: 0,
+                curve: 1
+            )
+        }
+        #expect(throws: StarkProtocolError.invalidRegenerativeBrakingPercent(101)) {
+            try StarkPowerModeConfigurationCommand.writePacket(
+                mapIndex: 0,
+                horsepower: 60,
+                regenerativeBrakingPercent: 101,
+                curve: 1
+            )
+        }
+    }
+
     @Test("Decodes horsepower and signed regeneration")
     func decodesPowerMode() throws {
         let payload = try StarkPowerModeConfigurationCommand.decodeResponse(
@@ -36,6 +125,7 @@ struct StarkPowerModeConfigurationCommandTests {
         #expect(payload.mapIndex == 4)
         #expect(payload.horsepower == 80)
         #expect(payload.regenerativeBrakingPercent == 70)
+        #expect(payload.curve == 0)
     }
 
     @Test("Decodes signed traction values in tenths of a percent")

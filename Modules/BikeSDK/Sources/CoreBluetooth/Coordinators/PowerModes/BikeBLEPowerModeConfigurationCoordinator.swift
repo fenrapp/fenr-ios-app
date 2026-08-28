@@ -3,8 +3,10 @@ import StarkProtocol
 
 @MainActor
 final class BikeBLEPowerModeConfigurationCoordinator {
-    private let transport: any BikeBLEPowerModeConfigurationTransporting
-    private let eventEmitter: BikeBLEEventEmitter
+    let transport: any BikeBLEPowerModeConfigurationTransporting
+    let eventEmitter: BikeBLEEventEmitter
+    private var preparedConfigurations: [Int: StarkPowerModeConfigurationPayload] = [:]
+    var preparedTractionConfigurations: [Int: StarkTractionControlConfigurationPayload] = [:]
 
     init(
         transport: any BikeBLEPowerModeConfigurationTransporting,
@@ -27,7 +29,101 @@ final class BikeBLEPowerModeConfigurationCoordinator {
         try await readTractionControlConfiguration(mapIndex: mapIndex)
     }
 
+    func preparePowerModeControl(mapIndex: Int) async throws {
+        try transport.ensureReady()
+        preparedConfigurations[mapIndex] = nil
+        let versionData = try await transport.readVersions()
+        guard let firmware = StarkFirmwareVersionParser.parseVCUPic(from: versionData) else {
+            throw BikeSDKError.operationFailed(
+                "Power mode control requires a recognized VCU PIC firmware"
+            )
+        }
+        let configuration = try await readPowerModeConfiguration(mapIndex: mapIndex)
+        guard StarkPowerModeConfigurationCommand.isSupportedReadCurve(
+            configuration.curve,
+            mapIndex: mapIndex
+        ) else {
+            throw BikeSDKError.operationFailed(
+                "Map \(mapIndex + 1) returned unexpected curve selector \(configuration.curve); "
+                    + "base power and regeneration controls are unavailable"
+            )
+        }
+        let noOpPacket = try StarkPowerModeConfigurationCommand.noOpWritePacket(
+            configuration: configuration
+        )
+        try await transport.writeConfiguration(noOpPacket)
+        try await Task.sleep(for: Constants.writeVerificationDelay)
+        let verified = try await readPowerModeConfiguration(mapIndex: mapIndex)
+        guard baseValuesMatch(verified, configuration),
+              StarkPowerModeConfigurationCommand.isSupportedReadCurve(
+                  verified.curve,
+                  mapIndex: mapIndex
+              )
+        else {
+            throw BikeSDKError.operationFailed(
+                "Power mode no-op verification returned different map values"
+            )
+        }
+        preparedConfigurations[mapIndex] = verified
+        await report(
+            "4005 map \(mapIndex) control prepared firmware=\(firmware.description) "
+                + "packet=\(noOpPacket.bikeSDKHexString)"
+        )
+    }
+
+    func setPowerModeConfiguration(
+        mapIndex: Int,
+        horsepower: Int,
+        regenerativeBrakingPercent: Int
+    ) async throws {
+        guard let prepared = preparedConfigurations[mapIndex] else {
+            throw BikeSDKError.operationFailed(
+                "Power mode control has not passed the no-op guard for map \(mapIndex + 1)"
+            )
+        }
+        guard StarkPowerModeConfigurationCommand.isSupportedReadCurve(
+            prepared.curve,
+            mapIndex: mapIndex
+        ) else {
+            preparedConfigurations[mapIndex] = nil
+            throw BikeSDKError.operationFailed(
+                "The selected map returned an unexpected curve selector"
+            )
+        }
+        let writeCurve = try StarkPowerModeConfigurationCommand.normalizedWriteCurve(
+            mapIndex: mapIndex
+        )
+        let packet = try StarkPowerModeConfigurationCommand.writePacket(
+            mapIndex: mapIndex,
+            horsepower: horsepower,
+            regenerativeBrakingPercent: regenerativeBrakingPercent,
+            curve: writeCurve
+        )
+        try await transport.writeConfiguration(packet)
+        try await Task.sleep(for: Constants.writeVerificationDelay)
+        let verified = try await readPowerModeConfiguration(mapIndex: mapIndex)
+        guard verified.horsepower == horsepower,
+              Int(verified.regenerativeBrakingPercent.rounded()) == regenerativeBrakingPercent,
+              StarkPowerModeConfigurationCommand.isSupportedReadCurve(
+                  verified.curve,
+                  mapIndex: mapIndex
+              )
+        else {
+            preparedConfigurations[mapIndex] = nil
+            throw BikeSDKError.operationFailed(
+                "Power mode write was not confirmed by the VCU response"
+            )
+        }
+        preparedConfigurations[mapIndex] = verified
+        await report(
+            "4005 map \(mapIndex) write verified hp=\(horsepower) "
+                + "regen=\(regenerativeBrakingPercent)% packet=\(packet.bikeSDKHexString)"
+        )
+    }
+
     func reset() {
+        preparedConfigurations.removeAll()
+        preparedTractionConfigurations.removeAll()
         console("session reset")
     }
 
@@ -107,7 +203,7 @@ final class BikeBLEPowerModeConfigurationCoordinator {
     }
 
     @discardableResult
-    private func readTractionControlConfiguration(
+    func readTractionControlConfiguration(
         mapIndex: Int
     ) async throws -> StarkTractionControlConfigurationPayload {
         let request = try StarkTractionControlConfigurationCommand.readPacket(mapIndex: mapIndex)
@@ -134,7 +230,16 @@ final class BikeBLEPowerModeConfigurationCoordinator {
         )
     }
 
-    private func report(_ detail: String) async {
+    private func baseValuesMatch(
+        _ lhs: StarkPowerModeConfigurationPayload,
+        _ rhs: StarkPowerModeConfigurationPayload
+    ) -> Bool {
+        lhs.mapIndex == rhs.mapIndex
+            && lhs.torqueRaw == rhs.torqueRaw
+            && lhs.regenerationRaw == rhs.regenerationRaw
+    }
+
+    func report(_ detail: String) async {
         console(detail)
         await emitDebug(detail)
     }
@@ -147,7 +252,8 @@ final class BikeBLEPowerModeConfigurationCoordinator {
         BikePowerModeDebugLog.log(message)
     }
 
-    private enum Constants {
+    enum Constants {
         static let interRequestDelay = Duration.milliseconds(150)
+        static let writeVerificationDelay = Duration.milliseconds(150)
     }
 }

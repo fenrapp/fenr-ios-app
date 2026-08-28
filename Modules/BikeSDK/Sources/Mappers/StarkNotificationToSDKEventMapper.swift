@@ -9,7 +9,10 @@ public struct StarkNotificationToSDKEventMapper: Sendable {
     }
 
     public func telemetryPayload(characteristic: UUID, data: Data) throws -> BikeSDKTelemetryPayload? {
-        try decoderRegistry.decode(characteristic: characteristic, data: data)
+        if characteristic == StarkUUIDs.vcuBikeConfiguration {
+            return try configurationPayload(data)
+        }
+        return try decoderRegistry.decode(characteristic: characteristic, data: data)
     }
 
     public func debug(
@@ -50,6 +53,27 @@ public struct StarkNotificationToSDKEventMapper: Sendable {
                 + "motorPowerRaw=\(value.nativeMotorPowerRaw)"
         default:
             return String(describing: payload)
+        }
+    }
+
+    private func configurationPayload(_ data: Data) throws -> BikeSDKTelemetryPayload? {
+        guard data.count >= 4 else {
+            throw StarkProtocolError.payloadTooShort(expected: 4, actual: data.count)
+        }
+        let mapIndex = Int(data[3])
+        switch data[1] {
+        case StarkPowerModeConfigurationCommand.configurationType:
+            return .powerModeConfiguration(try StarkPowerModeConfigurationCommand.decodeResponse(
+                data,
+                expectedMapIndex: mapIndex
+            ))
+        case StarkTractionControlConfigurationCommand.configurationType:
+            return .tractionControlConfiguration(try StarkTractionControlConfigurationCommand.decodeResponse(
+                data,
+                expectedMapIndex: mapIndex
+            ))
+        default:
+            return nil
         }
     }
 

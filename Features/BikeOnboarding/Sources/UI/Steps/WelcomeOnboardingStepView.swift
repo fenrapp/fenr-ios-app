@@ -19,8 +19,8 @@ struct WelcomeOnboardingStepView: View {
                 OnboardingMaterialPanel {
                     OnboardingFeatureRow(
                         icon: "shield.lefthalf.filled",
-                        title: "Read-only by design",
-                        detail: "FENR does not change bike settings or control ride behavior.",
+                        title: "Guarded configuration",
+                        detail: "FENR changes only verified settings; ride safety controls remain read-only.",
                         tint: DesignColor.positive
                     )
                 }

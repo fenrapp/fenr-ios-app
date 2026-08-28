@@ -118,6 +118,38 @@ public actor LiveBikeRepository: BikeRepository, BikeBatteryHealthRepository, Bi
         try await client.refreshPowerModeConfiguration(mapIndex: mapIndex)
     }
 
+    public func preparePowerModeControl(mapIndex: Int) async throws {
+        try await client.preparePowerModeControl(mapIndex: mapIndex)
+    }
+
+    public func setPowerModeConfiguration(
+        mapIndex: Int,
+        horsepower: Int,
+        regenerativeBrakingPercent: Int
+    ) async throws {
+        try await client.setPowerModeConfiguration(
+            mapIndex: mapIndex,
+            horsepower: horsepower,
+            regenerativeBrakingPercent: regenerativeBrakingPercent
+        )
+    }
+
+    public func prepareTractionControl(mapIndex: Int) async throws {
+        try await client.prepareTractionControl(mapIndex: mapIndex)
+    }
+
+    public func setTractionControlConfiguration(
+        mapIndex: Int,
+        powerTractionPercent: Double,
+        brakingTractionPercent: Double
+    ) async throws {
+        try await client.setTractionControlConfiguration(
+            mapIndex: mapIndex,
+            powerTractionPercent: powerTractionPercent,
+            brakingTractionPercent: brakingTractionPercent
+        )
+    }
+
     public func refreshTractionControlConfiguration(mapIndex: Int) async throws {
         try await client.refreshTractionControlConfiguration(mapIndex: mapIndex)
     }

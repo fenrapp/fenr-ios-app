@@ -17,6 +17,18 @@ public protocol BikeTelemetryClient: AnyObject, Sendable {
     func setChargeTarget(percent: Int) async throws -> BikeSDKChargePowerControlSnapshot
     func refreshPowerModeConfigurations() async throws
     func refreshPowerModeConfiguration(mapIndex: Int) async throws
+    func preparePowerModeControl(mapIndex: Int) async throws
+    func setPowerModeConfiguration(
+        mapIndex: Int,
+        horsepower: Int,
+        regenerativeBrakingPercent: Int
+    ) async throws
+    func prepareTractionControl(mapIndex: Int) async throws
+    func setTractionControlConfiguration(
+        mapIndex: Int,
+        powerTractionPercent: Double,
+        brakingTractionPercent: Double
+    ) async throws
     func refreshTractionControlConfiguration(mapIndex: Int) async throws
     func events() async -> AsyncStream<BikeSDKEvent>
 }
@@ -39,6 +51,26 @@ public extension BikeTelemetryClient {
     }
     func refreshPowerModeConfiguration(mapIndex _: Int) async throws {
         throw BikeSDKError.operationFailed("Power mode configuration refresh is unavailable")
+    }
+    func preparePowerModeControl(mapIndex _: Int) async throws {
+        throw BikeSDKError.operationFailed("Power mode control is unavailable")
+    }
+    func setPowerModeConfiguration(
+        mapIndex _: Int,
+        horsepower _: Int,
+        regenerativeBrakingPercent _: Int
+    ) async throws {
+        throw BikeSDKError.operationFailed("Power mode control is unavailable")
+    }
+    func prepareTractionControl(mapIndex _: Int) async throws {
+        throw BikeSDKError.operationFailed("Traction control is unavailable")
+    }
+    func setTractionControlConfiguration(
+        mapIndex _: Int,
+        powerTractionPercent _: Double,
+        brakingTractionPercent _: Double
+    ) async throws {
+        throw BikeSDKError.operationFailed("Traction control is unavailable")
     }
     func refreshTractionControlConfiguration(mapIndex _: Int) async throws {
         throw BikeSDKError.operationFailed("Traction control configuration refresh is unavailable")

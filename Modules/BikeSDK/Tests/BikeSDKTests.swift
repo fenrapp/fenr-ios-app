@@ -198,6 +198,32 @@ struct BikeSDKMappingTests {
         )))
     }
 
+    @Test("Notification mapper accepts unsolicited power and traction configurations")
+    func mapsUnsolicitedConfigurations() throws {
+        let mapper = makeNotificationMapper()
+
+        let power = try mapper.telemetryPayload(
+            characteristic: StarkUUIDs.vcuBikeConfiguration,
+            data: Data([2, 0, 0, 0, 38, 0, 70, 0, 0])
+        )
+        let traction = try mapper.telemetryPayload(
+            characteristic: StarkUUIDs.vcuBikeConfiguration,
+            data: Data([2, 8, 0, 4, 25, 0, 15, 0])
+        )
+
+        #expect(power == .powerModeConfiguration(.init(
+            mapIndex: 0,
+            torqueRaw: 38,
+            regenerationRaw: 70,
+            curve: 0
+        )))
+        #expect(traction == .tractionControlConfiguration(.init(
+            mapIndex: 4,
+            powerRaw: 25,
+            brakingRaw: 15
+        )))
+    }
+
     @Test("Unknown characteristic is ignored")
     func unknownCharacteristic() throws {
         let mapper = makeNotificationMapper()

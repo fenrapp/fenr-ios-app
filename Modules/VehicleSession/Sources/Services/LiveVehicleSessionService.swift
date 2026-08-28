@@ -33,6 +33,8 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     var powerModeRefreshTask: Task<Void, Never>?
     var pendingPowerModeRefresh: VehiclePowerModeRefreshRequest?
     var visitedPowerModeIndex: Int?
+    var didAttemptPowerModeBaseRefresh = false
+    var didAttemptPowerModeTractionRefresh = false
     var observers: [UUID: AsyncStream<VehicleSessionSnapshot>.Continuation] = [:]
 
     public init(
@@ -110,6 +112,8 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         powerModeRefreshTask = nil
         pendingPowerModeRefresh = nil
         visitedPowerModeIndex = nil
+        didAttemptPowerModeBaseRefresh = false
+        didAttemptPowerModeTractionRefresh = false
         publish()
     }
 

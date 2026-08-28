@@ -19,6 +19,9 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     private var batteryHealthMonitoringLeaseCount = 0
     private var chargePowerLimitWatts = Constants.defaultChargePowerWatts
     private var chargeTargetPercent = Constants.defaultChargeTargetPercent
+    private var powerModeOverrides: [Int: BikePowerModeConfiguration] = [:]
+    private var preparedPowerModeIndexes = Set<Int>()
+    private var preparedTractionControlIndexes = Set<Int>()
     private var lastPublishedConnection: BikeConnection?
     private var updateTask: Task<Void, Never>?
 
@@ -41,9 +44,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
         self.powerCalculator = powerCalculator
     }
 
-    deinit {
-        updateTask?.cancel()
-    }
+    deinit { updateTask?.cancel() }
 
     public func start() async {
         guard !isStarted else { return }
@@ -95,6 +96,80 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
             throw BikeEmulatorPowerModeError.readFailure
         }
         await publishCurrentState()
+    }
+
+    public func preparePowerModeControl(mapIndex: Int) async throws {
+        guard currentPowerModeConfigurations()[mapIndex]?.hasBaseConfiguration == true else {
+            throw BikeEmulatorPowerModeError.readFailure
+        }
+        preparedPowerModeIndexes.insert(mapIndex)
+        await publishDebugEvent(
+            title: "Power modes",
+            detail: "Debug no-op confirmed for map \(mapIndex + 1)"
+        )
+    }
+
+    public func setPowerModeConfiguration(
+        mapIndex: Int,
+        horsepower: Int,
+        regenerativeBrakingPercent: Int
+    ) async throws {
+        guard preparedPowerModeIndexes.contains(mapIndex),
+              var configuration = currentPowerModeConfigurations()[mapIndex]
+        else {
+            throw BikeEmulatorPowerModeError.controlNotPrepared
+        }
+        guard Constants.powerModeHorsepowerRange.contains(horsepower),
+              Constants.powerModeRegenerationRange.contains(regenerativeBrakingPercent)
+        else {
+            throw BikeEmulatorPowerModeError.invalidConfiguration
+        }
+        configuration.horsepower = horsepower
+        configuration.regenerativeBrakingPercent = Double(regenerativeBrakingPercent)
+        powerModeOverrides[mapIndex] = configuration
+        await publishCurrentState()
+        await publishDebugEvent(
+            title: "Power modes",
+            detail: "Debug map \(mapIndex + 1) write confirmed"
+        )
+    }
+
+    public func prepareTractionControl(mapIndex: Int) async throws {
+        guard currentPowerModeConfigurations()[mapIndex]?.hasTractionControlConfiguration == true else {
+            throw BikeEmulatorPowerModeError.readFailure
+        }
+        preparedTractionControlIndexes.insert(mapIndex)
+        await publishDebugEvent(
+            title: "Power modes",
+            detail: "Debug TC no-op confirmed for map \(mapIndex + 1)"
+        )
+    }
+
+    public func setTractionControlConfiguration(
+        mapIndex: Int,
+        powerTractionPercent: Double,
+        brakingTractionPercent: Double
+    ) async throws {
+        guard preparedTractionControlIndexes.contains(mapIndex),
+              var configuration = currentPowerModeConfigurations()[mapIndex]
+        else {
+            throw BikeEmulatorPowerModeError.controlNotPrepared
+        }
+        guard Constants.tractionControlRange.contains(powerTractionPercent),
+              Constants.tractionControlRange.contains(brakingTractionPercent),
+              powerTractionPercent.rounded() == powerTractionPercent,
+              brakingTractionPercent.rounded() == brakingTractionPercent
+        else {
+            throw BikeEmulatorPowerModeError.invalidConfiguration
+        }
+        configuration.powerTractionPercent = powerTractionPercent
+        configuration.brakingTractionPercent = brakingTractionPercent
+        powerModeOverrides[mapIndex] = configuration
+        await publishCurrentState()
+        await publishDebugEvent(
+            title: "Power modes",
+            detail: "Debug TC map \(mapIndex + 1) write confirmed"
+        )
     }
 
     public func observeTelemetry() async -> AsyncStream<BikeTelemetry> {
@@ -181,6 +256,9 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
 
     public func setPowerModePreset(_ preset: BikeEmulatorPowerModePreset) async {
         powerModePreset = preset
+        powerModeOverrides.removeAll()
+        preparedPowerModeIndexes.removeAll()
+        preparedTractionControlIndexes.removeAll()
         await publishCurrentState()
         await publishDebugEvent(title: "Power modes", detail: "Preset: \(preset.displayName)")
     }
@@ -190,7 +268,9 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
         await publishCurrentState()
         await publishDebugEvent(title: "Power modes", detail: "Active map: \(activeMapNumber)")
     }
+}
 
+private extension BikeEmulatorRepository {
     private func scheduleUpdates() {
         updateTask?.cancel()
         updateTask = Task { [weak self] in
@@ -230,7 +310,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     }
 
     private func makeTelemetry(date: Date) -> BikeTelemetry {
-        BikeEmulatorPayloadFactory.makeTelemetry(
+        var telemetry = BikeEmulatorPayloadFactory.makeTelemetry(
             scenario: scenario,
             tick: tick,
             context: .init(
@@ -241,6 +321,17 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
             ),
             powerCalculator: powerCalculator
         )
+        telemetry.powerModeConfigurations.merge(powerModeOverrides) { _, override in override }
+        return telemetry
+    }
+
+    private func currentPowerModeConfigurations() -> [Int: BikePowerModeConfiguration] {
+        var configurations = BikeEmulatorPowerModeTelemetryFactory.configurations(
+            preset: powerModePreset,
+            activeMapNumber: activeMapNumber
+        )
+        configurations.merge(powerModeOverrides) { _, override in override }
+        return configurations
     }
 
     private func makeBatteryHealth(date: Date) -> BikeBatteryHealth {
@@ -289,6 +380,9 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
         static let maximumChargeTargetPercent = 100
         static let chargingBusVoltage = 388.4
         static let noOpWriteHex = "DEBUG NO-OP 4005"
+        static let powerModeHorsepowerRange = 10 ... 80
+        static let powerModeRegenerationRange = -100 ... 100
+        static let tractionControlRange = 0.0 ... 100.0
     }
 }
 
@@ -299,15 +393,8 @@ private extension BikeEmulatorRepository {
         await connectionHub.send(connection)
     }
 }
-
 private enum BikeEmulatorChargeControlError: Error {
     case chargerUnavailable
     case invalidPower
     case invalidTarget
-}
-
-private enum BikeEmulatorPowerModeError: LocalizedError {
-    case readFailure
-
-    var errorDescription: String? { "Simulated 4005 read timeout" }
 }

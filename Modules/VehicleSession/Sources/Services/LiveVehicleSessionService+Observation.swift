@@ -59,7 +59,9 @@ extension LiveVehicleSessionService {
 
     private func receive(_ value: BikeConnection) {
         connection = value
-        if !isReceivingTelemetry {
+        if isReceivingTelemetry {
+            updatePowerModeRefresh(for: telemetry)
+        } else {
             resetPowerModeRefresh()
         }
         updateDeviceMotionObservation()

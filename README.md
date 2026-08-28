@@ -9,13 +9,14 @@ FENR is an independent iPhone and Apple Watch dashboard, diagnostics, and chargi
 - A live landscape ride dashboard with battery, speed, gear/map, indicators, charging state, and an adaptive compact presentation.
 - Battery health and cell-voltage views, including copyable charging telemetry for hardware diagnostics.
 - Authenticated charge-power and charge-target controls from the charging dashboard and Battery Health on supported VCU firmware.
+- Guarded base-map horsepower, regenerative-braking, TC, and TC Regen controls.
 - Read-only diagnostics, connection logging, and a developer emulator.
 - First-run bike onboarding and Bluetooth pairing flow.
 - Optional device GPS speed, plus metric, imperial, and system unit preferences.
 - A focused SwiftUI design system shared by the app features.
 - A standalone Watch app that connects directly to the motorcycle for compact ride and charging telemetry, with Bluetooth background support subject to watchOS execution limits.
 
-Most of FENR remains read-only. Its write surface is deliberately limited to the verified VCU charger configuration used for maximum charging power and target state of charge. FENR does not edit riding maps, bypass safety controls, modify firmware, or expose arbitrary configuration writes.
+Most of FENR remains read-only. Its write surface is deliberately limited to maximum charging power, target state of charge, and guarded base riding-map horsepower, regenerative braking, traction control, and regen traction control. FENR does not write custom curves, bypass safety controls, modify firmware, or expose arbitrary configuration writes.
 
 ## Charging controls
 
@@ -29,6 +30,10 @@ These controls are enabled only for VCU PIC firmware 1.9.1 or newer and while a 
 Each slider keeps its draft value inside the SwiftUI view while it is being dragged, so incoming telemetry cannot move the control. SwiftUI submits only the released value; the application applies it optimistically and sends it after a one-second debounce. Pending operations are cancelled or queued as appropriate, and timeouts or telemetry mismatches leave a copyable diagnostic entry instead of silently accepting the requested value.
 
 The Apple Watch app remains telemetry-only. Charging configuration is available from the iPhone charging dashboard and Battery Health screen.
+
+## Power-mode controls
+
+FENR can edit horsepower, regenerative braking, TC, and TC Regen for the five base maps. The base flow accepts only the observed zero curve selector or that map's standard selector and normalizes every outgoing selector to `mapIndex + 1`, matching the official client's behavior. Physical captures now confirm that base-map writes persist across fresh reads. TC uses the separate type `8` record on VCU PIC firmware 1.10.1 or newer. It sends whole percentages from 0 through 100 as signed 16-bit tenths, uses write mode `0x0F`, and requires a successful VCU write status plus an exact fresh read. Base and TC controls each require their own no-op and preserve the sibling value. TC writes still need physical write/read-back validation, and custom-curve writes remain out of scope.
 
 ## Why FENR? 🛠️
 

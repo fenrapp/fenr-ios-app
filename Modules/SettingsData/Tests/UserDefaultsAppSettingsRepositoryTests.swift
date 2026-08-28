@@ -54,6 +54,35 @@ struct UserDefaultsAppSettingsRepositoryTests {
         #expect(await repository.load().dashboardProgressBarMode == .energy)
         #expect(await repository.load().dashboardBatteryIndicatorMode == .percentage)
         #expect(!(await repository.load().showsDashboardTemperatures))
+        #expect(await repository.load().powerModeNamesByVIN.isEmpty)
+    }
+
+    @Test("Persists power mode names independently by bike and map")
+    func persistsPowerModeNames() async throws {
+        let suiteName = makeSuiteName()
+        let repository = UserDefaultsAppSettingsRepository(
+            userDefaults: makeDefaults(suiteName: suiteName)
+        )
+        var settings = AppSettings()
+        try settings.setPowerModeName(
+            try PowerModeName("ECO"),
+            forVIN: "FENRTEST000000001",
+            mapIndex: 0
+        )
+        try settings.setPowerModeName(
+            try PowerModeName("Enduro"),
+            forVIN: "FENRTEST000000002",
+            mapIndex: 1
+        )
+
+        await repository.save(settings)
+
+        let reloaded = await UserDefaultsAppSettingsRepository(
+            userDefaults: makeDefaults(suiteName: suiteName, clearsDomain: false)
+        ).load()
+        #expect(reloaded.powerModeName(forVIN: "FENRTEST000000001", mapIndex: 0)?.value == "ECO")
+        #expect(reloaded.powerModeName(forVIN: "FENRTEST000000002", mapIndex: 1)?.value == "Enduro")
+        #expect(reloaded.powerModeName(forVIN: "FENRTEST000000001", mapIndex: 1) == nil)
     }
 
     @Test("Does not notify observers when the saved settings are unchanged")

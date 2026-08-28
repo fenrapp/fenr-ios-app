@@ -8,20 +8,32 @@ struct VehiclePowerModeRefreshRequest: Equatable, Sendable {
 
 extension LiveVehicleSessionService {
     func updatePowerModeRefresh(for telemetry: BikeTelemetry) {
+        guard case .receivingTelemetry = connection.state else { return }
         guard let mapIndex = telemetry.mode.powerModeConfigurationIndex else {
             visitedPowerModeIndex = nil
+            didAttemptPowerModeBaseRefresh = false
+            didAttemptPowerModeTractionRefresh = false
             return
         }
-        guard visitedPowerModeIndex != mapIndex else { return }
-        visitedPowerModeIndex = mapIndex
+        if visitedPowerModeIndex != mapIndex {
+            visitedPowerModeIndex = mapIndex
+            didAttemptPowerModeBaseRefresh = false
+            didAttemptPowerModeTractionRefresh = false
+        }
 
         let configuration = telemetry.powerModeConfigurations[mapIndex]
         let request = VehiclePowerModeRefreshRequest(
             mapIndex: mapIndex,
-            needsBaseConfiguration: configuration?.hasBaseConfiguration != true,
+            needsBaseConfiguration: configuration?.hasBaseConfiguration != true
+                && !didAttemptPowerModeBaseRefresh,
             needsTractionControlConfiguration: configuration?.hasTractionControlConfiguration != true
+                && !didAttemptPowerModeTractionRefresh
         )
         guard request.needsBaseConfiguration || request.needsTractionControlConfiguration else { return }
+        didAttemptPowerModeBaseRefresh = didAttemptPowerModeBaseRefresh
+            || request.needsBaseConfiguration
+        didAttemptPowerModeTractionRefresh = didAttemptPowerModeTractionRefresh
+            || request.needsTractionControlConfiguration
         pendingPowerModeRefresh = request
         startPendingPowerModeRefreshIfNeeded()
     }
@@ -31,6 +43,8 @@ extension LiveVehicleSessionService {
         pendingPowerModeRefresh = nil
         powerModeRefreshTask?.cancel()
         powerModeRefreshTask = nil
+        didAttemptPowerModeBaseRefresh = false
+        didAttemptPowerModeTractionRefresh = false
     }
 }
 

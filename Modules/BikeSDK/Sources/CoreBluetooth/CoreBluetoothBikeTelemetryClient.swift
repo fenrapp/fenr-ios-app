@@ -105,6 +105,38 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
         try await notificationCoordinator.refreshPowerModeConfiguration(mapIndex: mapIndex)
     }
 
+    public func preparePowerModeControl(mapIndex: Int) async throws {
+        try await notificationCoordinator.preparePowerModeControl(mapIndex: mapIndex)
+    }
+
+    public func setPowerModeConfiguration(
+        mapIndex: Int,
+        horsepower: Int,
+        regenerativeBrakingPercent: Int
+    ) async throws {
+        try await notificationCoordinator.setPowerModeConfiguration(
+            mapIndex: mapIndex,
+            horsepower: horsepower,
+            regenerativeBrakingPercent: regenerativeBrakingPercent
+        )
+    }
+
+    public func prepareTractionControl(mapIndex: Int) async throws {
+        try await notificationCoordinator.prepareTractionControl(mapIndex: mapIndex)
+    }
+
+    public func setTractionControlConfiguration(
+        mapIndex: Int,
+        powerTractionPercent: Double,
+        brakingTractionPercent: Double
+    ) async throws {
+        try await notificationCoordinator.setTractionControlConfiguration(
+            mapIndex: mapIndex,
+            powerTractionPercent: powerTractionPercent,
+            brakingTractionPercent: brakingTractionPercent
+        )
+    }
+
     public func refreshTractionControlConfiguration(mapIndex: Int) async throws {
         try await notificationCoordinator.refreshTractionControlConfiguration(mapIndex: mapIndex)
     }

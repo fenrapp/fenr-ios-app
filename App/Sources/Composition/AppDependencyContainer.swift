@@ -7,6 +7,7 @@ import BLETraceDomain
 import ChargeControl
 import EnvironmentDomain
 import Foundation
+import PowerModeSettings
 import RideDashboard
 import RideSession
 import RideSessionDomain
@@ -62,6 +63,7 @@ struct AppDependencyContainer {
     private let onboardingContainer: BikeOnboardingDependencyContainer
     private let dashboardContainer: RideDashboardDependencyContainer
     private let appSettingsContainer: AppSettingsDependencyContainer
+    private let powerModeSettingsContainer: PowerModeSettingsDependencyContainer
     private let session: BikeSession
     private let chargeControlSession: ChargeControlSession
     private let profileRepository: any BikeProfileRepository
@@ -87,6 +89,7 @@ struct AppDependencyContainer {
         onboardingContainer: BikeOnboardingDependencyContainer,
         dashboardContainer: RideDashboardDependencyContainer,
         appSettingsContainer: AppSettingsDependencyContainer,
+        powerModeSettingsContainer: PowerModeSettingsDependencyContainer,
         bleTraceLogRepository: any BLETraceLogRepository,
         initialOnboardingVIN: String? = nil,
         forceOnboarding: Bool = false
@@ -96,6 +99,7 @@ struct AppDependencyContainer {
         self.onboardingContainer = onboardingContainer
         self.dashboardContainer = dashboardContainer
         self.appSettingsContainer = appSettingsContainer
+        self.powerModeSettingsContainer = powerModeSettingsContainer
         self.session = session
         self.chargeControlSession = chargeControlSession
         self.profileRepository = profileRepository
@@ -140,6 +144,7 @@ struct AppDependencyContainer {
                 setupFlow.complete(vin: vin)
             },
             appSettingsViewModel: makeAppSettingsViewModel(),
+            powerModeSettingsViewModel: makePowerModeSettingsViewModel(),
             setupFlow: setupFlow,
             lifecycleController: AppLifecycleController(
                 sessionController: sessionController,
@@ -192,6 +197,14 @@ struct AppDependencyContainer {
             deviceSpeedRepository: deviceSpeedRepository,
             bikeRepository: session.repository,
             profileRepository: profileRepository
+        )
+    }
+
+    func makePowerModeSettingsViewModel() -> PowerModeSettingsViewModel {
+        powerModeSettingsContainer.makeViewModel(
+            settingsRepository: settingsRepository,
+            bikeRepository: session.repository,
+            vehicleSession: vehicleSession
         )
     }
 

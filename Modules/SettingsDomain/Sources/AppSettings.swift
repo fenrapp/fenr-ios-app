@@ -8,6 +8,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var measurementSystem: MeasurementSystem
     public var defaultBatteryPackCapacity: BatteryPackCapacity
     public var batteryPackCapacitiesByVIN: [String: BatteryPackCapacity]
+    public var powerModeNamesByVIN: [String: [Int: PowerModeName]]
 
     public var batteryPackCapacity: BatteryPackCapacity {
         defaultBatteryPackCapacity
@@ -20,7 +21,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         showsDashboardTemperatures: Bool = false,
         measurementSystem: MeasurementSystem = .system,
         batteryPackCapacity: BatteryPackCapacity = .sevenPointTwoKilowattHours,
-        batteryPackCapacitiesByVIN: [String: BatteryPackCapacity] = [:]
+        batteryPackCapacitiesByVIN: [String: BatteryPackCapacity] = [:],
+        powerModeNamesByVIN: [String: [Int: PowerModeName]] = [:]
     ) {
         self.speedSource = speedSource
         self.dashboardProgressBarMode = dashboardProgressBarMode
@@ -29,6 +31,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.measurementSystem = measurementSystem
         defaultBatteryPackCapacity = batteryPackCapacity
         self.batteryPackCapacitiesByVIN = batteryPackCapacitiesByVIN
+        self.powerModeNamesByVIN = Self.sanitizedPowerModeNames(powerModeNamesByVIN)
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -39,6 +42,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case measurementSystem
         case defaultBatteryPackCapacity
         case batteryPackCapacitiesByVIN
+        case powerModeNamesByVIN
     }
 
     public init(from decoder: Decoder) throws {
@@ -66,6 +70,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
             [String: BatteryPackCapacity].self,
             forKey: .batteryPackCapacitiesByVIN
         ) ?? [:]
+        powerModeNamesByVIN = Self.sanitizedPowerModeNames(try container.decodeIfPresent(
+            [String: [Int: PowerModeName]].self,
+            forKey: .powerModeNamesByVIN
+        ) ?? [:])
     }
 
     public func batteryPackCapacity(forVIN vin: String?) -> BatteryPackCapacity {
@@ -75,6 +83,62 @@ public struct AppSettings: Codable, Equatable, Sendable {
 
     public mutating func setBatteryPackCapacity(_ capacity: BatteryPackCapacity, forVIN vin: String) {
         batteryPackCapacitiesByVIN[vin] = capacity
+    }
+
+    public func powerModeNames(forVIN vin: String?) -> [Int: PowerModeName] {
+        guard let vin else { return [:] }
+        return Self.sanitizedPowerModeNames([vin: powerModeNamesByVIN[vin] ?? [:]])[vin] ?? [:]
+    }
+
+    public func powerModeName(forVIN vin: String?, mapIndex: Int) -> PowerModeName? {
+        powerModeNames(forVIN: vin)[mapIndex]
+    }
+
+    public mutating func setPowerModeName(
+        _ name: PowerModeName,
+        forVIN vin: String,
+        mapIndex: Int
+    ) throws {
+        guard Self.powerModeIndices.contains(mapIndex) else {
+            throw PowerModeNameAssignmentError.invalidMapIndex
+        }
+        var names = powerModeNamesByVIN[vin] ?? [:]
+        guard !names.contains(where: { index, existingName in
+            index != mapIndex && name.matchesIgnoringCase(existingName)
+        }) else {
+            throw PowerModeNameAssignmentError.duplicate
+        }
+        names[mapIndex] = name
+        powerModeNamesByVIN[vin] = names
+    }
+
+    public mutating func clearPowerModeName(forVIN vin: String, mapIndex: Int) {
+        guard Self.powerModeIndices.contains(mapIndex) else { return }
+        guard var names = powerModeNamesByVIN[vin] else { return }
+        names[mapIndex] = nil
+        if names.isEmpty {
+            powerModeNamesByVIN[vin] = nil
+        } else {
+            powerModeNamesByVIN[vin] = names
+        }
+    }
+
+    private static let powerModeIndices = 0 ... 4
+
+    private static func sanitizedPowerModeNames(
+        _ namesByVIN: [String: [Int: PowerModeName]]
+    ) -> [String: [Int: PowerModeName]] {
+        namesByVIN.reduce(into: [:]) { result, entry in
+            var sanitized: [Int: PowerModeName] = [:]
+            for (mapIndex, name) in entry.value.sorted(by: { $0.key < $1.key })
+                where powerModeIndices.contains(mapIndex)
+                    && !sanitized.values.contains(where: { name.matchesIgnoringCase($0) }) {
+                sanitized[mapIndex] = name
+            }
+            if !sanitized.isEmpty {
+                result[entry.key] = sanitized
+            }
+        }
     }
 }
 

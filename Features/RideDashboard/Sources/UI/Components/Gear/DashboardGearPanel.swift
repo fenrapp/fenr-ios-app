@@ -24,7 +24,13 @@ struct DashboardGearPanel: View {
             switch state.display {
             case let .text(value):
                 Text(value)
-                    .font(.system(size: Constants.valueFontSize, weight: .medium, design: .rounded))
+                    .font(.system(
+                        size: value.count > Constants.compactTextThreshold
+                            ? Constants.nameFontSize
+                            : Constants.valueFontSize,
+                        weight: .medium,
+                        design: .rounded
+                    ))
                     .lineLimit(1)
                     .minimumScaleFactor(Constants.minimumScaleFactor)
             case .crawlForward:
@@ -60,6 +66,8 @@ struct DashboardGearPanel: View {
         static let outlineWidth: CGFloat = 2.75
         static let backgroundOpacity = 0.08
         static let valueFontSize: CGFloat = 34
+        static let nameFontSize: CGFloat = 20
+        static let compactTextThreshold = 2
         static let minimumScaleFactor = 0.65
         static let crawlIconSize: CGFloat = 32
         static let reverseArrowSize: CGFloat = 14

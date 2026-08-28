@@ -59,8 +59,22 @@ public struct AppSettingsViewStateMapper: Sendable {
                 connection: connection,
                 isVerifying: isVerifying,
                 verificationMessage: verificationMessage
-            )
+            ),
+            powerModes: powerModes(settings: settings, profile: profile)
         )
+    }
+
+    private func powerModes(
+        settings: AppSettings,
+        profile: BikeProfile?
+    ) -> PowerModeNavigationViewState {
+        let count = settings.powerModeNames(forVIN: profile?.vin).count
+        let detail = switch count {
+        case 0: "5 maps configured"
+        case 1: "5 maps · 1 custom name"
+        default: "5 maps · \(count) custom names"
+        }
+        return .init(detail: detail)
     }
 
     private func powerTier(

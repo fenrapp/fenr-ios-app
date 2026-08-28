@@ -65,6 +65,7 @@ enum ProductionAppDependencyContainerFactory {
             onboardingContainer: BikeOnboardingDependencyContainer(),
             dashboardContainer: RideDashboardDependencyContainer(),
             appSettingsContainer: AppSettingsDependencyContainer(),
+            powerModeSettingsContainer: PowerModeSettingsDependencyContainer(),
             bleTraceLogRepository: bleTraceRepository
         )
     }

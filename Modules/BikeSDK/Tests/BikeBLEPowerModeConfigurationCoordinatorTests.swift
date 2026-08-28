@@ -47,6 +47,80 @@ struct BikeBLEPowerModeConfigurationCoordinatorTests {
         #expect(transport.requests == [Data([0, 8, 2])])
     }
 
+    @Test("Normalizes a zero read curve and verifies a complete power and regen write")
+    func preparesAndWritesSelectedMap() async throws {
+        let transport = FakeBikeBLEPowerModeConfigurationTransport()
+        let coordinator = makeCoordinator(transport: transport)
+
+        try await coordinator.preparePowerModeControl(mapIndex: 2)
+        try await coordinator.setPowerModeConfiguration(
+            mapIndex: 2,
+            horsepower: 50,
+            regenerativeBrakingPercent: -20
+        )
+
+        #expect(transport.writePayloads == [
+            Data([1, 0, 2, 1, 75, 0, 50, 0, 3]),
+            Data([1, 0, 2, 1, 63, 0, 0xEC, 0xFF, 3])
+        ])
+        #expect(transport.requests == Array(repeating: Data([0, 0, 2]), count: 3))
+    }
+
+    @Test("Also accepts the normalized map curve in read responses")
+    func acceptsNormalizedReadCurve() async throws {
+        let transport = FakeBikeBLEPowerModeConfigurationTransport()
+        transport.curveOverrides[2] = 3
+        let coordinator = makeCoordinator(transport: transport)
+
+        try await coordinator.preparePowerModeControl(mapIndex: 2)
+
+        #expect(transport.writePayloads == [
+            Data([1, 0, 2, 1, 75, 0, 50, 0, 3])
+        ])
+    }
+
+    @Test("Prepares and verifies traction control while preserving its sibling value")
+    func preparesAndWritesTractionControl() async throws {
+        let transport = FakeBikeBLEPowerModeConfigurationTransport()
+        let coordinator = makeCoordinator(transport: transport)
+
+        try await coordinator.prepareTractionControl(mapIndex: 3)
+        try await coordinator.setTractionControlConfiguration(
+            mapIndex: 3,
+            powerTractionPercent: 12,
+            brakingTractionPercent: 30
+        )
+
+        #expect(transport.writePayloads == [
+            Data([1, 8, 1, 3, 15, 0xC8, 0, 0xC8, 0]),
+            Data([1, 8, 1, 3, 15, 0x78, 0, 0x2C, 0x01])
+        ])
+        #expect(transport.requests == Array(repeating: Data([0, 8, 3]), count: 3))
+    }
+
+    @Test("Requires traction-control compatible firmware before its no-op write")
+    func rejectsUnsupportedTractionControlFirmware() async {
+        let transport = FakeBikeBLEPowerModeConfigurationTransport()
+        transport.versionData = Data("1.10.0".utf8)
+        let coordinator = makeCoordinator(transport: transport)
+
+        await #expect(throws: BikeSDKError.self) {
+            try await coordinator.prepareTractionControl(mapIndex: 0)
+        }
+        #expect(transport.writePayloads.isEmpty)
+    }
+
+    @Test("Rejects an unexpected map curve before enabling writes")
+    func rejectsUnexpectedCurve() async {
+        let transport = FakeBikeBLEPowerModeConfigurationTransport()
+        let coordinator = makeCoordinator(transport: transport)
+        transport.curveOverrides[4] = 9
+
+        await #expect(throws: BikeSDKError.self) {
+            try await coordinator.preparePowerModeControl(mapIndex: 4)
+        }
+    }
+
     @Test("Fails verification when no power configuration is received")
     func requiresAtLeastOnePowerConfiguration() async {
         let transport = FakeBikeBLEPowerModeConfigurationTransport()

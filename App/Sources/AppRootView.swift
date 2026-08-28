@@ -2,6 +2,7 @@ import AppSettings
 import BatteryHealth
 import BikeDiagnostics
 import BikeOnboarding
+import PowerModeSettings
 import RideDashboard
 import SwiftUI
 import UIKit
@@ -12,6 +13,7 @@ struct AppRootView: View {
     @StateObject private var batteryHealthViewModel: BatteryHealthViewModel
     @StateObject private var onboardingViewModel: BikeOnboardingViewModel
     @StateObject private var appSettingsViewModel: AppSettingsViewModel
+    @StateObject private var powerModeSettingsViewModel: PowerModeSettingsViewModel
     @StateObject private var setupFlow: BikeSetupFlowController
     @State private var path: [Route] = []
     private let lifecycleController: AppLifecycleController
@@ -31,6 +33,7 @@ struct AppRootView: View {
         _batteryHealthViewModel = StateObject(wrappedValue: dependencies.batteryHealthViewModel)
         _onboardingViewModel = StateObject(wrappedValue: dependencies.onboardingViewModel)
         _appSettingsViewModel = StateObject(wrappedValue: dependencies.appSettingsViewModel)
+        _powerModeSettingsViewModel = StateObject(wrappedValue: dependencies.powerModeSettingsViewModel)
         _setupFlow = StateObject(wrappedValue: dependencies.setupFlow)
         lifecycleController = dependencies.lifecycleController
         rideDashboardFactory = dependencies.rideDashboardFactory
@@ -87,8 +90,11 @@ struct AppRootView: View {
                     AppSettingsView(
                         viewModel: appSettingsViewModel,
                         onOpenTelemetry: { path.append(.diagnostics) },
+                        onOpenPowerModes: { path.append(.powerModes) },
                         accessory: settingsAccessory
                     )
+                case .powerModes:
+                    PowerModeSettingsView(viewModel: powerModeSettingsViewModel)
                 }
             }
         }
@@ -196,6 +202,7 @@ struct AppRootView: View {
         case batteryHealth
         case diagnostics
         case settings
+        case powerModes
     }
 
     private enum Constants {

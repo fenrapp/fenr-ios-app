@@ -162,6 +162,9 @@ extension LiveVehicleSessionServiceTests {
         let fixture = makeFixture()
         await fixture.service.start()
         #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
         let baseOnly = BikePowerModeConfiguration(
             mapIndex: 0,
             horsepower: 60,
@@ -191,6 +194,61 @@ extension LiveVehicleSessionServiceTests {
         ))
         #expect(await waitUntil {
             await fixture.repository.powerModeRefreshes() == (base: [1], traction: [0, 1, 0])
+        })
+        await fixture.service.stop()
+    }
+
+    @Test("Refreshes the initial map when telemetry arrives before the session is ready")
+    func refreshesInitialPowerModeAfterConnectionBecomesReady() async {
+        let fixture = makeFixture()
+        await fixture.service.start()
+        #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
+        let tractionOnly = BikePowerModeConfiguration(
+            mapIndex: 0,
+            powerTractionPercent: 20,
+            brakingTractionPercent: 20
+        )
+
+        await fixture.repository.sendTelemetry(.init(
+            mode: .index(1),
+            powerModeConfigurations: [0: tractionOnly]
+        ))
+        #expect(await fixture.repository.powerModeRefreshes() == (base: [], traction: []))
+
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
+        #expect(await waitUntil {
+            await fixture.repository.powerModeRefreshes() == (base: [0], traction: [])
+        })
+        await fixture.service.stop()
+    }
+
+    @Test("Refreshes any restored active map when stale cached data is cleared")
+    func refreshesRestoredPowerModeAfterStaleCacheIsCleared() async {
+        let fixture = makeFixture()
+        await fixture.service.start()
+        #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
+        let completeConfiguration = BikePowerModeConfiguration(
+            mapIndex: 4,
+            horsepower: 60,
+            regenerativeBrakingPercent: 40,
+            powerTractionPercent: 20,
+            brakingTractionPercent: 20
+        )
+        await fixture.repository.sendTelemetry(.init(
+            mode: .index(5),
+            powerModeConfigurations: [4: completeConfiguration]
+        ))
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
+        #expect(await fixture.repository.powerModeRefreshes() == (base: [], traction: []))
+
+        await fixture.repository.sendTelemetry(.init(mode: .index(5)))
+
+        #expect(await waitUntil {
+            await fixture.repository.powerModeRefreshes() == (base: [4], traction: [4])
         })
         await fixture.service.stop()
     }
