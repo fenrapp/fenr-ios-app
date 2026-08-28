@@ -217,6 +217,28 @@ struct BikeSDKConnectionTests {
     }
 
     @MainActor
+    @Test("Automatic recovery publishes reconnecting without flashing disconnected")
+    func automaticRecoverySkipsDisconnectedState() async throws {
+        let adapter = FakeCoreBluetoothAdapter()
+        adapter.state = .poweredOn
+        let hub = AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
+        let stream = await hub.stream()
+        var iterator = stream.makeAsyncIterator()
+        let coordinator = makeConnectionCoordinator(adapter: adapter, eventHub: hub)
+        try await coordinator.connect(to: "VIN123")
+        _ = await nextNonDebugEvent(&iterator)
+
+        await coordinator.handleConnectionLoss(
+            terminalStatus: .disconnected(reason: "Synthetic link loss")
+        )
+
+        await #expect(
+            nextNonDebugEvent(&iterator)
+                == .connection(.reconnecting(vin: "VIN123", attempt: 1, maximumAttempts: 1))
+        )
+    }
+
+    @MainActor
     @Test("Stopping the coordinator disables future Bluetooth recovery scans")
     func stopDisablesRecoveryScans() async throws {
         let adapter = FakeCoreBluetoothAdapter()

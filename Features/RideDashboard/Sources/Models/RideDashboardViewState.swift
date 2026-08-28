@@ -11,6 +11,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
     public let centerMode: CenterMode
     public let connectionDetail: String
     public let hasTelemetry: Bool
+    public let showsConnectionProgress: Bool
     public let indicators: [DashboardIndicatorViewData]
 
     public init(
@@ -22,8 +23,9 @@ public struct RideDashboardViewState: Equatable, Sendable {
         gear: DashboardGearViewData = .init(),
         powerMode: DashboardPowerModeViewData = .init(),
         centerMode: CenterMode = .riding,
-        connectionDetail: String = "Connect your bike from Diagnostics.",
+        connectionDetail: String = "Restoring bike session",
         hasTelemetry: Bool = false,
+        showsConnectionProgress: Bool = true,
         indicators: [DashboardIndicatorViewData] = []
     ) {
         self.speedometer = speedometer
@@ -36,7 +38,16 @@ public struct RideDashboardViewState: Equatable, Sendable {
         self.centerMode = centerMode
         self.connectionDetail = connectionDetail
         self.hasTelemetry = hasTelemetry
+        self.showsConnectionProgress = showsConnectionProgress
         self.indicators = indicators
+    }
+
+    func waitingForStableTelemetry() -> Self {
+        .init(
+            batteryIndicatorMode: batteryIndicatorMode,
+            connectionDetail: "Verifying a stable telemetry stream",
+            showsConnectionProgress: true
+        )
     }
 
     public enum CenterMode: Hashable, Sendable {

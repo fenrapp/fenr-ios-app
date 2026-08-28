@@ -16,6 +16,7 @@ public enum BLETraceOperation: String, Codable, Sendable {
     case connectRequested = "connect_requested"
     case connectCompleted = "connect_completed"
     case connectFailed = "connect_failed"
+    case connectionStateChanged = "connection_state_changed"
     case disconnectRequested = "disconnect_requested"
     case disconnected
     case restoration

@@ -214,7 +214,6 @@ public final class BikeBLEConnectionCoordinator {
     public func didConnect(_ peripheral: CBPeripheral) async {
         guard sessionStore.isActive(peripheral) else { return }
         connectionWatchdog.cancel()
-        reconnectController.reset()
         let name = peripheral.name
         await eventEmitter.send(.connection(.discovering(peripheralName: name)))
         await peripheralOperations.discoverServices(BikeSDKConstants.serviceUUIDs, peripheral: peripheral)
@@ -229,9 +228,7 @@ public final class BikeBLEConnectionCoordinator {
             return
         }
         let message = error?.localizedDescription ?? BikeSDKText.connectFailed
-        await eventEmitter.send(.connection(.failed(message: message)))
-        resetSession()
-        await reconnectIfNeeded()
+        await handleConnectionLoss(terminalStatus: .failed(message: message))
     }
 
     public func didDisconnect(_ peripheral: CBPeripheral, error: Error?) async {
@@ -241,9 +238,7 @@ public final class BikeBLEConnectionCoordinator {
             await stopForPairingReset(error)
             return
         }
-        await eventEmitter.send(.connection(.disconnected(reason: error?.localizedDescription)))
-        resetSession()
-        await reconnectIfNeeded()
+        await handleConnectionLoss(terminalStatus: .disconnected(reason: error?.localizedDescription))
     }
 
 }
@@ -291,7 +286,6 @@ private extension BikeBLEConnectionCoordinator {
         guard sessionStore.peripheral?.identifier == peripheralIdentifier,
               sessionStore.shouldConnectWhenPoweredOn,
               let peripheral = sessionStore.peripheral else { return }
-        await eventEmitter.send(.connection(.failed(message: BikeSDKText.connectionTimedOut)))
         await traceEmitter.record(
             category: "link",
             operation: .connectFailed,
@@ -299,8 +293,7 @@ private extension BikeBLEConnectionCoordinator {
             detail: "connection_timeout"
         )
         adapter.cancelConnection(peripheral)
-        resetSession()
-        await reconnectIfNeeded()
+        await handleConnectionLoss(terminalStatus: .failed(message: BikeSDKText.connectionTimedOut))
     }
 
     func maskedVIN(_ vin: String) -> String {
@@ -320,6 +313,16 @@ private extension BikeBLEConnectionCoordinator {
 }
 
 extension BikeBLEConnectionCoordinator {
+    func handleConnectionLoss(terminalStatus: BikeSDKConnectionStatus) async {
+        let shouldReconnect = sessionStore.shouldConnectWhenPoweredOn
+        resetSession()
+        if shouldReconnect {
+            await reconnectIfNeeded()
+        } else {
+            await eventEmitter.send(.connection(terminalStatus))
+        }
+    }
+
     func stopForPairingReset(_ error: Error?) async {
         reconnectController.reset()
         sessionStore.setReconnectIntent(false)

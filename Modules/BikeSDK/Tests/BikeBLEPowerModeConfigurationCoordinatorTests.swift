@@ -72,7 +72,7 @@ struct BikeBLEPowerModeConfigurationCoordinatorTests {
     ) -> BikeBLEPowerModeConfigurationCoordinator {
         BikeBLEPowerModeConfigurationCoordinator(
             transport: transport,
-            eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
+            eventEmitter: makeEventEmitter(eventHub: eventHub),
             sessionStore: BLESessionStore()
         )
     }

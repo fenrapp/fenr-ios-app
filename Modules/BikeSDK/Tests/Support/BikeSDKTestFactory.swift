@@ -13,14 +13,18 @@ func makeConnectionCoordinator(
     sessionResetHandler: @escaping @MainActor () -> Void = {}
 ) -> BikeBLEConnectionCoordinator {
     let traceEmitter = makeTraceEmitter()
+    let reconnectController = BikeBLEReconnectController(
+        delay: BikeBLEReconnectDelay(),
+        policy: .init(delays: [.zero]),
+        connectionStabilityPeriod: .zero
+    )
     return BikeBLECoordinatorAssembly.makeConnectionCoordinator(
         dependencies: .init(
             adapter: adapter,
             sessionStore: BLESessionStore(),
-            eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
+            eventEmitter: makeEventEmitter(eventHub: eventHub),
             peripheralDelegate: NoOpPeripheralDelegate(),
-            reconnectDelay: BikeBLEReconnectDelay(),
-            reconnectPolicy: .init(delays: [.zero]),
+            reconnectController: reconnectController,
             connectionWatchdog: BikeBLEConnectionWatchdog(
                 timeoutScheduler: connectionTimeoutScheduler
             ),
@@ -48,6 +52,10 @@ func makeTraceEmitter(recorder: any BLETraceRecording = NoOpBLETraceRepository()
         uptimeNanoseconds: { DispatchTime.now().uptimeNanoseconds },
         makeSessionID: UUID.init
     )
+}
+
+func makeEventEmitter(eventHub: AsyncEventHub<BikeSDKEvent>) -> BikeBLEEventEmitter {
+    BikeBLEEventEmitter(eventHub: eventHub, connectionStatusObserver: { _ in })
 }
 
 private func makeProtocolNotificationDecoders() -> [UUID: StarkNotificationDecoder] {
@@ -146,9 +154,24 @@ func makeNotificationCoordinator(
     eventHub: AsyncEventHub<BikeSDKEvent>,
     timeoutScheduler: any BikeBLETimeoutScheduling
 ) -> BikeBLENotificationCoordinator {
-    let eventEmitter = BikeBLEEventEmitter(eventHub: eventHub)
+    makeNotificationCoordinator(
+        sessionStore: sessionStore,
+        eventHub: eventHub,
+        timeoutScheduler: timeoutScheduler,
+        connectionDidBecomeReady: {}
+    )
+}
+
+@MainActor
+private func makeNotificationCoordinator(
+    sessionStore: BLESessionStore,
+    eventHub: AsyncEventHub<BikeSDKEvent>,
+    timeoutScheduler: any BikeBLETimeoutScheduling,
+    connectionDidBecomeReady: @escaping @MainActor () -> Void
+) -> BikeBLENotificationCoordinator {
+    let eventEmitter = makeEventEmitter(eventHub: eventHub)
     let traceEmitter = makeTraceEmitter()
-    return BikeBLECoordinatorAssembly.makeNotificationCoordinator(
+    return BikeBLECoordinatorAssembly.makeNotificationCoordinator(dependencies: .init(
         sessionStore: sessionStore,
         eventEmitter: eventEmitter,
         notificationProcessor: BikeBLENotificationProcessor(
@@ -158,8 +181,9 @@ func makeNotificationCoordinator(
             traceEmitter: traceEmitter
         ),
         timeoutScheduler: timeoutScheduler,
+        connectionDidBecomeReady: connectionDidBecomeReady,
         peripheralOperations: BikeBLEPeripheralOperations(traceEmitter: traceEmitter)
-    )
+    ))
 }
 
 @MainActor
@@ -168,24 +192,23 @@ func makeTelemetryClient(
     eventHub: AsyncEventHub<BikeSDKEvent>
 ) -> CoreBluetoothBikeTelemetryClient {
     let sessionStore = BLESessionStore()
-    let eventEmitter = BikeBLEEventEmitter(eventHub: eventHub)
+    let eventEmitter = makeEventEmitter(eventHub: eventHub)
     let callbackQueue = BikeBLECallbackQueue()
     let runtimeConfiguration = BikeSDKRuntimeConfiguration()
     let traceEmitter = makeTraceEmitter()
     let peripheralOperations = BikeBLEPeripheralOperations(traceEmitter: traceEmitter)
-    let notificationCoordinator = BikeBLECoordinatorAssembly.makeNotificationCoordinator(
+    let reconnectController = BikeBLEReconnectController(
+        delay: BikeBLEReconnectDelay(),
+        policy: .init(delays: [.zero]),
+        connectionStabilityPeriod: .zero
+    )
+    let notificationCoordinator = makeNotificationCoordinator(
         sessionStore: sessionStore,
-        eventEmitter: eventEmitter,
-        notificationProcessor: BikeBLENotificationProcessor(
-            eventEmitter: eventEmitter,
-            notificationMapper: makeNotificationMapper(),
-            debugSampler: BikeNotificationDebugSampler(minimumInterval: 1),
-            traceEmitter: traceEmitter
-        ),
+        eventHub: eventHub,
         timeoutScheduler: BikeBLEOperationTimeoutScheduler(
             duration: runtimeConfiguration.subscriptionOperationTimeout
         ),
-        peripheralOperations: peripheralOperations
+        connectionDidBecomeReady: reconnectController.markConnectionReady
     )
     let securityCoordinator = makeSecurityCoordinator(
         sessionStore: sessionStore,
@@ -200,8 +223,7 @@ func makeTelemetryClient(
             sessionStore: sessionStore,
             eventEmitter: eventEmitter,
             peripheralDelegate: NoOpPeripheralDelegate(),
-            reconnectDelay: BikeBLEReconnectDelay(),
-            reconnectPolicy: .init(delays: [.zero]),
+            reconnectController: reconnectController,
             connectionWatchdog: makeConnectionWatchdog(
                 duration: runtimeConfiguration.connectionOperationTimeout
             ),

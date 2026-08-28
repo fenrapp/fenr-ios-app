@@ -11,7 +11,7 @@ struct BikeBLENotificationProcessorTests {
         let eventHub = AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
         let stream = await eventHub.stream()
         let processor = BikeBLENotificationProcessor(
-            eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
+            eventEmitter: makeEventEmitter(eventHub: eventHub),
             notificationMapper: makeNotificationMapper(),
             debugSampler: BikeNotificationDebugSampler(minimumInterval: 1),
             traceEmitter: makeTraceEmitter()
@@ -44,7 +44,7 @@ struct BikeBLENotificationProcessorTests {
         let stream = await eventHub.stream()
         let initialDate = Date(timeIntervalSince1970: 0)
         let processor = BikeBLENotificationProcessor(
-            eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
+            eventEmitter: makeEventEmitter(eventHub: eventHub),
             notificationMapper: makeNotificationMapper(),
             debugSampler: BikeNotificationDebugSampler(minimumInterval: 1),
             traceEmitter: makeTraceEmitter()
@@ -76,7 +76,7 @@ struct BikeBLENotificationProcessorTests {
         let eventHub = AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
         let stream = await eventHub.stream()
         let processor = BikeBLENotificationProcessor(
-            eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
+            eventEmitter: makeEventEmitter(eventHub: eventHub),
             notificationMapper: makeNotificationMapper(),
             debugSampler: BikeNotificationDebugSampler(minimumInterval: 1),
             traceEmitter: makeTraceEmitter()

@@ -10,6 +10,7 @@ public struct BikeBLENotificationCoordinator {
     private let chargePowerCoordinator: BikeBLEChargePowerCoordinator
     private let powerModeCoordinator: BikeBLEPowerModeConfigurationCoordinator
     private let configurationTransport: BikeBLEVCUConfigurationTransport
+    private let connectionDidBecomeReady: @MainActor () -> Void
     private let peripheralOperations: BikeBLEPeripheralOperations
 
     init(
@@ -20,6 +21,7 @@ public struct BikeBLENotificationCoordinator {
         chargePowerCoordinator: BikeBLEChargePowerCoordinator,
         powerModeCoordinator: BikeBLEPowerModeConfigurationCoordinator,
         configurationTransport: BikeBLEVCUConfigurationTransport,
+        connectionDidBecomeReady: @escaping @MainActor () -> Void,
         peripheralOperations: BikeBLEPeripheralOperations
     ) {
         self.sessionStore = sessionStore
@@ -29,6 +31,7 @@ public struct BikeBLENotificationCoordinator {
         self.chargePowerCoordinator = chargePowerCoordinator
         self.powerModeCoordinator = powerModeCoordinator
         self.configurationTransport = configurationTransport
+        self.connectionDidBecomeReady = connectionDidBecomeReady
         self.peripheralOperations = peripheralOperations
     }
 
@@ -98,6 +101,7 @@ public struct BikeBLENotificationCoordinator {
             characteristicUUID: characteristic.uuid,
             requiredCharacteristicUUIDs: BikeSDKConstants.requiredTelemetryNotifyUUIDs
         ) {
+            connectionDidBecomeReady()
             await eventEmitter.send(.connection(.receivingTelemetry(peripheralName: peripheral.name)))
         }
         if didDecodeTelemetry {

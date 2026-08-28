@@ -34,6 +34,20 @@ enum DashboardUnavailableState {
         .padding(DesignSpace.large)
     }
 
+    static func connecting(detail: String) -> some View {
+        VStack(spacing: DesignSpace.small) {
+            ProgressView()
+                .controlSize(.large)
+            Text("Connecting to bike").font(.title3.weight(.semibold))
+            Text(detail)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+        }
+        .padding(DesignSpace.large)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Connecting to bike. \(detail)")
+    }
+
     private enum Constants {
         static let iconSize: CGFloat = 42
     }

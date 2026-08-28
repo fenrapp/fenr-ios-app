@@ -17,7 +17,7 @@ struct BikeBLETimeoutRecoveryTests {
         sessionStore.setAuthenticationState(.readingNonce)
         let watchdog = BikeBLESecurityWatchdog(
             sessionStore: sessionStore,
-            eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
+            eventEmitter: makeEventEmitter(eventHub: eventHub),
             timeoutScheduler: scheduler,
             timeoutRecoveryHandler: {}
         )
@@ -41,7 +41,7 @@ struct BikeBLETimeoutRecoveryTests {
         sessionStore.setAuthenticationState(.readingNonce)
         let watchdog = BikeBLESecurityWatchdog(
             sessionStore: sessionStore,
-            eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
+            eventEmitter: makeEventEmitter(eventHub: eventHub),
             timeoutScheduler: scheduler,
             timeoutRecoveryHandler: { recoveryRecorder.append(1) }
         )
@@ -62,7 +62,7 @@ struct BikeBLETimeoutRecoveryTests {
         sessionStore.setAuthenticationState(.readingNonce)
         let watchdog = BikeBLESecurityWatchdog(
             sessionStore: sessionStore,
-            eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
+            eventEmitter: makeEventEmitter(eventHub: eventHub),
             timeoutScheduler: scheduler,
             timeoutRecoveryHandler: {}
         )
@@ -83,7 +83,7 @@ struct BikeBLETimeoutRecoveryTests {
         sessionStore.setAuthenticationState(.readingNonce)
         let watchdog = BikeBLESecurityWatchdog(
             sessionStore: sessionStore,
-            eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
+            eventEmitter: makeEventEmitter(eventHub: eventHub),
             timeoutScheduler: scheduler,
             timeoutRecoveryHandler: {}
         )
@@ -138,7 +138,7 @@ struct BikeBLETimeoutRecoveryTests {
     func securitySessionResetCancelsPendingWork() async {
         let eventHub = AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
         let sessionStore = BLESessionStore()
-        let eventEmitter = BikeBLEEventEmitter(eventHub: eventHub)
+        let eventEmitter = makeEventEmitter(eventHub: eventHub)
         let securityScheduler = FakeBikeBLETimeoutScheduler()
         let watchdog = BikeBLESecurityWatchdog(
             sessionStore: sessionStore,

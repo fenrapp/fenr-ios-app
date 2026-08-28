@@ -43,7 +43,7 @@ public enum BikeTelemetryClientFactory {
                 sessionStore: context.sessionStore,
                 eventEmitter: context.eventEmitter,
                 peripheralDelegate: peripheralDelegate,
-                reconnectPolicy: context.runtimeConfiguration.reconnectPolicy,
+                reconnectController: context.reconnectController,
                 connectionWatchdog: BikeBLEConnectionWatchdog(
                     timeoutScheduler: BikeBLEOperationTimeoutScheduler(
                         duration: context.runtimeConfiguration.connectionOperationTimeout
@@ -82,6 +82,7 @@ private extension BikeTelemetryClientFactory {
         let sessionStore: BLESessionStore
         let adapter: CoreBluetoothAdapter
         let callbackQueue: BikeBLECallbackQueue
+        let reconnectController: BikeBLEReconnectController
         let traceEmitter: BikeBLETraceEmitter
         let peripheralOperations: BikeBLEPeripheralOperations
     }
@@ -95,13 +96,24 @@ private extension BikeTelemetryClientFactory {
             uptimeNanoseconds: { DispatchTime.now().uptimeNanoseconds },
             makeSessionID: UUID.init
         )
+        let reconnectController = BikeBLEReconnectController(
+            delay: BikeBLEReconnectDelay(),
+            policy: runtimeConfiguration.reconnectPolicy,
+            connectionStabilityPeriod: runtimeConfiguration.connectionStabilityPeriod
+        )
         return FactoryContext(
             runtimeConfiguration: runtimeConfiguration,
             eventHub: eventHub,
-            eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
+            eventEmitter: BikeBLEEventEmitter(
+                eventHub: eventHub,
+                connectionStatusObserver: { [traceEmitter] status in
+                    await traceEmitter.recordConnectionState(status)
+                }
+            ),
             sessionStore: BLESessionStore(),
             adapter: AppleCoreBluetoothAdapter(),
             callbackQueue: BikeBLECallbackQueue(),
+            reconnectController: reconnectController,
             traceEmitter: traceEmitter,
             peripheralOperations: BikeBLEPeripheralOperations(traceEmitter: traceEmitter)
         )
@@ -172,8 +184,7 @@ private extension BikeTelemetryClientFactory {
                 sessionStore: input.sessionStore,
                 eventEmitter: input.eventEmitter,
                 peripheralDelegate: input.peripheralDelegate,
-                reconnectDelay: BikeBLEReconnectDelay(),
-                reconnectPolicy: input.reconnectPolicy,
+                reconnectController: input.reconnectController,
                 connectionWatchdog: input.connectionWatchdog,
                 traceEmitter: input.traceEmitter,
                 peripheralOperations: input.peripheralOperations
@@ -190,7 +201,7 @@ private extension BikeTelemetryClientFactory {
         let sessionStore: BLESessionStore
         let eventEmitter: BikeBLEEventEmitter
         let peripheralDelegate: CBPeripheralDelegate
-        let reconnectPolicy: BikeBLEReconnectPolicy
+        let reconnectController: BikeBLEReconnectController
         let connectionWatchdog: BikeBLEConnectionWatchdog
         let traceEmitter: BikeBLETraceEmitter
         let peripheralOperations: BikeBLEPeripheralOperations
@@ -250,13 +261,11 @@ private extension BikeTelemetryClientFactory {
         )
     }
 
-    static func makeNotificationCoordinator(
-        _ context: FactoryContext
-    ) -> BikeBLENotificationCoordinator {
+    static func makeNotificationCoordinator(_ context: FactoryContext) -> BikeBLENotificationCoordinator {
         let mapper = StarkNotificationToSDKEventMapper(
             decoderRegistry: BikeTelemetryDecoderRegistryFactory.make()
         )
-        return BikeBLECoordinatorAssembly.makeNotificationCoordinator(
+        return BikeBLECoordinatorAssembly.makeNotificationCoordinator(dependencies: .init(
             sessionStore: context.sessionStore,
             eventEmitter: context.eventEmitter,
             notificationProcessor: BikeBLENotificationProcessor(
@@ -270,7 +279,8 @@ private extension BikeTelemetryClientFactory {
             timeoutScheduler: BikeBLEOperationTimeoutScheduler(
                 duration: context.runtimeConfiguration.subscriptionOperationTimeout
             ),
+            connectionDidBecomeReady: context.reconnectController.markConnectionReady,
             peripheralOperations: context.peripheralOperations
-        )
+        ))
     }
 }

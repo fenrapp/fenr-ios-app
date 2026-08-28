@@ -163,6 +163,7 @@ struct RideDashboardMapperTests {
         #expect(state.gear == .init())
         #expect(state.indicators.allSatisfy { !$0.isActive })
         #expect(state.connectionDetail == "Bluetooth is off")
+        #expect(!state.showsConnectionProgress)
     }
 
     @Test("Maps charging into screen-ready dashboard state")

@@ -12,6 +12,16 @@ struct BikeSDKRuntimeConfigurationTests {
         #expect(configuration.connectionOperationTimeout == .seconds(12))
     }
 
+    @Test("Connection stability defaults to the shared telemetry interval")
+    func connectionStabilityUsesSharedInterval() {
+        let configuration = BikeSDKRuntimeConfiguration()
+
+        #expect(
+            configuration.connectionStabilityPeriod
+                == FENRRuntimeConstants.Telemetry.connectionStabilityPeriod
+        )
+    }
+
     @Test("Reconnect policy is configurable")
     func reconnectPolicyIsConfigurable() {
         let expectedPolicy = BikeBLEReconnectPolicy(delays: [.seconds(2), .seconds(3)])

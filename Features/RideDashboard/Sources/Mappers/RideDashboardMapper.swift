@@ -78,8 +78,9 @@ public struct RideDashboardMapper: Sendable {
             centerMode: hasTelemetry && telemetry.statusFlags.isChargerConnected
                 ? .charging
                 : .riding,
-            connectionDetail: connectionText(connection.state),
+            connectionDetail: RideDashboardConnectionMapper.text(connection.state),
             hasTelemetry: hasTelemetry,
+            showsConnectionProgress: !hasTelemetry && RideDashboardConnectionMapper.showsProgress(connection.state),
             indicators: indicators(flags: telemetry.statusFlags, hasTelemetry: hasTelemetry)
         )
     }
@@ -244,26 +245,55 @@ public struct RideDashboardMapper: Sendable {
         return .zero
     }
 
-    private func connectionText(_ state: ConnectionState) -> String {
-        switch state {
-        case .reconnecting(_, let attempt, let maximumAttempts): "Reconnecting (\(attempt)/\(maximumAttempts))"
-        case .pairingResetRequired(let message): message
-        case .scanning: "Scanning for bike"
-        case .connecting: "Connecting"
-        case .authenticating: "Authenticating"
-        case .receivingTelemetry: "Live telemetry active"
-        case .failed(let message): message
-        case .bluetoothPoweredOff: "Bluetooth is off"
-        case .bluetoothUnauthorized: "Bluetooth access is required"
-        default: "Connect your bike from Diagnostics."
-        }
-    }
-
     private enum Constants {
         static let maximumBatteryPercentage = 100
         static let criticalBatteryPercentage = 21
         static let warningBatteryPercentage = 51
         static let validPowerModeRange = 1 ... 5
+    }
+}
+
+private enum RideDashboardConnectionMapper {
+    static func text(_ state: ConnectionState) -> String {
+        switch state {
+        case .idle: "Restoring bike session"
+        case .reconnecting(_, let attempt, let maximumAttempts): "Reconnecting (\(attempt)/\(maximumAttempts))"
+        case .pairingResetRequired(let message): message
+        case .scanning: "Scanning for bike"
+        case .connecting: "Connecting"
+        case .discovering: "Discovering bike services"
+        case .authenticating: "Authenticating"
+        case .authenticated: "Enabling live telemetry"
+        case .subscribed: "Waiting for live telemetry"
+        case .receivingTelemetry: "Live telemetry active"
+        case .disconnected(let reason): reason ?? "Disconnected"
+        case .failed(let message): message
+        case .bluetoothUnavailable: "Bluetooth is unavailable"
+        case .bluetoothPoweredOff: "Bluetooth is off"
+        case .bluetoothUnauthorized: "Bluetooth access is required"
+        }
+    }
+
+    static func showsProgress(_ state: ConnectionState) -> Bool {
+        switch state {
+        case .idle,
+             .scanning,
+             .connecting,
+             .discovering,
+             .authenticating,
+             .authenticated,
+             .subscribed,
+             .receivingTelemetry,
+             .reconnecting:
+            true
+        case .bluetoothUnavailable,
+             .bluetoothUnauthorized,
+             .bluetoothPoweredOff,
+             .pairingResetRequired,
+             .disconnected,
+             .failed:
+            false
+        }
     }
 }
 

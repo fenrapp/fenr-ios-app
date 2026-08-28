@@ -148,6 +148,10 @@ public struct RideDashboardView: View {
                             .allowsHitTesting(false)
                         }
                     }
+                } else if viewModel.viewState.showsConnectionProgress {
+                    DashboardUnavailableState.connecting(
+                        detail: viewModel.viewState.connectionDetail
+                    )
                 } else {
                     DashboardUnavailableState.disconnected(
                         detail: viewModel.viewState.connectionDetail,

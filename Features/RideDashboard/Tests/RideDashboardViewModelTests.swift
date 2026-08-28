@@ -44,7 +44,66 @@ struct RideDashboardViewModelTests {
         fixture.viewModel.stopObserving()
     }
 
+    @Test("Waits for stable telemetry before revealing the dashboard")
+    func waitsForStableTelemetry() async throws {
+        let fixture = makeFixture(initialConnectionStabilityPeriod: .milliseconds(40))
+        fixture.viewModel.startObserving()
+
+        await fixture.vehicleSession.send(ridingSnapshot(speed: 24))
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.showsConnectionProgress
+                && !fixture.viewModel.viewState.hasTelemetry
+        })
+
+        try await Task.sleep(for: .milliseconds(10))
+        await fixture.vehicleSession.send(.init(
+            connection: .init(state: .reconnecting(
+                vin: "FENRTEST000000001",
+                attempt: 1,
+                maximumAttempts: 5
+            )),
+            hasReceivedSettings: true,
+            hasReceivedProfile: true
+        ))
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(!fixture.viewModel.viewState.hasTelemetry)
+        #expect(fixture.viewModel.viewState.showsConnectionProgress)
+
+        await fixture.vehicleSession.send(ridingSnapshot(speed: 42))
+        #expect(await waitUntil { fixture.viewModel.viewState.hasTelemetry })
+        #expect(fixture.viewModel.viewState.speedometer.valueText == "42")
+        fixture.viewModel.stopObserving()
+    }
+
+    @Test("Presents connection phases as progress instead of disconnection")
+    func mapsConnectionProgress() {
+        let mapper = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_US"))
+        let states: [ConnectionState] = [
+            .idle,
+            .scanning(vin: "FENRTEST000000001"),
+            .connecting(vin: "FENRTEST000000001", peripheralName: nil),
+            .discovering(peripheralName: nil),
+            .authenticating(peripheralName: nil),
+            .authenticated(peripheralName: nil),
+            .subscribed(peripheralName: nil),
+            .reconnecting(vin: "FENRTEST000000001", attempt: 1, maximumAttempts: 5)
+        ]
+
+        for connectionState in states {
+            let state = mapper.map(
+                telemetry: BikeTelemetry(),
+                connection: BikeConnection(state: connectionState),
+                speedKilometersPerHour: nil,
+                measurementSystem: .metric
+            )
+            #expect(state.showsConnectionProgress)
+            #expect(!state.hasTelemetry)
+            #expect(state.connectionDetail != "Connect your bike from Diagnostics.")
+        }
+    }
+
     private func makeFixture(
+        initialConnectionStabilityPeriod: Duration = .zero,
         reconnectionGracePeriod: Duration = .seconds(30)
     ) -> Fixture {
         let vehicleSession = RideDashboardVehicleSession()
@@ -54,6 +113,7 @@ struct RideDashboardViewModelTests {
                     locale: Locale(identifier: "en_GB")
                 ),
                 vehicleSession: vehicleSession,
+                initialConnectionStabilityPeriod: initialConnectionStabilityPeriod,
                 reconnectionGracePeriod: reconnectionGracePeriod
             ),
             vehicleSession: vehicleSession

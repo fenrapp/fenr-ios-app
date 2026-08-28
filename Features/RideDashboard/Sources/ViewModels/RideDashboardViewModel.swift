@@ -13,23 +13,29 @@ public final class RideDashboardViewModel: ObservableObject {
     private var snapshot = VehicleSessionSnapshot()
     private var observationTask: Task<Void, Never>?
     private var statusSnapshotRefreshTask: Task<Void, Never>?
+    private var connectionStabilityTask: Task<Void, Never>?
     private var reconnectionGraceTask: Task<Void, Never>?
+    private var pendingLiveViewState: RideDashboardViewState?
     private var lastLiveViewState: RideDashboardViewState?
+    private let initialConnectionStabilityPeriod: Duration
     private let reconnectionGracePeriod: Duration
 
     public init(
         mapper: RideDashboardMapper,
         vehicleSession: any VehicleSessionService,
+        initialConnectionStabilityPeriod: Duration,
         reconnectionGracePeriod: Duration
     ) {
         self.mapper = mapper
         self.vehicleSession = vehicleSession
+        self.initialConnectionStabilityPeriod = initialConnectionStabilityPeriod
         self.reconnectionGracePeriod = reconnectionGracePeriod
     }
 
     deinit {
         observationTask?.cancel()
         statusSnapshotRefreshTask?.cancel()
+        connectionStabilityTask?.cancel()
         reconnectionGraceTask?.cancel()
     }
 
@@ -51,6 +57,7 @@ public final class RideDashboardViewModel: ObservableObject {
         observationTask = nil
         statusSnapshotRefreshTask?.cancel()
         statusSnapshotRefreshTask = nil
+        cancelPendingConnectionStability()
         reconnectionGraceTask?.cancel()
         reconnectionGraceTask = nil
         lastLiveViewState = nil
@@ -80,12 +87,21 @@ public final class RideDashboardViewModel: ObservableObject {
 
     private func updateViewState(with mappedViewState: RideDashboardViewState) {
         if mappedViewState.hasTelemetry {
+            if lastLiveViewState == nil {
+                pendingLiveViewState = mappedViewState
+                publish(mappedViewState.waitingForStableTelemetry())
+                startConnectionStabilityPeriod()
+                return
+            }
+            cancelPendingConnectionStability()
             reconnectionGraceTask?.cancel()
             reconnectionGraceTask = nil
             lastLiveViewState = mappedViewState
             publish(mappedViewState)
             return
         }
+
+        cancelPendingConnectionStability()
 
         guard
             isTransientReconnectionState(snapshot.connection.state),
@@ -105,6 +121,38 @@ public final class RideDashboardViewModel: ObservableObject {
     private func publish(_ nextViewState: RideDashboardViewState) {
         guard nextViewState != viewState else { return }
         viewState = nextViewState
+    }
+
+    private func startConnectionStabilityPeriod() {
+        guard connectionStabilityTask == nil else { return }
+        let stabilityPeriod = initialConnectionStabilityPeriod
+        connectionStabilityTask = Task { [weak self] in
+            do {
+                try await Task.sleep(for: stabilityPeriod)
+            } catch {
+                return
+            }
+            guard !Task.isCancelled else { return }
+            self?.promoteStableConnection()
+        }
+    }
+
+    private func promoteStableConnection() {
+        connectionStabilityTask = nil
+        guard let pendingLiveViewState, isReceivingTelemetry else {
+            self.pendingLiveViewState = nil
+            render()
+            return
+        }
+        self.pendingLiveViewState = nil
+        lastLiveViewState = pendingLiveViewState
+        publish(pendingLiveViewState)
+    }
+
+    private func cancelPendingConnectionStability() {
+        connectionStabilityTask?.cancel()
+        connectionStabilityTask = nil
+        pendingLiveViewState = nil
     }
 
     private func startReconnectionGracePeriod() {

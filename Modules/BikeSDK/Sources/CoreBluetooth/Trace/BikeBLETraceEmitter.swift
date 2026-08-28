@@ -106,6 +106,15 @@ final class BikeBLETraceEmitter {
         await recorder.record(event)
     }
 
+    func recordConnectionState(_ status: BikeSDKConnectionStatus) async {
+        await record(
+            category: "connection_state",
+            operation: .connectionStateChanged,
+            direction: .internalEvent,
+            detail: connectionStateDetail(status)
+        )
+    }
+
     private func makeEvent(
         timestamp: Date,
         uptimeNanoseconds: UInt64,
@@ -147,6 +156,27 @@ final class BikeBLETraceEmitter {
             detail: detail.map(redact),
             error: traceError
         )
+    }
+
+    private func connectionStateDetail(_ status: BikeSDKConnectionStatus) -> String {
+        switch status {
+        case .idle: "idle"
+        case .bluetoothUnavailable: "bluetooth_unavailable"
+        case .bluetoothUnauthorized: "bluetooth_unauthorized"
+        case .bluetoothPoweredOff: "bluetooth_powered_off"
+        case .scanning: "scanning"
+        case .connecting: "connecting"
+        case .discovering: "discovering"
+        case .authenticating: "authenticating"
+        case .authenticated: "authenticated"
+        case .subscribed: "subscribed"
+        case .receivingTelemetry: "receiving_telemetry"
+        case .reconnecting(_, let attempt, let maximumAttempts):
+            "reconnecting attempt=\(attempt) maximum=\(maximumAttempts)"
+        case .pairingResetRequired: "pairing_reset_required"
+        case .disconnected: "disconnected"
+        case .failed: "failed"
+        }
     }
 
     func recordReadRequested(characteristic: CBCharacteristic) async {

@@ -10,7 +10,8 @@ struct BikeBLEReconnectControllerTests {
         let recorder = MainActorValueRecorder()
         let controller = BikeBLEReconnectController(
             delay: BikeBLEReconnectDelay(),
-            policy: .init(delays: [.zero])
+            policy: .init(delays: [.zero]),
+            connectionStabilityPeriod: .zero
         )
 
         let didSchedule = await controller.schedule(
@@ -34,7 +35,8 @@ struct BikeBLEReconnectControllerTests {
         let recorder = MainActorValueRecorder()
         let controller = BikeBLEReconnectController(
             delay: BikeBLEReconnectDelay(),
-            policy: .init(delays: [])
+            policy: .init(delays: []),
+            connectionStabilityPeriod: .zero
         )
 
         let didSchedule = await controller.schedule(
@@ -45,5 +47,37 @@ struct BikeBLEReconnectControllerTests {
         #expect(!didSchedule)
         #expect(recorder.values.isEmpty)
         #expect(!controller.hasPendingReconnect)
+    }
+
+    @Test("Backoff resets only after telemetry remains stable")
+    func stableTelemetryResetsBackoff() async throws {
+        let recorder = MainActorValueRecorder()
+        let controller = BikeBLEReconnectController(
+            delay: BikeBLEReconnectDelay(),
+            policy: .init(delays: [.seconds(60), .seconds(60), .seconds(60)]),
+            connectionStabilityPeriod: .milliseconds(20)
+        )
+        let schedule = {
+            await controller.schedule(
+                onScheduled: { attempt, _ in recorder.append(attempt) },
+                operation: {}
+            )
+        }
+
+        #expect(await schedule())
+        controller.cancelPending()
+        #expect(await schedule())
+        #expect(recorder.values == [1, 2])
+
+        controller.markConnectionReady()
+        #expect(await schedule())
+        #expect(recorder.values == [1, 2, 3])
+
+        controller.cancelPending()
+        controller.markConnectionReady()
+        try await Task.sleep(for: .milliseconds(30))
+        #expect(await schedule())
+        #expect(recorder.values == [1, 2, 3, 1])
+        controller.cancelPending()
     }
 }

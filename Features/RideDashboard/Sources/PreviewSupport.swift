@@ -13,6 +13,7 @@ enum RideDashboardPreviewFactory {
         let viewModel = RideDashboardViewModel(
             mapper: RideDashboardMapperFactory.makeRideMapper(locale: .autoupdatingCurrent),
             vehicleSession: PreviewVehicleSessionService(),
+            initialConnectionStabilityPeriod: .zero,
             reconnectionGracePeriod: .seconds(30)
         )
         viewModel.setPreviewState(state)

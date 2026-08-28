@@ -73,7 +73,7 @@ struct BikeBLETraceEmitterTests {
         await emitter.startSession(vin: "FENRTEST000000001", reason: .connectionRequest)
         let eventHub = AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
         let processor = BikeBLENotificationProcessor(
-            eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
+            eventEmitter: makeEventEmitter(eventHub: eventHub),
             notificationMapper: makeNotificationMapper(),
             debugSampler: BikeNotificationDebugSampler(minimumInterval: 10),
             traceEmitter: emitter
@@ -103,7 +103,7 @@ struct BikeBLETraceEmitterTests {
         await emitter.startSession(vin: "FENRTEST000000001", reason: .connectionRequest)
         let eventHub = AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
         let processor = BikeBLENotificationProcessor(
-            eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
+            eventEmitter: makeEventEmitter(eventHub: eventHub),
             notificationMapper: makeNotificationMapper(),
             debugSampler: BikeNotificationDebugSampler(minimumInterval: 10),
             traceEmitter: emitter
@@ -114,5 +114,27 @@ struct BikeBLETraceEmitterTests {
 
         let outcomes = await recorder.recordedEvents().compactMap(\.decodeStatus)
         #expect(outcomes == [.unmapped, .failed])
+    }
+
+    @Test("Records high-level connection states without vehicle identity")
+    func recordsConnectionStates() async {
+        let recorder = BLETraceRecorderSpy()
+        let emitter = makeTraceEmitter(recorder: recorder)
+        await emitter.startSession(vin: "FENRTEST000000001", reason: .connectionRequest)
+
+        await emitter.recordConnectionState(.connecting(
+            vin: "FENRTEST000000001",
+            peripheralName: "FENRTEST000000001"
+        ))
+        await emitter.recordConnectionState(.reconnecting(
+            vin: "FENRTEST000000001",
+            attempt: 2,
+            maximumAttempts: 5
+        ))
+
+        let events = await recorder.recordedEvents().filter {
+            $0.operation == .connectionStateChanged
+        }
+        #expect(events.map(\.detail) == ["connecting", "reconnecting attempt=2 maximum=5"])
     }
 }
