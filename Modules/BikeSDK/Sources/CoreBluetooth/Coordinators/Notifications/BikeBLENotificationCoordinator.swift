@@ -45,9 +45,6 @@ public struct BikeBLENotificationCoordinator {
             characteristic: characteristic,
             peripheral: peripheral
         )
-        if characteristic.uuid == BikeSDKConstants.vcuBikeConfigurationUUID {
-            powerModeCoordinator.startAutomaticRefreshIfNeeded()
-        }
     }
 
     public func didDiscoverDescriptors(
@@ -104,9 +101,6 @@ public struct BikeBLENotificationCoordinator {
             connectionDidBecomeReady()
             await eventEmitter.send(.connection(.receivingTelemetry(peripheralName: peripheral.name)))
         }
-        if didDecodeTelemetry {
-            powerModeCoordinator.startAutomaticRefreshIfNeeded()
-        }
     }
 
     public func didReadRSSI(_ rssi: Int, error: Error?) async {
@@ -118,7 +112,6 @@ public struct BikeBLENotificationCoordinator {
         notificationProcessor.resetDebugSampling()
         await subscriptionCoordinator.authenticationDidSucceed(peripheral: peripheral)
         await readAvailableTelemetrySnapshot(peripheral: peripheral, logsEveryRead: false)
-        powerModeCoordinator.startAutomaticRefreshIfNeeded()
     }
 
     public func startBatteryHealthMonitoring() async throws {

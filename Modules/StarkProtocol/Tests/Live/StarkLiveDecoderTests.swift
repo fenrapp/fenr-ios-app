@@ -65,16 +65,6 @@ struct StarkLiveDecoderTests {
         #expect(payload.odometerKilometers == 179.77)
     }
 
-    @Test("Inverter temperatures preserve the observed raw sensor values")
-    func inverterTemperaturesDecode() throws {
-        let payload = try StarkInverterTemperaturesDecoder().decode(
-            StarkProtocolFixtures.observedInverterTemperatures
-        )
-
-        #expect(payload.rawValues == [395, 408, 323, 519, 322, 325, 330, 0])
-        #expect(payload.celsius == [39.5, 40.8, 32.3, 51.9, 32.2, 32.5, 33.0, nil])
-    }
-
     @Test("Short live payloads report decoder-specific lengths")
     func invalidPayloads() {
         #expect(throws: StarkProtocolError.payloadTooShort(

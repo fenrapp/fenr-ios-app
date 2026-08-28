@@ -5,6 +5,24 @@ import Testing
 
 @Suite("Bike SDK notification mapping")
 struct BikeSDKMappingTests {
+    @Test("Notification mapper emits 6001 as BMS fault masks")
+    func mapsBatteryStatus() throws {
+        let mapper = makeNotificationMapper()
+        let event = try mapper.telemetryPayload(
+            characteristic: StarkUUIDs.batteryStatus,
+            data: Data([
+                0x01, 0x00, 0x00, 0x00,
+                0x02, 0x00, 0x00, 0x00,
+                0, 0, 0, 0, 0, 0, 0, 0
+            ])
+        )
+
+        #expect(event == .batteryStatus(.init(
+            positiveFaultBits: 1,
+            negativeFaultBits: 2
+        )))
+    }
+
     @Test("Notification mapper emits battery payload")
     func mapsBattery() throws {
         let mapper = makeNotificationMapper()

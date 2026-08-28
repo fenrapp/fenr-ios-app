@@ -4,6 +4,31 @@ import Testing
 
 @Suite("Stark battery health decoders")
 struct StarkBatteryHealthDecoderTests {
+    @Test("BMS status decodes positive and negative fault masks and accepts reserved trailing bytes")
+    func bmsStatusDecodes() throws {
+        let payload = try StarkBatteryStatusDecoder().decode(Data([
+            0x78, 0x56, 0x34, 0x12,
+            0xEF, 0xCD, 0xAB, 0x90,
+            0, 0, 0, 0, 0, 0, 0, 0
+        ]))
+
+        #expect(payload.positiveFaultBits == 0x1234_5678)
+        #expect(payload.negativeFaultBits == 0x90AB_CDEF)
+        #expect(payload.isFaultActive)
+    }
+
+    @Test("BMS status rejects a payload shorter than its two confirmed masks")
+    func incompleteBMSStatusIsRejected() {
+        #expect(throws: StarkProtocolError.payloadTooShort(
+            expected: StarkBatteryStatusPayloadLayout.requiredLength,
+            actual: StarkBatteryStatusPayloadLayout.requiredLength - 1
+        )) {
+            try StarkBatteryStatusDecoder().decode(
+                Data(repeating: 0, count: StarkBatteryStatusPayloadLayout.requiredLength - 1)
+            )
+        }
+    }
+
     @Test("Cell voltages decode the observed 100-cell layout")
     func cellVoltagesDecode() throws {
         let payload = try StarkCellVoltagesDecoder().decode(StarkProtocolFixtures.observedCellVoltages)

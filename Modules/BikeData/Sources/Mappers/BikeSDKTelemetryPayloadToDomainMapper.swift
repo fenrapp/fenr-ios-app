@@ -18,6 +18,8 @@ public struct BikeSDKTelemetryPayloadToDomainMapper: Sendable {
     @discardableResult
     public func apply(_ payload: BikeSDKTelemetryPayload, to telemetry: inout BikeTelemetry, date: Date) -> Bool {
         switch payload {
+        case .batteryStatus:
+            return false
         case .status(let status):
             apply(status, to: &telemetry)
         case .vcuBrake(let brake):

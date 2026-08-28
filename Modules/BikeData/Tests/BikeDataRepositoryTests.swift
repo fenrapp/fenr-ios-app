@@ -287,6 +287,24 @@ struct BikeDataRepositoryTests {
 }
 
 extension BikeDataRepositoryTests {
+    @Test("Battery Health maps 6001 as BMS faults without inventing state of health")
+    func mapsBMSStatusFaults() async throws {
+        let client = FakeBikeTelemetryClient()
+        let repository = makeRepository(client: client)
+        await repository.start()
+        let stream = await repository.observeBatteryHealth()
+        var iterator = stream.makeAsyncIterator()
+        _ = await iterator.next()
+
+        await client.send(.telemetry(BikeDataTelemetryFixtures.batteryStatusFault))
+        let health = try #require(await iterator.next())
+
+        #expect(health.isFaultActive)
+        #expect(health.positiveBMSFaultBits == 1)
+        #expect(health.negativeBMSFaultBits == 0)
+        #expect(health.stateOfHealth == .unknown)
+    }
+
     @Test("Connection observers do not receive unchanged state")
     func skipsDuplicateConnectionUpdates() async {
         let client = FakeBikeTelemetryClient()

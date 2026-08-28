@@ -222,15 +222,11 @@ final class BikeBLEConnectionScanner {
             return
         }
         for service in services where BikeSDKConstants.serviceUUIDs.contains(service.uuid) {
-            if let characteristics = service.characteristics, !characteristics.isEmpty {
-                characteristics.forEach(sessionStore.setCharacteristic)
-            } else {
-                await peripheralOperations.discoverCharacteristics(
-                    BikeSDKConstants.characteristicUUIDs(for: service.uuid),
-                    service: service,
-                    peripheral: peripheral
-                )
-            }
+            await peripheralOperations.discoverCharacteristics(
+                BikeSDKConstants.characteristicUUIDs(for: service.uuid),
+                service: service,
+                peripheral: peripheral
+            )
         }
         await peripheralOperations.readRSSI(peripheral: peripheral)
     }

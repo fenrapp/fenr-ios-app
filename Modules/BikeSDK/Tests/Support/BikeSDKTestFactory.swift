@@ -36,11 +36,7 @@ func makeConnectionCoordinator(
 }
 
 func makeNotificationMapper() -> StarkNotificationToSDKEventMapper {
-    let registry = StarkNotificationDecoderRegistry(decoders: makeProtocolNotificationDecoders().merging(
-        makeLiveNotificationDecoders(),
-        uniquingKeysWith: { _, replacement in replacement }
-    ))
-    return StarkNotificationToSDKEventMapper(decoderRegistry: registry)
+    StarkNotificationToSDKEventMapper(decoderRegistry: BikeTelemetryDecoderRegistryFactory.make())
 }
 
 @MainActor
@@ -56,87 +52,6 @@ func makeTraceEmitter(recorder: any BLETraceRecording = NoOpBLETraceRepository()
 
 func makeEventEmitter(eventHub: AsyncEventHub<BikeSDKEvent>) -> BikeBLEEventEmitter {
     BikeBLEEventEmitter(eventHub: eventHub, connectionStatusObserver: { _ in })
-}
-
-private func makeProtocolNotificationDecoders() -> [UUID: StarkNotificationDecoder] {
-    [
-        StarkUUIDs.batterySOC: .adapting(
-            decoder: StarkBatteryDecoder(),
-            transform: BikeSDKTelemetryPayload.battery
-        ),
-        StarkUUIDs.batteryParams: .adapting(
-            decoder: StarkBatteryParametersDecoder(),
-            transform: BikeSDKTelemetryPayload.batteryParameters
-        ),
-        StarkUUIDs.batterySignals: .adapting(
-            decoder: StarkBatterySignalsDecoder(),
-            transform: BikeSDKTelemetryPayload.batterySignals
-        ),
-        StarkUUIDs.batteryCellVoltages: .adapting(
-            decoder: StarkCellVoltagesDecoder(),
-            transform: BikeSDKTelemetryPayload.cellVoltages
-        ),
-        StarkUUIDs.batteryTemperatures: .adapting(
-            decoder: StarkBatteryTemperaturesDecoder(),
-            transform: BikeSDKTelemetryPayload.batteryTemperatures
-        ),
-        StarkUUIDs.batteryBalancing: .adapting(
-            decoder: StarkBatteryBalancingDecoder(),
-            transform: BikeSDKTelemetryPayload.batteryBalancing
-        ),
-        StarkUUIDs.chargerData: .adapting(
-            decoder: StarkChargerDecoder(),
-            transform: BikeSDKTelemetryPayload.charger
-        ),
-        StarkUUIDs.bikeStatus: .adapting(
-            decoder: StarkStatusDecoder(),
-            transform: BikeSDKTelemetryPayload.status
-        ),
-        StarkUUIDs.vcuTelemetryTLV: .adapting(
-            decoder: StarkVCUBrakeDecoder(),
-            when: { data in
-                data.starts(with: StarkVCUBrakePayloadLayout.header)
-            },
-            transform: BikeSDKTelemetryPayload.vcuBrake
-        )
-    ]
-}
-
-private func makeLiveNotificationDecoders() -> [UUID: StarkNotificationDecoder] {
-    [
-        StarkUUIDs.liveMap: .adapting(
-            decoder: StarkMapDecoder(),
-            transform: { .map($0.modeIndex) }
-        ),
-        StarkUUIDs.liveSpeed: .adapting(
-            decoder: StarkSpeedDecoder(),
-            transform: BikeSDKTelemetryPayload.speed
-        ),
-        StarkUUIDs.liveThrottle: .adapting(
-            decoder: StarkThrottleDecoder(),
-            transform: BikeSDKTelemetryPayload.throttle
-        ),
-        StarkUUIDs.liveIMU: .adapting(
-            decoder: StarkIMUDecoder(),
-            transform: BikeSDKTelemetryPayload.imu
-        ),
-        StarkUUIDs.liveTotals: .adapting(
-            decoder: StarkLiveTotalsDecoder(),
-            transform: BikeSDKTelemetryPayload.liveTotals
-        ),
-        StarkUUIDs.liveEstimation: .adapting(
-            decoder: StarkLiveEstimationsDecoder(),
-            transform: BikeSDKTelemetryPayload.liveEstimations
-        ),
-        StarkUUIDs.inverterTemperatures: .adapting(
-            decoder: StarkInverterTemperaturesDecoder(),
-            transform: BikeSDKTelemetryPayload.inverterTemperatures
-        ),
-        StarkUUIDs.vin: .adapting(
-            decoder: StarkVINDecoder(),
-            transform: { .vin($0.value) }
-        )
-    ]
 }
 
 func makeMutableCharacteristic(uuid: UUID) -> CBMutableCharacteristic {

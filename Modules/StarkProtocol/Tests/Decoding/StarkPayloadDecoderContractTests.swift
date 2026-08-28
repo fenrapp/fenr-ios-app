@@ -22,7 +22,7 @@ struct StarkPayloadDecoderContractTests {
         )
         let inverterTemperatures = try decode(
             StarkInverterTemperaturesDecoder(),
-            data: StarkProtocolFixtures.observedInverterTemperatures
+            data: StarkProtocolFixtures.validatedInverterTemperatures
         )
         let estimations = try decode(
             StarkLiveEstimationsDecoder(),
@@ -54,6 +54,7 @@ struct StarkPayloadDecoderContractTests {
     @Test("Payload constants match decoder contracts")
     func payloadConstants() {
         #expect(StarkBatteryPayloadLayout.minimumLength == 2)
+        #expect(StarkBatteryStatusPayloadLayout.requiredLength == 8)
         #expect(StarkSpeedPayloadLayout.requiredLength == 4)
         #expect(StarkStatusPayloadLayout.requiredLength == 18)
         #expect(StarkStatusPayloadLayout.batteryStatusOffset == 14)

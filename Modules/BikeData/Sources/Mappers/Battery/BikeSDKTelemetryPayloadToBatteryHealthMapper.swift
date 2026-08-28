@@ -12,6 +12,10 @@ public struct BikeSDKTelemetryPayloadToBatteryHealthMapper: Sendable {
         date: Date
     ) -> Bool {
         switch payload {
+        case .batteryStatus(let status):
+            health.positiveBMSFaultBits = status.positiveFaultBits
+            health.negativeBMSFaultBits = status.negativeFaultBits
+            health.lastUpdated = date
         case .battery(let battery):
             health.stateOfCharge = .known(percent: battery.stateOfChargePercent)
             health.stateOfHealth = healthLevel(percent: battery.stateOfHealthPercent)

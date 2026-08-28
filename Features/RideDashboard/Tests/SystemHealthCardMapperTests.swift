@@ -62,6 +62,8 @@ struct SystemHealthCardMapperTests {
         let unavailable = mapper.map(.init(batteryHealthMonitoringState: .failed("No BMS")))
 
         #expect(scanning.status == .scanning)
+        #expect(scanning.stateOfHealthText == "N/A")
+        #expect(scanning.stateOfHealthProgress == 0)
         #expect(unavailable.status == .unavailable)
         #expect(unavailable.statusDetail == "BMS DATA UNAVAILABLE")
     }

@@ -5,7 +5,7 @@ import Testing
 @Suite("BLE power mode configuration coordinator")
 @MainActor
 struct BikeBLEPowerModeConfigurationCoordinatorTests {
-    @Test("Reads all power maps before all traction maps through the live session")
+    @Test("Reads all power maps before all traction maps through an authenticated session")
     func readsAllConfigurationsInOrder() async throws {
         let transport = FakeBikeBLEPowerModeConfigurationTransport()
         let coordinator = makeCoordinator(transport: transport)
@@ -13,7 +13,7 @@ struct BikeBLEPowerModeConfigurationCoordinatorTests {
         try await coordinator.refresh()
 
         #expect(transport.requests == expectedRequests)
-        #expect(transport.allowedLiveTelemetrySessionValues == Array(repeating: true, count: 10))
+        #expect(transport.allowedLiveTelemetrySessionValues == Array(repeating: false, count: 10))
     }
 
     @Test("Keeps a successful power refresh when every traction request fails")
@@ -92,8 +92,7 @@ struct BikeBLEPowerModeConfigurationCoordinatorTests {
     ) -> BikeBLEPowerModeConfigurationCoordinator {
         BikeBLEPowerModeConfigurationCoordinator(
             transport: transport,
-            eventEmitter: makeEventEmitter(eventHub: eventHub),
-            sessionStore: BLESessionStore()
+            eventEmitter: makeEventEmitter(eventHub: eventHub)
         )
     }
 }

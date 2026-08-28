@@ -12,6 +12,10 @@ enum BikeTelemetryDecoderRegistryFactory {
     }
 
     private static let protocolDecoders: [UUID: StarkNotificationDecoder] = [
+        StarkUUIDs.batteryStatus: .adapting(
+            decoder: StarkBatteryStatusDecoder(),
+            transform: BikeSDKTelemetryPayload.batteryStatus
+        ),
         StarkUUIDs.batterySOC: .adapting(
             decoder: StarkBatteryDecoder(),
             transform: BikeSDKTelemetryPayload.battery

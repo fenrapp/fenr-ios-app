@@ -1,6 +1,11 @@
 import BikeSDK
 
 enum BikeDataTelemetryFixtures {
+    static let batteryStatusFault = BikeSDKTelemetryPayload.batteryStatus(.init(
+        positiveFaultBits: 0x0000_0001,
+        negativeFaultBits: 0
+    ))
+
     static let battery = BikeSDKTelemetryPayload.battery(.init(
         stateOfChargePercent: 76,
         stateOfHealthPercent: nil,

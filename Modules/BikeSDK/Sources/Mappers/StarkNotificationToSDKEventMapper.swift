@@ -29,6 +29,9 @@ public struct StarkNotificationToSDKEventMapper: Sendable {
 
     private func decodedDetail(_ payload: BikeSDKTelemetryPayload) -> String {
         switch payload {
+        case .batteryStatus(let value):
+            return "positiveFaultBits=\(value.positiveFaultBits) "
+                + "negativeFaultBits=\(value.negativeFaultBits)"
         case .battery(let value):
             let dcBus = value.dcBusRaw.map(String.init) ?? "nil"
             let dcBusVolts = value.dcBusVolts.map { String($0) } ?? "nil"

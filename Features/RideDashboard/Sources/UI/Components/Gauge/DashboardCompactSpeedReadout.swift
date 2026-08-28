@@ -21,9 +21,9 @@ struct DashboardCompactSpeedReadout: View {
     }
 
     private enum Constants {
-        static let valueFontSize: CGFloat = 34
-        static let unitFontSize: CGFloat = 13
-        static let valueSpacing: CGFloat = 3
+        static let valueFontSize: CGFloat = 44.2
+        static let unitFontSize: CGFloat = 16.9
+        static let valueSpacing: CGFloat = 3.9
         static let minimumScaleFactor: CGFloat = 0.7
     }
 }

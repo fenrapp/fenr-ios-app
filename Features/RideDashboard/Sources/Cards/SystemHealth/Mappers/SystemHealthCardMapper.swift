@@ -29,7 +29,7 @@ public struct SystemHealthCardMapper: Sendable {
             status: status,
             statusText: statusText(status),
             statusDetail: statusDetail(status, analysis: analysis),
-            stateOfHealthText: analysis.stateOfHealthPercent.map { "\($0)%" } ?? "—",
+            stateOfHealthText: analysis.stateOfHealthPercent.map { "\($0)%" } ?? "N/A",
             stateOfHealthProgress: progress(analysis.stateOfHealthPercent),
             cellDeltaText: millivolts(analysis.cellDeltaVolts, measurementMapper: measurementMapper),
             dcBusVoltageText: voltage(snapshot.batteryHealth.dcBusVoltage.volts, measurementMapper: measurementMapper),

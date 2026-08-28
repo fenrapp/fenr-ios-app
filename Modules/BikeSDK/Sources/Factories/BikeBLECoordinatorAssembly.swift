@@ -41,8 +41,7 @@ enum BikeBLECoordinatorAssembly {
         )
         let powerModeCoordinator = BikeBLEPowerModeConfigurationCoordinator(
             transport: configurationTransport,
-            eventEmitter: dependencies.eventEmitter,
-            sessionStore: dependencies.sessionStore
+            eventEmitter: dependencies.eventEmitter
         )
         let subscriptionQueue = BikeBLESubscriptionQueue(
             sessionStore: dependencies.sessionStore,
@@ -56,13 +55,7 @@ enum BikeBLECoordinatorAssembly {
             eventEmitter: dependencies.eventEmitter,
             notificationPreparer: notificationPreparer,
             experimentalCaptureCoordinator: experimentalCaptureCoordinator,
-            queue: subscriptionQueue,
-            requiredSubscriptionsDidComplete: {
-                powerModeCoordinator.startAutomaticRefreshIfNeeded()
-            },
-            configSubscriptionDidComplete: {
-                powerModeCoordinator.startAutomaticRefreshIfNeeded()
-            }
+            queue: subscriptionQueue
         )
         let chargePowerCoordinator = BikeBLEChargePowerCoordinator(
             transport: configurationTransport
