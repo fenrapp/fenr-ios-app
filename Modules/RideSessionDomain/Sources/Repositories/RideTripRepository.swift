@@ -9,11 +9,22 @@ public protocol RideTripRepository: Sendable {
     @discardableResult
     func resetTrip(completing trip: RideTrip, starting replacement: RideTrip?, at date: Date) async -> Bool
     func loadCompletedTrips(vin: String) async -> [RideTrip]
+    func loadCompletedTrip(id: UUID, vin: String) async -> RideTrip?
+    @discardableResult
+    func deleteCompletedTrip(id: UUID, vin: String) async -> Bool
     @discardableResult
     func promoteTemporaryIdentity(_ temporaryID: UUID, toVIN vin: String) async -> Bool
 }
 
 public extension RideTripRepository {
+    func loadCompletedTrip(id: UUID, vin: String) async -> RideTrip? {
+        await loadCompletedTrips(vin: vin).first { $0.id == id }
+    }
+
+    func deleteCompletedTrip(id _: UUID, vin _: String) async -> Bool {
+        false
+    }
+
     func resetTrip(
         completing trip: RideTrip,
         starting replacement: RideTrip?,

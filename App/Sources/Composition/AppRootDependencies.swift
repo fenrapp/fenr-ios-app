@@ -4,6 +4,7 @@ import BikeDiagnostics
 import BikeOnboarding
 import PowerModeSettings
 import RideDashboard
+import RideHistory
 
 @MainActor
 struct AppRootDependencies {
@@ -13,6 +14,7 @@ struct AppRootDependencies {
     let onboardingViewModel: BikeOnboardingViewModel
     let appSettingsViewModel: AppSettingsViewModel
     let powerModeSettingsViewModel: PowerModeSettingsViewModel
+    let rideHistoryViewModel: RideHistoryViewModel
     let setupFlow: BikeSetupFlowController
     let lifecycleController: AppLifecycleController
     let interfaceOrientationController: InterfaceOrientationController

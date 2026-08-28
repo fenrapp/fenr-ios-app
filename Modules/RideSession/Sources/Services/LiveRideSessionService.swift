@@ -161,6 +161,16 @@ public actor LiveRideSessionService: RideSessionService {
             publish()
         }
     }
+
+    @discardableResult
+    public func deleteCompletedTrip(id: UUID, vin: String) async -> Bool {
+        guard recorder.context.vehicleIdentity.confirmedVIN == vin else { return false }
+        let didDelete = await persistence.deleteCompletedTrip(id: id, vin: vin)
+        guard didDelete else { return false }
+        historyRevision += 1
+        publish()
+        return true
+    }
 }
 
 extension LiveRideSessionService {

@@ -5,17 +5,20 @@ public struct AppSettingsView: View {
     @ObservedObject private var viewModel: AppSettingsViewModel
     private let onOpenTelemetry: () -> Void
     private let onOpenPowerModes: () -> Void
+    private let onOpenRideHistory: () -> Void
     private let accessory: () -> AnyView
 
     public init(
         viewModel: AppSettingsViewModel,
         onOpenTelemetry: @escaping () -> Void = {},
         onOpenPowerModes: @escaping () -> Void = {},
+        onOpenRideHistory: @escaping () -> Void = {},
         accessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
         self.viewModel = viewModel
         self.onOpenTelemetry = onOpenTelemetry
         self.onOpenPowerModes = onOpenPowerModes
+        self.onOpenRideHistory = onOpenRideHistory
         self.accessory = accessory
     }
 
@@ -100,6 +103,10 @@ public struct AppSettingsView: View {
                     state: viewModel.viewState.powerModes,
                     action: onOpenPowerModes
                 )
+            }
+
+            Section("Rides") {
+                RideHistoryNavigationRow(action: onOpenRideHistory)
             }
             #endif
 

@@ -110,6 +110,7 @@ enum DebugAppDependencyContainerFactory {
             dashboardContainer: RideDashboardDependencyContainer(),
             appSettingsContainer: AppSettingsDependencyContainer(),
             powerModeSettingsContainer: PowerModeSettingsDependencyContainer(),
+            rideHistoryContainer: RideHistoryDependencyContainer(),
             bleTraceLogRepository: NoOpBLETraceRepository(),
             initialOnboardingVIN: BikeEmulatorIdentity.vin,
             forceOnboarding: forceOnboarding
@@ -185,6 +186,20 @@ enum DebugAppDependencyContainerFactory {
             let distance = 9.0 + Double(index) * 0.8
             let consumed = distance * (78.0 - Double(index) * 2.4) + 55
             let recovered = 35.0 + Double((index * 17) % 70)
+            let bucketCount = 12
+            let bucketDistance = distance / Double(bucketCount)
+            let energyBuckets = (0 ..< bucketCount).map { bucketIndex in
+                RideEnergyBucket(
+                    startedAt: end.addingTimeInterval(
+                        -duration + Double(bucketIndex) * duration / Double(bucketCount)
+                    ),
+                    startDistanceKilometers: Double(bucketIndex) * bucketDistance,
+                    endDistanceKilometers: Double(bucketIndex + 1) * bucketDistance,
+                    stateOfChargePercent: 92 - bucketIndex * 3,
+                    consumedEnergyWattHours: consumed / Double(bucketCount),
+                    recoveredEnergyWattHours: recovered / Double(bucketCount)
+                )
+            }
             let trip = RideTrip(
                 vehicleIdentity: .vin(vin),
                 applicationSessionID: UUID(),
@@ -200,7 +215,12 @@ enum DebugAppDependencyContainerFactory {
                 electricalObservedSeconds: duration * 0.97,
                 electricalExpectedSeconds: duration,
                 maximumDischargePowerWatts: 15_000 + Double(index * 500),
-                maximumRegenerationPowerWatts: 6_000 + Double(index * 300)
+                maximumRegenerationPowerWatts: 6_000 + Double(index * 300),
+                maximumLeftLeanDegrees: 18 + Double(index),
+                maximumRightLeanDegrees: 21 + Double(index),
+                maximumUphillPitchDegrees: 7 + Double(index) * 0.3,
+                maximumDownhillPitchDegrees: 5 + Double(index) * 0.2,
+                energyBuckets: energyBuckets
             )
             await repository.completeTrip(trip, at: end)
         }

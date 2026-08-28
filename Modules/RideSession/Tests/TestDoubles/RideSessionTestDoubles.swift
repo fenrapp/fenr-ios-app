@@ -78,6 +78,8 @@ actor SessionProfileRepository: BikeProfileRepository {
 
 actor SessionTripRepository: RideTripRepository {
     private var active: RideTrip?
+    private var deleteSucceeds = true
+    private var deletedTripIDs: [UUID] = []
 
     func prepare(context _: BikeSessionContext) -> RideTrip? { active }
     func saveActiveTrip(_ trip: RideTrip) -> Bool {
@@ -89,8 +91,14 @@ actor SessionTripRepository: RideTripRepository {
         return true
     }
     func loadCompletedTrips(vin _: String) -> [RideTrip] { [] }
+    func deleteCompletedTrip(id: UUID, vin _: String) -> Bool {
+        deletedTripIDs.append(id)
+        return deleteSucceeds
+    }
     func promoteTemporaryIdentity(_: UUID, toVIN _: String) -> Bool { true }
     func activeTrip() -> RideTrip? { active }
+    func setDeleteSucceeds(_ succeeds: Bool) { deleteSucceeds = succeeds }
+    func deletedIDs() -> [UUID] { deletedTripIDs }
 }
 
 struct SessionIdentityResolver: RideVehicleIdentityResolving {
@@ -103,6 +111,7 @@ actor BlockingRideTripRepository: RideTripRepository {
     enum Event: Equatable {
         case save(UUID)
         case reset(UUID, UUID?)
+        case delete(UUID)
     }
 
     private var recordedEvents: [Event] = []
@@ -138,6 +147,10 @@ actor BlockingRideTripRepository: RideTripRepository {
     }
 
     func loadCompletedTrips(vin _: String) -> [RideTrip] { [] }
+    func deleteCompletedTrip(id: UUID, vin _: String) -> Bool {
+        recordedEvents.append(.delete(id))
+        return true
+    }
     func promoteTemporaryIdentity(_: UUID, toVIN _: String) -> Bool { true }
 
     func blockNextSave() {

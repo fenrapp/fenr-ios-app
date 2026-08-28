@@ -40,6 +40,11 @@ public actor RideSessionPersistenceCoordinator {
         await enqueueBarrier(.promote(temporaryID, vin))
     }
 
+    @discardableResult
+    public func deleteCompletedTrip(id: UUID, vin: String) async -> Bool {
+        await enqueueBarrier(.deleteCompleted(id, vin))
+    }
+
     public func flush() async {
         guard workerTask != nil || !queue.isEmpty else { return }
         await withCheckedContinuation { continuation in
@@ -89,6 +94,8 @@ private extension RideSessionPersistenceCoordinator {
             await repository.resetTrip(completing: trip, starting: replacement, at: date)
         case .promote(let temporaryID, let vin):
             await repository.promoteTemporaryIdentity(temporaryID, toVIN: vin)
+        case .deleteCompleted(let id, let vin):
+            await repository.deleteCompletedTrip(id: id, vin: vin)
         }
     }
 
@@ -107,5 +114,6 @@ private extension RideSessionPersistenceCoordinator {
         case complete(RideTrip, Date)
         case reset(RideTrip, RideTrip?, Date)
         case promote(UUID, String)
+        case deleteCompleted(UUID, String)
     }
 }

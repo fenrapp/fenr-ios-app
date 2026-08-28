@@ -76,6 +76,20 @@ public final class SwiftDataRideTripRepository: RideTripRepository, Sendable {
         await store.loadCompletedTrips(vin: vin, mapper: mapper)
     }
 
+    public func loadCompletedTrip(id: UUID, vin: String) async -> RideTrip? {
+        await store.loadCompletedTrip(
+            id: id,
+            vin: vin,
+            mapper: mapper,
+            energyBucketMapper: energyBucketMapper
+        )
+    }
+
+    @discardableResult
+    public func deleteCompletedTrip(id: UUID, vin: String) async -> Bool {
+        await store.deleteCompletedTrip(id: id, vin: vin)
+    }
+
     @discardableResult
     public func promoteTemporaryIdentity(_ temporaryID: UUID, toVIN vin: String) async -> Bool {
         await store.promoteTemporaryIdentity(temporaryID, toVIN: vin)

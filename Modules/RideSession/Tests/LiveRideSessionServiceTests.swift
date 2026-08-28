@@ -81,6 +81,27 @@ struct LiveRideSessionServiceTests {
         #expect(snapshot.livePowerSamples.last?.powerWatts == 199)
     }
 
+    @Test("Publishes a history revision only after a completed ride is deleted")
+    func publishesDeletionRevision() async {
+        let fixture = makeLiveRideSessionServiceFixture()
+        await fixture.start()
+        #expect(await waitUntil {
+            await fixture.latestSnapshot().vehicleIdentity.confirmedVIN != nil
+        })
+        let vin = "TESTVIN0000000001"
+        let rideID = UUID()
+        let initialRevision = await fixture.latestSnapshot().historyRevision
+
+        #expect(await fixture.service.deleteCompletedTrip(id: rideID, vin: vin))
+        #expect(await fixture.tripRepository.deletedIDs() == [rideID])
+        #expect(await fixture.latestSnapshot().historyRevision == initialRevision + 1)
+
+        await fixture.tripRepository.setDeleteSucceeds(false)
+        #expect(await fixture.service.deleteCompletedTrip(id: UUID(), vin: vin) == false)
+        #expect(await fixture.latestSnapshot().historyRevision == initialRevision + 1)
+        await fixture.stop()
+    }
+
     private func driveTelemetry() -> BikeTelemetry {
         BikeTelemetry(
             speed: .known(kmh: 42, kmhX10: 420),

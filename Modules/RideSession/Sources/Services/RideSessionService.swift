@@ -1,3 +1,5 @@
+import Foundation
+
 public protocol RideSessionService: Sendable {
     func observe() async -> AsyncStream<RideSessionSnapshot>
     func start() async
@@ -7,4 +9,12 @@ public protocol RideSessionService: Sendable {
     func flush() async
     func togglePauseCurrentTrip() async
     func resetCurrentTrip() async
+    @discardableResult
+    func deleteCompletedTrip(id: UUID, vin: String) async -> Bool
+}
+
+public extension RideSessionService {
+    func deleteCompletedTrip(id _: UUID, vin _: String) async -> Bool {
+        false
+    }
 }

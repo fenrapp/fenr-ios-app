@@ -4,6 +4,7 @@ import BikeDiagnostics
 import BikeOnboarding
 import PowerModeSettings
 import RideDashboard
+import RideHistory
 import SwiftUI
 import UIKit
 
@@ -14,6 +15,7 @@ struct AppRootView: View {
     @StateObject private var onboardingViewModel: BikeOnboardingViewModel
     @StateObject private var appSettingsViewModel: AppSettingsViewModel
     @StateObject private var powerModeSettingsViewModel: PowerModeSettingsViewModel
+    @StateObject private var rideHistoryViewModel: RideHistoryViewModel
     @StateObject private var setupFlow: BikeSetupFlowController
     @State private var path: [Route] = []
     private let lifecycleController: AppLifecycleController
@@ -30,6 +32,7 @@ struct AppRootView: View {
         _onboardingViewModel = StateObject(wrappedValue: dependencies.onboardingViewModel)
         _appSettingsViewModel = StateObject(wrappedValue: dependencies.appSettingsViewModel)
         _powerModeSettingsViewModel = StateObject(wrappedValue: dependencies.powerModeSettingsViewModel)
+        _rideHistoryViewModel = StateObject(wrappedValue: dependencies.rideHistoryViewModel)
         _setupFlow = StateObject(wrappedValue: dependencies.setupFlow)
         lifecycleController = dependencies.lifecycleController
         rideDashboardFactory = dependencies.rideDashboardFactory
@@ -78,10 +81,13 @@ struct AppRootView: View {
                         viewModel: appSettingsViewModel,
                         onOpenTelemetry: { path.append(.diagnostics) },
                         onOpenPowerModes: { path.append(.powerModes) },
+                        onOpenRideHistory: { path.append(.rideHistory) },
                         accessory: settingsAccessory
                     )
                 case .powerModes:
                     PowerModeSettingsView(viewModel: powerModeSettingsViewModel)
+                case .rideHistory:
+                    RideHistoryView(viewModel: rideHistoryViewModel)
                 }
             }
         }
@@ -190,5 +196,6 @@ struct AppRootView: View {
         case diagnostics
         case settings
         case powerModes
+        case rideHistory
     }
 }

@@ -68,8 +68,8 @@ struct SwiftDataRideTripRepositoryTests {
         #expect(secondHistory.map(\.id) == [second.id])
     }
 
-    @Test("Keeps only the newest one hundred trips for each VIN")
-    func limitsHistoryPerVIN() async throws {
+    @Test("Keeps completed history beyond one hundred trips")
+    func retainsAllHistoryPerVIN() async throws {
         let repository = try makeRepository()
         for index in 0 ... 100 {
             let date = Date(timeIntervalSince1970: Double(index))
@@ -83,9 +83,9 @@ struct SwiftDataRideTripRepositoryTests {
         }
 
         let history = await repository.loadCompletedTrips(vin: Constants.firstVIN)
-        #expect(history.count == 100)
+        #expect(history.count == 101)
         #expect(history.first?.startedAt == Date(timeIntervalSince1970: 100))
-        #expect(history.last?.startedAt == Date(timeIntervalSince1970: 1))
+        #expect(history.last?.startedAt == Date(timeIntervalSince1970: 0))
     }
 
     @Test("Atomically archives a reset trip and stores its replacement")
@@ -144,11 +144,72 @@ struct SwiftDataRideTripRepositoryTests {
         #expect(restored?.energyBuckets == [bucket])
     }
 
+    @Test("Loads a completed ride detail with its energy buckets")
+    func loadsCompletedDetailWithBuckets() async throws {
+        let repository = try makeRepository()
+        let bucket = RideEnergyBucket(
+            startedAt: .distantPast,
+            startDistanceKilometers: 4,
+            endDistanceKilometers: 4.25,
+            stateOfChargePercent: 72,
+            consumedEnergyWattHours: 18,
+            recoveredEnergyWattHours: 2
+        )
+        let trip = RideTrip(
+            vehicleIdentity: .vin(Constants.firstVIN),
+            applicationSessionID: UUID(),
+            startedAt: .distantPast,
+            energyBuckets: [bucket]
+        )
+        await repository.completeTrip(trip, at: .distantFuture)
+
+        let detail = await repository.loadCompletedTrip(id: trip.id, vin: Constants.firstVIN)
+
+        #expect(detail?.energyBuckets == [bucket])
+        #expect(await repository.loadCompletedTrip(id: trip.id, vin: Constants.secondVIN) == nil)
+    }
+
+    @Test("Deletes only the matching completed ride and its detail")
+    func deletesCompletedRide() async throws {
+        let repository = try makeRepository()
+        let deletedBucket = makeBucket(id: UUID(), startedAt: .distantPast)
+        let retainedBucket = makeBucket(id: UUID(), startedAt: Date(timeIntervalSince1970: 2_000))
+        let completed = makeTrip(
+            identity: .vin(Constants.firstVIN),
+            sessionID: UUID(),
+            buckets: [deletedBucket]
+        )
+        let retained = makeTrip(
+            identity: .vin(Constants.firstVIN),
+            sessionID: UUID(),
+            startedAt: Date(timeIntervalSince1970: 2_000),
+            buckets: [retainedBucket]
+        )
+        let active = makeTrip(identity: .vin(Constants.firstVIN), sessionID: UUID())
+        await repository.completeTrip(completed, at: completed.updatedAt)
+        await repository.completeTrip(retained, at: retained.updatedAt)
+        await repository.saveActiveTrip(active)
+
+        #expect(await repository.deleteCompletedTrip(id: completed.id, vin: Constants.secondVIN) == false)
+        #expect(await repository.deleteCompletedTrip(id: active.id, vin: Constants.firstVIN) == false)
+        #expect(await repository.deleteCompletedTrip(id: completed.id, vin: Constants.firstVIN))
+        #expect(await repository.loadCompletedTrip(id: completed.id, vin: Constants.firstVIN) == nil)
+        #expect(await repository.loadCompletedTrip(
+            id: retained.id,
+            vin: Constants.firstVIN
+        )?.energyBuckets == [retainedBucket])
+        #expect(await repository.prepare(context: .init(
+            applicationSessionID: active.applicationSessionID,
+            vehicleIdentity: active.vehicleIdentity
+        ))?.id == active.id)
+    }
+
     private func makeTrip(
         identity: RideVehicleIdentity,
         sessionID: UUID,
         startedAt: Date = Date(timeIntervalSince1970: 1_000),
-        distance: Double = 2
+        distance: Double = 2,
+        buckets: [RideEnergyBucket] = []
     ) -> RideTrip {
         RideTrip(
             vehicleIdentity: identity,
@@ -164,7 +225,20 @@ struct SwiftDataRideTripRepositoryTests {
             maximumLeftLeanDegrees: 31,
             maximumRightLeanDegrees: 26,
             maximumUphillPitchDegrees: 12,
-            maximumDownhillPitchDegrees: 9
+            maximumDownhillPitchDegrees: 9,
+            energyBuckets: buckets
+        )
+    }
+
+    private func makeBucket(id: UUID, startedAt: Date) -> RideEnergyBucket {
+        RideEnergyBucket(
+            id: id,
+            startedAt: startedAt,
+            startDistanceKilometers: 1,
+            endDistanceKilometers: 1.25,
+            stateOfChargePercent: 79,
+            consumedEnergyWattHours: 22,
+            recoveredEnergyWattHours: 3
         )
     }
 

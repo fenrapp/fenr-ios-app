@@ -37,7 +37,6 @@ actor RideTripStore {
                 }
             }
             try modelContext.save()
-            try trimAllConfirmedHistories()
             return restoredTrip
         } catch {
             report(error)
@@ -73,9 +72,6 @@ actor RideTripStore {
             try upsert(completed, mapper: mapper)
             try syncEnergyBuckets(completed, mapper: energyBucketMapper)
             try modelContext.save()
-            if let vin = completed.confirmedVIN {
-                try trimHistory(vin: vin)
-            }
             return true
         } catch {
             report(error)
@@ -99,9 +95,6 @@ actor RideTripStore {
                 try syncEnergyBuckets(replacement, mapper: energyBucketMapper)
             }
             try modelContext.save()
-            if let vin = completed.confirmedVIN {
-                try trimHistory(vin: vin)
-            }
             return true
         } catch {
             report(error)
@@ -115,7 +108,7 @@ actor RideTripStore {
     ) -> [RideTrip] {
         do {
             let vinKind = RideTripRecordMapper.Constants.vinKind
-            var descriptor = FetchDescriptor<RideTripRecord>(
+            let descriptor = FetchDescriptor<RideTripRecord>(
                 predicate: #Predicate {
                     $0.endedAt != nil
                         && $0.vehicleIdentityKind == vinKind
@@ -123,11 +116,57 @@ actor RideTripStore {
                 },
                 sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
             )
-            descriptor.fetchLimit = Constants.maximumStoredTripsPerVIN
             return try modelContext.fetch(descriptor).compactMap(mapper.mapToDomain)
         } catch {
             report(error)
             return []
+        }
+    }
+
+    func loadCompletedTrip(
+        id: UUID,
+        vin: String,
+        mapper: RideTripRecordMapper,
+        energyBucketMapper: RideEnergyBucketRecordMapper
+    ) -> RideTrip? {
+        do {
+            let vinKind = RideTripRecordMapper.Constants.vinKind
+            var descriptor = FetchDescriptor<RideTripRecord>(predicate: #Predicate {
+                $0.id == id
+                    && $0.endedAt != nil
+                    && $0.vehicleIdentityKind == vinKind
+                    && $0.vehicleIdentityValue == vin
+            })
+            descriptor.fetchLimit = 1
+            guard let record = try modelContext.fetch(descriptor).first,
+                  let trip = mapper.mapToDomain(record) else { return nil }
+            return trip.restoringEnergyBuckets(
+                try fetchEnergyBuckets(tripID: id, mapper: energyBucketMapper)
+            )
+        } catch {
+            report(error)
+            return nil
+        }
+    }
+
+    func deleteCompletedTrip(id: UUID, vin: String) -> Bool {
+        do {
+            let vinKind = RideTripRecordMapper.Constants.vinKind
+            var descriptor = FetchDescriptor<RideTripRecord>(predicate: #Predicate {
+                $0.id == id
+                    && $0.endedAt != nil
+                    && $0.vehicleIdentityKind == vinKind
+                    && $0.vehicleIdentityValue == vin
+            })
+            descriptor.fetchLimit = 1
+            guard let record = try modelContext.fetch(descriptor).first else { return false }
+            try deleteEnergyBuckets(tripIDs: [id])
+            modelContext.delete(record)
+            try modelContext.save()
+            return true
+        } catch {
+            report(error)
+            return false
         }
     }
 
@@ -152,7 +191,6 @@ actor RideTripStore {
                 record.vehicleIdentityValue = vin
             }
             try modelContext.save()
-            try trimHistory(vin: vin)
             return true
         } catch {
             report(error)
@@ -252,41 +290,11 @@ private extension RideTripStore {
         }
     }
 
-    func trimAllConfirmedHistories() throws {
-        let vinKind = RideTripRecordMapper.Constants.vinKind
-        let descriptor = FetchDescriptor<RideTripRecord>(predicate: #Predicate {
-            $0.vehicleIdentityKind == vinKind && $0.endedAt != nil
-        })
-        let vins = Set(try modelContext.fetch(descriptor).map(\.vehicleIdentityValue))
-        for vin in vins {
-            try trimHistory(vin: vin)
-        }
-    }
-
-    func trimHistory(vin: String) throws {
-        let vinKind = RideTripRecordMapper.Constants.vinKind
-        let descriptor = FetchDescriptor<RideTripRecord>(
-            predicate: #Predicate {
-                $0.vehicleIdentityKind == vinKind
-                    && $0.vehicleIdentityValue == vin
-                    && $0.endedAt != nil
-            },
-            sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
-        )
-        let records = try modelContext.fetch(descriptor)
-        guard records.count > Constants.maximumStoredTripsPerVIN else { return }
-        let discardedRecords = Array(records.dropFirst(Constants.maximumStoredTripsPerVIN))
-        try deleteEnergyBuckets(tripIDs: discardedRecords.map(\.id))
-        discardedRecords.forEach(modelContext.delete)
-        try modelContext.save()
-    }
-
     func report(_ error: Error) {
         Constants.logger.error("Ride trip persistence failed: \(String(describing: error), privacy: .public)")
     }
 
     enum Constants {
-        static let maximumStoredTripsPerVIN = 100
         static let logger = Logger(subsystem: "com.fenr.app", category: "RideTripStore")
     }
 }

@@ -9,6 +9,7 @@ import EnvironmentDomain
 import Foundation
 import PowerModeSettings
 import RideDashboard
+import RideHistory
 import RideSession
 import RideSessionDomain
 import RuntimeConfiguration
@@ -64,6 +65,7 @@ struct AppDependencyContainer {
     private let dashboardContainer: RideDashboardDependencyContainer
     private let appSettingsContainer: AppSettingsDependencyContainer
     private let powerModeSettingsContainer: PowerModeSettingsDependencyContainer
+    private let rideHistoryContainer: RideHistoryDependencyContainer
     private let session: BikeSession
     private let chargeControlSession: ChargeControlSession
     private let profileRepository: any BikeProfileRepository
@@ -90,6 +92,7 @@ struct AppDependencyContainer {
         dashboardContainer: RideDashboardDependencyContainer,
         appSettingsContainer: AppSettingsDependencyContainer,
         powerModeSettingsContainer: PowerModeSettingsDependencyContainer,
+        rideHistoryContainer: RideHistoryDependencyContainer,
         bleTraceLogRepository: any BLETraceLogRepository,
         initialOnboardingVIN: String? = nil,
         forceOnboarding: Bool = false
@@ -100,6 +103,7 @@ struct AppDependencyContainer {
         self.dashboardContainer = dashboardContainer
         self.appSettingsContainer = appSettingsContainer
         self.powerModeSettingsContainer = powerModeSettingsContainer
+        self.rideHistoryContainer = rideHistoryContainer
         self.session = session
         self.chargeControlSession = chargeControlSession
         self.profileRepository = profileRepository
@@ -145,6 +149,7 @@ struct AppDependencyContainer {
             },
             appSettingsViewModel: makeAppSettingsViewModel(),
             powerModeSettingsViewModel: makePowerModeSettingsViewModel(),
+            rideHistoryViewModel: makeRideHistoryViewModel(),
             setupFlow: setupFlow,
             lifecycleController: AppLifecycleController(
                 sessionController: sessionController,
@@ -206,6 +211,13 @@ struct AppDependencyContainer {
             settingsRepository: settingsRepository,
             bikeRepository: session.repository,
             vehicleSession: vehicleSession
+        )
+    }
+
+    func makeRideHistoryViewModel() -> RideHistoryViewModel {
+        rideHistoryContainer.makeViewModel(
+            repository: rideTripRepository,
+            session: rideSession
         )
     }
 

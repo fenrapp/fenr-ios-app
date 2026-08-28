@@ -48,6 +48,27 @@ struct RideSessionPersistenceCoordinatorTests {
         #expect(await repository.events() == [.save(active.id), .reset(active.id, replacement.id)])
     }
 
+    @Test("A completed ride deletion is ordered behind pending saves")
+    func deletionIsBarrier() async {
+        let repository = BlockingRideTripRepository()
+        let coordinator = RideSessionPersistenceCoordinator(repository: repository)
+        let active = makeTrip(index: 1)
+        let completedID = UUID(uuidString: "00000000-0000-0000-0000-000000000002")!
+        await repository.blockNextSave()
+
+        await coordinator.saveActiveTrip(active)
+        await repository.waitForBlockedSave()
+        let deleteTask = Task {
+            await coordinator.deleteCompletedTrip(id: completedID, vin: "TESTVIN0000000001")
+        }
+        await Task.yield()
+        await repository.releaseBlockedSave()
+
+        #expect(await deleteTask.value)
+        #expect(await repository.events() == [.save(active.id), .delete(completedID)])
+        #expect(await repository.maximumConcurrentWrites() == 1)
+    }
+
     private func makeTrip(index: Int) -> RideTrip {
         RideTrip(
             id: UUID(uuidString: "00000000-0000-0000-0000-00000000000\(index)")!,
