@@ -10,8 +10,11 @@ public final class RideDynamicsCardViewModel: ObservableObject {
     private let rideSession: any RideSessionService
     private let vehicleSession: any VehicleSessionService
     private let mapper: RideDynamicsCardMapper
+    private let locationConsumerID = UUID()
     private var observationTask: Task<Void, Never>?
+    private var locationRequestTask: Task<Void, Never>?
     private var isVisible = false
+    private var isRequestingLocation = false
 
     public init(
         rideSession: any RideSessionService,
@@ -23,15 +26,27 @@ public final class RideDynamicsCardViewModel: ObservableObject {
         self.mapper = mapper
     }
 
-    deinit { observationTask?.cancel() }
+    deinit {
+        observationTask?.cancel()
+        locationRequestTask?.cancel()
+        guard isRequestingLocation else { return }
+        let vehicleSession = vehicleSession
+        let consumerID = locationConsumerID
+        Task {
+            await vehicleSession.setLocationMonitoringRequired(false, consumerID: consumerID)
+        }
+    }
 
     func setIsVisible(_ isVisible: Bool) {
+        guard self.isVisible != isVisible else { return }
         self.isVisible = isVisible
         if isVisible {
             observeIfNeeded()
+            setLocationRequired(true)
         } else {
             observationTask?.cancel()
             observationTask = nil
+            setLocationRequired(false)
         }
     }
 
@@ -63,5 +78,18 @@ private extension RideDynamicsCardViewModel {
         let next = mapper.map(snapshot)
         guard next != viewState else { return }
         viewState = next
+    }
+
+    func setLocationRequired(_ required: Bool) {
+        guard required != isRequestingLocation else { return }
+        isRequestingLocation = required
+        let previousRequest = locationRequestTask
+        let vehicleSession = vehicleSession
+        let consumerID = locationConsumerID
+        locationRequestTask = Task {
+            await previousRequest?.value
+            guard !Task.isCancelled else { return }
+            await vehicleSession.setLocationMonitoringRequired(required, consumerID: consumerID)
+        }
     }
 }

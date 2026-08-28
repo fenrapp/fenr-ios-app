@@ -114,6 +114,14 @@ public actor LiveBikeRepository: BikeRepository, BikeBatteryHealthRepository, Bi
         try await client.refreshPowerModeConfigurations()
     }
 
+    public func refreshPowerModeConfiguration(mapIndex: Int) async throws {
+        try await client.refreshPowerModeConfiguration(mapIndex: mapIndex)
+    }
+
+    public func refreshTractionControlConfiguration(mapIndex: Int) async throws {
+        try await client.refreshTractionControlConfiguration(mapIndex: mapIndex)
+    }
+
     public func observeTelemetry() async -> AsyncStream<BikeTelemetry> {
         await telemetryHub.stream(replay: stateStore.currentTelemetry())
     }

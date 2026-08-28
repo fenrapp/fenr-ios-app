@@ -101,6 +101,14 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
         try await notificationCoordinator.refreshPowerModeConfigurations()
     }
 
+    public func refreshPowerModeConfiguration(mapIndex: Int) async throws {
+        try await notificationCoordinator.refreshPowerModeConfiguration(mapIndex: mapIndex)
+    }
+
+    public func refreshTractionControlConfiguration(mapIndex: Int) async throws {
+        try await notificationCoordinator.refreshTractionControlConfiguration(mapIndex: mapIndex)
+    }
+
     private func startRuntimeIfNeeded() {
         callbackQueue.start()
         guard !isCentralStarted else { return }

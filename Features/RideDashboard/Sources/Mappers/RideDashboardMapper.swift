@@ -106,7 +106,7 @@ public struct RideDashboardMapper: Sendable {
             regenerativeBraking: percent(regenerativeBrakingPercent),
             powerTraction: percent(configuration.powerTractionPercent),
             brakingTraction: percent(configuration.brakingTractionPercent),
-            showsTractionControl: configuration.powerTractionPercent != nil,
+            showsTractionControl: configuration.hasTractionControlConfiguration,
             isVisible: true
         )
     }

@@ -15,6 +15,8 @@ public struct VehicleSessionUseCases: Sendable {
     let startBatteryHealthMonitoring: StartBatteryHealthMonitoringUseCase
     let stopBatteryHealthMonitoring: StopBatteryHealthMonitoringUseCase
     let readBikeStatusSnapshot: ReadBikeStatusSnapshotUseCase
+    let refreshPowerModeConfiguration: RefreshBikePowerModeConfigurationUseCase?
+    let refreshTractionControlConfiguration: RefreshBikeTractionControlConfigurationUseCase?
 
     public init(
         observeTelemetry: ObserveBikeTelemetryUseCase,
@@ -28,7 +30,9 @@ public struct VehicleSessionUseCases: Sendable {
         observeBatteryHealth: ObserveBikeBatteryHealthUseCase,
         startBatteryHealthMonitoring: StartBatteryHealthMonitoringUseCase,
         stopBatteryHealthMonitoring: StopBatteryHealthMonitoringUseCase,
-        readBikeStatusSnapshot: ReadBikeStatusSnapshotUseCase
+        readBikeStatusSnapshot: ReadBikeStatusSnapshotUseCase,
+        refreshPowerModeConfiguration: RefreshBikePowerModeConfigurationUseCase? = nil,
+        refreshTractionControlConfiguration: RefreshBikeTractionControlConfigurationUseCase? = nil
     ) {
         self.observeTelemetry = observeTelemetry
         self.observeConnection = observeConnection
@@ -42,5 +46,7 @@ public struct VehicleSessionUseCases: Sendable {
         self.startBatteryHealthMonitoring = startBatteryHealthMonitoring
         self.stopBatteryHealthMonitoring = stopBatteryHealthMonitoring
         self.readBikeStatusSnapshot = readBikeStatusSnapshot
+        self.refreshPowerModeConfiguration = refreshPowerModeConfiguration
+        self.refreshTractionControlConfiguration = refreshTractionControlConfiguration
     }
 }

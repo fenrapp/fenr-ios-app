@@ -23,7 +23,9 @@ enum VehicleSessionDependencyContainer {
                 observeBatteryHealth: .init(repository: repository),
                 startBatteryHealthMonitoring: .init(repository: repository),
                 stopBatteryHealthMonitoring: .init(repository: repository),
-                readBikeStatusSnapshot: .init(repository: repository)
+                readBikeStatusSnapshot: .init(repository: repository),
+                refreshPowerModeConfiguration: .init(repository: repository),
+                refreshTractionControlConfiguration: .init(repository: repository)
             ),
             speedResolver: .init(
                 now: Date.init,

@@ -7,6 +7,8 @@ public protocol BikeRepository: Sendable {
     func readTelemetrySnapshot() async throws
     func readBikeStatusSnapshot() async throws
     func refreshPowerModeConfigurations() async throws
+    func refreshPowerModeConfiguration(mapIndex: Int) async throws
+    func refreshTractionControlConfiguration(mapIndex: Int) async throws
     func observeTelemetry() async -> AsyncStream<BikeTelemetry>
     func observeConnection() async -> AsyncStream<BikeConnection>
     func observeDebugEvents() async -> AsyncStream<BikeDebugEvent>
@@ -15,4 +17,6 @@ public protocol BikeRepository: Sendable {
 public extension BikeRepository {
     func readBikeStatusSnapshot() async throws {}
     func refreshPowerModeConfigurations() async throws {}
+    func refreshPowerModeConfiguration(mapIndex _: Int) async throws {}
+    func refreshTractionControlConfiguration(mapIndex _: Int) async throws {}
 }

@@ -22,6 +22,7 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     var observationTasks: [Task<Void, Never>] = []
     var deviceSpeedTask: Task<Void, Never>?
     var deviceSpeedExpiryTask: Task<Void, Never>?
+    var locationConsumers: Set<UUID> = []
     var deviceMotionTask: Task<Void, Never>?
     var deviceMotionExpiryTask: Task<Void, Never>?
     var motionCalibrationTask: Task<Void, Never>?
@@ -29,6 +30,9 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     var batteryHealthStartTask: Task<Void, Never>?
     var batteryHealthStopTask: Task<Void, Never>?
     var batteryHealthConsumers: Set<UUID> = []
+    var powerModeRefreshTask: Task<Void, Never>?
+    var pendingPowerModeRefresh: VehiclePowerModeRefreshRequest?
+    var visitedPowerModeIndex: Int?
     var observers: [UUID: AsyncStream<VehicleSessionSnapshot>.Continuation] = [:]
 
     public init(
@@ -51,6 +55,7 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         batteryHealthTask?.cancel()
         batteryHealthStartTask?.cancel()
         batteryHealthStopTask?.cancel()
+        powerModeRefreshTask?.cancel()
     }
 
     public func observe() -> AsyncStream<VehicleSessionSnapshot> {
@@ -77,6 +82,7 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         deviceSpeedExpiryTask?.cancel()
         deviceSpeedExpiryTask = nil
         deviceSpeedSample = nil
+        locationConsumers.removeAll()
         deviceMotionTask?.cancel()
         deviceMotionTask = nil
         deviceMotionExpiryTask?.cancel()
@@ -100,6 +106,10 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         batteryHealthTask = nil
         batteryHealthMonitoringState = .inactive
         batteryHealth = .init()
+        powerModeRefreshTask?.cancel()
+        powerModeRefreshTask = nil
+        pendingPowerModeRefresh = nil
+        visitedPowerModeIndex = nil
         publish()
     }
 
@@ -139,6 +149,16 @@ public actor LiveVehicleSessionService: VehicleSessionService {
                 publish()
             }
         }
+    }
+
+    public func setLocationMonitoringRequired(_ required: Bool, consumerID: UUID) async {
+        if required {
+            locationConsumers.insert(consumerID)
+        } else {
+            locationConsumers.remove(consumerID)
+        }
+        updateDeviceSpeedObservation()
+        publish()
     }
 }
 

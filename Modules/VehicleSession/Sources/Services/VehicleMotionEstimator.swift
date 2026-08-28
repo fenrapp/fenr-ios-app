@@ -10,6 +10,8 @@ public struct VehicleMotionEstimator: Sendable {
     private var filteredRollDegrees: Double?
     private var filteredPitchDegrees: Double?
     private var filteredHeadingDegrees: Double?
+    private var rollSamples: [Double] = []
+    private var pitchSamples: [Double] = []
 
     public init(
         now: @escaping @Sendable () -> Date,
@@ -68,8 +70,12 @@ public struct VehicleMotionEstimator: Sendable {
 
         let relative = calibration.referenceAttitude.inverse.multiplied(by: deviceMotion.attitude).normalized
         let angles = relative.eulerAngles
-        let roll = filtered(angles.rollRadians.radiansToDegrees, previous: filteredRollDegrees)
-        let pitch = filtered(angles.pitchRadians.radiansToDegrees, previous: filteredPitchDegrees)
+        let rawRoll = -angles.rollRadians.radiansToDegrees
+        let rawPitch = angles.pitchRadians.radiansToDegrees
+        let medianRoll = medianFiltered(rawRoll, samples: &rollSamples)
+        let medianPitch = medianFiltered(rawPitch, samples: &pitchSamples)
+        let roll = filtered(medianRoll, previous: filteredRollDegrees)
+        let pitch = filtered(medianPitch, previous: filteredPitchDegrees)
         filteredRollDegrees = roll
         filteredPitchDegrees = pitch
         if let heading = heading.value {
@@ -104,12 +110,24 @@ private extension VehicleMotionEstimator {
     mutating func resetAngles() {
         filteredRollDegrees = nil
         filteredPitchDegrees = nil
+        rollSamples.removeAll(keepingCapacity: true)
+        pitchSamples.removeAll(keepingCapacity: true)
     }
 
     func filtered(_ value: Double, previous: Double?) -> Double {
         guard value.isFinite else { return previous ?? .zero }
         guard let previous else { return value }
         return previous + (value - previous) * smoothingFactor
+    }
+
+    func medianFiltered(_ value: Double, samples: inout [Double]) -> Double {
+        guard value.isFinite else { return samples.last ?? .zero }
+        samples.append(value)
+        if samples.count > Constants.medianWindowSize {
+            samples.removeFirst(samples.count - Constants.medianWindowSize)
+        }
+        let sorted = samples.sorted()
+        return sorted[sorted.count / 2]
     }
 
     mutating func filteredHeading(_ value: Double) -> Double {
@@ -159,6 +177,10 @@ private extension VehicleMotionEstimator {
               isFresh(location.observedAt) else { return nil }
         return location.coordinate
     }
+}
+
+private enum Constants {
+    static let medianWindowSize = 5
 }
 
 private extension MotionQuaternion {

@@ -1,4 +1,5 @@
 import BikeDomain
+import EnvironmentDomain
 import Foundation
 import SettingsDomain
 import Testing
@@ -127,6 +128,72 @@ struct LiveVehicleSessionServiceTests {
         #expect(await fixture.latestSnapshot().resolvedSpeedKilometersPerHour == nil)
         await fixture.service.stop()
     }
+}
+
+extension LiveVehicleSessionServiceTests {
+    @Test("Dynamics location consumer activates GPS with bike speed selected")
+    func dynamicsLocationConsumer() async {
+        let fixture = makeFixture(speedSource: .motorcycle)
+        await fixture.service.start()
+        #expect(await fixture.deviceSpeed.subscriptionCount() == 0)
+        let consumerID = UUID()
+
+        await fixture.service.setLocationMonitoringRequired(true, consumerID: consumerID)
+        #expect(await waitUntil { await fixture.deviceSpeed.subscriptionCount() == 1 })
+        let coordinate = GeographicCoordinate(latitudeDegrees: 40.4, longitudeDegrees: -3.7)
+        await fixture.deviceSpeed.send(.init(
+            kilometersPerHour: 20,
+            accuracyMetersPerSecond: 1,
+            altitudeMeters: 650,
+            verticalAccuracyMeters: 2,
+            coordinate: coordinate,
+            observedAt: fixture.now
+        ))
+        #expect(await waitUntil { await fixture.latestSnapshot().motion.coordinate == coordinate })
+
+        await fixture.service.setLocationMonitoringRequired(false, consumerID: consumerID)
+        #expect(await fixture.latestSnapshot().motion.coordinate == nil)
+        #expect(await fixture.latestSnapshot().motion.altitudeMeters == nil)
+        await fixture.service.stop()
+    }
+
+    @Test("Refreshes missing base and optional traction once per mode visit")
+    func refreshesPowerModeOnVisit() async {
+        let fixture = makeFixture()
+        await fixture.service.start()
+        #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
+        let baseOnly = BikePowerModeConfiguration(
+            mapIndex: 0,
+            horsepower: 60,
+            regenerativeBrakingPercent: 40
+        )
+
+        await fixture.repository.sendTelemetry(.init(
+            mode: .index(1),
+            powerModeConfigurations: [0: baseOnly]
+        ))
+        #expect(await waitUntil {
+            await fixture.repository.powerModeRefreshes() == (base: [], traction: [0])
+        })
+        await fixture.repository.sendTelemetry(.init(
+            mode: .index(1),
+            powerModeConfigurations: [0: baseOnly]
+        ))
+        #expect(await fixture.repository.powerModeRefreshes() == (base: [], traction: [0]))
+
+        await fixture.repository.sendTelemetry(.init(mode: .index(2)))
+        #expect(await waitUntil {
+            await fixture.repository.powerModeRefreshes() == (base: [1], traction: [0, 1])
+        })
+        await fixture.repository.sendTelemetry(.init(
+            mode: .index(1),
+            powerModeConfigurations: [0: baseOnly]
+        ))
+        #expect(await waitUntil {
+            await fixture.repository.powerModeRefreshes() == (base: [1], traction: [0, 1, 0])
+        })
+        await fixture.service.stop()
+    }
 
     @Test("Calibrates fresh device motion for the active VIN")
     func calibratesDeviceMotion() async {
@@ -191,7 +258,9 @@ struct LiveVehicleSessionServiceTests {
                 observeBatteryHealth: .init(repository: repository),
                 startBatteryHealthMonitoring: .init(repository: repository),
                 stopBatteryHealthMonitoring: .init(repository: repository),
-                readBikeStatusSnapshot: .init(repository: repository)
+                readBikeStatusSnapshot: .init(repository: repository),
+                refreshPowerModeConfiguration: .init(repository: repository),
+                refreshTractionControlConfiguration: .init(repository: repository)
             ),
             speedResolver: .init(
                 now: now,

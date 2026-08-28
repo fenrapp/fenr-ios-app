@@ -12,6 +12,8 @@ actor VehicleSessionTestRepository: BikeRepository, BikeBatteryHealthRepository 
     private var connectionSubscriptions = 0
     private var monitoringStarts = 0
     private var monitoringStops = 0
+    private var refreshedPowerModeIndexes: [Int] = []
+    private var refreshedTractionControlIndexes: [Int] = []
     private var shouldFailNextStart = false
     private var shouldDelayNextStart = false
     private var startWaiter: CheckedContinuation<Void, Never>?
@@ -22,6 +24,12 @@ actor VehicleSessionTestRepository: BikeRepository, BikeBatteryHealthRepository 
     func disconnect() throws {}
     func retrySecurityHandshake() throws {}
     func readTelemetrySnapshot() throws {}
+    func refreshPowerModeConfiguration(mapIndex: Int) {
+        refreshedPowerModeIndexes.append(mapIndex)
+    }
+    func refreshTractionControlConfiguration(mapIndex: Int) {
+        refreshedTractionControlIndexes.append(mapIndex)
+    }
     func observeDebugEvents() -> AsyncStream<BikeDebugEvent> { .init { _ in } }
 
     func observeTelemetry() async -> AsyncStream<BikeTelemetry> {
@@ -61,6 +69,9 @@ actor VehicleSessionTestRepository: BikeRepository, BikeBatteryHealthRepository 
     func sendHealth(_ value: BikeBatteryHealth) async { await healthHub.send(value) }
     func sourceSubscriptionCounts() -> (Int, Int) { (telemetrySubscriptions, connectionSubscriptions) }
     func monitoringCounts() -> (Int, Int) { (monitoringStarts, monitoringStops) }
+    func powerModeRefreshes() -> (base: [Int], traction: [Int]) {
+        (refreshedPowerModeIndexes, refreshedTractionControlIndexes)
+    }
     func failNextStart() { shouldFailNextStart = true }
     func delayNextStart() { shouldDelayNextStart = true }
     func hasPendingStart() -> Bool { startWaiter != nil }

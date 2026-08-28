@@ -7,16 +7,23 @@ public actor CoreMotionDeviceMotionRepository: DeviceMotionRepository {
     private let motionManager: CMMotionManager
     private let operationQueue: OperationQueue
     private let now: @Sendable () -> Date
+    private let orientation: @MainActor @Sendable () -> DeviceLandscapeOrientation?
+    private let attitudeNormalizer: DeviceMotionAttitudeNormalizer
+    private var lastOrientation = DeviceLandscapeOrientation.left
     private var continuations: [UUID: AsyncStream<DeviceMotionSample>.Continuation] = [:]
 
     public init(
         motionManager: CMMotionManager,
         operationQueue: OperationQueue,
-        now: @escaping @Sendable () -> Date
+        now: @escaping @Sendable () -> Date,
+        orientation: @escaping @MainActor @Sendable () -> DeviceLandscapeOrientation?,
+        attitudeNormalizer: DeviceMotionAttitudeNormalizer
     ) {
         self.motionManager = motionManager
         self.operationQueue = operationQueue
         self.now = now
+        self.orientation = orientation
+        self.attitudeNormalizer = attitudeNormalizer
         operationQueue.name = "com.fenr.device-motion"
         operationQueue.maxConcurrentOperationCount = 1
         operationQueue.qualityOfService = .userInteractive
@@ -59,17 +66,24 @@ private extension CoreMotionDeviceMotionRepository {
         }
     }
 
-    func receive(_ motion: CMDeviceMotion) {
+    func receive(_ motion: CMDeviceMotion) async {
         let quaternion = motion.attitude.quaternion
-        let sample = DeviceMotionSample(
-            attitude: .init(
+        if let orientation = await orientation() {
+            lastOrientation = orientation
+        }
+        let attitude = attitudeNormalizer.normalize(
+            .init(
                 xComponent: quaternion.x,
                 yComponent: quaternion.y,
                 zComponent: quaternion.z,
                 scalarComponent: quaternion.w
             ),
-            magneticHeadingDegrees: validHeading(motion.heading),
-            magneticAccuracy: accuracy(motion.magneticField.accuracy),
+            orientation: lastOrientation
+        )
+        let sample = DeviceMotionSample(
+            attitude: attitude,
+            magneticHeadingDegrees: nil,
+            magneticAccuracy: .unavailable,
             observedAt: now()
         )
         guard sample.isFinite else { return }
@@ -84,27 +98,13 @@ private extension CoreMotionDeviceMotionRepository {
 
     var preferredReferenceFrame: CMAttitudeReferenceFrame {
         let available = CMMotionManager.availableAttitudeReferenceFrames()
-        if available.contains(.xMagneticNorthZVertical) {
-            return .xMagneticNorthZVertical
+        if available.contains(.xArbitraryZVertical) {
+            return .xArbitraryZVertical
         }
         if available.contains(.xArbitraryCorrectedZVertical) {
             return .xArbitraryCorrectedZVertical
         }
-        return .xArbitraryZVertical
-    }
-
-    func validHeading(_ heading: Double) -> Double? {
-        heading.isFinite && heading >= .zero ? heading : nil
-    }
-
-    func accuracy(_ accuracy: CMMagneticFieldCalibrationAccuracy) -> MotionAccuracy {
-        switch accuracy {
-        case .uncalibrated: .unreliable
-        case .low: .low
-        case .medium: .medium
-        case .high: .high
-        @unknown default: .unavailable
-        }
+        return .xMagneticNorthZVertical
     }
 
     enum Constants {

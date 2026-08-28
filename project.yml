@@ -412,7 +412,7 @@ targets:
         INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
         INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: FENR uses Bluetooth to authenticate with your Stark Varg and display telemetry.
         INFOPLIST_KEY_NSCameraUsageDescription: FENR uses the camera to scan your bike VIN during setup.
-        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: FENR uses your location while the ride dashboard is open to provide GPS speed.
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: FENR uses your location while the ride dashboard is open to provide GPS speed, course, altitude, and coordinates.
         CODE_SIGN_ENTITLEMENTS: App/FENR.entitlements
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone:
           - UIInterfaceOrientationPortrait
@@ -506,7 +506,7 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: FENR Debug
         INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
         INFOPLIST_KEY_NSCameraUsageDescription: FENR uses the camera to scan your bike VIN during setup.
-        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: FENR uses your location while the ride dashboard is open to provide GPS speed.
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: FENR uses your location while the ride dashboard is open to provide GPS speed, course, altitude, and coordinates.
         CODE_SIGN_ENTITLEMENTS: App/FENRDebug.entitlements
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone:
           - UIInterfaceOrientationPortrait

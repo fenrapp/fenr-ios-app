@@ -52,12 +52,16 @@ extension LiveVehicleSessionService {
 
     private func receive(_ value: BikeTelemetry) {
         telemetry = value
+        updatePowerModeRefresh(for: value)
         updateDeviceSpeedObservation()
         publish()
     }
 
     private func receive(_ value: BikeConnection) {
         connection = value
+        if !isReceivingTelemetry {
+            resetPowerModeRefresh()
+        }
         updateDeviceMotionObservation()
         publish()
     }
@@ -76,13 +80,17 @@ extension LiveVehicleSessionService {
         publish()
     }
 
-    private func updateDeviceSpeedObservation() {
-        guard settings.speedSource.usesDeviceLocation else {
+    func updateDeviceSpeedObservation() {
+        guard settings.speedSource.usesDeviceLocation || !locationConsumers.isEmpty else {
             deviceSpeedTask?.cancel()
             deviceSpeedTask = nil
             deviceSpeedExpiryTask?.cancel()
             deviceSpeedExpiryTask = nil
+            let hadDeviceSpeedSample = deviceSpeedSample != nil
             deviceSpeedSample = nil
+            if hadDeviceSpeedSample {
+                refreshMotion()
+            }
             return
         }
         guard deviceSpeedTask == nil else { return }

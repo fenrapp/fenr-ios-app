@@ -45,7 +45,6 @@ enum BikeBLECurrentObservedFirmwareProfile {
             batteryTelemetryTLVUUID,
             inverterInfoUUID,
             inverterSignalsUUID,
-            inverterTemperaturesUUID,
             inverterPCBUUID,
             inverterTelemetryTLVUUID
         ]
@@ -59,7 +58,8 @@ enum BikeBLECurrentObservedFirmwareProfile {
             batteryCellVoltagesUUID,
             batteryBalancingUUID,
             batterySignalsUUID,
-            chargerDataUUID
+            chargerDataUUID,
+            inverterTemperaturesUUID
         ]
     }
 

@@ -5,9 +5,11 @@ import BLETraceDomain
 import CoreLocation
 import CoreMotion
 import EnvironmentData
+import EnvironmentDomain
 import Foundation
 import RideSessionData
 import SettingsData
+import UIKit
 
 @MainActor
 enum ProductionAppDependencyContainerFactory {
@@ -33,7 +35,9 @@ enum ProductionAppDependencyContainerFactory {
         let deviceMotionRepository = CoreMotionDeviceMotionRepository(
             motionManager: CMMotionManager(),
             operationQueue: OperationQueue(),
-            now: Date.init
+            now: Date.init,
+            orientation: currentLandscapeOrientation,
+            attitudeNormalizer: DeviceMotionAttitudeNormalizer()
         )
         let motionCalibrationRepository = makeMotionCalibrationRepository()
         let rideTripRepository = makeRideTripRepository()
@@ -83,6 +87,18 @@ enum ProductionAppDependencyContainerFactory {
             )
         } catch {
             preconditionFailure("Unable to create the motion calibration store: \(error)")
+        }
+    }
+
+    private static func currentLandscapeOrientation() -> DeviceLandscapeOrientation? {
+        let interfaceOrientation = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first(where: { $0.activationState == .foregroundActive })?
+            .interfaceOrientation
+        return switch interfaceOrientation {
+        case .landscapeLeft: .left
+        case .landscapeRight: .right
+        default: nil
         }
     }
 }

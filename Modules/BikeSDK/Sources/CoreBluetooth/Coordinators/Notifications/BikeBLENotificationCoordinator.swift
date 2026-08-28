@@ -123,6 +123,7 @@ public struct BikeBLENotificationCoordinator {
 
     public func startBatteryHealthMonitoring() async throws {
         try await subscriptionCoordinator.startBatteryHealthMonitoring()
+        try await readAvailableBatteryHealthSnapshot()
     }
 
     public func stopBatteryHealthMonitoring() async {
@@ -145,6 +146,14 @@ public struct BikeBLENotificationCoordinator {
 
     public func refreshPowerModeConfigurations() async throws {
         try await powerModeCoordinator.refresh()
+    }
+
+    public func refreshPowerModeConfiguration(mapIndex: Int) async throws {
+        try await powerModeCoordinator.refreshPowerModeConfiguration(mapIndex: mapIndex)
+    }
+
+    public func refreshTractionControlConfiguration(mapIndex: Int) async throws {
+        try await powerModeCoordinator.refreshTractionControlConfiguration(mapIndex: mapIndex)
     }
 
     public func didWriteValue(characteristic: CBCharacteristic, error: Error?) async {
@@ -177,6 +186,21 @@ public struct BikeBLENotificationCoordinator {
             try await failRead(BikeSDKText.noReadableCharacteristics)
         }
         await peripheralOperations.readValue(characteristic: characteristic, peripheral: peripheral)
+    }
+
+    private func readAvailableBatteryHealthSnapshot() async throws {
+        let peripheral = try await requirePeripheralForRead()
+        let characteristics = BikeSDKConstants.batteryHealthMonitoringUUIDs.compactMap {
+            sessionStore.discoveredCharacteristics[$0]
+        }.filter { $0.properties.contains(.read) }
+
+        for characteristic in characteristics {
+            await eventEmitter.send(.debug(.init(
+                title: BikeSDKText.readTitle,
+                detail: "Battery health snapshot \(characteristic.uuid.uuidString)"
+            )))
+            await peripheralOperations.readValue(characteristic: characteristic, peripheral: peripheral)
+        }
     }
 
     @discardableResult

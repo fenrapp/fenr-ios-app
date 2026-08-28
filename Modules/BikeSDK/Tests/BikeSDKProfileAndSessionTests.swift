@@ -119,7 +119,8 @@ struct BikeSDKProfileAndSessionTests {
             CBUUID(nsuuid: StarkUUIDs.batteryCellVoltages),
             CBUUID(nsuuid: StarkUUIDs.batteryBalancing),
             CBUUID(nsuuid: StarkUUIDs.batterySignals),
-            CBUUID(nsuuid: StarkUUIDs.chargerData)
+            CBUUID(nsuuid: StarkUUIDs.chargerData),
+            CBUUID(nsuuid: StarkUUIDs.inverterTemperatures)
         ])
     }
 
@@ -131,7 +132,6 @@ struct BikeSDKProfileAndSessionTests {
             CBUUID(nsuuid: StarkUUIDs.batteryTelemetryTLV),
             CBUUID(nsuuid: StarkUUIDs.inverterInfo),
             CBUUID(nsuuid: StarkUUIDs.inverterSignals),
-            CBUUID(nsuuid: StarkUUIDs.inverterTemperatures),
             CBUUID(nsuuid: StarkUUIDs.inverterPCB),
             CBUUID(nsuuid: StarkUUIDs.inverterTelemetryTLV)
         ]

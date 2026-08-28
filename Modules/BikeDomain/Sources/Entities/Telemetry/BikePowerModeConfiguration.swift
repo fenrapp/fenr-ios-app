@@ -18,6 +18,14 @@ public struct BikePowerModeConfiguration: Equatable, Sendable {
         self.powerTractionPercent = powerTractionPercent
         self.brakingTractionPercent = brakingTractionPercent
     }
+
+    public var hasBaseConfiguration: Bool {
+        horsepower != nil && regenerativeBrakingPercent != nil
+    }
+
+    public var hasTractionControlConfiguration: Bool {
+        powerTractionPercent != nil && brakingTractionPercent != nil
+    }
 }
 
 public enum BikeDeclaredPowerTier: String, Codable, CaseIterable, Equatable, Sendable {

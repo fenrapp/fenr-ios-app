@@ -27,6 +27,26 @@ struct BikeBLEPowerModeConfigurationCoordinatorTests {
         #expect(transport.requests == expectedRequests)
     }
 
+    @Test("Reads one selected power map without requesting traction")
+    func readsSelectedPowerMap() async throws {
+        let transport = FakeBikeBLEPowerModeConfigurationTransport()
+        let coordinator = makeCoordinator(transport: transport)
+
+        try await coordinator.refreshPowerModeConfiguration(mapIndex: 4)
+
+        #expect(transport.requests == [Data([0, 0, 4])])
+    }
+
+    @Test("Reads one selected traction map without requesting base configuration")
+    func readsSelectedTractionMap() async throws {
+        let transport = FakeBikeBLEPowerModeConfigurationTransport()
+        let coordinator = makeCoordinator(transport: transport)
+
+        try await coordinator.refreshTractionControlConfiguration(mapIndex: 2)
+
+        #expect(transport.requests == [Data([0, 8, 2])])
+    }
+
     @Test("Fails verification when no power configuration is received")
     func requiresAtLeastOnePowerConfiguration() async {
         let transport = FakeBikeBLEPowerModeConfigurationTransport()

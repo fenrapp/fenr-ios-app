@@ -20,8 +20,8 @@ struct VehicleMotionEstimatorTests {
         #expect(snapshot.rollDegrees == nil)
     }
 
-    @Test("Calculates roll relative to the calibrated position")
-    func relativeRoll() {
+    @Test("Reports positive Core Motion roll as a left lean from the rider perspective")
+    func riderRelativeRoll() {
         var estimator = makeEstimator()
         let roll = 24.0
         let snapshot = estimator.estimate(
@@ -31,7 +31,32 @@ struct VehicleMotionEstimatorTests {
         )
 
         #expect(snapshot.availability == .available)
-        #expect(abs((snapshot.rollDegrees ?? .zero) - roll) < 0.001)
+        #expect(abs((snapshot.rollDegrees ?? .zero) + roll) < 0.001)
+    }
+
+    @Test("Rejects an isolated pitch spike")
+    func rejectsPitchSpike() {
+        var estimator = makeEstimator()
+        let calibration = VehicleMotionCalibration(
+            vin: "FENRTEST000000001",
+            referenceAttitude: identity,
+            calibratedAt: now
+        )
+        for _ in 0 ..< 5 {
+            _ = estimator.estimate(
+                deviceMotion: sample(attitude: identity),
+                calibration: calibration,
+                location: nil
+            )
+        }
+
+        let snapshot = estimator.estimate(
+            deviceMotion: sample(attitude: quaternion(pitchDegrees: 35)),
+            calibration: calibration,
+            location: nil
+        )
+
+        #expect(abs(snapshot.pitchDegrees ?? .infinity) < 0.001)
     }
 
     @Test("Prefers a reliable GPS course while moving")
@@ -116,6 +141,16 @@ private extension VehicleMotionEstimatorTests {
             xComponent: .zero,
             yComponent: .zero,
             zComponent: sin(halfAngle),
+            scalarComponent: cos(halfAngle)
+        )
+    }
+
+    func quaternion(pitchDegrees: Double) -> MotionQuaternion {
+        let halfAngle = pitchDegrees * .pi / 360
+        return .init(
+            xComponent: sin(halfAngle),
+            yComponent: .zero,
+            zComponent: .zero,
             scalarComponent: cos(halfAngle)
         )
     }

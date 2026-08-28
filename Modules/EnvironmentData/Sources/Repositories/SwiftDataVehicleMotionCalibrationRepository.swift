@@ -37,6 +37,6 @@ public final class SwiftDataVehicleMotionCalibrationRepository: VehicleMotionCal
     }
 
     private enum Constants {
-        static let storeName = "VehicleMotionV1"
+        static let storeName = "VehicleMotionV2"
     }
 }

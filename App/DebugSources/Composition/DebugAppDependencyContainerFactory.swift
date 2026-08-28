@@ -3,10 +3,12 @@ import BikeEmulator
 import BLETraceDomain
 import CoreMotion
 import EnvironmentData
+import EnvironmentDomain
 import Foundation
 import RideSessionData
 import RideSessionDomain
 import SettingsData
+import UIKit
 
 @MainActor
 enum DebugAppDependencyContainerFactory {
@@ -76,7 +78,9 @@ enum DebugAppDependencyContainerFactory {
         let deviceMotionRepository = CoreMotionDeviceMotionRepository(
             motionManager: CMMotionManager(),
             operationQueue: OperationQueue(),
-            now: Date.init
+            now: Date.init,
+            orientation: currentLandscapeOrientation,
+            attitudeNormalizer: DeviceMotionAttitudeNormalizer()
         )
         let motionCalibrationRepository = makeMotionCalibrationRepository()
 #endif
@@ -109,6 +113,18 @@ enum DebugAppDependencyContainerFactory {
             initialOnboardingVIN: BikeEmulatorIdentity.vin,
             forceOnboarding: forceOnboarding
         )
+    }
+
+    private static func currentLandscapeOrientation() -> DeviceLandscapeOrientation? {
+        let interfaceOrientation = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first(where: { $0.activationState == .foregroundActive })?
+            .interfaceOrientation
+        return switch interfaceOrientation {
+        case .landscapeLeft: .left
+        case .landscapeRight: .right
+        default: nil
+        }
     }
 
     private static func launchValue(after flag: String, in arguments: [String]) -> String? {

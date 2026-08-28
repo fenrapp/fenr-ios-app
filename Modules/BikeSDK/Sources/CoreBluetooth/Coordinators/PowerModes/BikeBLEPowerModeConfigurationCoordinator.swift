@@ -55,6 +55,14 @@ final class BikeBLEPowerModeConfigurationCoordinator {
         try await readTractionControlConfigurations()
     }
 
+    func refreshPowerModeConfiguration(mapIndex: Int) async throws {
+        try await readPowerModeConfiguration(mapIndex: mapIndex)
+    }
+
+    func refreshTractionControlConfiguration(mapIndex: Int) async throws {
+        try await readTractionControlConfiguration(mapIndex: mapIndex)
+    }
+
     func reset() {
         console("session reset")
         automaticRefreshTask?.cancel()
@@ -81,24 +89,8 @@ final class BikeBLEPowerModeConfigurationCoordinator {
         for mapIndex in StarkPowerModeConfigurationCommand.mapIndexes {
             try Task.checkCancellation()
             do {
-                let request = try StarkPowerModeConfigurationCommand.readPacket(
-                    mapIndex: mapIndex
-                )
-                let response = try await transport.readConfiguration(
-                    request: request,
-                    operationName: "4005 power mode \(mapIndex) read",
-                    allowLiveTelemetrySession: true
-                )
-                let payload = try StarkPowerModeConfigurationCommand.decodeResponse(
-                    response,
-                    expectedMapIndex: mapIndex
-                )
+                _ = try await readPowerModeConfiguration(mapIndex: mapIndex)
                 receivedMapCount += 1
-                await report(
-                    "4005 power map \(mapIndex) decoded hp=\(payload.horsepower) "
-                        + "regen=\(payload.regenerativeBrakingPercent)%"
-                )
-                await eventEmitter.send(.telemetry(.powerModeConfiguration(payload)))
                 try await Task.sleep(for: Constants.interRequestDelay)
             } catch is CancellationError {
                 throw CancellationError()
@@ -128,24 +120,8 @@ final class BikeBLEPowerModeConfigurationCoordinator {
         for mapIndex in StarkPowerModeConfigurationCommand.mapIndexes {
             do {
                 try Task.checkCancellation()
-                let request = try StarkTractionControlConfigurationCommand.readPacket(
-                    mapIndex: mapIndex
-                )
-                let response = try await transport.readConfiguration(
-                    request: request,
-                    operationName: "4005 traction control \(mapIndex) read",
-                    allowLiveTelemetrySession: true
-                )
-                let payload = try StarkTractionControlConfigurationCommand.decodeResponse(
-                    response,
-                    expectedMapIndex: mapIndex
-                )
+                _ = try await readTractionControlConfiguration(mapIndex: mapIndex)
                 receivedMapCount += 1
-                await report(
-                    "4005 TC map \(mapIndex) decoded power=\(payload.powerPercent)% "
-                        + "braking=\(payload.brakingPercent)%"
-                )
-                await eventEmitter.send(.telemetry(.tractionControlConfiguration(payload)))
                 try await Task.sleep(for: Constants.interRequestDelay)
             } catch is CancellationError {
                 throw CancellationError()
@@ -157,6 +133,50 @@ final class BikeBLEPowerModeConfigurationCoordinator {
             "TC configurations received \(receivedMapCount)/"
                 + "\(StarkPowerModeConfigurationCommand.mapIndexes.count)"
         )
+    }
+
+    @discardableResult
+    private func readPowerModeConfiguration(
+        mapIndex: Int
+    ) async throws -> StarkPowerModeConfigurationPayload {
+        let request = try StarkPowerModeConfigurationCommand.readPacket(mapIndex: mapIndex)
+        let response = try await transport.readConfiguration(
+            request: request,
+            operationName: "4005 power mode \(mapIndex) read",
+            allowLiveTelemetrySession: true
+        )
+        let payload = try StarkPowerModeConfigurationCommand.decodeResponse(
+            response,
+            expectedMapIndex: mapIndex
+        )
+        await report(
+            "4005 power map \(mapIndex) decoded hp=\(payload.horsepower) "
+                + "regen=\(payload.regenerativeBrakingPercent)%"
+        )
+        await eventEmitter.send(.telemetry(.powerModeConfiguration(payload)))
+        return payload
+    }
+
+    @discardableResult
+    private func readTractionControlConfiguration(
+        mapIndex: Int
+    ) async throws -> StarkTractionControlConfigurationPayload {
+        let request = try StarkTractionControlConfigurationCommand.readPacket(mapIndex: mapIndex)
+        let response = try await transport.readConfiguration(
+            request: request,
+            operationName: "4005 traction control \(mapIndex) read",
+            allowLiveTelemetrySession: true
+        )
+        let payload = try StarkTractionControlConfigurationCommand.decodeResponse(
+            response,
+            expectedMapIndex: mapIndex
+        )
+        await report(
+            "4005 TC map \(mapIndex) decoded power=\(payload.powerPercent)% "
+                + "braking=\(payload.brakingPercent)%"
+        )
+        await eventEmitter.send(.telemetry(.tractionControlConfiguration(payload)))
+        return payload
     }
 
     private func emitMapFailure(kind: String, mapIndex: Int, error: Error) async {
