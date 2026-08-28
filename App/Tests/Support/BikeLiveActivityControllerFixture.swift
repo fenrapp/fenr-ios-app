@@ -1,4 +1,5 @@
 import BikeDomain
+import BLETraceDomain
 import EnvironmentDomain
 import Foundation
 import RideDashboard
@@ -83,7 +84,9 @@ final class AppLifecycleControllerFixture {
     let rideSession = LifecycleRideSessionSpy()
     let lifecycleController: AppLifecycleController
 
-    init() {
+    init(
+        bleTraceStoragePreparer: any BLETraceStoragePreparing = NoOpBLETraceRepository()
+    ) {
         let profileRepository = SetupProfileRepository(
             profile: .init(vin: "FENRTEST000000001")
         )
@@ -129,7 +132,8 @@ final class AppLifecycleControllerFixture {
             setupFlow: setupFlow,
             bikeLiveActivityController: liveActivityController,
             rideSession: rideSession,
-            vehicleSession: vehicleSession
+            vehicleSession: vehicleSession,
+            bleTraceStoragePreparer: bleTraceStoragePreparer
         )
     }
 }

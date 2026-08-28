@@ -96,22 +96,72 @@ struct BatteryHealthAnalyzerTests {
 
     @Test("BMS fault always wins")
     func prioritizesBMSFault() {
-        let analysis = analyzer.analyze(health(isFaultActive: true))
+        let analysis = analyzer.analyze(health(positiveBMSFaultBits: 1))
 
         #expect(analysis.severity == .critical)
         #expect(analysis.isBMSFaultActive)
     }
 
+    @Test("Does not promote a generic vehicle alert to a BMS fault")
+    func keepsVehicleAlertSeparateFromBMSFault() {
+        let analysis = analyzer.analyze(health(isFaultActive: true))
+
+        #expect(analysis.severity == .unknown)
+        #expect(!analysis.isBMSFaultActive)
+    }
+
+    @Test("Treats a uniformly depleted two-percent pack as low battery, not failed cells")
+    func classifiesUniformTwoPercentPackAsLowBattery() {
+        let cells = (1 ... 100).map { position in
+            BatteryCellVoltage(position: position, volts: 2.95 + Double(position % 4) * 0.001)
+        }
+        let analysis = analyzer.analyze(health(stateOfCharge: 2, cells: cells))
+
+        #expect(analysis.isLowBattery)
+        #expect(analysis.criticalCellCount == 0)
+        #expect(analysis.severity == .healthy)
+    }
+
+    @Test("Keeps an isolated low cell critical while the pack is depleted")
+    func detectsIsolatedLowCellAtLowCharge() {
+        var cells = (1 ... 99).map { BatteryCellVoltage(position: $0, volts: 2.96) }
+        cells.append(.init(position: 100, volts: 2.88))
+        let analysis = analyzer.analyze(health(stateOfCharge: 2, cells: cells))
+
+        #expect(analysis.isLowBattery)
+        #expect(analysis.severity == .critical)
+        #expect(analysis.criticalCellCount == 1)
+    }
+
+    @Test("Keeps the observed seven-percent voltage range out of BMS fault state")
+    func classifiesObservedLowChargeRange() {
+        let cells = (1 ... 100).map { position in
+            BatteryCellVoltage(position: position, volts: 3.0718 + Double(position % 20) * 0.0017)
+        }
+        let analysis = analyzer.analyze(health(stateOfCharge: 7, cells: cells))
+
+        #expect(analysis.isLowBattery)
+        #expect(!analysis.isBMSFaultActive)
+        #expect(analysis.criticalCellCount == 0)
+        #expect(analysis.severity != .critical)
+    }
+
     private func health(
         stateOfHealth: Int? = 95,
+        stateOfCharge: Int? = nil,
         cells: [BatteryCellVoltage] = [],
         balancingIndexes: Set<Int> = [],
         temperatures: [BatteryTemperature] = [],
-        isFaultActive: Bool = false
+        isFaultActive: Bool = false,
+        positiveBMSFaultBits: UInt32 = 0,
+        negativeBMSFaultBits: UInt32 = 0
     ) -> BikeBatteryHealth {
         .init(
+            stateOfCharge: stateOfCharge.map(BatteryLevel.known) ?? .unknown,
             stateOfHealth: stateOfHealth.map(HealthLevel.known) ?? .unknown,
             isFaultActive: isFaultActive,
+            positiveBMSFaultBits: positiveBMSFaultBits,
+            negativeBMSFaultBits: negativeBMSFaultBits,
             cellVoltages: cells,
             balancingCellIndexes: balancingIndexes,
             temperatures: temperatures

@@ -11,12 +11,18 @@ public struct DashboardEfficiencyViewData: Equatable, Sendable {
     public struct PowerPoint: Equatable, Identifiable, Sendable {
         public let id: Date
         public let date: Date
-        public let kilowatts: Double
+        public let usedKilowatts: Double
+        public let regenKilowatts: Double
 
-        public init(date: Date, kilowatts: Double) {
+        public init(
+            date: Date,
+            usedKilowatts: Double,
+            regenKilowatts: Double
+        ) {
             id = date
             self.date = date
-            self.kilowatts = kilowatts
+            self.usedKilowatts = usedKilowatts
+            self.regenKilowatts = regenKilowatts
         }
     }
 

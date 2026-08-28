@@ -37,7 +37,8 @@ enum VehicleSessionDependencyContainer {
                 maximumSampleAge: Constants.maximumMotionSampleAge,
                 minimumGPSCourseSpeedKilometersPerHour: Constants.minimumGPSCourseSpeedKilometersPerHour,
                 maximumGPSCourseAccuracyDegrees: Constants.maximumGPSCourseAccuracyDegrees,
-                smoothingFactor: Constants.motionSmoothingFactor
+                smoothingFactor: Constants.motionSmoothingFactor,
+                maximumLocationSampleAge: FENRRuntimeConstants.RideDashboard.deviceSpeedMaximumSampleAge
             )
         )
     }

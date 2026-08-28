@@ -128,6 +128,7 @@ private func previewFeature(
 ) -> RideDashboardFeatureModel {
     RideDashboardFeatureModel(
         dashboardViewModel: RideDashboardPreviewFactory.makeViewModel(state: dashboardState),
+        deviceBatteryViewModel: previewDeviceBatteryViewModel(),
         currentTripViewModel: previewCurrentTripViewModel(),
         tripStatisticsViewModel: previewTripStatisticsViewModel(),
         efficiencyViewModel: previewEfficiencyViewModel(),
@@ -161,6 +162,30 @@ private func previewFeature(
         ),
         chargingViewModel: previewChargingViewModel(state: chargingState)
     )
+}
+
+@MainActor
+private func previewDeviceBatteryViewModel() -> DashboardDeviceBatteryViewModel {
+    let viewModel = DashboardDeviceBatteryViewModel(monitor: PreviewDashboardDeviceBatteryMonitor())
+    viewModel.setPreviewState(.init(
+        percentageText: "64%",
+        systemImage: "battery.75percent",
+        emphasis: .normal,
+        accessibilityLabel: "iPhone battery 64 percent"
+    ))
+    return viewModel
+}
+
+private final class PreviewDashboardDeviceBatteryMonitor: DashboardDeviceBatteryMonitoring {
+    @MainActor func start() {}
+    @MainActor func stop() {}
+
+    @MainActor
+    func observe() -> AsyncStream<DashboardDeviceBatterySnapshot> {
+        AsyncStream { continuation in
+            continuation.yield(.init(level: 0.64, isCharging: false))
+        }
+    }
 }
 
 private let previewDashboardSystemHealthState = DashboardSystemHealthViewData(

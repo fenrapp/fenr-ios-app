@@ -92,8 +92,8 @@ struct DashboardSystemHealthCard: View {
 
     private var showsStatusBanner: Bool {
         switch state.status {
-        case .healthy: false
-        case .scanning, .attention, .critical, .unavailable: true
+        case .healthy, .scanning: false
+        case .lowBattery, .attention, .critical, .unavailable: true
         }
     }
 
@@ -106,7 +106,7 @@ struct DashboardSystemHealthCard: View {
             "battery temperature \(state.batteryTemperatureText)",
             "inverter temperature \(state.inverterTemperatureText)",
             state.statusDetail
-        ].joined(separator: ", ")
+        ].filter { !$0.isEmpty }.joined(separator: ", ")
     }
 
     private enum Constants {

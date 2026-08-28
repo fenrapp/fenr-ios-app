@@ -6,7 +6,7 @@ enum DashboardSystemHealthStyle {
         switch status {
         case .scanning, .unavailable: DesignColor.secondaryText
         case .healthy: DesignColor.positive
-        case .attention: DesignColor.warning
+        case .lowBattery, .attention: DesignColor.warning
         case .critical: DesignColor.critical
         }
     }

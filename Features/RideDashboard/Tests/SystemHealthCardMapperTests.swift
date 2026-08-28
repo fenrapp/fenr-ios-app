@@ -46,7 +46,7 @@ struct SystemHealthCardMapperTests {
         cells.append(.init(position: 100, volts: 2.85))
         let state = mapper.map(snapshot(health: .init(
             stateOfHealth: .known(percent: 94),
-            isFaultActive: true,
+            positiveBMSFaultBits: 1,
             cellVoltages: cells
         )))
 
@@ -56,12 +56,44 @@ struct SystemHealthCardMapperTests {
         #expect(state.cells.last?.condition == .critical)
     }
 
+    @Test("Maps a uniformly depleted pack to low battery without cell failures")
+    func mapsLowBatteryPack() {
+        let cells = (1 ... 100).map { position in
+            BatteryCellVoltage(position: position, volts: 2.95 + Double(position % 4) * 0.001)
+        }
+        let state = mapper.map(snapshot(health: .init(
+            stateOfCharge: .known(percent: 2),
+            stateOfHealth: .known(percent: 94),
+            cellVoltages: cells,
+            temperatures: [.init(position: 1, celsius: 25)]
+        )))
+
+        #expect(state.status == .lowBattery)
+        #expect(state.statusText == "LOW BATTERY")
+        #expect(state.statusDetail == "LOW BATTERY · CHARGE SOON")
+        #expect(state.criticalCellCount == 0)
+    }
+
+    @Test("Does not label the generic vehicle fault flag as a BMS fault")
+    func keepsGenericVehicleFaultSeparate() {
+        let state = mapper.map(snapshot(health: .init(
+            stateOfCharge: .known(percent: 80),
+            stateOfHealth: .known(percent: 94),
+            isFaultActive: true,
+            cellVoltages: [.init(position: 1, volts: 3.9)]
+        )))
+
+        #expect(state.status == .healthy)
+        #expect(state.statusDetail != "BMS FAULT ACTIVE")
+    }
+
     @Test("Distinguishes scanning and unavailable monitoring")
     func mapsMonitoringStates() {
         let scanning = mapper.map(.init(batteryHealthMonitoringState: .starting))
         let unavailable = mapper.map(.init(batteryHealthMonitoringState: .failed("No BMS")))
 
         #expect(scanning.status == .scanning)
+        #expect(scanning.statusDetail.isEmpty)
         #expect(scanning.stateOfHealthText == "N/A")
         #expect(scanning.stateOfHealthProgress == 0)
         #expect(unavailable.status == .unavailable)

@@ -49,6 +49,29 @@ struct SystemHealthCardViewModelTests {
         #expect(await waitUntil { await session.requirements() == [true, false] })
     }
 
+    @Test("Keeps the last health result while a repeat visit refreshes")
+    func keepsCachedHealthDuringRefresh() async {
+        let session = SystemHealthVehicleSession()
+        let viewModel = makeViewModel(session: session)
+
+        viewModel.setIsVisible(true)
+        await session.send(snapshot(healthPercent: 94))
+        #expect(await waitUntil(timeout: .seconds(2)) {
+            viewModel.viewState.stateOfHealthText == "94%"
+        })
+
+        viewModel.setIsVisible(false)
+        viewModel.setIsVisible(true)
+        await session.send(.init(batteryHealthMonitoringState: .starting))
+        try? await Task.sleep(for: .milliseconds(600))
+        #expect(viewModel.viewState.stateOfHealthText == "94%")
+
+        await session.send(snapshot(healthPercent: 88))
+        #expect(await waitUntil(timeout: .seconds(2)) {
+            viewModel.viewState.stateOfHealthText == "88%"
+        })
+    }
+
     @Test("Releases BMS monitoring when destroyed while visible")
     func releasesMonitoringOnDeinit() async {
         let session = SystemHealthVehicleSession()
@@ -80,34 +103,5 @@ struct SystemHealthCardViewModelTests {
             ),
             batteryHealthMonitoringState: .active
         )
-    }
-}
-
-private actor SystemHealthVehicleSession: VehicleSessionService {
-    private let hub = TestEventHub<VehicleSessionSnapshot>()
-    private var monitoringRequirements: [Bool] = []
-
-    func observe() async -> AsyncStream<VehicleSessionSnapshot> {
-        await hub.stream()
-    }
-
-    func start() {}
-    func stop() {}
-    func refreshBikeStatus() {}
-    func calibrateDeviceMotion() {}
-
-    func setBatteryHealthMonitoringRequired(_ required: Bool, consumerID _: UUID) {
-        monitoringRequirements.append(required)
-    }
-
-    func send(_ snapshot: VehicleSessionSnapshot, waitsForSubscriber: Bool = true) async {
-        if waitsForSubscriber {
-            await hub.waitForSubscriber()
-        }
-        await hub.send(snapshot)
-    }
-
-    func requirements() -> [Bool] {
-        monitoringRequirements
     }
 }

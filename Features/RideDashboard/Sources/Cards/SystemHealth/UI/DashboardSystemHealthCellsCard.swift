@@ -89,9 +89,11 @@ struct DashboardSystemHealthCellsCard: View {
         VStack(spacing: DesignSpace.small) {
             ProgressView()
                 .tint(DesignColor.informational)
-            Text(state.statusDetail)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(DesignColor.secondaryText)
+            if !state.statusDetail.isEmpty {
+                Text(state.statusDetail)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(DesignColor.secondaryText)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

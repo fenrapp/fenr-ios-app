@@ -155,9 +155,11 @@ import SwiftUI
 private let previewPowerPoints: [DashboardEfficiencyViewData.PowerPoint] = {
     let now = Date(timeIntervalSinceReferenceDate: 1_000)
     return stride(from: -60, through: 0, by: 5).map { offset in
-        .init(
+        let signedKilowatts = sin(Double(offset) / 8) * 4
+        return .init(
             date: now.addingTimeInterval(TimeInterval(offset)),
-            kilowatts: sin(Double(offset) / 8) * 4
+            usedKilowatts: max(signedKilowatts, .zero),
+            regenKilowatts: max(-signedKilowatts, .zero)
         )
     }
 }()

@@ -132,6 +132,7 @@ struct DashboardCompassDial: View {
                     .font(.caption2.weight(.semibold))
                     .monospacedDigit()
                     .foregroundStyle(DesignColor.secondaryText)
+                    .padding(.top, Constants.altitudeTopPadding)
             }
         }
     }
@@ -174,6 +175,7 @@ struct DashboardCompassDial: View {
         static let markerShadowRadius: CGFloat = 3
         static let cardinalFontSize: CGFloat = 34
         static let centerSpacing: CGFloat = 1
+        static let altitudeTopPadding: CGFloat = 4
         static let minimumTextScale: CGFloat = 0.7
         static let unavailableOpacity = 0.45
         static let northOffsetDegrees = 90.0

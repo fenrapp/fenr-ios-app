@@ -31,6 +31,7 @@ public struct RideDashboardView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let feature: RideDashboardFeatureModel
     @ObservedObject private var viewModel: RideDashboardViewModel
+    @ObservedObject private var deviceBatteryViewModel: DashboardDeviceBatteryViewModel
     @ObservedObject private var currentTripViewModel: CurrentTripCardViewModel
     @ObservedObject private var tripStatisticsViewModel: TripStatisticsCardViewModel
     @ObservedObject private var efficiencyViewModel: EfficiencyCardViewModel
@@ -51,6 +52,7 @@ public struct RideDashboardView: View {
     ) {
         self.feature = feature
         _viewModel = ObservedObject(wrappedValue: feature.dashboardViewModel)
+        _deviceBatteryViewModel = ObservedObject(wrappedValue: feature.deviceBatteryViewModel)
         _currentTripViewModel = ObservedObject(wrappedValue: feature.currentTripViewModel)
         _tripStatisticsViewModel = ObservedObject(wrappedValue: feature.tripStatisticsViewModel)
         _efficiencyViewModel = ObservedObject(wrappedValue: feature.efficiencyViewModel)
@@ -143,7 +145,12 @@ public struct RideDashboardView: View {
                             }
                             .frame(width: layout.centerColumnWidth)
 
-                            DashboardGearPanel(state: viewModel.viewState.gear)
+                            DashboardRightStatusColumn(
+                                gear: viewModel.viewState.gear,
+                                powerMode: viewModel.viewState.powerMode,
+                                showsPowerMode: viewModel.viewState.centerMode == .riding
+                                    && cardSelection.ridingCard != .speedometer
+                            )
                             .frame(width: layout.sideColumnWidth)
                         }
 
@@ -169,10 +176,24 @@ public struct RideDashboardView: View {
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
             .overlay(alignment: .topLeading) {
-                DashboardRideClock()
+                DashboardRideHeader(
+                    deviceBattery: deviceBatteryViewModel.viewState
+                )
                     .padding(Constants.accessoryEdgePadding)
             }
             .overlay(alignment: .topTrailing) {
+                if viewModel.viewState.hasTelemetry {
+                    DashboardOdometerLabel(state: viewModel.viewState.odometer)
+                        .padding(Constants.accessoryEdgePadding)
+                }
+            }
+            .overlay(alignment: .bottomLeading) {
+                if viewModel.viewState.temperatureSummary.hasValues {
+                    DashboardRideTemperatureSummary(state: viewModel.viewState.temperatureSummary)
+                        .padding(Constants.accessoryEdgePadding)
+                }
+            }
+            .overlay(alignment: .bottomTrailing) {
                 Button(action: onSettings) {
                     Label("Settings", systemImage: "gearshape.fill")
                 }
@@ -180,12 +201,6 @@ public struct RideDashboardView: View {
                 .controlSize(.small)
                 .padding(Constants.accessoryEdgePadding)
                 .accessibilityIdentifier("dashboard.settings")
-            }
-            .overlay(alignment: .bottomLeading) {
-                if viewModel.viewState.temperatureSummary.hasValues {
-                    DashboardRideTemperatureSummary(state: viewModel.viewState.temperatureSummary)
-                        .padding(Constants.accessoryEdgePadding)
-                }
             }
         }
         .background(Color(uiColor: .systemBackground).ignoresSafeArea())
@@ -215,28 +230,6 @@ public struct RideDashboardView: View {
             UIApplication.shared.isIdleTimerDisabled = false
             feature.stopPresentation()
         }
-    }
-}
-
-private struct DashboardRideClock: View {
-    var body: some View {
-        TimelineView(.periodic(from: currentMinute, by: Constants.minuteInterval)) { context in
-            let time = context.date.formatted(date: .omitted, time: .shortened)
-            Text(time)
-                .font(.system(size: Constants.fontSize, weight: .semibold, design: .rounded))
-                .monospacedDigit()
-                .accessibilityLabel("Time")
-                .accessibilityValue(time)
-        }
-    }
-
-    private var currentMinute: Date {
-        Calendar.autoupdatingCurrent.dateInterval(of: .minute, for: .now)?.start ?? .now
-    }
-
-    private enum Constants {
-        static let fontSize: CGFloat = 18
-        static let minuteInterval: TimeInterval = 60
     }
 }
 

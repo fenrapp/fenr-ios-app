@@ -2,6 +2,7 @@ public struct DashboardSystemHealthViewData: Equatable, Sendable {
     public enum Status: Equatable, Sendable {
         case scanning
         case healthy
+        case lowBattery
         case attention
         case critical
         case unavailable
@@ -82,7 +83,7 @@ public struct DashboardSystemHealthViewData: Equatable, Sendable {
     public init(
         status: Status = .scanning,
         statusText: String = "SCANNING",
-        statusDetail: String = "READING BMS DATA",
+        statusDetail: String = "",
         stateOfHealthText: String = "—",
         stateOfHealthProgress: Double = .zero,
         cellDeltaText: String = "—",

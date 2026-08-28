@@ -4,6 +4,7 @@ import BLETraceDomain
 @testable import RideDashboard
 import SettingsDomain
 import Testing
+import TestSupport
 
 @MainActor
 @Suite("App dependency container")
@@ -62,6 +63,23 @@ struct AppDependencyContainerTests {
         #expect(await fixture.rideSession.recordedEvents() == ["start"])
         #expect(await fixture.repository.startCount() == 1)
         #expect(await fixture.repository.lastVIN() == "FENRTEST000000001")
+    }
+
+    @Test("Lifecycle prepares traces in parallel and waits before automatic BLE start")
+    func lifecycleWaitsForTracePreparationBeforeBLEStart() async {
+        let tracePreparer = LifecycleBLETraceStoragePreparer()
+        let fixture = AppLifecycleControllerFixture(
+            bleTraceStoragePreparer: tracePreparer
+        )
+        let startTask = Task { await fixture.lifecycleController.start() }
+
+        #expect(await waitUntil { await tracePreparer.preparationHasStarted() })
+        #expect(await fixture.vehicleSession.startCount() == 1)
+        #expect(await fixture.repository.startCount() == 0)
+
+        await tracePreparer.finishPreparation()
+        await startTask.value
+        #expect(await fixture.repository.startCount() == 1)
     }
 
     @Test("Lifecycle waits for pending persistence before shutdown barriers")

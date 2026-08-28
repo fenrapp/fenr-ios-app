@@ -51,9 +51,8 @@ extension FileBLETraceLogRepository {
     ) throws {
         let urls = try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
         for url in urls where url.pathExtension == "partial" {
-            guard let data = try? Data(contentsOf: url),
-                  let firstLine = data.split(separator: 0x0A).first,
-                  let header = try? JSONSerialization.jsonObject(with: Data(firstLine)) as? [String: Any],
+            guard let firstLine = try? firstJSONLine(at: url),
+                  let header = try? JSONSerialization.jsonObject(with: firstLine) as? [String: Any],
                   let rawID = header["session_id"] as? String,
                   let id = UUID(uuidString: rawID),
                   let rawStart = header["started_at"] as? String,
@@ -61,13 +60,14 @@ extension FileBLETraceLogRepository {
             else {
                 continue
             }
-            let eventCount = max(0, data.split(separator: 0x0A).count - 1)
+            let fileStatistics = try streamStatistics(at: url)
+            let eventCount = max(0, fileStatistics.recordCount - 1)
             let footerInput = FooterInput(
                 sessionID: id,
                 endedAt: now,
                 durationMilliseconds: max(0, Int64(now.timeIntervalSince(startedAt) * 1_000)),
                 eventCount: eventCount,
-                baseBytes: Int64(data.count),
+                baseBytes: fileStatistics.byteCount,
                 status: .incomplete,
                 reason: .abruptTermination
             )
@@ -88,12 +88,10 @@ extension FileBLETraceLogRepository {
         let urls = try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "jsonl" }
         return urls.compactMap { url in
-            guard let data = try? Data(contentsOf: url) else { return nil }
-            let lines = data.split(separator: 0x0A)
-            guard let first = lines.first,
-                  let last = lines.last,
-                  let header = try? JSONSerialization.jsonObject(with: Data(first)) as? [String: Any],
-                  let footer = try? JSONSerialization.jsonObject(with: Data(last)) as? [String: Any],
+            guard let first = try? firstJSONLine(at: url),
+                  let last = try? lastJSONLine(at: url),
+                  let header = try? JSONSerialization.jsonObject(with: first) as? [String: Any],
+                  let footer = try? JSONSerialization.jsonObject(with: last) as? [String: Any],
                   let rawID = header["session_id"] as? String,
                   let id = UUID(uuidString: rawID),
                   let rawStart = header["started_at"] as? String,
@@ -103,7 +101,7 @@ extension FileBLETraceLogRepository {
                   let rawStatus = footer["status"] as? String,
                   let status = BLETraceSessionStatus(rawValue: rawStatus)
             else { return nil }
-            let eventCount = footer["event_count"] as? Int ?? max(0, lines.count - 2)
+            let eventCount = footer["event_count"] as? Int ?? 0
             return StoredSession(
                 summary: BLETraceSessionSummary(
                     id: id,
@@ -119,6 +117,54 @@ extension FileBLETraceLogRepository {
             )
         }
         .sorted { $0.summary.startedAt > $1.summary.startedAt }
+    }
+
+    static func firstJSONLine(at url: URL) throws -> Data? {
+        let handle = try FileHandle(forReadingFrom: url)
+        defer { try? handle.close() }
+        let data = try handle.read(upToCount: Constants.maximumBoundaryRecordBytes) ?? Data()
+        guard !data.isEmpty else { return nil }
+        if let newline = data.firstIndex(of: Constants.newline) {
+            return Data(data[..<newline])
+        }
+        guard data.count < Constants.maximumBoundaryRecordBytes else { return nil }
+        return data
+    }
+
+    static func lastJSONLine(at url: URL) throws -> Data? {
+        let handle = try FileHandle(forReadingFrom: url)
+        defer { try? handle.close() }
+        let fileLength = try handle.seekToEnd()
+        guard fileLength > 0 else { return nil }
+        let readLength = min(UInt64(Constants.maximumBoundaryRecordBytes), fileLength)
+        try handle.seek(toOffset: fileLength - readLength)
+        var data = try handle.read(upToCount: Int(readLength)) ?? Data()
+        while data.last == Constants.newline || data.last == Constants.carriageReturn {
+            data.removeLast()
+        }
+        guard !data.isEmpty else { return nil }
+        if let newline = data.lastIndex(of: Constants.newline) {
+            return Data(data[data.index(after: newline)...])
+        }
+        guard readLength == fileLength else { return nil }
+        return data
+    }
+
+    static func streamStatistics(at url: URL) throws -> FileStreamStatistics {
+        let handle = try FileHandle(forReadingFrom: url)
+        defer { try? handle.close() }
+        var byteCount: Int64 = 0
+        var newlineCount = 0
+        var lastByte: UInt8?
+        while let block = try handle.read(upToCount: Constants.streamingBlockBytes), !block.isEmpty {
+            byteCount += Int64(block.count)
+            newlineCount += block.reduce(into: 0) { count, byte in
+                if byte == Constants.newline { count += 1 }
+            }
+            lastByte = block.last
+        }
+        let recordCount = newlineCount + ((lastByte != nil && lastByte != Constants.newline) ? 1 : 0)
+        return FileStreamStatistics(byteCount: byteCount, recordCount: recordCount)
     }
 
     static func prune(
@@ -140,5 +186,17 @@ extension FileBLETraceLogRepository {
             try fileManager.removeItem(at: removed.url)
         }
         return retained
+    }
+
+    struct FileStreamStatistics {
+        let byteCount: Int64
+        let recordCount: Int
+    }
+
+    enum Constants {
+        static let newline: UInt8 = 0x0A
+        static let carriageReturn: UInt8 = 0x0D
+        static let maximumBoundaryRecordBytes = 64 * 1_024
+        static let streamingBlockBytes = 64 * 1_024
     }
 }

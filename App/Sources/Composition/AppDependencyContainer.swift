@@ -151,7 +151,8 @@ struct AppDependencyContainer {
                 setupFlow: setupFlow,
                 bikeLiveActivityController: bikeLiveActivityController,
                 rideSession: rideSession,
-                vehicleSession: vehicleSession
+                vehicleSession: vehicleSession,
+                bleTraceStoragePreparer: bleTraceLogRepository
             ),
             interfaceOrientationController: .shared
         )

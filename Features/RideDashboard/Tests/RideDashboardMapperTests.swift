@@ -56,6 +56,8 @@ struct RideDashboardMapperTests {
         #expect(abs(state.speedometer.progress - (42.0 / 180.0)) < 0.001)
         #expect(state.speedometer.sourceIndicator == nil)
         #expect(state.speedometer.accessibilityLabel == "Speed 42 km/h")
+        #expect(state.odometer.valueText == "180,0 km")
+        #expect(state.odometer.accessibilityLabel == "Odometer 180,0 km")
         #expect(state.battery.percentageText == "60%")
         #expect(state.battery.emphasis == .positive)
         #expect(state.batteryIndicatorMode == .estimatedRange)
@@ -115,7 +117,10 @@ struct RideDashboardMapperTests {
     @Test("Clamps negative speed")
     func mapsUnavailableValues() {
         let state = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_US")).map(
-            telemetry: BikeTelemetry(speed: .known(kmh: -5, kmhX10: -50)),
+            telemetry: BikeTelemetry(
+                speed: .known(kmh: -5, kmhX10: -50),
+                odometer: .known(kilometers: 180, centiKilometers: 18_000)
+            ),
             connection: BikeConnection(state: .receivingTelemetry(peripheralName: "FENRTEST000000001")),
             speedKilometersPerHour: -5,
             measurementSystem: .imperial
@@ -126,6 +131,7 @@ struct RideDashboardMapperTests {
         #expect(state.speedometer.unit == "mph")
         #expect(state.speedometer.progress == 0)
         #expect(state.connectionDetail == "Live telemetry active")
+        #expect(state.odometer.valueText == "111.8 mi")
     }
 
     @Test("Preserves negative speed only during reverse crawl")
@@ -160,6 +166,7 @@ struct RideDashboardMapperTests {
         #expect(!state.hasTelemetry)
         #expect(state.speedometer.valueText == "0")
         #expect(state.battery == .init())
+        #expect(state.odometer == .init())
         #expect(state.gear == .init())
         #expect(state.indicators.allSatisfy { !$0.isActive })
         #expect(state.connectionDetail == "Bluetooth is off")

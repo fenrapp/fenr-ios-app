@@ -1,3 +1,4 @@
+import BLETraceDomain
 import RideSession
 import VehicleSession
 
@@ -8,6 +9,7 @@ final class AppLifecycleController {
     private let bikeLiveActivityController: BikeLiveActivityController
     private let rideSession: any RideSessionService
     private let vehicleSession: any VehicleSessionService
+    private let bleTraceStoragePreparer: any BLETraceStoragePreparing
     private var changeBikeTask: Task<Void, Never>?
     private var persistenceTask: Task<Void, Never>?
     private var stopTask: Task<Void, Never>?
@@ -18,13 +20,15 @@ final class AppLifecycleController {
         setupFlow: BikeSetupFlowController,
         bikeLiveActivityController: BikeLiveActivityController,
         rideSession: any RideSessionService,
-        vehicleSession: any VehicleSessionService
+        vehicleSession: any VehicleSessionService,
+        bleTraceStoragePreparer: any BLETraceStoragePreparing
     ) {
         self.sessionController = sessionController
         self.setupFlow = setupFlow
         self.bikeLiveActivityController = bikeLiveActivityController
         self.rideSession = rideSession
         self.vehicleSession = vehicleSession
+        self.bleTraceStoragePreparer = bleTraceStoragePreparer
     }
 
     deinit {
@@ -36,6 +40,7 @@ final class AppLifecycleController {
     func start() async {
         guard !hasStarted, stopTask == nil else { return }
         hasStarted = true
+        async let traceStoragePreparation: Void = bleTraceStoragePreparer.prepareStorage()
         await vehicleSession.start()
         guard !Task.isCancelled else { return }
         await rideSession.start()
@@ -45,6 +50,8 @@ final class AppLifecycleController {
         bikeLiveActivityController.start()
         bikeLiveActivityController.setIsSetupCompleted(setupFlow.isCompleted)
         guard let vin = setupFlow.configuredVIN else { return }
+        await traceStoragePreparation
+        guard !Task.isCancelled else { return }
         await sessionController.start()
         guard !Task.isCancelled else { return }
         await sessionController.connectAutomatically(vin: vin)

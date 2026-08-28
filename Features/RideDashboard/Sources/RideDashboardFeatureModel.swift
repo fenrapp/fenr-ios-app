@@ -3,6 +3,7 @@ import Combine
 @MainActor
 public final class RideDashboardFeatureModel: ObservableObject {
     let dashboardViewModel: RideDashboardViewModel
+    let deviceBatteryViewModel: DashboardDeviceBatteryViewModel
     let currentTripViewModel: CurrentTripCardViewModel
     let tripStatisticsViewModel: TripStatisticsCardViewModel
     let efficiencyViewModel: EfficiencyCardViewModel
@@ -13,6 +14,7 @@ public final class RideDashboardFeatureModel: ObservableObject {
 
     public init(
         dashboardViewModel: RideDashboardViewModel,
+        deviceBatteryViewModel: DashboardDeviceBatteryViewModel,
         currentTripViewModel: CurrentTripCardViewModel,
         tripStatisticsViewModel: TripStatisticsCardViewModel,
         efficiencyViewModel: EfficiencyCardViewModel,
@@ -22,6 +24,7 @@ public final class RideDashboardFeatureModel: ObservableObject {
         chargingViewModel: ChargingDashboardViewModel
     ) {
         self.dashboardViewModel = dashboardViewModel
+        self.deviceBatteryViewModel = deviceBatteryViewModel
         self.currentTripViewModel = currentTripViewModel
         self.tripStatisticsViewModel = tripStatisticsViewModel
         self.efficiencyViewModel = efficiencyViewModel
@@ -33,11 +36,13 @@ public final class RideDashboardFeatureModel: ObservableObject {
 
     func start() {
         dashboardViewModel.startObserving()
+        deviceBatteryViewModel.start()
         rangeViewModel.start()
     }
 
     func stopPresentation() {
         dashboardViewModel.stopObserving()
+        deviceBatteryViewModel.stop()
         chargingViewModel.stop()
         currentTripViewModel.setIsVisible(false)
         tripStatisticsViewModel.stop()

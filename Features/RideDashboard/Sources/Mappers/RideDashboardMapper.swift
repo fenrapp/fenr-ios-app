@@ -53,6 +53,10 @@ public struct RideDashboardMapper: Sendable {
         )
         return RideDashboardViewState(
             speedometer: speedometer,
+            odometer: odometer(
+                kilometers: hasTelemetry ? telemetry.odometer.kilometers : nil,
+                measurementMapper: measurementMapper
+            ),
             progressBar: progressBarMapper.map(
                 mode: progressBarMode,
                 speedProgress: speedometer.progress,
@@ -126,6 +130,21 @@ public struct RideDashboardMapper: Sendable {
             emphasis: emphasis,
             accessibilityLabel: "Battery \(clampedPercentage) percent"
         )
+    }
+
+    private func odometer(
+        kilometers: Double?,
+        measurementMapper: RideDashboardMeasurementMapper
+    ) -> DashboardOdometerViewData {
+        guard let kilometers, kilometers.isFinite else { return .init() }
+        let distance = measurementMapper.distance(kilometers: kilometers)
+        let value = measurementMapper.number(
+            distance.value,
+            fractionDigits: 1,
+            minimumFractionDigits: 1
+        )
+        let text = "\(value) \(distance.unit)"
+        return .init(valueText: text, accessibilityLabel: "Odometer \(text)")
     }
 
     private func percent(_ value: Double?) -> String {

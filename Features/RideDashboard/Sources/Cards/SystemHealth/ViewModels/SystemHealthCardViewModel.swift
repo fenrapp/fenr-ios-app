@@ -15,6 +15,7 @@ public final class SystemHealthCardViewModel: ObservableObject {
     private var renderTask: Task<Void, Never>?
     private var isVisible = false
     private var isRequestingBatteryHealth = false
+    private var hasCachedHealthData = false
 
     public init(
         vehicleSession: any VehicleSessionService,
@@ -41,7 +42,6 @@ public final class SystemHealthCardViewModel: ObservableObject {
         guard self.isVisible != isVisible else { return }
         self.isVisible = isVisible
         if isVisible {
-            viewState = .init()
             observeIfNeeded()
             setMonitoringRequired(true)
         } else {
@@ -89,9 +89,19 @@ private extension SystemHealthCardViewModel {
 
     func render() {
         guard isVisible else { return }
+        if hasCachedHealthData, shouldKeepCachedState(for: snapshot) { return }
         let next = mapper.map(snapshot)
+        if !snapshot.batteryHealth.cellVoltages.isEmpty || snapshot.batteryHealth.isBMSFaultActive {
+            hasCachedHealthData = true
+        }
         guard next != viewState else { return }
         viewState = next
+    }
+
+    func shouldKeepCachedState(for snapshot: VehicleSessionSnapshot) -> Bool {
+        if case .failed = snapshot.batteryHealthMonitoringState { return false }
+        return snapshot.batteryHealth.cellVoltages.isEmpty
+            && !snapshot.batteryHealth.isBMSFaultActive
     }
 
     func setMonitoringRequired(_ required: Bool) {

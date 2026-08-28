@@ -9,6 +9,8 @@ actor FakeBLETraceLogRepository: BLETraceLogRepository {
     private(set) var deleteAllCount = 0
     var exportURL = URL(fileURLWithPath: "/tmp/fenr-test.jsonl")
 
+    func prepareStorage() {}
+
     func observeSessions() -> AsyncStream<[BLETraceSessionSummary]> {
         let (stream, continuation) = AsyncStream<[BLETraceSessionSummary]>.makeStream()
         self.continuation = continuation

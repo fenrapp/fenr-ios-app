@@ -38,9 +38,14 @@ public struct RideDashboardMeasurementMapper: Sendable {
 
     public func number(
         _ value: Double,
-        fractionDigits: Int
+        fractionDigits: Int,
+        minimumFractionDigits: Int = 0
     ) -> String {
-        textFormatter.number(value, fractionDigits: fractionDigits)
+        textFormatter.number(
+            value,
+            fractionDigits: fractionDigits,
+            minimumFractionDigits: minimumFractionDigits
+        )
     }
 
     public func metric(

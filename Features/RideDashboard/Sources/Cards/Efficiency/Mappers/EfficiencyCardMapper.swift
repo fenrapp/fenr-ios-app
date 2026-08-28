@@ -40,7 +40,12 @@ public struct EfficiencyCardMapper: Sendable {
             usedEnergyText: formatEnergy(trip?.consumedEnergyWattHours ?? .zero),
             recoveredEnergyText: formatEnergy(trip?.recoveredEnergyWattHours ?? .zero),
             powerPoints: snapshot.livePowerSamples.map {
-                .init(date: $0.date, kilowatts: $0.powerWatts / 1_000)
+                let kilowatts = $0.powerWatts / 1_000
+                return .init(
+                    date: $0.date,
+                    usedKilowatts: max(kilowatts, .zero),
+                    regenKilowatts: max(-kilowatts, .zero)
+                )
             },
             trendPoints: trendTrips.compactMap { trendPoint($0, usesMiles: usesMiles) },
             trendIsLoading: trendIsLoading,
