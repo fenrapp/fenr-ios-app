@@ -35,14 +35,14 @@ struct StarkChargerConfigurationCommandTests {
         #expect(payload[6] == 0x1B)
     }
 
-    @Test("Changing fast charge power repairs current and preserves both charger limits")
-    func settingFastChargePowerRepairsCurrentAndPreservesLimits() throws {
+    @Test("Changing fast charge power repairs current and preserves shared 3.3 kW limits")
+    func settingFastChargePowerRepairsCurrentAndPreservesSharedLimits() throws {
         let configuration = StarkChargerConfiguration(
             chargeCurrentDeciAmperes: 20,
             chargePowerWatts: 3_300,
             maximumStateOfChargeDeciPercent: 1_000,
             standardChargerMaximumPowerWatts: 3_300,
-            backpackChargerMaximumPowerWatts: 7_000
+            backpackChargerMaximumPowerWatts: 3_300
         )
 
         let payload = try StarkChargerConfigurationCommand.encodeWrite(
@@ -55,8 +55,50 @@ struct StarkChargerConfigurationCommandTests {
         #expect(payload[6] == 0x1B)
         #expect(payload[9] == 0xE4)
         #expect(payload[10] == 0x0C)
-        #expect(payload[11] == 0x58)
-        #expect(payload[12] == 0x1B)
+        #expect(payload[11] == 0xE4)
+        #expect(payload[12] == 0x0C)
+    }
+
+    @Test("Changing backpack power repairs both stale shared 700 watt caps")
+    func settingBackpackChargePowerRepairsStaleLimit() throws {
+        let configuration = StarkChargerConfiguration(
+            chargeCurrentDeciAmperes: 200,
+            chargePowerWatts: 700,
+            maximumStateOfChargeDeciPercent: 1_000,
+            standardChargerMaximumPowerWatts: 700,
+            backpackChargerMaximumPowerWatts: 700
+        )
+
+        let payload = try StarkChargerConfigurationCommand.encodeWrite(
+            configuration.settingChargePower(2_000, chargerType: .backpack)
+        )
+
+        #expect(payload[3] == 0xC8)
+        #expect(payload[4] == 0x00)
+        #expect(payload[5] == 0xD0)
+        #expect(payload[6] == 0x07)
+        #expect(payload[9] == 0xD0)
+        #expect(payload[10] == 0x07)
+        #expect(payload[11] == 0xD0)
+        #expect(payload[12] == 0x07)
+    }
+
+    @Test("Standard, backpack and unknown use the canonical shared maximum")
+    func settingStandardChargePowerUsesSharedLimit() throws {
+        let configuration = StarkChargerConfiguration(
+            chargeCurrentDeciAmperes: 200,
+            chargePowerWatts: 700,
+            maximumStateOfChargeDeciPercent: 1_000,
+            standardChargerMaximumPowerWatts: 700,
+            backpackChargerMaximumPowerWatts: 700
+        )
+
+        let nextConfiguration = configuration.settingChargePower(1_500, chargerType: .standard)
+        let unknownConfiguration = configuration.settingChargePower(1_500, chargerType: .unknown(255))
+
+        #expect(nextConfiguration.standardChargerMaximumPowerWatts == 1_500)
+        #expect(nextConfiguration.backpackChargerMaximumPowerWatts == 1_500)
+        #expect(unknownConfiguration == nextConfiguration)
     }
 
     @Test("Changing charge power preserves a configured current above the validated limit")

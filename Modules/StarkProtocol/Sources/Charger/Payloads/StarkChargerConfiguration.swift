@@ -38,6 +38,20 @@ public struct StarkChargerConfiguration: Equatable, Sendable {
             chargeCurrentDeciAmperes == StarkChargePowerControlLimits.twoAmpereRegressionCurrentDeciAmperes
             ? chargerType.chargeCurrentLimitDeciAmperes
             : chargeCurrentDeciAmperes
+        let nextMaximumPowerWatts: (standard: Int, backpack: Int)
+        switch chargerType {
+        case .standard, .backpack, .unknown:
+            let sharedMaximumPowerWatts = min(
+                max(standardChargerMaximumPowerWatts, watts),
+                chargerType.maximumChargePowerWatts
+            )
+            nextMaximumPowerWatts = (sharedMaximumPowerWatts, sharedMaximumPowerWatts)
+        case .fast:
+            nextMaximumPowerWatts = (
+                standardChargerMaximumPowerWatts,
+                backpackChargerMaximumPowerWatts
+            )
+        }
         return Self(
             save: save,
             chargeCurrentDeciAmperes: nextCurrentDeciAmperes,
@@ -46,8 +60,8 @@ public struct StarkChargerConfiguration: Equatable, Sendable {
             minimumCurrentDeciAmperes: minimumCurrentDeciAmperes,
             startTimeRaw: startTimeRaw,
             rampTimeRaw: rampTimeRaw,
-            standardChargerMaximumPowerWatts: standardChargerMaximumPowerWatts,
-            backpackChargerMaximumPowerWatts: backpackChargerMaximumPowerWatts
+            standardChargerMaximumPowerWatts: nextMaximumPowerWatts.standard,
+            backpackChargerMaximumPowerWatts: nextMaximumPowerWatts.backpack
         )
     }
 

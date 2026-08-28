@@ -30,7 +30,42 @@ struct BikeBLEChargePowerCoordinatorTests {
         ))
     }
 
-    @Test("Setting 7000 watts repairs current and preserves fast charger capacity")
+    @Test("Setting backpack power repairs the observed 700 watt charger cap")
+    func settingBackpackPowerRepairsSevenHundredWattCap() async throws {
+        let transport = FakeBikeBLEChargePowerConfigurationTransport()
+        transport.response = Data([
+            0x02, 0x04, 0x00,
+            0xC8, 0x00,
+            0xBC, 0x02,
+            0xE8, 0x03,
+            0x14, 0x00,
+            0x02, 0x00,
+            0x10, 0x00,
+            0xBC, 0x02,
+            0xBC, 0x02
+        ])
+        let coordinator = BikeBLEChargePowerCoordinator(
+            transport: transport,
+            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter()
+        )
+
+        _ = try await coordinator.prepareChargePowerControl(context: telemetryContext)
+        let snapshot = try await coordinator.setChargePowerLimit(watts: 2_000)
+
+        let write = try #require(transport.writePayloads.last)
+        #expect(write[3] == 0xC8)
+        #expect(write[4] == 0x00)
+        #expect(write[5] == 0xD0)
+        #expect(write[6] == 0x07)
+        #expect(write[9] == 0xD0)
+        #expect(write[10] == 0x07)
+        #expect(write[11] == 0xD0)
+        #expect(write[12] == 0x07)
+        #expect(snapshot.parsedConfig.standardChargerMaximumPowerWatts == 2_000)
+        #expect(snapshot.parsedConfig.backpackChargerMaximumPowerWatts == 2_000)
+    }
+
+    @Test("Setting 7000 watts repairs current and preserves shared 3.3 kW limits")
     func settingFastChargePowerRepairsCurrent() async throws {
         let transport = FakeBikeBLEChargePowerConfigurationTransport()
         transport.response = Data([
@@ -42,7 +77,7 @@ struct BikeBLEChargePowerCoordinatorTests {
             0x02, 0x00,
             0x10, 0x00,
             0xE4, 0x0C,
-            0x58, 0x1B
+            0xE4, 0x0C
         ])
         let coordinator = BikeBLEChargePowerCoordinator(
             transport: transport,
@@ -59,11 +94,11 @@ struct BikeBLEChargePowerCoordinatorTests {
         #expect(write[6] == 0x1B)
         #expect(write[9] == 0xE4)
         #expect(write[10] == 0x0C)
-        #expect(write[11] == 0x58)
-        #expect(write[12] == 0x1B)
+        #expect(write[11] == 0xE4)
+        #expect(write[12] == 0x0C)
         #expect(snapshot.parsedConfig.chargeCurrentDeciAmperes == 250)
         #expect(snapshot.parsedConfig.chargePowerWatts == 7_000)
-        #expect(snapshot.parsedConfig.backpackChargerMaximumPowerWatts == 7_000)
+        #expect(snapshot.parsedConfig.backpackChargerMaximumPowerWatts == 3_300)
     }
 
     @Test("A charger write is rejected when the fresh response does not confirm it")
