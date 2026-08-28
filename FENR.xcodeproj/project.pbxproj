@@ -635,6 +635,7 @@
 		6BC1CA11D31F3748F527AA2E /* WatchDashboardMetric.swift in Sources */ = {isa = PBXBuildFile; fileRef = 167884828E017A0A6F0DD223 /* WatchDashboardMetric.swift */; };
 		6BC5A0AE038A90E7D5FA46FB /* BLETraceData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 51978684FF3E3A6A3AB05585 /* BLETraceData.framework */; };
 		6BD5F01C733B356E5D7E03ED /* SettingsDomain.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A9A16741AABDA8641A96BF6E /* SettingsDomain.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		6C2980FA1FAD9B61682D56DA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7B38029BC11332A7989F445A /* Assets.xcassets */; };
 		6C3847081FFAD044FB2B1D66 /* StarkProtocol.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFC90F9CFD8A9B9197688CB /* StarkProtocol.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		6C3A06F467DD1DA6DBCAA245 /* SpyRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19E2669C89914A85940E1D27 /* SpyRepository.swift */; };
 		6C6B49A0A21E566EC57FDE6A /* BikeRawStatusFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 918AEA8009D1717AAE869197 /* BikeRawStatusFlags.swift */; };
@@ -1113,6 +1114,7 @@
 		BDC4D0A2E2AEFE0D523DCD55 /* HeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF803827093733BC603F700 /* HeaderView.swift */; };
 		BDD8821F295ADD6A47E6C28C /* BikeLiveActivityDynamicIsland.swift in Sources */ = {isa = PBXBuildFile; fileRef = 679003ECFA5EBB9E6997BD52 /* BikeLiveActivityDynamicIsland.swift */; };
 		BDEC9A2A888C585F94C4E73A /* SystemHealthCardViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0141AF1DE7D1F29132878820 /* SystemHealthCardViewModelTests.swift */; };
+		BE4021AF36F075294FB3EA12 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7B38029BC11332A7989F445A /* Assets.xcassets */; };
 		BEAE6682754962C1C15ECE0D /* BikeProfileUseCases.swift in Sources */ = {isa = PBXBuildFile; fileRef = C04CAD792040C4AE67486802 /* BikeProfileUseCases.swift */; };
 		BF05C4D49C2738EAFA43B6F4 /* EnvironmentDomain.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 67E788861D8D9D6A5E754217 /* EnvironmentDomain.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		BF41FF5FD71CD5AA7C9ABC04 /* BLETraceDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9BB8869FBFFBB2BBB11458F6 /* BLETraceDomain.framework */; };
@@ -4420,6 +4422,7 @@
 		7AAFAB067CA5FD92941EA0AB /* BikeRunState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeRunState.swift; sourceTree = "<group>"; };
 		7AE3990735EE93D855E29EFB /* AsyncEventHubTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncEventHubTests.swift; sourceTree = "<group>"; };
 		7B193EF133A24B969223CBE2 /* DashboardMetricViewData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardMetricViewData.swift; sourceTree = "<group>"; };
+		7B38029BC11332A7989F445A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7B3EE6FD377546119E0D8564 /* BikeLiveActivityTestDoubles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeLiveActivityTestDoubles.swift; sourceTree = "<group>"; };
 		7B5F82AA6BFF0F08BB4FB509 /* DeviceSpeedSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceSpeedSample.swift; sourceTree = "<group>"; };
 		7BA37A9946AC3F443BB451AF /* LiveVehicleSessionService+Observation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LiveVehicleSessionService+Observation.swift"; sourceTree = "<group>"; };
@@ -8303,6 +8306,7 @@
 			children = (
 				CFDE320C46D49EAFE75F8003 /* DebugSources */,
 				EC929C47077345AE5304311B /* DebugTests */,
+				C0F7BB8C04CB82606761822E /* Resources */,
 				BC54B22A2A4D0EF3776A2766 /* Sources */,
 				53C1A77D24E2EEBB33FF18F1 /* Tests */,
 			);
@@ -8712,6 +8716,14 @@
 				72ADB7591D3917CF21D69019 /* BikeBLEPowerModeConfigurationTransporting.swift */,
 			);
 			path = PowerModes;
+			sourceTree = "<group>";
+		};
+		C0F7BB8C04CB82606761822E /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				7B38029BC11332A7989F445A /* Assets.xcassets */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		C1D594310319BC46F6F61DBD /* Composition */ = {
@@ -11484,6 +11496,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BE4021AF36F075294FB3EA12 /* Assets.xcassets in Resources */,
 				6B87583907A6AC4761B09240 /* LaunchScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -11492,6 +11505,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6C2980FA1FAD9B61682D56DA /* Assets.xcassets in Resources */,
 				45EA00E4982AA0F2758631DB /* LaunchScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -383,6 +383,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
     sources:
       - path: App/Sources
+      - path: App/Resources
     preBuildScripts:
       - name: SwiftLint
         basedOnDependencyAnalysis: false
@@ -479,6 +480,7 @@ targets:
           - Composition/StarkProtocol
           - Composition/Production
       - path: App/DebugSources
+      - path: App/Resources
     preBuildScripts:
       - name: SwiftLint
         basedOnDependencyAnalysis: false
