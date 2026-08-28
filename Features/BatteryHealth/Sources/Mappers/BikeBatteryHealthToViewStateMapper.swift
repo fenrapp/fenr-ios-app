@@ -51,7 +51,7 @@ public struct BikeBatteryHealthToViewStateMapper {
     private func mapChargeControl(_ state: ChargeControlState) -> BatteryHealthChargeControlViewState {
         .init(
             isVisible: state.isVisible,
-            isEnabled: state.isEnabled,
+            isEnabled: state.canAcceptInput,
             power: .init(
                 selected: state.selectedWatts,
                 minimum: state.minimumWatts,

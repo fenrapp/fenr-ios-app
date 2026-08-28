@@ -51,8 +51,8 @@ struct ChargeControlSessionTests {
         #expect(await waitUntil { session.state.isEnabled })
     }
 
-    @Test("Rapid power selections debounce to the latest value")
-    func rapidPowerSelectionsWriteOnlyLatestValue() async {
+    @Test("A second power selection is ignored while the first update is pending")
+    func pendingPowerUpdateRejectsAnotherSelection() async {
         let repository = ChargeControlRepository()
         let session = ChargeControlSessionTestFactory.make(
             repository: repository,
@@ -64,7 +64,9 @@ struct ChargeControlSessionTests {
         session.setPowerLimit(watts: 1_200)
         session.setPowerLimit(watts: 1_300)
 
-        #expect(await waitUntil { await repository.writtenPowerValues() == [1_300] })
+        #expect(await waitUntil { await repository.writtenPowerValues() == [1_200] })
+        #expect(session.state.selectedWatts == 1_200)
+        #expect(!session.state.canAcceptInput)
     }
 
     @Test("The production debounce waits at least one second")
@@ -106,8 +108,8 @@ struct ChargeControlSessionTests {
         #expect(session.state.selectedTargetPercent == 100)
     }
 
-    @Test("Power and target writes stay serialized until telemetry confirmation")
-    func powerAndTargetWritesAreSerialized() async {
+    @Test("Power confirmation blocks both controls until telemetry confirms it")
+    func powerConfirmationBlocksBothControls() async {
         let repository = ChargeControlRepository()
         await repository.suspendPowerWrites()
         let session = ChargeControlSessionTestFactory.make(
@@ -125,11 +127,15 @@ struct ChargeControlSessionTests {
 
         #expect(await repository.writtenTargetValues().isEmpty)
         #expect(await repository.maximumConcurrentWriteCount() == 1)
+        #expect(!session.state.canAcceptInput)
 
         await repository.resumePowerWrites()
         #expect(await waitUntil { session.state.status == "Confirming 1500 W" })
         session.receive(ChargeControlFixtures.chargingHealth(powerWatts: 1_500))
 
+        #expect(await waitUntil { session.state.canAcceptInput })
+        #expect(await repository.writtenTargetValues().isEmpty)
+        session.setTarget(percent: 80)
         #expect(await waitUntil { await repository.writtenTargetValues() == [80] })
         #expect(await repository.maximumConcurrentWriteCount() == 1)
     }
@@ -158,8 +164,8 @@ struct ChargeControlSessionTests {
         #expect(session.state.confirmedWatts == 1_500)
     }
 
-    @Test("Confirming an older write preserves a newer optimistic selection")
-    func olderConfirmationPreservesNewerSelection() async {
+    @Test("Confirming a write rejects a newer selection until confirmation")
+    func pendingConfirmationRejectsNewerSelection() async {
         let repository = ChargeControlRepository()
         await repository.suspendPowerWrites()
         let session = ChargeControlSessionTestFactory.make(
@@ -174,15 +180,14 @@ struct ChargeControlSessionTests {
         #expect(await waitUntil { await repository.writtenPowerValues() == [1_500] })
         session.setPowerLimit(watts: 1_700)
         session.receive(ChargeControlFixtures.chargingHealth(powerWatts: 1_500))
-        #expect(session.state.selectedWatts == 1_700)
+        #expect(session.state.selectedWatts == 1_500)
 
         await repository.resumePowerWrites()
 
-        #expect(await waitUntil { await repository.writtenPowerValues() == [1_500, 1_700] })
-        #expect(session.state.selectedWatts == 1_700)
-        session.receive(ChargeControlFixtures.chargingHealth(powerWatts: 1_700))
         #expect(await waitUntil { session.state.phase == .ready })
-        #expect(session.state.selectedWatts == 1_700)
+        #expect(await repository.writtenPowerValues() == [1_500])
+        #expect(session.state.selectedWatts == 1_500)
+        #expect(session.state.canAcceptInput)
     }
 
     @Test("Disconnect cancels a pending debounced write")

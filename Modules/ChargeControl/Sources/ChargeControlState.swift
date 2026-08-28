@@ -24,6 +24,10 @@ public struct ChargeControlState: Equatable, Sendable {
     public internal(set) var error: String?
     public internal(set) var phase: ChargeControlPhase
 
+    public var canAcceptInput: Bool {
+        isEnabled && phase != .updating
+    }
+
     public init(
         isVisible: Bool = false,
         isEnabled: Bool = false,

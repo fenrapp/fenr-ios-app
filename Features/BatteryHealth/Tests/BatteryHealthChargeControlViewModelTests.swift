@@ -22,8 +22,8 @@ struct BatteryHealthChargeControlViewModelTests {
         viewModel.stop()
     }
 
-    @Test("Rapid charge power requests produce one final debounced write")
-    func rapidChargePowerRequestsProduceOneFinalWrite() async {
+    @Test("Charge controls disable while a power update is pending")
+    func chargeControlsDisableDuringPowerUpdate() async {
         let repository = FakeBatteryHealthRepository()
         let viewModel = makeBatteryHealthViewModel(repository: repository)
         viewModel.start()
@@ -33,7 +33,11 @@ struct BatteryHealthChargeControlViewModelTests {
         viewModel.setChargePowerLimit(watts: 2_000)
         viewModel.setChargePowerLimit(watts: 2_700)
 
-        #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargePowerWrites() == [2_700] })
+        #expect(await waitUntil {
+            !viewModel.viewState.chargePowerControl.isEnabled
+                && viewModel.viewState.chargePowerControl.power.selected == 2_000
+        })
+        #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargePowerWrites() == [2_000] })
         viewModel.stop()
     }
 
@@ -122,8 +126,8 @@ struct BatteryHealthChargeControlViewModelTests {
         viewModel.stop()
     }
 
-    @Test("Rapid charge target requests produce one final debounced write")
-    func rapidChargeTargetRequestsProduceOneFinalWrite() async {
+    @Test("Charge controls disable while a target update is pending")
+    func chargeControlsDisableDuringTargetUpdate() async {
         let repository = FakeBatteryHealthRepository()
         let viewModel = makeBatteryHealthViewModel(repository: repository)
         viewModel.start()
@@ -137,7 +141,11 @@ struct BatteryHealthChargeControlViewModelTests {
         viewModel.setChargeTarget(percent: 90)
         viewModel.setChargeTarget(percent: 75)
 
-        #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargeTargetWrites() == [75] })
+        #expect(await waitUntil {
+            !viewModel.viewState.chargePowerControl.isEnabled
+                && viewModel.viewState.chargePowerControl.target.selected == 90
+        })
+        #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargeTargetWrites() == [90] })
         viewModel.stop()
     }
 
@@ -180,6 +188,7 @@ struct BatteryHealthChargeControlViewModelTests {
             maximumPowerWatts: 1_000,
             maximumStateOfChargePercent: 1
         )
+        #expect(await waitUntil { viewModel.viewState.chargePowerControl.isEnabled })
         viewModel.setChargeTarget(percent: 105)
 
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargeTargetWrites() == [1, 100] })
@@ -212,8 +221,8 @@ struct BatteryHealthChargeControlViewModelTests {
         viewModel.stop()
     }
 
-    @Test("Charge target waits for pending power confirmation")
-    func chargeTargetWaitsForPendingPowerConfirmation() async {
+    @Test("Pending power confirmation disables target changes")
+    func pendingPowerConfirmationDisablesTargetChanges() async {
         let repository = FakeBatteryHealthRepository()
         let viewModel = makeBatteryHealthViewModel(repository: repository)
         viewModel.start()
@@ -230,12 +239,16 @@ struct BatteryHealthChargeControlViewModelTests {
         viewModel.setChargeTarget(percent: 80)
         try? await Task.sleep(for: .milliseconds(1_200))
         #expect(await repository.chargeTargetWrites().isEmpty)
+        #expect(!viewModel.viewState.chargePowerControl.isEnabled)
 
         await sendChargingHealth(
             repository: repository,
             maximumPowerWatts: 1_500,
             maximumStateOfChargePercent: 100
         )
+        #expect(await waitUntil { viewModel.viewState.chargePowerControl.isEnabled })
+        #expect(await repository.chargeTargetWrites().isEmpty)
+        viewModel.setChargeTarget(percent: 80)
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargeTargetWrites() == [80] })
         viewModel.stop()
     }

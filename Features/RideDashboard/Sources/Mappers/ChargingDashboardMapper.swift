@@ -81,17 +81,18 @@ public struct ChargingDashboardMapper: Sendable {
         _ state: ChargeControlState,
         hasReachedChargeLimit: Bool
     ) -> ChargingDashboardControlViewState {
-        .init(
-            isEnabled: state.isEnabled,
+        let canAcceptInput = state.canAcceptInput
+        return .init(
+            isEnabled: canAcceptInput,
             power: .init(
-                isEnabled: state.isEnabled && !hasReachedChargeLimit,
+                isEnabled: canAcceptInput && !hasReachedChargeLimit,
                 selected: state.selectedWatts,
                 minimum: state.minimumWatts,
                 maximum: state.maximumWatts,
                 step: state.stepWatts
             ),
             target: .init(
-                isEnabled: state.isEnabled,
+                isEnabled: canAcceptInput,
                 selected: state.selectedTargetPercent,
                 minimum: state.minimumTargetPercent,
                 maximum: state.maximumTargetPercent,

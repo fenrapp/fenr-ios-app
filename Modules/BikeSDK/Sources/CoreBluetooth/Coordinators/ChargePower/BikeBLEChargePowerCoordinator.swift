@@ -22,7 +22,6 @@ final class BikeBLEChargePowerCoordinator {
     func prepareChargePowerControl(
         context: BikeSDKChargePowerTelemetryContext
     ) async throws -> BikeSDKChargePowerControlSnapshot {
-        try transport.ensureReady()
         clearGuardState()
         let firmwareRead = try await readVCUFirmware()
         let firmware = firmwareRead.version

@@ -153,9 +153,9 @@ struct ChargingDashboardMapperTests {
 
         #expect(state.targetPercent == 78)
         let expectedControl = ChargingDashboardControlViewState(
-            isEnabled: true,
-            power: .init(selected: 1_700, minimum: 300, maximum: 3_300, step: 100),
-            target: .init(selected: 78, minimum: 1, maximum: 100, step: 1),
+            isEnabled: false,
+            power: .init(isEnabled: false, selected: 1_700, minimum: 300, maximum: 3_300, step: 100),
+            target: .init(isEnabled: false, selected: 78, minimum: 1, maximum: 100, step: 1),
             status: .init(
                 text: "UPDATING CHARGE SETTINGS",
                 systemImage: "slider.horizontal.3",

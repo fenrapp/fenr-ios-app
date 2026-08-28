@@ -24,8 +24,6 @@ final class FakeBikeBLEChargePowerConfigurationTransport:
     var staleReadCountAfterWrite = 0
     private var queuedReadResponses: [Data] = []
 
-    func ensureReady() throws {}
-
     func readVersions() async throws -> Data {
         versionData
     }

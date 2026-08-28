@@ -37,7 +37,7 @@ public final class ChargeControlSession: ObservableObject {
     }
 
     public func setPowerLimit(watts: Double) {
-        guard state.isEnabled else { return }
+        guard state.canAcceptInput else { return }
         let finalWatts = stateUpdater.normalizedPowerWatts(Int(watts.rounded()), state: state)
         guard state.selectedWatts != Double(finalWatts) else { return }
         operations.select(.power(watts: finalWatts))
@@ -49,7 +49,7 @@ public final class ChargeControlSession: ObservableObject {
     }
 
     public func setTarget(percent: Double) {
-        guard state.isEnabled else { return }
+        guard state.canAcceptInput else { return }
         let finalPercent = stateUpdater.normalizedTargetPercent(Int(percent.rounded()))
         guard state.selectedTargetPercent != Double(finalPercent) else { return }
         operations.select(.target(percent: finalPercent))

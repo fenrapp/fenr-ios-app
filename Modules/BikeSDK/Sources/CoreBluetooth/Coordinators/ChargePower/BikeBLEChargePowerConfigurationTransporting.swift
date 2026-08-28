@@ -3,7 +3,6 @@ import Foundation
 
 @MainActor
 protocol BikeBLEChargePowerConfigurationTransporting: AnyObject {
-    func ensureReady() throws
     func readVersions() async throws -> Data
     func readConfiguration(
         request: Data,
