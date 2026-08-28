@@ -60,7 +60,8 @@ public enum BikeTelemetryClientFactory {
                 sessionStore: sessionStore,
                 eventEmitter: eventEmitter,
                 peripheralDelegate: peripheralDelegate,
-                reconnectPolicy: runtimeConfiguration.reconnectPolicy
+                reconnectPolicy: runtimeConfiguration.reconnectPolicy,
+                connectionWatchdog: makeConnectionWatchdog(runtimeConfiguration: runtimeConfiguration)
             ),
             notificationCoordinator: notificationCoordinator,
             securityCoordinator: securityCoordinator
@@ -142,12 +143,23 @@ public enum BikeTelemetryClientFactory {
                 eventEmitter: input.eventEmitter,
                 peripheralDelegate: input.peripheralDelegate,
                 reconnectDelay: BikeBLEReconnectDelay(),
-                reconnectPolicy: input.reconnectPolicy
+                reconnectPolicy: input.reconnectPolicy,
+                connectionWatchdog: input.connectionWatchdog
             ),
             sessionResetHandler: { [notificationCoordinator, securityCoordinator] in
                 notificationCoordinator.resetSession()
                 securityCoordinator.resetSession()
             }
+        )
+    }
+
+    private static func makeConnectionWatchdog(
+        runtimeConfiguration: BikeSDKRuntimeConfiguration
+    ) -> BikeBLEConnectionWatchdog {
+        BikeBLEConnectionWatchdog(
+            timeoutScheduler: BikeBLEOperationTimeoutScheduler(
+                duration: runtimeConfiguration.connectionOperationTimeout
+            )
         )
     }
 
@@ -157,6 +169,7 @@ public enum BikeTelemetryClientFactory {
         let eventEmitter: BikeBLEEventEmitter
         let peripheralDelegate: CBPeripheralDelegate
         let reconnectPolicy: BikeBLEReconnectPolicy
+        let connectionWatchdog: BikeBLEConnectionWatchdog
     }
 
     private static func makePairingRetryController(

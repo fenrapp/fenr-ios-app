@@ -9,6 +9,7 @@ enum BikeBLECoordinatorAssembly {
         let peripheralDelegate: CBPeripheralDelegate
         let reconnectDelay: any BikeBLEReconnectDelaying
         let reconnectPolicy: BikeBLEReconnectPolicy
+        let connectionWatchdog: BikeBLEConnectionWatchdog
     }
 
     static func makeNotificationCoordinator(
@@ -88,6 +89,7 @@ enum BikeBLECoordinatorAssembly {
             reconnectController: reconnectController,
             scanner: scanner,
             connectionErrorClassifier: BikeBLEConnectionErrorClassifier(),
+            connectionWatchdog: dependencies.connectionWatchdog,
             sessionResetHandler: sessionResetHandler
         )
     }

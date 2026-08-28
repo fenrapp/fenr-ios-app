@@ -8,6 +8,7 @@ import StarkProtocol
 func makeConnectionCoordinator(
     adapter: CoreBluetoothAdapter,
     eventHub: AsyncEventHub<BikeSDKEvent>,
+    connectionTimeoutScheduler: any BikeBLETimeoutScheduling = FakeBikeBLETimeoutScheduler(),
     sessionResetHandler: @escaping @MainActor () -> Void = {}
 ) -> BikeBLEConnectionCoordinator {
     BikeBLECoordinatorAssembly.makeConnectionCoordinator(
@@ -17,7 +18,10 @@ func makeConnectionCoordinator(
             eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
             peripheralDelegate: NoOpPeripheralDelegate(),
             reconnectDelay: BikeBLEReconnectDelay(),
-            reconnectPolicy: .init(delays: [.zero])
+            reconnectPolicy: .init(delays: [.zero]),
+            connectionWatchdog: BikeBLEConnectionWatchdog(
+                timeoutScheduler: connectionTimeoutScheduler
+            )
         ),
         sessionResetHandler: sessionResetHandler
     )
@@ -174,7 +178,10 @@ func makeTelemetryClient(
             eventEmitter: eventEmitter,
             peripheralDelegate: NoOpPeripheralDelegate(),
             reconnectDelay: BikeBLEReconnectDelay(),
-            reconnectPolicy: .init(delays: [.zero])
+            reconnectPolicy: .init(delays: [.zero]),
+            connectionWatchdog: makeConnectionWatchdog(
+                duration: runtimeConfiguration.connectionOperationTimeout
+            )
         ),
         sessionResetHandler: { [notificationCoordinator, securityCoordinator] in
             notificationCoordinator.resetSession()
@@ -193,6 +200,13 @@ func makeTelemetryClient(
             callbackQueue: callbackQueue
         ),
         centralRestorationIdentifier: FENRRuntimeConstants.BikeSDK.centralRestorationIdentifier
+    )
+}
+
+@MainActor
+private func makeConnectionWatchdog(duration: Duration) -> BikeBLEConnectionWatchdog {
+    BikeBLEConnectionWatchdog(
+        timeoutScheduler: BikeBLEOperationTimeoutScheduler(duration: duration)
     )
 }
 

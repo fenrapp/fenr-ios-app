@@ -3,6 +3,7 @@ import Foundation
 enum BikeSDKText {
     static let disconnectedByUser = "Disconnected by user"
     static let connectFailed = "Failed to connect"
+    static let connectionTimedOut = "Bike connection timed out"
     static let connectionAlreadyActive = "A bike connection is already active"
     static let characteristicTitle = "Characteristic"
     static let serviceTitle = "Service"

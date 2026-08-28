@@ -5,6 +5,13 @@ import Testing
 
 @Suite("Bike SDK runtime configuration")
 struct BikeSDKRuntimeConfigurationTests {
+    @Test("Connection timeout defaults to the observed VargPilot watchdog interval")
+    func connectionTimeoutUsesObservedInterval() {
+        let configuration = BikeSDKRuntimeConfiguration()
+
+        #expect(configuration.connectionOperationTimeout == .seconds(12))
+    }
+
     @Test("Reconnect policy is configurable")
     func reconnectPolicyIsConfigurable() {
         let expectedPolicy = BikeBLEReconnectPolicy(delays: [.seconds(2), .seconds(3)])

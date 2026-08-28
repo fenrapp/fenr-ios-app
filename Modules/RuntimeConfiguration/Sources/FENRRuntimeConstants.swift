@@ -30,6 +30,7 @@ public enum FENRRuntimeConstants {
         public static let bluetoothCentralBackgroundMode = "bluetooth-central"
         public static let centralRestorationIdentifier = "com.fenr.app.ble-central"
         public static let notificationDebugMinimumInterval: TimeInterval = 1
+        public static let connectionOperationTimeout: Duration = .seconds(12)
         public static let securityOperationTimeout: Duration = .seconds(10)
         public static let subscriptionOperationTimeout: Duration = .seconds(8)
         public static let reconnectDelays: [Duration] = [

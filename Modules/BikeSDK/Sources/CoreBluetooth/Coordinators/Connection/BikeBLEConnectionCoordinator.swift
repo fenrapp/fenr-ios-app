@@ -11,6 +11,7 @@ public final class BikeBLEConnectionCoordinator {
     private let scanner: BikeBLEConnectionScanner
     private let sessionResetHandler: @MainActor () -> Void
     private let connectionErrorClassifier: BikeBLEConnectionErrorClassifier
+    private let connectionWatchdog: BikeBLEConnectionWatchdog
     private var isDiscoveringBikes = false
 
     init(
@@ -21,6 +22,7 @@ public final class BikeBLEConnectionCoordinator {
         reconnectController: BikeBLEReconnectController,
         scanner: BikeBLEConnectionScanner,
         connectionErrorClassifier: BikeBLEConnectionErrorClassifier,
+        connectionWatchdog: BikeBLEConnectionWatchdog,
         sessionResetHandler: @escaping @MainActor () -> Void
     ) {
         self.adapter = adapter
@@ -30,6 +32,7 @@ public final class BikeBLEConnectionCoordinator {
         self.reconnectController = reconnectController
         self.scanner = scanner
         self.connectionErrorClassifier = connectionErrorClassifier
+        self.connectionWatchdog = connectionWatchdog
         self.sessionResetHandler = sessionResetHandler
     }
 
@@ -161,11 +164,16 @@ public final class BikeBLEConnectionCoordinator {
             peripheralName: snapshot.name
         )))
         adapter.stopScan()
+        let peripheralIdentifier = peripheral.identifier
+        connectionWatchdog.start(peripheralIdentifier: peripheralIdentifier) { [weak self] identifier in
+            await self?.connectionTimedOut(peripheralIdentifier: identifier)
+        }
         adapter.connect(peripheral)
     }
 
     public func didConnect(_ peripheral: CBPeripheral) async {
         guard sessionStore.isActive(peripheral) else { return }
+        connectionWatchdog.cancel()
         reconnectController.reset()
         let name = peripheral.name
         await eventEmitter.send(.connection(.discovering(peripheralName: name)))
@@ -175,6 +183,7 @@ public final class BikeBLEConnectionCoordinator {
 
     public func didFailToConnect(_ peripheral: CBPeripheral, error: Error?) async {
         guard sessionStore.isActive(peripheral) else { return }
+        connectionWatchdog.cancel()
         if connectionErrorClassifier.requiresPairingReset(error) {
             await stopForPairingReset(error)
             return
@@ -187,6 +196,7 @@ public final class BikeBLEConnectionCoordinator {
 
     public func didDisconnect(_ peripheral: CBPeripheral, error: Error?) async {
         guard sessionStore.isActive(peripheral) else { return }
+        connectionWatchdog.cancel()
         if connectionErrorClassifier.requiresPairingReset(error) {
             await stopForPairingReset(error)
             return
@@ -243,8 +253,19 @@ public final class BikeBLEConnectionCoordinator {
     }
 
     private func resetSession() {
+        connectionWatchdog.cancel()
         sessionResetHandler()
         sessionStore.resetSession()
+    }
+
+    private func connectionTimedOut(peripheralIdentifier: UUID) async {
+        guard sessionStore.peripheral?.identifier == peripheralIdentifier,
+              sessionStore.shouldConnectWhenPoweredOn,
+              let peripheral = sessionStore.peripheral else { return }
+        await eventEmitter.send(.connection(.failed(message: BikeSDKText.connectionTimedOut)))
+        adapter.cancelConnection(peripheral)
+        resetSession()
+        await reconnectIfNeeded()
     }
 
     private func maskedVIN(_ vin: String) -> String {
