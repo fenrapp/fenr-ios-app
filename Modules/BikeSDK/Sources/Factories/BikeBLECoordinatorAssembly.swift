@@ -62,7 +62,8 @@ enum BikeBLECoordinatorAssembly {
             queue: subscriptionQueue
         )
         let chargePowerCoordinator = BikeBLEChargePowerCoordinator(
-            transport: configurationTransport
+            transport: configurationTransport,
+            verificationWaiter: BikeBLEChargePowerVerificationWaiter()
         )
         return BikeBLENotificationCoordinator(
             sessionStore: dependencies.sessionStore,

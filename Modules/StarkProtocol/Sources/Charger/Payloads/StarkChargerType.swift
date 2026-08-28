@@ -51,4 +51,13 @@ public enum StarkChargerType: Equatable, Sendable {
             StarkChargePowerControlLimits.standardMaximumWatts
         }
     }
+
+    var chargeCurrentLimitDeciAmperes: Int {
+        switch self {
+        case .fast:
+            StarkChargePowerControlLimits.fastCurrentLimitDeciAmperes
+        case .standard, .backpack, .unknown:
+            StarkChargePowerControlLimits.standardCurrentLimitDeciAmperes
+        }
+    }
 }

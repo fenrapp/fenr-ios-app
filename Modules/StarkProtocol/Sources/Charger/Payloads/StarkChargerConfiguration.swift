@@ -24,10 +24,14 @@ public struct StarkChargerConfiguration: Equatable, Sendable {
         self.backpackChargerMaximumPowerWatts = backpackChargerMaximumPowerWatts
     }
 
-    public func settingChargePower(_ watts: Int) -> Self {
+    public func settingChargePower(_ watts: Int, chargerType: StarkChargerType) -> Self {
+        let nextCurrentDeciAmperes =
+            chargeCurrentDeciAmperes == StarkChargePowerControlLimits.twoAmpereRegressionCurrentDeciAmperes
+            ? chargerType.chargeCurrentLimitDeciAmperes
+            : chargeCurrentDeciAmperes
         return Self(
             save: save,
-            chargeCurrentDeciAmperes: chargeCurrentDeciAmperes,
+            chargeCurrentDeciAmperes: nextCurrentDeciAmperes,
             chargePowerWatts: watts,
             maximumStateOfChargeDeciPercent: maximumStateOfChargeDeciPercent,
             standardChargerMaximumPowerWatts: standardChargerMaximumPowerWatts,
@@ -48,7 +52,9 @@ public struct StarkChargerConfiguration: Equatable, Sendable {
 }
 
 public enum StarkChargerConfigurationCommand {
+    public static let configurationType: UInt8 = 4
     public static let readPacket = Data([0x00, 0x04])
+    public static let responseLength = 19
     public static let writePacketLength = 13
 
     public static func encodeWrite(_ configuration: StarkChargerConfiguration) throws -> Data {
@@ -62,24 +68,28 @@ public enum StarkChargerConfigurationCommand {
     }
 
     public static func decodeResponse(_ data: Data) throws -> StarkChargerConfiguration {
-        let payload: Data
-        if data.count >= writePacketLength, data.first == 0x01 || data.first == 0x00 {
-            payload = data.dropFirst(2)
-        } else {
-            payload = data
+        guard data.count >= responseLength else {
+            throw StarkProtocolError.payloadTooShort(expected: responseLength, actual: data.count)
         }
-
-        guard payload.count >= 11 else {
-            throw StarkProtocolError.payloadTooShort(expected: 11, actual: payload.count)
+        let reader = StarkByteReader(data: data)
+        let operation = reader.u8(at: 0)
+        guard operation == 0 || operation == 2 else {
+            throw StarkProtocolError.unexpectedConfigurationOperation(expected: 0, actual: operation)
         }
-        let reader = StarkByteReader(data: payload)
+        let type = reader.u8(at: 1)
+        guard type == configurationType else {
+            throw StarkProtocolError.unexpectedConfigurationType(expected: configurationType, actual: type)
+        }
+        let status = reader.u8(at: 2)
+        guard status == 0 else {
+            throw StarkProtocolError.configurationRequestFailed(status: status)
+        }
         return StarkChargerConfiguration(
-            save: reader.u8(at: 0),
-            chargeCurrentDeciAmperes: Int(reader.u16(at: 1)),
-            chargePowerWatts: Int(reader.u16(at: 3)),
-            maximumStateOfChargeDeciPercent: Int(reader.u16(at: 5)),
-            standardChargerMaximumPowerWatts: Int(reader.u16(at: 7)),
-            backpackChargerMaximumPowerWatts: Int(reader.u16(at: 9))
+            chargeCurrentDeciAmperes: Int(reader.u16(at: 3)),
+            chargePowerWatts: Int(reader.u16(at: 5)),
+            maximumStateOfChargeDeciPercent: Int(reader.u16(at: 7)),
+            standardChargerMaximumPowerWatts: Int(reader.u16(at: 15)),
+            backpackChargerMaximumPowerWatts: Int(reader.u16(at: 17))
         )
     }
 

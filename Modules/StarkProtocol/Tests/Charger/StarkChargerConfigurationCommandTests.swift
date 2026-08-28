@@ -35,10 +35,34 @@ struct StarkChargerConfigurationCommandTests {
         #expect(payload[6] == 0x1B)
     }
 
-    @Test("Changing charge power preserves configured charge current")
-    func settingChargePowerPreservesCurrent() throws {
+    @Test("Changing fast charge power repairs current and preserves both charger limits")
+    func settingFastChargePowerRepairsCurrentAndPreservesLimits() throws {
         let configuration = StarkChargerConfiguration(
-            chargeCurrentDeciAmperes: 50,
+            chargeCurrentDeciAmperes: 20,
+            chargePowerWatts: 3_300,
+            maximumStateOfChargeDeciPercent: 1_000,
+            standardChargerMaximumPowerWatts: 3_300,
+            backpackChargerMaximumPowerWatts: 7_000
+        )
+
+        let payload = try StarkChargerConfigurationCommand.encodeWrite(
+            configuration.settingChargePower(7_000, chargerType: .fast)
+        )
+
+        #expect(payload[3] == 0xFA)
+        #expect(payload[4] == 0x00)
+        #expect(payload[5] == 0x58)
+        #expect(payload[6] == 0x1B)
+        #expect(payload[9] == 0xE4)
+        #expect(payload[10] == 0x0C)
+        #expect(payload[11] == 0x58)
+        #expect(payload[12] == 0x1B)
+    }
+
+    @Test("Changing charge power preserves a configured current above the validated limit")
+    func settingChargePowerPreservesHigherCurrent() throws {
+        let configuration = StarkChargerConfiguration(
+            chargeCurrentDeciAmperes: 250,
             chargePowerWatts: 2_000,
             maximumStateOfChargeDeciPercent: 1_000,
             standardChargerMaximumPowerWatts: 3_300,
@@ -46,17 +70,37 @@ struct StarkChargerConfigurationCommandTests {
         )
 
         let payload = try StarkChargerConfigurationCommand.encodeWrite(
-            configuration.settingChargePower(700)
+            configuration.settingChargePower(700, chargerType: .standard)
         )
 
-        #expect(payload[3] == 0x32)
+        #expect(payload[3] == 0xFA)
         #expect(payload[4] == 0x00)
         #expect(payload[5] == 0xBC)
         #expect(payload[6] == 0x02)
     }
 
-    @Test("Changing charge power preserves maximum current from telemetry fallback")
-    func settingChargePowerPreservesFallbackMaximumCurrent() throws {
+    @Test("Changing charge power preserves a non-regression current below twenty amperes")
+    func settingChargePowerPreservesOtherLowerCurrent() throws {
+        let configuration = StarkChargerConfiguration(
+            chargeCurrentDeciAmperes: 100,
+            chargePowerWatts: 2_000,
+            maximumStateOfChargeDeciPercent: 1_000,
+            standardChargerMaximumPowerWatts: 3_300,
+            backpackChargerMaximumPowerWatts: 7_000
+        )
+
+        let payload = try StarkChargerConfigurationCommand.encodeWrite(
+            configuration.settingChargePower(700, chargerType: .standard)
+        )
+
+        #expect(payload[3] == 0x64)
+        #expect(payload[4] == 0x00)
+        #expect(payload[5] == 0xBC)
+        #expect(payload[6] == 0x02)
+    }
+
+    @Test("Changing charge power repairs the two ampere regression")
+    func settingChargePowerRepairsTwoAmpereRegression() throws {
         let configuration = StarkChargerConfiguration(
             chargeCurrentDeciAmperes: 20,
             chargePowerWatts: 500,
@@ -66,16 +110,16 @@ struct StarkChargerConfigurationCommandTests {
         )
 
         let payload = try StarkChargerConfigurationCommand.encodeWrite(
-            configuration.settingChargePower(700)
+            configuration.settingChargePower(3_300, chargerType: .standard)
         )
 
-        #expect(payload[3] == 0x14)
+        #expect(payload[3] == 0xC8)
         #expect(payload[4] == 0x00)
-        #expect(payload[5] == 0xBC)
-        #expect(payload[6] == 0x02)
+        #expect(payload[5] == 0xE4)
+        #expect(payload[6] == 0x0C)
     }
 
-    @Test("Encodes observed minimum 300 watts while preserving fallback current")
+    @Test("Encodes observed minimum 300 watts with the validated current limit")
     func encodesObservedMinimumChargePower() throws {
         let configuration = StarkChargerConfiguration(
             chargeCurrentDeciAmperes: 20,
@@ -86,14 +130,42 @@ struct StarkChargerConfigurationCommandTests {
         )
 
         let payload = try StarkChargerConfigurationCommand.encodeWrite(
-            configuration.settingChargePower(StarkChargePowerControlLimits.minimumWatts)
+            configuration.settingChargePower(
+                StarkChargePowerControlLimits.minimumWatts,
+                chargerType: .standard
+            )
         )
 
         #expect(StarkChargePowerControlLimits.minimumWatts == 300)
-        #expect(payload[3] == 0x14)
+        #expect(payload[3] == 0xC8)
         #expect(payload[4] == 0x00)
         #expect(payload[5] == 0x2C)
         #expect(payload[6] == 0x01)
+    }
+
+    @Test("Decodes the complete notified charger configuration response")
+    func decodesNotifiedConfigurationResponse() throws {
+        let response = Data([
+            0x02, 0x04, 0x00,
+            0xC8, 0x00,
+            0xE4, 0x0C,
+            0xE8, 0x03,
+            0x14, 0x00,
+            0x02, 0x00,
+            0x10, 0x00,
+            0xE4, 0x0C,
+            0xE4, 0x0C
+        ])
+
+        let configuration = try StarkChargerConfigurationCommand.decodeResponse(response)
+
+        #expect(configuration == StarkChargerConfiguration(
+            chargeCurrentDeciAmperes: 200,
+            chargePowerWatts: 3_300,
+            maximumStateOfChargeDeciPercent: 1_000,
+            standardChargerMaximumPowerWatts: 3_300,
+            backpackChargerMaximumPowerWatts: 3_300
+        ))
     }
 
     @Test("Changing charge target preserves current and power")
