@@ -29,6 +29,7 @@ struct DashboardDynamicsInstrumentCard: View {
                 )
                 .layoutPriority(1)
                 currentMetric
+                    .padding(.top, Constants.currentMetricTopSpacing)
                 maximumMetrics
             }
             .dynamicTypeSize(...DynamicTypeSize.large)
@@ -139,6 +140,7 @@ struct DashboardDynamicsInstrumentCard: View {
         static let spacing: CGFloat = 4
         static let statusDotSize: CGFloat = 5
         static let zeroButtonSize: CGFloat = 22
+        static let currentMetricTopSpacing: CGFloat = 4
         static let currentMetricHeight: CGFloat = 28
         static let maximumMetricsHeight: CGFloat = 34
         static let minimumLabelScale = 0.8
