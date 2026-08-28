@@ -87,6 +87,21 @@ public final class AppSettingsViewModel: ObservableObject {
         save(updated)
     }
 
+    public func selectDashboardBatteryIndicatorMode(id: String) {
+        guard let mode = DashboardBatteryIndicatorMode(rawValue: id) else { return }
+        var updated = settings
+        updated.dashboardBatteryIndicatorMode = mode
+        settings = updated
+        save(updated)
+    }
+
+    public func setShowsDashboardTemperatures(_ isVisible: Bool) {
+        var updated = settings
+        updated.showsDashboardTemperatures = isVisible
+        settings = updated
+        save(updated)
+    }
+
     public func selectMeasurementSystem(id: String) {
         guard let measurementSystem = MeasurementSystem(rawValue: id) else { return }
         var updated = settings

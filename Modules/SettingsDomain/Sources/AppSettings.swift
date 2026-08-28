@@ -3,6 +3,8 @@ import Foundation
 public struct AppSettings: Codable, Equatable, Sendable {
     public var speedSource: SpeedSource
     public var dashboardProgressBarMode: DashboardProgressBarMode
+    public var dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode
+    public var showsDashboardTemperatures: Bool
     public var measurementSystem: MeasurementSystem
     public var defaultBatteryPackCapacity: BatteryPackCapacity
     public var batteryPackCapacitiesByVIN: [String: BatteryPackCapacity]
@@ -14,12 +16,16 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public init(
         speedSource: SpeedSource = .motorcycle,
         dashboardProgressBarMode: DashboardProgressBarMode = .energy,
+        dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
+        showsDashboardTemperatures: Bool = false,
         measurementSystem: MeasurementSystem = .system,
         batteryPackCapacity: BatteryPackCapacity = .sevenPointTwoKilowattHours,
         batteryPackCapacitiesByVIN: [String: BatteryPackCapacity] = [:]
     ) {
         self.speedSource = speedSource
         self.dashboardProgressBarMode = dashboardProgressBarMode
+        self.dashboardBatteryIndicatorMode = dashboardBatteryIndicatorMode
+        self.showsDashboardTemperatures = showsDashboardTemperatures
         self.measurementSystem = measurementSystem
         defaultBatteryPackCapacity = batteryPackCapacity
         self.batteryPackCapacitiesByVIN = batteryPackCapacitiesByVIN
@@ -28,6 +34,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case speedSource
         case dashboardProgressBarMode
+        case dashboardBatteryIndicatorMode
+        case showsDashboardTemperatures
         case measurementSystem
         case defaultBatteryPackCapacity
         case batteryPackCapacitiesByVIN
@@ -40,6 +48,14 @@ public struct AppSettings: Codable, Equatable, Sendable {
             DashboardProgressBarMode.self,
             forKey: .dashboardProgressBarMode
         ) ?? .energy
+        dashboardBatteryIndicatorMode = try container.decodeIfPresent(
+            DashboardBatteryIndicatorMode.self,
+            forKey: .dashboardBatteryIndicatorMode
+        ) ?? .percentage
+        showsDashboardTemperatures = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .showsDashboardTemperatures
+        ) ?? false
         measurementSystem = try container.decodeIfPresent(MeasurementSystem.self, forKey: .measurementSystem) ?? .system
         defaultBatteryPackCapacity = try container.decodeIfPresent(
             BatteryPackCapacity.self,
@@ -66,6 +82,11 @@ public enum DashboardProgressBarMode: String, Codable, CaseIterable, Sendable {
     case energy
     case speed
     case hidden
+}
+
+public enum DashboardBatteryIndicatorMode: String, Codable, CaseIterable, Sendable {
+    case percentage
+    case estimatedRange
 }
 
 public enum SpeedSource: String, Codable, CaseIterable, Sendable {

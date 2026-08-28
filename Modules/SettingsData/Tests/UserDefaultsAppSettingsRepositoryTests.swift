@@ -21,6 +21,8 @@ struct UserDefaultsAppSettingsRepositoryTests {
         let expected = AppSettings(
             speedSource: .hybrid,
             dashboardProgressBarMode: .speed,
+            dashboardBatteryIndicatorMode: .estimatedRange,
+            showsDashboardTemperatures: false,
             measurementSystem: .imperial,
             batteryPackCapacity: .sixPointEightKilowattHours
         )
@@ -33,7 +35,7 @@ struct UserDefaultsAppSettingsRepositoryTests {
         #expect(await reloadedRepository.load() == expected)
     }
 
-    @Test("Decodes legacy settings with the energy progress bar default")
+    @Test("Decodes legacy settings with dashboard display defaults")
     func decodesLegacySettings() async throws {
         let suiteName = makeSuiteName()
         let defaults = makeDefaults(suiteName: suiteName)
@@ -50,6 +52,8 @@ struct UserDefaultsAppSettingsRepositoryTests {
         let repository = UserDefaultsAppSettingsRepository(userDefaults: defaults)
 
         #expect(await repository.load().dashboardProgressBarMode == .energy)
+        #expect(await repository.load().dashboardBatteryIndicatorMode == .percentage)
+        #expect(!(await repository.load().showsDashboardTemperatures))
     }
 
     @Test("Does not notify observers when the saved settings are unchanged")

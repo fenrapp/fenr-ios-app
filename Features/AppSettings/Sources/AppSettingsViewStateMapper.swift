@@ -35,6 +35,13 @@ public struct AppSettingsViewStateMapper: Sendable {
                 ),
                 description: dashboardProgressBarModeDescription(settings.dashboardProgressBarMode)
             ),
+            dashboardBatteryIndicatorMode: .init(
+                selectedID: settings.dashboardBatteryIndicatorMode.rawValue,
+                options: DashboardBatteryIndicatorMode.allCases.map {
+                    .init(id: $0.rawValue, title: dashboardBatteryIndicatorModeTitle($0))
+                }
+            ),
+            showsDashboardTemperatures: settings.showsDashboardTemperatures,
             measurementSystem: .init(
                 selectedID: settings.measurementSystem.rawValue,
                 options: MeasurementSystem.allCases.map {
@@ -129,6 +136,13 @@ public struct AppSettingsViewStateMapper: Sendable {
         case .energy: "Regeneration fills left from the center; consumption fills right."
         case .speed: "Fills from left to right as speed increases."
         case .hidden: "Hides the progress bar from the ride dashboard."
+        }
+    }
+
+    private func dashboardBatteryIndicatorModeTitle(_ mode: DashboardBatteryIndicatorMode) -> String {
+        switch mode {
+        case .percentage: "Percentage"
+        case .estimatedRange: "Estimated range"
         }
     }
 

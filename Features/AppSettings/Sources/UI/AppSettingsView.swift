@@ -31,6 +31,12 @@ public struct AppSettingsView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
 
+                Toggle("Battery and inverter temperatures", isOn: showsDashboardTemperaturesBinding)
+
+                Text("Shows available thermal readings on the ride dashboard.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
                 Picker("Speed source", selection: speedSourceBinding) {
                     ForEach(viewModel.viewState.speedSource.selection.options) { option in
                         Text(option.title).tag(option.id)
@@ -97,6 +103,19 @@ public struct AppSettingsView: View {
             }
 
             Section("Battery") {
+                #if os(iOS)
+                Picker("Dashboard display", selection: dashboardBatteryIndicatorModeBinding) {
+                    ForEach(viewModel.viewState.dashboardBatteryIndicatorMode.options) { option in
+                        Text(option.title).tag(option.id)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                Text("Falls back to battery percentage until an estimated range is available.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                #endif
+
                 Picker("Pack capacity", selection: batteryPackCapacityBinding) {
                     ForEach(viewModel.viewState.batteryCapacity.options) { option in
                         Text(option.title).tag(option.id)
@@ -137,6 +156,13 @@ public struct AppSettingsView: View {
         )
     }
 
+    private var showsDashboardTemperaturesBinding: Binding<Bool> {
+        .init(
+            get: { viewModel.viewState.showsDashboardTemperatures },
+            set: { viewModel.setShowsDashboardTemperatures($0) }
+        )
+    }
+
     private var selectionPickerStyle: some PickerStyle {
         #if os(watchOS)
         NavigationLinkPickerStyle()
@@ -156,6 +182,13 @@ public struct AppSettingsView: View {
         .init(
             get: { viewModel.viewState.batteryCapacity.selectedID },
             set: { viewModel.selectBatteryPackCapacity(id: $0) }
+        )
+    }
+
+    private var dashboardBatteryIndicatorModeBinding: Binding<String> {
+        .init(
+            get: { viewModel.viewState.dashboardBatteryIndicatorMode.selectedID },
+            set: { viewModel.selectDashboardBatteryIndicatorMode(id: $0) }
         )
     }
 
