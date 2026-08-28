@@ -309,6 +309,17 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.appsettings
+  DashboardCardSettings:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Features/DashboardCardSettings/Sources
+    dependencies:
+      - target: SettingsDomain
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.dashboardcardsettings
   PowerModeSettings:
     type: framework
     platform: iOS
@@ -416,6 +427,7 @@ targets:
       - target: BatteryHealth
       - target: ChargeControl
       - target: AppSettings
+      - target: DashboardCardSettings
       - target: PowerModeSettings
       - target: RideHistory
       - target: BikeData
@@ -516,6 +528,7 @@ targets:
       - target: BatteryHealth
       - target: ChargeControl
       - target: AppSettings
+      - target: DashboardCardSettings
       - target: PowerModeSettings
       - target: RideHistory
       - target: BikeDomain
@@ -938,6 +951,18 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.appsettings.tests
+  DashboardCardSettingsTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Features/DashboardCardSettings/Tests
+    dependencies:
+      - target: DashboardCardSettings
+      - target: SettingsDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.dashboardcardsettings.tests
   PowerModeSettingsTests:
     type: bundle.unit-test
     platform: iOS
@@ -991,6 +1016,7 @@ targets:
       - target: RideDashboard
       - target: MeasurementPresentation
       - target: AppSettings
+      - target: DashboardCardSettings
       - target: PowerModeSettings
       - target: RideHistory
       - target: BikeData
@@ -1028,6 +1054,7 @@ targets:
       - target: BLETraceData
       - target: BLETraceDomain
       - target: AppSettings
+      - target: DashboardCardSettings
       - target: PowerModeSettings
       - target: RideHistory
       - target: BikeDiagnostics
@@ -1077,6 +1104,7 @@ schemes:
         RideDashboardTests: [test]
         BatteryHealthTests: [test]
         AppSettingsTests: [test]
+        DashboardCardSettingsTests: [test]
         PowerModeSettingsTests: [test]
         RideHistoryTests: [test]
         TestSupportTests: [test]
@@ -1103,6 +1131,7 @@ schemes:
         - RideDashboardTests
         - BatteryHealthTests
         - AppSettingsTests
+        - DashboardCardSettingsTests
         - PowerModeSettingsTests
         - RideHistoryTests
         - FENRTests

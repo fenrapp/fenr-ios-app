@@ -109,6 +109,7 @@ enum DebugAppDependencyContainerFactory {
             onboardingContainer: BikeOnboardingDependencyContainer(),
             dashboardContainer: RideDashboardDependencyContainer(),
             appSettingsContainer: AppSettingsDependencyContainer(),
+            dashboardCardSettingsContainer: DashboardCardSettingsDependencyContainer(),
             powerModeSettingsContainer: PowerModeSettingsDependencyContainer(),
             rideHistoryContainer: RideHistoryDependencyContainer(),
             bleTraceLogRepository: NoOpBLETraceRepository(),

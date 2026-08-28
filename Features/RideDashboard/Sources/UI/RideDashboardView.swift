@@ -98,6 +98,7 @@ public struct RideDashboardView: View {
                             ZStack(alignment: .bottom) {
                                 DashboardCenterCard(
                                     centerMode: viewModel.viewState.centerMode,
+                                    cardLayout: viewModel.cardLayout,
                                     selectedRidingCard: $cardSelection.ridingCard,
                                     speedometer: viewModel.viewState.speedometer,
                                     showsSpeedSourceIndicator: !DashboardIndicatorStatus.hasActiveIndicators(
@@ -220,8 +221,13 @@ public struct RideDashboardView: View {
             scheduleHiddenPageResetIfNeeded()
             synchronizeCardLifecycles()
         }
+        .onChange(of: viewModel.cardLayout) {
+            cardSelection.apply(layout: viewModel.cardLayout)
+            scheduleHiddenPageResetIfNeeded()
+            synchronizeCardLifecycles()
+        }
         .onAppear {
-            cardSelection = .init()
+            cardSelection = .init(layout: viewModel.cardLayout)
             UIApplication.shared.isIdleTimerDisabled = true
         }
         .onDisappear {
@@ -336,7 +342,10 @@ private extension RideDashboardView {
     func scheduleHiddenPageResetIfNeeded() {
         hiddenPageResetTask?.cancel()
         hiddenPageResetTask = nil
-        guard cardSelection.needsHiddenPageReset(in: viewModel.viewState.centerMode) else { return }
+        guard cardSelection.needsHiddenPageReset(
+            in: viewModel.viewState.centerMode,
+            layout: viewModel.cardLayout
+        ) else { return }
         hiddenPageResetTask = Task { @MainActor in
             do {
                 try await Task.sleep(for: Constants.hiddenPageResetDelay)
@@ -344,11 +353,17 @@ private extension RideDashboardView {
                 return
             }
             guard !Task.isCancelled,
-                  cardSelection.needsHiddenPageReset(in: viewModel.viewState.centerMode) else { return }
+                  cardSelection.needsHiddenPageReset(
+                    in: viewModel.viewState.centerMode,
+                    layout: viewModel.cardLayout
+                  ) else { return }
             var transaction = Transaction()
             transaction.animation = nil
             withTransaction(transaction) {
-                cardSelection.resetHiddenPages(in: viewModel.viewState.centerMode)
+                cardSelection.resetHiddenPages(
+                    in: viewModel.viewState.centerMode,
+                    layout: viewModel.cardLayout
+                )
             }
             hiddenPageResetTask = nil
         }

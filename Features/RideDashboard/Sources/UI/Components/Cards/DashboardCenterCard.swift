@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DashboardCenterCard: View {
     let centerMode: RideDashboardViewState.CenterMode
+    let cardLayout: DashboardCardLayout
     @Binding var selectedRidingCard: RidingDashboardCard
     let speedometer: DashboardSpeedometerViewData
     let showsSpeedSourceIndicator: Bool
@@ -39,7 +40,7 @@ struct DashboardCenterCard: View {
         switch centerMode {
         case .riding:
             DashboardRidingCardDeck(
-                cards: RidingDashboardCard.allCases,
+                cards: cardLayout.ridingCards,
                 selection: $selectedRidingCard,
                 reduceMotion: reduceMotion
             ) { card in
@@ -67,6 +68,7 @@ struct DashboardCenterCard: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .currentTrip:
             DashboardCurrentTripPager(
+                pages: cardLayout.currentTripPages,
                 selection: $selectedCurrentTripPage,
                 currentTrip: currentTrip,
                 statistics: tripStatistics,
@@ -77,6 +79,7 @@ struct DashboardCenterCard: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .efficiency:
             DashboardEfficiencyPager(
+                pages: cardLayout.efficiencyPages,
                 selection: $selectedEfficiencyPage,
                 state: efficiency,
                 reduceMotion: reduceMotion
@@ -84,6 +87,7 @@ struct DashboardCenterCard: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .range:
             DashboardRangePager(
+                pages: cardLayout.rangePages,
                 selection: $selectedRangePage,
                 state: range,
                 reduceMotion: reduceMotion
@@ -91,6 +95,7 @@ struct DashboardCenterCard: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .systemHealth:
             DashboardSystemHealthPager(
+                pages: cardLayout.systemHealthPages,
                 selection: $selectedSystemHealthPage,
                 state: systemHealth,
                 reduceMotion: reduceMotion
@@ -98,6 +103,7 @@ struct DashboardCenterCard: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .dynamics:
             DashboardRideDynamicsPager(
+                pages: cardLayout.dynamicsPages,
                 selection: $selectedDynamicsPage,
                 state: dynamics,
                 reduceMotion: reduceMotion,

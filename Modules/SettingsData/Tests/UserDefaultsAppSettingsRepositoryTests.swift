@@ -18,11 +18,17 @@ struct UserDefaultsAppSettingsRepositoryTests {
         let repository = UserDefaultsAppSettingsRepository(
             userDefaults: makeDefaults(suiteName: suiteName)
         )
+        var cardConfiguration = DashboardCardConfiguration()
+        cardConfiguration.setSectionOrder([
+            .range, .currentTrip, .efficiency, .systemHealth, .rideDynamics
+        ])
+        cardConfiguration.setSectionVisibility(false, id: .efficiency)
         let expected = AppSettings(
             speedSource: .hybrid,
             dashboardProgressBarMode: .speed,
             dashboardBatteryIndicatorMode: .estimatedRange,
             showsDashboardTemperatures: false,
+            dashboardCardConfiguration: cardConfiguration,
             measurementSystem: .imperial,
             batteryPackCapacity: .sixPointEightKilowattHours
         )
@@ -54,6 +60,7 @@ struct UserDefaultsAppSettingsRepositoryTests {
         #expect(await repository.load().dashboardProgressBarMode == .energy)
         #expect(await repository.load().dashboardBatteryIndicatorMode == .percentage)
         #expect(!(await repository.load().showsDashboardTemperatures))
+        #expect(await repository.load().dashboardCardConfiguration == .init())
         #expect(await repository.load().powerModeNamesByVIN.isEmpty)
     }
 

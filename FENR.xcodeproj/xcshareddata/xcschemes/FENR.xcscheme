@@ -169,6 +169,20 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "43F364753E344B1F7508CB2F"
+               BuildableName = "DashboardCardSettingsTests.xctest"
+               BlueprintName = "DashboardCardSettingsTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "8B64EFEC5B4B812005ECE6B9"
                BuildableName = "DesignSystemTests.xctest"
                BlueprintName = "DesignSystemTests"
@@ -595,6 +609,17 @@
                BlueprintIdentifier = "F59469F560874C18CC2B0229"
                BuildableName = "AppSettingsTests.xctest"
                BlueprintName = "AppSettingsTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "43F364753E344B1F7508CB2F"
+               BuildableName = "DashboardCardSettingsTests.xctest"
+               BlueprintName = "DashboardCardSettingsTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </TestableReference>

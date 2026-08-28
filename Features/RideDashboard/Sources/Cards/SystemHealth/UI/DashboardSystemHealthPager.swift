@@ -1,13 +1,14 @@
 import SwiftUI
 
 struct DashboardSystemHealthPager: View {
+    let pages: [SystemHealthDashboardPage]
     @Binding var selection: SystemHealthDashboardPage
     let state: DashboardSystemHealthViewData
     let reduceMotion: Bool
 
     var body: some View {
         DashboardHorizontalCardPager(
-            pages: SystemHealthDashboardPage.allCases,
+            pages: pages,
             selection: $selection,
             reduceMotion: reduceMotion,
             accessibilityLabel: "System health pages",

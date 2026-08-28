@@ -22,7 +22,16 @@ struct DashboardRidingCardDeck<Content: View>: View {
         self.content = content
     }
 
-    var body: some View {
+    @ViewBuilder var body: some View {
+        if cards.count == 1, let card = cards.first {
+            content(card)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            pagingContent
+        }
+    }
+
+    private var pagingContent: some View {
         DashboardPager(
             pages: cards,
             selection: $selection,

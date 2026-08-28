@@ -2,6 +2,7 @@ import AppSettings
 import BatteryHealth
 import BikeDiagnostics
 import BikeOnboarding
+import DashboardCardSettings
 import PowerModeSettings
 import RideDashboard
 import RideHistory
@@ -14,6 +15,7 @@ struct AppRootView: View {
     @StateObject private var batteryHealthViewModel: BatteryHealthViewModel
     @StateObject private var onboardingViewModel: BikeOnboardingViewModel
     @StateObject private var appSettingsViewModel: AppSettingsViewModel
+    @StateObject private var dashboardCardSettingsViewModel: DashboardCardSettingsViewModel
     @StateObject private var powerModeSettingsViewModel: PowerModeSettingsViewModel
     @StateObject private var rideHistoryViewModel: RideHistoryViewModel
     @StateObject private var setupFlow: BikeSetupFlowController
@@ -31,6 +33,9 @@ struct AppRootView: View {
         _batteryHealthViewModel = StateObject(wrappedValue: dependencies.batteryHealthViewModel)
         _onboardingViewModel = StateObject(wrappedValue: dependencies.onboardingViewModel)
         _appSettingsViewModel = StateObject(wrappedValue: dependencies.appSettingsViewModel)
+        _dashboardCardSettingsViewModel = StateObject(
+            wrappedValue: dependencies.dashboardCardSettingsViewModel
+        )
         _powerModeSettingsViewModel = StateObject(wrappedValue: dependencies.powerModeSettingsViewModel)
         _rideHistoryViewModel = StateObject(wrappedValue: dependencies.rideHistoryViewModel)
         _setupFlow = StateObject(wrappedValue: dependencies.setupFlow)
@@ -80,10 +85,13 @@ struct AppRootView: View {
                     AppSettingsView(
                         viewModel: appSettingsViewModel,
                         onOpenTelemetry: { path.append(.diagnostics) },
+                        onOpenDashboardCards: { path.append(.dashboardCards) },
                         onOpenPowerModes: { path.append(.powerModes) },
                         onOpenRideHistory: { path.append(.rideHistory) },
                         accessory: settingsAccessory
                     )
+                case .dashboardCards:
+                    DashboardCardSettingsView(viewModel: dashboardCardSettingsViewModel)
                 case .powerModes:
                     PowerModeSettingsView(viewModel: powerModeSettingsViewModel)
                 case .rideHistory:
@@ -195,6 +203,7 @@ struct AppRootView: View {
         case batteryHealth
         case diagnostics
         case settings
+        case dashboardCards
         case powerModes
         case rideHistory
     }

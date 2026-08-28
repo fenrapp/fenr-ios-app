@@ -5,6 +5,7 @@ import BikeDomain
 import BikeOnboarding
 import BLETraceDomain
 import ChargeControl
+import DashboardCardSettings
 import EnvironmentDomain
 import Foundation
 import PowerModeSettings
@@ -64,6 +65,7 @@ struct AppDependencyContainer {
     private let onboardingContainer: BikeOnboardingDependencyContainer
     private let dashboardContainer: RideDashboardDependencyContainer
     private let appSettingsContainer: AppSettingsDependencyContainer
+    private let dashboardCardSettingsContainer: DashboardCardSettingsDependencyContainer
     private let powerModeSettingsContainer: PowerModeSettingsDependencyContainer
     private let rideHistoryContainer: RideHistoryDependencyContainer
     private let session: BikeSession
@@ -91,6 +93,7 @@ struct AppDependencyContainer {
         onboardingContainer: BikeOnboardingDependencyContainer,
         dashboardContainer: RideDashboardDependencyContainer,
         appSettingsContainer: AppSettingsDependencyContainer,
+        dashboardCardSettingsContainer: DashboardCardSettingsDependencyContainer,
         powerModeSettingsContainer: PowerModeSettingsDependencyContainer,
         rideHistoryContainer: RideHistoryDependencyContainer,
         bleTraceLogRepository: any BLETraceLogRepository,
@@ -102,6 +105,7 @@ struct AppDependencyContainer {
         self.onboardingContainer = onboardingContainer
         self.dashboardContainer = dashboardContainer
         self.appSettingsContainer = appSettingsContainer
+        self.dashboardCardSettingsContainer = dashboardCardSettingsContainer
         self.powerModeSettingsContainer = powerModeSettingsContainer
         self.rideHistoryContainer = rideHistoryContainer
         self.session = session
@@ -148,6 +152,7 @@ struct AppDependencyContainer {
                 setupFlow.complete(vin: vin)
             },
             appSettingsViewModel: makeAppSettingsViewModel(),
+            dashboardCardSettingsViewModel: makeDashboardCardSettingsViewModel(),
             powerModeSettingsViewModel: makePowerModeSettingsViewModel(),
             rideHistoryViewModel: makeRideHistoryViewModel(),
             setupFlow: setupFlow,
@@ -204,6 +209,10 @@ struct AppDependencyContainer {
             bikeRepository: session.repository,
             profileRepository: profileRepository
         )
+    }
+
+    func makeDashboardCardSettingsViewModel() -> DashboardCardSettingsViewModel {
+        dashboardCardSettingsContainer.makeViewModel(settingsRepository: settingsRepository)
     }
 
     func makePowerModeSettingsViewModel() -> PowerModeSettingsViewModel {

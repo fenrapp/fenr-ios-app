@@ -58,6 +58,7 @@ struct RideDashboardDependencyContainer {
     ) -> RideDashboardViewModel {
         RideDashboardViewModel(
             mapper: RideDashboardMapperFactory.makeRideMapper(locale: .autoupdatingCurrent),
+            cardLayoutMapper: DashboardCardLayoutMapper(),
             vehicleSession: vehicleSession,
             initialConnectionStabilityPeriod:
                 FENRRuntimeConstants.Telemetry.connectionStabilityPeriod,

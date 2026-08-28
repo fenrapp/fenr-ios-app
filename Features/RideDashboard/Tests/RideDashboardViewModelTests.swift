@@ -150,6 +150,7 @@ struct RideDashboardViewModelTests {
                 mapper: RideDashboardMapperFactory.makeRideMapper(
                     locale: Locale(identifier: "en_GB")
                 ),
+                cardLayoutMapper: DashboardCardLayoutMapper(),
                 vehicleSession: vehicleSession,
                 initialConnectionStabilityPeriod: initialConnectionStabilityPeriod,
                 reconnectionGracePeriod: reconnectionGracePeriod
