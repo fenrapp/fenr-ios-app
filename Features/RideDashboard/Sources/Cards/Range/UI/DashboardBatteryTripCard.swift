@@ -6,7 +6,7 @@ struct DashboardBatteryTripCard: View {
     let state: DashboardRangeViewData
 
     var body: some View {
-        DashboardTripCardSurface {
+        DashboardAdaptiveCardSurface {
             VStack(alignment: .leading, spacing: Constants.spacing) {
                 DashboardTripCardHeader(title: "BATTERY · TRIP")
                 hero

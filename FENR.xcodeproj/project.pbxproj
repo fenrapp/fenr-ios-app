@@ -511,7 +511,6 @@
 		615C439996E7389EFB92EC8E /* EnvironmentData.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E7632D61C9EB2B79730F4FBE /* EnvironmentData.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		616CAB2D4A45821E27540673 /* DashboardChargingHeaderIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = A875FD7900967FB42D5ABBD6 /* DashboardChargingHeaderIcon.swift */; };
 		61CBD24CD7C8F069BDE4A7FF /* BikeDomain.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 66791CC3437C3C3CF15B7DC3 /* BikeDomain.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		6207CE5C1E1D71BE09B7A3DF /* DashboardTripCardSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = F868A995B5E1F736E90DFF44 /* DashboardTripCardSurface.swift */; };
 		6212248D50291061FA7B10B5 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D152D37658EE1DC1CB585657 /* AppRootView.swift */; };
 		6268170E06CE899148BECAF1 /* AppRideDashboardFeatureFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DD333336FE68D5B048AB89A /* AppRideDashboardFeatureFactory.swift */; };
 		626ABBD45DE9595A8F7A86E4 /* DashboardSystemHealthCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9BD6AFED1603C377E18EF74 /* DashboardSystemHealthCard.swift */; };
@@ -721,6 +720,7 @@
 		8C2E8DE8C898020A67F558A9 /* BikeMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50C27C109E00CFC985B6D918 /* BikeMode.swift */; };
 		8DF182AC287CB26565FE4ABE /* BikeBLEVCUConfigurationTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 532CFA15AC7528D69CEE15FF /* BikeBLEVCUConfigurationTransaction.swift */; };
 		8E092E155157FE8ED0295A12 /* RideDashboard.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 0FCFDA89DBB393339BA333DC /* RideDashboard.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		8E1D6DD3E74806C89B25A230 /* DashboardAdaptiveCardSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48BE1BFD09374C2B311939B3 /* DashboardAdaptiveCardSurface.swift */; };
 		8E1FEEC751FD0AE3E4F046BB /* StarkThrottlePayloadLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = F18DB800983CB1BC057C47C3 /* StarkThrottlePayloadLayout.swift */; };
 		8E42CB4F4AF2696BAF793F6E /* RideSessionData.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C282726D91FD0A692C39EC86 /* RideSessionData.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		8EA5C3E24D8065015E891101 /* MetricTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8458ED42D6919A29E49827C /* MetricTile.swift */; };
@@ -3617,6 +3617,7 @@
 		478D094FC7E0A281514C5D97 /* DashboardChargingCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardChargingCard.swift; sourceTree = "<group>"; };
 		4807115D6B8F2140F8379778 /* OnboardingProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingProgressView.swift; sourceTree = "<group>"; };
 		4826FA9D9B5EC6D144A09FD9 /* DashboardSpeedSourceIndicatorMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardSpeedSourceIndicatorMapper.swift; sourceTree = "<group>"; };
+		48BE1BFD09374C2B311939B3 /* DashboardAdaptiveCardSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardAdaptiveCardSurface.swift; sourceTree = "<group>"; };
 		4935B64ECC5349D15D75952C /* StartBatteryHealthMonitoringUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartBatteryHealthMonitoringUseCase.swift; sourceTree = "<group>"; };
 		49668E4387B4AC244E634570 /* AppSettings.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AppSettings.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4982248A40FF5F781E93ABD4 /* CoreBluetoothCentralDelegateProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreBluetoothCentralDelegateProxy.swift; sourceTree = "<group>"; };
@@ -4178,7 +4179,6 @@
 		F68DF817EC7CD68E53C6997E /* BikeLiveActivityMetricStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeLiveActivityMetricStack.swift; sourceTree = "<group>"; };
 		F6A241F0BA01EFF18E060367 /* BikeDebugEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeDebugEvent.swift; sourceTree = "<group>"; };
 		F6B7C1F432126DD3943ADB27 /* VehicleSpeedResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleSpeedResolverTests.swift; sourceTree = "<group>"; };
-		F868A995B5E1F736E90DFF44 /* DashboardTripCardSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardTripCardSurface.swift; sourceTree = "<group>"; };
 		F90DCE73FBE199ADE39E5270 /* DashboardSystemHealthPager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardSystemHealthPager.swift; sourceTree = "<group>"; };
 		F99397ABA66FD26D92CA813D /* RideSessionPersistenceCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideSessionPersistenceCoordinatorTests.swift; sourceTree = "<group>"; };
 		F9A2532E8064A5C8427F4638 /* BatteryTemperaturesGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryTemperaturesGridView.swift; sourceTree = "<group>"; };
@@ -6528,7 +6528,6 @@
 			isa = PBXGroup;
 			children = (
 				E1240D84FF9F7F33688F394F /* DashboardTripCardHeader.swift */,
-				F868A995B5E1F736E90DFF44 /* DashboardTripCardSurface.swift */,
 				B900483AA004D7904A9CF5A5 /* DashboardTripMetricRow.swift */,
 			);
 			path = UI;
@@ -6649,6 +6648,7 @@
 		7F264F7F44164178D9F6090A /* Cards */ = {
 			isa = PBXGroup;
 			children = (
+				48BE1BFD09374C2B311939B3 /* DashboardAdaptiveCardSurface.swift */,
 				18FAE2D4C3ABEDC109813058 /* DashboardCardContainer.swift */,
 				108B705185AE14B5ED1A4140 /* DashboardCardSurfaceStyle.swift */,
 				957917AFB31154A146ABFA1C /* DashboardCenterCard.swift */,
@@ -10217,6 +10217,7 @@
 				9BB49FF6CFBE3E275CB12D20 /* CurrentTripCardMapper.swift in Sources */,
 				CFC7349737C479A0A3F1A80E /* CurrentTripCardViewModel.swift in Sources */,
 				491EA0D591DE4E3ACADE40D4 /* CurrentTripDashboardPage.swift in Sources */,
+				8E1D6DD3E74806C89B25A230 /* DashboardAdaptiveCardSurface.swift in Sources */,
 				6FE004CE289038044E2E9E30 /* DashboardAmbientLighting.swift in Sources */,
 				A8300E286659A9733761D5E9 /* DashboardBatteryPanel.swift in Sources */,
 				BBBC59FB5D481915049CD60F /* DashboardBatteryTripCard.swift in Sources */,
@@ -10283,7 +10284,6 @@
 				EC3F3530470A66FE5A9B5F78 /* DashboardSystemHealthThermalCard.swift in Sources */,
 				AAFFA50FDF94ADFEBEEA87CA /* DashboardSystemHealthViewData.swift in Sources */,
 				8A698B13882058A8AC529ED9 /* DashboardTripCardHeader.swift in Sources */,
-				6207CE5C1E1D71BE09B7A3DF /* DashboardTripCardSurface.swift in Sources */,
 				DD59740B9EF9DE69132F8749 /* DashboardTripMetricRow.swift in Sources */,
 				A8E26CC5756212FAC1735827 /* DashboardTripStatisticsCard.swift in Sources */,
 				088AEF97934A9266A48963C3 /* DashboardTripStatisticsViewData.swift in Sources */,

@@ -23,30 +23,18 @@ struct DashboardBatteryPanel: View {
         Group {
             switch displayMode {
             case .percentage:
-                indicator(
-                    text: percentageText,
-                    systemImage: "bolt.fill",
-                    accessibilityLabel: state.accessibilityLabel
-                )
+                percentageIndicator
             case .estimatedRange:
                 if let estimatedRange {
                     Button {
                         showsRangeExplanation = true
                     } label: {
-                        indicator(
-                            text: estimatedRange.text,
-                            systemImage: "road.lanes",
-                            accessibilityLabel: estimatedRange.accessibilityLabel
-                        )
+                        estimatedRangeIndicator(estimatedRange)
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint("Shows how the estimate is calculated")
                 } else {
-                    indicator(
-                        text: percentageText,
-                        systemImage: "bolt.fill",
-                        accessibilityLabel: state.accessibilityLabel
-                    )
+                    percentageIndicator
                 }
             }
         }
@@ -57,24 +45,51 @@ struct DashboardBatteryPanel: View {
         }
     }
 
-    private func indicator(
-        text: String,
-        systemImage: String,
-        accessibilityLabel: String
-    ) -> some View {
-        HStack(spacing: DesignSpace.extraSmall) {
-            Image(systemName: systemImage)
-                .font(.system(size: Constants.iconFontSize, weight: .semibold))
-                .accessibilityHidden(true)
+    private var percentageIndicator: some View {
+        indicator(accessibilityLabel: state.accessibilityLabel, width: Constants.percentageWidth) {
+            indicatorIcon(systemName: "bolt.fill")
 
-            Text(text)
-                .font(.system(size: Constants.percentageFontSize, weight: .medium, design: .rounded))
+            Text(percentageText)
+                .font(.system(size: Constants.valueFontSize, weight: .medium, design: .rounded))
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(Constants.minimumTextScale)
         }
+    }
+
+    private func estimatedRangeIndicator(_ range: DashboardRangeViewData.Summary) -> some View {
+        indicator(accessibilityLabel: range.accessibilityLabel) {
+            indicatorIcon(systemName: "road.lanes")
+
+            rangeText(range)
+        }
+    }
+
+    private func rangeText(_ range: DashboardRangeViewData.Summary) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: Constants.rangeValueSpacing) {
+            Text(range.valueText)
+                .font(.system(size: Constants.valueFontSize, weight: .medium, design: .rounded))
+                .monospacedDigit()
+
+            Text(range.unitText)
+                .font(.system(size: Constants.rangeUnitFontSize, weight: .semibold, design: .rounded))
+        }
+        .lineLimit(1)
+        .fixedSize(horizontal: true, vertical: false)
+    }
+
+    private func indicator<Content: View>(
+        accessibilityLabel: String,
+        width: CGFloat? = nil,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        HStack(spacing: DesignSpace.extraSmall) {
+            content()
+        }
         .foregroundStyle(tint)
-        .frame(width: Constants.width, height: Constants.height)
+        .padding(.horizontal, Constants.contentHorizontalPadding)
+        .frame(minWidth: Constants.minimumWidth)
+        .frame(width: width, height: Constants.height)
         .background {
             Capsule()
                 .fill(tint.opacity(Constants.backgroundOpacity))
@@ -85,6 +100,12 @@ struct DashboardBatteryPanel: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
+    }
+
+    private func indicatorIcon(systemName: String) -> some View {
+        Image(systemName: systemName)
+            .font(.system(size: Constants.iconFontSize, weight: .semibold))
+            .accessibilityHidden(true)
     }
 
     private var percentageText: String {
@@ -102,12 +123,16 @@ struct DashboardBatteryPanel: View {
     }
 
     private enum Constants {
-        static let width: CGFloat = 112
+        static let percentageWidth: CGFloat = 112
+        static let minimumWidth: CGFloat = 112
         static let height: CGFloat = 60
         static let outlineWidth: CGFloat = 2.75
         static let backgroundOpacity = 0.08
         static let iconFontSize: CGFloat = 22
-        static let percentageFontSize: CGFloat = 26
+        static let valueFontSize: CGFloat = 26
+        static let rangeUnitFontSize: CGFloat = 15
+        static let rangeValueSpacing: CGFloat = 2
+        static let contentHorizontalPadding: CGFloat = 10
         static let minimumTextScale: CGFloat = 0.72
         static let rangeExplanation = "Calculated from the remaining battery energy, recent consumption, "
             + "and eligible saved trips for this bike. Riding style, terrain, temperature, and conditions "

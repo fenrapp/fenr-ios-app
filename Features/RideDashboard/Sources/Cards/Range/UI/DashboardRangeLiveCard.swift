@@ -6,7 +6,7 @@ struct DashboardRangeLiveCard: View {
     let state: DashboardRangeViewData
 
     var body: some View {
-        DashboardTripCardSurface {
+        DashboardAdaptiveCardSurface {
             VStack(alignment: .leading, spacing: Constants.spacing) {
                 DashboardTripCardHeader(title: "RANGE · LIVE")
                 hero

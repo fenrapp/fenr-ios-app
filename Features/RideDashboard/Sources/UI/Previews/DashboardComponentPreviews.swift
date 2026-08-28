@@ -46,7 +46,11 @@ import SwiftUI
         DashboardBatteryPanel(
             state: previewBattery(percentage: 78, emphasis: .positive),
             displayMode: .estimatedRange,
-            estimatedRange: .init(text: "64 km", accessibilityLabel: "Estimated range 64 kilometers")
+            estimatedRange: .init(
+                valueText: "212",
+                unitText: "km",
+                accessibilityLabel: "Estimated range 212 kilometers"
+            )
         )
         DashboardBatteryPanel(
             state: previewBattery(percentage: 78, emphasis: .positive),

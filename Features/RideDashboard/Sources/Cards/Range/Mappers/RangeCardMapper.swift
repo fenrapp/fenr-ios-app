@@ -38,7 +38,8 @@ public struct RangeCardMapper: Sendable {
             distanceUnitText: distanceUnitText,
             summary: range.map { _ in
                 .init(
-                    text: "\(rangeText) \(distanceUnitText)",
+                    valueText: rangeText,
+                    unitText: distanceUnitText,
                     accessibilityLabel: "Estimated range \(rangeText) \(distanceUnitText)"
                 )
             },

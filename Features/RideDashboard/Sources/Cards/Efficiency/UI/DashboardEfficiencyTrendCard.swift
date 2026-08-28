@@ -6,7 +6,7 @@ struct DashboardEfficiencyTrendCard: View {
     let state: DashboardEfficiencyViewData
 
     var body: some View {
-        DashboardTripCardSurface {
+        DashboardAdaptiveCardSurface {
             VStack(alignment: .leading, spacing: Constants.spacing) {
                 header
                 if state.trendIsLoading {

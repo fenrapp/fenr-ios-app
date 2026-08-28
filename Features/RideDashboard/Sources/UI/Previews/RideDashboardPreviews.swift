@@ -221,7 +221,11 @@ private func previewRangeViewModel() -> RangeCardViewModel {
     RangeCardPreviewFactory.makeViewModel(
         state: .init(
             rangeText: "64",
-            summary: .init(text: "64 km", accessibilityLabel: "Estimated range 64 kilometers"),
+            summary: .init(
+                valueText: "64",
+                unitText: "km",
+                accessibilityLabel: "Estimated range 64 kilometers"
+            ),
             status: .stable,
             typicalRangeText: "71",
             currentRangeText: "58",

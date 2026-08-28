@@ -5,7 +5,7 @@ struct DashboardSystemHealthThermalCard: View {
     let state: DashboardSystemHealthViewData
 
     var body: some View {
-        DashboardSquareCardSurface {
+        DashboardAdaptiveCardSurface {
             VStack(spacing: Constants.spacing) {
                 DashboardSystemHealthHeader(title: "THERMAL", state: state)
                 thermalSection(

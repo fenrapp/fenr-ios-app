@@ -5,7 +5,7 @@ struct DashboardTripStatisticsCard: View {
     let state: DashboardTripStatisticsViewData
 
     var body: some View {
-        DashboardTripCardSurface {
+        DashboardAdaptiveCardSurface {
             if state.isLoading {
                 ProgressView()
                     .tint(DesignColor.informational)
@@ -20,7 +20,7 @@ struct DashboardTripStatisticsCard: View {
     }
 
     private var content: some View {
-        VStack(spacing: Constants.sectionSpacing) {
+        VStack(alignment: .leading, spacing: Constants.sectionSpacing) {
             header
             totalDistance
             Divider()
@@ -28,6 +28,7 @@ struct DashboardTripStatisticsCard: View {
             metric(state.averageSpeed, systemImage: "speedometer")
             metric(state.maximumSpeed, systemImage: "arrow.up.right")
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private var header: some View {

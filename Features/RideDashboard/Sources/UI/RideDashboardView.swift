@@ -120,9 +120,12 @@ public struct RideDashboardView: View {
                                         : .zero
                                 )
 
-                                DashboardIndicatorStatus(indicators: viewModel.viewState.indicators)
-                                    .frame(maxHeight: .infinity, alignment: .top)
-                                    .padding(.top, Constants.accessoryEdgePadding)
+                                if viewModel.viewState.centerMode == .riding,
+                                   cardSelection.ridingCard == .speedometer {
+                                    DashboardIndicatorStatus(indicators: viewModel.viewState.indicators)
+                                        .frame(maxHeight: .infinity, alignment: .top)
+                                        .padding(.top, Constants.accessoryEdgePadding)
+                                }
 
                                 if viewModel.viewState.centerMode == .riding,
                                    cardSelection.ridingCard == .speedometer {

@@ -53,6 +53,6 @@ struct DashboardSquareCardSurface<Content: View>: View {
 
 private enum DashboardSquareCardSurfaceConstants {
     static let contentPadding: CGFloat = 14
-    static let expansionFactor: CGFloat = 1.08
-    static let maximumSide: CGFloat = 360
+    static let expansionFactor: CGFloat = 1.08 * 1.045
+    static let maximumSide: CGFloat = 360 * 1.045
 }

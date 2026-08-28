@@ -2,11 +2,17 @@ import Foundation
 
 public struct DashboardRangeViewData: Equatable, Sendable {
     public struct Summary: Equatable, Sendable {
-        public let text: String
+        public let valueText: String
+        public let unitText: String
         public let accessibilityLabel: String
 
-        public init(text: String, accessibilityLabel: String) {
-            self.text = text
+        public var text: String {
+            "\(valueText) \(unitText)"
+        }
+
+        public init(valueText: String, unitText: String, accessibilityLabel: String) {
+            self.valueText = valueText
+            self.unitText = unitText
             self.accessibilityLabel = accessibilityLabel
         }
     }

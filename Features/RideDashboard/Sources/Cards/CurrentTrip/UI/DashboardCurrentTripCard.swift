@@ -24,8 +24,8 @@ struct DashboardCurrentTripCard: View {
     }
 
     var body: some View {
-        DashboardTripCardSurface {
-            VStack(spacing: Constants.sectionSpacing) {
+        DashboardAdaptiveCardSurface {
+            VStack(alignment: .leading, spacing: Constants.sectionSpacing) {
                 header
                 duration
                 Divider()
@@ -33,6 +33,7 @@ struct DashboardCurrentTripCard: View {
                 metric(state.averageSpeed)
                 metric(state.maximumSpeed)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(state.accessibilityLabel)
