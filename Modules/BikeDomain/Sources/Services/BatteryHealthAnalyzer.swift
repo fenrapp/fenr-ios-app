@@ -56,6 +56,7 @@ public struct BatteryTemperatureStatistics: Equatable, Sendable {
 
 public struct BatteryHealthAnalysis: Equatable, Sendable {
     public let severity: BatteryHealthSeverity
+    public let stateOfChargePercent: Int?
     public let stateOfHealthPercent: Int?
     public let cellDeltaVolts: Double?
     public let averageCellVoltage: Double?
@@ -67,9 +68,11 @@ public struct BatteryHealthAnalysis: Equatable, Sendable {
     public let balancingCellCount: Int
     public let batteryTemperatures: BatteryTemperatureStatistics?
     public let isBMSFaultActive: Bool
+    public let isLowBattery: Bool
 
     public init(
         severity: BatteryHealthSeverity,
+        stateOfChargePercent: Int?,
         stateOfHealthPercent: Int?,
         cellDeltaVolts: Double?,
         averageCellVoltage: Double?,
@@ -80,9 +83,11 @@ public struct BatteryHealthAnalysis: Equatable, Sendable {
         attentionCellCount: Int,
         balancingCellCount: Int,
         batteryTemperatures: BatteryTemperatureStatistics?,
-        isBMSFaultActive: Bool
+        isBMSFaultActive: Bool,
+        isLowBattery: Bool
     ) {
         self.severity = severity
+        self.stateOfChargePercent = stateOfChargePercent
         self.stateOfHealthPercent = stateOfHealthPercent
         self.cellDeltaVolts = cellDeltaVolts
         self.averageCellVoltage = averageCellVoltage
@@ -94,6 +99,7 @@ public struct BatteryHealthAnalysis: Equatable, Sendable {
         self.balancingCellCount = balancingCellCount
         self.batteryTemperatures = batteryTemperatures
         self.isBMSFaultActive = isBMSFaultActive
+        self.isLowBattery = isLowBattery
     }
 }
 
@@ -107,12 +113,14 @@ public struct BatteryHealthAnalyzer: Sendable {
         let minimumCell = validCells.min { $0.volts < $1.volts }
         let maximumCell = validCells.max { $0.volts < $1.volts }
         let delta = minMaxDelta(minimum: minimumCell?.volts, maximum: maximumCell?.volts)
+        let isLowBattery = health.stateOfCharge.percent.map {
+            $0 <= Constants.lowBatteryStateOfChargePercent
+        } ?? false
         let cells = assessedCells(
             validCells,
             average: average,
-            minimum: minimumCell?.volts,
-            maximum: maximumCell?.volts,
-            balancingIndexes: health.balancingCellIndexes
+            balancingIndexes: health.balancingCellIndexes,
+            suppressUniformLowVoltage: isLowBattery
         )
         let temperatures = temperatureStatistics(health.temperatures)
         let severity = overallSeverity(
@@ -124,6 +132,7 @@ public struct BatteryHealthAnalyzer: Sendable {
         )
         return BatteryHealthAnalysis(
             severity: severity,
+            stateOfChargePercent: health.stateOfCharge.percent,
             stateOfHealthPercent: health.stateOfHealth.percent,
             cellDeltaVolts: delta,
             averageCellVoltage: average,
@@ -134,7 +143,8 @@ public struct BatteryHealthAnalyzer: Sendable {
             attentionCellCount: cells.count { $0.condition == .belowAverage || $0.condition == .aboveAverage },
             balancingCellCount: cells.count { $0.isBalancing },
             batteryTemperatures: temperatures,
-            isBMSFaultActive: health.isFaultActive
+            isBMSFaultActive: health.isBMSFaultActive,
+            isLowBattery: isLowBattery
         )
     }
 }
@@ -143,18 +153,23 @@ private extension BatteryHealthAnalyzer {
     func assessedCells(
         _ cells: [BatteryCellVoltage],
         average: Double?,
-        minimum: Double?,
-        maximum: Double?,
-        balancingIndexes: Set<Int>
+        balancingIndexes: Set<Int>,
+        suppressUniformLowVoltage: Bool
     ) -> [BatteryCellHealthAssessment] {
         guard let average else { return [] }
+        let minimum = cells.min { $0.volts < $1.volts }?.volts
+        let maximum = cells.max { $0.volts < $1.volts }?.volts
         return cells.map { cell in
             let deviation = cell.volts - average
             return BatteryCellHealthAssessment(
                 position: cell.position,
                 voltage: cell.volts,
                 deviation: deviation,
-                condition: cellCondition(voltage: cell.volts, deviation: deviation),
+                condition: cellCondition(
+                    voltage: cell.volts,
+                    deviation: deviation,
+                    suppressUniformLowVoltage: suppressUniformLowVoltage
+                ),
                 isBalancing: balancingIndexes.contains(cell.position - Constants.firstCellPosition),
                 isMinimum: cell.volts == minimum,
                 isMaximum: cell.volts == maximum
@@ -162,9 +177,13 @@ private extension BatteryHealthAnalyzer {
         }
     }
 
-    func cellCondition(voltage: Double, deviation: Double) -> BatteryCellHealthCondition {
-        if voltage <= Constants.criticalCellVoltage
-            || meetsThreshold(abs(deviation), Constants.criticalCellDeviation) {
+    func cellCondition(
+        voltage: Double,
+        deviation: Double,
+        suppressUniformLowVoltage: Bool
+    ) -> BatteryCellHealthCondition {
+        if meetsThreshold(abs(deviation), Constants.criticalCellDeviation)
+            || (!suppressUniformLowVoltage && voltage <= Constants.criticalCellVoltage) {
             return .critical
         }
         if meetsThreshold(-deviation, Constants.attentionCellDeviation) { return .belowAverage }
@@ -179,7 +198,7 @@ private extension BatteryHealthAnalyzer {
         cells: [BatteryCellHealthAssessment],
         temperatures: BatteryTemperatureStatistics?
     ) -> BatteryHealthSeverity {
-        var severity: BatteryHealthSeverity = health.isFaultActive ? .critical : .unknown
+        var severity: BatteryHealthSeverity = health.isBMSFaultActive ? .critical : .unknown
         severity = max(severity, stateOfHealthSeverity(health.stateOfHealth.percent))
         severity = max(severity, cellDeltaSeverity(delta))
         severity = max(severity, cellSeverity(cells))
@@ -250,6 +269,7 @@ private extension BatteryHealthAnalyzer {
 
     enum Constants {
         static let firstCellPosition = 1
+        static let lowBatteryStateOfChargePercent = 20
         static let healthyStateOfHealthPercent = 80
         static let criticalStateOfHealthPercent = 70
         static let criticalCellVoltage = 3.0

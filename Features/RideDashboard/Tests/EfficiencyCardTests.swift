@@ -37,9 +37,31 @@ struct EfficiencyCardTests {
 
         #expect(state.valueText == "40")
         #expect(state.status == .partial)
-        #expect(state.powerPoints.map(\.kilowatts) == [4, -2])
+        #expect(state.powerPoints.map(\.usedKilowatts) == [4, 0])
+        #expect(state.powerPoints.map(\.regenKilowatts) == [0, 2])
         #expect(state.usedEnergyText == "100 Wh")
         #expect(state.recoveredEnergyText == "20 Wh")
+    }
+
+    @Test("Separates positive, negative, and zero power across the two live series")
+    func separatesLivePowerSeries() {
+        let state = EfficiencyCardMapper(locale: Locale(identifier: "en_GB")).map(
+            snapshot: .init(
+                vehicleIdentity: .vin(CurrentTripTestIdentity.vin),
+                livePowerSamples: [
+                    .init(date: .distantPast, powerWatts: 2_500),
+                    .init(date: .distantPast.addingTimeInterval(1), powerWatts: .zero),
+                    .init(date: .distantPast.addingTimeInterval(2), powerWatts: -1_500),
+                    .init(date: .distantPast.addingTimeInterval(3), powerWatts: 500)
+                ]
+            ),
+            trendTrips: [],
+            trendIsLoading: false,
+            measurementSystem: .metric
+        )
+
+        #expect(state.powerPoints.map(\.usedKilowatts) == [2.5, 0, 0, 0.5])
+        #expect(state.powerPoints.map(\.regenKilowatts) == [0, 0, 1.5, 0])
     }
 
     @Test("Loads SwiftData history only after selecting trend and caches it")

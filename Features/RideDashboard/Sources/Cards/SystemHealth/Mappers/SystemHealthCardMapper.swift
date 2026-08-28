@@ -55,6 +55,8 @@ private extension SystemHealthCardMapper {
         if case .failed = monitoringState { return .unavailable }
         if analysis.isBMSFaultActive { return .critical }
         guard !analysis.cells.isEmpty else { return .scanning }
+        if analysis.severity == .critical { return .critical }
+        if analysis.isLowBattery { return .lowBattery }
         return switch analysis.severity {
         case .unknown: .scanning
         case .healthy: .healthy
@@ -67,6 +69,7 @@ private extension SystemHealthCardMapper {
         switch status {
         case .scanning: "SCANNING"
         case .healthy: "OK"
+        case .lowBattery: "LOW BATTERY"
         case .attention: "CHECK"
         case .critical: "CRITICAL"
         case .unavailable: "UNAVAILABLE"
@@ -81,12 +84,14 @@ private extension SystemHealthCardMapper {
         if analysis.criticalCellCount > .zero {
             return cellCountText(analysis.criticalCellCount, qualifier: "CRITICAL")
         }
+        if status == .lowBattery { return "LOW BATTERY · CHARGE SOON" }
         if analysis.attentionCellCount > .zero {
             return cellCountText(analysis.attentionCellCount, qualifier: "TO CHECK")
         }
         switch status {
-        case .scanning: return "READING BMS DATA"
+        case .scanning: return ""
         case .healthy: return analysis.balancingCellCount > .zero ? "CELL BALANCING ACTIVE" : "ALL SYSTEMS NORMAL"
+        case .lowBattery: return "LOW BATTERY · CHARGE SOON"
         case .attention: return "VALUE OUTSIDE NORMAL RANGE"
         case .critical: return "SYSTEM LIMIT EXCEEDED"
         case .unavailable: return "BMS DATA UNAVAILABLE"

@@ -2,7 +2,7 @@ import AsyncSupport
 import BLETraceDomain
 import Foundation
 public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository {
-    private let directory: URL
+    let directory: URL
     let exportDirectory: URL
     private let environment: BLETraceEnvironment
     let configuration: BLETraceFileStoreConfiguration
@@ -13,6 +13,7 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
     private let uptimeNanoseconds: @Sendable () -> UInt64
     private var activeSession: ActiveSession?
     var completedSessions: [StoredSession]
+    var hasPreparedStorage = false
     private var pendingLines: [PendingLine] = []
     private var pendingLineIndex = 0
     private var pendingByteCount: Int64 = 0
@@ -37,23 +38,12 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
         self.sessionHub = sessionHub
         self.now = now
         self.uptimeNanoseconds = uptimeNanoseconds
+        completedSessions = []
         do {
             try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
             try fileManager.createDirectory(at: exportDirectory, withIntermediateDirectories: true)
             try Self.configureDirectory(directory, fileManager: fileManager)
             try Self.configureDirectory(exportDirectory, fileManager: fileManager)
-            try Self.recoverPartialFiles(
-                in: directory,
-                fileManager: fileManager,
-                lineEncoder: lineEncoder,
-                now: now()
-            )
-            completedSessions = try Self.loadStoredSessions(in: directory, fileManager: fileManager)
-            completedSessions = try Self.prune(
-                completedSessions,
-                configuration: configuration,
-                fileManager: fileManager
-            )
         } catch {
             throw BLETraceRepositoryError.unableToCreateStorage
         }
@@ -62,7 +52,9 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
         writerTask?.cancel()
         try? activeSession?.fileHandle.close()
     }
+
     public func startSession(_ context: BLETraceSessionContext) async {
+        await prepareStorage()
         if activeSession != nil {
             await finishSession(reason: .clientStopped)
         }
@@ -157,10 +149,12 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
     }
 
     public func observeSessions() async -> AsyncStream<[BLETraceSessionSummary]> {
-        await sessionHub.stream(replay: currentSummaries())
+        await prepareStorage()
+        return await sessionHub.stream(replay: currentSummaries())
     }
 
     public func prepareExport(sessionID: UUID) async throws -> URL {
+        await prepareStorage()
         try fileManager.createDirectory(at: exportDirectory, withIntermediateDirectories: true)
         try removeExistingExport(for: sessionID)
 
@@ -197,6 +191,7 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
     }
 
     public func deleteSession(id: UUID) async throws {
+        await prepareStorage()
         if activeSession?.context.id == id {
             throw BLETraceRepositoryError.activeSessionCannotBeDeleted
         }
@@ -210,6 +205,7 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
     }
 
     public func deleteAllSessions() async throws {
+        await prepareStorage()
         for stored in completedSessions {
             try fileManager.removeItem(at: stored.url)
         }

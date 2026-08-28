@@ -2,40 +2,99 @@ import DesignSystem
 import SwiftUI
 
 struct DashboardPowerModeSummary: View {
+    enum Layout {
+        case horizontal
+        case sidebar
+    }
+
     let state: DashboardPowerModeViewData
+    let layout: Layout
+
+    init(
+        state: DashboardPowerModeViewData,
+        layout: Layout = .horizontal
+    ) {
+        self.state = state
+        self.layout = layout
+    }
 
     @ViewBuilder
     var body: some View {
         if state.isVisible {
-            HStack(spacing: DesignSpace.small) {
-                metric(
-                    value: state.horsepower,
-                    unit: "HP",
-                    accessibilityLabel: "Power"
-                )
-                separator
-                metric(
-                    value: state.regenerativeBraking,
-                    unit: "%",
-                    accessibilityLabel: "Regenerative braking"
-                )
-
-                if state.showsTractionControl {
-                    separator
-                    tractionControlMetric
+            switch layout {
+            case .horizontal:
+                horizontalContent
+                    .frame(height: Constants.height)
+                    .dashboardPowerModeSurface()
+            case .sidebar:
+                ViewThatFits(in: .horizontal) {
+                    sidebarHorizontalContent
+                        .frame(height: Constants.height)
+                        .dashboardPowerModeSurface()
+                    sidebarContent
+                        .padding(.vertical, DesignSpace.small)
+                        .dashboardPowerModeSurface()
                 }
             }
-            .padding(.horizontal, DesignSpace.medium)
-            .frame(height: Constants.height)
-            .background {
-                Capsule()
-                    .fill(DesignColor.groupedSurface)
-            }
-            .overlay {
-                Capsule()
-                    .stroke(DesignColor.border, lineWidth: Constants.outlineWidth)
+        }
+    }
+
+    private var horizontalContent: some View {
+        HStack(spacing: DesignSpace.small) {
+            metric(
+                value: state.horsepower,
+                unit: "HP",
+                accessibilityLabel: "Power"
+            )
+            separator
+            metric(
+                value: state.regenerativeBraking,
+                unit: "%",
+                accessibilityLabel: "Regenerative braking"
+            )
+
+            if state.showsTractionControl {
+                separator
+                tractionControlMetric
             }
         }
+        .padding(.horizontal, DesignSpace.medium)
+        .fixedSize(horizontal: true, vertical: false)
+    }
+
+    private var sidebarContent: some View {
+        VStack(spacing: DesignSpace.extraSmall) {
+            powerMetric
+            regenerationMetric
+        }
+        .padding(.horizontal, DesignSpace.small)
+        .frame(maxWidth: .infinity)
+    }
+
+    private var sidebarHorizontalContent: some View {
+        HStack(spacing: DesignSpace.small) {
+            powerMetric
+            separator
+            regenerationMetric
+        }
+        .padding(.horizontal, DesignSpace.small)
+        .fixedSize(horizontal: true, vertical: false)
+    }
+
+    private var powerMetric: some View {
+        metric(
+            value: state.horsepower,
+            unit: "HP",
+            accessibilityLabel: "Power"
+        )
+    }
+
+    private var regenerationMetric: some View {
+        metric(
+            value: state.regenerativeBraking,
+            unit: "%",
+            accessibilityLabel: "Regenerative braking"
+        )
     }
 
     private func metric(
@@ -85,10 +144,26 @@ struct DashboardPowerModeSummary: View {
 
     private enum Constants {
         static let height: CGFloat = 48
-        static let outlineWidth: CGFloat = 1.25
         static let separatorWidth: CGFloat = 1
         static let separatorHeight: CGFloat = 22
         static let valueFontSize: CGFloat = 24
         static let unitFontSize: CGFloat = 12
     }
+}
+
+private extension View {
+    func dashboardPowerModeSurface() -> some View {
+        background {
+            Capsule()
+                .fill(DesignColor.groupedSurface)
+        }
+        .overlay {
+            Capsule()
+                .stroke(DesignColor.border, lineWidth: DashboardPowerModeSurfaceConstants.outlineWidth)
+        }
+    }
+}
+
+private enum DashboardPowerModeSurfaceConstants {
+    static let outlineWidth: CGFloat = 1.25
 }

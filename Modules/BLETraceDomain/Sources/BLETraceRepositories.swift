@@ -6,7 +6,11 @@ public protocol BLETraceRecording: Sendable {
     func finishSession(reason: BLETraceSessionEndReason) async
 }
 
-public protocol BLETraceLogRepository: Sendable {
+public protocol BLETraceStoragePreparing: Sendable {
+    func prepareStorage() async
+}
+
+public protocol BLETraceLogRepository: BLETraceStoragePreparing, Sendable {
     func observeSessions() async -> AsyncStream<[BLETraceSessionSummary]>
     func prepareExport(sessionID: UUID) async throws -> URL
     func deleteSession(id: UUID) async throws
@@ -26,6 +30,7 @@ public actor NoOpBLETraceRepository: BLETraceRecording, BLETraceLogRepository {
     public func startSession(_ context: BLETraceSessionContext) {}
     public func record(_ event: BLETraceEvent) {}
     public func finishSession(reason: BLETraceSessionEndReason) {}
+    public func prepareStorage() {}
 
     public func observeSessions() -> AsyncStream<[BLETraceSessionSummary]> {
         AsyncStream { continuation in

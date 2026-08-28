@@ -1,7 +1,6 @@
 import BikeDomain
 import Combine
 import Foundation
-import RuntimeConfiguration
 import VehicleSession
 
 @MainActor
@@ -10,9 +9,13 @@ public final class RideDashboardViewModel: ObservableObject {
 
     private let mapper: RideDashboardMapper
     private let vehicleSession: any VehicleSessionService
+    private let temperatureMonitoringConsumerID = UUID()
     private var snapshot = VehicleSessionSnapshot()
     private var observationTask: Task<Void, Never>?
+    private var temperatureMonitoringTask: Task<Void, Never>?
+    private var isRequestingTemperatureMonitoring = false
     private var statusSnapshotRefreshTask: Task<Void, Never>?
+    private var didRefreshStatusForTelemetrySession = false
     private var connectionStabilityTask: Task<Void, Never>?
     private var reconnectionGraceTask: Task<Void, Never>?
     private var pendingLiveViewState: RideDashboardViewState?
@@ -37,6 +40,14 @@ public final class RideDashboardViewModel: ObservableObject {
         statusSnapshotRefreshTask?.cancel()
         connectionStabilityTask?.cancel()
         reconnectionGraceTask?.cancel()
+        guard isRequestingTemperatureMonitoring else { return }
+        let previousRequest = temperatureMonitoringTask
+        let vehicleSession = vehicleSession
+        let consumerID = temperatureMonitoringConsumerID
+        Task {
+            await previousRequest?.value
+            await vehicleSession.setBatteryHealthMonitoringRequired(false, consumerID: consumerID)
+        }
     }
 
     func startObserving() {
@@ -57,10 +68,12 @@ public final class RideDashboardViewModel: ObservableObject {
         observationTask = nil
         statusSnapshotRefreshTask?.cancel()
         statusSnapshotRefreshTask = nil
+        didRefreshStatusForTelemetrySession = false
         cancelPendingConnectionStability()
         reconnectionGraceTask?.cancel()
         reconnectionGraceTask = nil
         lastLiveViewState = nil
+        setTemperatureMonitoringRequired(false)
     }
 
 #if DEBUG
@@ -84,6 +97,7 @@ public final class RideDashboardViewModel: ObservableObject {
         )
         updateViewState(with: mappedViewState)
         updateStatusSnapshotRefresh()
+        setTemperatureMonitoringRequired(snapshot.settings.showsDashboardTemperatures)
     }
 
     private func updateViewState(with mappedViewState: RideDashboardViewState) {
@@ -191,20 +205,15 @@ public final class RideDashboardViewModel: ObservableObject {
         guard isReceivingTelemetry else {
             statusSnapshotRefreshTask?.cancel()
             statusSnapshotRefreshTask = nil
+            didRefreshStatusForTelemetrySession = false
             return
         }
-        guard statusSnapshotRefreshTask == nil else { return }
+        guard !didRefreshStatusForTelemetrySession else { return }
+        didRefreshStatusForTelemetrySession = true
 
         let vehicleSession = vehicleSession
         statusSnapshotRefreshTask = Task {
-            while !Task.isCancelled {
-                await vehicleSession.refreshBikeStatus()
-                do {
-                    try await Task.sleep(for: Constants.statusSnapshotRefreshInterval)
-                } catch {
-                    return
-                }
-            }
+            await vehicleSession.refreshBikeStatus()
         }
     }
 
@@ -216,7 +225,16 @@ public final class RideDashboardViewModel: ObservableObject {
         }
     }
 
-    private enum Constants {
-        static let statusSnapshotRefreshInterval = FENRRuntimeConstants.Telemetry.statusSnapshotRefreshInterval
+    private func setTemperatureMonitoringRequired(_ required: Bool) {
+        guard required != isRequestingTemperatureMonitoring else { return }
+        isRequestingTemperatureMonitoring = required
+        let previousRequest = temperatureMonitoringTask
+        let vehicleSession = vehicleSession
+        let consumerID = temperatureMonitoringConsumerID
+        temperatureMonitoringTask = Task {
+            await previousRequest?.value
+            guard !Task.isCancelled else { return }
+            await vehicleSession.setBatteryHealthMonitoringRequired(required, consumerID: consumerID)
+        }
     }
 }

@@ -951,6 +951,7 @@ targets:
       - path: App/Tests
       - path: App/Sources/Composition
     dependencies:
+      - target: TestSupport
       - target: BLETraceData
       - target: BLETraceDomain
       - target: BikeDiagnostics
@@ -984,7 +985,6 @@ targets:
       - path: App/DebugSources
         excludes:
           - FENRDebugApp.swift
-          - DebugScenarioPicker.swift
       - path: App/Sources/Composition
         excludes:
           - BikeData

@@ -33,7 +33,7 @@ public struct BikeBatteryHealthToViewStateMapper {
             ],
             charging: chargingMetrics(for: health),
             packStatus: [
-                metric("fault", "BMS fault", health.isFaultActive ? "Active" : "Clear"),
+                metric("fault", "BMS fault", health.isBMSFaultActive ? "Active" : "Clear"),
                 metric("captured", "Captured datasets", "\(captures.count)/\(BatteryDataset.allCases.count)"),
                 metric("cellDelta", "Cell delta", cellDelta(for: analysis))
             ],

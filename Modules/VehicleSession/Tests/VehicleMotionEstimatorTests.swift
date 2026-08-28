@@ -78,6 +78,36 @@ struct VehicleMotionEstimatorTests {
         #expect(snapshot.headingSource == .gpsCourse)
     }
 
+    @Test("Keeps GPS course between location updates independently of motion freshness")
+    func gpsCourseUsesLocationFreshness() {
+        var estimator = VehicleMotionEstimator(
+            now: { now },
+            maximumSampleAge: 0.75,
+            minimumGPSCourseSpeedKilometersPerHour: 5,
+            maximumGPSCourseAccuracyDegrees: 35,
+            smoothingFactor: 1,
+            maximumLocationSampleAge: 3
+        )
+
+        let snapshot = estimator.estimate(
+            deviceMotion: sample(attitude: identity),
+            calibration: .init(vin: "FENRTEST000000001", referenceAttitude: identity, calibratedAt: now),
+            location: .init(
+                kilometersPerHour: 30,
+                accuracyMetersPerSecond: 1,
+                courseDegrees: 184,
+                courseAccuracyDegrees: 4,
+                altitudeMeters: 742,
+                verticalAccuracyMeters: 8,
+                observedAt: now.addingTimeInterval(-1)
+            )
+        )
+
+        #expect(snapshot.headingDegrees == 184)
+        #expect(snapshot.headingSource == .gpsCourse)
+        #expect(snapshot.altitudeMeters == 742)
+    }
+
     @Test("Publishes only fresh valid coordinates")
     func coordinates() {
         let coordinate = GeographicCoordinate(latitudeDegrees: 40.426_389, longitudeDegrees: -3.703_889)

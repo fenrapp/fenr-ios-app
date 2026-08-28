@@ -6,6 +6,7 @@ import RideSession
 import RideSessionDomain
 import RuntimeConfiguration
 import SettingsDomain
+import UIKit
 import VehicleSession
 
 @MainActor
@@ -25,6 +26,12 @@ struct RideDashboardDependencyContainer {
         return RideDashboardFeatureModel(
             dashboardViewModel: makeViewModel(
                 vehicleSession: dependencies.vehicleSession
+            ),
+            deviceBatteryViewModel: DashboardDeviceBatteryViewModel(
+                monitor: UIKitDashboardDeviceBatteryMonitor(
+                    device: .current,
+                    notificationCenter: .default
+                )
             ),
             currentTripViewModel: tripViewModels.currentTrip,
             tripStatisticsViewModel: tripViewModels.statistics,

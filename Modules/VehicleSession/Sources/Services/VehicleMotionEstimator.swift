@@ -4,6 +4,7 @@ import Foundation
 public struct VehicleMotionEstimator: Sendable {
     private let now: @Sendable () -> Date
     private let maximumSampleAge: TimeInterval
+    private let maximumLocationSampleAge: TimeInterval
     private let minimumGPSCourseSpeedKilometersPerHour: Double
     private let maximumGPSCourseAccuracyDegrees: Double
     private let smoothingFactor: Double
@@ -18,10 +19,12 @@ public struct VehicleMotionEstimator: Sendable {
         maximumSampleAge: TimeInterval,
         minimumGPSCourseSpeedKilometersPerHour: Double,
         maximumGPSCourseAccuracyDegrees: Double,
-        smoothingFactor: Double
+        smoothingFactor: Double,
+        maximumLocationSampleAge: TimeInterval? = nil
     ) {
         self.now = now
         self.maximumSampleAge = maximumSampleAge
+        self.maximumLocationSampleAge = maximumLocationSampleAge ?? maximumSampleAge
         self.minimumGPSCourseSpeedKilometersPerHour = minimumGPSCourseSpeedKilometersPerHour
         self.maximumGPSCourseAccuracyDegrees = maximumGPSCourseAccuracyDegrees
         self.smoothingFactor = min(max(smoothingFactor, .zero), 1)
@@ -142,7 +145,7 @@ private extension VehicleMotionEstimator {
         location: DeviceSpeedSample?
     ) -> (value: Double?, source: VehicleMotionHeadingSource) {
         if let location,
-           isFresh(location.observedAt),
+           isFreshLocation(location.observedAt),
            location.kilometersPerHour >= minimumGPSCourseSpeedKilometersPerHour,
            let course = location.courseDegrees,
            course.isFinite,
@@ -163,7 +166,7 @@ private extension VehicleMotionEstimator {
 
     func validAltitude(_ location: DeviceSpeedSample?) -> Double? {
         guard let location,
-              isFresh(location.observedAt),
+              isFreshLocation(location.observedAt),
               let altitude = location.altitudeMeters,
               altitude.isFinite,
               let accuracy = location.verticalAccuracyMeters,
@@ -174,8 +177,13 @@ private extension VehicleMotionEstimator {
 
     func validCoordinate(_ location: DeviceSpeedSample?) -> GeographicCoordinate? {
         guard let location,
-              isFresh(location.observedAt) else { return nil }
+              isFreshLocation(location.observedAt) else { return nil }
         return location.coordinate
+    }
+
+    func isFreshLocation(_ date: Date) -> Bool {
+        let age = now().timeIntervalSince(date)
+        return age >= .zero && age <= maximumLocationSampleAge
     }
 }
 

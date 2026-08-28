@@ -26,6 +26,44 @@ struct RideDashboardViewModelTests {
         fixture.viewModel.stopObserving()
     }
 
+    @Test("Reads status once per telemetry session without flooding the BLE queue")
+    func refreshesStatusOncePerTelemetrySession() async {
+        let fixture = makeFixture()
+        fixture.viewModel.startObserving()
+
+        for speed in 1 ... 5 {
+            await fixture.vehicleSession.send(ridingSnapshot(speed: Double(speed)))
+        }
+        #expect(await waitUntil { await fixture.vehicleSession.statusRefreshCount() == 1 })
+
+        await fixture.vehicleSession.send(.init(
+            connection: .init(state: .disconnected(reason: "Synthetic disconnect")),
+            hasReceivedSettings: true,
+            hasReceivedProfile: true
+        ))
+        await fixture.vehicleSession.send(ridingSnapshot(speed: 6))
+
+        #expect(await waitUntil { await fixture.vehicleSession.statusRefreshCount() == 2 })
+        fixture.viewModel.stopObserving()
+    }
+
+    @Test("Keeps temperature telemetry active across dashboard cards when enabled")
+    func keepsTemperatureMonitoringActive() async {
+        let fixture = makeFixture()
+        fixture.viewModel.startObserving()
+
+        await fixture.vehicleSession.send(ridingSnapshot(speed: 42, showsTemperatures: true))
+        #expect(await waitUntil {
+            await fixture.vehicleSession.recordedBatteryHealthMonitoringRequests() == [true]
+        })
+
+        await fixture.vehicleSession.send(ridingSnapshot(speed: 43, showsTemperatures: false))
+        #expect(await waitUntil {
+            await fixture.vehicleSession.recordedBatteryHealthMonitoringRequests() == [true, false]
+        })
+        fixture.viewModel.stopObserving()
+    }
+
     @Test("Keeps live presentation during a brief reconnect and expires it")
     func preservesPresentationDuringReconnectionGrace() async {
         let fixture = makeFixture(reconnectionGracePeriod: .milliseconds(10))
@@ -120,7 +158,10 @@ struct RideDashboardViewModelTests {
         )
     }
 
-    private func ridingSnapshot(speed: Double) -> VehicleSessionSnapshot {
+    private func ridingSnapshot(
+        speed: Double,
+        showsTemperatures: Bool = false
+    ) -> VehicleSessionSnapshot {
         .init(
             telemetry: .init(
                 batteryLevel: .known(percent: 64),
@@ -131,6 +172,7 @@ struct RideDashboardViewModelTests {
             settings: .init(
                 dashboardProgressBarMode: .speed,
                 dashboardBatteryIndicatorMode: .estimatedRange,
+                showsDashboardTemperatures: showsTemperatures,
                 measurementSystem: .metric
             ),
             resolvedSpeedKilometersPerHour: speed,

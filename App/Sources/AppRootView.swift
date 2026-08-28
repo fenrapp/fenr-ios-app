@@ -19,14 +19,10 @@ struct AppRootView: View {
     private let lifecycleController: AppLifecycleController
     private let rideDashboardFactory: any RideDashboardFeatureBuilding
     private let interfaceOrientationController: InterfaceOrientationController
-    private let dashboardAccessory: () -> AnyView
-    private let batteryHealthAccessory: () -> AnyView
     private let settingsAccessory: () -> AnyView
 
     init(
         dependencies: AppRootDependencies,
-        dashboardAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) },
-        batteryHealthAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) },
         settingsAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
         _diagnosticsViewModel = StateObject(wrappedValue: dependencies.diagnosticsViewModel)
@@ -38,8 +34,6 @@ struct AppRootView: View {
         lifecycleController = dependencies.lifecycleController
         rideDashboardFactory = dependencies.rideDashboardFactory
         interfaceOrientationController = dependencies.interfaceOrientationController
-        self.dashboardAccessory = dashboardAccessory
-        self.batteryHealthAccessory = batteryHealthAccessory
         self.settingsAccessory = settingsAccessory
     }
 
@@ -54,10 +48,6 @@ struct AppRootView: View {
                         onSettings: { path.append(.settings) },
                         onDiagnostics: { path.append(.diagnostics) }
                     )
-                    .overlay(alignment: .bottomTrailing) {
-                        dashboardAccessory()
-                            .padding([.bottom, .trailing], Constants.dashboardAccessoryPadding)
-                    }
                 } else {
                     BikeOnboardingView(
                         viewModel: onboardingViewModel,
@@ -77,9 +67,6 @@ struct AppRootView: View {
                     )
                 case .batteryHealth:
                     BatteryHealthView(viewModel: batteryHealthViewModel)
-                        .safeAreaInset(edge: .bottom) {
-                            batteryHealthAccessory()
-                        }
                 case .diagnostics:
                     BikeDiagnosticsView(
                         viewModel: diagnosticsViewModel,
@@ -203,9 +190,5 @@ struct AppRootView: View {
         case diagnostics
         case settings
         case powerModes
-    }
-
-    private enum Constants {
-        static let dashboardAccessoryPadding: CGFloat = 8
     }
 }

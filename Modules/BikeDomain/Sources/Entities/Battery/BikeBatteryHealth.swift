@@ -12,11 +12,15 @@ public struct BikeBatteryHealth: Equatable, Sendable {
     public var temperatures: [BatteryTemperature]
     public var chargingStatus: BikeChargingStatus?
     public var lastUpdated: Date?
-    private var isVehicleFaultActive: Bool
+    public var isVehicleFaultActive: Bool
+
+    public var isBMSFaultActive: Bool {
+        positiveBMSFaultBits != 0 || negativeBMSFaultBits != 0
+    }
 
     public var isFaultActive: Bool {
         get {
-            isVehicleFaultActive || positiveBMSFaultBits != 0 || negativeBMSFaultBits != 0
+            isVehicleFaultActive || isBMSFaultActive
         }
         set {
             isVehicleFaultActive = newValue

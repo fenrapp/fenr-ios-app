@@ -2,6 +2,7 @@ import SettingsDomain
 
 public struct RideDashboardViewState: Equatable, Sendable {
     public let speedometer: DashboardSpeedometerViewData
+    public let odometer: DashboardOdometerViewData
     public let progressBar: DashboardProgressBarViewData
     public let battery: Battery
     public let batteryIndicatorMode: DashboardBatteryIndicatorMode
@@ -16,6 +17,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
 
     public init(
         speedometer: DashboardSpeedometerViewData = .init(),
+        odometer: DashboardOdometerViewData = .init(),
         progressBar: DashboardProgressBarViewData = .neutralEnergy,
         battery: Battery = .init(),
         batteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
@@ -29,6 +31,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
         indicators: [DashboardIndicatorViewData] = []
     ) {
         self.speedometer = speedometer
+        self.odometer = odometer
         self.progressBar = progressBar
         self.battery = battery
         self.batteryIndicatorMode = batteryIndicatorMode

@@ -9,7 +9,6 @@ public enum FENRRuntimeConstants {
     public enum Telemetry {
         public static let freshnessInterval: TimeInterval = 30
         public static let connectionStabilityPeriod: Duration = .seconds(2)
-        public static let statusSnapshotRefreshInterval: Duration = .milliseconds(125)
     }
 
     public enum RideDashboard {

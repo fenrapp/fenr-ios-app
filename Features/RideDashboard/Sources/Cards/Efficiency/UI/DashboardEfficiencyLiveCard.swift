@@ -10,6 +10,7 @@ struct DashboardEfficiencyLiveCard: View {
             VStack(alignment: .leading, spacing: Constants.spacing) {
                 header
                 hero
+                powerLegend
                 powerChart
                 energySummary
             }
@@ -45,18 +46,27 @@ struct DashboardEfficiencyLiveCard: View {
             ForEach(state.powerPoints) { point in
                 AreaMark(
                     x: .value("Time", point.date),
-                    y: .value("Power", point.kilowatts)
+                    y: .value("Used power", point.usedKilowatts)
                 )
-                .foregroundStyle(
-                    point.kilowatts >= .zero
-                        ? DesignColor.informational.opacity(0.18)
-                        : DesignColor.positive.opacity(0.2)
-                )
+                .foregroundStyle(DesignColor.informational.opacity(0.18))
                 LineMark(
                     x: .value("Time", point.date),
-                    y: .value("Power", point.kilowatts)
+                    y: .value("Used power", point.usedKilowatts)
                 )
-                .foregroundStyle(point.kilowatts >= .zero ? DesignColor.informational : DesignColor.positive)
+                .foregroundStyle(DesignColor.informational)
+                .lineStyle(.init(lineWidth: 2, lineCap: .round, lineJoin: .round))
+            }
+            ForEach(state.powerPoints) { point in
+                AreaMark(
+                    x: .value("Time", point.date),
+                    y: .value("Regenerated power", point.regenKilowatts)
+                )
+                .foregroundStyle(DesignColor.positive.opacity(0.2))
+                LineMark(
+                    x: .value("Time", point.date),
+                    y: .value("Regenerated power", point.regenKilowatts)
+                )
+                .foregroundStyle(DesignColor.positive)
                 .lineStyle(.init(lineWidth: 2, lineCap: .round, lineJoin: .round))
             }
         }
@@ -71,7 +81,28 @@ struct DashboardEfficiencyLiveCard: View {
                     .foregroundStyle(DesignColor.secondaryText)
             }
         }
-        .accessibilityLabel("Electrical power over the last 60 seconds")
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Used and regenerated electrical power over the last 60 seconds")
+        .accessibilityValue(powerAccessibilityValue)
+    }
+
+    private var powerLegend: some View {
+        HStack(spacing: DesignSpace.medium) {
+            powerLegendItem(title: "USED", color: DesignColor.informational)
+            powerLegendItem(title: "REGEN", color: DesignColor.positive)
+        }
+        .accessibilityHidden(true)
+    }
+
+    private func powerLegendItem(title: String, color: Color) -> some View {
+        HStack(spacing: DesignSpace.extraExtraSmall) {
+            Capsule()
+                .fill(color)
+                .frame(width: Constants.legendLineWidth, height: Constants.legendLineHeight)
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(color)
+        }
     }
 
     private var energySummary: some View {
@@ -94,11 +125,17 @@ struct DashboardEfficiencyLiveCard: View {
     }
 
     private var chartDomain: ClosedRange<Double> {
-        let values = state.powerPoints.map(\.kilowatts)
-        let lower = min(values.min() ?? -1, -0.5)
-        let upper = max(values.max() ?? 1, 0.5)
-        let padding = max((upper - lower) * 0.12, 0.25)
-        return (lower - padding) ... (upper + padding)
+        let maximum = state.powerPoints.reduce(0.5) { result, point in
+            max(result, max(point.usedKilowatts, point.regenKilowatts))
+        }
+        return .zero ... (maximum * Constants.chartScalePadding)
+    }
+
+    private var powerAccessibilityValue: String {
+        guard let latest = state.powerPoints.last else { return "Waiting for power data" }
+        let used = latest.usedKilowatts.formatted(.number.precision(.fractionLength(1)))
+        let regen = latest.regenKilowatts.formatted(.number.precision(.fractionLength(1)))
+        return "Used \(used) kilowatts, regenerated \(regen) kilowatts"
     }
 
     private var statusColor: Color {
@@ -114,5 +151,8 @@ struct DashboardEfficiencyLiveCard: View {
         static let spacing: CGFloat = 8
         static let heroFontSize: CGFloat = 40
         static let chartHeight: CGFloat = 118
+        static let chartScalePadding = 1.12
+        static let legendLineWidth: CGFloat = 16
+        static let legendLineHeight: CGFloat = 3
     }
 }

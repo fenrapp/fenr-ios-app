@@ -110,6 +110,77 @@ struct FileBLETraceLogRepositoryTests {
         #expect(try records(at: export).last?["reason"] as? String == "abrupt_termination")
     }
 
+    @Test("Initialization does not scan history and preparation is idempotent")
+    func preparesHistoryLazilyOnce() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let logs = root.appendingPathComponent("logs", isDirectory: true)
+        try FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
+        let id = UUID()
+        let partial = logs.appendingPathComponent("lazy.partial")
+        try partialRecords(id: id).write(to: partial)
+
+        let context = try makeBLETraceDataTestContext(root: root)
+        #expect(FileManager.default.fileExists(atPath: partial.path))
+        #expect(!FileManager.default.fileExists(
+            atPath: partial.deletingPathExtension().appendingPathExtension("jsonl").path
+        ))
+
+        await context.repository.prepareStorage()
+        await context.repository.prepareStorage()
+        let stream = await context.repository.observeSessions()
+        let sessions = await stream.first(where: { !$0.isEmpty }) ?? []
+        #expect(sessions.count == 1)
+        #expect(sessions.first?.id == id)
+        #expect(sessions.first?.status == .incomplete)
+    }
+
+    @Test("Loads a sparse hundreds-of-megabytes trace from bounded header and footer reads")
+    func loadsLargeSparseTraceFromBoundaries() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let logs = root.appendingPathComponent("logs", isDirectory: true)
+        try FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
+        let id = UUID()
+        let trace = logs.appendingPathComponent("large.jsonl")
+        #expect(FileManager.default.createFile(atPath: trace.path, contents: nil))
+        let handle = try FileHandle(forWritingTo: trace)
+        let header: [String: Any] = [
+            "record_type": "header",
+            "schema_version": 1,
+            "session_id": id.uuidString,
+            "started_at": "1970-01-01T00:00:10.000Z"
+        ]
+        let footer: [String: Any] = [
+            "record_type": "footer",
+            "schema_version": 1,
+            "session_id": id.uuidString,
+            "ended_at": "1970-01-01T00:01:10.000Z",
+            "event_count": 123,
+            "status": "complete"
+        ]
+        try handle.write(contentsOf: jsonLine(header))
+        try handle.seek(toOffset: 256 * 1_024 * 1_024)
+        try handle.write(contentsOf: Data([0x0A]))
+        try handle.write(contentsOf: jsonLine(footer))
+        try handle.close()
+
+        let context = try makeBLETraceDataTestContext(
+            maximumTotalBytes: 512 * 1_024 * 1_024,
+            root: root
+        )
+        await context.repository.prepareStorage()
+        let stream = await context.repository.observeSessions()
+        let sessions = await stream.first(where: { !$0.isEmpty }) ?? []
+
+        #expect(sessions.count == 1)
+        #expect(sessions.first?.id == id)
+        #expect(sessions.first?.eventCount == 123)
+        #expect((sessions.first?.fileSizeBytes ?? 0) > 250 * 1_024 * 1_024)
+    }
+
     @Test("Protects the active session from deletion")
     func protectsActiveSession() async throws {
         let context = try makeBLETraceDataTestContext()
@@ -139,5 +210,29 @@ struct FileBLETraceLogRepositoryTests {
         return try data.split(separator: 0x0A).map {
             try #require(JSONSerialization.jsonObject(with: Data($0)) as? [String: Any])
         }
+    }
+
+    private func partialRecords(id: UUID) throws -> Data {
+        let header: [String: Any] = [
+            "record_type": "header",
+            "schema_version": 1,
+            "session_id": id.uuidString,
+            "started_at": "1970-01-01T00:00:10.000Z"
+        ]
+        let event: [String: Any] = [
+            "record_type": "event",
+            "schema_version": 1,
+            "session_id": id.uuidString,
+            "sequence": 1
+        ]
+        var data = try jsonLine(header)
+        data.append(try jsonLine(event))
+        return data
+    }
+
+    private func jsonLine(_ object: [String: Any]) throws -> Data {
+        var data = try JSONSerialization.data(withJSONObject: object)
+        data.append(0x0A)
+        return data
     }
 }
