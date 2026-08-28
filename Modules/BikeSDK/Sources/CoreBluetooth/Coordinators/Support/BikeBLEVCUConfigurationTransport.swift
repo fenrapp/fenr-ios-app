@@ -5,6 +5,7 @@ import Foundation
 final class BikeBLEVCUConfigurationTransport {
     private let sessionStore: BLESessionStore
     private let eventEmitter: BikeBLEEventEmitter
+    private let peripheralOperations: BikeBLEPeripheralOperations
     private let transactionGate = BikeBLEVCUConfigurationTransactionGate()
     private var activeOperation: BikeBLEVCUConfigurationOperation?
     private var expectedConfigurationResponse: BikeBLEVCUConfigurationExpectedResponse?
@@ -12,9 +13,14 @@ final class BikeBLEVCUConfigurationTransport {
     private var timeoutTask: Task<Void, Never>?
     private var isDesynchronized = false
 
-    init(sessionStore: BLESessionStore, eventEmitter: BikeBLEEventEmitter) {
+    init(
+        sessionStore: BLESessionStore,
+        eventEmitter: BikeBLEEventEmitter,
+        peripheralOperations: BikeBLEPeripheralOperations
+    ) {
         self.sessionStore = sessionStore
         self.eventEmitter = eventEmitter
+        self.peripheralOperations = peripheralOperations
     }
 
     deinit {
@@ -156,6 +162,7 @@ final class BikeBLEVCUConfigurationTransport {
         operationName: String
     ) async throws -> Data {
         try ensureReady()
+        await peripheralOperations.prepareReadValue(characteristic: characteristic)
         return try await withCheckedThrowingContinuation { continuation in
             startOperation(
                 uuid: characteristic.uuid,
@@ -173,6 +180,11 @@ final class BikeBLEVCUConfigurationTransport {
         characteristic: CBCharacteristic
     ) async throws {
         try ensureReady()
+        await peripheralOperations.prepareWriteValue(
+            payload,
+            characteristic: characteristic,
+            type: .withResponse
+        )
         _ = try await withCheckedThrowingContinuation { continuation in
             startOperation(
                 uuid: characteristic.uuid,
@@ -233,6 +245,9 @@ private extension BikeBLEVCUConfigurationTransport {
         shouldRead: Bool
     ) async throws -> Data {
         try ensureReady()
+        if shouldRead {
+            await peripheralOperations.prepareReadValue(characteristic: characteristic)
+        }
         return try await withCheckedThrowingContinuation { continuation in
             startOperation(
                 uuid: characteristic.uuid,

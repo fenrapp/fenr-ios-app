@@ -6,17 +6,20 @@ final class BikeBLESubscriptionQueue {
     private let eventEmitter: BikeBLEEventEmitter
     private let timeoutScheduler: any BikeBLETimeoutScheduling
     private let experimentalCaptureCoordinator: BikeBLEExperimentalCaptureCoordinator
+    private let peripheralOperations: BikeBLEPeripheralOperations
 
     init(
         sessionStore: BLESessionStore,
         eventEmitter: BikeBLEEventEmitter,
         timeoutScheduler: any BikeBLETimeoutScheduling,
-        experimentalCaptureCoordinator: BikeBLEExperimentalCaptureCoordinator
+        experimentalCaptureCoordinator: BikeBLEExperimentalCaptureCoordinator,
+        peripheralOperations: BikeBLEPeripheralOperations
     ) {
         self.sessionStore = sessionStore
         self.eventEmitter = eventEmitter
         self.timeoutScheduler = timeoutScheduler
         self.experimentalCaptureCoordinator = experimentalCaptureCoordinator
+        self.peripheralOperations = peripheralOperations
     }
 
     func processNext(peripheral: CBPeripheral) async {
@@ -26,7 +29,11 @@ final class BikeBLESubscriptionQueue {
                 title: BikeSDKText.subscriptionTitle,
                 detail: "Disabling \(characteristic.uuid.uuidString)"
             )))
-            peripheral.setNotifyValue(false, for: characteristic)
+            await peripheralOperations.setNotifyValue(
+                false,
+                characteristic: characteristic,
+                peripheral: peripheral
+            )
             return
         }
         guard let characteristic = sessionStore.startNextNotificationCharacteristic() else { return }
@@ -35,7 +42,11 @@ final class BikeBLESubscriptionQueue {
             title: BikeSDKText.subscriptionTitle,
             detail: "Enabling \(characteristic.uuid.uuidString)"
         )))
-        peripheral.setNotifyValue(true, for: characteristic)
+        await peripheralOperations.setNotifyValue(
+            true,
+            characteristic: characteristic,
+            peripheral: peripheral
+        )
     }
 
     func reset() {

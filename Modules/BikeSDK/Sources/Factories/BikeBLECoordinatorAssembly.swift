@@ -10,18 +10,25 @@ enum BikeBLECoordinatorAssembly {
         let reconnectDelay: any BikeBLEReconnectDelaying
         let reconnectPolicy: BikeBLEReconnectPolicy
         let connectionWatchdog: BikeBLEConnectionWatchdog
+        let traceEmitter: BikeBLETraceEmitter
+        let peripheralOperations: BikeBLEPeripheralOperations
     }
 
     static func makeNotificationCoordinator(
         sessionStore: BLESessionStore,
         eventEmitter: BikeBLEEventEmitter,
         notificationProcessor: BikeBLENotificationProcessor,
-        timeoutScheduler: any BikeBLETimeoutScheduling
+        timeoutScheduler: any BikeBLETimeoutScheduling,
+        peripheralOperations: BikeBLEPeripheralOperations
     ) -> BikeBLENotificationCoordinator {
-        let notificationPreparer = BikeBLENotificationPreparer(eventEmitter: eventEmitter)
+        let notificationPreparer = BikeBLENotificationPreparer(
+            eventEmitter: eventEmitter,
+            peripheralOperations: peripheralOperations
+        )
         let configurationTransport = BikeBLEVCUConfigurationTransport(
             sessionStore: sessionStore,
-            eventEmitter: eventEmitter
+            eventEmitter: eventEmitter,
+            peripheralOperations: peripheralOperations
         )
         let experimentalCaptureCoordinator = BikeBLEExperimentalCaptureCoordinator(
             sessionStore: sessionStore,
@@ -37,7 +44,8 @@ enum BikeBLECoordinatorAssembly {
             sessionStore: sessionStore,
             eventEmitter: eventEmitter,
             timeoutScheduler: timeoutScheduler,
-            experimentalCaptureCoordinator: experimentalCaptureCoordinator
+            experimentalCaptureCoordinator: experimentalCaptureCoordinator,
+            peripheralOperations: peripheralOperations
         )
         let subscriptionCoordinator = BikeBLESubscriptionCoordinator(
             sessionStore: sessionStore,
@@ -62,7 +70,8 @@ enum BikeBLECoordinatorAssembly {
             subscriptionCoordinator: subscriptionCoordinator,
             chargePowerCoordinator: chargePowerCoordinator,
             powerModeCoordinator: powerModeCoordinator,
-            configurationTransport: configurationTransport
+            configurationTransport: configurationTransport,
+            peripheralOperations: peripheralOperations
         )
     }
 
@@ -79,7 +88,9 @@ enum BikeBLECoordinatorAssembly {
             sessionStore: dependencies.sessionStore,
             eventEmitter: dependencies.eventEmitter,
             peripheralDelegate: dependencies.peripheralDelegate,
-            reconnectController: reconnectController
+            reconnectController: reconnectController,
+            traceEmitter: dependencies.traceEmitter,
+            peripheralOperations: dependencies.peripheralOperations
         )
         return BikeBLEConnectionCoordinator(
             adapter: dependencies.adapter,
@@ -90,7 +101,9 @@ enum BikeBLECoordinatorAssembly {
             scanner: scanner,
             connectionErrorClassifier: BikeBLEConnectionErrorClassifier(),
             connectionWatchdog: dependencies.connectionWatchdog,
-            sessionResetHandler: sessionResetHandler
+            sessionResetHandler: sessionResetHandler,
+            traceEmitter: dependencies.traceEmitter,
+            peripheralOperations: dependencies.peripheralOperations
         )
     }
 }

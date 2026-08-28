@@ -10,6 +10,7 @@ final class BikeBLESecurityHandshake {
     private let configuration: BikeSecurityConfiguration
     private let notificationCoordinator: BikeBLENotificationCoordinator
     private let watchdog: BikeBLESecurityWatchdog
+    private let peripheralOperations: BikeBLEPeripheralOperations
 
     init(
         sessionStore: BLESessionStore,
@@ -17,7 +18,8 @@ final class BikeBLESecurityHandshake {
         payloadBuilder: any StarkAuthenticationPayloadBuilding,
         configuration: BikeSecurityConfiguration,
         notificationCoordinator: BikeBLENotificationCoordinator,
-        watchdog: BikeBLESecurityWatchdog
+        watchdog: BikeBLESecurityWatchdog,
+        peripheralOperations: BikeBLEPeripheralOperations
     ) {
         self.sessionStore = sessionStore
         self.eventEmitter = eventEmitter
@@ -25,6 +27,7 @@ final class BikeBLESecurityHandshake {
         self.configuration = configuration
         self.notificationCoordinator = notificationCoordinator
         self.watchdog = watchdog
+        self.peripheralOperations = peripheralOperations
     }
 
     func enableNotifications(
@@ -37,7 +40,11 @@ final class BikeBLESecurityHandshake {
             title: BikeSDKText.subscriptionTitle,
             detail: "Enabling \(characteristic.uuid.uuidString)"
         )))
-        peripheral.setNotifyValue(true, for: characteristic)
+        await peripheralOperations.setNotifyValue(
+            true,
+            characteristic: characteristic,
+            peripheral: peripheral
+        )
     }
 
     func readNonce(peripheral: CBPeripheral, characteristic: CBCharacteristic) async {
@@ -48,7 +55,7 @@ final class BikeBLESecurityHandshake {
             title: BikeSDKText.securityTitle,
             detail: BikeSDKText.securityNonceRead
         )))
-        peripheral.readValue(for: characteristic)
+        await peripheralOperations.readValue(characteristic: characteristic, peripheral: peripheral)
     }
 
     func handleNonce(
@@ -79,7 +86,12 @@ final class BikeBLESecurityHandshake {
                 title: BikeSDKText.securityTitle,
                 detail: "Writing V2 response: \(payload.count) bytes"
             )))
-            peripheral.writeValue(payload, for: characteristic, type: .withResponse)
+            await peripheralOperations.writeValue(
+                payload,
+                characteristic: characteristic,
+                type: .withResponse,
+                peripheral: peripheral
+            )
         } catch {
             await watchdog.fail("Security payload build failed: \(error)")
         }
@@ -106,7 +118,11 @@ final class BikeBLESecurityHandshake {
             detail: BikeSDKText.securityAuthenticated
         )))
         await eventEmitter.send(.connection(.authenticated(peripheralName: peripheral.name)))
-        peripheral.setNotifyValue(false, for: characteristic)
+        await peripheralOperations.setNotifyValue(
+            false,
+            characteristic: characteristic,
+            peripheral: peripheral
+        )
         await notificationCoordinator.authenticationDidSucceed(peripheral: peripheral)
     }
 }

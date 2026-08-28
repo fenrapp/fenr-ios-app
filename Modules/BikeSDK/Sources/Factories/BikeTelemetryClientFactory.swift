@@ -1,76 +1,69 @@
+import BLETraceDomain
 import CoreBluetooth
 import Foundation
 import StarkProtocol
 
 @MainActor
 public enum BikeTelemetryClientFactory {
-    public static func makeDefault() -> BikeTelemetryClient {
-        makeDefault(
-            centralRestorationIdentifier: CoreBluetoothRestorationPolicy.restorationIdentifier(for: .main),
-            automaticallyRetryPairing: false,
-            authenticationLinkRecoveryEnabled: false
-        )
-    }
-
     public static func makeDefault(
+        traceRecorder: any BLETraceRecording,
         centralRestorationIdentifier: String?,
         automaticallyRetryPairing: Bool = false,
         authenticationLinkRecoveryEnabled: Bool = false
     ) -> BikeTelemetryClient {
-        let runtimeConfiguration = BikeSDKRuntimeConfiguration()
-        let eventHub = makeEventHub(runtimeConfiguration: runtimeConfiguration)
-        let eventEmitter = BikeBLEEventEmitter(eventHub: eventHub)
-        let sessionStore = BLESessionStore()
-        let adapter = AppleCoreBluetoothAdapter()
-        let callbackQueue = BikeBLECallbackQueue()
-        let notificationCoordinator = makeNotificationCoordinator(
-            sessionStore: sessionStore,
-            eventEmitter: eventEmitter,
-            runtimeConfiguration: runtimeConfiguration
-        )
+        let context = makeContext(traceRecorder: traceRecorder)
+        let notificationCoordinator = makeNotificationCoordinator(context)
         let pairingRetryController = makePairingRetryController(
-            adapter: adapter,
-            sessionStore: sessionStore,
-            eventEmitter: eventEmitter,
+            context,
             automaticallyRetryPairing: automaticallyRetryPairing,
             authenticationLinkRecoveryEnabled: authenticationLinkRecoveryEnabled
         )
         let securityCoordinator = makeSecurityCoordinator(
-            sessionStore: sessionStore,
-            eventEmitter: eventEmitter,
+            context,
             notificationCoordinator: notificationCoordinator,
-            runtimeConfiguration: runtimeConfiguration,
             pairingRetryController: pairingRetryController
         )
         let discoveryCoordinator = BikeBLEDiscoveryCoordinator(
-            eventEmitter: eventEmitter,
+            eventEmitter: context.eventEmitter,
             securityCoordinator: securityCoordinator,
-            notificationCoordinator: notificationCoordinator
+            notificationCoordinator: notificationCoordinator,
+            peripheralOperations: context.peripheralOperations
         )
         let peripheralDelegate = CoreBluetoothPeripheralDelegateProxy(
-            sessionStore: sessionStore,
-            callbackQueue: callbackQueue,
+            sessionStore: context.sessionStore,
+            callbackQueue: context.callbackQueue,
             discoveryCoordinator: discoveryCoordinator,
             securityCoordinator: securityCoordinator,
-            notificationCoordinator: notificationCoordinator
+            notificationCoordinator: notificationCoordinator,
+            traceEmitter: context.traceEmitter
         )
         let connectionCoordinator = makeConnectionCoordinator(
             .init(
-                adapter: adapter,
-                sessionStore: sessionStore,
-                eventEmitter: eventEmitter,
+                adapter: context.adapter,
+                sessionStore: context.sessionStore,
+                eventEmitter: context.eventEmitter,
                 peripheralDelegate: peripheralDelegate,
-                reconnectPolicy: runtimeConfiguration.reconnectPolicy,
-                connectionWatchdog: makeConnectionWatchdog(runtimeConfiguration: runtimeConfiguration)
+                reconnectPolicy: context.runtimeConfiguration.reconnectPolicy,
+                connectionWatchdog: BikeBLEConnectionWatchdog(
+                    timeoutScheduler: BikeBLEOperationTimeoutScheduler(
+                        duration: context.runtimeConfiguration.connectionOperationTimeout
+                    )
+                ),
+                traceEmitter: context.traceEmitter,
+                peripheralOperations: context.peripheralOperations
             ),
             notificationCoordinator: notificationCoordinator,
             securityCoordinator: securityCoordinator
         )
-        let centralDelegate = makeCentralDelegate(connectionCoordinator, callbackQueue: callbackQueue)
+        let centralDelegate = makeCentralDelegate(
+            connectionCoordinator,
+            callbackQueue: context.callbackQueue,
+            traceEmitter: context.traceEmitter
+        )
         return makeClient(.init(
-            eventHub: eventHub,
-            adapter: adapter,
-            callbackQueue: callbackQueue,
+            eventHub: context.eventHub,
+            adapter: context.adapter,
+            callbackQueue: context.callbackQueue,
             connectionCoordinator: connectionCoordinator,
             securityCoordinator: securityCoordinator,
             notificationCoordinator: notificationCoordinator,
@@ -79,7 +72,42 @@ public enum BikeTelemetryClientFactory {
         ))
     }
 
-    private static func makeEventHub(
+}
+
+private extension BikeTelemetryClientFactory {
+    struct FactoryContext {
+        let runtimeConfiguration: BikeSDKRuntimeConfiguration
+        let eventHub: AsyncEventHub<BikeSDKEvent>
+        let eventEmitter: BikeBLEEventEmitter
+        let sessionStore: BLESessionStore
+        let adapter: CoreBluetoothAdapter
+        let callbackQueue: BikeBLECallbackQueue
+        let traceEmitter: BikeBLETraceEmitter
+        let peripheralOperations: BikeBLEPeripheralOperations
+    }
+
+    static func makeContext(traceRecorder: any BLETraceRecording) -> FactoryContext {
+        let runtimeConfiguration = BikeSDKRuntimeConfiguration()
+        let eventHub = makeEventHub(runtimeConfiguration: runtimeConfiguration)
+        let traceEmitter = BikeBLETraceEmitter(
+            recorder: traceRecorder,
+            now: Date.init,
+            uptimeNanoseconds: { DispatchTime.now().uptimeNanoseconds },
+            makeSessionID: UUID.init
+        )
+        return FactoryContext(
+            runtimeConfiguration: runtimeConfiguration,
+            eventHub: eventHub,
+            eventEmitter: BikeBLEEventEmitter(eventHub: eventHub),
+            sessionStore: BLESessionStore(),
+            adapter: AppleCoreBluetoothAdapter(),
+            callbackQueue: BikeBLECallbackQueue(),
+            traceEmitter: traceEmitter,
+            peripheralOperations: BikeBLEPeripheralOperations(traceEmitter: traceEmitter)
+        )
+    }
+
+    static func makeEventHub(
         runtimeConfiguration: BikeSDKRuntimeConfiguration
     ) -> AsyncEventHub<BikeSDKEvent> {
         AsyncEventHub(
@@ -87,51 +115,53 @@ public enum BikeTelemetryClientFactory {
         )
     }
 
-    private static func makeCentralDelegate(
+    static func makeCentralDelegate(
         _ connectionCoordinator: BikeBLEConnectionCoordinator,
-        callbackQueue: BikeBLECallbackQueue
+        callbackQueue: BikeBLECallbackQueue,
+        traceEmitter: BikeBLETraceEmitter
     ) -> CoreBluetoothCentralDelegateProxy {
         CoreBluetoothCentralDelegateProxy(
             connectionCoordinator: connectionCoordinator,
-            callbackQueue: callbackQueue
+            callbackQueue: callbackQueue,
+            traceEmitter: traceEmitter
         )
     }
 
-    private static func makeSecurityCoordinator(
-        sessionStore: BLESessionStore,
-        eventEmitter: BikeBLEEventEmitter,
+    static func makeSecurityCoordinator(
+        _ context: FactoryContext,
         notificationCoordinator: BikeBLENotificationCoordinator,
-        runtimeConfiguration: BikeSDKRuntimeConfiguration,
         pairingRetryController: BikeBLEPairingRetryController?
     ) -> BikeBLESecurityCoordinator {
         let watchdog = BikeBLESecurityWatchdog(
-            sessionStore: sessionStore,
-            eventEmitter: eventEmitter,
+            sessionStore: context.sessionStore,
+            eventEmitter: context.eventEmitter,
             timeoutScheduler: BikeBLEOperationTimeoutScheduler(
-                duration: runtimeConfiguration.securityOperationTimeout
+                duration: context.runtimeConfiguration.securityOperationTimeout
             ),
             timeoutRecoveryHandler: { [pairingRetryController] in
                 await pairingRetryController?.recoverIfNeeded()
             }
         )
         let handshake = BikeBLESecurityHandshake(
-            sessionStore: sessionStore,
-            eventEmitter: eventEmitter,
+            sessionStore: context.sessionStore,
+            eventEmitter: context.eventEmitter,
             payloadBuilder: StarkAuthenticationPayloadBuilder(),
             configuration: BikeSecurityConfiguration(pairingDate: StarkPinConstants.fallbackPairingDate),
             notificationCoordinator: notificationCoordinator,
-            watchdog: watchdog
+            watchdog: watchdog,
+            peripheralOperations: context.peripheralOperations
         )
         return BikeBLESecurityCoordinator(
-            sessionStore: sessionStore,
-            eventEmitter: eventEmitter,
+            sessionStore: context.sessionStore,
+            eventEmitter: context.eventEmitter,
             watchdog: watchdog,
             handshake: handshake,
-            pairingRetryController: pairingRetryController
+            pairingRetryController: pairingRetryController,
+            peripheralOperations: context.peripheralOperations
         )
     }
 
-    private static func makeConnectionCoordinator(
+    static func makeConnectionCoordinator(
         _ input: ConnectionCoordinatorInput,
         notificationCoordinator: BikeBLENotificationCoordinator,
         securityCoordinator: BikeBLESecurityCoordinator
@@ -144,7 +174,9 @@ public enum BikeTelemetryClientFactory {
                 peripheralDelegate: input.peripheralDelegate,
                 reconnectDelay: BikeBLEReconnectDelay(),
                 reconnectPolicy: input.reconnectPolicy,
-                connectionWatchdog: input.connectionWatchdog
+                connectionWatchdog: input.connectionWatchdog,
+                traceEmitter: input.traceEmitter,
+                peripheralOperations: input.peripheralOperations
             ),
             sessionResetHandler: { [notificationCoordinator, securityCoordinator] in
                 notificationCoordinator.resetSession()
@@ -153,37 +185,28 @@ public enum BikeTelemetryClientFactory {
         )
     }
 
-    private static func makeConnectionWatchdog(
-        runtimeConfiguration: BikeSDKRuntimeConfiguration
-    ) -> BikeBLEConnectionWatchdog {
-        BikeBLEConnectionWatchdog(
-            timeoutScheduler: BikeBLEOperationTimeoutScheduler(
-                duration: runtimeConfiguration.connectionOperationTimeout
-            )
-        )
-    }
-
-    private struct ConnectionCoordinatorInput {
+    struct ConnectionCoordinatorInput {
         let adapter: CoreBluetoothAdapter
         let sessionStore: BLESessionStore
         let eventEmitter: BikeBLEEventEmitter
         let peripheralDelegate: CBPeripheralDelegate
         let reconnectPolicy: BikeBLEReconnectPolicy
         let connectionWatchdog: BikeBLEConnectionWatchdog
+        let traceEmitter: BikeBLETraceEmitter
+        let peripheralOperations: BikeBLEPeripheralOperations
     }
 
-    private static func makePairingRetryController(
-        adapter: CoreBluetoothAdapter,
-        sessionStore: BLESessionStore,
-        eventEmitter: BikeBLEEventEmitter,
+    static func makePairingRetryController(
+        _ context: FactoryContext,
         automaticallyRetryPairing: Bool,
         authenticationLinkRecoveryEnabled: Bool
     ) -> BikeBLEPairingRetryController? {
         guard automaticallyRetryPairing else { return nil }
         let recovery = BikeBLEAuthenticationLinkRecovery(
-            adapter: adapter,
-            sessionStore: sessionStore,
-            eventEmitter: eventEmitter
+            adapter: context.adapter,
+            sessionStore: context.sessionStore,
+            eventEmitter: context.eventEmitter,
+            traceEmitter: context.traceEmitter
         )
         let recoveryHandler: (@MainActor @Sendable () async -> Void)?
         if authenticationLinkRecoveryEnabled {
@@ -192,7 +215,7 @@ public enum BikeTelemetryClientFactory {
             recoveryHandler = nil
         }
         return BikeBLEPairingRetryController(
-            eventEmitter: eventEmitter,
+            eventEmitter: context.eventEmitter,
             recoveryHandler: recoveryHandler,
             policy: BikeBLEPairingRetryPolicy(
                 maximumAttempts: 3,
@@ -201,7 +224,7 @@ public enum BikeTelemetryClientFactory {
         )
     }
 
-    private struct CoreBluetoothClientComponents {
+    struct CoreBluetoothClientComponents {
         let eventHub: AsyncEventHub<BikeSDKEvent>
         let adapter: CoreBluetoothAdapter
         let callbackQueue: BikeBLECallbackQueue
@@ -212,7 +235,7 @@ public enum BikeTelemetryClientFactory {
         let centralRestorationIdentifier: String?
     }
 
-    private static func makeClient(
+    static func makeClient(
         _ components: CoreBluetoothClientComponents
     ) -> CoreBluetoothBikeTelemetryClient {
         CoreBluetoothBikeTelemetryClient(
@@ -227,28 +250,27 @@ public enum BikeTelemetryClientFactory {
         )
     }
 
-    private static func makeNotificationCoordinator(
-        sessionStore: BLESessionStore,
-        eventEmitter: BikeBLEEventEmitter,
-        runtimeConfiguration: BikeSDKRuntimeConfiguration
+    static func makeNotificationCoordinator(
+        _ context: FactoryContext
     ) -> BikeBLENotificationCoordinator {
         let mapper = StarkNotificationToSDKEventMapper(
             decoderRegistry: BikeTelemetryDecoderRegistryFactory.make()
         )
         return BikeBLECoordinatorAssembly.makeNotificationCoordinator(
-            sessionStore: sessionStore,
-            eventEmitter: eventEmitter,
+            sessionStore: context.sessionStore,
+            eventEmitter: context.eventEmitter,
             notificationProcessor: BikeBLENotificationProcessor(
-                eventEmitter: eventEmitter,
+                eventEmitter: context.eventEmitter,
                 notificationMapper: mapper,
                 debugSampler: BikeNotificationDebugSampler(
-                    minimumInterval: runtimeConfiguration.notificationDebugMinimumInterval
-                )
+                    minimumInterval: context.runtimeConfiguration.notificationDebugMinimumInterval
+                ),
+                traceEmitter: context.traceEmitter
             ),
             timeoutScheduler: BikeBLEOperationTimeoutScheduler(
-                duration: runtimeConfiguration.subscriptionOperationTimeout
-            )
+                duration: context.runtimeConfiguration.subscriptionOperationTimeout
+            ),
+            peripheralOperations: context.peripheralOperations
         )
     }
-
 }

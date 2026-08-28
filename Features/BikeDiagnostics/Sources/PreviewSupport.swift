@@ -1,5 +1,6 @@
 import AsyncSupport
 import BikeDomain
+import BLETraceDomain
 import Foundation
 import MeasurementPresentation
 import SettingsDomain
@@ -28,7 +29,8 @@ enum BikeDiagnosticsPreviewFactory {
         pinDeriver: any BikePinDeriving,
         profileRepository: any BikeProfileRepository
     ) -> BikeDiagnosticsUseCases {
-        BikeDiagnosticsUseCases(
+        let traceRepository = NoOpBLETraceRepository()
+        return BikeDiagnosticsUseCases(
             start: .init(repository: repository),
             stop: .init(repository: repository),
             connect: .init(repository: repository),
@@ -40,7 +42,11 @@ enum BikeDiagnosticsPreviewFactory {
             observeDebugEvents: .init(repository: repository),
             derivePin: .init(pinDeriver: pinDeriver),
             loadProfile: .init(repository: profileRepository),
-            observeSettings: .init(repository: PreviewAppSettingsRepository())
+            observeSettings: .init(repository: PreviewAppSettingsRepository()),
+            observeBLETraceSessions: .init(repository: traceRepository),
+            prepareBLETraceExport: .init(repository: traceRepository),
+            deleteBLETraceSession: .init(repository: traceRepository),
+            deleteAllBLETraceSessions: .init(repository: traceRepository)
         )
     }
 
@@ -73,6 +79,10 @@ enum BikeDiagnosticsPreviewFactory {
                 badgesMapper: .init(runStateMapper: .init()),
                 rawFlagsMapper: .init(),
                 debugEventMapper: .init(dateFormatStyle: dateFormatStyle)
+            ),
+            bleTraceSession: .init(
+                dateFormatStyle: Date.FormatStyle(date: .abbreviated, time: .standard),
+                byteCountFormatStyle: ByteCountFormatStyle(style: .file)
             )
         )
     }

@@ -9,6 +9,8 @@ public struct BikeDiagnosticsViewState: Equatable, Sendable {
     public var rawFlags: [BikeDiagnosticsMetricViewData]
     public var debugEvents: [DebugEventViewData]
     public var hasDebugLog: Bool
+    public var bleTraceSessions: [BLETraceSessionViewData]
+    public var bleTraceError: String?
     public var isVINEditingEnabled: Bool
     public var isConnectEnabled: Bool
     public var isDisconnectEnabled: Bool
@@ -32,6 +34,8 @@ public struct BikeDiagnosticsViewState: Equatable, Sendable {
         rawFlags: [BikeDiagnosticsMetricViewData] = [],
         debugEvents: [DebugEventViewData] = [],
         hasDebugLog: Bool = false,
+        bleTraceSessions: [BLETraceSessionViewData] = [],
+        bleTraceError: String? = nil,
         isVINEditingEnabled: Bool = true,
         isConnectEnabled: Bool = false,
         isDisconnectEnabled: Bool = false,
@@ -49,6 +53,8 @@ public struct BikeDiagnosticsViewState: Equatable, Sendable {
         self.rawFlags = rawFlags
         self.debugEvents = debugEvents
         self.hasDebugLog = hasDebugLog
+        self.bleTraceSessions = bleTraceSessions
+        self.bleTraceError = bleTraceError
         self.isVINEditingEnabled = isVINEditingEnabled
         self.isConnectEnabled = isConnectEnabled
         self.isDisconnectEnabled = isDisconnectEnabled

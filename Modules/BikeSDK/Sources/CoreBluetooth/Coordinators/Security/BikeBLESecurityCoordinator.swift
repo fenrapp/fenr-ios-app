@@ -9,19 +9,22 @@ public final class BikeBLESecurityCoordinator {
     private let watchdog: BikeBLESecurityWatchdog
     private let handshake: BikeBLESecurityHandshake
     private let pairingRetryController: BikeBLEPairingRetryController?
+    private let peripheralOperations: BikeBLEPeripheralOperations
 
     init(
         sessionStore: BLESessionStore,
         eventEmitter: BikeBLEEventEmitter,
         watchdog: BikeBLESecurityWatchdog,
         handshake: BikeBLESecurityHandshake,
-        pairingRetryController: BikeBLEPairingRetryController?
+        pairingRetryController: BikeBLEPairingRetryController?,
+        peripheralOperations: BikeBLEPeripheralOperations
     ) {
         self.sessionStore = sessionStore
         self.eventEmitter = eventEmitter
         self.watchdog = watchdog
         self.handshake = handshake
         self.pairingRetryController = pairingRetryController
+        self.peripheralOperations = peripheralOperations
     }
 
     public func handles(_ characteristic: CBCharacteristic) -> Bool {
@@ -48,7 +51,10 @@ public final class BikeBLESecurityCoordinator {
             return
         }
         watchdog.watch(expectedState: .idle, operation: "descriptor discovery")
-        peripheral.discoverDescriptors(for: characteristic)
+        await peripheralOperations.discoverDescriptors(
+            characteristic: characteristic,
+            peripheral: peripheral
+        )
     }
 
     public func didDiscoverDescriptors(

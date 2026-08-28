@@ -10,6 +10,7 @@ public struct BikeBLENotificationCoordinator {
     private let chargePowerCoordinator: BikeBLEChargePowerCoordinator
     private let powerModeCoordinator: BikeBLEPowerModeConfigurationCoordinator
     private let configurationTransport: BikeBLEVCUConfigurationTransport
+    private let peripheralOperations: BikeBLEPeripheralOperations
 
     init(
         sessionStore: BLESessionStore,
@@ -18,7 +19,8 @@ public struct BikeBLENotificationCoordinator {
         subscriptionCoordinator: BikeBLESubscriptionCoordinator,
         chargePowerCoordinator: BikeBLEChargePowerCoordinator,
         powerModeCoordinator: BikeBLEPowerModeConfigurationCoordinator,
-        configurationTransport: BikeBLEVCUConfigurationTransport
+        configurationTransport: BikeBLEVCUConfigurationTransport,
+        peripheralOperations: BikeBLEPeripheralOperations
     ) {
         self.sessionStore = sessionStore
         self.eventEmitter = eventEmitter
@@ -27,6 +29,7 @@ public struct BikeBLENotificationCoordinator {
         self.chargePowerCoordinator = chargePowerCoordinator
         self.powerModeCoordinator = powerModeCoordinator
         self.configurationTransport = configurationTransport
+        self.peripheralOperations = peripheralOperations
     }
 
     public func discovered(characteristic: CBCharacteristic, peripheral: CBPeripheral) async {
@@ -169,7 +172,7 @@ public struct BikeBLENotificationCoordinator {
         else {
             try await failRead(BikeSDKText.noReadableCharacteristics)
         }
-        peripheral.readValue(for: characteristic)
+        await peripheralOperations.readValue(characteristic: characteristic, peripheral: peripheral)
     }
 
     @discardableResult
@@ -188,7 +191,7 @@ public struct BikeBLENotificationCoordinator {
                     detail: "Telemetry snapshot \(characteristic.uuid.uuidString)"
                 )))
             }
-            peripheral.readValue(for: characteristic)
+            await peripheralOperations.readValue(characteristic: characteristic, peripheral: peripheral)
         }
         return true
     }

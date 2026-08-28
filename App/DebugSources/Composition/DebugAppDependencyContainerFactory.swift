@@ -1,5 +1,6 @@
 import BikeDomain
 import BikeEmulator
+import BLETraceDomain
 import CoreMotion
 import EnvironmentData
 import Foundation
@@ -104,6 +105,7 @@ enum DebugAppDependencyContainerFactory {
             onboardingContainer: BikeOnboardingDependencyContainer(),
             dashboardContainer: RideDashboardDependencyContainer(),
             appSettingsContainer: AppSettingsDependencyContainer(),
+            bleTraceLogRepository: NoOpBLETraceRepository(),
             initialOnboardingVIN: BikeEmulatorIdentity.vin,
             forceOnboarding: forceOnboarding
         )

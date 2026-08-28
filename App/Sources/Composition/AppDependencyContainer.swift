@@ -3,6 +3,7 @@ import BatteryHealth
 import BikeDiagnostics
 import BikeDomain
 import BikeOnboarding
+import BLETraceDomain
 import ChargeControl
 import EnvironmentDomain
 import Foundation
@@ -71,6 +72,7 @@ struct AppDependencyContainer {
     private let vehicleSession: any VehicleSessionService
     private let initialOnboardingVIN: String?
     private let forceOnboarding: Bool
+    private let bleTraceLogRepository: any BLETraceLogRepository
 
     init(
         diagnosticsContainer: BikeDiagnosticsDependencyContainer,
@@ -85,6 +87,7 @@ struct AppDependencyContainer {
         onboardingContainer: BikeOnboardingDependencyContainer,
         dashboardContainer: RideDashboardDependencyContainer,
         appSettingsContainer: AppSettingsDependencyContainer,
+        bleTraceLogRepository: any BLETraceLogRepository,
         initialOnboardingVIN: String? = nil,
         forceOnboarding: Bool = false
     ) {
@@ -103,6 +106,7 @@ struct AppDependencyContainer {
         rideSession = sessionServices.ride
         self.initialOnboardingVIN = initialOnboardingVIN
         self.forceOnboarding = forceOnboarding
+        self.bleTraceLogRepository = bleTraceLogRepository
     }
 
     func makeRootDependencies() -> AppRootDependencies {
@@ -160,7 +164,8 @@ struct AppDependencyContainer {
             repository: session.repository,
             pinDeriver: session.pinDeriver,
             profileRepository: profileRepository,
-            settingsRepository: settingsRepository
+            settingsRepository: settingsRepository,
+            bleTraceLogRepository: bleTraceLogRepository
         )
     }
 

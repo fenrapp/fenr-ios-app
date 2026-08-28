@@ -1,8 +1,13 @@
 import BikeSDK
+import BLETraceDomain
+import RuntimeConfiguration
 
 @MainActor
 struct BikeSDKDependencyContainer {
-    func makeBikeTelemetryClient() -> BikeTelemetryClient {
-        BikeTelemetryClientFactory.makeDefault()
+    func makeBikeTelemetryClient(traceRecorder: any BLETraceRecording) -> BikeTelemetryClient {
+        BikeTelemetryClientFactory.makeDefault(
+            traceRecorder: traceRecorder,
+            centralRestorationIdentifier: FENRRuntimeConstants.BikeSDK.centralRestorationIdentifier
+        )
     }
 }

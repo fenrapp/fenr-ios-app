@@ -1,3 +1,4 @@
+import BLETraceDomain
 import BikeData
 import BikeDomain
 import BikeSDK
@@ -7,6 +8,7 @@ import SettingsData
 enum LiveWatchAppDependencyContainerFactory {
     static func makeDefault() -> WatchAppDependencyContainer {
         let client = BikeTelemetryClientFactory.makeDefault(
+            traceRecorder: NoOpBLETraceRepository(),
             centralRestorationIdentifier: nil,
             automaticallyRetryPairing: true,
             authenticationLinkRecoveryEnabled: true

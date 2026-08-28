@@ -1,3 +1,4 @@
+import BLETraceDomain
 import CoreBluetooth
 import StarkProtocol
 
@@ -12,6 +13,8 @@ public final class BikeBLEConnectionCoordinator {
     private let sessionResetHandler: @MainActor () -> Void
     private let connectionErrorClassifier: BikeBLEConnectionErrorClassifier
     private let connectionWatchdog: BikeBLEConnectionWatchdog
+    private let traceEmitter: BikeBLETraceEmitter
+    private let peripheralOperations: BikeBLEPeripheralOperations
     private var isDiscoveringBikes = false
 
     init(
@@ -23,7 +26,9 @@ public final class BikeBLEConnectionCoordinator {
         scanner: BikeBLEConnectionScanner,
         connectionErrorClassifier: BikeBLEConnectionErrorClassifier,
         connectionWatchdog: BikeBLEConnectionWatchdog,
-        sessionResetHandler: @escaping @MainActor () -> Void
+        sessionResetHandler: @escaping @MainActor () -> Void,
+        traceEmitter: BikeBLETraceEmitter,
+        peripheralOperations: BikeBLEPeripheralOperations
     ) {
         self.adapter = adapter
         self.sessionStore = sessionStore
@@ -34,18 +39,27 @@ public final class BikeBLEConnectionCoordinator {
         self.connectionErrorClassifier = connectionErrorClassifier
         self.connectionWatchdog = connectionWatchdog
         self.sessionResetHandler = sessionResetHandler
+        self.traceEmitter = traceEmitter
+        self.peripheralOperations = peripheralOperations
     }
 
     public func stop() async {
         reconnectController.reset()
         isDiscoveringBikes = false
         sessionStore.setReconnectIntent(false)
-        adapter.stopScan()
+        await stopScan(reason: "client_stopped")
         if let peripheral = sessionStore.peripheral {
+            await traceEmitter.record(
+                category: "link",
+                operation: .disconnectRequested,
+                direction: .outbound,
+                detail: "client_stopped"
+            )
             adapter.cancelConnection(peripheral)
         }
         resetSession()
         await eventEmitter.send(.connection(.idle))
+        await traceEmitter.finishSession(reason: .clientStopped)
     }
 
     public func connect(to vin: String) async throws {
@@ -58,6 +72,13 @@ public final class BikeBLEConnectionCoordinator {
             try await eventEmitter.fail(.operationFailed(BikeSDKText.connectionAlreadyActive))
             return
         }
+        await traceEmitter.startSession(vin: targetVIN, reason: .connectionRequest)
+        await traceEmitter.record(
+            category: "link",
+            operation: .connectRequested,
+            direction: .outbound,
+            detail: "connection_intent_started"
+        )
         sessionStore.setTargetVIN(targetVIN)
         reconnectController.reset()
         isDiscoveringBikes = false
@@ -82,7 +103,7 @@ public final class BikeBLEConnectionCoordinator {
     public func stopBikeDiscovery() async {
         guard isDiscoveringBikes else { return }
         isDiscoveringBikes = false
-        adapter.stopScan()
+        await stopScan(reason: "bike_discovery_stopped")
     }
 
     public func disconnect() async throws {
@@ -93,12 +114,19 @@ public final class BikeBLEConnectionCoordinator {
         sessionStore.setReconnectIntent(false)
         reconnectController.reset()
         isDiscoveringBikes = false
-        adapter.stopScan()
+        await stopScan(reason: "user_disconnected")
         if let peripheral = sessionStore.peripheral {
+            await traceEmitter.record(
+                category: "link",
+                operation: .disconnectRequested,
+                direction: .outbound,
+                detail: "user_disconnected"
+            )
             adapter.cancelConnection(peripheral)
         }
         resetSession()
         await eventEmitter.send(.connection(.disconnected(reason: BikeSDKText.disconnectedByUser)))
+        await traceEmitter.finishSession(reason: .userDisconnected)
     }
 
     public func centralDidUpdateState() async {
@@ -146,6 +174,12 @@ public final class BikeBLEConnectionCoordinator {
         }
         guard StarkPairingIdentity.matches(name, targetVIN: sessionStore.targetVIN) else { return }
         guard sessionStore.peripheral == nil else { return }
+        await traceEmitter.record(
+            category: "advertisement",
+            operation: .advertisementReceived,
+            direction: .inbound,
+            detail: "target_bike rssi=\(rssi)"
+        )
         await connect(peripheral: peripheral, name: name, rssi: rssi)
     }
 
@@ -163,7 +197,13 @@ public final class BikeBLEConnectionCoordinator {
             vin: sessionStore.targetVIN,
             peripheralName: snapshot.name
         )))
-        adapter.stopScan()
+        await stopScan(reason: "target_discovered")
+        await traceEmitter.record(
+            category: "link",
+            operation: .connectRequested,
+            direction: .outbound,
+            detail: "target_bike"
+        )
         let peripheralIdentifier = peripheral.identifier
         connectionWatchdog.start(peripheralIdentifier: peripheralIdentifier) { [weak self] identifier in
             await self?.connectionTimedOut(peripheralIdentifier: identifier)
@@ -177,8 +217,8 @@ public final class BikeBLEConnectionCoordinator {
         reconnectController.reset()
         let name = peripheral.name
         await eventEmitter.send(.connection(.discovering(peripheralName: name)))
-        peripheral.discoverServices(BikeSDKConstants.serviceUUIDs)
-        peripheral.readRSSI()
+        await peripheralOperations.discoverServices(BikeSDKConstants.serviceUUIDs, peripheral: peripheral)
+        await peripheralOperations.readRSSI(peripheral: peripheral)
     }
 
     public func didFailToConnect(_ peripheral: CBPeripheral, error: Error?) async {
@@ -206,13 +246,16 @@ public final class BikeBLEConnectionCoordinator {
         await reconnectIfNeeded()
     }
 
-    private func scanForConnection() async throws {
+}
+
+private extension BikeBLEConnectionCoordinator {
+    func scanForConnection() async throws {
         try await scanner.scanForConnection { [weak self] peripheral in
             await self?.connect(peripheral: peripheral, name: peripheral.name, rssi: nil)
         }
     }
 
-    private func reconnectIfNeeded() async {
+    func reconnectIfNeeded() async {
         guard sessionStore.shouldConnectWhenPoweredOn else { return }
         let didSchedule = await reconnectController.schedule(
             onScheduled: { [eventEmitter, sessionStore] attempt, maximumAttempts in
@@ -233,14 +276,54 @@ public final class BikeBLEConnectionCoordinator {
             await eventEmitter.send(.connection(.failed(
                 message: "Reconnect attempts exhausted"
             )))
+            await traceEmitter.finishSession(reason: .reconnectExhausted)
             return
         }
     }
 
+    func resetSession() {
+        connectionWatchdog.cancel()
+        sessionResetHandler()
+        sessionStore.resetSession()
+    }
+
+    func connectionTimedOut(peripheralIdentifier: UUID) async {
+        guard sessionStore.peripheral?.identifier == peripheralIdentifier,
+              sessionStore.shouldConnectWhenPoweredOn,
+              let peripheral = sessionStore.peripheral else { return }
+        await eventEmitter.send(.connection(.failed(message: BikeSDKText.connectionTimedOut)))
+        await traceEmitter.record(
+            category: "link",
+            operation: .connectFailed,
+            direction: .internalEvent,
+            detail: "connection_timeout"
+        )
+        adapter.cancelConnection(peripheral)
+        resetSession()
+        await reconnectIfNeeded()
+    }
+
+    func maskedVIN(_ vin: String) -> String {
+        guard vin.count > 4 else { return vin }
+        return "...\(vin.suffix(4))"
+    }
+
+    func stopScan(reason: String) async {
+        await traceEmitter.record(
+            category: "central",
+            operation: .scanStopped,
+            direction: .outbound,
+            detail: reason
+        )
+        adapter.stopScan()
+    }
+}
+
+extension BikeBLEConnectionCoordinator {
     func stopForPairingReset(_ error: Error?) async {
         reconnectController.reset()
         sessionStore.setReconnectIntent(false)
-        adapter.stopScan()
+        await stopScan(reason: "pairing_reset_required")
         await eventEmitter.send(.debug(.init(
             title: BikeSDKText.pairingTitle,
             detail: "Pairing reset required; automatic reconnect stopped; "
@@ -250,26 +333,6 @@ public final class BikeBLEConnectionCoordinator {
         await eventEmitter.send(.connection(.pairingResetRequired(
             message: BikeSDKText.pairingResetRequired
         )))
-    }
-
-    private func resetSession() {
-        connectionWatchdog.cancel()
-        sessionResetHandler()
-        sessionStore.resetSession()
-    }
-
-    private func connectionTimedOut(peripheralIdentifier: UUID) async {
-        guard sessionStore.peripheral?.identifier == peripheralIdentifier,
-              sessionStore.shouldConnectWhenPoweredOn,
-              let peripheral = sessionStore.peripheral else { return }
-        await eventEmitter.send(.connection(.failed(message: BikeSDKText.connectionTimedOut)))
-        adapter.cancelConnection(peripheral)
-        resetSession()
-        await reconnectIfNeeded()
-    }
-
-    private func maskedVIN(_ vin: String) -> String {
-        guard vin.count > 4 else { return vin }
-        return "...\(vin.suffix(4))"
+        await traceEmitter.finishSession(reason: .pairingResetRequired)
     }
 }

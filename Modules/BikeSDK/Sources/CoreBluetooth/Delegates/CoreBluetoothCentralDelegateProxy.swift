@@ -1,28 +1,44 @@
+import BLETraceDomain
 import CoreBluetooth
 
 @MainActor
 public final class CoreBluetoothCentralDelegateProxy: NSObject, @preconcurrency CBCentralManagerDelegate {
     private let connectionCoordinator: BikeBLEConnectionCoordinator
     private let callbackQueue: BikeBLECallbackQueue
+    private let traceEmitter: BikeBLETraceEmitter
 
-    public init(
+    init(
         connectionCoordinator: BikeBLEConnectionCoordinator,
-        callbackQueue: BikeBLECallbackQueue
+        callbackQueue: BikeBLECallbackQueue,
+        traceEmitter: BikeBLETraceEmitter
     ) {
         self.connectionCoordinator = connectionCoordinator
         self.callbackQueue = callbackQueue
+        self.traceEmitter = traceEmitter
         super.init()
     }
 
     public func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        callbackQueue.enqueue { [connectionCoordinator] in
+        callbackQueue.enqueue { [connectionCoordinator, traceEmitter] in
+            await traceEmitter.record(
+                category: "central",
+                operation: .centralStateChanged,
+                direction: .inbound,
+                detail: String(describing: central.state)
+            )
             await connectionCoordinator.centralDidUpdateState()
         }
     }
 
     public func centralManager(_ central: CBCentralManager, willRestoreState dict: [String: Any]) {
         let peripherals = dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral] ?? []
-        callbackQueue.enqueue { [connectionCoordinator] in
+        callbackQueue.enqueue { [connectionCoordinator, traceEmitter] in
+            await traceEmitter.record(
+                category: "central",
+                operation: .restoration,
+                direction: .inbound,
+                detail: "peripheral_count=\(peripherals.count)"
+            )
             await connectionCoordinator.restore(peripherals: peripherals)
         }
     }
@@ -45,13 +61,24 @@ public final class CoreBluetoothCentralDelegateProxy: NSObject, @preconcurrency 
     }
 
     public func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        callbackQueue.enqueue { [connectionCoordinator] in
+        callbackQueue.enqueue { [connectionCoordinator, traceEmitter] in
+            await traceEmitter.record(
+                category: "link",
+                operation: .connectCompleted,
+                direction: .inbound
+            )
             await connectionCoordinator.didConnect(peripheral)
         }
     }
 
     public func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
-        callbackQueue.enqueue { [connectionCoordinator] in
+        callbackQueue.enqueue { [connectionCoordinator, traceEmitter] in
+            await traceEmitter.record(
+                category: "link",
+                operation: .connectFailed,
+                direction: .inbound,
+                error: error
+            )
             await connectionCoordinator.didFailToConnect(peripheral, error: error)
         }
     }
@@ -61,7 +88,13 @@ public final class CoreBluetoothCentralDelegateProxy: NSObject, @preconcurrency 
         didDisconnectPeripheral peripheral: CBPeripheral,
         error: Error?
     ) {
-        callbackQueue.enqueue { [connectionCoordinator] in
+        callbackQueue.enqueue { [connectionCoordinator, traceEmitter] in
+            await traceEmitter.record(
+                category: "link",
+                operation: .disconnected,
+                direction: .inbound,
+                error: error
+            )
             await connectionCoordinator.didDisconnect(peripheral, error: error)
         }
     }

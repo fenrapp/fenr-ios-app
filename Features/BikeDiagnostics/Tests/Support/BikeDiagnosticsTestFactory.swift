@@ -1,12 +1,14 @@
 import BikeDiagnostics
 import BikeDomain
+import BLETraceDomain
 import Foundation
 import MeasurementPresentation
 
 @MainActor
 func makeViewModel(
     repository: FakeBikeDiagnosticsRepository,
-    profileRepository: any BikeProfileRepository = FakeBikeProfileRepository()
+    profileRepository: any BikeProfileRepository = FakeBikeProfileRepository(),
+    traceRepository: any BLETraceLogRepository = NoOpBLETraceRepository()
 ) -> BikeDiagnosticsViewModel {
     let pinDeriver = FakeBikePinDeriver()
     return BikeDiagnosticsViewModel(
@@ -22,7 +24,11 @@ func makeViewModel(
             observeDebugEvents: .init(repository: repository),
             derivePin: .init(pinDeriver: pinDeriver),
             loadProfile: .init(repository: profileRepository),
-            observeSettings: .init(repository: FakeAppSettingsRepository())
+            observeSettings: .init(repository: FakeAppSettingsRepository()),
+            observeBLETraceSessions: .init(repository: traceRepository),
+            prepareBLETraceExport: .init(repository: traceRepository),
+            deleteBLETraceSession: .init(repository: traceRepository),
+            deleteAllBLETraceSessions: .init(repository: traceRepository)
         ),
         mappers: makeMappers(),
         makeMappers: { _ in makeMappers() }
@@ -59,6 +65,10 @@ func makeMappers() -> BikeDiagnosticsMappers {
             badgesMapper: .init(runStateMapper: .init()),
             rawFlagsMapper: .init(),
             debugEventMapper: .init(dateFormatStyle: dateFormatStyle)
+        ),
+        bleTraceSession: .init(
+            dateFormatStyle: Date.FormatStyle(date: .abbreviated, time: .standard),
+            byteCountFormatStyle: ByteCountFormatStyle(style: .file)
         )
     )
 }

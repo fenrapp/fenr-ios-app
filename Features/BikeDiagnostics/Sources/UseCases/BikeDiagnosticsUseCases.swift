@@ -14,6 +14,10 @@ public struct BikeDiagnosticsUseCases: Sendable {
     let derivePin: DeriveBikePinUseCase
     let loadProfile: LoadBikeProfileUseCase
     let observeSettings: ObserveAppSettingsUseCase
+    let observeBLETraceSessions: ObserveBLETraceSessionsUseCase
+    let prepareBLETraceExport: PrepareBLETraceExportUseCase
+    let deleteBLETraceSession: DeleteBLETraceSessionUseCase
+    let deleteAllBLETraceSessions: DeleteAllBLETraceSessionsUseCase
 
     public init(
         start: StartBikeRepositoryUseCase,
@@ -27,7 +31,11 @@ public struct BikeDiagnosticsUseCases: Sendable {
         observeDebugEvents: ObserveBikeDebugEventsUseCase,
         derivePin: DeriveBikePinUseCase,
         loadProfile: LoadBikeProfileUseCase,
-        observeSettings: ObserveAppSettingsUseCase
+        observeSettings: ObserveAppSettingsUseCase,
+        observeBLETraceSessions: ObserveBLETraceSessionsUseCase,
+        prepareBLETraceExport: PrepareBLETraceExportUseCase,
+        deleteBLETraceSession: DeleteBLETraceSessionUseCase,
+        deleteAllBLETraceSessions: DeleteAllBLETraceSessionsUseCase
     ) {
         self.start = start
         self.stop = stop
@@ -41,5 +49,9 @@ public struct BikeDiagnosticsUseCases: Sendable {
         self.derivePin = derivePin
         self.loadProfile = loadProfile
         self.observeSettings = observeSettings
+        self.observeBLETraceSessions = observeBLETraceSessions
+        self.prepareBLETraceExport = prepareBLETraceExport
+        self.deleteBLETraceSession = deleteBLETraceSession
+        self.deleteAllBLETraceSessions = deleteAllBLETraceSessions
     }
 }

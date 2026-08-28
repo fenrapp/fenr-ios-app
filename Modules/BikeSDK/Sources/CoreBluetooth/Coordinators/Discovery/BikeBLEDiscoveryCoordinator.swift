@@ -6,15 +6,18 @@ public struct BikeBLEDiscoveryCoordinator {
     private let eventEmitter: BikeBLEEventEmitter
     private let securityCoordinator: BikeBLESecurityCoordinator
     private let notificationCoordinator: BikeBLENotificationCoordinator
+    private let peripheralOperations: BikeBLEPeripheralOperations
 
-    public init(
+    init(
         eventEmitter: BikeBLEEventEmitter,
         securityCoordinator: BikeBLESecurityCoordinator,
-        notificationCoordinator: BikeBLENotificationCoordinator
+        notificationCoordinator: BikeBLENotificationCoordinator,
+        peripheralOperations: BikeBLEPeripheralOperations
     ) {
         self.eventEmitter = eventEmitter
         self.securityCoordinator = securityCoordinator
         self.notificationCoordinator = notificationCoordinator
+        self.peripheralOperations = peripheralOperations
     }
 
     public func didDiscoverServices(peripheral: CBPeripheral, error: Error?) async {
@@ -45,9 +48,10 @@ public struct BikeBLEDiscoveryCoordinator {
             return
         }
         for service in services where BikeSDKConstants.serviceUUIDs.contains(service.uuid) {
-            peripheral.discoverCharacteristics(
+            await peripheralOperations.discoverCharacteristics(
                 BikeSDKConstants.characteristicUUIDs(for: service.uuid),
-                for: service
+                service: service,
+                peripheral: peripheral
             )
         }
     }

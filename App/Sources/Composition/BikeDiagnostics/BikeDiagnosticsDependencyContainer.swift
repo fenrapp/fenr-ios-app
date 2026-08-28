@@ -1,5 +1,6 @@
 import BikeDiagnostics
 import BikeDomain
+import BLETraceDomain
 import Foundation
 import MeasurementPresentation
 import SettingsDomain
@@ -10,14 +11,16 @@ struct BikeDiagnosticsDependencyContainer {
         repository: BikeRepository,
         pinDeriver: any BikePinDeriving,
         profileRepository: any BikeProfileRepository,
-        settingsRepository: AppSettingsRepository
+        settingsRepository: AppSettingsRepository,
+        bleTraceLogRepository: any BLETraceLogRepository
     ) -> BikeDiagnosticsViewModel {
         BikeDiagnosticsViewModel(
             useCases: makeUseCases(
                 repository: repository,
                 pinDeriver: pinDeriver,
                 profileRepository: profileRepository,
-                settingsRepository: settingsRepository
+                settingsRepository: settingsRepository,
+                bleTraceLogRepository: bleTraceLogRepository
             ),
             mappers: makeMappers(measurementSystem: .system),
             makeMappers: makeMappers
@@ -28,7 +31,8 @@ struct BikeDiagnosticsDependencyContainer {
         repository: BikeRepository,
         pinDeriver: any BikePinDeriving,
         profileRepository: any BikeProfileRepository,
-        settingsRepository: AppSettingsRepository
+        settingsRepository: AppSettingsRepository,
+        bleTraceLogRepository: any BLETraceLogRepository
     ) -> BikeDiagnosticsUseCases {
         BikeDiagnosticsUseCases(
             start: StartBikeRepositoryUseCase(repository: repository),
@@ -42,7 +46,11 @@ struct BikeDiagnosticsDependencyContainer {
             observeDebugEvents: ObserveBikeDebugEventsUseCase(repository: repository),
             derivePin: DeriveBikePinUseCase(pinDeriver: pinDeriver),
             loadProfile: LoadBikeProfileUseCase(repository: profileRepository),
-            observeSettings: ObserveAppSettingsUseCase(repository: settingsRepository)
+            observeSettings: ObserveAppSettingsUseCase(repository: settingsRepository),
+            observeBLETraceSessions: ObserveBLETraceSessionsUseCase(repository: bleTraceLogRepository),
+            prepareBLETraceExport: PrepareBLETraceExportUseCase(repository: bleTraceLogRepository),
+            deleteBLETraceSession: DeleteBLETraceSessionUseCase(repository: bleTraceLogRepository),
+            deleteAllBLETraceSessions: DeleteAllBLETraceSessionsUseCase(repository: bleTraceLogRepository)
         )
     }
 
@@ -83,6 +91,10 @@ struct BikeDiagnosticsDependencyContainer {
                 debugEventMapper: BikeDebugEventToDebugEventViewDataMapper(
                     dateFormatStyle: dateFormatStyle
                 )
+            ),
+            bleTraceSession: BLETraceSessionViewDataMapper(
+                dateFormatStyle: Date.FormatStyle(date: .abbreviated, time: .standard),
+                byteCountFormatStyle: ByteCountFormatStyle(style: .file)
             )
         )
     }

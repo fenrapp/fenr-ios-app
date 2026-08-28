@@ -3,9 +3,14 @@ import CoreBluetooth
 @MainActor
 struct BikeBLENotificationPreparer {
     private let eventEmitter: BikeBLEEventEmitter
+    private let peripheralOperations: BikeBLEPeripheralOperations
 
-    init(eventEmitter: BikeBLEEventEmitter) {
+    init(
+        eventEmitter: BikeBLEEventEmitter,
+        peripheralOperations: BikeBLEPeripheralOperations
+    ) {
         self.eventEmitter = eventEmitter
+        self.peripheralOperations = peripheralOperations
     }
 
     func prepare(characteristic: CBCharacteristic, peripheral: CBPeripheral) async {
@@ -15,6 +20,9 @@ struct BikeBLENotificationPreparer {
             )))
             return
         }
-        peripheral.discoverDescriptors(for: characteristic)
+        await peripheralOperations.discoverDescriptors(
+            characteristic: characteristic,
+            peripheral: peripheral
+        )
     }
 }

@@ -68,6 +68,9 @@ public struct BikeDiagnosticsView: View {
                 Button("Change Bike", role: .destructive, action: onChangeBike)
             }
         }
+        .sheet(item: exportBinding) { export in
+            ActivityShareSheet(itemURL: export.fileURL)
+        }
         .task { viewModel.startObserving() }
         .onDisappear { viewModel.stopObserving() }
     }
@@ -94,6 +97,24 @@ public struct BikeDiagnosticsView: View {
             events: viewModel.viewState.debugEvents,
             hasLog: viewModel.viewState.hasDebugLog,
             logTextProvider: viewModel.debugLogText
+        )
+        BLETraceLogsView(
+            sessions: viewModel.viewState.bleTraceSessions,
+            error: viewModel.viewState.bleTraceError,
+            onExport: viewModel.exportBLETraceSession,
+            onDelete: viewModel.deleteBLETraceSession,
+            onDeleteAll: viewModel.deleteAllBLETraceSessions
+        )
+    }
+
+    private var exportBinding: Binding<BLETraceExportViewData?> {
+        Binding(
+            get: { viewModel.bleTraceExport },
+            set: { value in
+                if value == nil {
+                    viewModel.clearBLETraceExport()
+                }
+            }
         )
     }
 

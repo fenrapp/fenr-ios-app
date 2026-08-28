@@ -1,3 +1,4 @@
+import BLETraceDomain
 import CoreBluetooth
 import StarkProtocol
 
@@ -8,6 +9,8 @@ final class BikeBLEConnectionScanner {
     private let eventEmitter: BikeBLEEventEmitter
     private let peripheralDelegate: CBPeripheralDelegate
     private let reconnectController: BikeBLEReconnectController
+    private let traceEmitter: BikeBLETraceEmitter
+    private let peripheralOperations: BikeBLEPeripheralOperations
     private var pendingRestoredPeripherals: [CBPeripheral] = []
 
     init(
@@ -15,13 +18,17 @@ final class BikeBLEConnectionScanner {
         sessionStore: BLESessionStore,
         eventEmitter: BikeBLEEventEmitter,
         peripheralDelegate: CBPeripheralDelegate,
-        reconnectController: BikeBLEReconnectController
+        reconnectController: BikeBLEReconnectController,
+        traceEmitter: BikeBLETraceEmitter,
+        peripheralOperations: BikeBLEPeripheralOperations
     ) {
         self.adapter = adapter
         self.sessionStore = sessionStore
         self.eventEmitter = eventEmitter
         self.peripheralDelegate = peripheralDelegate
         self.reconnectController = reconnectController
+        self.traceEmitter = traceEmitter
+        self.peripheralOperations = peripheralOperations
     }
 
     var centralStateDescription: String {
@@ -41,6 +48,12 @@ final class BikeBLEConnectionScanner {
     ) async throws {
         switch adapter.state {
         case .poweredOn:
+            await traceEmitter.record(
+                category: "central",
+                operation: .scanStopped,
+                direction: .outbound,
+                detail: "reset_before_connection_scan"
+            )
             adapter.stopScan()
             if await connectRetrievedPeripheral(connect: connect) {
                 return
@@ -50,6 +63,12 @@ final class BikeBLEConnectionScanner {
                 title: "BLE",
                 detail: "scan started for \(maskedVIN(sessionStore.targetVIN))"
             )))
+            await traceEmitter.record(
+                category: "central",
+                operation: .scanStarted,
+                direction: .outbound,
+                detail: "connection_scan"
+            )
             adapter.scanForBike()
         case .poweredOff:
             await eventEmitter.send(.connection(.bluetoothPoweredOff))
@@ -82,6 +101,10 @@ final class BikeBLEConnectionScanner {
         pendingRestoredPeripherals.removeAll()
         guard sessionStore.peripheral == nil else { return }
         guard let peripheral = restoredPeripheral(from: peripherals) else { return }
+        await traceEmitter.startSession(
+            vin: sessionStore.targetVIN.isEmpty ? (peripheral.name ?? "") : sessionStore.targetVIN,
+            reason: .restoration
+        )
         await eventEmitter.send(.debug(.init(
             title: "BLE",
             detail: "restored \(peripherals.count) peripheral(s)"
@@ -167,11 +190,17 @@ final class BikeBLEConnectionScanner {
         switch peripheral.state {
         case .connected:
             await eventEmitter.send(.connection(.discovering(peripheralName: peripheral.name)))
-            continueDiscovery(for: peripheral)
+            await continueDiscovery(for: peripheral)
         case .connecting:
             await emitConnecting(peripheral)
         default:
             await emitConnecting(peripheral)
+            await traceEmitter.record(
+                category: "link",
+                operation: .connectRequested,
+                direction: .outbound,
+                detail: "restored_peripheral"
+            )
             adapter.connect(peripheral)
         }
     }
@@ -183,23 +212,27 @@ final class BikeBLEConnectionScanner {
         )))
     }
 
-    private func continueDiscovery(for peripheral: CBPeripheral) {
+    private func continueDiscovery(for peripheral: CBPeripheral) async {
         guard let services = peripheral.services, !services.isEmpty else {
-            peripheral.discoverServices(BikeSDKConstants.serviceUUIDs)
-            peripheral.readRSSI()
+            await peripheralOperations.discoverServices(
+                BikeSDKConstants.serviceUUIDs,
+                peripheral: peripheral
+            )
+            await peripheralOperations.readRSSI(peripheral: peripheral)
             return
         }
         for service in services where BikeSDKConstants.serviceUUIDs.contains(service.uuid) {
             if let characteristics = service.characteristics, !characteristics.isEmpty {
                 characteristics.forEach(sessionStore.setCharacteristic)
             } else {
-                peripheral.discoverCharacteristics(
+                await peripheralOperations.discoverCharacteristics(
                     BikeSDKConstants.characteristicUUIDs(for: service.uuid),
-                    for: service
+                    service: service,
+                    peripheral: peripheral
                 )
             }
         }
-        peripheral.readRSSI()
+        await peripheralOperations.readRSSI(peripheral: peripheral)
     }
 
     private func maskedVIN(_ vin: String) -> String {

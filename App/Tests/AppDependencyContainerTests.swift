@@ -1,5 +1,6 @@
 @testable import BatteryHealth
 import BikeDomain
+import BLETraceDomain
 @testable import RideDashboard
 import SettingsDomain
 import Testing
@@ -33,8 +34,9 @@ struct AppDependencyContainerTests {
         let bikeSDKContainer = BikeSDKDependencyContainer()
         let bikeDataContainer = BikeDataDependencyContainer()
         let diagnosticsContainer = BikeDiagnosticsDependencyContainer()
+        let traceRepository = NoOpBLETraceRepository()
 
-        let client = bikeSDKContainer.makeBikeTelemetryClient()
+        let client = bikeSDKContainer.makeBikeTelemetryClient(traceRecorder: traceRepository)
         let repository = bikeDataContainer.makeBikeRepository(client: client)
         let pinDeriver = bikeDataContainer.makeBikePinDeriver()
         let profileRepository = EmptyBikeProfileRepository()
@@ -42,7 +44,8 @@ struct AppDependencyContainerTests {
             repository: repository,
             pinDeriver: pinDeriver,
             profileRepository: profileRepository,
-            settingsRepository: EmptyAppSettingsRepository()
+            settingsRepository: EmptyAppSettingsRepository(),
+            bleTraceLogRepository: traceRepository
         )
 
         #expect(viewModel.viewState.connection.status == "Idle")

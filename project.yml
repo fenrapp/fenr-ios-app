@@ -24,6 +24,26 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.asyncsupport
+  BLETraceDomain:
+    type: framework
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
+    sources:
+      - path: Modules/BLETraceDomain/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bletracedomain
+  BLETraceData:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/BLETraceData/Sources
+    dependencies:
+      - target: AsyncSupport
+      - target: BLETraceDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bletracedata
   RuntimeConfiguration:
     type: framework
     platform: auto
@@ -50,6 +70,7 @@ targets:
       - path: Modules/BikeSDK/Sources
     dependencies:
       - target: AsyncSupport
+      - target: BLETraceDomain
       - target: RuntimeConfiguration
       - target: StarkProtocol
     settings:
@@ -218,6 +239,7 @@ targets:
       - path: Features/BikeDiagnostics/Sources
     dependencies:
       - target: AsyncSupport
+      - target: BLETraceDomain
       - target: BikeDomain
       - target: SettingsDomain
       - target: DesignSystem
@@ -354,6 +376,10 @@ targets:
       # AsyncSupport is loaded by BikeSDK, BikeData, and BikeDiagnostics at runtime.
       - target: AsyncSupport
         embed: true
+      - target: BLETraceDomain
+        embed: true
+      - target: BLETraceData
+        embed: true
       - target: BikeDiagnostics
       - target: BikeOnboarding
       - target: RideDashboard
@@ -444,6 +470,10 @@ targets:
       # AsyncSupport is loaded by BikeEmulator and BikeDiagnostics at runtime.
       - target: AsyncSupport
         embed: true
+      - target: BLETraceDomain
+        embed: true
+      - target: BLETraceData
+        embed: true
       # BikeOnboarding loads StarkProtocol at runtime; the app does not import it.
       - target: StarkProtocol
         embed: true
@@ -528,6 +558,8 @@ targets:
       - path: Watch/Sources
     dependencies:
       - target: AsyncSupport
+        embed: true
+      - target: BLETraceDomain
         embed: true
       - target: StarkProtocol
         embed: true
@@ -623,6 +655,18 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.asyncsupport.tests
+  BLETraceDataTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/BLETraceData/Tests
+    dependencies:
+      - target: BLETraceData
+      - target: BLETraceDomain
+      - target: AsyncSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bletracedata.tests
   BikeSDKTests:
     type: bundle.unit-test
     platform: iOS
@@ -630,6 +674,7 @@ targets:
       - path: Modules/BikeSDK/Tests
     dependencies:
       - target: BikeSDK
+      - target: BLETraceDomain
       - target: RuntimeConfiguration
       - target: TestSupport
     settings:
@@ -771,6 +816,7 @@ targets:
       - path: Features/BikeDiagnostics/Tests
     dependencies:
       - target: BikeDiagnostics
+      - target: BLETraceDomain
       - target: BikeDomain
       - target: SettingsDomain
       - target: TestSupport
@@ -876,6 +922,8 @@ targets:
       - path: App/Tests
       - path: App/Sources/Composition
     dependencies:
+      - target: BLETraceData
+      - target: BLETraceDomain
       - target: BikeDiagnostics
       - target: BikeOnboarding
       - target: RideDashboard
@@ -914,6 +962,8 @@ targets:
           - StarkProtocol
           - Production
     dependencies:
+      - target: BLETraceData
+      - target: BLETraceDomain
       - target: AppSettings
       - target: BikeDiagnostics
       - target: BikeOnboarding
@@ -945,6 +995,7 @@ schemes:
         StarkProtocolTests: [test]
         AsyncSupportTests: [test]
         BikeSDKTests: [test]
+        BLETraceDataTests: [test]
         BikeDomainTests: [test]
         BikeDataTests: [test]
         BikeEmulatorTests: [test]
@@ -967,6 +1018,7 @@ schemes:
     test:
       targets:
         - StarkProtocolTests
+        - BLETraceDataTests
         - BikeSDKTests
         - BikeDomainTests
         - BikeDataTests

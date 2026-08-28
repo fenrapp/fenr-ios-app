@@ -1,6 +1,7 @@
 import BikeData
 import BikeDiagnostics
 import BikeDomain
+import BLETraceDomain
 import CoreLocation
 import CoreMotion
 import EnvironmentData
@@ -13,7 +14,8 @@ enum ProductionAppDependencyContainerFactory {
     static func makeDefault() -> AppDependencyContainer {
         let bikeSDKContainer = BikeSDKDependencyContainer()
         let bikeDataContainer = BikeDataDependencyContainer()
-        let client = bikeSDKContainer.makeBikeTelemetryClient()
+        let bleTraceRepository = BLETraceDependencyContainer().makeRepository()
+        let client = bikeSDKContainer.makeBikeTelemetryClient(traceRecorder: bleTraceRepository)
         let profileRepository = UserDefaultsBikeProfileRepository()
         let repository = bikeDataContainer.makeBikeRepository(
             client: client,
@@ -58,7 +60,8 @@ enum ProductionAppDependencyContainerFactory {
             sessionServices: sessionServices,
             onboardingContainer: BikeOnboardingDependencyContainer(),
             dashboardContainer: RideDashboardDependencyContainer(),
-            appSettingsContainer: AppSettingsDependencyContainer()
+            appSettingsContainer: AppSettingsDependencyContainer(),
+            bleTraceLogRepository: bleTraceRepository
         )
     }
 

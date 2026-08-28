@@ -43,6 +43,20 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C13CC2103A4F75FF35E8C161"
+               BuildableName = "BLETraceDataTests.xctest"
+               BlueprintName = "BLETraceDataTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "4336F947375CBE0D8AE09C36"
                BuildableName = "BatteryHealthTests.xctest"
                BlueprintName = "BatteryHealthTests"
@@ -355,6 +369,17 @@
                BlueprintIdentifier = "C453FEFC1E038CB490AD2E39"
                BuildableName = "StarkProtocolTests.xctest"
                BlueprintName = "StarkProtocolTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C13CC2103A4F75FF35E8C161"
+               BuildableName = "BLETraceDataTests.xctest"
+               BlueprintName = "BLETraceDataTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </TestableReference>

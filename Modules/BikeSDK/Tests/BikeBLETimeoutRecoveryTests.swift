@@ -151,13 +151,16 @@ struct BikeBLETimeoutRecoveryTests {
             eventHub: eventHub,
             timeoutScheduler: FakeBikeBLETimeoutScheduler()
         )
+        let traceEmitter = makeTraceEmitter()
+        let peripheralOperations = BikeBLEPeripheralOperations(traceEmitter: traceEmitter)
         let handshake = BikeBLESecurityHandshake(
             sessionStore: sessionStore,
             eventEmitter: eventEmitter,
             payloadBuilder: StarkAuthenticationPayloadBuilder(),
             configuration: BikeSecurityConfiguration(pairingDate: StarkPinConstants.fallbackPairingDate),
             notificationCoordinator: notificationCoordinator,
-            watchdog: watchdog
+            watchdog: watchdog,
+            peripheralOperations: peripheralOperations
         )
         let retryController = BikeBLEPairingRetryController(
             eventEmitter: eventEmitter,
@@ -169,7 +172,8 @@ struct BikeBLETimeoutRecoveryTests {
             eventEmitter: eventEmitter,
             watchdog: watchdog,
             handshake: handshake,
-            pairingRetryController: retryController
+            pairingRetryController: retryController,
+            peripheralOperations: peripheralOperations
         )
         watchdog.watch(expectedState: .readingNonce, operation: "nonce read")
         await retryController.schedule(characteristicUUID: CBUUID(string: "1001")) { _, _ in }
