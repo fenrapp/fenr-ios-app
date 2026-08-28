@@ -23,6 +23,8 @@ public struct RideDashboardMapper: Sendable {
         speedKilometersPerHour: Double?,
         speedSource: SpeedSource = .motorcycle,
         progressBarMode: DashboardProgressBarMode = .energy,
+        batteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
+        showsTemperatures: Bool = false,
         measurementSystem: MeasurementSystem,
         isGPSAvailable: Bool = true
     ) -> RideDashboardViewState {
@@ -63,8 +65,10 @@ public struct RideDashboardMapper: Sendable {
                 hasTelemetry: hasTelemetry,
                 measurementMapper: measurementMapper
             ),
-            battery: battery(
-                percentage: hasTelemetry ? telemetry.batteryLevel.percent : nil
+            battery: battery(percentage: hasTelemetry ? telemetry.batteryLevel.percent : nil),
+            batteryIndicatorMode: batteryIndicatorMode,
+            temperatureSummary: DashboardTemperatureSummaryMapper.map(
+                telemetry: telemetry, isVisible: hasTelemetry && showsTemperatures, measurementMapper: measurementMapper
             ),
             gear: gear(
                 runState: hasTelemetry ? telemetry.runState : .unknown,
@@ -260,5 +264,38 @@ public struct RideDashboardMapper: Sendable {
         static let criticalBatteryPercentage = 21
         static let warningBatteryPercentage = 51
         static let validPowerModeRange = 1 ... 5
+    }
+}
+
+private enum DashboardTemperatureSummaryMapper {
+    static func map(
+        telemetry: BikeTelemetry,
+        isVisible: Bool,
+        measurementMapper: RideDashboardMeasurementMapper
+    ) -> RideDashboardViewState.TemperatureSummary {
+        guard isVisible else { return .init() }
+        let batteryTemperatures = [
+            telemetry.batteryTelemetry.positiveBMS?.temperatureCelsius,
+            telemetry.batteryTelemetry.negativeBMS?.temperatureCelsius
+        ]
+        return .init(
+            batteryTemperatureText: temperatureText(
+                batteryTemperatures.compactMap { $0 }.filter(\.isFinite).max(),
+                measurementMapper: measurementMapper
+            ),
+            inverterTemperatureText: temperatureText(
+                telemetry.inverterTemperaturesCelsius.compactMap { $0 }.filter(\.isFinite).max(),
+                measurementMapper: measurementMapper
+            )
+        )
+    }
+
+    private static func temperatureText(
+        _ celsius: Double?,
+        measurementMapper: RideDashboardMeasurementMapper
+    ) -> String? {
+        guard let celsius else { return nil }
+        let temperature = measurementMapper.temperature(celsius: celsius)
+        return measurementMapper.number(temperature.value, fractionDigits: .zero) + temperature.unit
     }
 }

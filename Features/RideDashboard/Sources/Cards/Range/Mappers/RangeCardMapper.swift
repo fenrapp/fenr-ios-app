@@ -30,10 +30,18 @@ public struct RangeCardMapper: Sendable {
         let tripDistance = snapshot.trip?.distanceKilometers ?? .zero
         let startDistance = buckets.first?.startDistanceKilometers ?? tripDistance
         let range = estimate.estimatedRangeKilometers.map { $0 * distanceScale }
+        let rangeText = formatDistance(range)
+        let distanceUnitText = usesMiles ? "mi" : "km"
 
         return DashboardRangeViewData(
-            rangeText: formatDistance(range),
-            distanceUnitText: usesMiles ? "mi" : "km",
+            rangeText: rangeText,
+            distanceUnitText: distanceUnitText,
+            summary: range.map { _ in
+                .init(
+                    text: "\(rangeText) \(distanceUnitText)",
+                    accessibilityLabel: "Estimated range \(rangeText) \(distanceUnitText)"
+                )
+            },
             status: status(estimate.confidence),
             typicalRangeText: formatDistance(estimate.typicalRangeKilometers.map { $0 * distanceScale }),
             currentRangeText: formatDistance(estimate.currentRangeKilometers.map { $0 * distanceScale }),

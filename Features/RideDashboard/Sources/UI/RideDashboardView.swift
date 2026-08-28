@@ -1,26 +1,27 @@
+import DesignSystem
 import SwiftUI
 import UIKit
 
 @MainActor
 public struct RideDashboardScene: View {
     @StateObject private var feature: RideDashboardFeatureModel
-    private let showsTelemetryButton: Bool
+    private let onSettings: () -> Void
     private let onDiagnostics: () -> Void
 
     public init(
         factory: any RideDashboardFeatureBuilding,
-        showsTelemetryButton: Bool = false,
+        onSettings: @escaping () -> Void = {},
         onDiagnostics: @escaping () -> Void
     ) {
         _feature = StateObject(wrappedValue: factory.makeFeature())
-        self.showsTelemetryButton = showsTelemetryButton
+        self.onSettings = onSettings
         self.onDiagnostics = onDiagnostics
     }
 
     public var body: some View {
         RideDashboardView(
             feature: feature,
-            showsTelemetryButton: showsTelemetryButton,
+            onSettings: onSettings,
             onDiagnostics: onDiagnostics
         )
     }
@@ -39,12 +40,12 @@ public struct RideDashboardView: View {
     @ScaledMetric(relativeTo: .body) private var speedometerTypeScale: CGFloat = 1
     @State private var cardSelection = DashboardCardSelectionState()
     @State private var hiddenPageResetTask: Task<Void, Never>?
-    private let showsTelemetryButton: Bool
+    private let onSettings: () -> Void
     private let onDiagnostics: () -> Void
 
     public init(
         feature: RideDashboardFeatureModel,
-        showsTelemetryButton: Bool = false,
+        onSettings: @escaping () -> Void = {},
         onDiagnostics: @escaping () -> Void
     ) {
         self.feature = feature
@@ -55,7 +56,7 @@ public struct RideDashboardView: View {
         _rangeViewModel = ObservedObject(wrappedValue: feature.rangeViewModel)
         _dynamicsViewModel = ObservedObject(wrappedValue: feature.dynamicsViewModel)
         _chargingViewModel = ObservedObject(wrappedValue: feature.chargingViewModel)
-        self.showsTelemetryButton = showsTelemetryButton
+        self.onSettings = onSettings
         self.onDiagnostics = onDiagnostics
     }
 
@@ -75,7 +76,11 @@ public struct RideDashboardView: View {
                             .ignoresSafeArea()
 
                         HStack(spacing: .zero) {
-                            DashboardBatteryPanel(state: viewModel.viewState.battery)
+                            DashboardBatteryPanel(
+                                state: viewModel.viewState.battery,
+                                displayMode: viewModel.viewState.batteryIndicatorMode,
+                                estimatedRange: rangeViewModel.summary
+                            )
                                 .frame(width: layout.sideColumnWidth)
 
                             ZStack(alignment: .bottom) {
@@ -144,15 +149,23 @@ public struct RideDashboardView: View {
                 }
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
-            .overlay(alignment: .topTrailing) {
-                if showsTelemetryButton {
-                    Button(action: onDiagnostics) {
-                        Label("Telemetry", systemImage: "waveform.path.ecg")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
+            .overlay(alignment: .topLeading) {
+                DashboardRideClock()
                     .padding(Constants.accessoryEdgePadding)
-                    .accessibilityIdentifier("dashboard.telemetry")
+            }
+            .overlay(alignment: .topTrailing) {
+                Button(action: onSettings) {
+                    Label("Settings", systemImage: "gearshape.fill")
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .padding(Constants.accessoryEdgePadding)
+                .accessibilityIdentifier("dashboard.settings")
+            }
+            .overlay(alignment: .bottomLeading) {
+                if viewModel.viewState.temperatureSummary.hasValues {
+                    DashboardRideTemperatureSummary(state: viewModel.viewState.temperatureSummary)
+                        .padding(Constants.accessoryEdgePadding)
                 }
             }
         }
@@ -183,6 +196,120 @@ public struct RideDashboardView: View {
             UIApplication.shared.isIdleTimerDisabled = false
             feature.stopPresentation()
         }
+    }
+}
+
+private struct DashboardRideClock: View {
+    var body: some View {
+        TimelineView(.periodic(from: currentMinute, by: Constants.minuteInterval)) { context in
+            let time = context.date.formatted(date: .omitted, time: .shortened)
+            Text(time)
+                .font(.system(size: Constants.fontSize, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+                .accessibilityLabel("Time")
+                .accessibilityValue(time)
+        }
+    }
+
+    private var currentMinute: Date {
+        Calendar.autoupdatingCurrent.dateInterval(of: .minute, for: .now)?.start ?? .now
+    }
+
+    private enum Constants {
+        static let fontSize: CGFloat = 18
+        static let minuteInterval: TimeInterval = 60
+    }
+}
+
+private struct DashboardRideTemperatureSummary: View {
+    let state: RideDashboardViewState.TemperatureSummary
+
+    var body: some View {
+        DashboardTemperatureCapsule {
+            HStack(spacing: Constants.itemSpacing) {
+                if let batteryTemperatureText = state.batteryTemperatureText {
+                    DashboardTemperatureItem(
+                        text: batteryTemperatureText,
+                        systemImage: "battery.100percent",
+                        accessibilityLabel: "Battery temperature"
+                    )
+                }
+
+                if state.batteryTemperatureText != nil, state.inverterTemperatureText != nil {
+                    Divider()
+                        .frame(height: Constants.separatorHeight)
+                }
+
+                if let inverterTemperatureText = state.inverterTemperatureText {
+                    DashboardTemperatureItem(
+                        text: inverterTemperatureText,
+                        systemImage: "bolt.horizontal.fill",
+                        accessibilityLabel: "Inverter temperature"
+                    )
+                }
+            }
+        }
+    }
+
+    private enum Constants {
+        static let itemSpacing: CGFloat = 5
+        static let separatorHeight: CGFloat = 13
+    }
+}
+
+private struct DashboardTemperatureItem: View {
+    let text: String
+    let systemImage: String
+    let accessibilityLabel: String
+
+    var body: some View {
+        Label(text, systemImage: systemImage)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
+            .accessibilityLabel(accessibilityLabel)
+            .accessibilityValue(text)
+    }
+}
+
+private struct DashboardTemperatureCapsule<Content: View>: View {
+    private let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    var body: some View {
+        content
+            .font(.system(
+                size: DashboardTemperatureCapsuleConstants.valueFontSize,
+                weight: .semibold,
+                design: .rounded
+            ))
+            .foregroundStyle(DesignColor.primaryText)
+            .monospacedDigit()
+            .padding(.horizontal, DashboardTemperatureCapsuleConstants.horizontalPadding)
+            .frame(height: DashboardTemperatureCapsuleConstants.height)
+            .background {
+                Capsule()
+                    .fill(DesignColor.groupedSurface)
+            }
+            .overlay {
+                Capsule()
+                    .stroke(DesignColor.border, lineWidth: DashboardTemperatureCapsuleConstants.outlineWidth)
+            }
+    }
+}
+
+private enum DashboardTemperatureCapsuleConstants {
+    static let height: CGFloat = 29
+    static let horizontalPadding: CGFloat = 10
+    static let outlineWidth: CGFloat = 1.25
+    static let valueFontSize: CGFloat = 14
+}
+
+private extension RideDashboardViewState.TemperatureSummary {
+    var hasValues: Bool {
+        batteryTemperatureText != nil || inverterTemperatureText != nil
     }
 }
 

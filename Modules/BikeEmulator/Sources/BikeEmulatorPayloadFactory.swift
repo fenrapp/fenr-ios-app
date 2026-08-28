@@ -45,6 +45,7 @@ enum BikeEmulatorPayloadFactory {
             speed: .known(kmh: speed, kmhX10: Int(speed * Constants.speedScale)),
             motorRPM: .known(isRiding ? Int(speed * Constants.rpmPerKmh) : .zero),
             odometer: odometer(for: scenario, tick: tick),
+            inverterTemperaturesCelsius: inverterTemperatures(for: tick),
             statusFlags: BikeStatusFlags(
                 isOn: !scenario.isChargerConnected,
                 isCharging: isCharging,
@@ -234,6 +235,13 @@ enum BikeEmulatorPayloadFactory {
         }
     }
 
+    private static func inverterTemperatures(for tick: Int) -> [Double?] {
+        let thermalOffset = sin(Double(tick) * Constants.inverterTemperatureWaveRadians)
+            * Constants.inverterTemperatureWaveAmplitude
+        let base = Constants.inverterBaseTemperature + thermalOffset
+        return [base, base + 2.5, base + 1.2]
+    }
+
     private static func byteCount(for dataset: BatteryDataset) -> Int {
         switch dataset {
         case .bmsStatus: Constants.bmsStatusByteCount
@@ -360,6 +368,9 @@ private extension BikeEmulatorPayloadFactory {
         static let temperatureWaveRadians = 0.11
         static let temperatureVariationRange = 5
         static let temperatureVariationStep = 0.7
+        static let inverterBaseTemperature = 39.0
+        static let inverterTemperatureWaveAmplitude = 4.0
+        static let inverterTemperatureWaveRadians = 0.09
         static let bmsStatusByteCount = 16
         static let temperaturesByteCount = 27
         static let dcBusByteCount = 6

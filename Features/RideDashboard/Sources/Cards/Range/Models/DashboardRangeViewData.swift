@@ -1,6 +1,16 @@
 import Foundation
 
 public struct DashboardRangeViewData: Equatable, Sendable {
+    public struct Summary: Equatable, Sendable {
+        public let text: String
+        public let accessibilityLabel: String
+
+        public init(text: String, accessibilityLabel: String) {
+            self.text = text
+            self.accessibilityLabel = accessibilityLabel
+        }
+    }
+
     public struct ConsumptionPoint: Equatable, Identifiable, Sendable {
         public let id: UUID
         public let distance: Double
@@ -33,6 +43,7 @@ public struct DashboardRangeViewData: Equatable, Sendable {
 
     public let rangeText: String
     public let distanceUnitText: String
+    public let summary: Summary?
     public let status: Status
     public let typicalRangeText: String
     public let currentRangeText: String
@@ -48,6 +59,7 @@ public struct DashboardRangeViewData: Equatable, Sendable {
     public init(
         rangeText: String = "—",
         distanceUnitText: String = "km",
+        summary: Summary? = nil,
         status: Status = .learning,
         typicalRangeText: String = "—",
         currentRangeText: String = "—",
@@ -62,6 +74,7 @@ public struct DashboardRangeViewData: Equatable, Sendable {
     ) {
         self.rangeText = rangeText
         self.distanceUnitText = distanceUnitText
+        self.summary = summary
         self.status = status
         self.typicalRangeText = typicalRangeText
         self.currentRangeText = currentRangeText

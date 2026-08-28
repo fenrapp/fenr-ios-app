@@ -30,6 +30,7 @@ public final class RideDashboardFeatureModel: ObservableObject {
 
     func start() {
         dashboardViewModel.startObserving()
+        rangeViewModel.start()
     }
 
     func stopPresentation() {

@@ -48,12 +48,12 @@ struct AppRootView: View {
                 } else if setupFlow.isCompleted {
                     RideDashboardScene(
                         factory: rideDashboardFactory,
-                        showsTelemetryButton: Constants.showsDashboardTelemetryButton,
+                        onSettings: { path.append(.settings) },
                         onDiagnostics: { path.append(.diagnostics) }
                     )
-                    .overlay(alignment: .topTrailing) {
+                    .overlay(alignment: .bottomTrailing) {
                         dashboardAccessory()
-                            .padding([.top, .trailing], Constants.dashboardAccessoryPadding)
+                            .padding([.bottom, .trailing], Constants.dashboardAccessoryPadding)
                     }
                 } else {
                     BikeOnboardingView(
@@ -200,10 +200,5 @@ struct AppRootView: View {
 
     private enum Constants {
         static let dashboardAccessoryPadding: CGFloat = 8
-#if DEBUG
-        static let showsDashboardTelemetryButton = true
-#else
-        static let showsDashboardTelemetryButton = false
-#endif
     }
 }

@@ -26,6 +26,7 @@ struct RangeCardTests {
         )
 
         #expect(state.rangeText != "—")
+        #expect(state.summary?.text == "51 km")
         #expect(state.batteryText == "50%")
         #expect(state.remainingEnergyText == "3.6 kWh")
         #expect(state.consumptionPoints.count == 1)
@@ -34,8 +35,27 @@ struct RangeCardTests {
         #expect(state.peakRegenerationText == "4.0 kW")
     }
 
-    @Test("Loads history only while the range card is visible")
-    func loadsHistoryLazily() async {
+    @Test("Omits the dashboard summary until a range can be estimated")
+    func omitsUnavailableSummary() {
+        let state = RangeCardMapper(
+            locale: Locale(identifier: "en_GB"),
+            estimator: RideRangeEstimator()
+        ).map(
+            snapshot: .init(
+                vehicleIdentity: .vin(CurrentTripTestIdentity.vin),
+                batteryStateOfChargePercent: 60,
+                batteryCapacityWattHours: 7_200
+            ),
+            historicalTrips: [],
+            historyIsLoading: false
+        )
+
+        #expect(state.rangeText == "—")
+        #expect(state.summary == nil)
+    }
+
+    @Test("Keeps the visible range summary current without publishing the hidden card")
+    func keepsSummaryCurrentWhileCardIsHidden() async {
         let repository = CurrentTripCardTripRepository(completedTrips: [historicalTrip()])
         let session = TestRideSessionService(snapshot: .init(
             vehicleIdentity: .vin(CurrentTripTestIdentity.vin),
@@ -50,15 +70,22 @@ struct RangeCardTests {
 
         await Task.yield()
         #expect(await repository.loadCount() == 0)
-        viewModel.setIsVisible(true)
+        viewModel.start()
         #expect(await waitUntil { await repository.loadCount() == 1 })
-        viewModel.setIsVisible(false)
+        #expect(await waitUntil { viewModel.summary != nil })
+        #expect(viewModel.viewState == DashboardRangeViewData())
+
         await session.send(.init(
             vehicleIdentity: .vin(CurrentTripTestIdentity.vin),
-            historyRevision: 1
+            historyRevision: 1,
+            batteryStateOfChargePercent: 50,
+            batteryCapacityWattHours: 7_200
         ))
-        await Task.yield()
-        #expect(await repository.loadCount() == 1)
+        #expect(await waitUntil { await repository.loadCount() == 2 })
+        #expect(viewModel.viewState == DashboardRangeViewData())
+
+        viewModel.setIsVisible(true)
+        #expect(viewModel.viewState.summary != nil)
     }
 
     private func activeTrip() -> RideTrip {

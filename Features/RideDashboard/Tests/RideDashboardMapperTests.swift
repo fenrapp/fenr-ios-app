@@ -1,6 +1,6 @@
 import BikeDomain
 import Foundation
-import RideDashboard
+@testable import RideDashboard
 import SettingsDomain
 import Testing
 
@@ -46,6 +46,7 @@ struct RideDashboardMapperTests {
             telemetry: telemetry,
             connection: BikeConnection(state: .receivingTelemetry(peripheralName: "FENRTEST000000001")),
             speedKilometersPerHour: telemetry.speed.kmh,
+            batteryIndicatorMode: .estimatedRange,
             measurementSystem: .metric
         )
 
@@ -57,6 +58,7 @@ struct RideDashboardMapperTests {
         #expect(state.speedometer.accessibilityLabel == "Speed 42 km/h")
         #expect(state.battery.percentageText == "60%")
         #expect(state.battery.emphasis == .positive)
+        #expect(state.batteryIndicatorMode == .estimatedRange)
         #expect(state.gear == .init(display: .text("3"), isActive: true, accessibilityLabel: "Gear 3"))
         #expect(state.centerMode == .riding)
         #expect(state.indicators.first(where: { $0.id == "highBeam" })?.isActive == true)
@@ -271,4 +273,108 @@ struct RideDashboardMapperTests {
         #expect(!state.powerMode.showsTractionControl)
     }
 
+}
+
+@Suite("Dashboard indicator status")
+struct DashboardIndicatorStatusTests {
+    @Test("Does not promote routine braking to the top indicator status")
+    func excludesBrakeFromTopIndicators() {
+        let brake = DashboardIndicatorViewData(
+            id: "brake",
+            symbolName: "exclamationmark.circle.fill",
+            accessibilityLabel: "Brake",
+            accessibilityValue: "On",
+            isActive: true,
+            emphasis: .critical
+        )
+        let highBeam = DashboardIndicatorViewData(
+            id: "highBeam",
+            symbolName: "headlight.high.beam",
+            accessibilityLabel: "High beam",
+            accessibilityValue: "On",
+            isActive: true,
+            emphasis: .informational
+        )
+
+        #expect(!DashboardIndicatorStatus.hasActiveIndicators([brake]))
+        #expect(DashboardIndicatorStatus.hasActiveIndicators([brake, highBeam]))
+    }
+}
+
+@Suite("Dashboard temperature summary")
+struct DashboardTemperatureSummaryTests {
+    @Test("Maps the hottest available battery and inverter temperatures")
+    func mapsAvailableTemperatures() {
+        let telemetry = BikeTelemetry(
+            inverterTemperaturesCelsius: [41, nil, 48],
+            batteryTelemetry: .init(
+                stateOfCharge: .known(percent: 64),
+                positiveBMS: bms(temperatureCelsius: 23),
+                negativeBMS: bms(temperatureCelsius: 26)
+            )
+        )
+        let mapper = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_GB"))
+        let connection = BikeConnection(state: .receivingTelemetry(peripheralName: "SYNTHETIC"))
+
+        let metric = mapper.map(
+            telemetry: telemetry,
+            connection: connection,
+            speedKilometersPerHour: nil,
+            showsTemperatures: true,
+            measurementSystem: .metric
+        )
+        let imperial = mapper.map(
+            telemetry: telemetry,
+            connection: connection,
+            speedKilometersPerHour: nil,
+            showsTemperatures: true,
+            measurementSystem: .imperial
+        )
+
+        #expect(metric.temperatureSummary.batteryTemperatureText == "26°C")
+        #expect(metric.temperatureSummary.inverterTemperatureText == "48°C")
+        #expect(imperial.temperatureSummary.batteryTemperatureText == "79°F")
+        #expect(imperial.temperatureSummary.inverterTemperatureText == "118°F")
+    }
+
+    @Test("Omits unavailable or non-finite temperatures")
+    func omitsUnavailableTemperatures() {
+        let state = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_GB")).map(
+            telemetry: .init(
+                batteryLevel: .known(percent: 64),
+                inverterTemperaturesCelsius: [nil, .nan]
+            ),
+            connection: .init(state: .receivingTelemetry(peripheralName: "SYNTHETIC")),
+            speedKilometersPerHour: nil,
+            measurementSystem: .metric
+        )
+
+        #expect(state.temperatureSummary == .init())
+    }
+
+    @Test("Omits temperatures when the dashboard setting is disabled")
+    func hidesTemperaturesFromSettings() {
+        let state = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_GB")).map(
+            telemetry: .init(
+                batteryLevel: .known(percent: 64),
+                inverterTemperaturesCelsius: [48]
+            ),
+            connection: .init(state: .receivingTelemetry(peripheralName: "SYNTHETIC")),
+            speedKilometersPerHour: nil,
+            showsTemperatures: false,
+            measurementSystem: .metric
+        )
+
+        #expect(state.temperatureSummary == .init())
+    }
+
+    private func bms(temperatureCelsius: Double) -> BikeBMSSignalsTelemetry {
+        .init(
+            voltageCandidateRaw: .zero,
+            temperatureRaw: .zero,
+            temperatureCelsius: temperatureCelsius,
+            humidityRaw: .zero,
+            humidityPercent: .zero
+        )
+    }
 }

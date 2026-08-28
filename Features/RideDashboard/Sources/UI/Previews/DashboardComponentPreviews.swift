@@ -43,7 +43,15 @@ import SwiftUI
 
 #Preview("Battery panel") {
     VStack(alignment: .leading, spacing: DesignSpace.large) {
-        DashboardBatteryPanel(state: previewBattery(percentage: 78, emphasis: .positive))
+        DashboardBatteryPanel(
+            state: previewBattery(percentage: 78, emphasis: .positive),
+            displayMode: .estimatedRange,
+            estimatedRange: .init(text: "64 km", accessibilityLabel: "Estimated range 64 kilometers")
+        )
+        DashboardBatteryPanel(
+            state: previewBattery(percentage: 78, emphasis: .positive),
+            displayMode: .estimatedRange
+        )
         DashboardBatteryPanel(state: previewBattery(percentage: 28, emphasis: .warning))
         DashboardBatteryPanel(state: previewBattery(percentage: 8, emphasis: .critical))
         DashboardBatteryPanel(state: .init())
@@ -123,14 +131,6 @@ import SwiftUI
             accessibilityValue: "On",
             isActive: true,
             emphasis: .warning
-        ),
-        .init(
-            id: "brake",
-            symbolName: "exclamationmark.circle.fill",
-            accessibilityLabel: "Brake",
-            accessibilityValue: "On",
-            isActive: true,
-            emphasis: .critical
         )
     ])
     .padding()

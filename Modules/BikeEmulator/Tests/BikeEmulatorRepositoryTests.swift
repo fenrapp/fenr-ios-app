@@ -74,6 +74,7 @@ struct BikeEmulatorRepositoryTests {
         #expect(movingTelemetry.motorRPM.value ?? .zero > .zero)
         #expect(!movingTelemetry.statusFlags.isCharging)
         #expect(movingTelemetry.batteryLevel.percent == health.stateOfCharge.percent)
+        #expect(movingTelemetry.inverterTemperaturesCelsius.compactMap { $0 }.max() != nil)
     }
 
     @Test("Debug scenarios evolve their live dashboard values")

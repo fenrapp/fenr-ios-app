@@ -6,6 +6,7 @@ import RideSessionDomain
 @MainActor
 public final class RangeCardViewModel: ObservableObject {
     @Published public private(set) var viewState = DashboardRangeViewData()
+    @Published public private(set) var summary: DashboardRangeViewData.Summary?
 
     private let useCases: RangeCardUseCases
     private let mapper: RangeCardMapper
@@ -13,6 +14,7 @@ public final class RangeCardViewModel: ObservableObject {
     private var snapshot = RideSessionSnapshot(vehicleIdentity: .temporary(UUID()))
     private var historicalTrips: [RideTrip] = []
     private var loadedKey: DashboardRideHistoryKey?
+    private var isStarted = false
     private var isVisible = false
     private var historyIsLoading = false
     private var sessionTask: Task<Void, Never>?
@@ -33,27 +35,35 @@ public final class RangeCardViewModel: ObservableObject {
         loadTask?.cancel()
     }
 
-    func setIsVisible(_ isVisible: Bool) {
-        self.isVisible = isVisible
-        guard isVisible else {
-            stopPublishing()
-            return
-        }
+    func start() {
+        guard !isStarted else { return }
+        isStarted = true
         observeSessionIfNeeded()
         loadHistoryIfNeeded()
         render()
     }
 
+    func setIsVisible(_ isVisible: Bool) {
+        self.isVisible = isVisible
+        guard isVisible else { return }
+        start()
+        render()
+    }
+
     func stop() {
+        isStarted = false
         isVisible = false
         stopPublishing()
         loadedKey = nil
         historicalTrips = []
+        summary = nil
     }
 
 #if DEBUG
     func setPreviewState(_ viewState: DashboardRangeViewData) {
+        isStarted = true
         self.viewState = viewState
+        summary = viewState.summary
     }
 #endif
 }
@@ -84,7 +94,7 @@ private extension RangeCardViewModel {
     }
 
     func loadHistoryIfNeeded() {
-        guard isVisible,
+        guard isStarted,
               let vin = snapshot.vehicleIdentity.confirmedVIN,
               loadTask == nil else { return }
         let key = DashboardRideHistoryKey(vin: vin, revision: snapshot.historyRevision)
@@ -109,12 +119,15 @@ private extension RangeCardViewModel {
     }
 
     func render() {
-        guard isVisible else { return }
         let nextState = mapper.map(
             snapshot: snapshot,
             historicalTrips: historicalTrips,
             historyIsLoading: historyIsLoading
         )
+        if nextState.summary != summary {
+            summary = nextState.summary
+        }
+        guard isVisible else { return }
         guard nextState != viewState else { return }
         viewState = nextState
     }

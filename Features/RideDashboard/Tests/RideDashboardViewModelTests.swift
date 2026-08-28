@@ -19,6 +19,7 @@ struct RideDashboardViewModelTests {
         #expect(await waitUntil {
             fixture.viewModel.viewState.speedometer.valueText == "42"
                 && fixture.viewModel.viewState.battery.percentageText == "64%"
+                && fixture.viewModel.viewState.batteryIndicatorMode == .estimatedRange
         })
         #expect(fixture.viewModel.viewState.progressBar == .speed(progress: 42.0 / 180.0))
         #expect(await waitUntil { await fixture.vehicleSession.statusRefreshCount() == 1 })
@@ -67,7 +68,11 @@ struct RideDashboardViewModelTests {
                 statusFlags: .init(isOn: true, isInGear: true)
             ),
             connection: .init(state: .receivingTelemetry(peripheralName: "SYNTHETIC")),
-            settings: .init(dashboardProgressBarMode: .speed, measurementSystem: .metric),
+            settings: .init(
+                dashboardProgressBarMode: .speed,
+                dashboardBatteryIndicatorMode: .estimatedRange,
+                measurementSystem: .metric
+            ),
             resolvedSpeedKilometersPerHour: speed,
             hasReceivedSettings: true,
             hasReceivedProfile: true

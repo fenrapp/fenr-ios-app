@@ -36,6 +36,10 @@ private enum DashboardPreviewConstants {
                         accessibilityLabel: "Consuming 32.0 kW"
                     ),
                     battery: previewBattery(percentage: 34, emphasis: .warning),
+                    temperatureSummary: .init(
+                        batteryTemperatureText: "26°C",
+                        inverterTemperatureText: "48°C"
+                    ),
                     gear: previewGear("3"),
                     powerMode: previewPowerMode(horsepower: "40", regen: "30"),
                     connectionDetail: "Live telemetry active",
@@ -202,6 +206,7 @@ private func previewRangeViewModel() -> RangeCardViewModel {
     RangeCardPreviewFactory.makeViewModel(
         state: .init(
             rangeText: "64",
+            summary: .init(text: "64 km", accessibilityLabel: "Estimated range 64 kilometers"),
             status: .stable,
             typicalRangeText: "71",
             currentRangeText: "58",

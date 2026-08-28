@@ -38,11 +38,11 @@ struct DashboardIndicatorStatus: View {
         indicators.filter(Self.isDisplayed)
     }
 
-    static func hasActiveIndicators(_ indicators: [DashboardIndicatorViewData]) -> Bool {
+    nonisolated static func hasActiveIndicators(_ indicators: [DashboardIndicatorViewData]) -> Bool {
         indicators.contains(where: Self.isDisplayed)
     }
 
-    private static func isDisplayed(_ indicator: DashboardIndicatorViewData) -> Bool {
+    nonisolated private static func isDisplayed(_ indicator: DashboardIndicatorViewData) -> Bool {
         indicator.isActive && IndicatorID(rawValue: indicator.id) != nil
     }
 
@@ -54,10 +54,9 @@ struct DashboardIndicatorStatus: View {
         }
     }
 
-    private enum IndicatorID: String {
+    nonisolated private enum IndicatorID: String {
         case highBeam
         case leftTurn
-        case brake
         case rightTurn
     }
 

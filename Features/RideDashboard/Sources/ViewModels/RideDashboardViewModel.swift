@@ -69,6 +69,8 @@ public final class RideDashboardViewModel: ObservableObject {
             speedKilometersPerHour: snapshot.resolvedSpeedKilometersPerHour,
             speedSource: snapshot.speedSource,
             progressBarMode: snapshot.settings.dashboardProgressBarMode,
+            batteryIndicatorMode: snapshot.settings.dashboardBatteryIndicatorMode,
+            showsTemperatures: snapshot.settings.showsDashboardTemperatures,
             measurementSystem: snapshot.settings.measurementSystem,
             isGPSAvailable: snapshot.isGPSAvailable
         )

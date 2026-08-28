@@ -1,7 +1,11 @@
+import SettingsDomain
+
 public struct RideDashboardViewState: Equatable, Sendable {
     public let speedometer: DashboardSpeedometerViewData
     public let progressBar: DashboardProgressBarViewData
     public let battery: Battery
+    public let batteryIndicatorMode: DashboardBatteryIndicatorMode
+    public let temperatureSummary: TemperatureSummary
     public let gear: DashboardGearViewData
     public let powerMode: DashboardPowerModeViewData
     public let centerMode: CenterMode
@@ -13,6 +17,8 @@ public struct RideDashboardViewState: Equatable, Sendable {
         speedometer: DashboardSpeedometerViewData = .init(),
         progressBar: DashboardProgressBarViewData = .neutralEnergy,
         battery: Battery = .init(),
+        batteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
+        temperatureSummary: TemperatureSummary = .init(),
         gear: DashboardGearViewData = .init(),
         powerMode: DashboardPowerModeViewData = .init(),
         centerMode: CenterMode = .riding,
@@ -23,6 +29,8 @@ public struct RideDashboardViewState: Equatable, Sendable {
         self.speedometer = speedometer
         self.progressBar = progressBar
         self.battery = battery
+        self.batteryIndicatorMode = batteryIndicatorMode
+        self.temperatureSummary = temperatureSummary
         self.gear = gear
         self.powerMode = powerMode
         self.centerMode = centerMode
@@ -59,6 +67,19 @@ public struct RideDashboardViewState: Equatable, Sendable {
             case positive
             case warning
             case critical
+        }
+    }
+
+    public struct TemperatureSummary: Equatable, Sendable {
+        public let batteryTemperatureText: String?
+        public let inverterTemperatureText: String?
+
+        public init(
+            batteryTemperatureText: String? = nil,
+            inverterTemperatureText: String? = nil
+        ) {
+            self.batteryTemperatureText = batteryTemperatureText
+            self.inverterTemperatureText = inverterTemperatureText
         }
     }
 }
