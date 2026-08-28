@@ -83,6 +83,40 @@ import SwiftUI
         .dashboardCardPreviewCanvas()
 }
 
+#Preview("System health healthy") {
+    DashboardSystemHealthCard(state: previewSystemHealthHealthyState)
+        .dashboardCardPreviewCanvas()
+}
+
+#Preview("System health cell anomaly") {
+    DashboardSystemHealthCellsCard(state: previewSystemHealthAnomalyState)
+        .dashboardCardPreviewCanvas()
+}
+
+#Preview("System health balancing") {
+    DashboardSystemHealthCellsCard(state: previewSystemHealthBalancingState)
+        .dashboardCardPreviewCanvas()
+}
+
+#Preview("System health thermal") {
+    DashboardSystemHealthThermalCard(state: previewSystemHealthHealthyState)
+        .dashboardCardPreviewCanvas()
+}
+
+#Preview("System health scanning") {
+    DashboardSystemHealthCard(state: .init())
+        .dashboardCardPreviewCanvas()
+}
+
+#Preview("System health unavailable") {
+    DashboardSystemHealthCard(state: .init(
+        status: .unavailable,
+        statusText: "UNAVAILABLE",
+        statusDetail: "BMS DATA UNAVAILABLE"
+    ))
+    .dashboardCardPreviewCanvas()
+}
+
 #Preview("Ride dynamics lean") {
     DashboardLeanCard(state: previewDynamicsState, reduceMotion: false, calibrate: {})
         .dashboardCardPreviewCanvas()
@@ -156,6 +190,74 @@ private let previewRangeState = DashboardRangeViewData(
     peakDischargeText: "18.4 kW",
     peakRegenerationText: "6.2 kW"
 )
+
+private let previewSystemHealthHealthyState = makePreviewSystemHealthState()
+
+private let previewSystemHealthAnomalyState = makePreviewSystemHealthState(
+    criticalCellPosition: 18,
+    status: .critical,
+    statusText: "CRITICAL",
+    statusDetail: "1 CELL CRITICAL"
+)
+
+private let previewSystemHealthBalancingState = makePreviewSystemHealthState(
+    balancingCellPositions: [12, 57],
+    statusDetail: "CELL BALANCING ACTIVE"
+)
+
+private func makePreviewSystemHealthState(
+    criticalCellPosition: Int? = nil,
+    balancingCellPositions: Set<Int> = [],
+    status: DashboardSystemHealthViewData.Status = .healthy,
+    statusText: String = "OK",
+    statusDetail: String = "ALL SYSTEMS NORMAL"
+) -> DashboardSystemHealthViewData {
+    let cells = (1 ... 100).map { position in
+        let isCritical = position == criticalCellPosition
+        let variation = Double((position * 7) % 9)
+        let voltageText = (3.89 + variation * 0.001)
+            .formatted(.number.precision(.fractionLength(4))) + " V"
+        return DashboardSystemHealthViewData.Cell(
+            position: position,
+            voltageText: isCritical ? "2.8500 V" : voltageText,
+            deviationText: isCritical ? "−1,042 mV" : "\(Int(variation) - 4) mV",
+            condition: isCritical ? .critical : .normal,
+            isBalancing: balancingCellPositions.contains(position)
+        )
+    }
+    return .init(
+        status: status,
+        statusText: statusText,
+        statusDetail: statusDetail,
+        stateOfHealthText: "94%",
+        stateOfHealthProgress: 0.94,
+        cellDeltaText: criticalCellPosition == nil ? "8 mV" : "1,048 mV",
+        dcBusVoltageText: "394.8 V",
+        batteryTemperatureText: "29°C",
+        inverterTemperatureText: "44°C",
+        criticalCellCount: criticalCellPosition == nil ? 0 : 1,
+        balancingCellCount: balancingCellPositions.count,
+        cells: cells,
+        minimumCellText: criticalCellPosition.map { "#\($0) · 2.8500 V" } ?? "#1 · 3.8900 V",
+        maximumCellText: "#99 · 3.8980 V",
+        batteryThermalRange: .init(
+            minimumCelsius: 24,
+            averageCelsius: 27,
+            maximumCelsius: 29,
+            minimumText: "24°C",
+            averageText: "27°C",
+            maximumText: "29°C"
+        ),
+        inverterThermalRange: .init(
+            minimumCelsius: 39,
+            averageCelsius: 42,
+            maximumCelsius: 44,
+            minimumText: "39°C",
+            averageText: "42°C",
+            maximumText: "44°C"
+        )
+    )
+}
 
 private let previewDynamicsState = DashboardRideDynamicsViewData(
     status: .live,

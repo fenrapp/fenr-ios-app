@@ -30,6 +30,10 @@ struct RideDashboardDependencyContainer {
             tripStatisticsViewModel: tripViewModels.statistics,
             efficiencyViewModel: tripViewModels.efficiency,
             rangeViewModel: tripViewModels.range,
+            systemHealthViewModel: SystemHealthCardViewModel(
+                vehicleSession: dependencies.vehicleSession,
+                mapper: RideDashboardMapperFactory.makeSystemHealthMapper(locale: .autoupdatingCurrent)
+            ),
             dynamicsViewModel: RideDynamicsCardViewModel(
                 rideSession: dependencies.rideSession,
                 vehicleSession: dependencies.vehicleSession,

@@ -12,6 +12,8 @@ struct DashboardCenterCard: View {
     let efficiency: DashboardEfficiencyViewData
     @Binding var selectedRangePage: RangeDashboardPage
     let range: DashboardRangeViewData
+    @Binding var selectedSystemHealthPage: SystemHealthDashboardPage
+    let systemHealth: DashboardSystemHealthViewData
     @Binding var selectedDynamicsPage: RideDynamicsDashboardPage
     let dynamics: DashboardRideDynamicsViewData
     let charging: ChargingDashboardViewState
@@ -84,6 +86,13 @@ struct DashboardCenterCard: View {
             DashboardRangePager(
                 selection: $selectedRangePage,
                 state: range,
+                reduceMotion: reduceMotion
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        case .systemHealth:
+            DashboardSystemHealthPager(
+                selection: $selectedSystemHealthPage,
+                state: systemHealth,
                 reduceMotion: reduceMotion
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)

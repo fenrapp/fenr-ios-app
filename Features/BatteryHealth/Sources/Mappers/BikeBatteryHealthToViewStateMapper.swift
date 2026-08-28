@@ -5,9 +5,14 @@ import Foundation
 @MainActor
 public struct BikeBatteryHealthToViewStateMapper {
     private let formatter: BatteryHealthFormatter
+    private let analyzer: BatteryHealthAnalyzer
 
-    public init(formatter: BatteryHealthFormatter) {
+    public init(
+        formatter: BatteryHealthFormatter,
+        analyzer: BatteryHealthAnalyzer = .init()
+    ) {
         self.formatter = formatter
+        self.analyzer = analyzer
     }
 
     public func map(
@@ -17,7 +22,8 @@ public struct BikeBatteryHealthToViewStateMapper {
         isMonitoring: Bool,
         monitorError: String?
     ) -> BatteryHealthViewState {
-        BatteryHealthViewState(
+        let analysis = analyzer.analyze(health)
+        return BatteryHealthViewState(
             summary: [
                 metric("soc", "SOC", formatter.percent(health.stateOfCharge.percent)),
                 metric("soh", "SOH", formatter.percent(health.stateOfHealth.percent)),
@@ -29,9 +35,9 @@ public struct BikeBatteryHealthToViewStateMapper {
             packStatus: [
                 metric("fault", "BMS fault", health.isFaultActive ? "Active" : "Clear"),
                 metric("captured", "Captured datasets", "\(captures.count)/\(BatteryDataset.allCases.count)"),
-                metric("cellDelta", "Cell delta", cellDelta(for: health.cellVoltages))
+                metric("cellDelta", "Cell delta", cellDelta(for: analysis))
             ],
-            cells: cellViewData(for: health),
+            cells: cellViewData(for: analysis),
             temperatures: temperatureViewData(for: health),
             datasets: BatteryDataset.allCases.map { dataset in
             datasetViewData(dataset: dataset, capture: captures[dataset], health: health)
@@ -98,26 +104,20 @@ public struct BikeBatteryHealthToViewStateMapper {
         }
     }
 
-    private func cellDelta(for cells: [BatteryCellVoltage]) -> String {
-        guard let minimum = cells.map(\.volts).min(), let maximum = cells.map(\.volts).max() else {
-            return BatteryHealthText.placeholder
-        }
-        return formatter.cellVoltage(maximum - minimum)
+    private func cellDelta(for analysis: BatteryHealthAnalysis) -> String {
+        analysis.cellDeltaVolts.map(formatter.cellVoltage) ?? BatteryHealthText.placeholder
     }
 
-    private func cellViewData(for health: BikeBatteryHealth) -> [BatteryCellViewData] {
-        let voltages = health.cellVoltages.map(\.volts)
-        guard let minimum = voltages.min(), let maximum = voltages.max() else { return [] }
-        let average = voltages.reduce(0, +) / Double(voltages.count)
-        return health.cellVoltages.map { cell in
+    private func cellViewData(for analysis: BatteryHealthAnalysis) -> [BatteryCellViewData] {
+        analysis.cells.map { cell in
             BatteryCellViewData(
                 position: cell.position,
-                voltage: formatter.cellVoltage(cell.volts),
-                deviation: formatter.voltageDeviation(volts: cell.volts - average),
-                condition: condition(for: cell.volts, average: average),
-                isBalancing: health.balancingCellIndexes.contains(cell.position - 1),
-                isMinimum: cell.volts == minimum,
-                isMaximum: cell.volts == maximum
+                voltage: formatter.cellVoltage(cell.voltage),
+                deviation: formatter.voltageDeviation(volts: cell.deviation),
+                condition: condition(cell.condition),
+                isBalancing: cell.isBalancing,
+                isMinimum: cell.isMinimum,
+                isMaximum: cell.isMaximum
             )
         }
     }
@@ -146,23 +146,12 @@ public struct BikeBatteryHealthToViewStateMapper {
         return metrics
     }
 
-    private func condition(for voltage: Double, average: Double) -> BatteryCellCondition {
-        let deviation = voltage - average
-        if voltage <= Constants.criticalVoltage || abs(deviation) >= Constants.criticalDeviation {
-            return .critical
+    private func condition(_ condition: BatteryCellHealthCondition) -> BatteryCellCondition {
+        switch condition {
+        case .normal: .normal
+        case .belowAverage: .belowAverage
+        case .aboveAverage: .aboveAverage
+        case .critical: .critical
         }
-        if deviation <= -Constants.warningDeviation {
-            return .belowAverage
-        }
-        if deviation >= Constants.warningDeviation {
-            return .aboveAverage
-        }
-        return .normal
-    }
-
-    private enum Constants {
-        static let criticalVoltage = 3.0
-        static let warningDeviation = 0.02
-        static let criticalDeviation = 0.05
     }
 }

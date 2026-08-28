@@ -129,6 +129,18 @@ enum RideDynamicsCardPreviewFactory {
     }
 }
 
+@MainActor
+enum SystemHealthCardPreviewFactory {
+    static func makeViewModel(state: DashboardSystemHealthViewData) -> SystemHealthCardViewModel {
+        let viewModel = SystemHealthCardViewModel(
+            vehicleSession: PreviewVehicleSessionService(),
+            mapper: RideDashboardMapperFactory.makeSystemHealthMapper(locale: .autoupdatingCurrent)
+        )
+        viewModel.setPreviewState(state)
+        return viewModel
+    }
+}
+
 private actor PreviewRideTripRepository: RideTripRepository {
     func prepare(context _: BikeSessionContext) -> RideTrip? { nil }
     func saveActiveTrip(_: RideTrip) -> Bool { true }

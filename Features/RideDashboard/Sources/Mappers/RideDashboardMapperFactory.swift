@@ -76,6 +76,15 @@ public enum RideDashboardMapperFactory {
         RideDynamicsCardMapper(locale: locale)
     }
 
+    public static func makeSystemHealthMapper(locale: Locale) -> SystemHealthCardMapper {
+        SystemHealthCardMapper { measurementSystem in
+            makeMeasurementMapper(
+                measurementSystem: measurementSystem,
+                locale: locale
+            )
+        }
+    }
+
     public static func makeChargingMapper(
         settings: AppSettings,
         locale: Locale,

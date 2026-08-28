@@ -7,6 +7,7 @@ public final class RideDashboardFeatureModel: ObservableObject {
     let tripStatisticsViewModel: TripStatisticsCardViewModel
     let efficiencyViewModel: EfficiencyCardViewModel
     let rangeViewModel: RangeCardViewModel
+    let systemHealthViewModel: SystemHealthCardViewModel
     let dynamicsViewModel: RideDynamicsCardViewModel
     let chargingViewModel: ChargingDashboardViewModel
 
@@ -16,6 +17,7 @@ public final class RideDashboardFeatureModel: ObservableObject {
         tripStatisticsViewModel: TripStatisticsCardViewModel,
         efficiencyViewModel: EfficiencyCardViewModel,
         rangeViewModel: RangeCardViewModel,
+        systemHealthViewModel: SystemHealthCardViewModel,
         dynamicsViewModel: RideDynamicsCardViewModel,
         chargingViewModel: ChargingDashboardViewModel
     ) {
@@ -24,6 +26,7 @@ public final class RideDashboardFeatureModel: ObservableObject {
         self.tripStatisticsViewModel = tripStatisticsViewModel
         self.efficiencyViewModel = efficiencyViewModel
         self.rangeViewModel = rangeViewModel
+        self.systemHealthViewModel = systemHealthViewModel
         self.dynamicsViewModel = dynamicsViewModel
         self.chargingViewModel = chargingViewModel
     }
@@ -40,6 +43,7 @@ public final class RideDashboardFeatureModel: ObservableObject {
         tripStatisticsViewModel.stop()
         efficiencyViewModel.stop()
         rangeViewModel.stop()
+        systemHealthViewModel.setIsVisible(false)
         dynamicsViewModel.setIsVisible(false)
     }
 
@@ -65,6 +69,7 @@ public final class RideDashboardFeatureModel: ObservableObject {
             page: selection.efficiencyPage
         )
         rangeViewModel.setIsVisible(selection.isRangeVisible(in: centerMode))
+        systemHealthViewModel.setIsVisible(selection.isSystemHealthVisible(in: centerMode))
         dynamicsViewModel.setIsVisible(selection.isDynamicsVisible(in: centerMode))
     }
 }
