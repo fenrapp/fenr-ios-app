@@ -27,6 +27,7 @@ struct UserDefaultsAppSettingsRepositoryTests {
             speedSource: .hybrid,
             dashboardProgressBarMode: .speed,
             dashboardBatteryIndicatorMode: .estimatedRange,
+            dashboardDeviceBatteryDisplayMode: .text,
             showsDashboardTemperatures: false,
             dashboardCardConfiguration: cardConfiguration,
             rideNavigation: RideNavigationSettings(
@@ -66,6 +67,7 @@ struct UserDefaultsAppSettingsRepositoryTests {
 
         #expect(await repository.load().dashboardProgressBarMode == .energy)
         #expect(await repository.load().dashboardBatteryIndicatorMode == .percentage)
+        #expect(await repository.load().dashboardDeviceBatteryDisplayMode == .icon)
         #expect(!(await repository.load().showsDashboardTemperatures))
         #expect(await repository.load().dashboardCardConfiguration == .init())
         #expect(await repository.load().rideNavigation == .init())

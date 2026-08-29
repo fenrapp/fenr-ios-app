@@ -1,4 +1,5 @@
 @testable import RideDashboard
+import SettingsDomain
 import Testing
 import TestSupport
 
@@ -8,7 +9,7 @@ struct DashboardDeviceBatteryViewModelTests {
     @Test("Formats charging, low, and unavailable iPhone battery states")
     func mapsBatteryStates() async {
         let monitor = TestDashboardDeviceBatteryMonitor()
-        let viewModel = DashboardDeviceBatteryViewModel(monitor: monitor)
+        let viewModel = makeViewModel(monitor: monitor)
 
         viewModel.start()
         #expect(monitor.startCount == 1)
@@ -33,7 +34,7 @@ struct DashboardDeviceBatteryViewModelTests {
     @Test("Starts once and can restart after stopping")
     func ownsMonitoringLifecycle() {
         let monitor = TestDashboardDeviceBatteryMonitor()
-        let viewModel = DashboardDeviceBatteryViewModel(monitor: monitor)
+        let viewModel = makeViewModel(monitor: monitor)
 
         viewModel.start()
         viewModel.start()
@@ -43,5 +44,46 @@ struct DashboardDeviceBatteryViewModelTests {
         viewModel.start()
         #expect(monitor.startCount == 2)
         #expect(monitor.stopCount == 1)
+    }
+
+    @Test("Starts with the icon and persists display mode toggles")
+    func persistsDisplayMode() async {
+        let monitor = TestDashboardDeviceBatteryMonitor()
+        let repository = TestDashboardDeviceBatterySettingsRepository()
+        let viewModel = makeViewModel(monitor: monitor, repository: repository)
+
+        viewModel.start()
+        #expect(viewModel.viewState.displayMode == .icon)
+
+        viewModel.toggleDisplayMode()
+
+        #expect(viewModel.viewState.displayMode == .text)
+        #expect(await waitUntil { await repository.load().dashboardDeviceBatteryDisplayMode == .text })
+
+        viewModel.toggleDisplayMode()
+        viewModel.toggleDisplayMode()
+        viewModel.toggleDisplayMode()
+
+        #expect(viewModel.viewState.displayMode == .icon)
+        #expect(await waitUntil { await repository.load().dashboardDeviceBatteryDisplayMode == .icon })
+
+        viewModel.stop()
+        viewModel.start()
+        #expect(await waitUntil { viewModel.viewState.displayMode == .icon })
+
+        viewModel.toggleDisplayMode()
+        #expect(viewModel.viewState.displayMode == .text)
+        #expect(await waitUntil { await repository.load().dashboardDeviceBatteryDisplayMode == .text })
+    }
+
+    private func makeViewModel(
+        monitor: TestDashboardDeviceBatteryMonitor,
+        repository: TestDashboardDeviceBatterySettingsRepository = .init()
+    ) -> DashboardDeviceBatteryViewModel {
+        DashboardDeviceBatteryViewModel(
+            monitor: monitor,
+            loadSettings: LoadAppSettingsUseCase(repository: repository),
+            saveSettings: SaveAppSettingsUseCase(repository: repository)
+        )
     }
 }

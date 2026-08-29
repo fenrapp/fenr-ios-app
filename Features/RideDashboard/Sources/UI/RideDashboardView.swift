@@ -164,7 +164,8 @@ public struct RideDashboardView: View {
             .frame(width: proxy.size.width, height: proxy.size.height)
             .overlay(alignment: .topLeading) {
                 DashboardRideHeader(
-                    deviceBattery: deviceBatteryViewModel.viewState
+                    deviceBattery: deviceBatteryViewModel.viewState,
+                    toggleDeviceBatteryDisplayMode: deviceBatteryViewModel.toggleDisplayMode
                 )
                     .padding(Constants.accessoryEdgePadding)
             }
