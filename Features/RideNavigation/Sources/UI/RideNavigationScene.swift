@@ -49,11 +49,10 @@ public struct RideNavigationScene: View {
                 )
                 .transition(.scale(scale: Constants.miniTransitionScale).combined(with: .opacity))
             case .mini:
-                RideNavigationMiniView(
-                    state: feature.viewModel.miniViewState,
+                RideNavigationMiniScene(
+                    viewModel: feature.viewModel,
                     mapSurfaceFactory: feature.mapSurfaceFactory,
                     transitionNamespace: navigationSurfaceNamespace,
-                    onSelectCorner: feature.viewModel.setMiniMapCorner,
                     onExpand: onExpand
                 )
                 .transition(.scale(scale: Constants.miniTransitionScale).combined(with: .opacity))
@@ -98,6 +97,26 @@ public struct RideNavigationScene: View {
         static let miniTransitionScale = 0.92
         static let presentationTransitionDuration = 0.35
         static let reducedPresentationTransitionDuration = 0.12
+    }
+}
+
+@MainActor
+private struct RideNavigationMiniScene: View {
+    @ObservedObject var viewModel: RideNavigationViewModel
+    let mapSurfaceFactory: RideNavigationMapSurfaceFactory
+    let transitionNamespace: Namespace.ID
+    let onExpand: () -> Void
+
+    var body: some View {
+        RideNavigationMiniView(
+            state: viewModel.miniViewState,
+            mapSurfaceFactory: mapSurfaceFactory,
+            transitionNamespace: transitionNamespace,
+            onMove: viewModel.setMiniMapPosition,
+            onResize: viewModel.setMiniMapScale,
+            onToggleOrientation: viewModel.toggleMiniMapLayoutOrientation,
+            onExpand: onExpand
+        )
     }
 }
 

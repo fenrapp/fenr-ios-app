@@ -28,11 +28,59 @@ struct RideNavigationMiniModeTests {
         #expect(fixture.viewModel.miniViewState.mapScene.displayStyle == .focus)
         #expect(fixture.viewModel.miniViewState.mapScene.markers.isEmpty)
 
-        fixture.viewModel.setMiniMapCorner(.bottomLeading)
+        let position = RideNavigationMiniViewState.Position(
+            horizontalFraction: 0.02,
+            verticalFraction: 0.98
+        )
+        fixture.viewModel.setMiniMapPosition(position)
+        fixture.viewModel.setMiniMapScale(1.3)
+        fixture.viewModel.toggleMiniMapLayoutOrientation()
         #expect(await waitUntil {
-            await fixture.settingsRepository.load().rideNavigation.miniMapCorner == .bottomLeading
+            let settings = await fixture.settingsRepository.load().rideNavigation
+            return settings.miniMapPosition.horizontalFraction == 0.02
+                && settings.miniMapPosition.verticalFraction == 0.98
+                && settings.miniMapScale.value == 1.3
+                && settings.miniMapLayoutOrientation == .landscape
         })
+        #expect(fixture.viewModel.miniViewState.position == position)
+        #expect(fixture.viewModel.miniViewState.scale == 1.3)
+        #expect(fixture.viewModel.miniViewState.scaleRange == 0.7 ... 1.3)
+        #expect(fixture.viewModel.miniViewState.isLandscape)
         fixture.viewModel.stop()
+    }
+
+    @Test("mini map layout keeps every edge inside the screen margin")
+    func miniMapLayoutRespectsScreenMargins() {
+        let layout = RideNavigationMiniView.MiniMapLayout(
+            containerSize: CGSize(width: 900, height: 400),
+            scale: 1.3,
+            isLandscape: false
+        )
+        let topLeading = layout.position(for: .init(horizontalFraction: 0, verticalFraction: 0))
+        let bottomTrailing = layout.position(for: .init(horizontalFraction: 1, verticalFraction: 1))
+
+        #expect(abs(topLeading.x - layout.cardSize.width / 2 - 16) < 0.001)
+        #expect(abs(topLeading.y - layout.cardSize.height / 2 - 44 - 16) < 0.001)
+        #expect(abs(900 - bottomTrailing.x - layout.cardSize.width / 2 - 16) < 0.001)
+        #expect(abs(400 - bottomTrailing.y - layout.cardSize.height / 2 - 16) < 0.001)
+    }
+
+    @Test("mini map layout rotates and scales within its supported range")
+    func miniMapLayoutRotatesAndScales() {
+        let compact = RideNavigationMiniView.MiniMapLayout(
+            containerSize: CGSize(width: 900, height: 400),
+            scale: 0.7,
+            isLandscape: false
+        )
+        let expanded = RideNavigationMiniView.MiniMapLayout(
+            containerSize: CGSize(width: 900, height: 400),
+            scale: 1.3,
+            isLandscape: true
+        )
+
+        #expect(compact.cardSize.height > compact.cardSize.width)
+        #expect(expanded.cardSize.width > expanded.cardSize.height)
+        #expect(expanded.cardSize.width > compact.cardSize.width)
     }
 
     @Test("an automatic trail arrival remains compact until expanded")
