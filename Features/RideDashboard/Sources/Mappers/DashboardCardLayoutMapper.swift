@@ -25,6 +25,7 @@ public struct DashboardCardLayoutMapper: Sendable {
 
     private func ridingCard(_ id: DashboardCardSectionID) -> RidingDashboardCard {
         switch id {
+        case .navigation: .navigation
         case .currentTrip: .currentTrip
         case .efficiency: .efficiency
         case .range: .range

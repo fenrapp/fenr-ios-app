@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 @main
@@ -16,6 +17,9 @@ struct FENRDebugApp: App {
         WindowGroup {
             AppRootView(
                 dependencies: dependencies,
+                opensRideNavigationOnLaunch: ProcessInfo.processInfo.arguments.contains(
+                    "-openRideNavigation"
+                ),
                 settingsAccessory: {
                     AnyView(DebugPowerModeControls(controller: scenarioController))
                 }

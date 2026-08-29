@@ -2,31 +2,6 @@ import DesignSystem
 import SwiftUI
 import UIKit
 
-@MainActor
-public struct RideDashboardScene: View {
-    @StateObject private var feature: RideDashboardFeatureModel
-    private let onSettings: () -> Void
-    private let onDiagnostics: () -> Void
-
-    public init(
-        factory: any RideDashboardFeatureBuilding,
-        onSettings: @escaping () -> Void = {},
-        onDiagnostics: @escaping () -> Void
-    ) {
-        _feature = StateObject(wrappedValue: factory.makeFeature())
-        self.onSettings = onSettings
-        self.onDiagnostics = onDiagnostics
-    }
-
-    public var body: some View {
-        RideDashboardView(
-            feature: feature,
-            onSettings: onSettings,
-            onDiagnostics: onDiagnostics
-        )
-    }
-}
-
 public struct RideDashboardView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let feature: RideDashboardFeatureModel
@@ -44,10 +19,16 @@ public struct RideDashboardView: View {
     @State private var hiddenPageResetTask: Task<Void, Never>?
     private let onSettings: () -> Void
     private let onDiagnostics: () -> Void
+    private let onNavigation: () -> Void
+    private let isNavigationActive: Bool
+    private let isPresentationActive: Bool
 
     public init(
         feature: RideDashboardFeatureModel,
         onSettings: @escaping () -> Void = {},
+        onNavigation: @escaping () -> Void = {},
+        isNavigationActive: Bool = false,
+        isPresentationActive: Bool = true,
         onDiagnostics: @escaping () -> Void
     ) {
         self.feature = feature
@@ -61,6 +42,9 @@ public struct RideDashboardView: View {
         _dynamicsViewModel = ObservedObject(wrappedValue: feature.dynamicsViewModel)
         _chargingViewModel = ObservedObject(wrappedValue: feature.chargingViewModel)
         self.onSettings = onSettings
+        self.onNavigation = onNavigation
+        self.isNavigationActive = isNavigationActive
+        self.isPresentationActive = isPresentationActive
         self.onDiagnostics = onDiagnostics
     }
 
@@ -122,7 +106,9 @@ public struct RideDashboardView: View {
                                     resetCurrentTrip: currentTripViewModel.resetCurrentTrip,
                                     calibrateDynamics: dynamicsViewModel.calibrate,
                                     setChargePowerLimit: chargingViewModel.setChargePowerLimit(watts:),
-                                    setChargeTarget: chargingViewModel.setChargeTarget(percent:)
+                                    setChargeTarget: chargingViewModel.setChargeTarget(percent:),
+                                    openNavigation: onNavigation,
+                                    isNavigationActive: isNavigationActive
                                 )
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .offset(
@@ -207,8 +193,18 @@ public struct RideDashboardView: View {
         .background(Color(uiColor: .systemBackground).ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .task {
-            feature.start()
-            synchronizeCardLifecycles()
+            if isPresentationActive {
+                feature.start()
+                synchronizeCardLifecycles()
+            }
+        }
+        .onChange(of: isPresentationActive) {
+            if isPresentationActive {
+                feature.start()
+                synchronizeCardLifecycles()
+            } else {
+                feature.stopPresentation()
+            }
         }
         .onChange(of: viewModel.viewState.centerMode) {
             if viewModel.viewState.centerMode == .riding {
@@ -238,7 +234,6 @@ public struct RideDashboardView: View {
         }
     }
 }
-
 private struct DashboardRideTemperatureSummary: View {
     let state: RideDashboardViewState.TemperatureSummary
 

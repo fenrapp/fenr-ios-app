@@ -27,10 +27,13 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
         let pages = configuration.pages.map { page($0, in: configuration) }
         let visibleCount = pages.filter(\.isVisible).count
         let firstVisibleTitle = pages.first(where: \.isVisible)?.title ?? pages.first?.title ?? ""
+        let detail = pages.isEmpty
+            ? "Open ride navigation from the dashboard"
+            : "\(visibleCount) of \(pages.count) cards visible · \(firstVisibleTitle) first"
         return .init(
             id: configuration.id.rawValue,
             title: sectionTitle(configuration.id),
-            detail: "\(visibleCount) of \(pages.count) cards visible · \(firstVisibleTitle) first",
+            detail: detail,
             isVisible: configuration.isVisible,
             thumbnail: sectionThumbnail(configuration.id),
             pages: pages
@@ -52,6 +55,7 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
 
     private func sectionTitle(_ id: DashboardCardSectionID) -> String {
         switch id {
+        case .navigation: "Ride Navigation"
         case .currentTrip: "Current Trip"
         case .efficiency: "Efficiency"
         case .range: "Range"
@@ -79,6 +83,7 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
 
     private func sectionThumbnail(_ id: DashboardCardSectionID) -> DashboardCardThumbnailViewData {
         switch id {
+        case .navigation: .init(style: .compass, systemImage: "location.north.fill", accent: .accent)
         case .currentTrip: .init(style: .metrics, systemImage: "timer", accent: .accent)
         case .efficiency: .init(style: .chart, systemImage: "leaf.fill", accent: .positive)
         case .range: .init(style: .battery, systemImage: "road.lanes", accent: .informational)

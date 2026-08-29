@@ -295,6 +295,62 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "50B02F38006A8E6AE923F0A2"
+               BuildableName = "RideNavigationAppleMapsTests.xctest"
+               BlueprintName = "RideNavigationAppleMapsTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "E8DC84F8868FF25C7537B843"
+               BuildableName = "RideNavigationDataTests.xctest"
+               BlueprintName = "RideNavigationDataTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "65F63F67AC3D42EDCF1748B7"
+               BuildableName = "RideNavigationDomainTests.xctest"
+               BlueprintName = "RideNavigationDomainTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "1F897DADA89D3D19D5FE5AD8"
+               BuildableName = "RideNavigationTests.xctest"
+               BlueprintName = "RideNavigationTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "B8906249B93AD993A468E8C1"
                BuildableName = "RideSessionDataTests.xctest"
                BlueprintName = "RideSessionDataTests"
@@ -499,6 +555,50 @@
                BlueprintIdentifier = "356DDF7D3F812ECC21EBADB7"
                BuildableName = "RideSessionDomainTests.xctest"
                BlueprintName = "RideSessionDomainTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "65F63F67AC3D42EDCF1748B7"
+               BuildableName = "RideNavigationDomainTests.xctest"
+               BlueprintName = "RideNavigationDomainTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "E8DC84F8868FF25C7537B843"
+               BuildableName = "RideNavigationDataTests.xctest"
+               BlueprintName = "RideNavigationDataTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "1F897DADA89D3D19D5FE5AD8"
+               BuildableName = "RideNavigationTests.xctest"
+               BlueprintName = "RideNavigationTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "50B02F38006A8E6AE923F0A2"
+               BuildableName = "RideNavigationAppleMapsTests.xctest"
+               BlueprintName = "RideNavigationAppleMapsTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </TestableReference>

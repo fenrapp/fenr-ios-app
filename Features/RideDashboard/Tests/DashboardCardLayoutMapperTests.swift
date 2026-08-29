@@ -8,7 +8,7 @@ struct DashboardCardLayoutMapperTests {
     func mapsConfiguration() {
         var configuration = DashboardCardConfiguration()
         configuration.setSectionOrder([
-            .range, .rideDynamics, .currentTrip, .efficiency, .systemHealth
+            .navigation, .range, .rideDynamics, .currentTrip, .efficiency, .systemHealth
         ])
         configuration.setSectionVisibility(false, id: .efficiency)
         configuration.setPageOrder([.batteryTrip, .range], sectionID: .range)
@@ -18,14 +18,14 @@ struct DashboardCardLayoutMapperTests {
         let layout = DashboardCardLayoutMapper().map(configuration)
 
         #expect(layout.ridingCards == [
-            .speedometer, .range, .dynamics, .currentTrip, .systemHealth
+            .speedometer, .navigation, .range, .dynamics, .currentTrip, .systemHealth
         ])
         #expect(layout.rangePages == [.battery])
         #expect(layout.dynamicsPages == [.course, .lean, .pitch])
         #expect(layout.efficiencyPages == [.live, .trend])
     }
 
-    @Test("Keeps Speedometer as the only riding card when every section is hidden")
+    @Test("Keeps only the speedometer when every configurable section is hidden")
     func mapsSingleCardLayout() {
         var configuration = DashboardCardConfiguration()
         for sectionID in DashboardCardSectionID.allCases {
@@ -35,6 +35,17 @@ struct DashboardCardLayoutMapperTests {
         let layout = DashboardCardLayoutMapper().map(configuration)
 
         #expect(layout.ridingCards == [.speedometer])
+    }
+
+    @Test("Hides ride navigation when its setting is disabled")
+    func hidesNavigationCard() {
+        var configuration = DashboardCardConfiguration()
+        configuration.setSectionVisibility(false, id: .navigation)
+
+        let layout = DashboardCardLayoutMapper().map(configuration)
+
+        #expect(!layout.ridingCards.contains(.navigation))
+        #expect(layout.ridingCards.first == .speedometer)
     }
 
     @Test("Selection adopts configured first pages and falls back to speedometer")

@@ -12,9 +12,9 @@ struct DashboardCardSettingsViewModelTests {
 
         #expect(state.fixedCards.map(\.title) == ["Speedometer", "Charging"])
         #expect(state.sections.map(\.title) == [
-            "Current Trip", "Efficiency", "Range", "System Health", "Ride Dynamics"
+            "Ride Navigation", "Current Trip", "Efficiency", "Range", "System Health", "Ride Dynamics"
         ])
-        #expect(state.sections.first?.detail == "2 of 2 cards visible · Current Trip first")
+        #expect(state.sections.first?.detail == "Open ride navigation from the dashboard")
     }
 
     @Test("Saves section order and visibility immediately")
@@ -22,10 +22,11 @@ struct DashboardCardSettingsViewModelTests {
         let repository = DashboardCardSettingsRepository(saveDelay: .milliseconds(100))
         let viewModel = makeViewModel(repository: repository)
         viewModel.start()
-        #expect(await waitUntil { viewModel.viewState.sections.count == 5 })
+        #expect(await waitUntil { viewModel.viewState.sections.count == 6 })
 
         viewModel.setSectionOrder(ids: [
             DashboardCardSectionID.range.rawValue,
+            DashboardCardSectionID.navigation.rawValue,
             DashboardCardSectionID.currentTrip.rawValue,
             DashboardCardSectionID.efficiency.rawValue,
             DashboardCardSectionID.systemHealth.rawValue,
@@ -56,7 +57,7 @@ struct DashboardCardSettingsViewModelTests {
         let repository = DashboardCardSettingsRepository()
         let viewModel = makeViewModel(repository: repository)
         viewModel.start()
-        #expect(await waitUntil { viewModel.viewState.sections.count == 5 })
+        #expect(await waitUntil { viewModel.viewState.sections.count == 6 })
 
         viewModel.setPageOrder(
             ids: [DashboardCardPageID.efficiencyTrend.rawValue, DashboardCardPageID.efficiencyLive.rawValue],
@@ -111,7 +112,7 @@ struct DashboardCardSettingsViewModelTests {
     func clearsDuplicateSaveConfirmation() async {
         var initialConfiguration = DashboardCardConfiguration()
         initialConfiguration.setSectionOrder([
-            .range, .currentTrip, .efficiency, .systemHealth, .rideDynamics
+            .range, .navigation, .currentTrip, .efficiency, .systemHealth, .rideDynamics
         ])
         let repository = DashboardCardSettingsRepository(
             settings: AppSettings(dashboardCardConfiguration: initialConfiguration)

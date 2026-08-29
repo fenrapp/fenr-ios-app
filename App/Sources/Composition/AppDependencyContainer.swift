@@ -11,6 +11,8 @@ import Foundation
 import PowerModeSettings
 import RideDashboard
 import RideHistory
+import RideNavigation
+import RideNavigationDomain
 import RideSession
 import RideSessionDomain
 import RuntimeConfiguration
@@ -79,6 +81,7 @@ struct AppDependencyContainer {
     private let initialOnboardingVIN: String?
     private let forceOnboarding: Bool
     private let bleTraceLogRepository: any BLETraceLogRepository
+    private let incomingMapLinkStore: any IncomingMapLinkStoring
 
     init(
         diagnosticsContainer: BikeDiagnosticsDependencyContainer,
@@ -97,6 +100,7 @@ struct AppDependencyContainer {
         powerModeSettingsContainer: PowerModeSettingsDependencyContainer,
         rideHistoryContainer: RideHistoryDependencyContainer,
         bleTraceLogRepository: any BLETraceLogRepository,
+        incomingMapLinkStore: any IncomingMapLinkStoring,
         initialOnboardingVIN: String? = nil,
         forceOnboarding: Bool = false
     ) {
@@ -119,6 +123,7 @@ struct AppDependencyContainer {
         self.initialOnboardingVIN = initialOnboardingVIN
         self.forceOnboarding = forceOnboarding
         self.bleTraceLogRepository = bleTraceLogRepository
+        self.incomingMapLinkStore = incomingMapLinkStore
     }
 
     func makeRootDependencies() -> AppRootDependencies {
@@ -155,6 +160,12 @@ struct AppDependencyContainer {
             dashboardCardSettingsViewModel: makeDashboardCardSettingsViewModel(),
             powerModeSettingsViewModel: makePowerModeSettingsViewModel(),
             rideHistoryViewModel: makeRideHistoryViewModel(),
+            rideNavigationFactory: AppRideNavigationFeatureFactory(
+                vehicleSession: vehicleSession,
+                observeDeviceSpeed: ObserveDeviceSpeedUseCase(repository: deviceSpeedRepository),
+                settingsRepository: settingsRepository
+            ),
+            incomingMapLinkStore: incomingMapLinkStore,
             setupFlow: setupFlow,
             lifecycleController: AppLifecycleController(
                 sessionController: sessionController,

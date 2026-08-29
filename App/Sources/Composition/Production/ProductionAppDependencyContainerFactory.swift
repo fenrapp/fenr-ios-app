@@ -7,6 +7,7 @@ import CoreMotion
 import EnvironmentData
 import EnvironmentDomain
 import Foundation
+import RideNavigationData
 import RideSessionData
 import SettingsData
 import UIKit
@@ -68,8 +69,14 @@ enum ProductionAppDependencyContainerFactory {
             dashboardCardSettingsContainer: DashboardCardSettingsDependencyContainer(),
             powerModeSettingsContainer: PowerModeSettingsDependencyContainer(),
             rideHistoryContainer: RideHistoryDependencyContainer(),
-            bleTraceLogRepository: bleTraceRepository
+            bleTraceLogRepository: bleTraceRepository,
+            incomingMapLinkStore: makeIncomingMapLinkStore()
         )
+    }
+
+    private static func makeIncomingMapLinkStore() -> UserDefaultsIncomingMapLinkStore {
+        (try? UserDefaultsIncomingMapLinkStore.shared())
+            ?? UserDefaultsIncomingMapLinkStore(userDefaults: .standard)
     }
 
     private static func makeRideTripRepository() -> SwiftDataRideTripRepository {

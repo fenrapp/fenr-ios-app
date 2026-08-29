@@ -185,6 +185,27 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesessiondata
+  RideNavigationDomain:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/RideNavigationDomain/Sources
+    dependencies:
+      - target: EnvironmentDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigationdomain
+  RideNavigationData:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/RideNavigationData/Sources
+    dependencies:
+      - target: EnvironmentDomain
+      - target: RideNavigationDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigationdata
   SettingsDomain:
     type: framework
     platform: auto
@@ -347,6 +368,32 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridehistory
+  RideNavigation:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Features/RideNavigation/Sources
+    dependencies:
+      - target: EnvironmentDomain
+      - target: RideNavigationDomain
+      - target: SettingsDomain
+      - target: VehicleSession
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigation
+  RideNavigationAppleMaps:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/RideNavigationAppleMaps/Sources
+    dependencies:
+      - target: EnvironmentDomain
+      - target: RideNavigationDomain
+      - target: RideNavigation
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigationapplemaps
   WatchDashboard:
     type: framework
     platform: watchOS
@@ -381,6 +428,34 @@ targets:
       path: App/Generated/FENR-Info.plist
       properties:
         NSSupportsLiveActivities: true
+        LSSupportsOpeningDocumentsInPlace: true
+        CFBundleURLTypes:
+          - CFBundleURLName: com.fenr.app.navigation
+            CFBundleURLSchemes:
+              - fenr-app
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: GPX route
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Owner
+            LSItemContentTypes:
+              - com.topografix.gpx
+          - CFBundleTypeName: Apple Maps directions request
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - com.apple.maps.directionsrequest
+        MKDirectionsApplicationSupportedModes:
+          - MKDirectionsModeCar
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: com.topografix.gpx
+            UTTypeDescription: GPS Exchange Format
+            UTTypeConformsTo:
+              - public.xml
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - gpx
+              public.mime-type:
+                - application/gpx+xml
         UIBackgroundModes:
           - bluetooth-central
         UISupportedInterfaceOrientations:
@@ -430,6 +505,10 @@ targets:
       - target: DashboardCardSettings
       - target: PowerModeSettings
       - target: RideHistory
+      - target: RideNavigation
+      - target: RideNavigationAppleMaps
+      - target: RideNavigationData
+      - target: RideNavigationDomain
       - target: BikeData
       - target: EnvironmentDomain
       - target: EnvironmentData
@@ -445,6 +524,8 @@ targets:
       - target: RuntimeConfiguration
       - target: ChargingLiveActivityExtension
         embed: true
+      - target: FENRShareExtension
+        embed: true
     settings:
       base:
         INFOPLIST_KEY_NSMotionUsageDescription: "FENR uses motion data to show motorcycle lean and pitch while riding."
@@ -454,7 +535,7 @@ targets:
         INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
         INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: FENR uses Bluetooth to authenticate with your Stark Varg and display telemetry.
         INFOPLIST_KEY_NSCameraUsageDescription: FENR uses the camera to scan your bike VIN during setup.
-        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: FENR uses your location while the ride dashboard is open to provide GPS speed, course, altitude, and coordinates.
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: FENR uses your location for GPS speed, ride recording, and route navigation.
         CODE_SIGN_ENTITLEMENTS: App/FENR.entitlements
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone:
           - UIInterfaceOrientationPortrait
@@ -472,6 +553,34 @@ targets:
       path: App/Generated/FENRDebug-Info.plist
       properties:
         NSSupportsLiveActivities: true
+        LSSupportsOpeningDocumentsInPlace: true
+        CFBundleURLTypes:
+          - CFBundleURLName: com.fenr.app.navigation
+            CFBundleURLSchemes:
+              - fenr-app
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: GPX route
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Owner
+            LSItemContentTypes:
+              - com.topografix.gpx
+          - CFBundleTypeName: Apple Maps directions request
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - com.apple.maps.directionsrequest
+        MKDirectionsApplicationSupportedModes:
+          - MKDirectionsModeCar
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: com.topografix.gpx
+            UTTypeDescription: GPS Exchange Format
+            UTTypeConformsTo:
+              - public.xml
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - gpx
+              public.mime-type:
+                - application/gpx+xml
         UIBackgroundModes:
           - bluetooth-central
         UISupportedInterfaceOrientations:
@@ -531,6 +640,10 @@ targets:
       - target: DashboardCardSettings
       - target: PowerModeSettings
       - target: RideHistory
+      - target: RideNavigation
+      - target: RideNavigationAppleMaps
+      - target: RideNavigationData
+      - target: RideNavigationDomain
       - target: BikeDomain
       - target: EnvironmentDomain
       - target: EnvironmentData
@@ -544,6 +657,8 @@ targets:
       - target: BikeEmulator
       - target: ChargingLiveActivityDebugExtension
         embed: true
+      - target: FENRDebugShareExtension
+        embed: true
     settings:
       base:
         INFOPLIST_KEY_NSMotionUsageDescription: "FENR uses motion data to show motorcycle lean and pitch while riding."
@@ -552,7 +667,7 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: FENR Debug
         INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
         INFOPLIST_KEY_NSCameraUsageDescription: FENR uses the camera to scan your bike VIN during setup.
-        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: FENR uses your location while the ride dashboard is open to provide GPS speed, course, altitude, and coordinates.
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: FENR uses your location for GPS speed, ride recording, and route navigation.
         CODE_SIGN_ENTITLEMENTS: App/FENRDebug.entitlements
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone:
           - UIInterfaceOrientationPortrait
@@ -591,6 +706,40 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug.charging-live-activity
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: LiveActivityExtension/Info.plist
+  FENRShareExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: ShareExtension/Sources
+    dependencies:
+      - target: RideNavigationData
+      - target: RideNavigationDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.share
+        PRODUCT_NAME: Open in FENR
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: ShareExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: ShareExtension/FENRShare.entitlements
+        SKIP_INSTALL: YES
+  FENRDebugShareExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: ShareExtension/Sources
+    dependencies:
+      - target: RideNavigationData
+      - target: RideNavigationDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug.share
+        PRODUCT_NAME: Open in FENR Debug
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: ShareExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: ShareExtension/FENRDebugShare.entitlements
+        SKIP_INSTALL: YES
   FENRWatch:
     type: application
     platform: watchOS
@@ -794,6 +943,56 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesessiondomain.tests
+  RideNavigationDomainTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/RideNavigationDomain/Tests
+    dependencies:
+      - target: EnvironmentDomain
+      - target: RideNavigationDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigationdomain.tests
+  RideNavigationDataTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/RideNavigationData/Tests
+    dependencies:
+      - target: EnvironmentDomain
+      - target: RideNavigationDomain
+      - target: RideNavigationData
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigationdata.tests
+  RideNavigationTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Features/RideNavigation/Tests
+    dependencies:
+      - target: EnvironmentDomain
+      - target: RideNavigation
+      - target: RideNavigationDomain
+      - target: SettingsDomain
+      - target: TestSupport
+      - target: VehicleSession
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigation.tests
+  RideNavigationAppleMapsTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/RideNavigationAppleMaps/Tests
+    dependencies:
+      - target: EnvironmentDomain
+      - target: RideNavigationAppleMaps
+      - target: RideNavigationDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigationapplemaps.tests
   RideSessionTests:
     type: bundle.unit-test
     platform: iOS
@@ -1019,6 +1218,10 @@ targets:
       - target: DashboardCardSettings
       - target: PowerModeSettings
       - target: RideHistory
+      - target: RideNavigation
+      - target: RideNavigationAppleMaps
+      - target: RideNavigationData
+      - target: RideNavigationDomain
       - target: BikeData
       - target: EnvironmentDomain
       - target: EnvironmentData
@@ -1057,6 +1260,10 @@ targets:
       - target: DashboardCardSettings
       - target: PowerModeSettings
       - target: RideHistory
+      - target: RideNavigation
+      - target: RideNavigationAppleMaps
+      - target: RideNavigationData
+      - target: RideNavigationDomain
       - target: BikeDiagnostics
       - target: BikeOnboarding
       - target: RideDashboard
@@ -1094,6 +1301,10 @@ schemes:
         ChargeControlTests: [test]
         SettingsDataTests: [test]
         RideSessionDomainTests: [test]
+        RideNavigationDomainTests: [test]
+        RideNavigationDataTests: [test]
+        RideNavigationTests: [test]
+        RideNavigationAppleMapsTests: [test]
         RideSessionTests: [test]
         VehicleSessionTests: [test]
         RideSessionDataTests: [test]
@@ -1121,6 +1332,10 @@ schemes:
         - ChargeControlTests
         - SettingsDataTests
         - RideSessionDomainTests
+        - RideNavigationDomainTests
+        - RideNavigationDataTests
+        - RideNavigationTests
+        - RideNavigationAppleMapsTests
         - RideSessionTests
         - VehicleSessionTests
         - RideSessionDataTests
