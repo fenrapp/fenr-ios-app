@@ -216,10 +216,25 @@ public final class RideNavigationViewModel: ObservableObject {
         screen == .map && [.following, .navigating, .recording, .paused].contains(activity)
     }
 
-    public func setMiniMapCorner(_ corner: RideNavigationMiniViewState.Corner) {
-        let setting = MiniMapCorner(corner)
-        guard appSettings.rideNavigation.miniMapCorner != setting else { return }
-        appSettings.rideNavigation.miniMapCorner = setting
+    public func setMiniMapPosition(_ position: RideNavigationMiniViewState.Position) {
+        let setting = MiniMapPosition(position)
+        guard appSettings.rideNavigation.miniMapPosition != setting else { return }
+        appSettings.rideNavigation.miniMapPosition = setting
+        persistSettings()
+        renderMiniViewState()
+    }
+
+    public func setMiniMapScale(_ scale: Double) {
+        let setting = MiniMapScale(scale)
+        guard appSettings.rideNavigation.miniMapScale != setting else { return }
+        appSettings.rideNavigation.miniMapScale = setting
+        persistSettings()
+        renderMiniViewState()
+    }
+
+    public func toggleMiniMapLayoutOrientation() {
+        appSettings.rideNavigation.miniMapLayoutOrientation =
+            appSettings.rideNavigation.miniMapLayoutOrientation == .portrait ? .landscape : .portrait
         persistSettings()
         renderMiniViewState()
     }
@@ -1108,7 +1123,10 @@ extension RideNavigationViewModel {
         }
         miniViewState = RideNavigationMiniViewState(
             mapScene: scene,
-            corner: RideNavigationMiniViewState.Corner(appSettings.rideNavigation.miniMapCorner),
+            position: RideNavigationMiniViewState.Position(appSettings.rideNavigation.miniMapPosition),
+            scale: appSettings.rideNavigation.miniMapScale.value,
+            scaleRange: MiniMapScale.minimumValue ... MiniMapScale.maximumValue,
+            isLandscape: appSettings.rideNavigation.miniMapLayoutOrientation == .landscape,
             statusText: statusText,
             accessibilityLabel: statusText.map { "Mini navigation map, \($0)" }
                 ?? "Mini navigation map"
@@ -1831,25 +1849,21 @@ private struct RideNavigationLocationSnapshot {
     }
 }
 
-private extension MiniMapCorner {
-    init(_ corner: RideNavigationMiniViewState.Corner) {
-        switch corner {
-        case .topLeading: self = .topLeading
-        case .topTrailing: self = .topTrailing
-        case .bottomLeading: self = .bottomLeading
-        case .bottomTrailing: self = .bottomTrailing
-        }
+private extension MiniMapPosition {
+    init(_ position: RideNavigationMiniViewState.Position) {
+        self.init(
+            horizontalFraction: position.horizontalFraction,
+            verticalFraction: position.verticalFraction
+        )
     }
 }
 
-private extension RideNavigationMiniViewState.Corner {
-    init(_ corner: MiniMapCorner) {
-        switch corner {
-        case .topLeading: self = .topLeading
-        case .topTrailing: self = .topTrailing
-        case .bottomLeading: self = .bottomLeading
-        case .bottomTrailing: self = .bottomTrailing
-        }
+private extension RideNavigationMiniViewState.Position {
+    init(_ position: MiniMapPosition) {
+        self.init(
+            horizontalFraction: position.horizontalFraction,
+            verticalFraction: position.verticalFraction
+        )
     }
 }
 // swiftlint:enable file_length

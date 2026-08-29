@@ -35,7 +35,9 @@ struct UserDefaultsAppSettingsRepositoryTests {
                 avoidsHighways: true,
                 preferredMapStyle: .satellite,
                 mapOrientation: .northUp,
-                miniMapCorner: .bottomLeading
+                miniMapPosition: MiniMapPosition(horizontalFraction: 0.28, verticalFraction: 0.73),
+                miniMapScale: MiniMapScale(1.3),
+                miniMapLayoutOrientation: .landscape
             ),
             measurementSystem: .imperial,
             batteryPackCapacity: .sixPointEightKilowattHours
@@ -112,7 +114,41 @@ struct UserDefaultsAppSettingsRepositoryTests {
         let settings = await UserDefaultsAppSettingsRepository(userDefaults: defaults).load()
 
         #expect(settings.rideNavigation.mapOrientation == .headingUp)
-        #expect(settings.rideNavigation.miniMapCorner == .topTrailing)
+        #expect(settings.rideNavigation.miniMapPosition == .topTrailing)
+        #expect(settings.rideNavigation.miniMapScale == .initial)
+        #expect(settings.rideNavigation.miniMapLayoutOrientation == .portrait)
+    }
+
+    @Test("Migrates a saved mini map corner to its normalized position")
+    func migratesLegacyMiniMapCorner() async throws {
+        let defaults = makeDefaults()
+        defaults.set(
+            try JSONSerialization.data(withJSONObject: [
+                "rideNavigation": ["miniMapCorner": "bottomLeading"]
+            ]),
+            forKey: "fenr.app.settings"
+        )
+
+        let settings = await UserDefaultsAppSettingsRepository(userDefaults: defaults).load()
+
+        #expect(settings.rideNavigation.miniMapPosition == MiniMapPosition(
+            horizontalFraction: 0.15,
+            verticalFraction: 0.65
+        ))
+    }
+
+    @Test("Clamps a mini map position to normalized screen coordinates")
+    func clampsMiniMapPositionToScreen() {
+        let position = MiniMapPosition(horizontalFraction: -0.4, verticalFraction: 1.8)
+
+        #expect(position.horizontalFraction == 0)
+        #expect(position.verticalFraction == 1)
+    }
+
+    @Test("Clamps the persisted mini map scale to its supported range")
+    func clampsMiniMapScale() {
+        #expect(MiniMapScale(0.2).value == 0.7)
+        #expect(MiniMapScale(2).value == 1.3)
     }
 
     @Test("Persists power mode names independently by bike and map")
