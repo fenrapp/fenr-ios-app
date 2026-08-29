@@ -8,8 +8,10 @@ struct DashboardRideHeader: View {
     var body: some View {
         HStack(spacing: Constants.itemSpacing) {
             clock
-            separator
-            phoneBattery
+            if deviceBattery.displayMode != .hidden {
+                separator
+                phoneBattery
+            }
         }
         .font(.system(size: Constants.fontSize, weight: .semibold, design: .rounded))
         .monospacedDigit()
@@ -27,10 +29,14 @@ struct DashboardRideHeader: View {
     private var phoneBattery: some View {
         Button(action: toggleDeviceBatteryDisplayMode) {
             switch deviceBattery.displayMode {
-            case .icon:
+            case .iconAndText:
                 Label(deviceBattery.percentageText, systemImage: deviceBattery.systemImage)
-            case .text:
-                Text("iPhone \(deviceBattery.percentageText)")
+            case .textOnly:
+                Text(deviceBattery.percentageText)
+            case .iconOnly:
+                Image(systemName: deviceBattery.systemImage)
+            case .hidden:
+                EmptyView()
             }
         }
         .buttonStyle(.plain)
@@ -60,8 +66,10 @@ struct DashboardRideHeader: View {
 
     private var deviceBatteryDisplayModeHint: String {
         switch deviceBattery.displayMode {
-        case .icon: "Switches to text display"
-        case .text: "Switches to icon display"
+        case .iconAndText: "Switches to percentage-only display"
+        case .textOnly: "Switches to icon-only display"
+        case .iconOnly: "Switches to icon and percentage display"
+        case .hidden: ""
         }
     }
 

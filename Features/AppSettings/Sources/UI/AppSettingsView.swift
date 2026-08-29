@@ -40,6 +40,17 @@ public struct AppSettingsView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
 
+                Picker("Phone battery", selection: dashboardDeviceBatteryDisplayModeBinding) {
+                    ForEach(viewModel.viewState.dashboardDeviceBatteryDisplayMode.options) { option in
+                        Text(option.title).tag(option.id)
+                    }
+                }
+                .pickerStyle(.menu)
+
+                Text("Controls how the phone battery appears beside the dashboard clock.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
                 Toggle("Battery and inverter temperatures", isOn: showsDashboardTemperaturesBinding)
 
                 Text("Shows available thermal readings on the ride dashboard.")
@@ -182,6 +193,13 @@ public struct AppSettingsView: View {
         .init(
             get: { viewModel.viewState.showsDashboardTemperatures },
             set: { viewModel.setShowsDashboardTemperatures($0) }
+        )
+    }
+
+    private var dashboardDeviceBatteryDisplayModeBinding: Binding<String> {
+        .init(
+            get: { viewModel.viewState.dashboardDeviceBatteryDisplayMode.selectedID },
+            set: { viewModel.selectDashboardDeviceBatteryDisplayMode(id: $0) }
         )
     }
 

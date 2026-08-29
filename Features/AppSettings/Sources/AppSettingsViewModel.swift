@@ -95,6 +95,14 @@ public final class AppSettingsViewModel: ObservableObject {
         save(updated)
     }
 
+    public func selectDashboardDeviceBatteryDisplayMode(id: String) {
+        guard let mode = DashboardDeviceBatteryDisplayMode(rawValue: id) else { return }
+        var updated = settings
+        updated.dashboardDeviceBatteryDisplayMode = mode
+        settings = updated
+        save(updated)
+    }
+
     public func setShowsDashboardTemperatures(_ isVisible: Bool) {
         var updated = settings
         updated.showsDashboardTemperatures = isVisible

@@ -9,7 +9,7 @@ public final class DashboardDeviceBatteryViewModel: ObservableObject {
     private let loadSettings: LoadAppSettingsUseCase
     private let saveSettings: SaveAppSettingsUseCase
     private var snapshot = DashboardDeviceBatterySnapshot(level: nil, isCharging: false)
-    private var displayMode = DashboardDeviceBatteryDisplayMode.icon
+    private var displayMode = DashboardDeviceBatteryDisplayMode.iconAndText
     private var observationTask: Task<Void, Never>?
     private var settingsLoadTask: Task<Void, Never>?
     private var settingsSaveTask: Task<Void, Never>?
@@ -55,7 +55,7 @@ public final class DashboardDeviceBatteryViewModel: ObservableObject {
     func toggleDisplayMode() {
         settingsLoadTask?.cancel()
         settingsLoadTask = nil
-        displayMode = displayMode.toggled
+        displayMode = displayMode.nextVisibleMode
         render()
         save(displayMode)
     }

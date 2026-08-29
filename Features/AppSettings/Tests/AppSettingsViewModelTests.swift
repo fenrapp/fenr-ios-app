@@ -21,6 +21,7 @@ struct AppSettingsViewModelTests {
         viewModel.selectSpeedSource(id: SpeedSource.hybrid.rawValue)
         viewModel.selectDashboardProgressBarMode(id: DashboardProgressBarMode.hidden.rawValue)
         viewModel.selectDashboardBatteryIndicatorMode(id: DashboardBatteryIndicatorMode.estimatedRange.rawValue)
+        viewModel.selectDashboardDeviceBatteryDisplayMode(id: DashboardDeviceBatteryDisplayMode.iconOnly.rawValue)
         viewModel.setShowsDashboardTemperatures(true)
         viewModel.selectMeasurementSystem(id: MeasurementSystem.imperial.rawValue)
         viewModel.selectBatteryPackCapacity(id: BatteryPackCapacity.sixPointEightKilowattHours.rawValue)
@@ -28,6 +29,7 @@ struct AppSettingsViewModelTests {
             speedSource: .hybrid,
             dashboardProgressBarMode: .hidden,
             dashboardBatteryIndicatorMode: .estimatedRange,
+            dashboardDeviceBatteryDisplayMode: .iconOnly,
             showsDashboardTemperatures: true,
             measurementSystem: .imperial
         )
@@ -71,6 +73,11 @@ struct AppSettingsViewModelTests {
         #expect(
             viewModel.viewState.dashboardBatteryIndicatorMode.options.map(\.title)
                 == ["Percentage", "Estimated range"]
+        )
+        #expect(viewModel.viewState.dashboardDeviceBatteryDisplayMode.selectedID == "iconAndText")
+        #expect(
+            viewModel.viewState.dashboardDeviceBatteryDisplayMode.options.map(\.title)
+                == ["Icon and percentage", "Percentage only", "Icon only", "Hidden"]
         )
         #expect(!viewModel.viewState.showsDashboardTemperatures)
         #expect(viewModel.viewState.measurementSystem.options.map(\.title) == ["System", "Metric", "Imperial"])
