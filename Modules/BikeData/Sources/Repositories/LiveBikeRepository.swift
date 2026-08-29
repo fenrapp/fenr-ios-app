@@ -110,6 +110,24 @@ public actor LiveBikeRepository: BikeRepository, BikeBatteryHealthRepository, Bi
         try await client.readBikeStatusSnapshot()
     }
 
+    public func prepareBikeLockControl() async throws -> BikeLockControlSnapshot {
+        let snapshot = try await client.prepareBikeLockControl()
+        return .init(
+            vcuFirmware: snapshot.vcuFirmware,
+            isLocked: snapshot.isLocked,
+            didPassNoOpWrite: snapshot.didPassNoOpWrite
+        )
+    }
+
+    public func setBikeLocked(_ isLocked: Bool) async throws -> BikeLockControlSnapshot {
+        let snapshot = try await client.setBikeLocked(isLocked)
+        return .init(
+            vcuFirmware: snapshot.vcuFirmware,
+            isLocked: snapshot.isLocked,
+            didPassNoOpWrite: snapshot.didPassNoOpWrite
+        )
+    }
+
     public func refreshPowerModeConfigurations() async throws {
         try await client.refreshPowerModeConfigurations()
     }

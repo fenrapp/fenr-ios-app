@@ -1,5 +1,6 @@
 public enum RidingDashboardCard: Int, CaseIterable, Hashable, Sendable {
     case speedometer
+    case bikeLock
     case navigation
     case currentTrip
     case efficiency
@@ -10,6 +11,7 @@ public enum RidingDashboardCard: Int, CaseIterable, Hashable, Sendable {
     var accessibilityLabel: String {
         switch self {
         case .speedometer: "Speedometer"
+        case .bikeLock: "Bike Lock"
         case .navigation: "Ride Navigation"
         case .currentTrip: "Current Trip"
         case .efficiency: "Efficiency"

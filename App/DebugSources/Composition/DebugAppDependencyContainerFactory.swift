@@ -115,6 +115,11 @@ enum DebugAppDependencyContainerFactory {
             rideHistoryContainer: RideHistoryDependencyContainer(),
             bleTraceLogRepository: NoOpBLETraceRepository(),
             incomingMapLinkStore: makeIncomingMapLinkStore(),
+            bikeLockCredentialStore: KeychainBikeLockCredentialStore(
+                service: "com.fenr.app.debug.bike-lock"
+            ),
+            bikeLockAuthenticator: LocalAuthenticationBikeLockAuthenticator(),
+            allowsExperimentalBikeLockControl: true,
             initialOnboardingVIN: BikeEmulatorIdentity.vin,
             forceOnboarding: forceOnboarding
         )

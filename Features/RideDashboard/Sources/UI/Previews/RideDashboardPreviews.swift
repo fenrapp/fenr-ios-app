@@ -161,7 +161,8 @@ private func previewFeature(
                 canCalibrate: true
             )
         ),
-        chargingViewModel: previewChargingViewModel(state: chargingState)
+        chargingViewModel: previewChargingViewModel(state: chargingState),
+        bikeLockViewModel: BikeLockCardPreviewFactory.makeViewModel()
     )
 }
 

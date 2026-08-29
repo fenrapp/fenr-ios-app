@@ -8,6 +8,8 @@ public protocol BikeRepository: Sendable {
     func retrySecurityHandshake() async throws
     func readTelemetrySnapshot() async throws
     func readBikeStatusSnapshot() async throws
+    func prepareBikeLockControl() async throws -> BikeLockControlSnapshot
+    func setBikeLocked(_ isLocked: Bool) async throws -> BikeLockControlSnapshot
     func refreshPowerModeConfigurations() async throws
     func refreshPowerModeConfiguration(mapIndex: Int) async throws
     func preparePowerModeControl(mapIndex: Int) async throws
@@ -30,6 +32,12 @@ public protocol BikeRepository: Sendable {
 
 public extension BikeRepository {
     func readBikeStatusSnapshot() async throws {}
+    func prepareBikeLockControl() async throws -> BikeLockControlSnapshot {
+        throw BikeRepositoryError.bikeLockControlUnavailable
+    }
+    func setBikeLocked(_ isLocked: Bool) async throws -> BikeLockControlSnapshot {
+        throw BikeRepositoryError.bikeLockControlUnavailable
+    }
     func refreshPowerModeConfigurations() async throws {}
     func refreshPowerModeConfiguration(mapIndex _: Int) async throws {}
     func preparePowerModeControl(mapIndex _: Int) async throws {
@@ -58,11 +66,13 @@ public extension BikeRepository {
 private enum BikeRepositoryError: LocalizedError {
     case powerModeControlUnavailable
     case tractionControlUnavailable
+    case bikeLockControlUnavailable
 
     var errorDescription: String? {
         switch self {
         case .powerModeControlUnavailable: "Power mode control is unavailable"
         case .tractionControlUnavailable: "Traction control is unavailable"
+        case .bikeLockControlUnavailable: "Bike Lock control is unavailable"
         }
     }
 }

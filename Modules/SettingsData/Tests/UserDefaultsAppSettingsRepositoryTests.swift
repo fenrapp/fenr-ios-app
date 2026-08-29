@@ -179,6 +179,33 @@ struct UserDefaultsAppSettingsRepositoryTests {
         #expect(reloaded.powerModeName(forVIN: "FENRTEST000000001", mapIndex: 1) == nil)
     }
 
+    @Test("Persists Bike Lock security independently by bike")
+    func persistsBikeLockSettingsByBike() async {
+        let suiteName = makeSuiteName()
+        let repository = UserDefaultsAppSettingsRepository(
+            userDefaults: makeDefaults(suiteName: suiteName)
+        )
+        var settings = AppSettings()
+        settings.setBikeLockSettings(
+            .init(securityMode: .pinAndFaceID),
+            forVIN: "FENRTEST000000001"
+        )
+
+        await repository.save(settings)
+
+        let reloaded = await UserDefaultsAppSettingsRepository(
+            userDefaults: makeDefaults(suiteName: suiteName, clearsDomain: false)
+        ).load()
+        #expect(
+            reloaded.bikeLockSettings(forVIN: "FENRTEST000000001").securityMode
+                == .pinAndFaceID
+        )
+        #expect(
+            reloaded.bikeLockSettings(forVIN: "FENRTEST000000002").securityMode
+                == .notConfigured
+        )
+    }
+
     @Test("Does not notify observers when the saved settings are unchanged")
     func skipsDuplicateSettingsNotifications() async {
         let repository = UserDefaultsAppSettingsRepository(userDefaults: makeDefaults())

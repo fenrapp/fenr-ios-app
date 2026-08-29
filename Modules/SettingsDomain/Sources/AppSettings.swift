@@ -12,6 +12,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var defaultBatteryPackCapacity: BatteryPackCapacity
     public var batteryPackCapacitiesByVIN: [String: BatteryPackCapacity]
     public var powerModeNamesByVIN: [String: [Int: PowerModeName]]
+    public var bikeLockSettingsByVIN: [String: BikeLockSettings]
 
     public var batteryPackCapacity: BatteryPackCapacity {
         defaultBatteryPackCapacity
@@ -28,7 +29,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         measurementSystem: MeasurementSystem = .system,
         batteryPackCapacity: BatteryPackCapacity = .sevenPointTwoKilowattHours,
         batteryPackCapacitiesByVIN: [String: BatteryPackCapacity] = [:],
-        powerModeNamesByVIN: [String: [Int: PowerModeName]] = [:]
+        powerModeNamesByVIN: [String: [Int: PowerModeName]] = [:],
+        bikeLockSettingsByVIN: [String: BikeLockSettings] = [:]
     ) {
         self.speedSource = speedSource
         self.dashboardProgressBarMode = dashboardProgressBarMode
@@ -41,6 +43,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         defaultBatteryPackCapacity = batteryPackCapacity
         self.batteryPackCapacitiesByVIN = batteryPackCapacitiesByVIN
         self.powerModeNamesByVIN = Self.sanitizedPowerModeNames(powerModeNamesByVIN)
+        self.bikeLockSettingsByVIN = bikeLockSettingsByVIN
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -55,6 +58,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case defaultBatteryPackCapacity
         case batteryPackCapacitiesByVIN
         case powerModeNamesByVIN
+        case bikeLockSettingsByVIN
     }
 
     public init(from decoder: Decoder) throws {
@@ -98,6 +102,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
             [String: [Int: PowerModeName]].self,
             forKey: .powerModeNamesByVIN
         ) ?? [:])
+        bikeLockSettingsByVIN = try container.decodeIfPresent(
+            [String: BikeLockSettings].self,
+            forKey: .bikeLockSettingsByVIN
+        ) ?? [:]
     }
 
     public func batteryPackCapacity(forVIN vin: String?) -> BatteryPackCapacity {
@@ -144,6 +152,19 @@ public struct AppSettings: Codable, Equatable, Sendable {
             powerModeNamesByVIN[vin] = nil
         } else {
             powerModeNamesByVIN[vin] = names
+        }
+    }
+
+    public func bikeLockSettings(forVIN vin: String?) -> BikeLockSettings {
+        guard let vin else { return .init() }
+        return bikeLockSettingsByVIN[vin] ?? .init()
+    }
+
+    public mutating func setBikeLockSettings(_ settings: BikeLockSettings, forVIN vin: String) {
+        if settings.securityMode == .notConfigured {
+            bikeLockSettingsByVIN[vin] = nil
+        } else {
+            bikeLockSettingsByVIN[vin] = settings
         }
     }
 

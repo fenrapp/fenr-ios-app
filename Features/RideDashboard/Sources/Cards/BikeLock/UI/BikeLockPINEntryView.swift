@@ -1,0 +1,84 @@
+import SwiftUI
+
+struct BikeLockPINEntryView: View {
+    let title: String
+    let submit: (String) -> Void
+    let cancel: () -> Void
+
+    @State private var pin = ""
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: Constants.contentSpacing) {
+                HStack(spacing: Constants.dotSpacing) {
+                    ForEach(0 ..< Constants.pinLength, id: \.self) { index in
+                        Circle()
+                            .fill(index < pin.count ? Color.primary : Color.secondary.opacity(Constants.emptyOpacity))
+                            .frame(width: Constants.dotSize, height: Constants.dotSize)
+                    }
+                }
+                .accessibilityLabel("\(pin.count) of 6 digits entered")
+
+                LazyVGrid(columns: columns, spacing: Constants.keySpacing) {
+                    ForEach(1 ... 9, id: \.self) { digit in
+                        key(String(digit)) { append(String(digit)) }
+                    }
+                    Color.clear
+                    key("0") { append("0") }
+                    key("Delete", systemImage: "delete.left") {
+                        if !pin.isEmpty { pin.removeLast() }
+                    }
+                }
+                .frame(maxWidth: Constants.keypadWidth)
+            }
+            .padding(Constants.contentPadding)
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: cancel)
+                }
+            }
+        }
+    }
+
+    private var columns: [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: Constants.keySpacing), count: 3)
+    }
+
+    private func append(_ digit: String) {
+        guard pin.count < Constants.pinLength else { return }
+        pin.append(digit)
+        if pin.count == Constants.pinLength {
+            submit(pin)
+        }
+    }
+
+    private func key(_ title: String, systemImage: String? = nil, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Group {
+                if let systemImage {
+                    Image(systemName: systemImage)
+                } else {
+                    Text(title)
+                }
+            }
+            .font(.title2.weight(.medium))
+            .frame(maxWidth: .infinity, minHeight: Constants.keyHeight)
+        }
+        .buttonStyle(.bordered)
+        .accessibilityLabel(title)
+    }
+
+    private enum Constants {
+        static let pinLength = 6
+        static let contentSpacing: CGFloat = 28
+        static let dotSpacing: CGFloat = 12
+        static let dotSize: CGFloat = 14
+        static let emptyOpacity = 0.35
+        static let keySpacing: CGFloat = 12
+        static let keyHeight: CGFloat = 48
+        static let keypadWidth: CGFloat = 300
+        static let contentPadding: CGFloat = 24
+    }
+}

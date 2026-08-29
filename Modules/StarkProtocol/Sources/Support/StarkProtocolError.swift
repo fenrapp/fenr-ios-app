@@ -9,6 +9,7 @@ public enum StarkProtocolError: Error, Equatable, Sendable {
     case invalidRegenerativeBrakingPercent(Int)
     case invalidTractionControlPercent(Double)
     case invalidTractionControlRawValue(Int)
+    case invalidBikeLockStatus(UInt8)
     case invalidPowerModeCurve(Int)
     case unexpectedConfigurationType(expected: UInt8, actual: UInt8)
     case unexpectedMapIndex(expected: Int, actual: Int)

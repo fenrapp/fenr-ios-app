@@ -5,7 +5,7 @@ import RuntimeConfiguration
 public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository, BikeDiscoveryRepository {
     private let telemetryHub: BikeEmulatorEventHub<BikeTelemetry>
     private let connectionHub: BikeEmulatorEventHub<BikeConnection>
-    private let debugEventHub: BikeEmulatorEventHub<BikeDebugEvent>
+    let debugEventHub: BikeEmulatorEventHub<BikeDebugEvent>
     private let batteryHealthHub: BikeEmulatorEventHub<BikeBatteryHealth>
     private let captureHub: BikeEmulatorCaptureHub
     private let discoveredBikesHub: BikeEmulatorEventHub<[DiscoveredBike]>
@@ -22,6 +22,8 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     private var powerModeOverrides: [Int: BikePowerModeConfiguration] = [:]
     private var preparedPowerModeIndexes = Set<Int>()
     private var preparedTractionControlIndexes = Set<Int>()
+    var isBikeLockPrepared = false
+    var isBikeLocked = false
     private var lastPublishedConnection: BikeConnection?
     private var updateTask: Task<Void, Never>?
 
@@ -75,6 +77,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     }
 
     public func disconnect() async throws {
+        isBikeLockPrepared = false
         await publishConnectionIfChanged(
             BikeConnection(state: .disconnected(reason: "Debug disconnect"))
         )
@@ -268,6 +271,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
         await publishCurrentState()
         await publishDebugEvent(title: "Power modes", detail: "Active map: \(activeMapNumber)")
     }
+
 }
 
 private extension BikeEmulatorRepository {
@@ -299,10 +303,6 @@ private extension BikeEmulatorRepository {
 
     private func publishBatteryHealth(date: Date = Date()) async {
         await batteryHealthHub.send(makeBatteryHealth(date: date))
-    }
-
-    private func publishDebugEvent(title: String, detail: String) async {
-        await debugEventHub.send(BikeDebugEvent(title: title, detail: detail))
     }
 
     private func makeConnection() -> BikeConnection {
