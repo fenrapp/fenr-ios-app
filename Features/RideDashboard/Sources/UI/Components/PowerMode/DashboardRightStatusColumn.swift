@@ -7,12 +7,12 @@ struct DashboardRightStatusColumn: View {
 
     var body: some View {
         VStack(spacing: Constants.spacing) {
-            DashboardGearPanel(state: gear)
-
             if showsPowerMode {
                 DashboardPowerModeSummary(state: powerMode, layout: .sidebar)
                     .transition(.opacity)
             }
+
+            DashboardGearPanel(state: gear)
         }
         .padding(.horizontal, Constants.horizontalPadding)
     }
