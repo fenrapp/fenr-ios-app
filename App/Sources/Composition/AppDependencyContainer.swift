@@ -82,6 +82,9 @@ struct AppDependencyContainer {
     private let forceOnboarding: Bool
     private let bleTraceLogRepository: any BLETraceLogRepository
     private let incomingMapLinkStore: any IncomingMapLinkStoring
+    private let bikeLockCredentialStore: any BikeLockCredentialStoring
+    private let bikeLockAuthenticator: any BikeLockAuthenticating
+    private let allowsExperimentalBikeLockControl: Bool
 
     init(
         diagnosticsContainer: BikeDiagnosticsDependencyContainer,
@@ -101,6 +104,9 @@ struct AppDependencyContainer {
         rideHistoryContainer: RideHistoryDependencyContainer,
         bleTraceLogRepository: any BLETraceLogRepository,
         incomingMapLinkStore: any IncomingMapLinkStoring,
+        bikeLockCredentialStore: any BikeLockCredentialStoring,
+        bikeLockAuthenticator: any BikeLockAuthenticating,
+        allowsExperimentalBikeLockControl: Bool,
         initialOnboardingVIN: String? = nil,
         forceOnboarding: Bool = false
     ) {
@@ -124,6 +130,9 @@ struct AppDependencyContainer {
         self.forceOnboarding = forceOnboarding
         self.bleTraceLogRepository = bleTraceLogRepository
         self.incomingMapLinkStore = incomingMapLinkStore
+        self.bikeLockCredentialStore = bikeLockCredentialStore
+        self.bikeLockAuthenticator = bikeLockAuthenticator
+        self.allowsExperimentalBikeLockControl = allowsExperimentalBikeLockControl
     }
 
     func makeRootDependencies() -> AppRootDependencies {
@@ -143,11 +152,15 @@ struct AppDependencyContainer {
         let rideDashboardFactory = AppRideDashboardFeatureFactory(
             container: dashboardContainer,
             dependencies: .init(
+                bikeRepository: session.repository,
                 rideTripRepository: rideTripRepository,
                 chargeControl: chargeControlSession,
                 rideSession: rideSession,
                 settingsRepository: settingsRepository,
-                vehicleSession: vehicleSession
+                vehicleSession: vehicleSession,
+                bikeLockCredentialStore: bikeLockCredentialStore,
+                bikeLockAuthenticator: bikeLockAuthenticator,
+                allowsExperimentalBikeLockControl: allowsExperimentalBikeLockControl
             )
         )
         return AppRootDependencies(

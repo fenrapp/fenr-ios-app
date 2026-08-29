@@ -51,6 +51,16 @@ struct RideDashboardDependencyContainer {
             chargingViewModel: chargingContainer.makeViewModel(
                 vehicleSession: dependencies.vehicleSession,
                 chargeControl: dependencies.chargeControl
+            ),
+            bikeLockViewModel: BikeLockCardViewModel(
+                prepareControl: PrepareBikeLockControlUseCase(repository: dependencies.bikeRepository),
+                setLocked: SetBikeLockedUseCase(repository: dependencies.bikeRepository),
+                loadSettings: LoadAppSettingsUseCase(repository: dependencies.settingsRepository),
+                saveSettings: SaveAppSettingsUseCase(repository: dependencies.settingsRepository),
+                vehicleSession: dependencies.vehicleSession,
+                credentialStore: dependencies.bikeLockCredentialStore,
+                authenticator: dependencies.bikeLockAuthenticator,
+                allowsExperimentalControl: dependencies.allowsExperimentalBikeLockControl
             )
         )
     }
@@ -70,9 +80,13 @@ struct RideDashboardDependencyContainer {
 }
 
 struct RideDashboardFeatureDependencies {
+    let bikeRepository: any BikeRepository
     let rideTripRepository: any RideTripRepository
     let chargeControl: ChargeControlSession
     let rideSession: any RideSessionService
     let settingsRepository: any AppSettingsRepository
     let vehicleSession: any VehicleSessionService
+    let bikeLockCredentialStore: any BikeLockCredentialStoring
+    let bikeLockAuthenticator: any BikeLockAuthenticating
+    let allowsExperimentalBikeLockControl: Bool
 }

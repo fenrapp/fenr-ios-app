@@ -11,6 +11,7 @@ public final class RideDashboardFeatureModel: ObservableObject {
     let systemHealthViewModel: SystemHealthCardViewModel
     let dynamicsViewModel: RideDynamicsCardViewModel
     let chargingViewModel: ChargingDashboardViewModel
+    let bikeLockViewModel: BikeLockCardViewModel
 
     public init(
         dashboardViewModel: RideDashboardViewModel,
@@ -21,7 +22,8 @@ public final class RideDashboardFeatureModel: ObservableObject {
         rangeViewModel: RangeCardViewModel,
         systemHealthViewModel: SystemHealthCardViewModel,
         dynamicsViewModel: RideDynamicsCardViewModel,
-        chargingViewModel: ChargingDashboardViewModel
+        chargingViewModel: ChargingDashboardViewModel,
+        bikeLockViewModel: BikeLockCardViewModel
     ) {
         self.dashboardViewModel = dashboardViewModel
         self.deviceBatteryViewModel = deviceBatteryViewModel
@@ -32,12 +34,14 @@ public final class RideDashboardFeatureModel: ObservableObject {
         self.systemHealthViewModel = systemHealthViewModel
         self.dynamicsViewModel = dynamicsViewModel
         self.chargingViewModel = chargingViewModel
+        self.bikeLockViewModel = bikeLockViewModel
     }
 
     func start() {
         dashboardViewModel.startObserving()
         deviceBatteryViewModel.start()
         rangeViewModel.start()
+        bikeLockViewModel.start()
     }
 
     func stopPresentation() {
@@ -50,6 +54,7 @@ public final class RideDashboardFeatureModel: ObservableObject {
         rangeViewModel.stop()
         systemHealthViewModel.setIsVisible(false)
         dynamicsViewModel.setIsVisible(false)
+        bikeLockViewModel.stop()
     }
 
     func synchronizeCardLifecycles(

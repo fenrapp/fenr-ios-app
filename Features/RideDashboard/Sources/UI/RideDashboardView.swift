@@ -14,6 +14,7 @@ public struct RideDashboardView: View {
     @ObservedObject private var systemHealthViewModel: SystemHealthCardViewModel
     @ObservedObject private var dynamicsViewModel: RideDynamicsCardViewModel
     @ObservedObject private var chargingViewModel: ChargingDashboardViewModel
+    @ObservedObject private var bikeLockViewModel: BikeLockCardViewModel
     @ScaledMetric(relativeTo: .body) private var speedometerTypeScale: CGFloat = 1
     @State private var cardSelection = DashboardCardSelectionState()
     @State private var hiddenPageResetTask: Task<Void, Never>?
@@ -41,6 +42,7 @@ public struct RideDashboardView: View {
         _systemHealthViewModel = ObservedObject(wrappedValue: feature.systemHealthViewModel)
         _dynamicsViewModel = ObservedObject(wrappedValue: feature.dynamicsViewModel)
         _chargingViewModel = ObservedObject(wrappedValue: feature.chargingViewModel)
+        _bikeLockViewModel = ObservedObject(wrappedValue: feature.bikeLockViewModel)
         self.onSettings = onSettings
         self.onNavigation = onNavigation
         self.isNavigationActive = isNavigationActive
@@ -99,6 +101,8 @@ public struct RideDashboardView: View {
                                     systemHealth: systemHealthViewModel.viewState,
                                     selectedDynamicsPage: $cardSelection.dynamicsPage,
                                     dynamics: dynamicsViewModel.viewState,
+                                    bikeLock: bikeLockViewModel.viewState,
+                                    bikeLockSecurityOptions: bikeLockViewModel.securityOptions,
                                     charging: chargingViewModel.viewState,
                                     referenceSize: proxy.size,
                                     reduceMotion: reduceMotion,
@@ -108,7 +112,11 @@ public struct RideDashboardView: View {
                                     setChargePowerLimit: chargingViewModel.setChargePowerLimit(watts:),
                                     setChargeTarget: chargingViewModel.setChargeTarget(percent:),
                                     openNavigation: onNavigation,
-                                    isNavigationActive: isNavigationActive
+                                    isNavigationActive: isNavigationActive,
+                                    performBikeLockAction: bikeLockViewModel.performPrimaryAction,
+                                    configureBikeLock: bikeLockViewModel.configure(securityOptionID:pin:),
+                                    submitBikeLockPIN: bikeLockViewModel.submitPIN,
+                                    dismissBikeLockSheet: bikeLockViewModel.dismissSheet
                                 )
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .offset(
@@ -209,7 +217,12 @@ public struct RideDashboardView: View {
         }
         .onChange(of: viewModel.viewState.centerMode) {
             if viewModel.viewState.centerMode == .riding {
-                cardSelection.selectSpeedometer()
+                if bikeLockViewModel.viewState.isAvailable,
+                   bikeLockViewModel.viewState.isLocked {
+                    cardSelection.ridingCard = .bikeLock
+                } else {
+                    cardSelection.selectSpeedometer()
+                }
             }
             scheduleHiddenPageResetIfNeeded()
             synchronizeCardLifecycles()
@@ -222,6 +235,21 @@ public struct RideDashboardView: View {
             cardSelection.apply(layout: viewModel.cardLayout)
             scheduleHiddenPageResetIfNeeded()
             synchronizeCardLifecycles()
+        }
+        .onChange(of: bikeLockViewModel.viewState.isAvailable) {
+            if !bikeLockViewModel.viewState.isAvailable,
+               cardSelection.ridingCard == .bikeLock {
+                cardSelection.selectSpeedometer()
+            }
+        }
+        .onChange(of: bikeLockViewModel.viewState.isLocked) {
+            guard viewModel.viewState.centerMode == .riding,
+                  bikeLockViewModel.viewState.isAvailable else { return }
+            if bikeLockViewModel.viewState.isLocked {
+                cardSelection.ridingCard = .bikeLock
+            } else if cardSelection.ridingCard == .bikeLock {
+                cardSelection.selectSpeedometer()
+            }
         }
         .onAppear {
             cardSelection = .init(layout: viewModel.cardLayout)
@@ -264,7 +292,6 @@ private struct DashboardRideTemperatureSummary: View {
             }
         }
     }
-
     private enum Constants {
         static let itemSpacing: CGFloat = 5
         static let separatorHeight: CGFloat = 13
@@ -365,7 +392,7 @@ private extension RideDashboardView {
         }
     }
 
-    enum Constants {
+    private enum Constants {
         static let accessoryEdgePadding: CGFloat = 16
         static let speedToBatterySpacing: CGFloat = 10
         static let hiddenPageResetDelay = Duration.milliseconds(500)

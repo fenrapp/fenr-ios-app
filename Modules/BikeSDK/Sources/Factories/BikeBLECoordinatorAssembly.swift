@@ -47,6 +47,10 @@ enum BikeBLECoordinatorAssembly {
             transport: configurationTransport,
             eventEmitter: dependencies.eventEmitter
         )
+        let bikeLockCoordinator = BikeBLEBikeLockConfigurationCoordinator(
+            transport: configurationTransport,
+            eventEmitter: dependencies.eventEmitter
+        )
         let subscriptionQueue = BikeBLESubscriptionQueue(
             sessionStore: dependencies.sessionStore,
             eventEmitter: dependencies.eventEmitter,
@@ -72,6 +76,7 @@ enum BikeBLECoordinatorAssembly {
             subscriptionCoordinator: subscriptionCoordinator,
             chargePowerCoordinator: chargePowerCoordinator,
             powerModeCoordinator: powerModeCoordinator,
+            bikeLockCoordinator: bikeLockCoordinator,
             configurationTransport: configurationTransport,
             connectionDidBecomeReady: dependencies.connectionDidBecomeReady,
             peripheralOperations: dependencies.peripheralOperations

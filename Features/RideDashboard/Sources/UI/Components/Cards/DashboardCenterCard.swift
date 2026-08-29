@@ -17,6 +17,8 @@ struct DashboardCenterCard: View {
     let systemHealth: DashboardSystemHealthViewData
     @Binding var selectedDynamicsPage: RideDynamicsDashboardPage
     let dynamics: DashboardRideDynamicsViewData
+    let bikeLock: BikeLockCardViewState
+    let bikeLockSecurityOptions: [BikeLockSecurityOptionViewData]
     let charging: ChargingDashboardViewState
     let referenceSize: CGSize
     let reduceMotion: Bool
@@ -27,6 +29,10 @@ struct DashboardCenterCard: View {
     let setChargeTarget: (Double) -> Void
     let openNavigation: () -> Void
     let isNavigationActive: Bool
+    let performBikeLockAction: () -> Void
+    let configureBikeLock: (String, String) -> Void
+    let submitBikeLockPIN: (String) -> Void
+    let dismissBikeLockSheet: () -> Void
 
     var body: some View {
         DashboardCardContainer(
@@ -42,7 +48,7 @@ struct DashboardCenterCard: View {
         switch centerMode {
         case .riding:
             DashboardRidingCardDeck(
-                cards: cardLayout.ridingCards,
+                cards: visibleRidingCards,
                 selection: $selectedRidingCard,
                 reduceMotion: reduceMotion
             ) { card in
@@ -62,11 +68,10 @@ struct DashboardCenterCard: View {
     private func ridingCard(_ card: RidingDashboardCard) -> some View {
         switch card {
         case .speedometer:
-            DashboardSpeedometer(
-                state: speedometer,
-                showsSourceIndicator: showsSpeedSourceIndicator,
-                referenceSize: referenceSize
-            )
+            speedometerCard
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        case .bikeLock:
+            bikeLockCard
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .navigation:
             DashboardNavigationCard(
@@ -119,5 +124,28 @@ struct DashboardCenterCard: View {
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+    }
+
+    private var visibleRidingCards: [RidingDashboardCard] {
+        cardLayout.ridingCards.filter { $0 != .bikeLock || bikeLock.isAvailable }
+    }
+
+    private var speedometerCard: some View {
+        DashboardSpeedometer(
+            state: speedometer,
+            showsSourceIndicator: showsSpeedSourceIndicator,
+            referenceSize: referenceSize
+        )
+    }
+
+    private var bikeLockCard: some View {
+        DashboardBikeLockCard(
+            viewState: bikeLock,
+            securityOptions: bikeLockSecurityOptions,
+            performPrimaryAction: performBikeLockAction,
+            configure: configureBikeLock,
+            submitPIN: submitBikeLockPIN,
+            dismissSheet: dismissBikeLockSheet
+        )
     }
 }

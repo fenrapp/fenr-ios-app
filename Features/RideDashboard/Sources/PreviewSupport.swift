@@ -143,6 +143,26 @@ enum SystemHealthCardPreviewFactory {
     }
 }
 
+@MainActor
+enum BikeLockCardPreviewFactory {
+    static func makeViewModel(state: BikeLockCardViewState = .init()) -> BikeLockCardViewModel {
+        let repository = RideDashboardPreviewRepository()
+        let settingsRepository = PreviewBikeLockSettingsRepository()
+        let viewModel = BikeLockCardViewModel(
+            prepareControl: .init(repository: repository),
+            setLocked: .init(repository: repository),
+            loadSettings: .init(repository: settingsRepository),
+            saveSettings: .init(repository: settingsRepository),
+            vehicleSession: PreviewVehicleSessionService(),
+            credentialStore: PreviewBikeLockCredentialStore(),
+            authenticator: PreviewBikeLockAuthenticator(),
+            allowsExperimentalControl: false
+        )
+        viewModel.setPreviewState(state)
+        return viewModel
+    }
+}
+
 private actor PreviewRideTripRepository: RideTripRepository {
     func prepare(context _: BikeSessionContext) -> RideTrip? { nil }
     func saveActiveTrip(_: RideTrip) -> Bool { true }
@@ -194,6 +214,24 @@ private actor PreviewVehicleSessionService: VehicleSessionService {
     func refreshBikeStatus() {}
     func calibrateDeviceMotion() {}
     func setBatteryHealthMonitoringRequired(_: Bool, consumerID _: UUID) {}
+}
+
+private actor PreviewBikeLockSettingsRepository: AppSettingsRepository {
+    private var settings = AppSettings()
+
+    func load() -> AppSettings { settings }
+    func save(_ settings: AppSettings) { self.settings = settings }
+    func observe() -> AsyncStream<AppSettings> { .init { $0.finish() } }
+}
+
+private actor PreviewBikeLockCredentialStore: BikeLockCredentialStoring {
+    func save(pin _: String, for _: String) {}
+    func verify(pin _: String, for _: String) -> Bool { true }
+    func removePIN(for _: String) {}
+}
+
+private struct PreviewBikeLockAuthenticator: BikeLockAuthenticating {
+    func authenticate() async throws -> Bool { true }
 }
 
 private actor RideDashboardPreviewRepository: BikeRepository, BikeBatteryHealthRepository {

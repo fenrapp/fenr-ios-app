@@ -64,7 +64,7 @@ extension BikeBLEVCUConfigurationTransport {
             let characteristic = try configurationCharacteristic()
             guard payload.count >= 2,
                   payload[0] == 1,
-                  payload[1] == 8
+                  payload[1] == 8 || payload[1] == 5
             else {
                 try await write(payload, peripheral: peripheral, characteristic: characteristic)
                 return
@@ -87,19 +87,19 @@ extension BikeBLEVCUConfigurationTransport {
                 response = try await awaitConfigurationResponse(
                     peripheral: peripheral,
                     characteristic: characteristic,
-                    operationName: "4005 traction-control write response",
+                    operationName: "4005 configuration type \(payload[1]) write response",
                     shouldRead: false
                 )
             }
             await emitConfigurationDebug(prefix: "Write response", data: response)
             guard response.count >= 3 else {
                 throw BikeSDKError.operationFailed(
-                    "Traction-control write returned an incomplete VCU response"
+                    "VCU configuration write returned an incomplete response"
                 )
             }
             guard response[2] == 0 else {
                 throw BikeSDKError.operationFailed(
-                    "Traction-control write was rejected by the VCU with status \(response[2])"
+                    "VCU configuration write was rejected with status \(response[2])"
                 )
             }
         }

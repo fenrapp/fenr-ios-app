@@ -9,6 +9,7 @@ public struct BikeBLENotificationCoordinator {
     private let subscriptionCoordinator: BikeBLESubscriptionCoordinator
     private let chargePowerCoordinator: BikeBLEChargePowerCoordinator
     private let powerModeCoordinator: BikeBLEPowerModeConfigurationCoordinator
+    private let bikeLockCoordinator: BikeBLEBikeLockConfigurationCoordinator
     private let configurationTransport: BikeBLEVCUConfigurationTransport
     private let connectionDidBecomeReady: @MainActor () -> Void
     private let peripheralOperations: BikeBLEPeripheralOperations
@@ -20,6 +21,7 @@ public struct BikeBLENotificationCoordinator {
         subscriptionCoordinator: BikeBLESubscriptionCoordinator,
         chargePowerCoordinator: BikeBLEChargePowerCoordinator,
         powerModeCoordinator: BikeBLEPowerModeConfigurationCoordinator,
+        bikeLockCoordinator: BikeBLEBikeLockConfigurationCoordinator,
         configurationTransport: BikeBLEVCUConfigurationTransport,
         connectionDidBecomeReady: @escaping @MainActor () -> Void,
         peripheralOperations: BikeBLEPeripheralOperations
@@ -30,6 +32,7 @@ public struct BikeBLENotificationCoordinator {
         self.subscriptionCoordinator = subscriptionCoordinator
         self.chargePowerCoordinator = chargePowerCoordinator
         self.powerModeCoordinator = powerModeCoordinator
+        self.bikeLockCoordinator = bikeLockCoordinator
         self.configurationTransport = configurationTransport
         self.connectionDidBecomeReady = connectionDidBecomeReady
         self.peripheralOperations = peripheralOperations
@@ -141,6 +144,14 @@ public struct BikeBLENotificationCoordinator {
         try await powerModeCoordinator.refresh()
     }
 
+    public func prepareBikeLockControl() async throws -> BikeSDKBikeLockControlSnapshot {
+        try await bikeLockCoordinator.prepare()
+    }
+
+    public func setBikeLocked(_ isLocked: Bool) async throws -> BikeSDKBikeLockControlSnapshot {
+        try await bikeLockCoordinator.setLocked(isLocked)
+    }
+
     public func refreshPowerModeConfiguration(mapIndex: Int) async throws {
         try await powerModeCoordinator.refreshPowerModeConfiguration(mapIndex: mapIndex)
     }
@@ -189,6 +200,7 @@ public struct BikeBLENotificationCoordinator {
         subscriptionCoordinator.reset()
         chargePowerCoordinator.reset()
         powerModeCoordinator.reset()
+        bikeLockCoordinator.reset()
         configurationTransport.reset()
     }
 

@@ -287,6 +287,23 @@ struct BikeEmulatorRepositoryTests {
 }
 
 extension BikeEmulatorRepositoryTests {
+    @Test("Bike Lock requires preparation and preserves its debug state")
+    func bikeLockControlRequiresPreparation() async throws {
+        let repository = BikeEmulatorRepositoryFactory.make(scenario: .ridingClean)
+
+        await #expect(throws: Error.self) {
+            try await repository.setBikeLocked(true)
+        }
+        let preparation = try await repository.prepareBikeLockControl()
+        let locked = try await repository.setBikeLocked(true)
+        let confirmed = try await repository.prepareBikeLockControl()
+
+        #expect(preparation.didPassNoOpWrite)
+        #expect(!preparation.isLocked)
+        #expect(locked.isLocked)
+        #expect(confirmed.isLocked)
+    }
+
     @Test("Traction controls accept only confirmed whole percentages")
     func tractionControlWriteRange() async throws {
         let repository = BikeEmulatorRepositoryFactory.make(

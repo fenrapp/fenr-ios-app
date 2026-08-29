@@ -70,8 +70,15 @@ enum ProductionAppDependencyContainerFactory {
             powerModeSettingsContainer: PowerModeSettingsDependencyContainer(),
             rideHistoryContainer: RideHistoryDependencyContainer(),
             bleTraceLogRepository: bleTraceRepository,
-            incomingMapLinkStore: makeIncomingMapLinkStore()
+            incomingMapLinkStore: makeIncomingMapLinkStore(),
+            bikeLockCredentialStore: makeBikeLockCredentialStore(),
+            bikeLockAuthenticator: LocalAuthenticationBikeLockAuthenticator(),
+            allowsExperimentalBikeLockControl: true
         )
+    }
+
+    private static func makeBikeLockCredentialStore() -> KeychainBikeLockCredentialStore {
+        KeychainBikeLockCredentialStore(service: "com.fenr.app.bike-lock")
     }
 
     private static func makeIncomingMapLinkStore() -> UserDefaultsIncomingMapLinkStore {
