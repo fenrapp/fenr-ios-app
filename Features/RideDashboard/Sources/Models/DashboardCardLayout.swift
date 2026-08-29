@@ -14,7 +14,9 @@ struct DashboardCardLayout: Equatable, Sendable {
         systemHealthPages: [SystemHealthDashboardPage] = SystemHealthDashboardPage.allCases,
         dynamicsPages: [RideDynamicsDashboardPage] = RideDynamicsDashboardPage.allCases
     ) {
-        self.ridingCards = [.speedometer] + ridingCards.filter { $0 != .speedometer }
+        self.ridingCards = [.speedometer] + ridingCards.filter {
+            $0 != .speedometer
+        }
         self.currentTripPages = currentTripPages.isEmpty ? [.current] : currentTripPages
         self.efficiencyPages = efficiencyPages.isEmpty ? [.live] : efficiencyPages
         self.rangePages = rangePages.isEmpty ? [.range] : rangePages

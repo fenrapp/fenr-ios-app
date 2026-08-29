@@ -34,18 +34,7 @@ public struct DashboardCardSettingsView: View {
                 ForEach(sectionRowsBinding, editActions: .move) { row in
                     let section = row.wrappedValue
                     HStack(spacing: Constants.rowSpacing) {
-                        NavigationLink {
-                            DashboardCardSectionDetailView(
-                                viewModel: viewModel,
-                                sectionID: section.id
-                            )
-                        } label: {
-                            DashboardCardRowLabel(
-                                title: section.title,
-                                detail: section.detail,
-                                thumbnail: section.thumbnail
-                            )
-                        }
+                        sectionLabel(section)
                         DashboardCardVisibilityToggle(
                             title: section.title,
                             isEnabled: true,
@@ -84,6 +73,31 @@ public struct DashboardCardSettingsView: View {
             get: { viewModel.viewState.section(id: section.id)?.isVisible ?? section.isVisible },
             set: { viewModel.setSectionVisibility($0, id: section.id) }
         )
+    }
+
+    @ViewBuilder
+    private func sectionLabel(_ section: DashboardCardSectionRowViewData) -> some View {
+        if section.pages.isEmpty {
+            DashboardCardRowLabel(
+                title: section.title,
+                detail: section.detail,
+                thumbnail: section.thumbnail
+            )
+            .frame(maxWidth: .infinity, alignment: .leading)
+        } else {
+            NavigationLink {
+                DashboardCardSectionDetailView(
+                    viewModel: viewModel,
+                    sectionID: section.id
+                )
+            } label: {
+                DashboardCardRowLabel(
+                    title: section.title,
+                    detail: section.detail,
+                    thumbnail: section.thumbnail
+                )
+            }
+        }
     }
 
     private enum Constants {

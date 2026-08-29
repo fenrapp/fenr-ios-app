@@ -20,7 +20,7 @@ struct UserDefaultsAppSettingsRepositoryTests {
         )
         var cardConfiguration = DashboardCardConfiguration()
         cardConfiguration.setSectionOrder([
-            .range, .currentTrip, .efficiency, .systemHealth, .rideDynamics
+            .range, .navigation, .currentTrip, .efficiency, .systemHealth, .rideDynamics
         ])
         cardConfiguration.setSectionVisibility(false, id: .efficiency)
         let expected = AppSettings(
@@ -29,6 +29,13 @@ struct UserDefaultsAppSettingsRepositoryTests {
             dashboardBatteryIndicatorMode: .estimatedRange,
             showsDashboardTemperatures: false,
             dashboardCardConfiguration: cardConfiguration,
+            rideNavigation: RideNavigationSettings(
+                avoidsTolls: true,
+                avoidsHighways: true,
+                preferredMapStyle: .satellite,
+                mapOrientation: .northUp,
+                miniMapCorner: .bottomLeading
+            ),
             measurementSystem: .imperial,
             batteryPackCapacity: .sixPointEightKilowattHours
         )
@@ -61,7 +68,29 @@ struct UserDefaultsAppSettingsRepositoryTests {
         #expect(await repository.load().dashboardBatteryIndicatorMode == .percentage)
         #expect(!(await repository.load().showsDashboardTemperatures))
         #expect(await repository.load().dashboardCardConfiguration == .init())
+        #expect(await repository.load().rideNavigation == .init())
         #expect(await repository.load().powerModeNamesByVIN.isEmpty)
+    }
+
+    @Test("Decodes legacy ride navigation settings with heading up")
+    func decodesLegacyRideNavigationSettings() async throws {
+        let suiteName = makeSuiteName()
+        let defaults = makeDefaults(suiteName: suiteName)
+        defaults.set(
+            try JSONSerialization.data(withJSONObject: [
+                "rideNavigation": [
+                    "avoidsTolls": true,
+                    "avoidsHighways": false,
+                    "preferredMapStyle": "standard"
+                ]
+            ]),
+            forKey: "fenr.app.settings"
+        )
+
+        let settings = await UserDefaultsAppSettingsRepository(userDefaults: defaults).load()
+
+        #expect(settings.rideNavigation.mapOrientation == .headingUp)
+        #expect(settings.rideNavigation.miniMapCorner == .topTrailing)
     }
 
     @Test("Persists power mode names independently by bike and map")

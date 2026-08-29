@@ -5,6 +5,7 @@ import CoreMotion
 import EnvironmentData
 import EnvironmentDomain
 import Foundation
+import RideNavigationData
 import RideSessionData
 import RideSessionDomain
 import SettingsData
@@ -113,9 +114,15 @@ enum DebugAppDependencyContainerFactory {
             powerModeSettingsContainer: PowerModeSettingsDependencyContainer(),
             rideHistoryContainer: RideHistoryDependencyContainer(),
             bleTraceLogRepository: NoOpBLETraceRepository(),
+            incomingMapLinkStore: makeIncomingMapLinkStore(),
             initialOnboardingVIN: BikeEmulatorIdentity.vin,
             forceOnboarding: forceOnboarding
         )
+    }
+
+    private static func makeIncomingMapLinkStore() -> UserDefaultsIncomingMapLinkStore {
+        (try? UserDefaultsIncomingMapLinkStore.shared())
+            ?? UserDefaultsIncomingMapLinkStore(userDefaults: .standard)
     }
 
     private static func currentLandscapeOrientation() -> DeviceLandscapeOrientation? {

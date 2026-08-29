@@ -13,7 +13,6 @@ final class InterfaceOrientationController {
     }
 
     func request(_ orientations: UIInterfaceOrientationMask) {
-        guard requestedOrientations != orientations else { return }
         requestedOrientations = orientations
 
         for case let windowScene as UIWindowScene in UIApplication.shared.connectedScenes {

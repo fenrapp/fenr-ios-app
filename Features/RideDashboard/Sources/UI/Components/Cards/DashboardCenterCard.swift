@@ -25,6 +25,8 @@ struct DashboardCenterCard: View {
     let calibrateDynamics: () -> Void
     let setChargePowerLimit: (Double) -> Void
     let setChargeTarget: (Double) -> Void
+    let openNavigation: () -> Void
+    let isNavigationActive: Bool
 
     var body: some View {
         DashboardCardContainer(
@@ -66,6 +68,12 @@ struct DashboardCenterCard: View {
                 referenceSize: referenceSize
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+        case .navigation:
+            DashboardNavigationCard(
+                isNavigationActive: isNavigationActive,
+                openNavigation: openNavigation
+            )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .currentTrip:
             DashboardCurrentTripPager(
                 pages: cardLayout.currentTripPages,
