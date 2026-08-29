@@ -7,6 +7,7 @@ public struct DeviceSpeedSample: Equatable, Sendable {
     public let courseAccuracyDegrees: Double?
     public let altitudeMeters: Double?
     public let verticalAccuracyMeters: Double?
+    public let horizontalAccuracyMeters: Double?
     public let coordinate: GeographicCoordinate?
     public let observedAt: Date
 
@@ -17,6 +18,7 @@ public struct DeviceSpeedSample: Equatable, Sendable {
         courseAccuracyDegrees: Double? = nil,
         altitudeMeters: Double? = nil,
         verticalAccuracyMeters: Double? = nil,
+        horizontalAccuracyMeters: Double? = nil,
         coordinate: GeographicCoordinate? = nil,
         observedAt: Date
     ) {
@@ -26,6 +28,7 @@ public struct DeviceSpeedSample: Equatable, Sendable {
         self.courseAccuracyDegrees = courseAccuracyDegrees
         self.altitudeMeters = altitudeMeters
         self.verticalAccuracyMeters = verticalAccuracyMeters
+        self.horizontalAccuracyMeters = horizontalAccuracyMeters
         self.coordinate = coordinate
         self.observedAt = observedAt
     }

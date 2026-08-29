@@ -75,6 +75,7 @@ public final class CoreLocationDeviceSpeedRepository: NSObject, DeviceSpeedRepos
             courseAccuracyDegrees: location.courseAccuracy >= .zero ? location.courseAccuracy : nil,
             altitudeMeters: location.verticalAccuracy >= .zero ? location.altitude : nil,
             verticalAccuracyMeters: location.verticalAccuracy >= .zero ? location.verticalAccuracy : nil,
+            horizontalAccuracyMeters: location.horizontalAccuracy >= .zero ? location.horizontalAccuracy : nil,
             coordinate: coordinate(from: location),
             observedAt: location.timestamp
         )
