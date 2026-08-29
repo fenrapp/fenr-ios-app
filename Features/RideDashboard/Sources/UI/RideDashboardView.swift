@@ -66,18 +66,18 @@ public struct RideDashboardView: View {
                             .ignoresSafeArea()
 
                         HStack(spacing: .zero) {
-                            VStack(spacing: Constants.speedToBatterySpacing) {
-                                if viewModel.viewState.centerMode == .riding,
-                                   cardSelection.ridingCard != .speedometer {
-                                    DashboardCompactSpeedReadout(state: viewModel.viewState.speedometer)
-                                        .transition(.opacity)
-                                }
-
+                            VStack(spacing: DashboardSideStatusLayoutMetrics.spacing) {
                                 DashboardBatteryPanel(
                                     state: viewModel.viewState.battery,
                                     displayMode: viewModel.viewState.batteryIndicatorMode,
                                     estimatedRange: rangeViewModel.summary
                                 )
+
+                                if viewModel.viewState.centerMode == .riding,
+                                   cardSelection.showsCompactSpeed(viewModel.viewState.showsCompactSpeedReadout) {
+                                    DashboardCompactSpeedReadout(state: viewModel.viewState.speedometer)
+                                        .transition(.opacity)
+                                }
                             }
                             .frame(width: layout.sideColumnWidth)
 
@@ -394,7 +394,6 @@ private extension RideDashboardView {
 
     private enum Constants {
         static let accessoryEdgePadding: CGFloat = 16
-        static let speedToBatterySpacing: CGFloat = 10
         static let hiddenPageResetDelay = Duration.milliseconds(500)
     }
 }

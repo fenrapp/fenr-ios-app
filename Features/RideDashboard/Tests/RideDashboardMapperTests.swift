@@ -56,6 +56,7 @@ struct RideDashboardMapperTests {
         #expect(abs(state.speedometer.progress - (42.0 / 180.0)) < 0.001)
         #expect(state.speedometer.sourceIndicator == nil)
         #expect(state.speedometer.accessibilityLabel == "Speed 42 km/h")
+        #expect(state.showsCompactSpeedReadout)
         #expect(state.odometer.valueText == "180,0 km")
         #expect(state.odometer.accessibilityLabel == "Odometer 180,0 km")
         #expect(state.battery.percentageText == "60%")
@@ -98,14 +99,8 @@ struct RideDashboardMapperTests {
             isGPSAvailable: false
         )
 
-        #expect(gpsState.speedometer.sourceIndicator == .init(
-            text: "GPS",
-            systemImage: "location.fill"
-        ))
-        #expect(hybridState.speedometer.sourceIndicator == .init(
-            text: "GPS+",
-            systemImage: "arrow.triangle.branch"
-        ))
+        #expect(gpsState.speedometer.sourceIndicator == .init(text: "GPS", systemImage: "location.fill"))
+        #expect(hybridState.speedometer.sourceIndicator == .init(text: "GPS+", systemImage: "arrow.triangle.branch"))
         #expect(gpsState.speedometer.accessibilityLabel.contains("GPS speed source"))
         #expect(unavailableState.speedometer.sourceIndicator == .init(
             text: "NO GPS",
@@ -119,7 +114,8 @@ struct RideDashboardMapperTests {
         let state = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_US")).map(
             telemetry: BikeTelemetry(
                 speed: .known(kmh: -5, kmhX10: -50),
-                odometer: .known(kilometers: 180, centiKilometers: 18_000)
+                odometer: .known(kilometers: 180, centiKilometers: 18_000),
+                statusFlags: .init()
             ),
             connection: BikeConnection(state: .receivingTelemetry(peripheralName: "FENRTEST000000001")),
             speedKilometersPerHour: -5,
@@ -130,6 +126,7 @@ struct RideDashboardMapperTests {
         #expect(state.speedometer.valueText == "0")
         #expect(state.speedometer.unit == "mph")
         #expect(state.speedometer.progress == 0)
+        #expect(!state.showsCompactSpeedReadout)
         #expect(state.connectionDetail == "Live telemetry active")
         #expect(state.odometer.valueText == "111.8 mi")
     }
@@ -187,6 +184,7 @@ struct RideDashboardMapperTests {
 
         #expect(state.centerMode == .charging)
         #expect(state.gear == .init(display: .text("N"), isActive: true, accessibilityLabel: "Gear neutral"))
+        #expect(!state.showsCompactSpeedReadout)
     }
 
     @Test("Shows the charging card for a connected idle charger")

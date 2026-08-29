@@ -30,6 +30,10 @@ struct DashboardCardSelectionState: Equatable {
         centerMode == .riding && ridingCard == .speedometer
     }
 
+    func showsCompactSpeed(_ isEnabled: Bool) -> Bool {
+        ridingCard != .speedometer && isEnabled
+    }
+
     func isCurrentTripVisible(in centerMode: RideDashboardViewState.CenterMode) -> Bool {
         centerMode == .riding && ridingCard == .currentTrip
     }

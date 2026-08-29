@@ -6,19 +6,19 @@ struct DashboardRightStatusColumn: View {
     let showsPowerMode: Bool
 
     var body: some View {
-        VStack(spacing: Constants.spacing) {
+        VStack(spacing: DashboardSideStatusLayoutMetrics.spacing) {
+            DashboardGearPanel(state: gear)
+
             if showsPowerMode {
                 DashboardPowerModeSummary(state: powerMode, layout: .sidebar)
+                    .frame(height: DashboardSideStatusLayoutMetrics.secondaryStatusHeight)
                     .transition(.opacity)
             }
-
-            DashboardGearPanel(state: gear)
         }
         .padding(.horizontal, Constants.horizontalPadding)
     }
 
     private enum Constants {
-        static let spacing: CGFloat = 10
         static let horizontalPadding: CGFloat = 6
     }
 }
