@@ -3,14 +3,13 @@ import BikeDiagnostics
 import BikeDomain
 import BLETraceDomain
 import CoreLocation
-import CoreMotion
 import EnvironmentData
 import EnvironmentDomain
 import Foundation
 import RideNavigationData
 import RideSessionData
 import SettingsData
-import UIKit
+import VehicleSession
 
 @MainActor
 enum ProductionAppDependencyContainerFactory {
@@ -33,13 +32,6 @@ enum ProductionAppDependencyContainerFactory {
         let deviceSpeedRepository = CoreLocationDeviceSpeedRepository(
             locationManager: CLLocationManager()
         )
-        let deviceMotionRepository = CoreMotionDeviceMotionRepository(
-            motionManager: CMMotionManager(),
-            operationQueue: OperationQueue(),
-            now: Date.init,
-            orientation: currentLandscapeOrientation,
-            attitudeNormalizer: DeviceMotionAttitudeNormalizer()
-        )
         let motionCalibrationRepository = makeMotionCalibrationRepository()
         let rideTripRepository = makeRideTripRepository()
         let sessionServices = AppSessionDependencyContainer.makeServices(
@@ -48,8 +40,8 @@ enum ProductionAppDependencyContainerFactory {
                 profileRepository: profileRepository,
                 settingsRepository: settingsRepository,
                 deviceSpeedRepository: deviceSpeedRepository,
-                deviceMotionRepository: deviceMotionRepository,
                 motionCalibrationRepository: motionCalibrationRepository,
+                imuProfile: BikeIMUProfile.productionV1,
                 rideTripRepository: rideTripRepository
             )
         )
@@ -107,15 +99,4 @@ enum ProductionAppDependencyContainerFactory {
         }
     }
 
-    private static func currentLandscapeOrientation() -> DeviceLandscapeOrientation? {
-        let interfaceOrientation = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first(where: { $0.activationState == .foregroundActive })?
-            .interfaceOrientation
-        return switch interfaceOrientation {
-        case .landscapeLeft: .left
-        case .landscapeRight: .right
-        default: nil
-        }
-    }
 }

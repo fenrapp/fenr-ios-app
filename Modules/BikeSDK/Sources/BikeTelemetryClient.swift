@@ -8,6 +8,8 @@ public protocol BikeTelemetryClient: AnyObject, Sendable {
     func retrySecurityHandshake() async throws
     func readTelemetrySnapshot() async throws
     func readBikeStatusSnapshot() async throws
+    func startIMUMonitoring() async throws
+    func stopIMUMonitoring() async
     func startBatteryHealthMonitoring() async throws
     func stopBatteryHealthMonitoring() async
     func prepareChargePowerControl(
@@ -37,6 +39,8 @@ public protocol BikeTelemetryClient: AnyObject, Sendable {
 
 public extension BikeTelemetryClient {
     func readBikeStatusSnapshot() async throws {}
+    func startIMUMonitoring() async throws {}
+    func stopIMUMonitoring() async {}
     func prepareChargePowerControl(
         context: BikeSDKChargePowerTelemetryContext
     ) async throws -> BikeSDKChargePowerControlSnapshot {

@@ -75,6 +75,14 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
         try await notificationCoordinator.readBikeStatusSnapshot()
     }
 
+    public func startIMUMonitoring() async throws {
+        try await notificationCoordinator.startIMUMonitoring()
+    }
+
+    public func stopIMUMonitoring() async {
+        await notificationCoordinator.stopIMUMonitoring()
+    }
+
     public func startBatteryHealthMonitoring() async throws {
         try await notificationCoordinator.startBatteryHealthMonitoring()
     }

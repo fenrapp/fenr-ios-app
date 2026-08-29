@@ -2,9 +2,14 @@ import BikeDomain
 import Foundation
 import RuntimeConfiguration
 
-public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository, BikeDiscoveryRepository {
+// The emulator keeps one actor as the owner of every simulated bike channel.
+// swiftlint:disable file_length type_body_length
+
+public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatteryHealthRepository,
+    BikeDiscoveryRepository {
     private let telemetryHub: BikeEmulatorEventHub<BikeTelemetry>
     private let connectionHub: BikeEmulatorEventHub<BikeConnection>
+    private let imuHub: BikeEmulatorEventHub<BikeIMUSample>
     let debugEventHub: BikeEmulatorEventHub<BikeDebugEvent>
     private let batteryHealthHub: BikeEmulatorEventHub<BikeBatteryHealth>
     private let captureHub: BikeEmulatorCaptureHub
@@ -17,6 +22,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     private var tick = 0
     private var isStarted = false
     private var batteryHealthMonitoringLeaseCount = 0
+    private var imuMonitoringLeaseCount = 0
     private var chargePowerLimitWatts = Constants.defaultChargePowerWatts
     private var chargeTargetPercent = Constants.defaultChargeTargetPercent
     private var powerModeOverrides: [Int: BikePowerModeConfiguration] = [:]
@@ -26,6 +32,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
     var isBikeLocked = false
     private var lastPublishedConnection: BikeConnection?
     private var updateTask: Task<Void, Never>?
+    private var imuUpdateTask: Task<Void, Never>?
 
     init(
         scenario: BikeEmulatorScenario,
@@ -39,6 +46,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
         self.activeMapNumber = max(1, min(5, activeMapNumber))
         telemetryHub = channels.telemetry
         connectionHub = channels.connection
+        imuHub = channels.imu
         debugEventHub = channels.debugEvent
         batteryHealthHub = channels.batteryHealth
         captureHub = channels.capture
@@ -46,7 +54,10 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
         self.powerCalculator = powerCalculator
     }
 
-    deinit { updateTask?.cancel() }
+    deinit {
+        updateTask?.cancel()
+        imuUpdateTask?.cancel()
+    }
 
     public func start() async {
         guard !isStarted else { return }
@@ -59,6 +70,9 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
         isStarted = false
         updateTask?.cancel()
         updateTask = nil
+        imuUpdateTask?.cancel()
+        imuUpdateTask = nil
+        imuMonitoringLeaseCount = 0
     }
 
     public func connect(vin: String) async throws {
@@ -187,6 +201,23 @@ public actor BikeEmulatorRepository: BikeRepository, BikeBatteryHealthRepository
         await debugEventHub.stream()
     }
 
+    public func observeIMU() async -> AsyncStream<BikeIMUSample> {
+        await imuHub.stream()
+    }
+
+    public func startIMUMonitoring() {
+        imuMonitoringLeaseCount += 1
+        guard imuMonitoringLeaseCount == 1 else { return }
+        scheduleIMUUpdates()
+    }
+
+    public func stopIMUMonitoring() {
+        imuMonitoringLeaseCount = max(0, imuMonitoringLeaseCount - 1)
+        guard imuMonitoringLeaseCount == 0 else { return }
+        imuUpdateTask?.cancel()
+        imuUpdateTask = nil
+    }
+
     public func startBatteryHealthMonitoring() async throws {
         batteryHealthMonitoringLeaseCount += 1
         await publishBatteryHealth()
@@ -286,6 +317,43 @@ private extension BikeEmulatorRepository {
         }
     }
 
+    private func scheduleIMUUpdates() {
+        imuUpdateTask?.cancel()
+        imuUpdateTask = Task { [weak self] in
+            while !Task.isCancelled {
+                do {
+                    try await Task.sleep(for: .milliseconds(100))
+                } catch {
+                    return
+                }
+                guard !Task.isCancelled else { return }
+                await self?.publishIMU()
+            }
+        }
+    }
+
+    private func publishIMU() async {
+        let date = Date()
+        let phase = date.timeIntervalSinceReferenceDate
+        let rollRadians = sin(phase * 0.7) * 12 * .pi / 180
+        let pitchRadians = sin(phase * 0.37) * 6 * .pi / 180
+        let acceleration = BikeIMUVector(
+            x: -sin(pitchRadians) * Constants.debugOneGRaw,
+            y: sin(rollRadians) * cos(pitchRadians) * Constants.debugOneGRaw,
+            z: cos(rollRadians) * cos(pitchRadians) * Constants.debugOneGRaw
+        )
+        let gyroscope = BikeIMUVector(
+            x: cos(phase * 0.7) * 8.4,
+            y: cos(phase * 0.37) * 2.22,
+            z: .zero
+        )
+        await imuHub.send(.init(
+            accelerationRaw: acceleration,
+            gyroscopeRaw: gyroscope,
+            observedAt: date
+        ))
+    }
+
     private func advance() async {
         guard isStarted else { return }
         tick += 1
@@ -383,6 +451,7 @@ private extension BikeEmulatorRepository {
         static let powerModeHorsepowerRange = 10 ... 80
         static let powerModeRegenerationRange = -100 ... 100
         static let tractionControlRange = 0.0 ... 100.0
+        static let debugOneGRaw = 1_000.0
     }
 }
 
@@ -398,3 +467,4 @@ private enum BikeEmulatorChargeControlError: Error {
     case invalidPower
     case invalidTarget
 }
+// swiftlint:enable file_length type_body_length

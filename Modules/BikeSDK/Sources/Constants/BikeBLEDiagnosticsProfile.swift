@@ -63,6 +63,8 @@ enum BikeBLECurrentObservedFirmwareProfile {
         ]
     }
 
+    static var imuMonitoringUUID: CBUUID { liveIMUUUID }
+
     static var requiredServiceUUIDs: [CBUUID] {
         [statusService.serviceUUID, liveService.serviceUUID, batteryService.serviceUUID]
     }

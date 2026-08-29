@@ -14,22 +14,24 @@ public struct VehicleMotionCalibrationRecordMapper: Sendable {
 
     func update(_ record: VehicleMotionCalibrationRecord, from calibration: VehicleMotionCalibration) {
         record.vin = calibration.vin
-        record.quaternionX = calibration.referenceAttitude.xComponent
-        record.quaternionY = calibration.referenceAttitude.yComponent
-        record.quaternionZ = calibration.referenceAttitude.zComponent
-        record.quaternionW = calibration.referenceAttitude.scalarComponent
+        record.gyroscopeBiasXRaw = calibration.gyroscopeBiasXRaw
+        record.gyroscopeBiasYRaw = calibration.gyroscopeBiasYRaw
+        record.gyroscopeBiasZRaw = calibration.gyroscopeBiasZRaw
+        record.rollZeroOffsetDegrees = calibration.rollZeroOffsetDegrees
+        record.pitchZeroOffsetDegrees = calibration.pitchZeroOffsetDegrees
+        record.profileVersion = calibration.profileVersion
         record.calibratedAt = calibration.calibratedAt
     }
 
     func mapToDomain(_ record: VehicleMotionCalibrationRecord) -> VehicleMotionCalibration {
         VehicleMotionCalibration(
             vin: record.vin,
-            referenceAttitude: .init(
-                xComponent: record.quaternionX,
-                yComponent: record.quaternionY,
-                zComponent: record.quaternionZ,
-                scalarComponent: record.quaternionW
-            ),
+            gyroscopeBiasXRaw: record.gyroscopeBiasXRaw,
+            gyroscopeBiasYRaw: record.gyroscopeBiasYRaw,
+            gyroscopeBiasZRaw: record.gyroscopeBiasZRaw,
+            rollZeroOffsetDegrees: record.rollZeroOffsetDegrees,
+            pitchZeroOffsetDegrees: record.pitchZeroOffsetDegrees,
+            profileVersion: record.profileVersion,
             calibratedAt: record.calibratedAt
         )
     }

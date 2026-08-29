@@ -61,8 +61,10 @@ actor SessionDeviceSpeedRepository: DeviceSpeedRepository {
     func send(_ sample: DeviceSpeedSample) async { await hub.send(sample) }
 }
 
-actor SessionDeviceMotionRepository: DeviceMotionRepository {
-    func observeDeviceMotion() -> AsyncStream<DeviceMotionSample> { .init { _ in } }
+actor SessionIMURepository: BikeIMURepository {
+    func observeIMU() -> AsyncStream<BikeIMUSample> { .init { _ in } }
+    func startIMUMonitoring() throws {}
+    func stopIMUMonitoring() {}
 }
 
 actor SessionMotionCalibrationRepository: VehicleMotionCalibrationRepository {

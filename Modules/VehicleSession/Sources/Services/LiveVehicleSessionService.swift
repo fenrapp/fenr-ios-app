@@ -12,8 +12,9 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     var settings = AppSettings()
     var profile: BikeProfile?
     var deviceSpeedSample: DeviceSpeedSample?
-    var deviceMotionSample: DeviceMotionSample?
+    var imuSample: BikeIMUSample?
     var motionCalibration: VehicleMotionCalibration?
+    var hasLoadedMotionCalibration = false
     var motion = VehicleMotionSnapshot()
     var batteryHealth = BikeBatteryHealth()
     var batteryHealthMonitoringState = VehicleBatteryHealthMonitoringState.inactive
@@ -23,8 +24,8 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     var deviceSpeedTask: Task<Void, Never>?
     var deviceSpeedExpiryTask: Task<Void, Never>?
     var locationConsumers: Set<UUID> = []
-    var deviceMotionTask: Task<Void, Never>?
-    var deviceMotionExpiryTask: Task<Void, Never>?
+    var imuExpiryTask: Task<Void, Never>?
+    var isIMUMonitoring = false
     var motionCalibrationTask: Task<Void, Never>?
     var batteryHealthTask: Task<Void, Never>?
     var batteryHealthStartTask: Task<Void, Never>?
@@ -51,8 +52,7 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         observationTasks.forEach { $0.cancel() }
         deviceSpeedTask?.cancel()
         deviceSpeedExpiryTask?.cancel()
-        deviceMotionTask?.cancel()
-        deviceMotionExpiryTask?.cancel()
+        imuExpiryTask?.cancel()
         motionCalibrationTask?.cancel()
         batteryHealthTask?.cancel()
         batteryHealthStartTask?.cancel()
@@ -85,14 +85,17 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         deviceSpeedExpiryTask = nil
         deviceSpeedSample = nil
         locationConsumers.removeAll()
-        deviceMotionTask?.cancel()
-        deviceMotionTask = nil
-        deviceMotionExpiryTask?.cancel()
-        deviceMotionExpiryTask = nil
+        imuExpiryTask?.cancel()
+        imuExpiryTask = nil
+        if isIMUMonitoring {
+            await useCases.stopIMUMonitoring.execute()
+            isIMUMonitoring = false
+        }
         motionCalibrationTask?.cancel()
         motionCalibrationTask = nil
-        deviceMotionSample = nil
+        imuSample = nil
         motionCalibration = nil
+        hasLoadedMotionCalibration = false
         motionEstimator.reset()
         motion = .init()
         batteryHealthConsumers.removeAll()
@@ -121,18 +124,15 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         try? await useCases.readBikeStatusSnapshot.execute()
     }
 
-    public func calibrateDeviceMotion() async {
-        guard let profile,
-              let sample = deviceMotionSample,
-              motion.availability == .uncalibrated || motion.availability == .available else { return }
-        let calibration = VehicleMotionCalibration(
-            vin: profile.vin,
-            referenceAttitude: sample.attitude,
-            calibratedAt: sample.observedAt
-        )
-        await useCases.saveMotionCalibration.execute(calibration)
-        motionCalibration = calibration
-        refreshMotion()
+    public func zeroBikeAttitude() async {
+        guard profile != nil,
+              imuSample != nil,
+              motion.availability == .available || motion.availability == .zeroing
+        else {
+            return
+        }
+        motionEstimator.requestZero()
+        await refreshMotion()
         publish()
     }
 
@@ -161,7 +161,7 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         } else {
             locationConsumers.remove(consumerID)
         }
-        updateDeviceSpeedObservation()
+        await updateDeviceSpeedObservation()
         publish()
     }
 }

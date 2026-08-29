@@ -3,7 +3,8 @@ import Foundation
 
 public enum VehicleMotionAvailability: Equatable, Sendable {
     case unavailable
-    case uncalibrated
+    case calibrating
+    case zeroing
     case available
     case stale
 }
@@ -11,7 +12,6 @@ public enum VehicleMotionAvailability: Equatable, Sendable {
 public enum VehicleMotionHeadingSource: Equatable, Sendable {
     case unavailable
     case gpsCourse
-    case magnetic
 }
 
 public struct VehicleMotionSnapshot: Equatable, Sendable {

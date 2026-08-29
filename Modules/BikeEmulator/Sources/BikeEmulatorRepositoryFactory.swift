@@ -13,6 +13,7 @@ public enum BikeEmulatorRepositoryFactory {
             channels: BikeEmulatorChannels(
                 telemetry: BikeEmulatorEventHub<BikeTelemetry>(replaysLatestValue: true),
                 connection: BikeEmulatorEventHub<BikeConnection>(replaysLatestValue: true),
+                imu: BikeEmulatorEventHub<BikeIMUSample>(replaysLatestValue: false),
                 debugEvent: BikeEmulatorEventHub<BikeDebugEvent>(replaysLatestValue: true),
                 batteryHealth: BikeEmulatorEventHub<BikeBatteryHealth>(replaysLatestValue: true),
                 capture: BikeEmulatorCaptureHub(),
@@ -26,6 +27,7 @@ public enum BikeEmulatorRepositoryFactory {
 struct BikeEmulatorChannels {
     let telemetry: BikeEmulatorEventHub<BikeTelemetry>
     let connection: BikeEmulatorEventHub<BikeConnection>
+    let imu: BikeEmulatorEventHub<BikeIMUSample>
     let debugEvent: BikeEmulatorEventHub<BikeDebugEvent>
     let batteryHealth: BikeEmulatorEventHub<BikeBatteryHealth>
     let capture: BikeEmulatorCaptureHub

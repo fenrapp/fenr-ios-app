@@ -2,13 +2,15 @@ import BikeDomain
 import BikeSDK
 import Foundation
 
-public actor LiveBikeRepository: BikeRepository, BikeBatteryHealthRepository, BikeDiscoveryRepository {
+public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryHealthRepository,
+    BikeDiscoveryRepository {
     private let client: BikeTelemetryClient
     private let eventHandler: LiveBikeRepositoryEventHandler
     private let stateStore: BikeRepositoryStateStore
     private let telemetryHub: AsyncEventHub<BikeTelemetry>
     private let connectionHub: AsyncEventHub<BikeConnection>
     private let debugHub: AsyncEventHub<BikeDebugEvent>
+    private let imuHub: AsyncEventHub<BikeIMUSample>
     private let batteryHealthStore: BatteryHealthStateStore
     private let batteryHealthHub: AsyncEventHub<BikeBatteryHealth>
     private let batteryCaptureHub: AsyncEventHub<BatteryDatasetCapture>
@@ -23,6 +25,7 @@ public actor LiveBikeRepository: BikeRepository, BikeBatteryHealthRepository, Bi
         telemetryHub: AsyncEventHub<BikeTelemetry>,
         connectionHub: AsyncEventHub<BikeConnection>,
         debugHub: AsyncEventHub<BikeDebugEvent>,
+        imuHub: AsyncEventHub<BikeIMUSample>,
         batteryHealthStore: BatteryHealthStateStore,
         batteryHealthHub: AsyncEventHub<BikeBatteryHealth>,
         batteryCaptureHub: AsyncEventHub<BatteryDatasetCapture>,
@@ -34,6 +37,7 @@ public actor LiveBikeRepository: BikeRepository, BikeBatteryHealthRepository, Bi
         self.telemetryHub = telemetryHub
         self.connectionHub = connectionHub
         self.debugHub = debugHub
+        self.imuHub = imuHub
         self.batteryHealthStore = batteryHealthStore
         self.batteryHealthHub = batteryHealthHub
         self.batteryCaptureHub = batteryCaptureHub
@@ -55,6 +59,7 @@ public actor LiveBikeRepository: BikeRepository, BikeBatteryHealthRepository, Bi
             telemetryHub: telemetryHub,
             connectionHub: connectionHub,
             debugHub: debugHub,
+            imuHub: imuHub,
             batteryHealthStore: batteryHealthStore,
             batteryHealthHub: batteryHealthHub,
             batteryCaptureHub: batteryCaptureHub,
@@ -182,6 +187,18 @@ public actor LiveBikeRepository: BikeRepository, BikeBatteryHealthRepository, Bi
 
     public func observeDebugEvents() async -> AsyncStream<BikeDebugEvent> {
         await debugHub.stream()
+    }
+
+    public func observeIMU() async -> AsyncStream<BikeIMUSample> {
+        await imuHub.stream()
+    }
+
+    public func startIMUMonitoring() async throws {
+        try await client.startIMUMonitoring()
+    }
+
+    public func stopIMUMonitoring() async {
+        await client.stopIMUMonitoring()
     }
 
     public func startBatteryHealthMonitoring() async throws {

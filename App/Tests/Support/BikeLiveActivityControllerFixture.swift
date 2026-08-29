@@ -24,7 +24,9 @@ final class BikeLiveActivityControllerFixture {
                 observeConnection: .init(repository: repository),
                 observeSettings: .init(repository: settingsRepository),
                 observeDeviceSpeed: .init(repository: BikeLiveActivityDeviceSpeedRepository()),
-                observeDeviceMotion: .init(repository: BikeLiveActivityDeviceMotionRepository()),
+                observeIMU: .init(repository: BikeLiveActivityIMURepository()),
+                startIMUMonitoring: .init(repository: BikeLiveActivityIMURepository()),
+                stopIMUMonitoring: .init(repository: BikeLiveActivityIMURepository()),
                 loadMotionCalibration: .init(repository: BikeLiveActivityMotionCalibrationRepository()),
                 saveMotionCalibration: .init(repository: BikeLiveActivityMotionCalibrationRepository()),
                 observeBikeProfile: .init(repository: BikeLiveActivityProfileRepository()),
@@ -39,11 +41,11 @@ final class BikeLiveActivityControllerFixture {
                 maximumSampleAge: 5
             ),
             motionEstimator: .init(
+                profile: nil,
                 now: Date.init,
                 maximumSampleAge: 5,
                 minimumGPSCourseSpeedKilometersPerHour: 5,
-                maximumGPSCourseAccuracyDegrees: 35,
-                smoothingFactor: 1
+                maximumGPSCourseAccuracyDegrees: 35
             )
         )
         controller = BikeLiveActivityController(
@@ -150,8 +152,10 @@ private actor BikeLiveActivityProfileRepository: BikeProfileRepository {
     func clearProfile() {}
 }
 
-private actor BikeLiveActivityDeviceMotionRepository: DeviceMotionRepository {
-    func observeDeviceMotion() -> AsyncStream<DeviceMotionSample> { .init { _ in } }
+private actor BikeLiveActivityIMURepository: BikeIMURepository {
+    func observeIMU() -> AsyncStream<BikeIMUSample> { .init { _ in } }
+    func startIMUMonitoring() throws {}
+    func stopIMUMonitoring() {}
 }
 
 private actor BikeLiveActivityMotionCalibrationRepository: VehicleMotionCalibrationRepository {

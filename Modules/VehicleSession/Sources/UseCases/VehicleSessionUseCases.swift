@@ -7,7 +7,9 @@ public struct VehicleSessionUseCases: Sendable {
     let observeConnection: ObserveBikeConnectionUseCase
     let observeSettings: ObserveAppSettingsUseCase
     let observeDeviceSpeed: ObserveDeviceSpeedUseCase
-    let observeDeviceMotion: ObserveDeviceMotionUseCase
+    let observeIMU: ObserveBikeIMUUseCase
+    let startIMUMonitoring: StartBikeIMUMonitoringUseCase
+    let stopIMUMonitoring: StopBikeIMUMonitoringUseCase
     let loadMotionCalibration: LoadVehicleMotionCalibrationUseCase
     let saveMotionCalibration: SaveVehicleMotionCalibrationUseCase
     let observeBikeProfile: ObserveBikeProfileUseCase
@@ -23,7 +25,9 @@ public struct VehicleSessionUseCases: Sendable {
         observeConnection: ObserveBikeConnectionUseCase,
         observeSettings: ObserveAppSettingsUseCase,
         observeDeviceSpeed: ObserveDeviceSpeedUseCase,
-        observeDeviceMotion: ObserveDeviceMotionUseCase,
+        observeIMU: ObserveBikeIMUUseCase,
+        startIMUMonitoring: StartBikeIMUMonitoringUseCase,
+        stopIMUMonitoring: StopBikeIMUMonitoringUseCase,
         loadMotionCalibration: LoadVehicleMotionCalibrationUseCase,
         saveMotionCalibration: SaveVehicleMotionCalibrationUseCase,
         observeBikeProfile: ObserveBikeProfileUseCase,
@@ -38,7 +42,9 @@ public struct VehicleSessionUseCases: Sendable {
         self.observeConnection = observeConnection
         self.observeSettings = observeSettings
         self.observeDeviceSpeed = observeDeviceSpeed
-        self.observeDeviceMotion = observeDeviceMotion
+        self.observeIMU = observeIMU
+        self.startIMUMonitoring = startIMUMonitoring
+        self.stopIMUMonitoring = stopIMUMonitoring
         self.loadMotionCalibration = loadMotionCalibration
         self.saveMotionCalibration = saveMotionCalibration
         self.observeBikeProfile = observeBikeProfile

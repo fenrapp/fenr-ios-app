@@ -5,6 +5,7 @@ import SettingsDomain
 extension LiveVehicleSessionService {
     func observeSources() {
         observeTelemetry()
+        observeIMU()
         observeConnection()
         observeSettings()
         observeProfile()
@@ -12,6 +13,16 @@ extension LiveVehicleSessionService {
 
     private func observeTelemetry() {
         let useCase = useCases.observeTelemetry
+        observationTasks.append(Task { [weak self] in
+            let stream = await useCase.execute()
+            for await value in stream where !Task.isCancelled {
+                await self?.receive(value)
+            }
+        })
+    }
+
+    private func observeIMU() {
+        let useCase = useCases.observeIMU
         observationTasks.append(Task { [weak self] in
             let stream = await useCase.execute()
             for await value in stream where !Task.isCancelled {
@@ -50,39 +61,44 @@ extension LiveVehicleSessionService {
         })
     }
 
-    private func receive(_ value: BikeTelemetry) {
+    private func receive(_ value: BikeTelemetry) async {
         telemetry = value
         updatePowerModeRefresh(for: value)
-        updateDeviceSpeedObservation()
+        await updateDeviceSpeedObservation()
+        await refreshMotion()
         publish()
     }
 
-    private func receive(_ value: BikeConnection) {
+    private func receive(_ value: BikeConnection) async {
         connection = value
         if isReceivingTelemetry {
             updatePowerModeRefresh(for: telemetry)
         } else {
             resetPowerModeRefresh()
         }
-        updateDeviceMotionObservation()
+        await updateIMUMonitoring()
         publish()
     }
 
-    private func receive(_ value: AppSettings) {
+    private func receive(_ value: AppSettings) async {
         settings = value
         hasReceivedSettings = true
-        updateDeviceSpeedObservation()
+        await updateDeviceSpeedObservation()
         publish()
     }
 
-    private func receive(_ value: BikeProfileState) {
+    private func receive(_ value: BikeProfileState) async {
         profile = value.profile
         hasReceivedProfile = true
-        loadMotionCalibration(for: value.profile)
+        hasLoadedMotionCalibration = false
+        motionCalibration = nil
+        motionEstimator.reset()
+        await refreshMotion()
+        await loadMotionCalibration(for: value.profile)
         publish()
     }
 
-    func updateDeviceSpeedObservation() {
+    func updateDeviceSpeedObservation() async {
         guard settings.speedSource.usesDeviceLocation || !locationConsumers.isEmpty else {
             deviceSpeedTask?.cancel()
             deviceSpeedTask = nil
@@ -91,7 +107,7 @@ extension LiveVehicleSessionService {
             let hadDeviceSpeedSample = deviceSpeedSample != nil
             deviceSpeedSample = nil
             if hadDeviceSpeedSample {
-                refreshMotion()
+                await refreshMotion()
             }
             return
         }
@@ -105,10 +121,10 @@ extension LiveVehicleSessionService {
         }
     }
 
-    private func receive(_ value: DeviceSpeedSample) {
+    private func receive(_ value: DeviceSpeedSample) async {
         deviceSpeedSample = value
         scheduleDeviceSpeedExpiry(for: value)
-        refreshMotion()
+        await refreshMotion()
         publish()
     }
 
@@ -129,68 +145,74 @@ extension LiveVehicleSessionService {
         }
     }
 
-    private func expireDeviceSpeedSample(_ sample: DeviceSpeedSample) {
+    private func expireDeviceSpeedSample(_ sample: DeviceSpeedSample) async {
         deviceSpeedExpiryTask = nil
         guard deviceSpeedSample == sample else { return }
         deviceSpeedSample = nil
-        refreshMotion()
+        await refreshMotion()
         publish()
     }
 
-    private func updateDeviceMotionObservation() {
+    private func updateIMUMonitoring() async {
         guard isReceivingTelemetry else {
-            deviceMotionTask?.cancel()
-            deviceMotionTask = nil
-            deviceMotionExpiryTask?.cancel()
-            deviceMotionExpiryTask = nil
-            deviceMotionSample = nil
+            if isIMUMonitoring {
+                await useCases.stopIMUMonitoring.execute()
+                isIMUMonitoring = false
+            }
+            imuExpiryTask?.cancel()
+            imuExpiryTask = nil
+            imuSample = nil
             motionEstimator.reset()
-            refreshMotion()
+            await refreshMotion()
             return
         }
-        guard deviceMotionTask == nil else { return }
-        let useCase = useCases.observeDeviceMotion
-        deviceMotionTask = Task { [weak self] in
-            let stream = await useCase.execute()
-            for await value in stream where !Task.isCancelled {
-                await self?.receive(value)
-            }
+        guard !isIMUMonitoring else { return }
+        do {
+            try await useCases.startIMUMonitoring.execute()
+            isIMUMonitoring = true
+        } catch {
+            isIMUMonitoring = false
+            imuSample = nil
+            motionEstimator.reset()
+            await refreshMotion()
         }
     }
 
-    private func receive(_ value: DeviceMotionSample) {
-        deviceMotionSample = value
-        scheduleDeviceMotionExpiry(for: value)
-        refreshMotion()
+    private func receive(_ value: BikeIMUSample) async {
+        guard isIMUMonitoring else { return }
+        imuSample = value
+        scheduleIMUExpiry(for: value)
+        await refreshMotion()
         publish()
     }
 
-    private func scheduleDeviceMotionExpiry(for sample: DeviceMotionSample) {
-        deviceMotionExpiryTask?.cancel()
-        deviceMotionExpiryTask = Task { [weak self] in
+    private func scheduleIMUExpiry(for sample: BikeIMUSample) {
+        imuExpiryTask?.cancel()
+        imuExpiryTask = Task { [weak self] in
             do {
-                try await Task.sleep(for: .seconds(1))
+                try await Task.sleep(for: .milliseconds(750))
             } catch {
                 return
             }
             guard !Task.isCancelled else { return }
-            await self?.expireDeviceMotionSample(sample)
+            await self?.expireIMUSample(sample)
         }
     }
 
-    private func expireDeviceMotionSample(_ sample: DeviceMotionSample) {
-        deviceMotionExpiryTask = nil
-        guard deviceMotionSample == sample else { return }
-        refreshMotion()
+    private func expireIMUSample(_ sample: BikeIMUSample) async {
+        imuExpiryTask = nil
+        guard imuSample == sample else { return }
+        await refreshMotion()
         publish()
     }
 
-    private func loadMotionCalibration(for profile: BikeProfile?) {
+    private func loadMotionCalibration(for profile: BikeProfile?) async {
         motionCalibrationTask?.cancel()
         guard let profile else {
             motionCalibration = nil
+            hasLoadedMotionCalibration = true
             motionEstimator.reset()
-            refreshMotion()
+            await refreshMotion()
             return
         }
         let useCase = useCases.loadMotionCalibration
@@ -201,21 +223,28 @@ extension LiveVehicleSessionService {
         }
     }
 
-    private func receive(_ calibration: VehicleMotionCalibration?, vin: String) {
+    private func receive(_ calibration: VehicleMotionCalibration?, vin: String) async {
         motionCalibrationTask = nil
         guard profile?.vin == vin else { return }
         motionCalibration = calibration
+        hasLoadedMotionCalibration = true
         motionEstimator.reset()
-        refreshMotion()
+        await refreshMotion()
         publish()
     }
 
-    func refreshMotion() {
-        motion = motionEstimator.estimate(
-            deviceMotion: deviceMotionSample,
+    func refreshMotion() async {
+        let estimation = motionEstimator.estimate(
+            imuSample: imuSample,
             calibration: motionCalibration,
-            location: deviceSpeedSample
+            vin: hasLoadedMotionCalibration ? profile?.vin : nil,
+            location: deviceSpeedSample,
+            bikeSpeedKilometersPerHour: telemetry.speed.kmh
         )
+        motion = estimation.snapshot
+        guard let calibration = estimation.calibrationToPersist else { return }
+        motionCalibration = calibration
+        await useCases.saveMotionCalibration.execute(calibration)
     }
 
     private var isReceivingTelemetry: Bool {

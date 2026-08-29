@@ -51,7 +51,7 @@ public final class RideDynamicsCardViewModel: ObservableObject {
     }
 
     func calibrate() {
-        Task { [vehicleSession] in await vehicleSession.calibrateDeviceMotion() }
+        Task { [vehicleSession] in await vehicleSession.zeroBikeAttitude() }
     }
 
 #if DEBUG

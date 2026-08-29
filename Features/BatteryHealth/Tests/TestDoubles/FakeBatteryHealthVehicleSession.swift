@@ -29,7 +29,7 @@ actor FakeBatteryHealthVehicleSession: VehicleSessionService {
     func start() {}
     func stop() {}
     func refreshBikeStatus() {}
-    func calibrateDeviceMotion() {}
+    func zeroBikeAttitude() {}
 
     func setBatteryHealthMonitoringRequired(_ required: Bool, consumerID _: UUID) async {
         if required {

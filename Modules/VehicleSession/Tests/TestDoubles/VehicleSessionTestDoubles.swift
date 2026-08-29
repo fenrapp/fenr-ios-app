@@ -125,15 +125,21 @@ actor VehicleSessionTestDeviceSpeedRepository: DeviceSpeedRepository {
     func subscriptionCount() -> Int { subscriptions }
 }
 
-actor VehicleSessionTestDeviceMotionRepository: DeviceMotionRepository {
-    private let hub = VehicleSessionTestHub<DeviceMotionSample>()
+actor VehicleSessionTestIMURepository: BikeIMURepository {
+    private let hub = VehicleSessionTestHub<BikeIMUSample>()
     private var subscriptions = 0
-    func observeDeviceMotion() async -> AsyncStream<DeviceMotionSample> {
+    private var monitoringStarts = 0
+    private var monitoringStops = 0
+
+    func observeIMU() async -> AsyncStream<BikeIMUSample> {
         subscriptions += 1
         return await hub.stream()
     }
-    func send(_ value: DeviceMotionSample) async { await hub.send(value) }
+    func startIMUMonitoring() { monitoringStarts += 1 }
+    func stopIMUMonitoring() { monitoringStops += 1 }
+    func send(_ value: BikeIMUSample) async { await hub.send(value) }
     func subscriptionCount() -> Int { subscriptions }
+    func monitoringCounts() -> (Int, Int) { (monitoringStarts, monitoringStops) }
 }
 
 actor VehicleSessionTestMotionCalibrationRepository: VehicleMotionCalibrationRepository {

@@ -16,7 +16,9 @@ enum VehicleSessionDependencyContainer {
                 observeConnection: .init(repository: repository),
                 observeSettings: .init(repository: dependencies.settingsRepository),
                 observeDeviceSpeed: .init(repository: dependencies.deviceSpeedRepository),
-                observeDeviceMotion: .init(repository: dependencies.deviceMotionRepository),
+                observeIMU: .init(repository: dependencies.imuRepository),
+                startIMUMonitoring: .init(repository: dependencies.imuRepository),
+                stopIMUMonitoring: .init(repository: dependencies.imuRepository),
                 loadMotionCalibration: .init(repository: dependencies.motionCalibrationRepository),
                 saveMotionCalibration: .init(repository: dependencies.motionCalibrationRepository),
                 observeBikeProfile: .init(repository: dependencies.profileRepository),
@@ -33,11 +35,11 @@ enum VehicleSessionDependencyContainer {
                 maximumSampleAge: FENRRuntimeConstants.RideDashboard.deviceSpeedMaximumSampleAge
             ),
             motionEstimator: .init(
+                profile: dependencies.imuProfile,
                 now: Date.init,
                 maximumSampleAge: Constants.maximumMotionSampleAge,
                 minimumGPSCourseSpeedKilometersPerHour: Constants.minimumGPSCourseSpeedKilometersPerHour,
                 maximumGPSCourseAccuracyDegrees: Constants.maximumGPSCourseAccuracyDegrees,
-                smoothingFactor: Constants.motionSmoothingFactor,
                 maximumLocationSampleAge: FENRRuntimeConstants.RideDashboard.deviceSpeedMaximumSampleAge
             )
         )
@@ -49,8 +51,9 @@ struct VehicleSessionDependencies {
     let profileRepository: any BikeProfileRepository
     let settingsRepository: any AppSettingsRepository
     let deviceSpeedRepository: any DeviceSpeedRepository
-    let deviceMotionRepository: any DeviceMotionRepository
+    let imuRepository: any BikeIMURepository
     let motionCalibrationRepository: any VehicleMotionCalibrationRepository
+    let imuProfile: BikeIMUProfile?
 }
 
 private extension VehicleSessionDependencyContainer {
@@ -59,6 +62,5 @@ private extension VehicleSessionDependencyContainer {
         static let maximumMotionSampleAge: TimeInterval = 0.75
         static let minimumGPSCourseSpeedKilometersPerHour: Double = 5
         static let maximumGPSCourseAccuracyDegrees: Double = 35
-        static let motionSmoothingFactor: Double = 0.18
     }
 }

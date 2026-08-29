@@ -67,6 +67,13 @@ enum BikeBLEDiagnosticsProfile {
         }
     }
 
+    static var imuMonitoringUUID: CBUUID {
+        switch firmware {
+        case .currentObserved:
+            BikeBLECurrentObservedFirmwareProfile.imuMonitoringUUID
+        }
+    }
+
     static var requiredServiceUUIDs: [CBUUID] {
         switch firmware {
         case .currentObserved:

@@ -18,7 +18,7 @@ actor TestVehicleSessionService: VehicleSessionService {
     func start() async {}
     func stop() async {}
     func refreshBikeStatus() async {}
-    func calibrateDeviceMotion() async {}
+    func zeroBikeAttitude() async {}
     func setBatteryHealthMonitoringRequired(_: Bool, consumerID _: UUID) async {}
 
     func setLocationMonitoringRequired(_ required: Bool, consumerID _: UUID) async {
