@@ -6,6 +6,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode
     public var showsDashboardTemperatures: Bool
     public var dashboardCardConfiguration: DashboardCardConfiguration
+    public var rideNavigation: RideNavigationSettings
     public var measurementSystem: MeasurementSystem
     public var defaultBatteryPackCapacity: BatteryPackCapacity
     public var batteryPackCapacitiesByVIN: [String: BatteryPackCapacity]
@@ -21,6 +22,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
         showsDashboardTemperatures: Bool = false,
         dashboardCardConfiguration: DashboardCardConfiguration = .init(),
+        rideNavigation: RideNavigationSettings = .init(),
         measurementSystem: MeasurementSystem = .system,
         batteryPackCapacity: BatteryPackCapacity = .sevenPointTwoKilowattHours,
         batteryPackCapacitiesByVIN: [String: BatteryPackCapacity] = [:],
@@ -31,6 +33,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.dashboardBatteryIndicatorMode = dashboardBatteryIndicatorMode
         self.showsDashboardTemperatures = showsDashboardTemperatures
         self.dashboardCardConfiguration = dashboardCardConfiguration
+        self.rideNavigation = rideNavigation
         self.measurementSystem = measurementSystem
         defaultBatteryPackCapacity = batteryPackCapacity
         self.batteryPackCapacitiesByVIN = batteryPackCapacitiesByVIN
@@ -43,6 +46,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case dashboardBatteryIndicatorMode
         case showsDashboardTemperatures
         case dashboardCardConfiguration
+        case rideNavigation
         case measurementSystem
         case defaultBatteryPackCapacity
         case batteryPackCapacitiesByVIN
@@ -67,6 +71,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
         dashboardCardConfiguration = try container.decodeIfPresent(
             DashboardCardConfiguration.self,
             forKey: .dashboardCardConfiguration
+        ) ?? .init()
+        rideNavigation = try container.decodeIfPresent(
+            RideNavigationSettings.self,
+            forKey: .rideNavigation
         ) ?? .init()
         measurementSystem = try container.decodeIfPresent(MeasurementSystem.self, forKey: .measurementSystem) ?? .system
         defaultBatteryPackCapacity = try container.decodeIfPresent(
