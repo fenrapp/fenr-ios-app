@@ -296,7 +296,7 @@ private let previewCompassWithoutLocationState = DashboardRideDynamicsViewData(
 )
 
 private let previewCalibrationRequiredState = DashboardRideDynamicsViewData(
-    status: .calibrationRequired,
+    status: .calibrating,
     maximumLeftLeanText: "34°",
     maximumRightLeanText: "29°",
     canCalibrate: true

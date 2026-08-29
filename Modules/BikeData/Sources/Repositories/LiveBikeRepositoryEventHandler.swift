@@ -5,14 +5,18 @@ import Foundation
 public struct LiveBikeRepositoryEventHandler: Sendable {
     private let telemetryMapper: BikeSDKTelemetryPayloadToDomainMapper
     private let eventMapper: BikeSDKEventToDomainMapper
+    private let imuMapper: BikeSDKIMUSampleToDomainMapper
+    private let imuRateLimiter: BikeIMUSampleRateLimiter
     private let batteryHealthMapper: BikeSDKTelemetryPayloadToBatteryHealthMapper
     private let batteryDatasetMapper: BikeSDKBatteryDatasetToDomainMapper
     private let connectionSessionPolicy: BikeConnectionSessionPolicy
     private let profileRepository: (any BikeProfileRepository)?
 
-    public init(
+    init(
         telemetryMapper: BikeSDKTelemetryPayloadToDomainMapper,
         eventMapper: BikeSDKEventToDomainMapper,
+        imuMapper: BikeSDKIMUSampleToDomainMapper,
+        imuRateLimiter: BikeIMUSampleRateLimiter,
         batteryHealthMapper: BikeSDKTelemetryPayloadToBatteryHealthMapper,
         batteryDatasetMapper: BikeSDKBatteryDatasetToDomainMapper,
         connectionSessionPolicy: BikeConnectionSessionPolicy,
@@ -20,6 +24,8 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
     ) {
         self.telemetryMapper = telemetryMapper
         self.eventMapper = eventMapper
+        self.imuMapper = imuMapper
+        self.imuRateLimiter = imuRateLimiter
         self.batteryHealthMapper = batteryHealthMapper
         self.batteryDatasetMapper = batteryDatasetMapper
         self.connectionSessionPolicy = connectionSessionPolicy
@@ -37,6 +43,10 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
             await handleConnection(status, targets: targets)
         case .telemetry(let payload):
             await handleTelemetry(payload, targets: targets)
+        case .imu(let sample):
+            if await imuRateLimiter.shouldAccept(sample.observedAt) {
+                await targets.imuHub.send(imuMapper.map(sample))
+            }
         case .batteryDatasetCapture(let capture):
             let mappedCapture = BatteryDatasetCapture(
                 dataset: batteryDatasetMapper.map(capture.dataset),
@@ -75,6 +85,7 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
     ) async {
         let connectionState = eventMapper.connectionState(from: status)
         if connectionSessionPolicy.shouldResetSession(for: connectionState) {
+            await imuRateLimiter.reset()
             let state = await targets.stateStore.resetSession(connectionState: connectionState)
             await targets.telemetryHub.send(state.telemetry)
             await targets.connectionHub.send(state.connection)

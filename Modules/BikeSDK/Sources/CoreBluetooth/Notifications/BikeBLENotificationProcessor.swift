@@ -31,7 +31,11 @@ public struct BikeBLENotificationProcessor {
                 data: data
             )
             if let payload {
-                await eventEmitter.send(.telemetry(payload))
+                if case .imu(let imuPayload) = payload {
+                    await eventEmitter.send(.imu(.init(payload: imuPayload, observedAt: date)))
+                } else {
+                    await eventEmitter.send(.telemetry(payload))
+                }
                 decodeStatus = .decoded
                 decodeDetail = notificationMapper.debug(
                     characteristic: characteristic,

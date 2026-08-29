@@ -1,5 +1,5 @@
 import Foundation
-import RideSessionData
+@testable import RideSessionData
 import RideSessionDomain
 import Testing
 
@@ -21,6 +21,17 @@ struct SwiftDataRideTripRepositoryTests {
         #expect(restored?.isAwaitingElectricalRebase == true)
         #expect(restored?.maximumLeftLeanDegrees == 31)
         #expect(restored?.maximumUphillPitchDegrees == 12)
+        #expect(restored?.attitudeSource == .bikeIMUBetaV1)
+    }
+
+    @Test("Missing persisted attitude source is treated as legacy phone data")
+    func mapsLegacyAttitudeSource() throws {
+        let mapper = RideTripRecordMapper()
+        let trip = makeTrip(identity: .vin(Constants.firstVIN), sessionID: UUID())
+        let record = mapper.makeRecord(from: trip)
+        record.attitudeSourceRawValue = nil
+
+        #expect(mapper.mapToDomain(record)?.attitudeSource == .legacyPhone)
     }
 
     @Test("Deletes temporary data from previous application sessions")

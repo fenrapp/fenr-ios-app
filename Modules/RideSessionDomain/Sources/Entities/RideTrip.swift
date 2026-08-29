@@ -31,6 +31,7 @@ public struct RideTrip: Equatable, Identifiable, Sendable {
     public let maximumRightLeanDegrees: Double
     public let maximumUphillPitchDegrees: Double
     public let maximumDownhillPitchDegrees: Double
+    public let attitudeSource: RideAttitudeSource
     public let energyBuckets: [RideEnergyBucket]
 
     public var isPaused: Bool { pausedAt != nil }
@@ -89,6 +90,7 @@ public struct RideTrip: Equatable, Identifiable, Sendable {
         maximumRightLeanDegrees: Double = .zero,
         maximumUphillPitchDegrees: Double = .zero,
         maximumDownhillPitchDegrees: Double = .zero,
+        attitudeSource: RideAttitudeSource = .bikeIMUBetaV1,
         energyBuckets: [RideEnergyBucket] = []
     ) {
         self.id = id
@@ -121,6 +123,7 @@ public struct RideTrip: Equatable, Identifiable, Sendable {
         self.maximumRightLeanDegrees = maximumRightLeanDegrees
         self.maximumUphillPitchDegrees = maximumUphillPitchDegrees
         self.maximumDownhillPitchDegrees = maximumDownhillPitchDegrees
+        self.attitudeSource = attitudeSource
         self.energyBuckets = energyBuckets
     }
 

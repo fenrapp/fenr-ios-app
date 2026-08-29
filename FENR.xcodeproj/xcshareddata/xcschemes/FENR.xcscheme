@@ -191,6 +191,20 @@
          </BuildActionEntry>
          <BuildActionEntry
             buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "838BE6DE211A08C746CC9AB5"
+               BuildableName = "EnvironmentDataTests.xctest"
+               BlueprintName = "EnvironmentDataTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
             buildForRunning = "YES"
             buildForProfiling = "YES"
             buildForArchiving = "YES"
@@ -544,6 +558,17 @@
                BlueprintIdentifier = "4F60C80AD9FE8D96269B7741"
                BuildableName = "SettingsDataTests.xctest"
                BlueprintName = "SettingsDataTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "838BE6DE211A08C746CC9AB5"
+               BuildableName = "EnvironmentDataTests.xctest"
+               BlueprintName = "EnvironmentDataTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </TestableReference>

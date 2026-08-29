@@ -528,7 +528,6 @@ targets:
         embed: true
     settings:
       base:
-        INFOPLIST_KEY_NSMotionUsageDescription: "FENR uses motion data to show motorcycle lean and pitch while riding."
         INFOPLIST_KEY_NSFaceIDUsageDescription: "FENR uses Face ID to authorize unlocking your motorcycle."
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app
         ENABLE_USER_SCRIPT_SANDBOXING: NO
@@ -662,7 +661,6 @@ targets:
         embed: true
     settings:
       base:
-        INFOPLIST_KEY_NSMotionUsageDescription: "FENR uses motion data to show motorcycle lean and pitch while riding."
         INFOPLIST_KEY_NSFaceIDUsageDescription: "FENR uses Face ID to authorize unlocking your motorcycle."
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug
         ENABLE_USER_SCRIPT_SANDBOXING: NO
@@ -935,6 +933,17 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.settingsdata.tests
+  EnvironmentDataTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/EnvironmentData/Tests
+    dependencies:
+      - target: EnvironmentData
+      - target: EnvironmentDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.environmentdata.tests
   RideSessionDomainTests:
     type: bundle.unit-test
     platform: iOS
@@ -1302,6 +1311,7 @@ schemes:
         BikeEmulatorTests: [test]
         ChargeControlTests: [test]
         SettingsDataTests: [test]
+        EnvironmentDataTests: [test]
         RideSessionDomainTests: [test]
         RideNavigationDomainTests: [test]
         RideNavigationDataTests: [test]
@@ -1333,6 +1343,7 @@ schemes:
         - BikeEmulatorTests
         - ChargeControlTests
         - SettingsDataTests
+        - EnvironmentDataTests
         - RideSessionDomainTests
         - RideNavigationDomainTests
         - RideNavigationDataTests

@@ -35,8 +35,9 @@ enum AppSessionDependencyContainer {
                 profileRepository: dependencies.profileRepository,
                 settingsRepository: dependencies.settingsRepository,
                 deviceSpeedRepository: dependencies.deviceSpeedRepository,
-                deviceMotionRepository: dependencies.deviceMotionRepository,
-                motionCalibrationRepository: dependencies.motionCalibrationRepository
+                imuRepository: dependencies.repository,
+                motionCalibrationRepository: dependencies.motionCalibrationRepository,
+                imuProfile: dependencies.imuProfile
             )
         )
         let rideSession = RideSessionDependencyContainer.makeService(
@@ -51,12 +52,12 @@ enum AppSessionDependencyContainer {
 }
 
 struct AppSessionDependencies {
-    let repository: any BikeRepository & BikeBatteryHealthRepository
+    let repository: any BikeRepository & BikeIMURepository & BikeBatteryHealthRepository
     let profileRepository: any BikeProfileRepository
     let settingsRepository: any AppSettingsRepository
     let deviceSpeedRepository: any DeviceSpeedRepository
-    let deviceMotionRepository: any DeviceMotionRepository
     let motionCalibrationRepository: any VehicleMotionCalibrationRepository
+    let imuProfile: BikeIMUProfile?
     let rideTripRepository: any RideTripRepository
 }
 

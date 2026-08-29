@@ -80,15 +80,15 @@ struct RideDynamicsCardMapperTests {
         let snapshot = RideSessionSnapshot(
             vehicleIdentity: .temporary(UUID()),
             motion: .init(
-                headingSource: .magnetic,
-                availability: .uncalibrated,
+                headingSource: .unavailable,
+                availability: .calibrating,
                 observedAt: .now
             )
         )
 
         let state = RideDynamicsCardMapper(locale: .init(identifier: "en_GB")).map(snapshot)
 
-        #expect(state.status == .calibrationRequired)
+        #expect(state.status == .calibrating)
         #expect(!state.canCalibrate)
     }
 
@@ -97,7 +97,8 @@ struct RideDynamicsCardMapperTests {
         let mapper = RideDynamicsCardMapper(locale: .init(identifier: "en_GB"))
         let cases: [(VehicleMotionAvailability, DashboardRideDynamicsViewData.Status)] = [
             (.unavailable, .unavailable),
-            (.uncalibrated, .calibrationRequired),
+            (.calibrating, .calibrating),
+            (.zeroing, .zeroing),
             (.available, .live),
             (.stale, .signalLost)
         ]

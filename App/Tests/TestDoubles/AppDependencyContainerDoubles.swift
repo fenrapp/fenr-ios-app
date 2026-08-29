@@ -38,7 +38,7 @@ actor LifecycleVehicleSessionSpy: VehicleSessionService {
     func start() { starts += 1 }
     func stop() { stops += 1 }
     func refreshBikeStatus() {}
-    func calibrateDeviceMotion() {}
+    func zeroBikeAttitude() {}
 
     func setBatteryHealthMonitoringRequired(_ required: Bool, consumerID _: UUID) {
         batteryHealthRequirements.append(required)

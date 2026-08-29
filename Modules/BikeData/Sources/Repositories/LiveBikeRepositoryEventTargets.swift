@@ -5,6 +5,7 @@ struct LiveBikeRepositoryEventTargets: Sendable {
     let telemetryHub: AsyncEventHub<BikeTelemetry>
     let connectionHub: AsyncEventHub<BikeConnection>
     let debugHub: AsyncEventHub<BikeDebugEvent>
+    let imuHub: AsyncEventHub<BikeIMUSample>
     let batteryHealthStore: BatteryHealthStateStore
     let batteryHealthHub: AsyncEventHub<BikeBatteryHealth>
     let batteryCaptureHub: AsyncEventHub<BatteryDatasetCapture>

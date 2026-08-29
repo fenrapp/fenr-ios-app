@@ -20,6 +20,10 @@ public enum LiveBikeRepositoryFactory {
                     connectionDebugMapper: BikeSDKConnectionStatusDebugMapper(),
                     notificationDebugMapper: BikeSDKNotificationDebugToDomainMapper()
                 ),
+                imuMapper: BikeSDKIMUSampleToDomainMapper(),
+                imuRateLimiter: BikeIMUSampleRateLimiter(
+                    minimumInterval: configuration.imuMinimumInterval
+                ),
                 batteryHealthMapper: BikeSDKTelemetryPayloadToBatteryHealthMapper(),
                 batteryDatasetMapper: BikeSDKBatteryDatasetToDomainMapper(),
                 connectionSessionPolicy: BikeConnectionSessionPolicy(),
@@ -34,6 +38,9 @@ public enum LiveBikeRepositoryFactory {
             ),
             debugHub: AsyncEventHub(
                 bufferingPolicy: .bufferingNewest(configuration.debugBufferLimit)
+            ),
+            imuHub: AsyncEventHub(
+                bufferingPolicy: .bufferingNewest(configuration.imuBufferLimit)
             ),
             batteryHealthStore: BatteryHealthStateStore(),
             batteryHealthHub: AsyncEventHub(

@@ -122,6 +122,14 @@ public struct BikeBLENotificationCoordinator {
         try await readAvailableBatteryHealthSnapshot()
     }
 
+    public func startIMUMonitoring() async throws {
+        try await subscriptionCoordinator.startIMUMonitoring()
+    }
+
+    public func stopIMUMonitoring() async {
+        await subscriptionCoordinator.stopIMUMonitoring()
+    }
+
     public func stopBatteryHealthMonitoring() async {
         await subscriptionCoordinator.stopBatteryHealthMonitoring()
     }

@@ -6,9 +6,7 @@ struct DashboardDynamicsAngleGauge: View {
     let angleDegrees: Double
     let maximumAngleDegrees: Double
     let vehiclePerspective: VehiclePerspective
-    let canCalibrate: Bool
     let reduceMotion: Bool
-    let calibrate: () -> Void
 
     var body: some View {
         GeometryReader { proxy in
@@ -93,10 +91,12 @@ struct DashboardDynamicsAngleGauge: View {
     @ViewBuilder
     private var centerContent: some View {
         switch status {
-        case .calibrationRequired:
-            calibrationContent
+        case .calibrating:
+            waitingContent(message: "CALIBRATING")
+        case .zeroing:
+            waitingContent(message: "HOLD STILL")
         case .unavailable:
-            unavailableContent(message: "MOTION UNAVAILABLE")
+            unavailableContent(message: "IMU UNAVAILABLE")
         case .signalLost:
             unavailableContent(message: "SIGNAL LOST")
         case .live:
@@ -108,26 +108,14 @@ struct DashboardDynamicsAngleGauge: View {
         motorcycle
     }
 
-    private var calibrationContent: some View {
+    private func waitingContent(message: String) -> some View {
         VStack(spacing: Constants.calibrationSpacing) {
             vehicleSymbol
                 .frame(width: Constants.calibrationVehicleWidth, height: Constants.calibrationVehicleHeight)
                 .foregroundStyle(DesignColor.secondaryText)
-            Text(canCalibrate ? "LEVEL PHONE" : "PREPARING SENSOR")
+            Text(message)
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(DesignColor.secondaryText)
-            Button(action: calibrate) {
-                Label("ZERO", systemImage: "scope")
-                    .font(.caption.weight(.bold))
-                    .padding(.horizontal, Constants.calibrationButtonHorizontalPadding)
-                    .frame(height: Constants.calibrationButtonHeight)
-                    .background(Capsule().fill(DesignColor.informational.opacity(Constants.buttonFillOpacity)))
-                    .overlay(Capsule().stroke(DesignColor.informational, lineWidth: 1))
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(DesignColor.informational)
-            .disabled(!canCalibrate)
-            .opacity(canCalibrate ? 1 : Constants.disabledOpacity)
         }
     }
 
@@ -195,13 +183,9 @@ struct DashboardDynamicsAngleGauge: View {
         static let calibrationSpacing: CGFloat = 5
         static let calibrationVehicleWidth: CGFloat = 46
         static let calibrationVehicleHeight: CGFloat = 30
-        static let calibrationButtonHorizontalPadding: CGFloat = 10
-        static let calibrationButtonHeight: CGFloat = 24
-        static let buttonFillOpacity = 0.08
         static let unavailableIconSize: CGFloat = 28
         static let animationDuration = 0.2
         static let inactiveTickOpacity = 0.28
-        static let disabledOpacity = 0.35
     }
 
     enum VehiclePerspective {

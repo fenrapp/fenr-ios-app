@@ -9,16 +9,7 @@ public actor DebugVehicleMotionCalibrationRepository: VehicleMotionCalibrationRe
     }
 
     public func load(vin: String) -> VehicleMotionCalibration? {
-        calibrations[vin] ?? VehicleMotionCalibration(
-            vin: vin,
-            referenceAttitude: .init(
-                xComponent: .zero,
-                yComponent: .zero,
-                zComponent: .zero,
-                scalarComponent: 1
-            ),
-            calibratedAt: Date()
-        )
+        calibrations[vin]
     }
 
     public func save(_ calibration: VehicleMotionCalibration) {

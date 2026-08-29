@@ -34,6 +34,7 @@ final class RideTripRecord {
     var maximumRightLeanDegrees: Double
     var maximumUphillPitchDegrees: Double
     var maximumDownhillPitchDegrees: Double
+    var attitudeSourceRawValue: String?
 
     init(
         id: UUID,
@@ -74,5 +75,6 @@ final class RideTripRecord {
         maximumRightLeanDegrees = .zero
         maximumUphillPitchDegrees = .zero
         maximumDownhillPitchDegrees = .zero
+        attitudeSourceRawValue = nil
     }
 }

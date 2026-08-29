@@ -15,7 +15,6 @@ struct LiveVehicleSessionServiceTests {
         await fixture.service.start()
         _ = await fixture.service.observe()
         _ = await fixture.service.observe()
-
         #expect(await waitUntil {
             let sourceCounts = await fixture.repository.sourceSubscriptionCounts()
             let settingsCount = await fixture.settings.subscriptionCount()
@@ -253,44 +252,65 @@ extension LiveVehicleSessionServiceTests {
         await fixture.service.stop()
     }
 
-    @Test("Calibrates fresh device motion for the active VIN")
-    func calibratesDeviceMotion() async {
+    @Test("Starts bike IMU monitoring and auto-calibrates a stable sample window")
+    func autoCalibratesBikeIMU() async {
         let fixture = makeFixture()
         await fixture.service.start()
         #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
         await fixture.repository.sendConnection(.init(
             state: .receivingTelemetry(peripheralName: "TEST")
         ))
-        #expect(await waitUntil { await fixture.deviceMotion.subscriptionCount() == 1 })
-        await fixture.deviceMotion.send(.init(
-            attitude: .init(
-                xComponent: 0.1,
-                yComponent: 0.2,
-                zComponent: 0.3,
-                scalarComponent: 0.9
-            ),
-            observedAt: fixture.now
-        ))
-        #expect(await waitUntil { await fixture.latestSnapshot().motion.availability == .uncalibrated })
-
-        await fixture.service.calibrateDeviceMotion()
+        #expect(await waitUntil { await fixture.imu.monitoringCounts().0 == 1 })
+        await fixture.repository.sendTelemetry(.init(speed: .known(kmh: 0, kmhX10: 0)))
+        for index in 0 ... 20 {
+            await fixture.imu.send(.init(
+                accelerationRaw: .init(x: 0, y: 0, z: 1_000),
+                gyroscopeRaw: .init(x: 2, y: -1, z: 3),
+                observedAt: fixture.now.addingTimeInterval(Double(index) / 10 - 2)
+            ))
+        }
 
         #expect(await waitUntil { await fixture.latestSnapshot().motion.availability == .available })
         #expect(await fixture.motionCalibration.savedValue()?.vin == "TESTVIN0000000001")
         await fixture.service.stop()
+        #expect(await fixture.imu.monitoringCounts() == (1, 1))
     }
 
-    @Test("Does not persist calibration before a device motion sample exists")
+    @Test("Stops and restarts optional bike IMU monitoring across a reconnect")
+    func reconnectsBikeIMU() async {
+        let fixture = makeFixture()
+        await fixture.service.start()
+        #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
+
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
+        #expect(await waitUntil { await fixture.imu.monitoringCounts() == (1, 0) })
+
+        await fixture.repository.sendConnection(.init(state: .disconnected(reason: "Link lost")))
+        #expect(await waitUntil { await fixture.imu.monitoringCounts() == (1, 1) })
+        #expect(await fixture.latestSnapshot().motion.availability == .unavailable)
+
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
+        #expect(await waitUntil { await fixture.imu.monitoringCounts() == (2, 1) })
+        await fixture.service.stop()
+    }
+
+    @Test("Does not persist a zero before a bike IMU sample exists")
     func ignoresCalibrationWithoutSample() async {
         let fixture = makeFixture()
         await fixture.service.start()
 
-        await fixture.service.calibrateDeviceMotion()
+        await fixture.service.zeroBikeAttitude()
 
         #expect(await fixture.motionCalibration.savedValue() == nil)
         await fixture.service.stop()
     }
 
+    // The fixture intentionally spells out the complete production dependency graph.
+    // swiftlint:disable:next function_body_length
     private func makeFixture(
         speedSource: SpeedSource = .motorcycle,
         now: @escaping @Sendable () -> Date = { Date(timeIntervalSince1970: 1_000) },
@@ -300,7 +320,7 @@ extension LiveVehicleSessionServiceTests {
         let settings = VehicleSessionTestSettingsRepository(speedSource: speedSource)
         let profile = VehicleSessionTestProfileRepository()
         let deviceSpeed = VehicleSessionTestDeviceSpeedRepository()
-        let deviceMotion = VehicleSessionTestDeviceMotionRepository()
+        let imu = VehicleSessionTestIMURepository()
         let motionCalibration = VehicleSessionTestMotionCalibrationRepository()
         let fixtureDate = now()
         let service = LiveVehicleSessionService(
@@ -309,7 +329,9 @@ extension LiveVehicleSessionServiceTests {
                 observeConnection: .init(repository: repository),
                 observeSettings: .init(repository: settings),
                 observeDeviceSpeed: .init(repository: deviceSpeed),
-                observeDeviceMotion: .init(repository: deviceMotion),
+                observeIMU: .init(repository: imu),
+                startIMUMonitoring: .init(repository: imu),
+                stopIMUMonitoring: .init(repository: imu),
                 loadMotionCalibration: .init(repository: motionCalibration),
                 saveMotionCalibration: .init(repository: motionCalibration),
                 observeBikeProfile: .init(repository: profile),
@@ -326,11 +348,25 @@ extension LiveVehicleSessionServiceTests {
                 maximumSampleAge: maximumSampleAge
             ),
             motionEstimator: .init(
+                profile: .init(
+                    version: 1,
+                    accelerationTransform: .init(
+                        bikeX: .positiveX,
+                        bikeY: .positiveY,
+                        bikeZ: .positiveZ
+                    ),
+                    gyroscopeTransform: .init(
+                        bikeX: .positiveX,
+                        bikeY: .positiveY,
+                        bikeZ: .positiveZ
+                    ),
+                    gyroscopeDegreesPerSecondPerRawUnit: .init(x: 0.01, y: 0.01, z: 0.01),
+                    oneGRaw: 1_000
+                ),
                 now: now,
                 maximumSampleAge: maximumSampleAge,
                 minimumGPSCourseSpeedKilometersPerHour: 5,
-                maximumGPSCourseAccuracyDegrees: 35,
-                smoothingFactor: 1
+                maximumGPSCourseAccuracyDegrees: 35
             )
         )
         return Fixture(
@@ -339,7 +375,7 @@ extension LiveVehicleSessionServiceTests {
             settings: settings,
             profile: profile,
             deviceSpeed: deviceSpeed,
-            deviceMotion: deviceMotion,
+            imu: imu,
             motionCalibration: motionCalibration,
             now: fixtureDate
         )
@@ -351,7 +387,7 @@ extension LiveVehicleSessionServiceTests {
         let settings: VehicleSessionTestSettingsRepository
         let profile: VehicleSessionTestProfileRepository
         let deviceSpeed: VehicleSessionTestDeviceSpeedRepository
-        let deviceMotion: VehicleSessionTestDeviceMotionRepository
+        let imu: VehicleSessionTestIMURepository
         let motionCalibration: VehicleSessionTestMotionCalibrationRepository
         let now: Date
 

@@ -43,7 +43,7 @@ public struct RideDynamicsCardMapper: Sendable {
                 coordinateText($0.longitudeDegrees, positiveHemisphere: "E", negativeHemisphere: "W")
             },
             canCalibrate: snapshot.vehicleIdentity.confirmedVIN != nil
-                && (motion.availability == .available || motion.availability == .uncalibrated)
+                && motion.availability == .available
         )
     }
 }
@@ -67,7 +67,8 @@ private extension RideDynamicsCardMapper {
     func status(_ availability: VehicleMotionAvailability) -> DashboardRideDynamicsViewData.Status {
         switch availability {
         case .unavailable: .unavailable
-        case .uncalibrated: .calibrationRequired
+        case .calibrating: .calibrating
+        case .zeroing: .zeroing
         case .available: .live
         case .stale: .signalLost
         }
@@ -77,7 +78,6 @@ private extension RideDynamicsCardMapper {
         switch source {
         case .unavailable: "NO COURSE"
         case .gpsCourse: "GPS"
-        case .magnetic: "COMPASS"
         }
     }
 

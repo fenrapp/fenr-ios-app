@@ -103,6 +103,40 @@ struct BikeBLENotificationProcessorTests {
             return
         }
     }
+
+    @Test("IMU preserves signed axes and the Core Bluetooth callback timestamp")
+    func emitsTimestampedIMU() async {
+        let eventHub = AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
+        let stream = await eventHub.stream()
+        let date = Date(timeIntervalSince1970: 123)
+        let processor = BikeBLENotificationProcessor(
+            eventEmitter: makeEventEmitter(eventHub: eventHub),
+            notificationMapper: makeNotificationMapper(),
+            debugSampler: BikeNotificationDebugSampler(minimumInterval: 1),
+            traceEmitter: makeTraceEmitter()
+        )
+
+        let didDecode = await processor.process(
+            characteristic: StarkUUIDs.liveIMU,
+            data: BikeSDKPayloadFixtures.imu,
+            date: date
+        )
+        var iterator = stream.makeAsyncIterator()
+        let event = await iterator.next()
+
+        #expect(didDecode)
+        guard case let .imu(sample) = event else {
+            Issue.record("Expected a dedicated IMU event")
+            return
+        }
+        #expect(sample.observedAt == date)
+        #expect(sample.payload.accelerationXRaw == 3)
+        #expect(sample.payload.accelerationYRaw == -1_135)
+        #expect(sample.payload.accelerationZRaw == 1_178)
+        #expect(sample.payload.gyroscopeXRaw == 15)
+        #expect(sample.payload.gyroscopeYRaw == -451)
+        #expect(sample.payload.gyroscopeZRaw == 927)
+    }
 }
 
 private extension BikeSDKEvent {

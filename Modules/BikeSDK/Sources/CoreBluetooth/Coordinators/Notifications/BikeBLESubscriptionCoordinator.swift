@@ -169,6 +169,35 @@ struct BikeBLESubscriptionCoordinator {
         }
     }
 
+    func startIMUMonitoring() async throws {
+        guard let peripheral = sessionStore.peripheral else {
+            throw BikeSDKError.operationFailed(BikeSDKText.noActivePeripheral)
+        }
+        guard sessionStore.authenticationState == .authenticated else {
+            throw BikeSDKError.operationFailed(BikeSDKText.authenticationRequired)
+        }
+        guard sessionStore.acquireIMUMonitoringLease() else { return }
+        guard let characteristic = sessionStore.discoveredCharacteristics[BikeSDKConstants.imuMonitoringUUID]
+        else {
+            _ = sessionStore.releaseIMUMonitoringLease()
+            throw BikeSDKError.operationFailed("Bike IMU is unavailable")
+        }
+        await notificationPreparer.prepare(characteristic: characteristic, peripheral: peripheral)
+    }
+
+    func stopIMUMonitoring() async {
+        guard sessionStore.releaseIMUMonitoringLease(),
+              let peripheral = sessionStore.peripheral
+        else {
+            return
+        }
+        let uuid = BikeSDKConstants.imuMonitoringUUID
+        sessionStore.removePendingNotificationCharacteristic(uuid: uuid)
+        guard let characteristic = sessionStore.discoveredCharacteristics[uuid] else { return }
+        sessionStore.enqueueUnsubscriptionCharacteristic(characteristic)
+        await queue.processNext(peripheral: peripheral)
+    }
+
     func stopBatteryHealthMonitoring() async {
         guard sessionStore.releaseBatteryHealthMonitoringLease(),
               let peripheral = sessionStore.peripheral
@@ -208,6 +237,10 @@ struct BikeBLESubscriptionCoordinator {
            !sessionStore.isBatteryHealthMonitoringActive() {
             sessionStore.enqueueUnsubscriptionCharacteristic(characteristic)
         }
+        if characteristic.uuid == BikeSDKConstants.imuMonitoringUUID,
+           !sessionStore.isIMUMonitoringActive() {
+            sessionStore.enqueueUnsubscriptionCharacteristic(characteristic)
+        }
     }
 
     private func prepareConfigurationNotificationIfAvailable(peripheral: CBPeripheral) async {
@@ -226,6 +259,7 @@ struct BikeBLESubscriptionCoordinator {
     private func shouldPrepareNotification(for characteristic: CBCharacteristic) -> Bool {
         let uuid = characteristic.uuid
         return BikeSDKConstants.telemetryCharacteristicUUIDs.contains(uuid)
+            || (uuid == BikeSDKConstants.imuMonitoringUUID && sessionStore.isIMUMonitoringActive())
             || (BikeSDKConstants.batteryHealthMonitoringUUIDs.contains(uuid)
                 && sessionStore.isBatteryHealthMonitoringActive())
     }
