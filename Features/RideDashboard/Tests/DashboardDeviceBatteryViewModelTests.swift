@@ -46,34 +46,34 @@ struct DashboardDeviceBatteryViewModelTests {
         #expect(monitor.stopCount == 1)
     }
 
-    @Test("Starts with the icon and persists display mode toggles")
+    @Test("Starts with icon and percentage and persists visible display mode cycles")
     func persistsDisplayMode() async {
         let monitor = TestDashboardDeviceBatteryMonitor()
         let repository = TestDashboardDeviceBatterySettingsRepository()
         let viewModel = makeViewModel(monitor: monitor, repository: repository)
 
         viewModel.start()
-        #expect(viewModel.viewState.displayMode == .icon)
+        #expect(viewModel.viewState.displayMode == .iconAndText)
 
         viewModel.toggleDisplayMode()
 
-        #expect(viewModel.viewState.displayMode == .text)
-        #expect(await waitUntil { await repository.load().dashboardDeviceBatteryDisplayMode == .text })
+        #expect(viewModel.viewState.displayMode == .textOnly)
+        #expect(await waitUntil { await repository.load().dashboardDeviceBatteryDisplayMode == .textOnly })
 
         viewModel.toggleDisplayMode()
         viewModel.toggleDisplayMode()
         viewModel.toggleDisplayMode()
 
-        #expect(viewModel.viewState.displayMode == .icon)
-        #expect(await waitUntil { await repository.load().dashboardDeviceBatteryDisplayMode == .icon })
+        #expect(viewModel.viewState.displayMode == .textOnly)
+        #expect(await waitUntil { await repository.load().dashboardDeviceBatteryDisplayMode == .textOnly })
 
         viewModel.stop()
         viewModel.start()
-        #expect(await waitUntil { viewModel.viewState.displayMode == .icon })
+        #expect(await waitUntil { viewModel.viewState.displayMode == .textOnly })
 
         viewModel.toggleDisplayMode()
-        #expect(viewModel.viewState.displayMode == .text)
-        #expect(await waitUntil { await repository.load().dashboardDeviceBatteryDisplayMode == .text })
+        #expect(viewModel.viewState.displayMode == .iconOnly)
+        #expect(await waitUntil { await repository.load().dashboardDeviceBatteryDisplayMode == .iconOnly })
     }
 
     private func makeViewModel(

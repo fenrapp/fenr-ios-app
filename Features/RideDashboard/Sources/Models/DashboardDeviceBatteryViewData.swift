@@ -19,7 +19,7 @@ public struct DashboardDeviceBatteryViewData: Equatable, Sendable {
         systemImage: String = "battery.0percent",
         emphasis: Emphasis = .unavailable,
         accessibilityLabel: String = "iPhone battery unavailable",
-        displayMode: DashboardDeviceBatteryDisplayMode = .icon
+        displayMode: DashboardDeviceBatteryDisplayMode = .iconAndText
     ) {
         self.percentageText = percentageText
         self.systemImage = systemImage

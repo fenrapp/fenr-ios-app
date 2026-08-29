@@ -2,6 +2,7 @@ public struct AppSettingsViewState: Equatable, Sendable {
     public let speedSource: SpeedSourceSettingsViewState
     public let dashboardProgressBarMode: DashboardProgressBarSettingsViewState
     public let dashboardBatteryIndicatorMode: AppSettingsSelectionViewState
+    public let dashboardDeviceBatteryDisplayMode: AppSettingsSelectionViewState
     public let showsDashboardTemperatures: Bool
     public let measurementSystem: AppSettingsSelectionViewState
     public let batteryCapacity: AppSettingsSelectionViewState
@@ -18,6 +19,10 @@ public struct AppSettingsViewState: Equatable, Sendable {
             selectedID: "percentage",
             options: []
         ),
+        dashboardDeviceBatteryDisplayMode: AppSettingsSelectionViewState = .init(
+            selectedID: "iconAndText",
+            options: []
+        ),
         showsDashboardTemperatures: Bool = false,
         measurementSystem: AppSettingsSelectionViewState,
         batteryCapacity: AppSettingsSelectionViewState,
@@ -30,6 +35,7 @@ public struct AppSettingsViewState: Equatable, Sendable {
         self.speedSource = speedSource
         self.dashboardProgressBarMode = dashboardProgressBarMode
         self.dashboardBatteryIndicatorMode = dashboardBatteryIndicatorMode
+        self.dashboardDeviceBatteryDisplayMode = dashboardDeviceBatteryDisplayMode
         self.showsDashboardTemperatures = showsDashboardTemperatures
         self.measurementSystem = measurementSystem
         self.batteryCapacity = batteryCapacity

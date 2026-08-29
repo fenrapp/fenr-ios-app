@@ -27,7 +27,7 @@ struct UserDefaultsAppSettingsRepositoryTests {
             speedSource: .hybrid,
             dashboardProgressBarMode: .speed,
             dashboardBatteryIndicatorMode: .estimatedRange,
-            dashboardDeviceBatteryDisplayMode: .text,
+            dashboardDeviceBatteryDisplayMode: .hidden,
             showsDashboardTemperatures: false,
             dashboardCardConfiguration: cardConfiguration,
             rideNavigation: RideNavigationSettings(
@@ -67,11 +67,31 @@ struct UserDefaultsAppSettingsRepositoryTests {
 
         #expect(await repository.load().dashboardProgressBarMode == .energy)
         #expect(await repository.load().dashboardBatteryIndicatorMode == .percentage)
-        #expect(await repository.load().dashboardDeviceBatteryDisplayMode == .icon)
+        #expect(await repository.load().dashboardDeviceBatteryDisplayMode == .iconAndText)
         #expect(!(await repository.load().showsDashboardTemperatures))
         #expect(await repository.load().dashboardCardConfiguration == .init())
         #expect(await repository.load().rideNavigation == .init())
         #expect(await repository.load().powerModeNamesByVIN.isEmpty)
+    }
+
+    @Test("Migrates legacy dashboard phone battery display modes")
+    func migratesLegacyDeviceBatteryDisplayModes() async throws {
+        for (rawValue, expected) in [
+            ("icon", DashboardDeviceBatteryDisplayMode.iconAndText),
+            ("text", DashboardDeviceBatteryDisplayMode.textOnly)
+        ] {
+            let defaults = makeDefaults()
+            defaults.set(
+                try JSONSerialization.data(withJSONObject: [
+                    "dashboardDeviceBatteryDisplayMode": rawValue
+                ]),
+                forKey: "fenr.app.settings"
+            )
+
+            let settings = await UserDefaultsAppSettingsRepository(userDefaults: defaults).load()
+
+            #expect(settings.dashboardDeviceBatteryDisplayMode == expected)
+        }
     }
 
     @Test("Decodes legacy ride navigation settings with heading up")

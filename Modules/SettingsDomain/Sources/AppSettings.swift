@@ -21,7 +21,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         speedSource: SpeedSource = .motorcycle,
         dashboardProgressBarMode: DashboardProgressBarMode = .energy,
         dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
-        dashboardDeviceBatteryDisplayMode: DashboardDeviceBatteryDisplayMode = .icon,
+        dashboardDeviceBatteryDisplayMode: DashboardDeviceBatteryDisplayMode = .iconAndText,
         showsDashboardTemperatures: Bool = false,
         dashboardCardConfiguration: DashboardCardConfiguration = .init(),
         rideNavigation: RideNavigationSettings = .init(),
@@ -71,7 +71,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         dashboardDeviceBatteryDisplayMode = try container.decodeIfPresent(
             DashboardDeviceBatteryDisplayMode.self,
             forKey: .dashboardDeviceBatteryDisplayMode
-        ) ?? .icon
+        ) ?? .iconAndText
         showsDashboardTemperatures = try container.decodeIfPresent(
             Bool.self,
             forKey: .showsDashboardTemperatures
@@ -177,14 +177,42 @@ public enum DashboardBatteryIndicatorMode: String, Codable, CaseIterable, Sendab
     case estimatedRange
 }
 
-public enum DashboardDeviceBatteryDisplayMode: String, Codable, Sendable {
-    case icon
-    case text
+public enum DashboardDeviceBatteryDisplayMode: String, Codable, CaseIterable, Sendable {
+    case iconAndText
+    case textOnly
+    case iconOnly
+    case hidden
 
-    public var toggled: Self {
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = try container.decode(String.self)
+        switch rawValue {
+        case "icon", Self.iconAndText.rawValue:
+            self = .iconAndText
+        case "text", Self.textOnly.rawValue:
+            self = .textOnly
+        case Self.iconOnly.rawValue:
+            self = .iconOnly
+        case Self.hidden.rawValue:
+            self = .hidden
+        default:
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Unsupported dashboard device battery display mode"
+            )
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
+    }
+
+    public var nextVisibleMode: Self {
         switch self {
-        case .icon: .text
-        case .text: .icon
+        case .iconAndText: .textOnly
+        case .textOnly: .iconOnly
+        case .iconOnly, .hidden: .iconAndText
         }
     }
 }

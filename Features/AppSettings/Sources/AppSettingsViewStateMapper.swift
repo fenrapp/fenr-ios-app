@@ -41,6 +41,12 @@ public struct AppSettingsViewStateMapper: Sendable {
                     .init(id: $0.rawValue, title: dashboardBatteryIndicatorModeTitle($0))
                 }
             ),
+            dashboardDeviceBatteryDisplayMode: .init(
+                selectedID: settings.dashboardDeviceBatteryDisplayMode.rawValue,
+                options: DashboardDeviceBatteryDisplayMode.allCases.map {
+                    .init(id: $0.rawValue, title: dashboardDeviceBatteryDisplayModeTitle($0))
+                }
+            ),
             showsDashboardTemperatures: settings.showsDashboardTemperatures,
             measurementSystem: .init(
                 selectedID: settings.measurementSystem.rawValue,
@@ -157,6 +163,15 @@ public struct AppSettingsViewStateMapper: Sendable {
         switch mode {
         case .percentage: "Percentage"
         case .estimatedRange: "Estimated range"
+        }
+    }
+
+    private func dashboardDeviceBatteryDisplayModeTitle(_ mode: DashboardDeviceBatteryDisplayMode) -> String {
+        switch mode {
+        case .iconAndText: "Icon and percentage"
+        case .textOnly: "Percentage only"
+        case .iconOnly: "Icon only"
+        case .hidden: "Hidden"
         }
     }
 
