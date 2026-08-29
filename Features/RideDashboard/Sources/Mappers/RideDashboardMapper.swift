@@ -53,6 +53,7 @@ public struct RideDashboardMapper: Sendable {
         )
         return RideDashboardViewState(
             speedometer: speedometer,
+            showsCompactSpeedReadout: hasTelemetry && CompactSpeedVisibility.isVisible(for: telemetry.runState),
             odometer: odometer(
                 kilometers: hasTelemetry ? telemetry.odometer.kilometers : nil,
                 measurementMapper: measurementMapper
@@ -256,6 +257,17 @@ public struct RideDashboardMapper: Sendable {
         static let criticalBatteryPercentage = 21
         static let warningBatteryPercentage = 51
         static let validPowerModeRange = 1 ... 5
+    }
+}
+
+private enum CompactSpeedVisibility {
+    static func isVisible(for runState: BikeRunState) -> Bool {
+        switch runState {
+        case .on, .crawlForward, .crawlReverse:
+            true
+        case .unknown, .off, .neutral, .charging:
+            false
+        }
     }
 }
 

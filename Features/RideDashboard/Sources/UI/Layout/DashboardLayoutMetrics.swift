@@ -37,3 +37,8 @@ struct DashboardLayoutMetrics {
         static let minimumSideColumnWidth: CGFloat = 124
     }
 }
+
+enum DashboardSideStatusLayoutMetrics {
+    static let spacing: CGFloat = 10
+    static let secondaryStatusHeight: CGFloat = 64
+}

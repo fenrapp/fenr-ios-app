@@ -16,6 +16,7 @@ struct DashboardCompactSpeedReadout: View {
         .lineLimit(1)
         .minimumScaleFactor(Constants.minimumScaleFactor)
         .foregroundStyle(DesignColor.primaryText)
+        .frame(height: DashboardSideStatusLayoutMetrics.secondaryStatusHeight)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(state.accessibilityLabel)
     }

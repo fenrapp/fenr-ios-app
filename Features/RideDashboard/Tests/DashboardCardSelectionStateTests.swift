@@ -3,6 +3,16 @@ import Testing
 
 @Suite("Dashboard card selection state")
 struct DashboardCardSelectionStateTests {
+    @Test("Shows compact speed only on a secondary card when enabled")
+    func resolvesCompactSpeedVisibility() {
+        var selection = DashboardCardSelectionState()
+
+        #expect(!selection.showsCompactSpeed(true))
+        selection.ridingCard = .range
+        #expect(!selection.showsCompactSpeed(false))
+        #expect(selection.showsCompactSpeed(true))
+    }
+
     @Test("Resets only pages belonging to hidden cards")
     func resetsOnlyHiddenPages() {
         var selection = DashboardCardSelectionState(
