@@ -3,6 +3,7 @@ import SwiftUI
 
 struct DashboardRideHeader: View {
     let deviceBattery: DashboardDeviceBatteryViewData
+    let toggleDeviceBatteryDisplayMode: () -> Void
 
     var body: some View {
         HStack(spacing: Constants.itemSpacing) {
@@ -24,11 +25,21 @@ struct DashboardRideHeader: View {
     }
 
     private var phoneBattery: some View {
-        Label(deviceBattery.percentageText, systemImage: deviceBattery.systemImage)
-            .foregroundStyle(phoneBatteryColor)
-            .lineLimit(1)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(deviceBattery.accessibilityLabel)
+        Button(action: toggleDeviceBatteryDisplayMode) {
+            switch deviceBattery.displayMode {
+            case .icon:
+                Label(deviceBattery.percentageText, systemImage: deviceBattery.systemImage)
+            case .text:
+                Text("iPhone \(deviceBattery.percentageText)")
+            }
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(phoneBatteryColor)
+        .lineLimit(1)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(deviceBattery.accessibilityLabel)
+        .accessibilityHint(deviceBatteryDisplayModeHint)
+        .accessibilityIdentifier("dashboard.phone-battery")
     }
 
     private var separator: some View {
@@ -44,6 +55,13 @@ struct DashboardRideHeader: View {
         case .normal: DesignColor.primaryText
         case .low: DesignColor.critical
         case .charging: DesignColor.positive
+        }
+    }
+
+    private var deviceBatteryDisplayModeHint: String {
+        switch deviceBattery.displayMode {
+        case .icon: "Switches to text display"
+        case .text: "Switches to icon display"
         }
     }
 

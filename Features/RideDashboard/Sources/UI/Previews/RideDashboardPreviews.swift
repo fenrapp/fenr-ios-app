@@ -1,3 +1,4 @@
+import SettingsDomain
 import SwiftUI
 
 #if DEBUG
@@ -166,7 +167,12 @@ private func previewFeature(
 
 @MainActor
 private func previewDeviceBatteryViewModel() -> DashboardDeviceBatteryViewModel {
-    let viewModel = DashboardDeviceBatteryViewModel(monitor: PreviewDashboardDeviceBatteryMonitor())
+    let settingsRepository = PreviewDashboardDeviceBatterySettingsRepository()
+    let viewModel = DashboardDeviceBatteryViewModel(
+        monitor: PreviewDashboardDeviceBatteryMonitor(),
+        loadSettings: LoadAppSettingsUseCase(repository: settingsRepository),
+        saveSettings: SaveAppSettingsUseCase(repository: settingsRepository)
+    )
     viewModel.setPreviewState(.init(
         percentageText: "64%",
         systemImage: "battery.75percent",
@@ -174,6 +180,14 @@ private func previewDeviceBatteryViewModel() -> DashboardDeviceBatteryViewModel 
         accessibilityLabel: "iPhone battery 64 percent"
     ))
     return viewModel
+}
+
+private actor PreviewDashboardDeviceBatterySettingsRepository: AppSettingsRepository {
+    private var settings = AppSettings()
+
+    func load() -> AppSettings { settings }
+    func save(_ settings: AppSettings) { self.settings = settings }
+    func observe() -> AsyncStream<AppSettings> { AsyncStream { $0.finish() } }
 }
 
 private final class PreviewDashboardDeviceBatteryMonitor: DashboardDeviceBatteryMonitoring {

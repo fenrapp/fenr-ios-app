@@ -4,6 +4,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var speedSource: SpeedSource
     public var dashboardProgressBarMode: DashboardProgressBarMode
     public var dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode
+    public var dashboardDeviceBatteryDisplayMode: DashboardDeviceBatteryDisplayMode
     public var showsDashboardTemperatures: Bool
     public var dashboardCardConfiguration: DashboardCardConfiguration
     public var rideNavigation: RideNavigationSettings
@@ -20,6 +21,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         speedSource: SpeedSource = .motorcycle,
         dashboardProgressBarMode: DashboardProgressBarMode = .energy,
         dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
+        dashboardDeviceBatteryDisplayMode: DashboardDeviceBatteryDisplayMode = .icon,
         showsDashboardTemperatures: Bool = false,
         dashboardCardConfiguration: DashboardCardConfiguration = .init(),
         rideNavigation: RideNavigationSettings = .init(),
@@ -31,6 +33,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.speedSource = speedSource
         self.dashboardProgressBarMode = dashboardProgressBarMode
         self.dashboardBatteryIndicatorMode = dashboardBatteryIndicatorMode
+        self.dashboardDeviceBatteryDisplayMode = dashboardDeviceBatteryDisplayMode
         self.showsDashboardTemperatures = showsDashboardTemperatures
         self.dashboardCardConfiguration = dashboardCardConfiguration
         self.rideNavigation = rideNavigation
@@ -44,6 +47,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case speedSource
         case dashboardProgressBarMode
         case dashboardBatteryIndicatorMode
+        case dashboardDeviceBatteryDisplayMode
         case showsDashboardTemperatures
         case dashboardCardConfiguration
         case rideNavigation
@@ -64,6 +68,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
             DashboardBatteryIndicatorMode.self,
             forKey: .dashboardBatteryIndicatorMode
         ) ?? .percentage
+        dashboardDeviceBatteryDisplayMode = try container.decodeIfPresent(
+            DashboardDeviceBatteryDisplayMode.self,
+            forKey: .dashboardDeviceBatteryDisplayMode
+        ) ?? .icon
         showsDashboardTemperatures = try container.decodeIfPresent(
             Bool.self,
             forKey: .showsDashboardTemperatures
@@ -167,6 +175,18 @@ public enum DashboardProgressBarMode: String, Codable, CaseIterable, Sendable {
 public enum DashboardBatteryIndicatorMode: String, Codable, CaseIterable, Sendable {
     case percentage
     case estimatedRange
+}
+
+public enum DashboardDeviceBatteryDisplayMode: String, Codable, Sendable {
+    case icon
+    case text
+
+    public var toggled: Self {
+        switch self {
+        case .icon: .text
+        case .text: .icon
+        }
+    }
 }
 
 public enum SpeedSource: String, Codable, CaseIterable, Sendable {

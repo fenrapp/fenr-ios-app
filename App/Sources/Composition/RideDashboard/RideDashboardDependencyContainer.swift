@@ -31,7 +31,9 @@ struct RideDashboardDependencyContainer {
                 monitor: UIKitDashboardDeviceBatteryMonitor(
                     device: .current,
                     notificationCenter: .default
-                )
+                ),
+                loadSettings: LoadAppSettingsUseCase(repository: dependencies.settingsRepository),
+                saveSettings: SaveAppSettingsUseCase(repository: dependencies.settingsRepository)
             ),
             currentTripViewModel: tripViewModels.currentTrip,
             tripStatisticsViewModel: tripViewModels.statistics,
@@ -71,5 +73,6 @@ struct RideDashboardFeatureDependencies {
     let rideTripRepository: any RideTripRepository
     let chargeControl: ChargeControlSession
     let rideSession: any RideSessionService
+    let settingsRepository: any AppSettingsRepository
     let vehicleSession: any VehicleSessionService
 }

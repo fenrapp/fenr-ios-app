@@ -146,6 +146,7 @@ struct AppDependencyContainer {
                 rideTripRepository: rideTripRepository,
                 chargeControl: chargeControlSession,
                 rideSession: rideSession,
+                settingsRepository: settingsRepository,
                 vehicleSession: vehicleSession
             )
         )
