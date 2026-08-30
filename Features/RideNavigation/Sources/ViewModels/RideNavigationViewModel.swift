@@ -1010,10 +1010,13 @@ extension RideNavigationViewModel {
     }
 
     private func persistSettings() {
-        settingsSaveTask?.cancel()
+        let previousTask = settingsSaveTask
+        previousTask?.cancel()
         let settings = appSettings
         let saveSettings = saveSettings
         settingsSaveTask = Task {
+            await previousTask?.value
+            guard !Task.isCancelled else { return }
             await saveSettings.execute(settings)
         }
     }

@@ -14,8 +14,6 @@ struct RideNavigationMiniModeTests {
         let fixture = RideNavigationViewModelFixture(routes: [context.route])
         await start(context.route, at: context.start, fixture: fixture)
 
-        fixture.viewModel.setMapStyle(MapSourceDescriptor.appleHybrid.id)
-        fixture.viewModel.setMapHeadingUp(false)
         fixture.viewModel.setPresentationMode(.mini)
         await fixture.deviceSpeedRepository.send(
             deviceSpeedSample(next, seconds: 5, courseDegrees: 90)
@@ -27,31 +25,62 @@ struct RideNavigationMiniModeTests {
         #expect(fixture.viewModel.miniViewState.mapScene.polylines.contains {
             $0.role == .completed && $0.points.count >= 2
         })
-        #expect(fixture.viewModel.miniViewState.mapScene.displayStyle == .map)
-        #expect(fixture.viewModel.miniViewState.mapScene.source == .appleHybrid)
         guard case .follow(_, let heading) = fixture.viewModel.miniViewState.mapScene.camera else {
-            Issue.record("Mini navigation should keep the selected follow orientation")
+            Issue.record("Mini navigation should follow the latest route location")
             fixture.viewModel.stop()
             return
         }
-        #expect(heading == nil)
+        #expect(heading == 90)
         #expect(fixture.viewModel.miniViewState.mapScene.markers.isEmpty)
+        fixture.viewModel.stop()
+    }
 
-        let position = RideNavigationMiniViewState.Position(
+    @Test("mini map settings persist in order with the latest values")
+    func miniMapSettingsPersistenceIsLatestWriteWins() async {
+        let fixture = RideNavigationViewModelFixture()
+        let firstPosition = RideNavigationMiniViewState.Position(
             horizontalFraction: 0.02,
             verticalFraction: 0.98
         )
-        fixture.viewModel.setMiniMapPosition(position)
+        let latestPosition = RideNavigationMiniViewState.Position(
+            horizontalFraction: 0.8,
+            verticalFraction: 0.2
+        )
+
+        await fixture.settingsRepository.suspendNextSave()
+        fixture.viewModel.setMiniMapPosition(firstPosition)
+        await fixture.settingsRepository.waitUntilSaveIsSuspended()
+
+        fixture.viewModel.setMiniMapPosition(latestPosition)
         fixture.viewModel.setMiniMapScale(1.5)
         fixture.viewModel.toggleMiniMapLayoutOrientation()
+        #expect(await fixture.settingsRepository.saveInvocationCount() == 1)
+
+        await fixture.settingsRepository.resumeSuspendedSave()
         #expect(await waitUntil {
-            let settings = await fixture.settingsRepository.load().rideNavigation
-            return settings.miniMapPosition.horizontalFraction == 0.02
-                && settings.miniMapPosition.verticalFraction == 0.98
-                && settings.miniMapScale.value == 1.5
-                && settings.miniMapLayoutOrientation == .landscape
+            await fixture.settingsRepository.savedSettings().count == 2
         })
-        #expect(fixture.viewModel.miniViewState.position == position)
+
+        let savedSettings = await fixture.settingsRepository.savedSettings()
+        #expect(
+            savedSettings.first?.rideNavigation.miniMapPosition.horizontalFraction
+                == firstPosition.horizontalFraction
+        )
+        #expect(
+            savedSettings.first?.rideNavigation.miniMapPosition.verticalFraction
+                == firstPosition.verticalFraction
+        )
+        #expect(
+            savedSettings.last?.rideNavigation.miniMapPosition.horizontalFraction
+                == latestPosition.horizontalFraction
+        )
+        #expect(
+            savedSettings.last?.rideNavigation.miniMapPosition.verticalFraction
+                == latestPosition.verticalFraction
+        )
+        #expect(savedSettings.last?.rideNavigation.miniMapScale.value == 1.5)
+        #expect(savedSettings.last?.rideNavigation.miniMapLayoutOrientation == .landscape)
+        #expect(fixture.viewModel.miniViewState.position == latestPosition)
         #expect(fixture.viewModel.miniViewState.scale == 1.5)
         #expect(fixture.viewModel.miniViewState.scaleRange == 0.5 ... 1.5)
         #expect(fixture.viewModel.miniViewState.isLandscape)
