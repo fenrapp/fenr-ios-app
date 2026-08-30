@@ -2,7 +2,8 @@ import BikeDomain
 import Foundation
 import TestSupport
 
-actor ChargingDashboardRepository: BikeRepository, BikeBatteryHealthRepository {
+actor ChargingDashboardRepository: BikeRepository, BikeBatteryHealthRepository,
+    BikeChargePowerControlRepository {
     private let telemetryHub = TestEventHub<BikeTelemetry>(bufferingPolicy: .unbounded)
 
     func start() async {}

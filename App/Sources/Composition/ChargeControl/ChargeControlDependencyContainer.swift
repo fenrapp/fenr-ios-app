@@ -3,7 +3,7 @@ import ChargeControl
 
 @MainActor
 struct ChargeControlDependencyContainer {
-    func makeSession(repository: any BikeBatteryHealthRepository) -> ChargeControlSession {
+    func makeSession(repository: any BikeChargePowerControlRepository) -> ChargeControlSession {
         ChargeControlSession(
             useCases: ChargeControlUseCases(
                 prepare: PrepareChargePowerControlUseCase(repository: repository),

@@ -256,7 +256,8 @@ private final class PreviewBikeLockCapabilityStore: BikeLockCapabilityStateStori
     }
 }
 
-private actor RideDashboardPreviewRepository: BikeRepository, BikeBatteryHealthRepository {
+private actor RideDashboardPreviewRepository: BikeRepository, BikeBatteryHealthRepository,
+    BikeChargePowerControlRepository {
     func start() async {}
     func stop() async {}
     func connect(vin _: String) async throws {}

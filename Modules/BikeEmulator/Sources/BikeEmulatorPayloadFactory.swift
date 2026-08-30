@@ -99,7 +99,7 @@ enum BikeEmulatorPayloadFactory {
                 volts: isChargerConnected ? Constants.chargingBusVoltage : Constants.stationaryBusVoltage
             ),
             chargeState: isCharging ? .charging : (isChargerConnected ? .connected : .disconnected),
-            isFaultActive: scenario == .cellAnomaly,
+            isVehicleFaultActive: scenario == .cellAnomaly,
             cellVoltages: makeCellVoltages(scenario: scenario, tick: tick),
             balancingCellIndexes: scenario == .cellBalancing ? Constants.balancingCells : [],
             temperatures: makeTemperatures(tick: tick),

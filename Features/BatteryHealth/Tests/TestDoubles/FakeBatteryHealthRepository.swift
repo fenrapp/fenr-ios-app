@@ -2,7 +2,7 @@ import BikeDomain
 import Foundation
 import TestSupport
 
-actor FakeBatteryHealthRepository: BikeBatteryHealthRepository {
+actor FakeBatteryHealthRepository: BikeBatteryHealthRepository, BikeChargePowerControlRepository {
     private let healthHub = TestEventHub<BikeBatteryHealth>(bufferingPolicy: .unbounded)
     private let captureHub = TestEventHub<BatteryDatasetCapture>(bufferingPolicy: .unbounded)
     private var latestHealth = BikeBatteryHealth()

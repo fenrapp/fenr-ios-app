@@ -3,7 +3,7 @@ import BikeSDK
 import Foundation
 
 public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryHealthRepository,
-    BikeDiscoveryRepository {
+    BikeChargePowerControlRepository, BikeDiscoveryRepository {
     private let client: BikeTelemetryClient
     private let eventHandler: LiveBikeRepositoryEventHandler
     private let stateStore: BikeRepositoryStateStore

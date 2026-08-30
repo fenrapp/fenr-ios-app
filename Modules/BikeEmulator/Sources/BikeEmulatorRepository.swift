@@ -6,7 +6,7 @@ import RuntimeConfiguration
 // swiftlint:disable file_length type_body_length
 
 public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatteryHealthRepository,
-    BikeDiscoveryRepository {
+    BikeChargePowerControlRepository, BikeDiscoveryRepository {
     private let telemetryHub: BikeEmulatorEventHub<BikeTelemetry>
     private let connectionHub: BikeEmulatorEventHub<BikeConnection>
     private let imuHub: BikeEmulatorEventHub<BikeIMUSample>

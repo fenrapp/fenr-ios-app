@@ -904,12 +904,12 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikesdk.tests
   BikeDomainTests:
     type: bundle.unit-test
-    platform: iOS
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
     sources:
       - path: Modules/BikeDomain/Tests
     dependencies:
       - target: BikeDomain
-      - target: TestSupport
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikedomain.tests
@@ -1476,6 +1476,7 @@ schemes:
         FENRWatchDebug: all
         AsyncSupportTests: [test]
         BLETraceDomainTests: [test]
+        BikeDomainTests: [test]
         EnvironmentDomainTests: [test]
         SettingsDomainTests: [test]
         TestSupportTests: [test]
@@ -1486,6 +1487,7 @@ schemes:
       targets:
         - AsyncSupportTests
         - BLETraceDomainTests
+        - BikeDomainTests
         - EnvironmentDomainTests
         - SettingsDomainTests
         - TestSupportTests

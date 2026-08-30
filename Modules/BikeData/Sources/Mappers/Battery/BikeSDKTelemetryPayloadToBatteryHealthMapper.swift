@@ -26,7 +26,7 @@ public struct BikeSDKTelemetryPayloadToBatteryHealthMapper: Sendable {
                 isCharging: status.isCharging,
                 isChargerConnected: status.isChargerConnected
             )
-            health.isFaultActive = status.isFaultActive
+            health.isVehicleFaultActive = status.isFaultActive
             health.lastUpdated = date
         case .cellVoltages(let payload):
             health.cellVoltages = payload.volts.enumerated().map {

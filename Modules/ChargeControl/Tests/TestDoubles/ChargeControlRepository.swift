@@ -1,6 +1,6 @@
 import BikeDomain
 
-actor ChargeControlRepository: BikeBatteryHealthRepository {
+actor ChargeControlRepository: BikeChargePowerControlRepository {
     private var prepareCalls = 0
     private var powerWrites: [Int] = []
     private var targetWrites: [Int] = []
@@ -22,11 +22,6 @@ actor ChargeControlRepository: BikeBatteryHealthRepository {
         self.passesNoOpWrite = passesNoOpWrite
         self.preparationDelay = preparationDelay
     }
-
-    func startBatteryHealthMonitoring() async throws {}
-    func stopBatteryHealthMonitoring() async {}
-    func observeBatteryHealth() async -> AsyncStream<BikeBatteryHealth> { .init { _ in } }
-    func observeBatteryDatasetCaptures() async -> AsyncStream<BatteryDatasetCapture> { .init { _ in } }
 
     func prepareChargePowerControl(
         chargingStatus: BikeChargingStatus
