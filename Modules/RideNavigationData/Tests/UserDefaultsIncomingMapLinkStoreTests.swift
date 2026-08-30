@@ -1,4 +1,4 @@
-@preconcurrency import Foundation
+import Foundation
 @testable import RideNavigationData
 import RideNavigationDomain
 import Testing
@@ -11,7 +11,7 @@ struct UserDefaultsIncomingMapLinkStoreTests {
         let suiteName = "fenr-map-link-tests-\(UUID().uuidString)"
         defer { UserDefaults.standard.removePersistentDomain(forName: suiteName) }
         let store = UserDefaultsIncomingMapLinkStore(
-            userDefaults: try #require(UserDefaults(suiteName: suiteName)),
+            userDefaults: makeDefaults(suiteName: suiteName),
             encoder: JSONEncoder(),
             decoder: JSONDecoder()
         )
@@ -23,7 +23,7 @@ struct UserDefaultsIncomingMapLinkStoreTests {
         try await store.save(link)
 
         let storedData = try #require(
-            UserDefaults(suiteName: suiteName)?.data(forKey: "ride-navigation.pending-map-link")
+            makeDefaults(suiteName: suiteName).data(forKey: "ride-navigation.pending-map-link")
         )
         #expect(try JSONDecoder().decode(IncomingMapLink.self, from: storedData) == link)
         #expect(try await store.consume() == link)
@@ -35,9 +35,9 @@ struct UserDefaultsIncomingMapLinkStoreTests {
         let suiteName = "fenr-map-link-tests-\(UUID().uuidString)"
         let key = "malformed-link"
         defer { UserDefaults.standard.removePersistentDomain(forName: suiteName) }
-        UserDefaults(suiteName: suiteName)?.set(Data("not-json".utf8), forKey: key)
+        makeDefaults(suiteName: suiteName).set(Data("not-json".utf8), forKey: key)
         let store = UserDefaultsIncomingMapLinkStore(
-            userDefaults: try #require(UserDefaults(suiteName: suiteName)),
+            userDefaults: makeDefaults(suiteName: suiteName),
             key: key,
             encoder: JSONEncoder(),
             decoder: JSONDecoder()
@@ -54,7 +54,7 @@ struct UserDefaultsIncomingMapLinkStoreTests {
         let suiteName = "fenr-map-link-tests-\(UUID().uuidString)"
         defer { UserDefaults.standard.removePersistentDomain(forName: suiteName) }
         let store = UserDefaultsIncomingMapLinkStore(
-            userDefaults: try #require(UserDefaults(suiteName: suiteName)),
+            userDefaults: makeDefaults(suiteName: suiteName),
             encoder: JSONEncoder(),
             decoder: JSONDecoder()
         )
@@ -80,7 +80,7 @@ struct UserDefaultsIncomingMapLinkStoreTests {
         let suiteName = "fenr-map-link-tests-\(UUID().uuidString)"
         defer { UserDefaults.standard.removePersistentDomain(forName: suiteName) }
         let store = UserDefaultsIncomingMapLinkStore(
-            userDefaults: try #require(UserDefaults(suiteName: suiteName)),
+            userDefaults: makeDefaults(suiteName: suiteName),
             encoder: JSONEncoder(),
             decoder: JSONDecoder()
         )
@@ -105,5 +105,12 @@ struct UserDefaultsIncomingMapLinkStoreTests {
             url: try #require(URL(string: "https://maps.apple.com/\(path)")),
             receivedAt: Date(timeIntervalSince1970: receivedAt)
         )
+    }
+
+    nonisolated private func makeDefaults(suiteName: String) -> UserDefaults {
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            preconditionFailure("Unable to create isolated UserDefaults suite")
+        }
+        return defaults
     }
 }
