@@ -36,7 +36,7 @@ actor VehicleMotionCalibrationStore {
     }
 
     func report(_ error: Error) {
-        Constants.logger.error("Motion calibration persistence failed: \(String(describing: error), privacy: .public)")
+        Constants.logger.error("Motion calibration persistence failed: \(String(describing: error), privacy: .private)")
     }
 
     enum Constants {

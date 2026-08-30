@@ -992,6 +992,7 @@ targets:
     dependencies:
       - target: EnvironmentData
       - target: EnvironmentDomain
+      - target: TestSupport
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.environmentdata.tests
