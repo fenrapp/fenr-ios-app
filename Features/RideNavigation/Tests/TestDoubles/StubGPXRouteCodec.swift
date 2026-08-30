@@ -8,7 +8,9 @@ struct StubGPXRouteImporter: GPXRouteImporting {
 }
 
 struct StubGPXRouteExporter: GPXRouteExporting {
+    static let exportedData = Data("stub-gpx".utf8)
+
     func export(_: RideRoute) throws -> Data {
-        Data()
+        Self.exportedData
     }
 }

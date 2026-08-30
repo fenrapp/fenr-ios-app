@@ -6,26 +6,64 @@ struct RideNavigationSummaryPanel: View {
     @Binding var routeName: String
     let onSave: () -> Void
     let onExport: () -> Void
-    let onDone: () -> Void
+    let onClose: () -> Void
 
     var body: some View {
+        GeometryReader { proxy in
+            ViewThatFits(in: .vertical) {
+                panel
+
+                ScrollView {
+                    panel
+                }
+                .scrollIndicators(.hidden)
+                .frame(height: max(.zero, proxy.size.height - Constants.minimumVerticalMargin * 2))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .padding(.horizontal, DesignSpace.medium)
+            .padding(.vertical, Constants.minimumVerticalMargin)
+        }
+    }
+
+    private var panel: some View {
         VStack(spacing: DesignSpace.large) {
-            completionIcon
-            summaryHeader
+            header
+
             if state.canSaveCompletedRoute {
                 routeNameField
             }
+
             actions
-            if let errorText = state.errorText {
-                Label(errorText, systemImage: "exclamationmark.triangle.fill")
-                    .font(.footnote)
-                    .foregroundStyle(DesignColor.warning)
-                    .multilineTextAlignment(.center)
-            }
+            errorMessage
         }
-        .padding(DesignSpace.extraLarge)
+        .padding(DesignSpace.large)
         .frame(width: Constants.panelWidth)
         .rideNavigationGlassSurface(cornerRadius: Constants.panelRadius)
+        .overlay(alignment: .topTrailing) {
+            closeButton
+                .padding(.top, DesignSpace.medium)
+                .padding(.trailing, DesignSpace.medium)
+        }
+    }
+
+    private var header: some View {
+        HStack(spacing: DesignSpace.medium) {
+            completionIcon
+            summaryHeader
+            Spacer(minLength: .zero)
+        }
+        .padding(.trailing, Constants.closeButtonSize)
+    }
+
+    private var closeButton: some View {
+        Button(action: onClose) {
+            Image(systemName: "xmark")
+                .font(.subheadline.weight(.semibold))
+                .frame(width: Constants.closeButtonSize, height: Constants.closeButtonSize)
+                .background(DesignColor.controlSurface, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Close ride summary")
     }
 
     private var completionIcon: some View {
@@ -42,14 +80,12 @@ struct RideNavigationSummaryPanel: View {
     }
 
     private var summaryHeader: some View {
-        VStack(spacing: DesignSpace.extraSmall) {
+        VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
             Text(state.summaryTitle)
-                .font(.largeTitle.weight(.bold))
-                .multilineTextAlignment(.center)
+                .font(.title2.weight(.bold))
             Text(state.summaryDetail)
-                .font(.title3.monospacedDigit())
+                .font(.subheadline.monospacedDigit())
                 .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
         }
     }
 
@@ -70,11 +106,21 @@ struct RideNavigationSummaryPanel: View {
         }
     }
 
+    @ViewBuilder
+    private var errorMessage: some View {
+        if let errorText = state.errorText {
+            Label(errorText, systemImage: "exclamationmark.triangle.fill")
+                .font(.footnote)
+                .foregroundStyle(DesignColor.warning)
+                .multilineTextAlignment(.center)
+        }
+    }
+
     private var actions: some View {
         HStack(spacing: DesignSpace.small) {
             if state.canSaveCompletedRoute {
                 Button(action: onSave) {
-                    Label("Save Route", systemImage: "square.and.arrow.down.fill")
+                    Label("Save", systemImage: "square.and.arrow.down.fill")
                 }
                 .controlSize(.large)
                 .rideNavigationPrimaryButton()
@@ -85,19 +131,17 @@ struct RideNavigationSummaryPanel: View {
             }
             .controlSize(.large)
             .rideNavigationSecondaryButton()
-
-            Button("Done", action: onDone)
-                .controlSize(.large)
-                .rideNavigationSecondaryButton()
         }
     }
 
     private enum Constants {
-        static let panelWidth: CGFloat = 480
-        static let panelRadius: CGFloat = 30
-        static let iconSize: CGFloat = 56
+        static let panelWidth: CGFloat = 520
+        static let panelRadius: CGFloat = 26
+        static let closeButtonSize: CGFloat = 36
+        static let iconSize: CGFloat = 52
         static let iconShadowOpacity = 0.28
         static let iconShadowRadius: CGFloat = 12
         static let fieldHeight: CGFloat = 50
+        static let minimumVerticalMargin: CGFloat = 16
     }
 }

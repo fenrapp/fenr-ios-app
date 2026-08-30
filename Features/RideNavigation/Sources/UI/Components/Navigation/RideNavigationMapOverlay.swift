@@ -1,6 +1,5 @@
 import DesignSystem
 import SwiftUI
-
 struct RideNavigationMapOverlay: View {
     let state: RideNavigationViewState
     let showsControls: Bool
@@ -19,6 +18,7 @@ struct RideNavigationMapOverlay: View {
     let onMapHeadingUp: (Bool) -> Void
     let onToggleVoice: () -> Void
     let onMapStyle: (String) -> Void
+    @Binding var activeMapSelector: RideNavigationMapSelector?
     let onFindTrailExit: () -> Void
     let onCancelTrailExit: () -> Void
     let onStartTrailExit: () -> Void
@@ -29,37 +29,70 @@ struct RideNavigationMapOverlay: View {
     @State private var showsTrailExitConfirmation = false
 
     var body: some View {
-        VStack(spacing: DesignSpace.small) {
-            if showsControls {
-                topControls
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                routeOptions
-                    .transition(.opacity)
-                routePreferences
-                    .transition(.opacity)
+        ZStack {
+            ZStack {
+                if activeMapSelector != nil {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture { activeMapSelector = nil }
+                }
+
+                VStack(spacing: DesignSpace.small) {
+                    if showsControls {
+                        topControls
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                            .zIndex(1)
+                        RideNavigationRoutePlanningOptionsView(
+                            state: state,
+                            onSelectRouteOption: onSelectRouteOption,
+                            onAvoidTolls: onAvoidTolls,
+                            onAvoidHighways: onAvoidHighways
+                        )
+                            .transition(.opacity)
+                    }
+                    guidance
+                    trailExitPreview
+                    Spacer(minLength: DesignSpace.medium)
+                    if showsControls {
+                        bottomDashboard
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    } else {
+                        RideNavigationCompactDashboard(state: state)
+                            .transition(.scale(scale: Constants.compactTransitionScale).combined(with: .opacity))
+                    }
+                }
+                .zIndex(1)
+
+                RideNavigationMapSelectorPanel(
+                    state: state,
+                    onMapStyle: { styleID in perform { onMapStyle(styleID) } },
+                    onMapHeadingUp: { isHeadingUp in perform { onMapHeadingUp(isHeadingUp) } },
+                    activeSelector: $activeMapSelector
+                )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                    .padding(.top, Constants.controlSize + DesignSpace.small)
+                    .transition(
+                        .scale(scale: Constants.mapSelectorTransitionScale, anchor: .topTrailing)
+                            .combined(with: .opacity)
+                    )
+                    .zIndex(2)
             }
-            guidance
-            trailExitPreview
-            Spacer(minLength: DesignSpace.medium)
-            if showsControls {
-                bottomDashboard
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            } else {
-                RideNavigationCompactDashboard(state: state)
-                    .transition(.scale(scale: Constants.compactTransitionScale).combined(with: .opacity))
+            .padding(DesignSpace.medium)
+
+            if showsFinishConfirmation {
+                RideNavigationFinishConfirmationOverlay(
+                    activity: state.activity,
+                    isMonochrome: isFocus,
+                    onCancel: dismissFinishConfirmation,
+                    onConfirm: confirmFinish
+                )
+                    .ignoresSafeArea()
+                    .transition(.opacity.combined(with: .scale(scale: Constants.confirmationTransitionScale)))
+                    .zIndex(3)
             }
         }
-        .padding(DesignSpace.medium)
-        .confirmationDialog(
-            finishConfirmationTitle,
-            isPresented: $showsFinishConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button(finishButtonTitle, role: .destructive, action: onFinish)
-            Button("Keep Riding", role: .cancel) {}
-        } message: {
-            Text(finishConfirmationMessage)
-        }
+        .animation(.smooth(duration: Constants.mapSelectorTransitionDuration), value: activeMapSelector)
+        .animation(.smooth(duration: Constants.confirmationTransitionDuration), value: showsFinishConfirmation)
         .confirmationDialog(
             "Find a road-accessible exit?",
             isPresented: $showsTrailExitConfirmation,
@@ -123,37 +156,11 @@ private extension RideNavigationMapOverlay {
     private var mapControlGroup: some View {
         RideNavigationMapControls(
             state: state,
-            onMapStyle: { value in perform { onMapStyle(value) } },
-            onMapHeadingUp: { value in perform { onMapHeadingUp(value) } },
             onToggleVoice: { perform(onToggleVoice) },
             onOverview: { perform(onOverview) },
-            onRecenter: { perform(onRecenter) }
+            onRecenter: { perform(onRecenter) },
+            activeSelector: $activeMapSelector
         )
-    }
-}
-private extension RideNavigationMapOverlay {
-    @ViewBuilder
-    private var routePreferences: some View {
-        if state.showsRoadRoutePreferences {
-            RideNavigationRoutePreferencesView(
-                avoidsTolls: state.avoidsTolls,
-                avoidsHighways: state.avoidsHighways,
-                isLoading: state.isCalculatingRoadRoutes,
-                onAvoidTolls: onAvoidTolls,
-                onAvoidHighways: onAvoidHighways
-            )
-        }
-    }
-    @ViewBuilder
-    private var routeOptions: some View {
-        if state.activity == .preview, state.roadRouteOptions.count > 1 {
-            RideNavigationRouteOptionsView(
-                options: state.roadRouteOptions,
-                onSelect: onSelectRouteOption
-            )
-            .allowsHitTesting(!state.isCalculatingRoadRoutes)
-            .opacity(state.isCalculatingRoadRoutes ? Constants.loadingOpacity : 1)
-        }
     }
 
     @ViewBuilder
@@ -333,6 +340,25 @@ private extension RideNavigationMapOverlay {
         state.mapScene.displayStyle == .focus
     }
 
+    private func dismissFinishConfirmation() {
+        perform { showsFinishConfirmation = false }
+    }
+
+    private func confirmFinish() {
+        perform {
+            showsFinishConfirmation = false
+            onFinish()
+        }
+    }
+
+    private func handleClose() {
+        if state.activity == .preview {
+            onClose()
+        } else {
+            showsFinishConfirmation = true
+        }
+    }
+
     private func perform(_ action: () -> Void) {
         onInteraction()
         action()
@@ -364,33 +390,11 @@ private extension RideNavigationMapOverlay {
         static let dashboardHeight: CGFloat = 76
         static let dashboardRadius: CGFloat = 24
         static let metricDividerHeight: CGFloat = 32
-        static let loadingOpacity = 0.55
         static let focusActionOpacity = 0.88
         static let compactTransitionScale = 0.96
-    }
-}
-
-private extension RideNavigationMapOverlay {
-    var finishConfirmationTitle: String {
-        state.activity == .recording || state.activity == .paused ? "Finish recording?" : "End this route?"
-    }
-
-    var finishButtonTitle: String {
-        state.activity == .recording || state.activity == .paused ? "Finish Recording" : "End Route"
-    }
-
-    var finishConfirmationMessage: String {
-        if state.activity == .recording || state.activity == .paused {
-            return "Your recorded track will be ready to save or export."
-        }
-        return "Navigation will stop and you will see your ride summary."
-    }
-
-    func handleClose() {
-        if state.activity == .preview {
-            onClose()
-        } else {
-            showsFinishConfirmation = true
-        }
+        static let mapSelectorTransitionScale = 0.94
+        static let mapSelectorTransitionDuration = 0.2
+        static let confirmationTransitionScale = 0.96
+        static let confirmationTransitionDuration = 0.2
     }
 }

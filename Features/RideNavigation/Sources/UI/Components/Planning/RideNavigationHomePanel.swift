@@ -1,5 +1,6 @@
 import DesignSystem
 import SwiftUI
+import UIKit
 
 struct RideNavigationHomePanel: View {
     let state: RideNavigationViewState
@@ -10,10 +11,74 @@ struct RideNavigationHomePanel: View {
     let onSearch: () -> Void
     let onSelectSearchResult: (UUID) -> Void
     let onOpenRoute: (UUID) -> Void
+    let onShareRoute: (UUID) -> Void
+    let onDeleteRoute: (UUID) -> Void
     @State private var query = ""
+    @State private var keyboardFrame: CGRect?
     @FocusState private var isSearchFieldFocused: Bool
 
     var body: some View {
+        GeometryReader { proxy in
+            let safeFrame = rideNavigationSafeContentFrame(in: proxy)
+
+            ZStack {
+                homeCards
+                    .frame(width: safeFrame.width, height: safeFrame.height)
+                    .position(x: safeFrame.midX, y: safeFrame.midY)
+
+                if isSearchFieldFocused, let keyboardFrame {
+                    Button("Done") { isSearchFieldFocused = false }
+                        .buttonStyle(.plain)
+                        .frame(
+                            width: Constants.keyboardDismissButtonWidth,
+                            height: Constants.keyboardDismissButtonHeight
+                        )
+                        .rideNavigationGlassSurface(cornerRadius: Constants.keyboardDismissButtonRadius)
+                        .position(
+                            rideNavigationKeyboardDismissButtonPosition(
+                                in: proxy,
+                                keyboardFrame: keyboardFrame,
+                                buttonSize: CGSize(
+                                    width: Constants.keyboardDismissButtonWidth,
+                                    height: Constants.keyboardDismissButtonHeight
+                                )
+                            )
+                        )
+                        .transition(.opacity.combined(with: .scale(scale: Constants.doneTransitionScale)))
+                }
+            }
+        }
+        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .animation(.smooth(duration: Constants.doneTransitionDuration), value: isSearchFieldFocused)
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) {
+            keyboardFrame = $0.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            keyboardFrame = nil
+        }
+    }
+
+    private var homeCards: some View {
+        HStack(alignment: .top, spacing: DesignSpace.medium) {
+            panel
+
+            if showsSavedRoutesPanel {
+                RideNavigationSavedRoutesPanel(
+                    routes: state.savedRoutes,
+                    errorText: state.errorText,
+                    onOpenRoute: onOpenRoute,
+                    onShareRoute: onShareRoute,
+                    onDeleteRoute: onDeleteRoute
+                )
+                .frame(height: homePanelHeight)
+                .transition(.move(edge: .trailing).combined(with: .opacity))
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .animation(.snappy(duration: Constants.searchTransitionDuration), value: showsSavedRoutesPanel)
+    }
+
+    private var panel: some View {
         VStack(alignment: .leading, spacing: isSearchMode ? DesignSpace.extraSmall : DesignSpace.medium) {
             if !isSearchMode {
                 header
@@ -30,12 +95,18 @@ struct RideNavigationHomePanel: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             } else {
                 rideActions
-                savedRoutesSection
+                if let errorText = state.errorText, state.savedRoutes.isEmpty {
+                    errorBanner(errorText)
+                }
             }
         }
         .padding(isSearchMode ? DesignSpace.small : DesignSpace.medium)
-        .frame(width: Constants.panelWidth)
-        .frame(maxHeight: .infinity, alignment: .top)
+        .frame(
+            width: isSearchMode ? Constants.searchPanelWidth : Constants.panelWidth,
+            height: isSearchMode ? nil : homePanelHeight,
+            alignment: .top
+        )
+        .frame(maxHeight: isSearchMode ? .infinity : nil, alignment: .top)
         .background(
             Color.black.opacity(Constants.interactionShieldOpacity),
             in: RoundedRectangle(cornerRadius: Constants.panelRadius, style: .continuous)
@@ -43,18 +114,8 @@ struct RideNavigationHomePanel: View {
         .rideNavigationGlassSurface(cornerRadius: Constants.panelRadius)
         .contentShape(RoundedRectangle(cornerRadius: Constants.panelRadius, style: .continuous))
         .onTapGesture {}
-        .padding(.horizontal, DesignSpace.small)
-        .padding(.bottom, DesignSpace.small)
-        .padding(.top, DesignSpace.medium)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .onAppear { query = state.searchQuery }
         .animation(.snappy(duration: Constants.searchTransitionDuration), value: isSearchMode)
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Done") { isSearchFieldFocused = false }
-            }
-        }
     }
 
     private var header: some View {
@@ -141,56 +202,36 @@ struct RideNavigationHomePanel: View {
         }
     }
 
-    private var savedRoutesSection: some View {
-        VStack(alignment: .leading, spacing: DesignSpace.small) {
-            HStack {
-                Text("Saved Routes")
-                    .font(.headline)
-                Spacer()
-                if !state.savedRoutes.isEmpty {
-                    Text(state.savedRoutes.count, format: .number)
-                        .font(.subheadline.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            if state.savedRoutes.isEmpty {
-                VStack(spacing: DesignSpace.extraSmall) {
-                    Image(systemName: "point.topleft.down.to.point.bottomright.curvepath")
-                        .font(.title2)
-                        .foregroundStyle(.secondary)
-                    Text("Imported and recorded routes will appear here.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, DesignSpace.extraSmall)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: .zero) {
-                        ForEach(Array(state.savedRoutes.enumerated()), id: \.element.id) { index, route in
-                            Button { onOpenRoute(route.id) } label: {
-                                RideNavigationRow(
-                                    title: route.title,
-                                    detail: route.detail,
-                                    image: "point.topleft.down.to.point.bottomright.curvepath"
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            if index < state.savedRoutes.count - 1 {
-                                Divider().padding(.leading, Constants.rowDividerInset)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        .frame(maxHeight: .infinity, alignment: .top)
-    }
-
     private var isSearchMode: Bool {
         isSearchFieldFocused || !query.isEmpty || state.isSearching || !state.searchResults.isEmpty
+    }
+
+    private var showsSavedRoutesPanel: Bool {
+        !isSearchMode && !state.savedRoutes.isEmpty
+    }
+
+    private var savedRoutesPanelHeight: CGFloat {
+        let rowsHeight = CGFloat(state.savedRoutes.count) * Constants.savedRouteRowHeight
+        return min(
+            Constants.savedRoutesMaximumHeight,
+            max(Constants.savedRoutesMinimumHeight, Constants.savedRoutesHeaderHeight + rowsHeight)
+        )
+    }
+
+    private var homePanelHeight: CGFloat {
+        max(Constants.planningPanelHeight, savedRoutesPanelHeight)
+    }
+
+    private func errorBanner(_ text: String) -> some View {
+        Label(text, systemImage: "exclamationmark.triangle.fill")
+            .font(.caption)
+            .foregroundStyle(DesignColor.critical)
+            .padding(DesignSpace.small)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                DesignColor.critical.opacity(Constants.errorBackgroundOpacity),
+                in: RoundedRectangle(cornerRadius: DesignRadius.medium)
+            )
     }
 
     private func clearSearch() {
@@ -212,14 +253,48 @@ struct RideNavigationHomePanel: View {
 
     private enum Constants {
         static let panelWidth: CGFloat = 390
+        static let searchPanelWidth: CGFloat = 480
+        static let planningPanelHeight: CGFloat = 260
+        static let savedRoutesMinimumHeight: CGFloat = 150
+        static let savedRoutesMaximumHeight: CGFloat = 330
+        static let savedRoutesHeaderHeight: CGFloat = 84
+        static let savedRouteRowHeight: CGFloat = 64
         static let panelRadius: CGFloat = 24
         static let closeButtonSize: CGFloat = 36
         static let searchHeight: CGFloat = 44
         static let searchBackButtonSize: CGFloat = 44
-        static let rowDividerInset: CGFloat = 52
         static let searchTransitionDuration = 0.28
+        static let keyboardDismissButtonWidth: CGFloat = 76
+        static let keyboardDismissButtonHeight: CGFloat = 44
+        static let keyboardDismissButtonRadius: CGFloat = 22
+        static let doneTransitionScale = 0.96
+        static let doneTransitionDuration = 0.2
         static let interactionShieldOpacity = 0.001
+        static let errorBackgroundOpacity = 0.12
     }
+}
+
+private func rideNavigationKeyboardDismissButtonPosition(
+    in proxy: GeometryProxy,
+    keyboardFrame: CGRect,
+    buttonSize: CGSize
+) -> CGPoint {
+    let viewFrame = proxy.frame(in: .global)
+    return CGPoint(
+        x: keyboardFrame.maxX - viewFrame.minX - DesignSpace.medium - buttonSize.width / 2,
+        y: keyboardFrame.minY - viewFrame.minY - DesignSpace.medium - buttonSize.height / 2
+    )
+}
+
+private func rideNavigationSafeContentFrame(in proxy: GeometryProxy) -> CGRect {
+    let insets = proxy.safeAreaInsets
+    let margin = DesignSpace.medium
+    return CGRect(
+        x: insets.leading + margin,
+        y: insets.top + margin,
+        width: max(.zero, proxy.size.width - insets.leading - insets.trailing - margin * 2),
+        height: max(.zero, proxy.size.height - insets.top - insets.bottom - margin * 2)
+    )
 }
 
 private struct RideNavigationQuickAction: View {
