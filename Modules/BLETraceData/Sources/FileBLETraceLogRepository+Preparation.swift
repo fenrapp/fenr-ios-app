@@ -3,8 +3,13 @@ import Foundation
 extension FileBLETraceLogRepository {
     public func prepareStorage() async {
         guard !hasPreparedStorage else { return }
-        hasPreparedStorage = true
         do {
+            try Self.prepareDirectories(
+                directory: directory,
+                exportDirectory: exportDirectory,
+                fileManager: fileManager
+            )
+            try Self.removeDirectoryContents(exportDirectory, fileManager: fileManager)
             try Self.recoverPartialFiles(
                 in: directory,
                 fileManager: fileManager,
@@ -18,10 +23,13 @@ extension FileBLETraceLogRepository {
             completedSessions = try Self.prune(
                 completedSessions,
                 configuration: configuration,
-                fileManager: fileManager
+                fileManager: fileManager,
+                exportDirectory: exportDirectory
             )
+            hasPreparedStorage = true
         } catch {
-            completedSessions = []
+            reconcileCompletedSessionsFromDisk()
+            hasPreparedStorage = false
         }
     }
 }

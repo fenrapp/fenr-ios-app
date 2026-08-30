@@ -2,6 +2,17 @@ import BLETraceDomain
 import Foundation
 
 extension FileBLETraceLogRepository {
+    static func prepareDirectories(
+        directory: URL,
+        exportDirectory: URL,
+        fileManager: FileManager
+    ) throws {
+        try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: exportDirectory, withIntermediateDirectories: true)
+        try configureDirectory(directory, fileManager: fileManager)
+        try configureDirectory(exportDirectory, fileManager: fileManager)
+    }
+
     static func configureDirectory(_ url: URL, fileManager: FileManager) throws {
         var values = URLResourceValues()
         values.isExcludedFromBackup = true
@@ -43,6 +54,32 @@ extension FileBLETraceLogRepository {
         return (attributes?[.size] as? NSNumber)?.int64Value ?? 0
     }
 
+    static func removeItemIfPresent(_ url: URL, fileManager: FileManager) throws {
+        guard fileManager.fileExists(atPath: url.path) else { return }
+        try fileManager.removeItem(at: url)
+    }
+
+    static func removeDirectoryContents(_ directory: URL, fileManager: FileManager) throws {
+        guard fileManager.fileExists(atPath: directory.path) else { return }
+        for url in try fileManager.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: nil
+        ) {
+            try fileManager.removeItem(at: url)
+        }
+    }
+
+    static func removeExactExport(
+        named fileName: String,
+        exportDirectory: URL,
+        fileManager: FileManager
+    ) throws {
+        try removeItemIfPresent(
+            exportDirectory.appendingPathComponent(fileName),
+            fileManager: fileManager
+        )
+    }
+
     static func recoverPartialFiles(
         in directory: URL,
         fileManager: FileManager,
@@ -52,35 +89,47 @@ extension FileBLETraceLogRepository {
         let urls = try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
         for url in urls where url.pathExtension == "partial" {
             guard let firstLine = try? firstJSONLine(at: url),
-                  let header = try? JSONSerialization.jsonObject(with: firstLine) as? [String: Any],
-                  let rawID = header["session_id"] as? String,
-                  let id = UUID(uuidString: rawID),
-                  let rawStart = header["started_at"] as? String,
-                  let startedAt = try? Date(rawStart, strategy: .iso8601)
-            else {
-                continue
+                  let header = validateHeader(firstLine) else { continue }
+            do {
+                let finalURL = url.deletingPathExtension().appendingPathExtension("jsonl")
+                guard !fileManager.fileExists(atPath: finalURL.path) else { continue }
+                let lastLine = try lastJSONLine(at: url)
+                let hasValidFooter = lastLine.flatMap {
+                    validateSessionBoundary(headerData: firstLine, footerData: $0)
+                } != nil
+                if !hasValidFooter {
+                    let fileStatistics = try streamStatistics(at: url)
+                    let eventCount = max(0, fileStatistics.recordCount - 1)
+                    let endedAt = max(now, header.startedAt)
+                    let footerInput = FooterInput(
+                        sessionID: header.sessionID,
+                        endedAt: endedAt,
+                        durationMilliseconds: max(
+                            0,
+                            Int64(endedAt.timeIntervalSince(header.startedAt) * 1_000)
+                        ),
+                        eventCount: eventCount,
+                        baseBytes: fileStatistics.byteCount,
+                        status: .incomplete,
+                        reason: .abruptTermination
+                    )
+                    let handle = try FileHandle(forWritingTo: url)
+                    do {
+                        _ = try handle.seekToEnd()
+                        try handle.write(contentsOf: encodeFooter(footerInput, lineEncoder: lineEncoder))
+                        try handle.synchronize()
+                        try handle.close()
+                    } catch {
+                        try? handle.close()
+                        throw error
+                    }
+                }
+                try configureLogFile(url, fileManager: fileManager)
+                try fileManager.moveItem(at: url, to: finalURL)
+                try configureLogFile(finalURL, fileManager: fileManager)
+            } catch {
+                // Keep the partial file for a future recovery attempt.
             }
-            let fileStatistics = try streamStatistics(at: url)
-            let eventCount = max(0, fileStatistics.recordCount - 1)
-            let footerInput = FooterInput(
-                sessionID: id,
-                endedAt: now,
-                durationMilliseconds: max(0, Int64(now.timeIntervalSince(startedAt) * 1_000)),
-                eventCount: eventCount,
-                baseBytes: fileStatistics.byteCount,
-                status: .incomplete,
-                reason: .abruptTermination
-            )
-            if let handle = try? FileHandle(forWritingTo: url) {
-                _ = try? handle.seekToEnd()
-                try? handle.write(contentsOf: encodeFooter(footerInput, lineEncoder: lineEncoder))
-                try? handle.close()
-            }
-            let finalURL = url.deletingPathExtension().appendingPathExtension("jsonl")
-            if fileManager.fileExists(atPath: finalURL.path) {
-                try fileManager.removeItem(at: finalURL)
-            }
-            try fileManager.moveItem(at: url, to: finalURL)
         }
     }
 
@@ -90,33 +139,24 @@ extension FileBLETraceLogRepository {
         return urls.compactMap { url in
             guard let first = try? firstJSONLine(at: url),
                   let last = try? lastJSONLine(at: url),
-                  let header = try? JSONSerialization.jsonObject(with: first) as? [String: Any],
-                  let footer = try? JSONSerialization.jsonObject(with: last) as? [String: Any],
-                  let rawID = header["session_id"] as? String,
-                  let id = UUID(uuidString: rawID),
-                  let rawStart = header["started_at"] as? String,
-                  let startedAt = try? Date(rawStart, strategy: .iso8601),
-                  let rawEnd = footer["ended_at"] as? String,
-                  let endedAt = try? Date(rawEnd, strategy: .iso8601),
-                  let rawStatus = footer["status"] as? String,
-                  let status = BLETraceSessionStatus(rawValue: rawStatus)
+                  let boundary = validateSessionBoundary(headerData: first, footerData: last)
             else { return nil }
-            let eventCount = footer["event_count"] as? Int ?? 0
+            guard (try? configureLogFile(url, fileManager: fileManager)) != nil else { return nil }
             return StoredSession(
                 summary: BLETraceSessionSummary(
-                    id: id,
-                    startedAt: startedAt,
-                    endedAt: endedAt,
-                    duration: endedAt.timeIntervalSince(startedAt),
+                    id: boundary.sessionID,
+                    startedAt: boundary.startedAt,
+                    endedAt: boundary.endedAt,
+                    duration: boundary.endedAt.timeIntervalSince(boundary.startedAt),
                     fileSizeBytes: fileSize(url, fileManager: fileManager),
-                    eventCount: eventCount,
-                    status: status,
+                    eventCount: boundary.eventCount,
+                    status: boundary.status,
                     fileName: url.lastPathComponent
                 ),
                 url: url
             )
         }
-        .sorted { $0.summary.startedAt > $1.summary.startedAt }
+        .sorted(by: storedSessionPrecedes)
     }
 
     static func firstJSONLine(at url: URL) throws -> Data? {
@@ -171,21 +211,39 @@ extension FileBLETraceLogRepository {
         _ sessions: [StoredSession],
         configuration: BLETraceFileStoreConfiguration,
         fileManager: FileManager,
+        exportDirectory: URL,
         reservingSessionSlot: Bool = false
     ) throws -> [StoredSession] {
-        var retained = sessions.sorted { $0.summary.startedAt > $1.summary.startedAt }
+        var retained = sessions.sorted(by: storedSessionPrecedes)
         let countLimit = max(0, configuration.maximumSessionCount - (reservingSessionSlot ? 1 : 0))
         while retained.count > countLimit {
             let removed = retained.removeLast()
+            try removeExactExport(
+                named: removed.summary.fileName,
+                exportDirectory: exportDirectory,
+                fileManager: fileManager
+            )
             try fileManager.removeItem(at: removed.url)
         }
         var total = retained.reduce(Int64(0)) { $0 + $1.summary.fileSizeBytes }
-        while total > configuration.maximumTotalBytes, retained.count > 1 {
-            let removed = retained.removeLast()
+        while total > configuration.maximumTotalBytes, let removed = retained.last {
+            try removeExactExport(
+                named: removed.summary.fileName,
+                exportDirectory: exportDirectory,
+                fileManager: fileManager
+            )
+            retained.removeLast()
             total -= removed.summary.fileSizeBytes
             try fileManager.removeItem(at: removed.url)
         }
         return retained
+    }
+
+    static func storedSessionPrecedes(_ lhs: StoredSession, _ rhs: StoredSession) -> Bool {
+        if lhs.summary.startedAt != rhs.summary.startedAt {
+            return lhs.summary.startedAt > rhs.summary.startedAt
+        }
+        return lhs.summary.id.uuidString < rhs.summary.id.uuidString
     }
 
     struct FileStreamStatistics {

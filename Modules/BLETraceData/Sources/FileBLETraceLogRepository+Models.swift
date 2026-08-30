@@ -108,6 +108,51 @@ extension FileBLETraceLogRepository {
         }
     }
 
+    struct StoredHeaderBoundary: Decodable {
+        let recordType: String
+        let schemaVersion: Int
+        let sessionID: UUID
+        let startedAt: String
+
+        enum CodingKeys: String, CodingKey {
+            case recordType = "record_type"
+            case schemaVersion = "schema_version"
+            case sessionID = "session_id"
+            case startedAt = "started_at"
+        }
+    }
+
+    struct StoredFooterBoundary: Decodable {
+        let recordType: String
+        let schemaVersion: Int
+        let sessionID: UUID
+        let endedAt: String
+        let eventCount: Int
+        let status: String
+
+        enum CodingKeys: String, CodingKey {
+            case recordType = "record_type"
+            case schemaVersion = "schema_version"
+            case sessionID = "session_id"
+            case endedAt = "ended_at"
+            case eventCount = "event_count"
+            case status
+        }
+    }
+
+    struct ValidatedStoredHeader {
+        let sessionID: UUID
+        let startedAt: Date
+    }
+
+    struct ValidatedStoredSession {
+        let sessionID: UUID
+        let startedAt: Date
+        let endedAt: Date
+        let eventCount: Int
+        let status: BLETraceSessionStatus
+    }
+
     struct FooterInput {
         let sessionID: UUID
         let endedAt: Date
@@ -130,6 +175,40 @@ extension FileBLETraceLogRepository {
             totalBytes = resolvedBytes
         }
         return try lineEncoder.encode(makeFooter(input, bytes: totalBytes))
+    }
+
+    static func validateHeader(_ data: Data) -> ValidatedStoredHeader? {
+        guard let header = try? JSONDecoder().decode(StoredHeaderBoundary.self, from: data),
+              header.recordType == "header",
+              header.schemaVersion == 1,
+              let startedAt = parseTimestamp(header.startedAt) else { return nil }
+        return ValidatedStoredHeader(sessionID: header.sessionID, startedAt: startedAt)
+    }
+
+    static func validateSessionBoundary(
+        headerData: Data,
+        footerData: Data
+    ) -> ValidatedStoredSession? {
+        guard let header = validateHeader(headerData),
+              let footer = try? JSONDecoder().decode(StoredFooterBoundary.self, from: footerData),
+              footer.recordType == "footer",
+              footer.schemaVersion == 1,
+              footer.sessionID == header.sessionID,
+              let endedAt = parseTimestamp(footer.endedAt),
+              endedAt >= header.startedAt,
+              footer.eventCount >= 0,
+              let status = BLETraceSessionStatus(rawValue: footer.status) else { return nil }
+        return ValidatedStoredSession(
+            sessionID: header.sessionID,
+            startedAt: header.startedAt,
+            endedAt: endedAt,
+            eventCount: footer.eventCount,
+            status: status
+        )
+    }
+
+    static func parseTimestamp(_ value: String) -> Date? {
+        try? Date(value, strategy: .iso8601)
     }
 
     private static func makeFooter(_ input: FooterInput, bytes: Int64) -> FooterRecord {

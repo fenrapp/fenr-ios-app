@@ -1,3 +1,5 @@
+import AsyncSupport
+import BLETraceDomain
 import Foundation
 
 public struct BLETraceFileStoreConfiguration: Sendable {
@@ -25,5 +27,30 @@ public struct BLETraceJSONLineEncoder: Sendable {
         var data = try encoder.encode(value)
         data.append(0x0A)
         return data
+    }
+}
+
+public struct BLETraceFileStoreDependencies {
+    let fileManager: FileManager
+    let lineEncoder: BLETraceJSONLineEncoder
+    let sessionHub: AsyncEventHub<[BLETraceSessionSummary]>
+    let now: @Sendable () -> Date
+    let uptimeNanoseconds: @Sendable () -> UInt64
+    let writerTaskStarter: any BLETraceWriterTaskStarter
+
+    public init(
+        fileManager: sending FileManager,
+        lineEncoder: BLETraceJSONLineEncoder,
+        sessionHub: AsyncEventHub<[BLETraceSessionSummary]>,
+        now: @escaping @Sendable () -> Date,
+        uptimeNanoseconds: @escaping @Sendable () -> UInt64,
+        writerTaskStarter: any BLETraceWriterTaskStarter
+    ) {
+        self.fileManager = fileManager
+        self.lineEncoder = lineEncoder
+        self.sessionHub = sessionHub
+        self.now = now
+        self.uptimeNanoseconds = uptimeNanoseconds
+        self.writerTaskStarter = writerTaskStarter
     }
 }
