@@ -17,6 +17,10 @@ final class BikeBLEReconnectController {
         task != nil
     }
 
+    var hasPendingStabilityReset: Bool {
+        stabilityTask != nil
+    }
+
     init(
         delay: any BikeBLEReconnectDelaying,
         policy: BikeBLEReconnectPolicy,
