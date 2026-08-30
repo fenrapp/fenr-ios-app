@@ -317,7 +317,7 @@ extension BikeBLEVCUConfigurationTransport {
         _ operation: @MainActor () async throws -> Value
     ) async throws -> Value {
         try Task.checkCancellation()
-        await transactionGate.acquire()
+        try await transactionGate.acquireCancellable()
         do {
             try Task.checkCancellation()
             let value = try await operation()
