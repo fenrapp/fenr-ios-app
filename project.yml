@@ -288,7 +288,6 @@ targets:
       - path: Features/RideDashboard/Sources
     dependencies:
       - target: BikeDomain
-      - target: EnvironmentDomain
       - target: RideSession
       - target: RideSessionDomain
       - target: VehicleSession
@@ -961,6 +960,17 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.settingsdata.tests
+  EnvironmentDomainTests:
+    type: bundle.unit-test
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
+    sources:
+      - path: Modules/EnvironmentDomain/Tests
+    dependencies:
+      - target: EnvironmentDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.environmentdomain.tests
   EnvironmentDataTests:
     type: bundle.unit-test
     platform: iOS
@@ -1359,6 +1369,7 @@ schemes:
         BikeEmulatorTests: [test]
         ChargeControlTests: [test]
         SettingsDataTests: [test]
+        EnvironmentDomainTests: [test]
         EnvironmentDataTests: [test]
         RideSessionDomainTests: [test]
         RideNavigationDomainTests: [test]
@@ -1394,6 +1405,7 @@ schemes:
         - BikeEmulatorTests
         - ChargeControlTests
         - SettingsDataTests
+        - EnvironmentDomainTests
         - EnvironmentDataTests
         - RideSessionDomainTests
         - RideNavigationDomainTests
@@ -1451,6 +1463,7 @@ schemes:
         FENRWatchDebug: all
         AsyncSupportTests: [test]
         BLETraceDomainTests: [test]
+        EnvironmentDomainTests: [test]
         TestSupportTests: [test]
         MeasurementPresentationTests: [test]
         WatchDashboardTests: [test]
@@ -1459,6 +1472,7 @@ schemes:
       targets:
         - AsyncSupportTests
         - BLETraceDomainTests
+        - EnvironmentDomainTests
         - TestSupportTests
         - MeasurementPresentationTests
         - WatchDashboardTests

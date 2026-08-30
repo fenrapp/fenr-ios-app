@@ -1,6 +1,6 @@
 import Foundation
 
-public struct VehicleMotionCalibration: Codable, Equatable, Sendable {
+public struct VehicleMotionCalibration: Equatable, Sendable {
     public let vin: String
     public let gyroscopeBiasXRaw: Double
     public let gyroscopeBiasYRaw: Double
