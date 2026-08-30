@@ -1,3 +1,4 @@
+import BikeDomain
 import Combine
 import SettingsDomain
 
@@ -7,8 +8,11 @@ public final class DashboardCardSettingsViewModel: ObservableObject {
 
     private let useCases: DashboardCardSettingsUseCases
     private let mapper: DashboardCardSettingsViewStateMapper
+    private let bikeLockCapabilityStore: any BikeLockCapabilityStateStoring
     private var settings = AppSettings()
+    private var bikeLockCapability = BikeLockCapabilityState()
     private var observationTask: Task<Void, Never>?
+    private var bikeLockCapabilityTask: Task<Void, Never>?
     private var saveTask: Task<Void, Never>?
     private var observationRequestCount = 0
     private var pendingConfigurations: [DashboardCardConfiguration] = []
@@ -16,15 +20,22 @@ public final class DashboardCardSettingsViewModel: ObservableObject {
 
     public init(
         useCases: DashboardCardSettingsUseCases,
-        mapper: DashboardCardSettingsViewStateMapper
+        mapper: DashboardCardSettingsViewStateMapper,
+        bikeLockCapabilityStore: any BikeLockCapabilityStateStoring
     ) {
         self.useCases = useCases
         self.mapper = mapper
-        viewState = mapper.map(configuration: settings.dashboardCardConfiguration)
+        self.bikeLockCapabilityStore = bikeLockCapabilityStore
+        bikeLockCapability = bikeLockCapabilityStore.currentState
+        viewState = mapper.map(
+            settings: settings,
+            bikeLockCapability: bikeLockCapability
+        )
     }
 
     deinit {
         observationTask?.cancel()
+        bikeLockCapabilityTask?.cancel()
         saveTask?.cancel()
     }
 
@@ -41,6 +52,15 @@ public final class DashboardCardSettingsViewModel: ObservableObject {
                 self.receive(latestSettings)
             }
         }
+        let bikeLockCapabilityStore = self.bikeLockCapabilityStore
+        bikeLockCapabilityTask = Task { [weak self] in
+            for await state in bikeLockCapabilityStore.observe() {
+                guard !Task.isCancelled, let self else { return }
+                guard bikeLockCapability != state else { continue }
+                bikeLockCapability = state
+                render()
+            }
+        }
     }
 
     public func stop() {
@@ -49,17 +69,30 @@ public final class DashboardCardSettingsViewModel: ObservableObject {
         guard observationRequestCount == 0 else { return }
         observationTask?.cancel()
         observationTask = nil
+        bikeLockCapabilityTask?.cancel()
+        bikeLockCapabilityTask = nil
     }
 
     public func setSectionOrder(ids: [String]) {
-        let ids = ids.compactMap(DashboardCardSectionID.init(rawValue:))
+        var ids = ids.compactMap(DashboardCardSectionID.init(rawValue:))
         var configuration = settings.dashboardCardConfiguration
+        if !ids.contains(.bikeLock),
+           let bikeLockIndex = configuration.sections.firstIndex(where: { $0.id == .bikeLock }) {
+            ids.insert(.bikeLock, at: min(bikeLockIndex, ids.endIndex))
+        }
         configuration.setSectionOrder(ids)
         update(configuration)
     }
 
     public func setSectionVisibility(_ isVisible: Bool, id: String) {
         guard let id = DashboardCardSectionID(rawValue: id) else { return }
+        if id == .bikeLock {
+            guard bikeLockCapability.isAvailable,
+                  !settings.bikeLockSettings(
+                      forVIN: bikeLockCapability.vehicleIdentifier
+                  ).securityMode.isConfigured
+            else { return }
+        }
         var configuration = settings.dashboardCardConfiguration
         configuration.setSectionVisibility(isVisible, id: id)
         update(configuration)
@@ -148,7 +181,10 @@ public final class DashboardCardSettingsViewModel: ObservableObject {
     }
 
     private func render() {
-        let next = mapper.map(configuration: settings.dashboardCardConfiguration)
+        let next = mapper.map(
+            settings: settings,
+            bikeLockCapability: bikeLockCapability
+        )
         guard next != viewState else { return }
         viewState = next
     }

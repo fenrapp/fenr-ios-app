@@ -336,6 +336,7 @@ targets:
     sources:
       - path: Features/DashboardCardSettings/Sources
     dependencies:
+      - target: BikeDomain
       - target: SettingsDomain
       - target: DesignSystem
     settings:
@@ -530,7 +531,7 @@ targets:
       base:
         INFOPLIST_KEY_NSMotionUsageDescription: "FENR uses motion data to show motorcycle lean and pitch while riding."
         INFOPLIST_KEY_NSFaceIDUsageDescription: "FENR uses Face ID to authorize unlocking your motorcycle."
-        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app
+        PRODUCT_BUNDLE_IDENTIFIER: in.fenr.app
         ENABLE_USER_SCRIPT_SANDBOXING: NO
         INFOPLIST_KEY_CFBundleDisplayName: FENR
         INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
@@ -691,7 +692,7 @@ targets:
       - target: DesignSystem
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.charging-live-activity
+        PRODUCT_BUNDLE_IDENTIFIER: in.fenr.app.charging-live-activity
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: LiveActivityExtension/Info.plist
   ChargingLiveActivityDebugExtension:
@@ -719,7 +720,7 @@ targets:
       - target: RideNavigationDomain
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.share
+        PRODUCT_BUNDLE_IDENTIFIER: in.fenr.app.share
         PRODUCT_NAME: Open in FENR
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: ShareExtension/Info.plist
@@ -1159,6 +1160,7 @@ targets:
       - path: Features/DashboardCardSettings/Tests
     dependencies:
       - target: DashboardCardSettings
+      - target: BikeDomain
       - target: SettingsDomain
       - target: TestSupport
     settings:

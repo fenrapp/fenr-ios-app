@@ -33,15 +33,10 @@ enum ProductionAppDependencyContainerFactory {
         let deviceSpeedRepository = CoreLocationDeviceSpeedRepository(
             locationManager: CLLocationManager()
         )
-        let deviceMotionRepository = CoreMotionDeviceMotionRepository(
-            motionManager: CMMotionManager(),
-            operationQueue: OperationQueue(),
-            now: Date.init,
-            orientation: currentLandscapeOrientation,
-            attitudeNormalizer: DeviceMotionAttitudeNormalizer()
-        )
+        let deviceMotionRepository = makeDeviceMotionRepository()
         let motionCalibrationRepository = makeMotionCalibrationRepository()
         let rideTripRepository = makeRideTripRepository()
+        let bikeLockCapabilityStore = BikeLockCapabilityStateStore()
         let sessionServices = AppSessionDependencyContainer.makeServices(
             dependencies: .init(
                 repository: repository,
@@ -73,12 +68,23 @@ enum ProductionAppDependencyContainerFactory {
             incomingMapLinkStore: makeIncomingMapLinkStore(),
             bikeLockCredentialStore: makeBikeLockCredentialStore(),
             bikeLockAuthenticator: LocalAuthenticationBikeLockAuthenticator(),
+            bikeLockCapabilityStore: bikeLockCapabilityStore,
             allowsExperimentalBikeLockControl: true
         )
     }
 
     private static func makeBikeLockCredentialStore() -> KeychainBikeLockCredentialStore {
         KeychainBikeLockCredentialStore(service: "com.fenr.app.bike-lock")
+    }
+
+    private static func makeDeviceMotionRepository() -> CoreMotionDeviceMotionRepository {
+        CoreMotionDeviceMotionRepository(
+            motionManager: CMMotionManager(),
+            operationQueue: OperationQueue(),
+            now: Date.init,
+            orientation: currentLandscapeOrientation,
+            attitudeNormalizer: DeviceMotionAttitudeNormalizer()
+        )
     }
 
     private static func makeIncomingMapLinkStore() -> UserDefaultsIncomingMapLinkStore {

@@ -60,6 +60,7 @@ struct RideDashboardDependencyContainer {
                 vehicleSession: dependencies.vehicleSession,
                 credentialStore: dependencies.bikeLockCredentialStore,
                 authenticator: dependencies.bikeLockAuthenticator,
+                capabilityStore: dependencies.bikeLockCapabilityStore,
                 allowsExperimentalControl: dependencies.allowsExperimentalBikeLockControl
             )
         )
@@ -88,5 +89,6 @@ struct RideDashboardFeatureDependencies {
     let vehicleSession: any VehicleSessionService
     let bikeLockCredentialStore: any BikeLockCredentialStoring
     let bikeLockAuthenticator: any BikeLockAuthenticating
+    let bikeLockCapabilityStore: any BikeLockCapabilityStateStoring
     let allowsExperimentalBikeLockControl: Bool
 }

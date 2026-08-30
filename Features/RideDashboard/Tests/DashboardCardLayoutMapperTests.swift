@@ -8,7 +8,7 @@ struct DashboardCardLayoutMapperTests {
     func mapsConfiguration() {
         var configuration = DashboardCardConfiguration()
         configuration.setSectionOrder([
-            .navigation, .range, .rideDynamics, .currentTrip, .efficiency, .systemHealth
+            .bikeLock, .navigation, .range, .rideDynamics, .currentTrip, .efficiency, .systemHealth
         ])
         configuration.setSectionVisibility(false, id: .efficiency)
         configuration.setPageOrder([.batteryTrip, .range], sectionID: .range)
@@ -25,7 +25,7 @@ struct DashboardCardLayoutMapperTests {
         #expect(layout.efficiencyPages == [.live, .trend])
     }
 
-    @Test("Keeps the fixed controls when every configurable section is hidden")
+    @Test("Keeps only the speedometer when every configurable section is hidden")
     func mapsSingleCardLayout() {
         var configuration = DashboardCardConfiguration()
         for sectionID in DashboardCardSectionID.allCases {
@@ -34,7 +34,7 @@ struct DashboardCardLayoutMapperTests {
 
         let layout = DashboardCardLayoutMapper().map(configuration)
 
-        #expect(layout.ridingCards == [.speedometer, .bikeLock])
+        #expect(layout.ridingCards == [.speedometer])
     }
 
     @Test("Hides ride navigation when its setting is disabled")

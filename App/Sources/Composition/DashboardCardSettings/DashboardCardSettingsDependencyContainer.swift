@@ -1,10 +1,12 @@
+import BikeDomain
 import DashboardCardSettings
 import SettingsDomain
 
 @MainActor
 struct DashboardCardSettingsDependencyContainer {
     func makeViewModel(
-        settingsRepository: any AppSettingsRepository
+        settingsRepository: any AppSettingsRepository,
+        bikeLockCapabilityStore: any BikeLockCapabilityStateStoring
     ) -> DashboardCardSettingsViewModel {
         DashboardCardSettingsViewModel(
             useCases: .init(
@@ -12,7 +14,8 @@ struct DashboardCardSettingsDependencyContainer {
                 observeSettings: .init(repository: settingsRepository),
                 saveSettings: .init(repository: settingsRepository)
             ),
-            mapper: DashboardCardSettingsViewStateMapper()
+            mapper: DashboardCardSettingsViewStateMapper(),
+            bikeLockCapabilityStore: bikeLockCapabilityStore
         )
     }
 }

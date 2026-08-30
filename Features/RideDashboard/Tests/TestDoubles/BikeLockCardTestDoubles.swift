@@ -83,3 +83,19 @@ actor BikeLockCardAuthenticator: BikeLockAuthenticating {
 
     func authenticate() -> Bool { result }
 }
+
+@MainActor
+final class BikeLockCardCapabilityStore: BikeLockCapabilityStateStoring {
+    private(set) var currentState = BikeLockCapabilityState()
+
+    func update(_ state: BikeLockCapabilityState) {
+        currentState = state
+    }
+
+    func observe() -> AsyncStream<BikeLockCapabilityState> {
+        .init { continuation in
+            continuation.yield(currentState)
+            continuation.finish()
+        }
+    }
+}

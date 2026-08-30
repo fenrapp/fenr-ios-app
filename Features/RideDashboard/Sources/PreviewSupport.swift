@@ -156,6 +156,7 @@ enum BikeLockCardPreviewFactory {
             vehicleSession: PreviewVehicleSessionService(),
             credentialStore: PreviewBikeLockCredentialStore(),
             authenticator: PreviewBikeLockAuthenticator(),
+            capabilityStore: PreviewBikeLockCapabilityStore(),
             allowsExperimentalControl: false
         )
         viewModel.setPreviewState(state)
@@ -232,6 +233,22 @@ private actor PreviewBikeLockCredentialStore: BikeLockCredentialStoring {
 
 private struct PreviewBikeLockAuthenticator: BikeLockAuthenticating {
     func authenticate() async throws -> Bool { true }
+}
+
+@MainActor
+private final class PreviewBikeLockCapabilityStore: BikeLockCapabilityStateStoring {
+    private(set) var currentState = BikeLockCapabilityState()
+
+    func update(_ state: BikeLockCapabilityState) {
+        currentState = state
+    }
+
+    func observe() -> AsyncStream<BikeLockCapabilityState> {
+        .init { continuation in
+            continuation.yield(currentState)
+            continuation.finish()
+        }
+    }
 }
 
 private actor RideDashboardPreviewRepository: BikeRepository, BikeBatteryHealthRepository {

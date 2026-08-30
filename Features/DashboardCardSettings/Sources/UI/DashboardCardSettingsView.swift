@@ -37,7 +37,8 @@ public struct DashboardCardSettingsView: View {
                         sectionLabel(section)
                         DashboardCardVisibilityToggle(
                             title: section.title,
-                            isEnabled: true,
+                            isEnabled: section.isVisibilityEnabled,
+                            disabledHint: section.disabledVisibilityHint,
                             isVisible: visibilityBinding(for: section)
                         )
                     }

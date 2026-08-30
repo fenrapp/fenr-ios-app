@@ -1,6 +1,7 @@
 import Foundation
 
 public enum DashboardCardSectionID: String, Codable, CaseIterable, Hashable, Sendable {
+    case bikeLock
     case navigation
     case currentTrip
     case efficiency
@@ -12,6 +13,7 @@ public enum DashboardCardSectionID: String, Codable, CaseIterable, Hashable, Sen
 
     public var defaultPageOrder: [DashboardCardPageID] {
         switch self {
+        case .bikeLock: []
         case .navigation: []
         case .currentTrip: [.currentTrip, .rideStatistics]
         case .efficiency: [.efficiencyLive, .efficiencyTrend]
@@ -163,6 +165,9 @@ public struct DashboardCardConfiguration: Codable, Equatable, Sendable {
         var savedOrder = knownSections.map(\.id)
         if !savedOrder.contains(.navigation) {
             savedOrder.insert(.navigation, at: .zero)
+        }
+        if !savedOrder.contains(.bikeLock) {
+            savedOrder.insert(.bikeLock, at: .zero)
         }
         let orderedIDs = completeOrder(savedOrder, defaults: DashboardCardSectionID.defaultOrder)
 

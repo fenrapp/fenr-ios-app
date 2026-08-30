@@ -17,6 +17,10 @@ struct BikeLockCardViewModelTests {
 
         #expect(await waitUntil { fixture.viewModel.viewState.isAvailable })
         #expect(await fixture.repository.recordedPrepareRequests() == 1)
+        #expect(fixture.capabilityStore.currentState == .init(
+            vehicleIdentifier: BikeLockCardFixtures.vin,
+            isAvailable: true
+        ))
     }
 
     @Test("Invalidates preparation on disconnect and prepares again after reconnect")
@@ -30,10 +34,30 @@ struct BikeLockCardViewModelTests {
             connectionState: .disconnected(reason: nil)
         ))
         #expect(await waitUntil { !fixture.viewModel.viewState.isAvailable })
+        #expect(!fixture.capabilityStore.currentState.isAvailable)
         await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot())
 
         #expect(await waitUntil { await fixture.repository.recordedPrepareRequests() == 2 })
         #expect(fixture.viewModel.viewState.isAvailable)
+    }
+
+    @Test("Configuring protection makes the dashboard card visible")
+    func configurationRestoresCardVisibility() async {
+        var settings = AppSettings()
+        settings.dashboardCardConfiguration.setSectionVisibility(false, id: .bikeLock)
+        let fixture = BikeLockCardViewModelTestFactory.make(settings: settings)
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot(settings: settings))
+        #expect(await waitUntil { fixture.viewModel.viewState.isAvailable })
+
+        fixture.viewModel.configure(
+            securityOptionID: BikeLockSecurityMode.withoutPIN.rawValue,
+            pin: ""
+        )
+
+        #expect(await waitUntil { await fixture.repository.recordedLockRequests() == [true] })
+        let savedSettings = await fixture.settingsRepository.load()
+        #expect(savedSettings.dashboardCardConfiguration.section(id: .bikeLock).isVisible)
     }
 
     @Test("Configures a numeric PIN and locks the bike")
@@ -42,12 +66,16 @@ struct BikeLockCardViewModelTests {
         fixture.viewModel.start()
         await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot())
         #expect(await waitUntil { fixture.viewModel.viewState.isAvailable })
+        fixture.viewModel.performPrimaryAction()
+        #expect(fixture.viewModel.viewState.sheet == .setup)
 
         fixture.viewModel.configure(
             securityOptionID: BikeLockSecurityMode.pin.rawValue,
             pin: "123456"
         )
 
+        #expect(fixture.viewModel.viewState.sheet == nil)
+        #expect(fixture.viewModel.viewState.isWorking)
         #expect(await waitUntil { await fixture.repository.recordedLockRequests() == [true] })
         #expect(await fixture.credentialStore.storedPIN(for: BikeLockCardFixtures.vin) == "123456")
         #expect(fixture.viewModel.viewState.isLocked)

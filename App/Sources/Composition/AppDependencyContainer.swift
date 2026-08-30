@@ -84,6 +84,7 @@ struct AppDependencyContainer {
     private let incomingMapLinkStore: any IncomingMapLinkStoring
     private let bikeLockCredentialStore: any BikeLockCredentialStoring
     private let bikeLockAuthenticator: any BikeLockAuthenticating
+    private let bikeLockCapabilityStore: any BikeLockCapabilityStateStoring
     private let allowsExperimentalBikeLockControl: Bool
 
     init(
@@ -106,6 +107,7 @@ struct AppDependencyContainer {
         incomingMapLinkStore: any IncomingMapLinkStoring,
         bikeLockCredentialStore: any BikeLockCredentialStoring,
         bikeLockAuthenticator: any BikeLockAuthenticating,
+        bikeLockCapabilityStore: any BikeLockCapabilityStateStoring,
         allowsExperimentalBikeLockControl: Bool,
         initialOnboardingVIN: String? = nil,
         forceOnboarding: Bool = false
@@ -132,6 +134,7 @@ struct AppDependencyContainer {
         self.incomingMapLinkStore = incomingMapLinkStore
         self.bikeLockCredentialStore = bikeLockCredentialStore
         self.bikeLockAuthenticator = bikeLockAuthenticator
+        self.bikeLockCapabilityStore = bikeLockCapabilityStore
         self.allowsExperimentalBikeLockControl = allowsExperimentalBikeLockControl
     }
 
@@ -160,6 +163,7 @@ struct AppDependencyContainer {
                 vehicleSession: vehicleSession,
                 bikeLockCredentialStore: bikeLockCredentialStore,
                 bikeLockAuthenticator: bikeLockAuthenticator,
+                bikeLockCapabilityStore: bikeLockCapabilityStore,
                 allowsExperimentalBikeLockControl: allowsExperimentalBikeLockControl
             )
         )
@@ -237,7 +241,10 @@ struct AppDependencyContainer {
     }
 
     func makeDashboardCardSettingsViewModel() -> DashboardCardSettingsViewModel {
-        dashboardCardSettingsContainer.makeViewModel(settingsRepository: settingsRepository)
+        dashboardCardSettingsContainer.makeViewModel(
+            settingsRepository: settingsRepository,
+            bikeLockCapabilityStore: bikeLockCapabilityStore
+        )
     }
 
     func makePowerModeSettingsViewModel() -> PowerModeSettingsViewModel {
