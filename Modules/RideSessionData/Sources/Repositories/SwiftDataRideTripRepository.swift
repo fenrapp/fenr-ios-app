@@ -7,18 +7,6 @@ public final class SwiftDataRideTripRepository: RideTripRepository, Sendable {
     private let mapper: RideTripRecordMapper
     private let energyBucketMapper: RideEnergyBucketRecordMapper
 
-    public convenience init(
-        mapper: RideTripRecordMapper,
-        energyBucketMapper: RideEnergyBucketRecordMapper,
-        isStoredInMemoryOnly: Bool = false
-    ) throws {
-        self.init(
-            modelContainer: try Self.makeModelContainer(isStoredInMemoryOnly: isStoredInMemoryOnly),
-            mapper: mapper,
-            energyBucketMapper: energyBucketMapper
-        )
-    }
-
     public init(
         modelContainer: ModelContainer,
         mapper: RideTripRecordMapper,

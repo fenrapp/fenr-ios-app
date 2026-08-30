@@ -149,7 +149,9 @@ enum DebugAppDependencyContainerFactory {
 
     private static func makeRideTripRepository() -> SwiftDataRideTripRepository {
         do {
-            let repository = try SwiftDataRideTripRepository(
+            let modelContainer = try SwiftDataRideTripRepository.makeModelContainer()
+            let repository = SwiftDataRideTripRepository(
+                modelContainer: modelContainer,
                 mapper: RideTripRecordMapper(),
                 energyBucketMapper: RideEnergyBucketRecordMapper()
             )

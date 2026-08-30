@@ -82,7 +82,9 @@ enum ProductionAppDependencyContainerFactory {
 
     private static func makeRideTripRepository() -> SwiftDataRideTripRepository {
         do {
-            return try SwiftDataRideTripRepository(
+            let modelContainer = try SwiftDataRideTripRepository.makeModelContainer()
+            return SwiftDataRideTripRepository(
+                modelContainer: modelContainer,
                 mapper: RideTripRecordMapper(),
                 energyBucketMapper: RideEnergyBucketRecordMapper()
             )
