@@ -40,14 +40,11 @@ public struct RideNavigationScene: View {
                 RideNavigationView(
                     viewModel: feature.viewModel,
                     mapSurfaceFactory: feature.mapSurfaceFactory,
+                    transitionNamespace: navigationSurfaceNamespace,
                     onClose: onClose,
                     onMinimize: onMinimize
                 )
-                .matchedGeometryEffect(
-                    id: Constants.navigationSurfaceID,
-                    in: navigationSurfaceNamespace
-                )
-                .transition(.scale(scale: Constants.miniTransitionScale).combined(with: .opacity))
+                .transition(.opacity)
             case .mini:
                 RideNavigationMiniScene(
                     viewModel: feature.viewModel,
@@ -55,7 +52,7 @@ public struct RideNavigationScene: View {
                     transitionNamespace: navigationSurfaceNamespace,
                     onExpand: onExpand
                 )
-                .transition(.scale(scale: Constants.miniTransitionScale).combined(with: .opacity))
+                .transition(.opacity)
             }
         }
         .statusBarHidden(presentationMode == .fullScreen)
@@ -93,9 +90,7 @@ public struct RideNavigationScene: View {
     }
 
     private enum Constants {
-        static let navigationSurfaceID = "ride-navigation-surface"
-        static let miniTransitionScale = 0.92
-        static let presentationTransitionDuration = 0.35
+        static let presentationTransitionDuration = 0.45
         static let reducedPresentationTransitionDuration = 0.12
     }
 }
@@ -123,23 +118,28 @@ private struct RideNavigationMiniScene: View {
 public struct RideNavigationView: View {
     @ObservedObject private var viewModel: RideNavigationViewModel
     private let mapSurfaceFactory: RideNavigationMapSurfaceFactory
+    private let transitionNamespace: Namespace.ID
     private let onClose: () -> Void
     private let onMinimize: () -> Void
     @State private var showsImporter = false
     @State private var exportDocument: GPXFileDocument?
     @State private var exportFilename = "Ride.gpx"
+    @State private var shareRequest: GPXExportRequest?
     @State private var routeName = ""
     @State private var focusInteractionGeneration = 0
     @State private var showsFocusControls = true
+    @State private var activeMapSelector: RideNavigationMapSelector?
 
     public init(
         viewModel: RideNavigationViewModel,
         mapSurfaceFactory: RideNavigationMapSurfaceFactory,
+        transitionNamespace: Namespace.ID,
         onClose: @escaping () -> Void,
         onMinimize: @escaping () -> Void
     ) {
         self.viewModel = viewModel
         self.mapSurfaceFactory = mapSurfaceFactory
+        self.transitionNamespace = transitionNamespace
         self.onClose = onClose
         self.onMinimize = onMinimize
     }
@@ -152,6 +152,10 @@ public struct RideNavigationView: View {
                 onInteraction: revealFocusControls
             )
             .id(MapSurfaceIdentity(scene: viewModel.viewState.mapScene))
+            .matchedGeometryEffect(
+                id: Constants.navigationSurfaceID,
+                in: transitionNamespace
+            )
             .transition(.opacity)
             .ignoresSafeArea()
 
@@ -165,7 +169,9 @@ public struct RideNavigationView: View {
                     onSearchQueryChanged: viewModel.updateSearchQuery,
                     onSearch: viewModel.search,
                     onSelectSearchResult: viewModel.selectSearchResult,
-                    onOpenRoute: viewModel.openSavedRoute
+                    onOpenRoute: viewModel.openSavedRoute,
+                    onShareRoute: viewModel.shareSavedRoute,
+                    onDeleteRoute: viewModel.deleteSavedRoute
                 )
             case .map:
                 RideNavigationMapOverlay(
@@ -186,6 +192,7 @@ public struct RideNavigationView: View {
                     onMapHeadingUp: viewModel.setMapHeadingUp,
                     onToggleVoice: viewModel.toggleVoice,
                     onMapStyle: viewModel.setMapStyle,
+                    activeMapSelector: $activeMapSelector,
                     onFindTrailExit: viewModel.findTrailExit,
                     onCancelTrailExit: viewModel.cancelTrailExitPreview,
                     onStartTrailExit: viewModel.startTrailExit,
@@ -197,17 +204,23 @@ public struct RideNavigationView: View {
                 RideNavigationSummaryPanel(
                     state: viewModel.viewState,
                     routeName: $routeName,
-                    onSave: { viewModel.saveCompletedRoute(name: routeName) },
+                    onSave: { viewModel.saveCompletedRouteAndClose(name: routeName) },
                     onExport: viewModel.exportCompletedRoute,
-                    onDone: viewModel.discardActivity
+                    onClose: viewModel.discardActivity
                 )
             }
         }
         .background(Color.black)
         .toolbar(.hidden, for: .navigationBar)
         .statusBarHidden()
-        .task(id: FocusAutoHideKey(isActive: isFocusDriving, generation: focusInteractionGeneration)) {
-            guard isFocusDriving else {
+        .task(
+            id: FocusAutoHideKey(
+                isActive: isFocusDriving,
+                isSelectorPresented: activeMapSelector != nil,
+                generation: focusInteractionGeneration
+            )
+        ) {
+            guard isFocusDriving, activeMapSelector == nil else {
                 withAnimation(.smooth(duration: Constants.focusTransitionDuration)) {
                     showsFocusControls = true
                 }
@@ -227,11 +240,21 @@ public struct RideNavigationView: View {
                 routeName = "Recorded ride"
             }
         }
+        .onChange(of: activeMapSelector) {
+            if activeMapSelector != nil {
+                revealFocusControls()
+            }
+        }
         .onChange(of: viewModel.exportRequest) {
             guard let request = viewModel.exportRequest else { return }
             exportFilename = request.filename
             exportDocument = GPXFileDocument(data: request.data)
             viewModel.clearExportRequest()
+        }
+        .onChange(of: viewModel.shareRequest) {
+            guard let request = viewModel.shareRequest else { return }
+            shareRequest = request
+            viewModel.clearShareRequest()
         }
         .fileImporter(
             isPresented: $showsImporter,
@@ -250,6 +273,9 @@ public struct RideNavigationView: View {
             contentType: .gpx,
             defaultFilename: exportFilename
         ) { _ in exportDocument = nil }
+        .sheet(item: $shareRequest) { request in
+            GPXShareSheet(request: request)
+        }
         .animation(
             .smooth(duration: Constants.mapTransitionDuration),
             value: MapSurfaceIdentity(scene: viewModel.viewState.mapScene)
@@ -279,6 +305,7 @@ public struct RideNavigationView: View {
 
     private struct FocusAutoHideKey: Hashable {
         let isActive: Bool
+        let isSelectorPresented: Bool
         let generation: Int
     }
 
@@ -293,27 +320,9 @@ public struct RideNavigationView: View {
     }
 
     private enum Constants {
+        static let navigationSurfaceID = "ride-navigation-surface"
         static let focusControlsDelaySeconds = 5.0
         static let focusTransitionDuration = 0.35
         static let mapTransitionDuration = 0.28
     }
-}
-
-private struct GPXFileDocument: FileDocument {
-    static let readableContentTypes: [UTType] = [.gpx]
-    let data: Data
-
-    init(data: Data) { self.data = data }
-
-    init(configuration: ReadConfiguration) throws {
-        data = configuration.file.regularFileContents ?? Data()
-    }
-
-    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-        FileWrapper(regularFileWithContents: data)
-    }
-}
-
-private extension UTType {
-    static let gpx = UTType(importedAs: "com.topografix.gpx", conformingTo: .xml)
 }

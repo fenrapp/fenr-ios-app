@@ -1,0 +1,117 @@
+import DesignSystem
+import SwiftUI
+
+struct RideNavigationSavedRoutesPanel: View {
+    let routes: [RideNavigationRouteRow]
+    let errorText: String?
+    let onOpenRoute: (UUID) -> Void
+    let onShareRoute: (UUID) -> Void
+    let onDeleteRoute: (UUID) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSpace.medium) {
+            header
+
+            if let errorText {
+                Label(errorText, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(DesignColor.critical)
+            }
+
+            routeList
+        }
+        .padding(DesignSpace.medium)
+        .frame(width: Constants.panelWidth)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .background(
+            Color.black.opacity(Constants.interactionShieldOpacity),
+            in: RoundedRectangle(cornerRadius: Constants.panelRadius, style: .continuous)
+        )
+        .rideNavigationGlassSurface(cornerRadius: Constants.panelRadius)
+        .contentShape(RoundedRectangle(cornerRadius: Constants.panelRadius, style: .continuous))
+        .onTapGesture {}
+    }
+
+    private var header: some View {
+        HStack(spacing: DesignSpace.small) {
+            VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
+                Text("Saved Routes")
+                    .font(.title3.weight(.bold))
+                Text("Your route library")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Text(routes.count, format: .number)
+                .font(.caption.weight(.semibold).monospacedDigit())
+                .foregroundStyle(.secondary)
+                .frame(
+                    minWidth: Constants.countBadgeSize,
+                    minHeight: Constants.countBadgeSize
+                )
+                .padding(.horizontal, routes.count > Constants.singleDigitMaximum ? DesignSpace.extraExtraSmall : .zero)
+                .background(DesignColor.controlSurface, in: Capsule())
+                .accessibilityLabel("\(routes.count) saved routes")
+        }
+    }
+
+    private var routeList: some View {
+        List(routes) { route in
+            Button { onOpenRoute(route.id) } label: {
+                savedRouteRow(route)
+            }
+            .buttonStyle(.plain)
+            .listRowInsets(EdgeInsets(top: .zero, leading: .zero, bottom: DesignSpace.extraSmall, trailing: .zero))
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                Button { onShareRoute(route.id) } label: {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                }
+                .tint(DesignColor.accent)
+            }
+            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                Button(role: .destructive) { onDeleteRoute(route.id) } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .scrollIndicators(.hidden)
+        .contentMargins(.vertical, .zero, for: .scrollContent)
+    }
+
+    private func savedRouteRow(_ route: RideNavigationRouteRow) -> some View {
+        HStack(spacing: DesignSpace.small) {
+            VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
+                Text(route.title)
+                    .font(.subheadline.weight(.semibold))
+                    .lineLimit(1)
+                Text(route.detail)
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.horizontal, DesignSpace.small)
+        .frame(minHeight: Constants.rowHeight)
+        .background(DesignColor.groupedSurface, in: RoundedRectangle(cornerRadius: DesignRadius.medium))
+        .contentShape(RoundedRectangle(cornerRadius: DesignRadius.medium))
+    }
+
+    private enum Constants {
+        static let panelWidth: CGFloat = 320
+        static let panelRadius: CGFloat = 24
+        static let countBadgeSize: CGFloat = 28
+        static let singleDigitMaximum = 9
+        static let rowHeight: CGFloat = 56
+        static let interactionShieldOpacity = 0.001
+    }
+}

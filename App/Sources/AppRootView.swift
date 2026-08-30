@@ -127,7 +127,6 @@ struct AppRootView: View {
                     onMinimize: minimizeRideNavigation,
                     onExpand: expandRideNavigation
                 )
-                .ignoresSafeArea()
                 .zIndex(1)
             }
         }

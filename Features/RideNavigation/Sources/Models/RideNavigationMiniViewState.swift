@@ -23,7 +23,7 @@ public struct RideNavigationMiniViewState: Equatable, Sendable {
         mapScene: NavigationMapScene = .init(displayStyle: .focus),
         position: Position = .topTrailing,
         scale: Double = 1.1,
-        scaleRange: ClosedRange<Double> = 0.7 ... 1.3,
+        scaleRange: ClosedRange<Double> = 0.5 ... 1.5,
         isLandscape: Bool = false,
         statusText: String? = nil,
         accessibilityLabel: String = "Mini navigation map"

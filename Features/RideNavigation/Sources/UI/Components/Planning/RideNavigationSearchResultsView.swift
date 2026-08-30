@@ -27,10 +27,7 @@ struct RideNavigationSearchResultsView: View {
             Text("Results")
                 .font(.headline)
             Spacer()
-            if isSearching {
-                ProgressView()
-                    .controlSize(.small)
-            } else if !results.isEmpty {
+            if !results.isEmpty {
                 Text(results.count, format: .number)
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)

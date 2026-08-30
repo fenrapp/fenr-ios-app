@@ -11,6 +11,7 @@ public final class RideNavigationViewModel: ObservableObject {
     @Published public private(set) var viewState = RideNavigationViewState()
     @Published public private(set) var miniViewState = RideNavigationMiniViewState()
     @Published public private(set) var exportRequest: GPXExportRequest?
+    @Published public private(set) var shareRequest: GPXExportRequest?
 
     private let vehicleSession: any VehicleSessionService
     private let observeDeviceSpeed: ObserveDeviceSpeedUseCase
@@ -38,6 +39,7 @@ public final class RideNavigationViewModel: ObservableObject {
     private var settingsLoadingTask: Task<Void, Never>?
     private var settingsSaveTask: Task<Void, Never>?
     private var routeSaveTask: Task<Void, Never>?
+    private var routeDeletionTasks: [UUID: Task<Void, Never>] = [:]
     private var draftPersistenceTask: Task<Void, Never>?
     private var guidanceTask: Task<Void, Never>?
     private var isStarted = false
@@ -132,6 +134,7 @@ public final class RideNavigationViewModel: ObservableObject {
         settingsLoadingTask?.cancel()
         settingsSaveTask?.cancel()
         routeSaveTask?.cancel()
+        routeDeletionTasks.values.forEach { $0.cancel() }
         draftPersistenceTask?.cancel()
         guidanceTask?.cancel()
         locationObservationTask?.cancel()
@@ -191,6 +194,8 @@ public final class RideNavigationViewModel: ObservableObject {
         settingsSaveTask = nil
         routeSaveTask?.cancel()
         routeSaveTask = nil
+        routeDeletionTasks.values.forEach { $0.cancel() }
+        routeDeletionTasks.removeAll()
         draftPersistenceTask?.cancel()
         draftPersistenceTask = nil
         guidanceTask?.cancel()
@@ -382,6 +387,8 @@ extension RideNavigationViewModel {
             trimmed.isEmpty ? completedRecording.name : trimmed,
             at: now()
         )
+        let replacedRoute = savedRoutes.first { $0.id == route.id }
+        publishSavedRoute(route)
         routeSaveTask?.cancel()
         let repository = repository
         routeSaveTask = Task { [weak self] in
@@ -400,13 +407,32 @@ extension RideNavigationViewModel {
             } catch is CancellationError {
                 return
             } catch {
-                guard let self,
-                      screen == .summary,
-                      self.completedRecording?.id == route.id else { return }
+                guard let self else { return }
+                savedRoutes.removeAll { $0.id == route.id }
+                if let replacedRoute {
+                    savedRoutes.insert(replacedRoute, at: .zero)
+                }
                 errorText = "The route could not be saved."
                 render()
             }
         }
+    }
+
+    public func saveCompletedRouteAndClose(name: String) {
+        guard completedRecording != nil else {
+            discardActivity()
+            return
+        }
+        saveCompletedRoute(name: name)
+        discardActivity()
+    }
+
+    private func publishSavedRoute(_ route: RideRoute) {
+        savedRoutes.removeAll { $0.id == route.id }
+        savedRoutes.insert(route, at: .zero)
+        completedRecording = route
+        errorText = nil
+        render()
     }
 
     public func exportCompletedRoute() {
@@ -428,6 +454,56 @@ extension RideNavigationViewModel {
 
     public func clearExportRequest() {
         exportRequest = nil
+    }
+
+    public func shareSavedRoute(id: UUID) {
+        guard let route = savedRoutes.first(where: { $0.id == id }) else { return }
+        do {
+            shareRequest = GPXExportRequest(
+                filename: sanitizedFilename(route.name) + ".gpx",
+                data: try exporter.export(route)
+            )
+            errorText = nil
+            render()
+        } catch {
+            errorText = "The GPX file could not be created."
+            render()
+        }
+    }
+
+    public func clearShareRequest() {
+        shareRequest = nil
+    }
+
+    public func deleteSavedRoute(id: UUID) {
+        guard savedRoutes.contains(where: { $0.id == id }) else { return }
+        savedRoutes.removeAll { $0.id == id }
+        if selectedRoute?.id == id {
+            selectedRoute = nil
+        }
+        errorText = nil
+        render()
+
+        let repository = repository
+        routeDeletionTasks[id] = Task { [weak self] in
+            do {
+                try await repository.delete(id: id)
+                try Task.checkCancellation()
+                let routes = await repository.loadRoutes()
+                try Task.checkCancellation()
+                self?.receiveRouteDeletion(routes, id: id, errorText: nil)
+            } catch is CancellationError {
+                return
+            } catch {
+                let routes = await repository.loadRoutes()
+                guard !Task.isCancelled else { return }
+                self?.receiveRouteDeletion(
+                    routes,
+                    id: id,
+                    errorText: "The route could not be deleted."
+                )
+            }
+        }
     }
 
     public func openIncomingMapLink(_ url: URL) {
@@ -857,6 +933,18 @@ extension RideNavigationViewModel {
         render()
     }
 
+    private func receiveRouteDeletion(
+        _ routes: [RideRoute],
+        id: UUID,
+        errorText: String?
+    ) {
+        routeDeletionTasks[id] = nil
+        let pendingDeletionIDs = Set(routeDeletionTasks.keys)
+        savedRoutes = routes.filter { !pendingDeletionIDs.contains($0.id) }
+        self.errorText = errorText
+        render()
+    }
+
     private func receiveLoadedSettings(_ settings: AppSettings) {
         appSettings = settings
         switch settings.rideNavigation.preferredMapStyle {
@@ -1151,7 +1239,7 @@ extension RideNavigationViewModel {
         }
         scene = NavigationMapScene(
             source: scene.source,
-            displayStyle: .focus,
+            displayStyle: scene.displayStyle,
             camera: followCamera,
             userCoordinate: scene.userCoordinate,
             userHeadingDegrees: scene.userHeadingDegrees,
@@ -1762,7 +1850,8 @@ extension RideNavigationViewModel {
     private func sanitizedFilename(_ value: String) -> String {
         let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_"))
         let sanitized = value.unicodeScalars.map { allowed.contains($0) ? Character(String($0)) : "-" }
-        return String(sanitized).trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+        let filename = String(sanitized).trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+        return filename.isEmpty ? "Ride" : filename
     }
 
     private enum Constants {
