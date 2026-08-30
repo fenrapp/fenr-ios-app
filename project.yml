@@ -867,6 +867,17 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.asyncsupport.tests
+  BLETraceDomainTests:
+    type: bundle.unit-test
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
+    sources:
+      - path: Modules/BLETraceDomain/Tests
+    dependencies:
+      - target: BLETraceDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bletracedomain.tests
   BLETraceDataTests:
     type: bundle.unit-test
     platform: iOS
@@ -1340,6 +1351,7 @@ schemes:
         FENR: all
         StarkProtocolTests: [test]
         AsyncSupportTests: [test]
+        BLETraceDomainTests: [test]
         BikeSDKTests: [test]
         BLETraceDataTests: [test]
         BikeDomainTests: [test]
@@ -1374,6 +1386,7 @@ schemes:
       targets:
         - StarkProtocolTests
         - AsyncSupportTests
+        - BLETraceDomainTests
         - BLETraceDataTests
         - BikeSDKTests
         - BikeDomainTests
@@ -1437,6 +1450,7 @@ schemes:
       targets:
         FENRWatchDebug: all
         AsyncSupportTests: [test]
+        BLETraceDomainTests: [test]
         TestSupportTests: [test]
         MeasurementPresentationTests: [test]
         WatchDashboardTests: [test]
@@ -1444,6 +1458,7 @@ schemes:
     test:
       targets:
         - AsyncSupportTests
+        - BLETraceDomainTests
         - TestSupportTests
         - MeasurementPresentationTests
         - WatchDashboardTests

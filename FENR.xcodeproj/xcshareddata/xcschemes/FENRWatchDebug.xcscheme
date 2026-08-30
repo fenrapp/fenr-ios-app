@@ -23,6 +23,20 @@
          </BuildActionEntry>
          <BuildActionEntry
             buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A7D34EB549EB91C1186B3A15"
+               BuildableName = "BLETraceDomainTests.xctest"
+               BlueprintName = "BLETraceDomainTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
             buildForRunning = "YES"
             buildForProfiling = "YES"
             buildForArchiving = "YES"
@@ -117,6 +131,17 @@
                BlueprintIdentifier = "C4CF7DCAF8635785666B76B1"
                BuildableName = "AsyncSupportTests.xctest"
                BlueprintName = "AsyncSupportTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A7D34EB549EB91C1186B3A15"
+               BuildableName = "BLETraceDomainTests.xctest"
+               BlueprintName = "BLETraceDomainTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </TestableReference>
