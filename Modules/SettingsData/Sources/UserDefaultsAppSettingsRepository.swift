@@ -5,7 +5,7 @@ public actor UserDefaultsAppSettingsRepository: AppSettingsRepository {
     private let userDefaults: UserDefaults
     private var continuations: [UUID: AsyncStream<AppSettings>.Continuation] = [:]
 
-    public init(userDefaults: UserDefaults = .standard) {
+    public init(userDefaults: UserDefaults) {
         self.userDefaults = userDefaults
     }
 
@@ -28,7 +28,9 @@ public actor UserDefaultsAppSettingsRepository: AppSettingsRepository {
 
     public func observe() -> AsyncStream<AppSettings> {
         let id = UUID()
-        let (stream, continuation) = AsyncStream<AppSettings>.makeStream()
+        let (stream, continuation) = AsyncStream<AppSettings>.makeStream(
+            bufferingPolicy: .bufferingNewest(1)
+        )
         continuations[id] = continuation
         continuation.yield(load())
         continuation.onTermination = { [weak self] _ in

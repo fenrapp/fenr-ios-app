@@ -28,7 +28,7 @@ enum ProductionAppDependencyContainerFactory {
             pinDeriver: bikeDataContainer.makeBikePinDeriver()
         )
         let chargeControl = ChargeControlDependencyContainer().makeSession(repository: repository)
-        let settingsRepository = UserDefaultsAppSettingsRepository()
+        let settingsRepository = UserDefaultsAppSettingsRepository(userDefaults: .standard)
         let deviceSpeedRepository = CoreLocationDeviceSpeedRepository(
             locationManager: CLLocationManager()
         )

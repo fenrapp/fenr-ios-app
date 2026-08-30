@@ -14,7 +14,7 @@ enum DebugWatchAppDependencyContainerFactory {
         return WatchAppDependencyContainer(
             repository: repository,
             profileRepository: WatchDebugProfileRepository(),
-            settingsRepository: UserDefaultsAppSettingsRepository(),
+            settingsRepository: UserDefaultsAppSettingsRepository(userDefaults: .standard),
             initialProfile: BikeProfile(vin: BikeEmulatorIdentity.vin)
         )
     }

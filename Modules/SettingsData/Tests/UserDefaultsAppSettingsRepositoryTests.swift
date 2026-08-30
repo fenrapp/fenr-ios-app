@@ -111,7 +111,7 @@ struct UserDefaultsAppSettingsRepositoryTests {
         let repository = UserDefaultsAppSettingsRepository(userDefaults: makeDefaults())
         let stream = await repository.observe()
         var iterator = stream.makeAsyncIterator()
-        _ = await iterator.next()
+        #expect(await iterator.next() == AppSettings())
         let metric = AppSettings(measurementSystem: .metric)
         let imperial = AppSettings(measurementSystem: .imperial)
 
@@ -121,6 +121,78 @@ struct UserDefaultsAppSettingsRepositoryTests {
         await repository.save(imperial)
 
         #expect(await iterator.next() == imperial)
+    }
+
+    @Test("Loads the legacy blob from the stable settings key without rewriting it")
+    func loadsLegacyBlobFromStableKey() async {
+        let suiteName = makeSuiteName()
+        let setupDefaults = makeDefaults(suiteName: suiteName)
+        setupDefaults.set(
+            AppSettingsPersistenceFixtures.legacySettingsData,
+            forKey: AppSettingsPersistenceFixtures.settingsKey
+        )
+        let repository = UserDefaultsAppSettingsRepository(
+            userDefaults: makeDefaults(suiteName: suiteName, clearsDomain: false)
+        )
+
+        let settings = await repository.load()
+        let verificationDefaults = makeDefaults(suiteName: suiteName, clearsDomain: false)
+
+        #expect(settings.speedSource == .gps)
+        #expect(settings.measurementSystem == .metric)
+        #expect(
+            verificationDefaults.data(forKey: AppSettingsPersistenceFixtures.settingsKey)
+                == AppSettingsPersistenceFixtures.legacySettingsData
+        )
+    }
+
+    @Test("Returns defaults for corrupt data without mutating the stored blob")
+    func returnsDefaultsForCorruptData() async {
+        let suiteName = makeSuiteName()
+        let setupDefaults = makeDefaults(suiteName: suiteName)
+        setupDefaults.set(
+            AppSettingsPersistenceFixtures.corruptSettingsData,
+            forKey: AppSettingsPersistenceFixtures.settingsKey
+        )
+        let repository = UserDefaultsAppSettingsRepository(
+            userDefaults: makeDefaults(suiteName: suiteName, clearsDomain: false)
+        )
+
+        #expect(await repository.load() == AppSettings())
+        let verificationDefaults = makeDefaults(suiteName: suiteName, clearsDomain: false)
+        #expect(
+            verificationDefaults.data(forKey: AppSettingsPersistenceFixtures.settingsKey)
+                == AppSettingsPersistenceFixtures.corruptSettingsData
+        )
+    }
+
+    @Test("Broadcasts the same saved settings to every observer")
+    func broadcastsSettingsToEveryObserver() async {
+        let repository = UserDefaultsAppSettingsRepository(userDefaults: makeDefaults())
+        let firstStream = await repository.observe()
+        let secondStream = await repository.observe()
+        var firstIterator = firstStream.makeAsyncIterator()
+        var secondIterator = secondStream.makeAsyncIterator()
+        #expect(await firstIterator.next() == AppSettings())
+        #expect(await secondIterator.next() == AppSettings())
+        let expected = AppSettings(measurementSystem: .metric)
+
+        await repository.save(expected)
+
+        #expect(await firstIterator.next() == expected)
+        #expect(await secondIterator.next() == expected)
+    }
+
+    @Test("A delayed observer receives only the latest pending settings")
+    func delayedObserverReceivesLatestPendingSettings() async {
+        let repository = UserDefaultsAppSettingsRepository(userDefaults: makeDefaults())
+        let stream = await repository.observe()
+        await repository.save(AppSettings(measurementSystem: .metric))
+        let expected = AppSettings(measurementSystem: .imperial)
+        await repository.save(expected)
+        var iterator = stream.makeAsyncIterator()
+
+        #expect(await iterator.next() == expected)
     }
 
     nonisolated private func makeSuiteName() -> String {

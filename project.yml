@@ -963,7 +963,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.settingsdomain.tests
   SettingsDataTests:
     type: bundle.unit-test
-    platform: iOS
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
     sources:
       - path: Modules/SettingsData/Tests
     dependencies:
@@ -1481,6 +1482,7 @@ schemes:
         BikeDomainTests: [test]
         EnvironmentDomainTests: [test]
         SettingsDomainTests: [test]
+        SettingsDataTests: [test]
         TestSupportTests: [test]
         MeasurementPresentationTests: [test]
         WatchDashboardTests: [test]
@@ -1493,6 +1495,7 @@ schemes:
         - BikeDomainTests
         - EnvironmentDomainTests
         - SettingsDomainTests
+        - SettingsDataTests
         - TestSupportTests
         - MeasurementPresentationTests
         - WatchDashboardTests
