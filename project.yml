@@ -1370,6 +1370,7 @@ schemes:
     test:
       targets:
         - StarkProtocolTests
+        - AsyncSupportTests
         - BLETraceDataTests
         - BikeSDKTests
         - BikeDomainTests
@@ -1397,6 +1398,7 @@ schemes:
         - BikeLockSettingsTests
         - PowerModeSettingsTests
         - RideHistoryTests
+        - TestSupportTests
         - FENRTests
         - FENRDebugTests
   FENRDebug:

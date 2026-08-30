@@ -503,6 +503,17 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C4CF7DCAF8635785666B76B1"
+               BuildableName = "AsyncSupportTests.xctest"
+               BlueprintName = "AsyncSupportTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "C13CC2103A4F75FF35E8C161"
                BuildableName = "BLETraceDataTests.xctest"
                BlueprintName = "BLETraceDataTests"
@@ -792,6 +803,17 @@
                BlueprintIdentifier = "79CCE32E9EF6E96F5FB83B8E"
                BuildableName = "RideHistoryTests.xctest"
                BlueprintName = "RideHistoryTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "28F27724F8C61BA761C6C1E7"
+               BuildableName = "TestSupportTests.xctest"
+               BlueprintName = "TestSupportTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </TestableReference>

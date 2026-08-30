@@ -1,7 +1,7 @@
-import BLETraceDomain
 import BikeData
 import BikeDomain
 import BikeSDK
+import BLETraceDomain
 import SettingsData
 
 @MainActor
