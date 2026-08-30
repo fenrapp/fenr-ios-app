@@ -13,7 +13,11 @@ public enum RideRouteGeometry {
         let value = sin(latitudeDelta / 2) * sin(latitudeDelta / 2)
             + cos(latitude1) * cos(latitude2)
             * sin(longitudeDelta / 2) * sin(longitudeDelta / 2)
-        return Constants.earthRadiusMeters * 2 * atan2(sqrt(value), sqrt(1 - value))
+        let clampedValue = max(.zero, min(1, value))
+        return Constants.earthRadiusMeters * 2 * atan2(
+            sqrt(clampedValue),
+            sqrt(1 - clampedValue)
+        )
     }
 
     public static func distanceMeters(along points: [RideRoutePoint]) -> Double {

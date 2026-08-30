@@ -48,7 +48,7 @@ public struct RideRoute: Equatable, Identifiable, Sendable {
             id: id,
             name: name,
             createdAt: createdAt,
-            updatedAt: date,
+            updatedAt: max(updatedAt, date),
             segments: segments
         )
     }

@@ -54,6 +54,18 @@ struct RideRouteProgressTests {
         #expect(bearing < 91)
     }
 
+    @Test("near-antipodal distance stays finite")
+    func nearAntipodalDistanceIsFinite() {
+        let start = coordinate(latitude: -45, longitude: 0)
+        let end = coordinate(latitude: 45.000_000_01, longitude: 179.999_999_99)
+
+        let distance = RideRouteGeometry.distanceMeters(from: start, to: end)
+
+        #expect(distance.isFinite)
+        #expect(distance > 20_015_000)
+        #expect(distance < 20_016_000)
+    }
+
     @Test("crossing tracks stay close to the current route progress")
     func crossingTrackUsesCurrentProgress() throws {
         let crossing = coordinate(latitude: 41, longitude: 2)
