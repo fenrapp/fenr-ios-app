@@ -3,9 +3,9 @@ import TestSupport
 
 actor FakeBikeDiagnosticsRepository: BikeRepository {
     private let state = FakeBikeDiagnosticsRepositoryState()
-    private let telemetryHub = TestEventHub<BikeTelemetry>()
-    private let connectionHub = TestEventHub<BikeConnection>()
-    private let debugHub = TestEventHub<BikeDebugEvent>()
+    private let telemetryHub = TestEventHub<BikeTelemetry>(bufferingPolicy: .unbounded)
+    private let connectionHub = TestEventHub<BikeConnection>(bufferingPolicy: .unbounded)
+    private let debugHub = TestEventHub<BikeDebugEvent>(bufferingPolicy: .unbounded)
 
     func start() async { await state.incrementStart() }
     func stop() async { await state.incrementStop() }
@@ -28,12 +28,12 @@ actor FakeBikeDiagnosticsRepository: BikeRepository {
     }
 
     func sendTelemetry(_ telemetry: BikeTelemetry) async {
-        await telemetryHub.waitForSubscriber()
+        _ = await telemetryHub.waitForSubscriber()
         await telemetryHub.send(telemetry)
     }
 
     func sendDebugEvent(_ event: BikeDebugEvent) async {
-        await debugHub.waitForSubscriber()
+        _ = await debugHub.waitForSubscriber()
         await debugHub.send(event)
     }
 

@@ -2,7 +2,7 @@ import BikeSDK
 import TestSupport
 
 actor FakeBikeTelemetryClient: BikeTelemetryClient {
-    private let hub = TestEventHub<BikeSDKEvent>()
+    private let hub = TestEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded)
     private let state = FakeBikeTelemetryClientState()
 
     func start() async {

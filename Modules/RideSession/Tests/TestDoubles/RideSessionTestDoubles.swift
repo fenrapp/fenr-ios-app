@@ -14,8 +14,8 @@ actor SessionBatteryHealthRepository: BikeBatteryHealthRepository {
 }
 
 actor SessionBikeRepository: BikeRepository {
-    private let telemetryHub = TestEventHub<BikeTelemetry>()
-    private let connectionHub = TestEventHub<BikeConnection>()
+    private let telemetryHub = TestEventHub<BikeTelemetry>(bufferingPolicy: .unbounded)
+    private let connectionHub = TestEventHub<BikeConnection>(bufferingPolicy: .unbounded)
 
     func start() {}
     func stop() {}
@@ -28,8 +28,8 @@ actor SessionBikeRepository: BikeRepository {
     func observeConnection() async -> AsyncStream<BikeConnection> { await connectionHub.stream() }
 
     func waitForSubscribers() async {
-        async let telemetry: Void = telemetryHub.waitForSubscriber()
-        async let connection: Void = connectionHub.waitForSubscriber()
+        async let telemetry: Bool = telemetryHub.waitForSubscriber()
+        async let connection: Bool = connectionHub.waitForSubscriber()
         _ = await (telemetry, connection)
     }
 
@@ -52,12 +52,12 @@ actor SessionSettingsRepository: AppSettingsRepository {
 }
 
 actor SessionDeviceSpeedRepository: DeviceSpeedRepository {
-    private let hub = TestEventHub<DeviceSpeedSample>()
+    private let hub = TestEventHub<DeviceSpeedSample>(bufferingPolicy: .unbounded)
 
     func observeDeviceSpeed() async -> AsyncStream<DeviceSpeedSample> { await hub.stream() }
     func locationAuthorizationStatus() -> LocationAuthorizationStatus { .authorized }
     func requestLocationAuthorization() {}
-    func waitForSubscriber() async { await hub.waitForSubscriber() }
+    func waitForSubscriber() async { _ = await hub.waitForSubscriber() }
     func send(_ sample: DeviceSpeedSample) async { await hub.send(sample) }
 }
 

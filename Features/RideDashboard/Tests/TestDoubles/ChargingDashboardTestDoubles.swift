@@ -3,7 +3,7 @@ import Foundation
 import TestSupport
 
 actor ChargingDashboardRepository: BikeRepository, BikeBatteryHealthRepository {
-    private let telemetryHub = TestEventHub<BikeTelemetry>()
+    private let telemetryHub = TestEventHub<BikeTelemetry>(bufferingPolicy: .unbounded)
 
     func start() async {}
     func stop() async {}
@@ -57,7 +57,7 @@ actor ChargingDashboardRepository: BikeRepository, BikeBatteryHealthRepository {
     }
 
     func sendTelemetry(_ telemetry: BikeTelemetry) async {
-        await telemetryHub.waitForSubscriber()
+        _ = await telemetryHub.waitForSubscriber()
         await telemetryHub.send(telemetry)
     }
 

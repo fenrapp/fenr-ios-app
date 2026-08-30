@@ -3,7 +3,7 @@ import TestSupport
 import VehicleSession
 
 actor RideDashboardVehicleSession: VehicleSessionService {
-    private let hub = TestEventHub<VehicleSessionSnapshot>()
+    private let hub = TestEventHub<VehicleSessionSnapshot>(bufferingPolicy: .unbounded)
     private var refreshCount = 0
     private var batteryHealthMonitoringRequests: [Bool] = []
 
@@ -24,7 +24,7 @@ actor RideDashboardVehicleSession: VehicleSessionService {
     }
 
     func send(_ snapshot: VehicleSessionSnapshot) async {
-        await hub.waitForSubscriber()
+        _ = await hub.waitForSubscriber()
         await hub.send(snapshot)
     }
 

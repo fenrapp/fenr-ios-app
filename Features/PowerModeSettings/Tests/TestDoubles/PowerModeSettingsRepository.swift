@@ -2,7 +2,7 @@ import SettingsDomain
 import TestSupport
 
 actor PowerModeSettingsRepository: AppSettingsRepository {
-    private let hub = TestEventHub<AppSettings>()
+    private let hub = TestEventHub<AppSettings>(bufferingPolicy: .unbounded)
     private(set) var settings = AppSettings()
 
     func load() -> AppSettings {

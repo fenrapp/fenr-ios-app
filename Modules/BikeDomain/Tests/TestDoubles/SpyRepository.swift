@@ -3,7 +3,7 @@ import TestSupport
 
 actor SpyRepository: BikeRepository {
     private let state = SpyRepositoryState()
-    private let telemetry = TestEventHub<BikeTelemetry>()
+    private let telemetry = TestEventHub<BikeTelemetry>(bufferingPolicy: .unbounded)
 
     func start() async {}
     func stop() async {}
@@ -39,7 +39,7 @@ actor SpyRepository: BikeRepository {
 
     func setError(_ error: SpyError) async { await state.setError(error) }
     func sendTelemetry(_ value: BikeTelemetry) async {
-        await telemetry.waitForSubscriber()
+        _ = await telemetry.waitForSubscriber()
         await telemetry.send(value)
     }
     func connectedVIN() async -> String? { await state.connectedVIN }

@@ -4,7 +4,7 @@ import RideSessionDomain
 import TestSupport
 
 actor RideHistoryTestSession: RideSessionService {
-    private let hub = TestEventHub<RideSessionSnapshot>()
+    private let hub = TestEventHub<RideSessionSnapshot>(bufferingPolicy: .unbounded)
     private let repository: any RideTripRepository
     private var snapshot: RideSessionSnapshot
     private var deleteSucceeds = true
@@ -48,6 +48,6 @@ actor RideHistoryTestSession: RideSessionService {
     }
 
     func waitForSubscriber() async {
-        await hub.waitForSubscriber()
+        _ = await hub.waitForSubscriber()
     }
 }
