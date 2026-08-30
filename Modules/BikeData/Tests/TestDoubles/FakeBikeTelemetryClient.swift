@@ -18,6 +18,14 @@ actor FakeBikeTelemetryClient: BikeTelemetryClient {
     func readTelemetrySnapshot() async throws {}
     func readBikeStatusSnapshot() async throws {}
 
+    func startIMUMonitoring() async throws {
+        await state.incrementIMUStart()
+    }
+
+    func stopIMUMonitoring() async {
+        await state.incrementIMUStop()
+    }
+
     func startBatteryHealthMonitoring() async throws {
         await state.incrementBatteryHealthStart()
     }
@@ -107,6 +115,14 @@ actor FakeBikeTelemetryClient: BikeTelemetryClient {
         await state.batteryHealthStartCount
     }
 
+    func imuStartCount() async -> Int {
+        await state.imuStartCount
+    }
+
+    func imuStopCount() async -> Int {
+        await state.imuStopCount
+    }
+
     func batteryHealthStopCount() async -> Int {
         await state.batteryHealthStopCount
     }
@@ -121,6 +137,8 @@ private actor FakeBikeTelemetryClientState {
     private(set) var eventStreamCount = 0
     private(set) var batteryHealthStartCount = 0
     private(set) var batteryHealthStopCount = 0
+    private(set) var imuStartCount = 0
+    private(set) var imuStopCount = 0
     private(set) var chargePowerContext: BikeSDKChargePowerTelemetryContext?
 
     func incrementStart() {
@@ -137,6 +155,14 @@ private actor FakeBikeTelemetryClientState {
 
     func incrementBatteryHealthStop() {
         batteryHealthStopCount += 1
+    }
+
+    func incrementIMUStart() {
+        imuStartCount += 1
+    }
+
+    func incrementIMUStop() {
+        imuStopCount += 1
     }
 
     func setChargePowerContext(_ context: BikeSDKChargePowerTelemetryContext) {

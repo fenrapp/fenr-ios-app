@@ -31,6 +31,8 @@ struct BikeSDKProfileAndSessionTests {
         #expect(!BikeSDKConstants.experimentalCaptureUUIDs.contains(
             CBUUID(nsuuid: StarkUUIDs.liveIMU)
         ))
+        #expect(BikeSDKConstants.imuMonitoringUUID == CBUUID(nsuuid: StarkUUIDs.liveIMU))
+        #expect(!BikeSDKConstants.requiredTelemetryNotifyUUIDs.contains(BikeSDKConstants.imuMonitoringUUID))
         #expect(!BikeSDKConstants.experimentalCaptureUUIDs.contains(
             CBUUID(nsuuid: StarkUUIDs.liveTotals)
         ))

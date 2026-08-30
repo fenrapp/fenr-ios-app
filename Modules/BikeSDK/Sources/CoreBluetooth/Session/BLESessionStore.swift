@@ -19,6 +19,7 @@ public final class BLESessionStore {
     public private(set) var pendingExperimentalCharacteristics: [CBCharacteristic] = []
     public private(set) var activeExperimentalCaptureCharacteristic: CBCharacteristic?
     private var batteryHealthMonitoringLeaseCount = 0
+    private var imuMonitoringLeaseCount = 0
 
     public init() {}
 
@@ -109,6 +110,21 @@ public final class BLESessionStore {
         batteryHealthMonitoringLeaseCount > 0
     }
 
+    public func acquireIMUMonitoringLease() -> Bool {
+        imuMonitoringLeaseCount += 1
+        return imuMonitoringLeaseCount == 1
+    }
+
+    public func releaseIMUMonitoringLease() -> Bool {
+        guard imuMonitoringLeaseCount > 0 else { return false }
+        imuMonitoringLeaseCount -= 1
+        return imuMonitoringLeaseCount == 0
+    }
+
+    public func isIMUMonitoringActive() -> Bool {
+        imuMonitoringLeaseCount > 0
+    }
+
     public var hasActiveNotificationOperation: Bool {
         activeNotificationCharacteristic != nil || activeUnsubscriptionCharacteristic != nil
     }
@@ -181,5 +197,6 @@ public final class BLESessionStore {
         pendingExperimentalCharacteristics.removeAll()
         activeExperimentalCaptureCharacteristic = nil
         batteryHealthMonitoringLeaseCount = 0
+        imuMonitoringLeaseCount = 0
     }
 }

@@ -13,6 +13,7 @@ func makeRepository(
         telemetryHub: .init(bufferingPolicy: .unbounded),
         connectionHub: .init(bufferingPolicy: .unbounded),
         debugHub: .init(bufferingPolicy: .unbounded),
+        imuHub: .init(bufferingPolicy: .unbounded),
         batteryHealthStore: .init(),
         batteryHealthHub: .init(bufferingPolicy: .unbounded),
         batteryCaptureHub: .init(bufferingPolicy: .unbounded),
@@ -31,6 +32,8 @@ private func makeEventHandler(
             connectionDebugMapper: .init(),
             notificationDebugMapper: .init()
         ),
+        imuMapper: .init(),
+        imuRateLimiter: .init(minimumInterval: .zero),
         batteryHealthMapper: .init(),
         batteryDatasetMapper: .init(),
         connectionSessionPolicy: .init(),

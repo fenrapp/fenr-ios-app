@@ -50,6 +50,7 @@ public struct RideTripRecordMapper: Sendable {
         record.maximumRightLeanDegrees = trip.maximumRightLeanDegrees
         record.maximumUphillPitchDegrees = trip.maximumUphillPitchDegrees
         record.maximumDownhillPitchDegrees = trip.maximumDownhillPitchDegrees
+        record.attitudeSourceRawValue = trip.attitudeSource.rawValue
     }
 
     func mapToDomain(_ record: RideTripRecord) -> RideTrip? {
@@ -84,7 +85,10 @@ public struct RideTripRecordMapper: Sendable {
             maximumLeftLeanDegrees: record.maximumLeftLeanDegrees,
             maximumRightLeanDegrees: record.maximumRightLeanDegrees,
             maximumUphillPitchDegrees: record.maximumUphillPitchDegrees,
-            maximumDownhillPitchDegrees: record.maximumDownhillPitchDegrees
+            maximumDownhillPitchDegrees: record.maximumDownhillPitchDegrees,
+            attitudeSource: record.attitudeSourceRawValue
+                .flatMap(RideAttitudeSource.init(rawValue:))
+                ?? .legacyPhone
         )
     }
 

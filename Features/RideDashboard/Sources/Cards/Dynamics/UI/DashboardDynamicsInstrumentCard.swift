@@ -23,9 +23,7 @@ struct DashboardDynamicsInstrumentCard: View {
                     angleDegrees: angleDegrees,
                     maximumAngleDegrees: maximumAngleDegrees,
                     vehiclePerspective: vehiclePerspective,
-                    canCalibrate: canCalibrate,
-                    reduceMotion: reduceMotion,
-                    calibrate: calibrate
+                    reduceMotion: reduceMotion
                 )
                 .layoutPriority(1)
                 currentMetric
@@ -50,7 +48,7 @@ struct DashboardDynamicsInstrumentCard: View {
             Text(status.rawValue)
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(DesignColor.secondaryText)
-            if status != .calibrationRequired {
+            if status == .live {
                 zeroButton
             }
         }
@@ -109,7 +107,7 @@ struct DashboardDynamicsInstrumentCard: View {
     private var statusColor: Color {
         switch status {
         case .live: DesignColor.informational
-        case .calibrationRequired: DesignColor.warning
+        case .calibrating, .zeroing: DesignColor.warning
         case .signalLost: DesignColor.critical
         case .unavailable: DesignColor.secondaryText
         }

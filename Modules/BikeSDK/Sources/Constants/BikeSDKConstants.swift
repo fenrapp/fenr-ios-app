@@ -43,6 +43,10 @@ enum BikeSDKConstants {
         BikeBLEDiagnosticsProfile.batteryHealthMonitoringUUIDs
     }
 
+    static var imuMonitoringUUID: CBUUID {
+        BikeBLEDiagnosticsProfile.imuMonitoringUUID
+    }
+
     static var experimentalCaptureUUIDs: [CBUUID] {
         BikeBLEDiagnosticsProfile.experimentalCaptureUUIDs
     }

@@ -5,7 +5,7 @@ public protocol VehicleSessionService: Sendable {
     func start() async
     func stop() async
     func refreshBikeStatus() async
-    func calibrateDeviceMotion() async
+    func zeroBikeAttitude() async
     func setBatteryHealthMonitoringRequired(_ required: Bool, consumerID: UUID) async
     func setLocationMonitoringRequired(_ required: Bool, consumerID: UUID) async
 }

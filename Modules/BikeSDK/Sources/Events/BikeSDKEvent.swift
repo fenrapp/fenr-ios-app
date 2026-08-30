@@ -4,6 +4,7 @@ public enum BikeSDKEvent: Equatable, Sendable {
     case connection(BikeSDKConnectionStatus)
     case discoveredBike(BikeSDKDiscoveredBike)
     case telemetry(BikeSDKTelemetryPayload)
+    case imu(BikeSDKIMUSample)
     case batteryDatasetCapture(BikeSDKBatteryDatasetCapture)
     case rssi(Int)
     case peripheral(name: String?, identifier: UUID)

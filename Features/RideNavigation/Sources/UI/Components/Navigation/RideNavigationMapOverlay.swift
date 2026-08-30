@@ -70,7 +70,7 @@ struct RideNavigationMapOverlay: View {
                     activeSelector: $activeMapSelector
                 )
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                    .padding(.top, Constants.controlSize + DesignSpace.small)
+                    .padding(.top, RideNavigationTopControls.height + DesignSpace.small)
                     .transition(
                         .scale(scale: Constants.mapSelectorTransitionScale, anchor: .topTrailing)
                             .combined(with: .opacity)
@@ -117,49 +117,13 @@ struct RideNavigationMapOverlay: View {
 }
 private extension RideNavigationMapOverlay {
     private var topControls: some View {
-        HStack(alignment: .top, spacing: DesignSpace.small) {
-            routeHeader
-            Spacer(minLength: DesignSpace.medium)
-            mapControlGroup
-        }
-    }
-    private var routeHeader: some View {
-        HStack(spacing: DesignSpace.small) {
-            Button(
-                action: { perform(handleClose) },
-                label: { RideNavigationMapControlLabel(systemImage: "xmark") }
-            )
-            .buttonStyle(.plain)
-            .accessibilityLabel(state.activity == .preview ? "Close route" : "End ride")
-
-            VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
-                HStack(spacing: DesignSpace.extraSmall) {
-                    if state.activity == .recording || state.activity == .paused {
-                        Circle()
-                            .fill(state.activity == .paused ? DesignColor.warning : DesignColor.critical)
-                            .frame(width: Constants.recordingIndicatorSize, height: Constants.recordingIndicatorSize)
-                    }
-                    Text(state.routeTitle ?? activityTitle)
-                        .font(.headline.weight(.semibold))
-                        .lineLimit(1)
-                }
-                Text("\(state.distanceText) · \(state.elapsedText)")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.trailing, DesignSpace.medium)
-            .frame(minWidth: Constants.routeHeaderMinimumWidth, alignment: .leading)
-        }
-        .frame(height: Constants.controlSize)
-        .rideNavigationGlassSurface(cornerRadius: Constants.controlRadius)
-    }
-    private var mapControlGroup: some View {
-        RideNavigationMapControls(
+        RideNavigationTopControls(
             state: state,
+            activeMapSelector: $activeMapSelector,
+            onClose: { perform(handleClose) },
             onToggleVoice: { perform(onToggleVoice) },
             onOverview: { perform(onOverview) },
-            onRecenter: { perform(onRecenter) },
-            activeSelector: $activeMapSelector
+            onRecenter: { perform(onRecenter) }
         )
     }
 
@@ -370,20 +334,7 @@ private extension RideNavigationMapOverlay {
             .fixedSize(horizontal: true, vertical: false)
     }
 
-    private var activityTitle: String {
-        switch state.activity {
-        case .recording, .paused: "Recording Ride"
-        case .navigating: "Navigation"
-        case .following: "Enduro Navigation"
-        case .preview: "Route Preview"
-        }
-    }
-
     private enum Constants {
-        static let controlSize: CGFloat = 48
-        static let controlRadius: CGFloat = 24
-        static let recordingIndicatorSize: CGFloat = 8
-        static let routeHeaderMinimumWidth: CGFloat = 220
         static let guidanceWidth: CGFloat = 360
         static let guidanceHeight: CGFloat = 52
         static let guidanceRadius: CGFloat = 18

@@ -17,7 +17,7 @@ actor RideDashboardVehicleSession: VehicleSessionService {
     func refreshBikeStatus() {
         refreshCount += 1
     }
-    func calibrateDeviceMotion() {}
+    func zeroBikeAttitude() {}
 
     func setBatteryHealthMonitoringRequired(_ required: Bool, consumerID _: UUID) {
         batteryHealthMonitoringRequests.append(required)

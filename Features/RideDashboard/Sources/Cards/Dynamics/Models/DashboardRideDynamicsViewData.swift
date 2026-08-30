@@ -1,8 +1,9 @@
 public struct DashboardRideDynamicsViewData: Equatable, Sendable {
     public enum Status: String, Equatable, Sendable {
         case unavailable = "UNAVAILABLE"
-        case calibrationRequired = "CALIBRATE"
-        case live = "LIVE"
+        case calibrating = "CALIBRATING"
+        case zeroing = "HOLD STILL"
+        case live = "IMU BETA"
         case signalLost = "SIGNAL LOST"
     }
 

@@ -1,7 +1,6 @@
 import BikeDomain
 import BikeEmulator
 import BLETraceDomain
-import CoreMotion
 import EnvironmentData
 import EnvironmentDomain
 import Foundation
@@ -9,7 +8,6 @@ import RideNavigationData
 import RideSessionData
 import RideSessionDomain
 import SettingsData
-import UIKit
 
 @MainActor
 enum DebugAppDependencyContainerFactory {
@@ -72,19 +70,16 @@ enum DebugAppDependencyContainerFactory {
     ) -> AppDependencyContainer {
         let settingsRepository = UserDefaultsAppSettingsRepository()
         let deviceSpeedRepository = DebugDeviceSpeedRepository()
-#if targetEnvironment(simulator)
-        let deviceMotionRepository = DebugDeviceMotionRepository()
-        let motionCalibrationRepository = DebugVehicleMotionCalibrationRepository()
-#else
-        let deviceMotionRepository = CoreMotionDeviceMotionRepository(
-            motionManager: CMMotionManager(),
-            operationQueue: OperationQueue(),
-            now: Date.init,
-            orientation: currentLandscapeOrientation,
-            attitudeNormalizer: DeviceMotionAttitudeNormalizer()
-        )
-        let motionCalibrationRepository = makeMotionCalibrationRepository()
-#endif
+        let motionCalibrationRepository = DebugVehicleMotionCalibrationRepository(calibrations: [
+            BikeEmulatorIdentity.vin: .init(
+                vin: BikeEmulatorIdentity.vin,
+                gyroscopeBiasXRaw: .zero,
+                gyroscopeBiasYRaw: .zero,
+                gyroscopeBiasZRaw: .zero,
+                profileVersion: 1,
+                calibratedAt: Date()
+            )
+        ])
         let rideTripRepository = makeRideTripRepository()
         let sessionServices = AppSessionDependencyContainer.makeServices(
             dependencies: .init(
@@ -92,8 +87,8 @@ enum DebugAppDependencyContainerFactory {
                 profileRepository: profileRepository,
                 settingsRepository: settingsRepository,
                 deviceSpeedRepository: deviceSpeedRepository,
-                deviceMotionRepository: deviceMotionRepository,
                 motionCalibrationRepository: motionCalibrationRepository,
+                imuProfile: .debug,
                 rideTripRepository: rideTripRepository
             )
         )
@@ -132,18 +127,6 @@ enum DebugAppDependencyContainerFactory {
             ?? UserDefaultsIncomingMapLinkStore(userDefaults: .standard)
     }
 
-    private static func currentLandscapeOrientation() -> DeviceLandscapeOrientation? {
-        let interfaceOrientation = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first(where: { $0.activationState == .foregroundActive })?
-            .interfaceOrientation
-        return switch interfaceOrientation {
-        case .landscapeLeft: .left
-        case .landscapeRight: .right
-        default: nil
-        }
-    }
-
     private static func launchValue(after flag: String, in arguments: [String]) -> String? {
         guard let index = arguments.firstIndex(of: flag), arguments.indices.contains(index + 1) else {
             return nil
@@ -174,16 +157,6 @@ enum DebugAppDependencyContainerFactory {
             return repository
         } catch {
             preconditionFailure("Unable to create the debug ride trip store: \(error)")
-        }
-    }
-
-    private static func makeMotionCalibrationRepository() -> SwiftDataVehicleMotionCalibrationRepository {
-        do {
-            return try SwiftDataVehicleMotionCalibrationRepository(
-                mapper: VehicleMotionCalibrationRecordMapper()
-            )
-        } catch {
-            preconditionFailure("Unable to create the debug motion calibration store: \(error)")
         }
     }
 

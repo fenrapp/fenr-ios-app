@@ -12,7 +12,7 @@ actor PowerModeSettingsVehicleSession: VehicleSessionService {
     func start() {}
     func stop() {}
     func refreshBikeStatus() {}
-    func calibrateDeviceMotion() {}
+    func zeroBikeAttitude() {}
     func setBatteryHealthMonitoringRequired(_: Bool, consumerID _: UUID) {}
 
     func send(_ snapshot: VehicleSessionSnapshot) async {
