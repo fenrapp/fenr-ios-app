@@ -1,3 +1,4 @@
+import DesignSystem
 import SwiftUI
 
 struct BikeLockSetupView: View {
@@ -122,7 +123,7 @@ struct BikeLockSetupView: View {
                     .buttonStyle(.bordered)
             }
         } else {
-            BikeLockPINPad(pin: $pinEntry, onComplete: completePINEntry)
+            NumericPINPad(pin: $pinEntry, onComplete: completePINEntry)
         }
     }
 

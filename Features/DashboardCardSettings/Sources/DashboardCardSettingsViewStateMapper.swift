@@ -38,10 +38,10 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
             return nil
         }
         let pages = configuration.pages.map { page($0, in: configuration) }
-        let bikeLockIsConfigured = configuration.id == .bikeLock
+        let bikeLockRequiresPIN = configuration.id == .bikeLock
             && settings.bikeLockSettings(
                 forVIN: bikeLockCapability.vehicleIdentifier
-            ).securityMode.isConfigured
+            ).securityMode.requiresPIN
         let visibleCount = pages.filter(\.isVisible).count
         let firstVisibleTitle = pages.first(where: \.isVisible)?.title ?? pages.first?.title ?? ""
         let detail = sectionDetail(
@@ -49,15 +49,15 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
             pages: pages,
             visibleCount: visibleCount,
             firstVisibleTitle: firstVisibleTitle,
-            bikeLockIsConfigured: bikeLockIsConfigured
+            bikeLockIsConfigured: bikeLockRequiresPIN
         )
         return .init(
             id: configuration.id.rawValue,
             title: sectionTitle(configuration.id),
             detail: detail,
-            isVisible: configuration.isVisible || bikeLockIsConfigured,
-            isVisibilityEnabled: !bikeLockIsConfigured,
-            disabledVisibilityHint: bikeLockIsConfigured
+            isVisible: configuration.isVisible || bikeLockRequiresPIN,
+            isVisibilityEnabled: !bikeLockRequiresPIN,
+            disabledVisibilityHint: bikeLockRequiresPIN
                 ? "Bike Lock must remain visible while unlock protection is configured"
                 : nil,
             thumbnail: sectionThumbnail(configuration.id),

@@ -1,11 +1,15 @@
 import SwiftUI
 
-struct BikeLockPINPad: View {
-    @Binding var pin: String
+public struct NumericPINPad: View {
+    @Binding private var pin: String
+    private let onComplete: (String) -> Void
 
-    let onComplete: (String) -> Void
+    public init(pin: Binding<String>, onComplete: @escaping (String) -> Void) {
+        _pin = pin
+        self.onComplete = onComplete
+    }
 
-    var body: some View {
+    public var body: some View {
         VStack(spacing: Constants.contentSpacing) {
             HStack(spacing: Constants.dotSpacing) {
                 ForEach(0 ..< Constants.pinLength, id: \.self) { index in
@@ -20,8 +24,7 @@ struct BikeLockPINPad: View {
                 ForEach(1 ... 9, id: \.self) { digit in
                     key(String(digit)) { append(String(digit)) }
                 }
-                Color.clear
-                    .accessibilityHidden(true)
+                Color.clear.accessibilityHidden(true)
                 key("0") { append("0") }
                 key("Delete", systemImage: "delete.left", action: deleteLastDigit)
             }
@@ -36,9 +39,7 @@ struct BikeLockPINPad: View {
     private func append(_ digit: String) {
         guard pin.count < Constants.pinLength else { return }
         pin.append(digit)
-        if pin.count == Constants.pinLength {
-            onComplete(pin)
-        }
+        if pin.count == Constants.pinLength { onComplete(pin) }
     }
 
     private func deleteLastDigit() {
@@ -46,18 +47,10 @@ struct BikeLockPINPad: View {
         pin.removeLast()
     }
 
-    private func key(
-        _ title: String,
-        systemImage: String? = nil,
-        action: @escaping () -> Void
-    ) -> some View {
+    private func key(_ title: String, systemImage: String? = nil, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Group {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                } else {
-                    Text(title)
-                }
+                if let systemImage { Image(systemName: systemImage) } else { Text(title) }
             }
             .font(.title2.weight(.medium))
             .frame(maxWidth: .infinity, minHeight: Constants.keyHeight)

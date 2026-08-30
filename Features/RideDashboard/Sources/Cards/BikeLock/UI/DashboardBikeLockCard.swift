@@ -114,8 +114,8 @@ struct DashboardBikeLockCard: View {
     }
 
     private var actionSystemImage: String {
-        guard viewState.isConfigured else { return "slider.horizontal.3" }
-        return viewState.isLocked ? "lock.open.fill" : "lock.fill"
+        if viewState.isLocked { return "lock.open.fill" }
+        return viewState.isConfigured ? "lock.fill" : "slider.horizontal.3"
     }
 
     private var statusDetail: String {
@@ -123,7 +123,9 @@ struct DashboardBikeLockCard: View {
             return "Requires a compatible VCU connection."
         }
         guard viewState.isConfigured else {
-            return "Choose your unlock protection."
+            return viewState.isLocked
+                ? "Unlock protection is not set up on this device."
+                : "Choose your unlock protection."
         }
         return viewState.isLocked
             ? "Unlock protection is active."

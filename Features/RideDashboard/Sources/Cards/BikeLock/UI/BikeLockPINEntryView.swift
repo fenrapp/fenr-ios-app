@@ -1,3 +1,4 @@
+import DesignSystem
 import SwiftUI
 
 struct BikeLockPINEntryView: View {
@@ -9,7 +10,7 @@ struct BikeLockPINEntryView: View {
 
     var body: some View {
         NavigationStack {
-            BikeLockPINPad(pin: $pin, onComplete: submit)
+            NumericPINPad(pin: $pin, onComplete: submit)
             .padding(Constants.contentPadding)
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)

@@ -29,8 +29,10 @@ enum BikeLockCardViewModelTestFactory {
             viewModel: BikeLockCardViewModel(
                 prepareControl: .init(repository: repository),
                 setLocked: .init(repository: repository),
-                loadSettings: .init(repository: settingsRepository),
-                saveSettings: .init(repository: settingsRepository),
+                updateSecurity: .init(
+                    repository: settingsRepository,
+                    credentialStore: credentialStore
+                ),
                 vehicleSession: vehicleSession,
                 credentialStore: credentialStore,
                 authenticator: authenticator,

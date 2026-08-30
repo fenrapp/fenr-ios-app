@@ -41,8 +41,8 @@ struct BikeLockCardViewModelTests {
         #expect(fixture.viewModel.viewState.isAvailable)
     }
 
-    @Test("Configuring protection makes the dashboard card visible")
-    func configurationRestoresCardVisibility() async {
+    @Test("No PIN protection does not force the dashboard card visible")
+    func noPINConfigurationKeepsCardHidden() async {
         var settings = AppSettings()
         settings.dashboardCardConfiguration.setSectionVisibility(false, id: .bikeLock)
         let fixture = BikeLockCardViewModelTestFactory.make(settings: settings)
@@ -57,7 +57,23 @@ struct BikeLockCardViewModelTests {
 
         #expect(await waitUntil { await fixture.repository.recordedLockRequests() == [true] })
         let savedSettings = await fixture.settingsRepository.load()
-        #expect(savedSettings.dashboardCardConfiguration.section(id: .bikeLock).isVisible)
+        #expect(!savedSettings.dashboardCardConfiguration.section(id: .bikeLock).isVisible)
+    }
+
+    @Test("An externally locked bike unlocks without forcing setup")
+    func unlocksExternallyLockedBikeWithoutSetup() async {
+        let fixture = BikeLockCardViewModelTestFactory.make(isLocked: true)
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot())
+        #expect(await waitUntil { fixture.viewModel.viewState.isAvailable })
+        #expect(fixture.viewModel.viewState.actionTitle == "Unlock")
+
+        fixture.viewModel.performPrimaryAction()
+
+        #expect(fixture.viewModel.viewState.sheet == nil)
+        #expect(await waitUntil { await fixture.repository.recordedLockRequests() == [false] })
+        let savedSettings = await fixture.settingsRepository.load()
+        #expect(savedSettings.bikeLockSettings(forVIN: BikeLockCardFixtures.vin).securityMode == .notConfigured)
     }
 
     @Test("Configures a numeric PIN and locks the bike")

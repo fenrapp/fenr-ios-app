@@ -1,8 +1,8 @@
 import LocalAuthentication
-import RideDashboard
+import SettingsDomain
 
 struct LocalAuthenticationBikeLockAuthenticator: BikeLockAuthenticating {
-    func authenticate() async throws -> Bool {
+    func authenticate(reason: String) async throws -> Bool {
         let context = LAContext()
         context.localizedFallbackTitle = "Enter PIN"
         var authorizationError: NSError?
@@ -14,7 +14,7 @@ struct LocalAuthenticationBikeLockAuthenticator: BikeLockAuthenticating {
         }
         return try await context.evaluatePolicy(
             .deviceOwnerAuthenticationWithBiometrics,
-            localizedReason: "Unlock your motorcycle"
+            localizedReason: reason
         )
     }
 }

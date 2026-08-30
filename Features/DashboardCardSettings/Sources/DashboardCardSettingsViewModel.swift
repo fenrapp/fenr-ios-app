@@ -90,7 +90,7 @@ public final class DashboardCardSettingsViewModel: ObservableObject {
             guard bikeLockCapability.isAvailable,
                   !settings.bikeLockSettings(
                       forVIN: bikeLockCapability.vehicleIdentifier
-                  ).securityMode.isConfigured
+                  ).securityMode.requiresPIN
             else { return }
         }
         var configuration = settings.dashboardCardConfiguration

@@ -65,6 +65,10 @@ actor BikeLockCardCredentialStore: BikeLockCredentialStoring {
         pins[vehicleIdentifier] == pin
     }
 
+    func containsPIN(for vehicleIdentifier: String) -> Bool {
+        pins[vehicleIdentifier] != nil
+    }
+
     func removePIN(for vehicleIdentifier: String) {
         pins[vehicleIdentifier] = nil
     }
@@ -81,7 +85,7 @@ actor BikeLockCardAuthenticator: BikeLockAuthenticating {
         self.result = result
     }
 
-    func authenticate() -> Bool { result }
+    func authenticate(reason _: String) -> Bool { result }
 }
 
 @MainActor

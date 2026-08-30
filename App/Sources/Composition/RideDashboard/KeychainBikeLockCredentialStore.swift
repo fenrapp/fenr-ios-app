@@ -1,6 +1,6 @@
 import Foundation
-import RideDashboard
 import Security
+import SettingsDomain
 
 actor KeychainBikeLockCredentialStore: BikeLockCredentialStoring {
     private let service: String
@@ -37,6 +37,10 @@ actor KeychainBikeLockCredentialStore: BikeLockCredentialStoring {
         guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
               let storedData = item as? Data else { return false }
         return storedData == Data(pin.utf8)
+    }
+
+    func containsPIN(for vehicleIdentifier: String) -> Bool {
+        SecItemCopyMatching(baseQuery(for: vehicleIdentifier) as CFDictionary, nil) == errSecSuccess
     }
 
     func removePIN(for vehicleIdentifier: String) throws {
