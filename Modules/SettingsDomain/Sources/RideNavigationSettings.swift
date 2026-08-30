@@ -114,8 +114,8 @@ public struct MiniMapPosition: Codable, Equatable, Sendable {
 }
 
 public struct MiniMapScale: Codable, Equatable, Sendable {
-    public static let minimumValue = 0.7
-    public static let maximumValue = 1.3
+    public static let minimumValue = 0.5
+    public static let maximumValue = 1.5
     public static let initial = MiniMapScale(1.1)
 
     public let value: Double

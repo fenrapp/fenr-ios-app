@@ -36,7 +36,14 @@ public struct RideNavigationPresentationMapper: Sendable {
     }
 
     func routeDetail(_ route: RideRoute, measurementSystem: MeasurementSystem) -> String {
-        distance(meters: route.distanceMeters, measurementSystem: measurementSystem)
+        let routeDistance = distance(
+            meters: route.distanceMeters,
+            measurementSystem: measurementSystem
+        )
+        let updatedAt = route.updatedAt.formatted(
+            Date.FormatStyle(date: .abbreviated, time: .shortened, locale: locale)
+        )
+        return "\(routeDistance) · \(updatedAt)"
     }
 
     func roadRouteOption(

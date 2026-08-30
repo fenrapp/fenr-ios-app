@@ -11,7 +11,9 @@ struct RideNavigationMiniView: View {
     let onExpand: () -> Void
     @State private var settledPosition: RideNavigationMiniViewState.Position?
     @State private var settledScale: Double?
-    @GestureState private var dragLocation: CGPoint?
+    @State private var showsOrientationControl = true
+    @State private var orientationInteractionGeneration = 0
+    @GestureState private var dragTranslation: CGSize = .zero
     @GestureState private var magnification: CGFloat = 1
 
     var body: some View {
@@ -28,7 +30,10 @@ struct RideNavigationMiniView: View {
             )
             let normalizedPosition = settledPosition ?? state.position
             let restingPosition = layout.position(for: normalizedPosition)
-            let cardPosition = layout.constrainedPosition(dragLocation ?? restingPosition)
+            let cardPosition = layout.translatedPosition(
+                from: restingPosition,
+                by: dragTranslation
+            )
             ZStack {
                 miniMap
                     .frame(width: layout.cardSize.width, height: layout.cardSize.height)
@@ -43,18 +48,35 @@ struct RideNavigationMiniView: View {
 
                 orientationButton
                     .position(layout.orientationControlPosition(for: cardPosition))
+                    .opacity(showsOrientationControl ? 1 : 0)
+                    .scaleEffect(showsOrientationControl ? 1 : Constants.controlTransitionScale)
+                    .allowsHitTesting(showsOrientationControl)
+                    .accessibilityHidden(!showsOrientationControl)
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
             .animation(.smooth(duration: Constants.orientationAnimationDuration), value: state.isLandscape)
         }
         .coordinateSpace(name: Constants.dragCoordinateSpace)
+        .task(id: orientationInteractionGeneration) {
+            do {
+                try await Task.sleep(for: .seconds(Constants.orientationControlDelaySeconds))
+                withAnimation(.smooth(duration: Constants.controlTransitionDuration)) {
+                    showsOrientationControl = false
+                }
+            } catch {
+                return
+            }
+        }
     }
 
     private var orientationButton: some View {
-        Button(action: onToggleOrientation) {
+        Button {
+            revealOrientationControl()
+            onToggleOrientation()
+        } label: {
             Image(systemName: state.isLandscape ? "rectangle.portrait.rotate" : "rectangle.landscape.rotate")
                 .font(.system(size: Constants.orientationIconSize, weight: .semibold))
-                .foregroundStyle(Color.white)
+                .foregroundStyle(.primary)
                 .frame(
                     width: Constants.orientationControlSize,
                     height: Constants.orientationControlSize
@@ -98,7 +120,7 @@ struct RideNavigationMiniView: View {
         .contentShape(RoundedRectangle(cornerRadius: Constants.cornerRadius, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(state.accessibilityLabel)
-        .accessibilityHint("Drag to reposition, pinch to resize, or double-tap to expand navigation")
+        .accessibilityHint("Drag to reposition, pinch to resize, or tap to expand navigation")
         .accessibilityAddTraits(.isButton)
         .accessibilityAction(named: Text("Expand navigation"), onExpand)
         .accessibilityIdentifier("rideNavigation.miniMap")
@@ -109,13 +131,19 @@ struct RideNavigationMiniView: View {
             minimumDistance: Constants.dragMinimumDistance,
             coordinateSpace: .named(Constants.dragCoordinateSpace)
         )
-            .updating($dragLocation) { value, location, _ in
-                location = layout.constrainedPosition(value.location)
+            .updating($dragTranslation) { value, translation, _ in
+                translation = value.translation
             }
             .onEnded { value in
-                let normalizedPosition = layout.normalizedPosition(for: value.location)
+                let restingPosition = layout.position(for: settledPosition ?? state.position)
+                let finalPosition = layout.translatedPosition(
+                    from: restingPosition,
+                    by: value.translation
+                )
+                let normalizedPosition = layout.normalizedPosition(for: finalPosition)
                 settledPosition = normalizedPosition
                 onMove(normalizedPosition)
+                revealOrientationControl()
             }
     }
 
@@ -138,6 +166,13 @@ struct RideNavigationMiniView: View {
         min(max(value, range.lowerBound), range.upperBound)
     }
 
+    private func revealOrientationControl() {
+        withAnimation(.smooth(duration: Constants.controlTransitionDuration)) {
+            showsOrientationControl = true
+        }
+        orientationInteractionGeneration += 1
+    }
+
     private enum Constants {
         static let navigationSurfaceID = "ride-navigation-surface"
         static let dragCoordinateSpace = "ride-navigation-mini-map"
@@ -153,6 +188,9 @@ struct RideNavigationMiniView: View {
         static let orientationControlOverflow = orientationControlSize + orientationControlGap
         static let orientationIconSize: CGFloat = 15
         static let orientationAnimationDuration = 0.3
+        static let orientationControlDelaySeconds = 3.0
+        static let controlTransitionScale = 0.92
+        static let controlTransitionDuration = 0.2
         static let borderWidth: CGFloat = 1
         static let borderOpacity = 0.24
         static let shadowOpacity = 0.4
@@ -160,6 +198,9 @@ struct RideNavigationMiniView: View {
         static let statusTracking: CGFloat = 0.7
     }
 
+}
+
+extension RideNavigationMiniView {
     struct MiniMapLayout {
         let cardSize: CGSize
         private let containerSize: CGSize
@@ -216,6 +257,15 @@ struct RideNavigationMiniView: View {
                         + Constants.orientationControlOverflow
                         + cardSize.height / 2,
                     maximum: containerSize.height - Constants.edgeMargin - cardSize.height / 2
+                )
+            )
+        }
+
+        func translatedPosition(from origin: CGPoint, by translation: CGSize) -> CGPoint {
+            constrainedPosition(
+                CGPoint(
+                    x: origin.x + translation.width,
+                    y: origin.y + translation.height
                 )
             )
         }

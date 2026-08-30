@@ -1,13 +1,17 @@
 import DesignSystem
 import SwiftUI
 
+enum RideNavigationMapSelector {
+    case source
+    case orientation
+}
+
 struct RideNavigationMapControls: View {
     let state: RideNavigationViewState
-    let onMapStyle: (String) -> Void
-    let onMapHeadingUp: (Bool) -> Void
     let onToggleVoice: () -> Void
     let onOverview: () -> Void
     let onRecenter: () -> Void
+    @Binding var activeSelector: RideNavigationMapSelector?
 
     var body: some View {
         RideNavigationGlassGroup(spacing: DesignSpace.extraSmall) {
@@ -16,11 +20,13 @@ struct RideNavigationMapControls: View {
                     sources: state.mapSources,
                     selectedStyleID: state.selectedMapStyleID,
                     allowsFocus: state.allowsFocusMapStyle,
-                    onSelect: onMapStyle
+                    isPresented: activeSelector == .source,
+                    onPresentationChange: { activeSelector = $0 ? .source : nil }
                 )
                 RideNavigationMapOrientationMenu(
                     isHeadingUp: state.isHeadingUp,
-                    onSelect: onMapHeadingUp
+                    isPresented: activeSelector == .orientation,
+                    onPresentationChange: { activeSelector = $0 ? .orientation : nil }
                 )
                 controlButton(
                     systemImage: state.isVoiceMuted ? "speaker.slash.fill" : "speaker.wave.2.fill",
@@ -53,5 +59,34 @@ struct RideNavigationMapControls: View {
         .buttonStyle(.plain)
         .rideNavigationGlassControl()
         .accessibilityLabel(accessibilityLabel)
+    }
+}
+
+struct RideNavigationMapSelectorPanel: View {
+    let state: RideNavigationViewState
+    let onMapStyle: (String) -> Void
+    let onMapHeadingUp: (Bool) -> Void
+    @Binding var activeSelector: RideNavigationMapSelector?
+
+    @ViewBuilder
+    var body: some View {
+        switch activeSelector {
+        case .source:
+            RideNavigationMapSourcePicker(
+                sources: state.mapSources,
+                selectedStyleID: state.selectedMapStyleID,
+                allowsFocus: state.allowsFocusMapStyle
+            ) { styleID in
+                onMapStyle(styleID)
+                activeSelector = nil
+            }
+        case .orientation:
+            RideNavigationMapOrientationPicker(isHeadingUp: state.isHeadingUp) { isHeadingUp in
+                onMapHeadingUp(isHeadingUp)
+                activeSelector = nil
+            }
+        case nil:
+            EmptyView()
+        }
     }
 }

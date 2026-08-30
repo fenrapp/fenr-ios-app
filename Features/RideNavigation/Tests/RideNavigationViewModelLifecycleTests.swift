@@ -136,8 +136,8 @@ struct RideNavigationViewModelLifecycleTests {
         fixture.viewModel.stop()
     }
 
-    @Test("clearing a recording draft does not cancel an explicit route save")
-    func draftCleanupDoesNotCancelRouteSave() async {
+    @Test("saving and closing a recording summary refreshes the home library")
+    func savingAndClosingRecordingSummaryRefreshesSavedRoutes() async {
         let repository = ControllableRecordedRouteRepository()
         let fixture = RideNavigationViewModelFixture(repository: repository)
         let first = coordinate()
@@ -149,13 +149,51 @@ struct RideNavigationViewModelLifecycleTests {
         #expect(await waitUntil { fixture.viewModel.viewState.distanceText != "0 ft" })
         fixture.viewModel.finishActivity()
 
-        fixture.viewModel.saveCompletedRoute(name: "Saved recording")
+        fixture.viewModel.saveCompletedRouteAndClose(name: "Saved recording")
         #expect(await waitUntil { await repository.hasPendingSave })
-        fixture.viewModel.discardActivity()
+
+        #expect(fixture.viewModel.viewState.screen == .home)
+        #expect(fixture.viewModel.viewState.savedRoutes.map(\.title) == ["Saved recording"])
+
         await repository.completeSave()
 
         #expect(await waitUntil { await repository.saveWasCancelled != nil })
         #expect(await repository.saveWasCancelled == false)
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.savedRoutes.map(\.title) == ["Saved recording"]
+        })
+        fixture.viewModel.stop()
+    }
+
+    @Test("a saved route can be shared as a named GPX file")
+    func savedRouteCanBeShared() async {
+        let route = savedRoute(name: "Mountain Loop")
+        let fixture = RideNavigationViewModelFixture(routes: [route])
+        fixture.viewModel.start()
+        #expect(await waitUntil { fixture.viewModel.viewState.savedRoutes.count == 1 })
+        #expect(fixture.viewModel.viewState.savedRoutes.first?.detail.contains("2023") == true)
+
+        fixture.viewModel.shareSavedRoute(id: route.id)
+
+        #expect(fixture.viewModel.shareRequest?.filename == "Mountain-Loop.gpx")
+        #expect(fixture.viewModel.shareRequest?.data == StubGPXRouteExporter.exportedData)
+        fixture.viewModel.clearShareRequest()
+        #expect(fixture.viewModel.shareRequest == nil)
+        fixture.viewModel.stop()
+    }
+
+    @Test("deleting a saved route updates presentation and persistence")
+    func savedRouteCanBeDeleted() async {
+        let route = savedRoute(name: "Route to delete")
+        let repository = StubRecordedRouteRepository(routes: [route])
+        let fixture = RideNavigationViewModelFixture(repository: repository)
+        fixture.viewModel.start()
+        #expect(await waitUntil { fixture.viewModel.viewState.savedRoutes.count == 1 })
+
+        fixture.viewModel.deleteSavedRoute(id: route.id)
+
+        #expect(fixture.viewModel.viewState.savedRoutes.isEmpty)
+        #expect(await waitUntil { await repository.loadRoutes().isEmpty })
         fixture.viewModel.stop()
     }
 
@@ -172,6 +210,20 @@ struct RideNavigationViewModelLifecycleTests {
             horizontalAccuracyMeters: 5,
             coordinate: coordinate,
             observedAt: Date(timeIntervalSince1970: 1_700_000_000 + seconds)
+        )
+    }
+
+    private func savedRoute(name: String) -> RideRoute {
+        let date = Date(timeIntervalSince1970: 1_700_000_000)
+        return RideRoute(
+            name: name,
+            createdAt: date,
+            segments: [
+                RideRouteSegment(points: [
+                    RideRoutePoint(coordinate: coordinate(), timestamp: date),
+                    RideRoutePoint(coordinate: coordinate(offset: 0.001), timestamp: date)
+                ])
+            ]
         )
     }
 }

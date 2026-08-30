@@ -147,8 +147,8 @@ struct UserDefaultsAppSettingsRepositoryTests {
 
     @Test("Clamps the persisted mini map scale to its supported range")
     func clampsMiniMapScale() {
-        #expect(MiniMapScale(0.2).value == 0.7)
-        #expect(MiniMapScale(2).value == 1.3)
+        #expect(MiniMapScale(0.2).value == 0.5)
+        #expect(MiniMapScale(2).value == 1.5)
     }
 
     @Test("Persists power mode names independently by bike and map")
