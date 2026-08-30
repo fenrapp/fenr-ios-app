@@ -2,6 +2,7 @@
 import BikeDomain
 import BikeSDK
 import Foundation
+import StarkProtocol
 import Testing
 
 @Suite("Bike data repository lifecycle")
@@ -54,5 +55,105 @@ struct BikeDataRepositoryLifecycleTests {
 
         #expect(telemetry == BikeTelemetry())
         #expect(connection == BikeConnection())
+    }
+
+    @Test("Concurrent starts share one client startup and event stream")
+    func concurrentStartsShareStartup() async {
+        let client = FakeBikeTelemetryClient()
+        await client.suspendStart()
+        let repository = makeRepository(client: client)
+
+        let firstStart = Task { await repository.start() }
+        #expect(await client.waitUntilStartIsSuspended())
+        let secondStart = Task { await repository.start() }
+        #expect(await repository.lifecycleState == .starting)
+
+        await client.resumeStart()
+        await firstStart.value
+        await secondStart.value
+
+        #expect(await repository.lifecycleState == .started)
+        #expect(await client.startCount() == 1)
+        #expect(await client.eventStreamCount() == 1)
+    }
+
+    @Test("Stop invalidates and awaits an in-flight startup")
+    func stopDuringStartupCancelsAndAwaitsStartup() async {
+        let client = FakeBikeTelemetryClient()
+        await client.suspendStart()
+        await client.suspendStop()
+        let repository = makeRepository(client: client)
+        let startTask = Task { await repository.start() }
+        #expect(await client.waitUntilStartIsSuspended())
+
+        let stopTask = Task { await repository.stop() }
+        #expect(await client.waitUntilStopIsSuspended())
+        #expect(await repository.lifecycleState == .stopping)
+        await client.resumeStart()
+        await client.resumeStop()
+        await startTask.value
+        await stopTask.value
+
+        #expect(await repository.lifecycleState == .stopped)
+        #expect(await client.startCount() == 1)
+        #expect(await client.eventStreamCount() == 0)
+        #expect(await client.stopCount() == 1)
+    }
+
+    @Test("A start requested while stopping waits before opening the next session")
+    func startDuringStopWaitsForShutdown() async {
+        let client = FakeBikeTelemetryClient()
+        let repository = makeRepository(client: client)
+        await repository.start()
+        await client.suspendStop()
+
+        let stopTask = Task { await repository.stop() }
+        #expect(await client.waitUntilStopIsSuspended())
+        let restartTask = Task { await repository.start() }
+        #expect(await repository.lifecycleState == .stopping)
+
+        await client.resumeStop()
+        await stopTask.value
+        await restartTask.value
+
+        #expect(await repository.lifecycleState == .started)
+        #expect(await client.startCount() == 2)
+        #expect(await client.eventStreamCount() == 2)
+        #expect(await client.stopCount() == 1)
+    }
+
+    @Test("Stopping resets the IMU limiter before the next session")
+    func stopResetsIMULimiter() async throws {
+        let client = FakeBikeTelemetryClient()
+        let repository = makeRepository(
+            client: client,
+            imuMinimumInterval: 1
+        )
+        let observedAt = Date(timeIntervalSince1970: 100)
+        let sample = BikeSDKIMUSample(
+            payload: .init(
+                accelerationXRaw: 1,
+                accelerationYRaw: 2,
+                accelerationZRaw: 3,
+                gyroscopeXRaw: 4,
+                gyroscopeYRaw: 5,
+                gyroscopeZRaw: 6
+            ),
+            observedAt: observedAt
+        )
+
+        await repository.start()
+        let firstStream = await repository.observeIMU()
+        var firstIterator = firstStream.makeAsyncIterator()
+        await client.send(.imu(sample))
+        #expect(try #require(await firstIterator.next()).observedAt == observedAt)
+
+        await repository.stop()
+        await repository.start()
+        let secondStream = await repository.observeIMU()
+        var secondIterator = secondStream.makeAsyncIterator()
+        await client.send(.imu(sample))
+
+        #expect(try #require(await secondIterator.next()).observedAt == observedAt)
     }
 }

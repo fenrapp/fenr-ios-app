@@ -140,7 +140,7 @@ struct BikePowerBatteryRepositoryTests {
         )))
         let event = try #require(await iterator.next())
 
-        #expect(event.detail.contains(characteristic.uuidString))
+        #expect(!event.detail.contains(characteristic.uuidString))
         #expect(event.detail.contains("19 00"))
         #expect(event.detail.contains("currentCandidateRaw=25"))
         #expect(event.detail.contains("candidateFormula="))

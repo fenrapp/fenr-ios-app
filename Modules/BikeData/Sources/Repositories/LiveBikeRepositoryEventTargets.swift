@@ -1,3 +1,4 @@
+import AsyncSupport
 import BikeDomain
 
 struct LiveBikeRepositoryEventTargets: Sendable {

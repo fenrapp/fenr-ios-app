@@ -1,6 +1,14 @@
+import AsyncSupport
 import BikeDomain
 import BikeSDK
 import Foundation
+
+enum LiveBikeRepositoryLifecycleState: Equatable, Sendable {
+    case stopped
+    case starting
+    case started
+    case stopping
+}
 
 public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryHealthRepository,
     BikeChargePowerControlRepository, BikeDiscoveryRepository {
@@ -16,7 +24,11 @@ public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryH
     private let batteryCaptureHub: AsyncEventHub<BatteryDatasetCapture>
     private let discoveredBikesHub: AsyncEventHub<[DiscoveredBike]>
     private let chargePowerMapper: BikeSDKChargePowerControlToDomainMapper
-    private var task: Task<Void, Never>?
+    private(set) var lifecycleState: LiveBikeRepositoryLifecycleState = .stopped
+    private var generation: UInt64 = 0
+    private var startupTask: Task<AsyncStream<BikeSDKEvent>?, Never>?
+    private var eventsTask: Task<Void, Never>?
+    private var shutdownTask: Task<Void, Never>?
 
     public init(
         client: BikeTelemetryClient,
@@ -47,13 +59,80 @@ public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryH
     }
 
     deinit {
-        task?.cancel()
+        startupTask?.cancel()
+        eventsTask?.cancel()
+        shutdownTask?.cancel()
     }
 
     public func start() async {
-        guard task == nil else { return }
-        await client.start()
-        let events = await client.events()
+        while !Task.isCancelled {
+            switch lifecycleState {
+            case .stopped:
+                generation &+= 1
+                let startGeneration = generation
+                let client = client
+                let task: Task<AsyncStream<BikeSDKEvent>?, Never> = Task {
+                    guard !Task.isCancelled else { return nil }
+                    await client.start()
+                    guard !Task.isCancelled else { return nil }
+                    let events = await client.events()
+                    guard !Task.isCancelled else { return nil }
+                    return events
+                }
+                lifecycleState = .starting
+                startupTask = task
+                let events = await task.value
+                completeStart(events: events, generation: startGeneration)
+                return
+            case .starting:
+                guard let task = startupTask else { return }
+                let startGeneration = generation
+                let events = await task.value
+                completeStart(events: events, generation: startGeneration)
+                return
+            case .started:
+                return
+            case .stopping:
+                guard let task = shutdownTask else { return }
+                let stopGeneration = generation
+                await task.value
+                completeStop(generation: stopGeneration)
+            }
+        }
+    }
+
+    public func stop() async {
+        switch lifecycleState {
+        case .stopped:
+            return
+        case .stopping:
+            guard let task = shutdownTask else { return }
+            let stopGeneration = generation
+            await task.value
+            completeStop(generation: stopGeneration)
+        case .starting, .started:
+            beginStop()
+            guard let task = shutdownTask else { return }
+            let stopGeneration = generation
+            await task.value
+            completeStop(generation: stopGeneration)
+        }
+    }
+
+    private func completeStart(
+        events: AsyncStream<BikeSDKEvent>?,
+        generation startGeneration: UInt64
+    ) {
+        guard lifecycleState == .starting,
+              generation == startGeneration
+        else { return }
+
+        startupTask = nil
+        guard let events else {
+            lifecycleState = .stopped
+            return
+        }
+
         let targets = LiveBikeRepositoryEventTargets(
             stateStore: stateStore,
             telemetryHub: telemetryHub,
@@ -65,24 +144,60 @@ public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryH
             batteryCaptureHub: batteryCaptureHub,
             discoveredBikesHub: discoveredBikesHub
         )
-        task = Task { [eventHandler, targets] in
+        eventsTask = Task { [eventHandler, targets] in
             for await event in events {
+                guard !Task.isCancelled else { break }
                 await eventHandler.handle(event, targets: targets)
             }
         }
+        lifecycleState = .started
     }
 
-    public func stop() async {
-        task?.cancel()
-        task = nil
-        await client.stop()
-        let state = await stateStore.resetSession(connectionState: .idle)
-        await telemetryHub.send(state.telemetry)
-        await connectionHub.send(state.connection)
-        await batteryHealthStore.reset()
-        await batteryHealthHub.send(BikeBatteryHealth())
+    private func beginStop() {
+        generation &+= 1
+        let stopGeneration = generation
+        lifecycleState = .stopping
+
+        let startupTask = startupTask
+        let eventsTask = eventsTask
+        startupTask?.cancel()
+        eventsTask?.cancel()
+
+        let client = client
+        let eventHandler = eventHandler
+        let stateStore = stateStore
+        let telemetryHub = telemetryHub
+        let connectionHub = connectionHub
+        let batteryHealthStore = batteryHealthStore
+        let batteryHealthHub = batteryHealthHub
+        shutdownTask = Task {
+            _ = await startupTask?.value
+            await eventsTask?.value
+            await client.stop()
+            await eventHandler.resetSession()
+            let state = await stateStore.resetSession(connectionState: .idle)
+            await telemetryHub.send(state.telemetry)
+            await connectionHub.send(state.connection)
+            await batteryHealthStore.reset()
+            await batteryHealthHub.send(BikeBatteryHealth())
+        }
+
+        generation = stopGeneration
     }
 
+    private func completeStop(generation stopGeneration: UInt64) {
+        guard lifecycleState == .stopping,
+              generation == stopGeneration
+        else { return }
+
+        startupTask = nil
+        eventsTask = nil
+        shutdownTask = nil
+        lifecycleState = .stopped
+    }
+}
+
+extension LiveBikeRepository {
     public func connect(vin: String) async throws {
         try await client.connect(to: vin)
     }

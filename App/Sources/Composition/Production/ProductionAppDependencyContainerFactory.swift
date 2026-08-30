@@ -18,7 +18,7 @@ enum ProductionAppDependencyContainerFactory {
         let bikeDataContainer = BikeDataDependencyContainer()
         let bleTraceRepository = BLETraceDependencyContainer().makeRepository()
         let client = bikeSDKContainer.makeBikeTelemetryClient(traceRecorder: bleTraceRepository)
-        let profileRepository = UserDefaultsBikeProfileRepository()
+        let profileRepository = UserDefaultsBikeProfileRepository(userDefaults: .standard)
         let repository = bikeDataContainer.makeBikeRepository(
             client: client,
             profileRepository: profileRepository

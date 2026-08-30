@@ -16,7 +16,7 @@ enum LiveWatchAppDependencyContainerFactory {
         )
         return WatchAppDependencyContainer(
             repository: LiveBikeRepositoryFactory.makeDefault(client: client),
-            profileRepository: UserDefaultsBikeProfileRepository(),
+            profileRepository: UserDefaultsBikeProfileRepository(userDefaults: .standard),
             settingsRepository: UserDefaultsAppSettingsRepository(userDefaults: .standard),
             initialProfile: nil
         )
