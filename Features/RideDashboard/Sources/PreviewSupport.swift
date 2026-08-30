@@ -148,14 +148,18 @@ enum BikeLockCardPreviewFactory {
     static func makeViewModel(state: BikeLockCardViewState = .init()) -> BikeLockCardViewModel {
         let repository = RideDashboardPreviewRepository()
         let settingsRepository = PreviewBikeLockSettingsRepository()
+        let credentialStore = PreviewBikeLockCredentialStore()
         let viewModel = BikeLockCardViewModel(
             prepareControl: .init(repository: repository),
             setLocked: .init(repository: repository),
-            loadSettings: .init(repository: settingsRepository),
-            saveSettings: .init(repository: settingsRepository),
+            updateSecurity: .init(
+                repository: settingsRepository,
+                credentialStore: credentialStore
+            ),
             vehicleSession: PreviewVehicleSessionService(),
-            credentialStore: PreviewBikeLockCredentialStore(),
+            credentialStore: credentialStore,
             authenticator: PreviewBikeLockAuthenticator(),
+            capabilityStore: PreviewBikeLockCapabilityStore(),
             allowsExperimentalControl: false
         )
         viewModel.setPreviewState(state)
@@ -227,11 +231,28 @@ private actor PreviewBikeLockSettingsRepository: AppSettingsRepository {
 private actor PreviewBikeLockCredentialStore: BikeLockCredentialStoring {
     func save(pin _: String, for _: String) {}
     func verify(pin _: String, for _: String) -> Bool { true }
+    func containsPIN(for _: String) -> Bool { true }
     func removePIN(for _: String) {}
 }
 
 private struct PreviewBikeLockAuthenticator: BikeLockAuthenticating {
-    func authenticate() async throws -> Bool { true }
+    func authenticate(reason _: String) async throws -> Bool { true }
+}
+
+@MainActor
+private final class PreviewBikeLockCapabilityStore: BikeLockCapabilityStateStoring {
+    private(set) var currentState = BikeLockCapabilityState()
+
+    func update(_ state: BikeLockCapabilityState) {
+        currentState = state
+    }
+
+    func observe() -> AsyncStream<BikeLockCapabilityState> {
+        .init { continuation in
+            continuation.yield(currentState)
+            continuation.finish()
+        }
+    }
 }
 
 private actor RideDashboardPreviewRepository: BikeRepository, BikeBatteryHealthRepository {

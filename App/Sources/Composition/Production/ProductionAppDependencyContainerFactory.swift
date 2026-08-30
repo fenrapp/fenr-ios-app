@@ -34,6 +34,7 @@ enum ProductionAppDependencyContainerFactory {
         )
         let motionCalibrationRepository = makeMotionCalibrationRepository()
         let rideTripRepository = makeRideTripRepository()
+        let bikeLockCapabilityStore = BikeLockCapabilityStateStore()
         let sessionServices = AppSessionDependencyContainer.makeServices(
             dependencies: .init(
                 repository: repository,
@@ -65,6 +66,7 @@ enum ProductionAppDependencyContainerFactory {
             incomingMapLinkStore: makeIncomingMapLinkStore(),
             bikeLockCredentialStore: makeBikeLockCredentialStore(),
             bikeLockAuthenticator: LocalAuthenticationBikeLockAuthenticator(),
+            bikeLockCapabilityStore: bikeLockCapabilityStore,
             allowsExperimentalBikeLockControl: true
         )
     }

@@ -92,6 +92,7 @@ enum DebugAppDependencyContainerFactory {
                 rideTripRepository: rideTripRepository
             )
         )
+        let bikeLockCapabilityStore = BikeLockCapabilityStateStore()
         return AppDependencyContainer(
             diagnosticsContainer: BikeDiagnosticsDependencyContainer(),
             batteryHealthContainer: BatteryHealthDependencyContainer(),
@@ -114,6 +115,7 @@ enum DebugAppDependencyContainerFactory {
                 service: "com.fenr.app.debug.bike-lock"
             ),
             bikeLockAuthenticator: LocalAuthenticationBikeLockAuthenticator(),
+            bikeLockCapabilityStore: bikeLockCapabilityStore,
             allowsExperimentalBikeLockControl: true,
             initialOnboardingVIN: BikeEmulatorIdentity.vin,
             forceOnboarding: forceOnboarding

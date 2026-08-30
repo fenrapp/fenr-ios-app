@@ -9,6 +9,7 @@ struct BikeLockCardViewModelTestFixture {
     let settingsRepository: BikeLockCardSettingsRepository
     let vehicleSession: RideDashboardVehicleSession
     let credentialStore: BikeLockCardCredentialStore
+    let capabilityStore: BikeLockCardCapabilityStore
 }
 
 @MainActor
@@ -23,21 +24,26 @@ enum BikeLockCardViewModelTestFactory {
         let settingsRepository = BikeLockCardSettingsRepository(settings: settings)
         let vehicleSession = RideDashboardVehicleSession()
         let credentialStore = BikeLockCardCredentialStore()
+        let capabilityStore = BikeLockCardCapabilityStore()
         return .init(
             viewModel: BikeLockCardViewModel(
                 prepareControl: .init(repository: repository),
                 setLocked: .init(repository: repository),
-                loadSettings: .init(repository: settingsRepository),
-                saveSettings: .init(repository: settingsRepository),
+                updateSecurity: .init(
+                    repository: settingsRepository,
+                    credentialStore: credentialStore
+                ),
                 vehicleSession: vehicleSession,
                 credentialStore: credentialStore,
                 authenticator: authenticator,
+                capabilityStore: capabilityStore,
                 allowsExperimentalControl: allowsExperimentalControl
             ),
             repository: repository,
             settingsRepository: settingsRepository,
             vehicleSession: vehicleSession,
-            credentialStore: credentialStore
+            credentialStore: credentialStore,
+            capabilityStore: capabilityStore
         )
     }
 }

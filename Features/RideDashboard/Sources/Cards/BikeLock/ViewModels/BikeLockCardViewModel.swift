@@ -31,11 +31,11 @@ public final class BikeLockCardViewModel: ObservableObject {
 
     private let prepareControl: PrepareBikeLockControlUseCase
     private let setLocked: SetBikeLockedUseCase
-    private let loadSettings: LoadAppSettingsUseCase
-    private let saveSettings: SaveAppSettingsUseCase
+    private let updateSecurity: UpdateBikeLockSecurityUseCase
     private let vehicleSession: any VehicleSessionService
     private let credentialStore: any BikeLockCredentialStoring
     private let authenticator: any BikeLockAuthenticating
+    private let capabilityStore: any BikeLockCapabilityStateStoring
     private let allowsExperimentalControl: Bool
     private var observationTask: Task<Void, Never>?
     private var operationTask: Task<Void, Never>?
@@ -50,20 +50,20 @@ public final class BikeLockCardViewModel: ObservableObject {
     public init(
         prepareControl: PrepareBikeLockControlUseCase,
         setLocked: SetBikeLockedUseCase,
-        loadSettings: LoadAppSettingsUseCase,
-        saveSettings: SaveAppSettingsUseCase,
+        updateSecurity: UpdateBikeLockSecurityUseCase,
         vehicleSession: any VehicleSessionService,
         credentialStore: any BikeLockCredentialStoring,
         authenticator: any BikeLockAuthenticating,
+        capabilityStore: any BikeLockCapabilityStateStoring,
         allowsExperimentalControl: Bool
     ) {
         self.prepareControl = prepareControl
         self.setLocked = setLocked
-        self.loadSettings = loadSettings
-        self.saveSettings = saveSettings
+        self.updateSecurity = updateSecurity
         self.vehicleSession = vehicleSession
         self.credentialStore = credentialStore
         self.authenticator = authenticator
+        self.capabilityStore = capabilityStore
         self.allowsExperimentalControl = allowsExperimentalControl
     }
 
@@ -88,6 +88,7 @@ public extension BikeLockCardViewModel {
                 let receivesTelemetry = Self.receivesTelemetry(snapshot)
                 if !receivesTelemetry {
                     invalidateControlPreparation()
+                    capabilityStore.update(.init(vehicleIdentifier: vin))
                     render()
                     continue
                 }
@@ -103,6 +104,7 @@ public extension BikeLockCardViewModel {
                     settings = snapshot.settings.bikeLockSettings(forVIN: vin)
                     firmware = nil
                     hasAttemptedPreparation = false
+                    capabilityStore.update(.init(vehicleIdentifier: vin))
                     if isVehicleStationary {
                         prepare()
                     } else {
@@ -123,7 +125,7 @@ public extension BikeLockCardViewModel {
     func stop() {
         observationTask?.cancel()
         observationTask = nil
-        invalidateVehicle()
+        invalidateVehicle(clearsCapability: false)
     }
 
     func performPrimaryAction() {
@@ -142,7 +144,7 @@ public extension BikeLockCardViewModel {
         }
         switch settings.securityMode {
         case .notConfigured:
-            render(sheetUpdate: .present(.setup))
+            changeLockState(to: false)
         case .withoutPIN:
             changeLockState(to: false)
         case .pin:
@@ -161,17 +163,15 @@ public extension BikeLockCardViewModel {
         }
         let normalizedPIN = mode.requiresPIN ? pin : ""
         operationTask?.cancel()
-        operationTask = Task { [weak self, credentialStore, loadSettings, saveSettings] in
+        render(isWorking: true, sheetUpdate: .dismiss)
+        operationTask = Task { [weak self, updateSecurity] in
             guard let self else { return }
             do {
-                if mode.requiresPIN {
-                    try await credentialStore.save(pin: normalizedPIN, for: vehicleIdentifier)
-                } else {
-                    try await credentialStore.removePIN(for: vehicleIdentifier)
-                }
-                var appSettings = await loadSettings.execute()
-                appSettings.setBikeLockSettings(.init(securityMode: mode), forVIN: vehicleIdentifier)
-                await saveSettings.execute(appSettings)
+                try await updateSecurity.execute(
+                    vehicleIdentifier: vehicleIdentifier,
+                    securityMode: mode,
+                    newPIN: mode.requiresPIN ? normalizedPIN : nil
+                )
                 guard !Task.isCancelled else { return }
                 settings = .init(securityMode: mode)
                 try await applyLockState(true)
@@ -224,10 +224,15 @@ private extension BikeLockCardViewModel {
                 guard !Task.isCancelled else { return }
                 firmware = snapshot.vcuFirmware
                 isLocked = snapshot.isLocked
+                capabilityStore.update(.init(
+                    vehicleIdentifier: vehicleIdentifier,
+                    isAvailable: true
+                ))
                 render()
             } catch {
                 guard !Task.isCancelled else { return }
                 firmware = nil
+                capabilityStore.update(.init(vehicleIdentifier: vehicleIdentifier))
                 render(error: error.localizedDescription)
             }
         }
@@ -240,7 +245,7 @@ private extension BikeLockCardViewModel {
             guard let self else { return }
             let authenticated: Bool
             do {
-                authenticated = try await authenticator.authenticate()
+                authenticated = try await authenticator.authenticate(reason: "Unlock your motorcycle")
             } catch {
                 guard !Task.isCancelled else { return }
                 render(error: error.localizedDescription, sheetUpdate: .present(.enterPIN))
@@ -303,13 +308,16 @@ private extension BikeLockCardViewModel {
         hasAttemptedPreparation = false
     }
 
-    private func invalidateVehicle() {
+    private func invalidateVehicle(clearsCapability: Bool = true) {
         operationTask?.cancel()
         operationTask = nil
         vehicleIdentifier = nil
         settings = .init()
         isLocked = false
         invalidateControlPreparation()
+        if clearsCapability {
+            capabilityStore.update(.init())
+        }
         render(sheetUpdate: .dismiss)
     }
 }
@@ -323,11 +331,7 @@ extension BikeLockCardViewModel {
         let isAvailable = firmware != nil
         let status = isLocked ? "Locked" : "Unlocked"
         let actionTitle: String
-        if !settings.securityMode.isConfigured {
-            actionTitle = "Set Up"
-        } else {
-            actionTitle = isLocked ? "Unlock" : "Lock"
-        }
+        actionTitle = isLocked ? "Unlock" : (settings.securityMode.isConfigured ? "Lock" : "Set Up")
         viewState = .init(
             isAvailable: isAvailable,
             isLocked: isLocked,
@@ -336,7 +340,7 @@ extension BikeLockCardViewModel {
             statusText: isAvailable ? status : "Unavailable",
             actionTitle: actionTitle,
             detailText: isAvailable
-                ? "VCU PIC \(firmware ?? "") - experimental control"
+                ? "VCU PIC \(firmware ?? "")"
                 : "Bike Lock requires VCU PIC 1.6.29 or newer.",
             errorText: error,
             sheet: sheetUpdate.resolve(current: viewState.sheet)
@@ -367,29 +371,4 @@ extension BikeLockCardViewModel {
         viewState = state
     }
 #endif
-}
-
-private enum BikeLockSheetUpdate {
-    case preserve
-    case present(BikeLockCardViewState.Sheet)
-    case dismiss
-
-    func resolve(current: BikeLockCardViewState.Sheet?) -> BikeLockCardViewState.Sheet? {
-        switch self {
-        case .preserve:
-            current
-        case let .present(sheet):
-            sheet
-        case .dismiss:
-            nil
-        }
-    }
-}
-
-private enum BikeLockCardOperationError: LocalizedError {
-    case vehicleMustBeStationary
-
-    var errorDescription: String? {
-        "Stop the motorcycle and disengage the gear before using Bike Lock."
-    }
 }

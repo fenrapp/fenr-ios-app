@@ -136,6 +136,21 @@ struct DashboardCenterCard: View {
             showsSourceIndicator: showsSpeedSourceIndicator,
             referenceSize: referenceSize
         )
+        .overlay(alignment: .bottom) {
+            if bikeLock.isLocked {
+                DashboardBikeLockStatusBadge()
+                    .padding(.bottom, Constants.bikeLockBadgeBottomPadding)
+                    .transition(.scale(scale: Constants.bikeLockBadgeTransitionScale).combined(with: .opacity))
+                    .allowsHitTesting(false)
+            }
+        }
+        .accessibilityLabel(speedometerAccessibilityLabel)
+        .animation(.easeInOut(duration: Constants.bikeLockBadgeAnimationDuration), value: bikeLock.isLocked)
+    }
+
+    private var speedometerAccessibilityLabel: String {
+        guard bikeLock.isLocked else { return speedometer.accessibilityLabel }
+        return "\(speedometer.accessibilityLabel), bike locked"
     }
 
     private var bikeLockCard: some View {
@@ -147,5 +162,11 @@ struct DashboardCenterCard: View {
             submitPIN: submitBikeLockPIN,
             dismissSheet: dismissBikeLockSheet
         )
+    }
+
+    private enum Constants {
+        static let bikeLockBadgeBottomPadding: CGFloat = 28
+        static let bikeLockBadgeTransitionScale = 0.94
+        static let bikeLockBadgeAnimationDuration = 0.18
     }
 }

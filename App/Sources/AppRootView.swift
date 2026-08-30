@@ -1,6 +1,7 @@
 import AppSettings
 import BatteryHealth
 import BikeDiagnostics
+import BikeLockSettings
 import BikeOnboarding
 import DashboardCardSettings
 import PowerModeSettings
@@ -16,6 +17,7 @@ struct AppRootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var diagnosticsViewModel: BikeDiagnosticsViewModel
     @StateObject private var batteryHealthViewModel: BatteryHealthViewModel
+    @StateObject private var bikeLockSettingsViewModel: BikeLockSettingsViewModel
     @StateObject private var onboardingViewModel: BikeOnboardingViewModel
     @StateObject private var appSettingsViewModel: AppSettingsViewModel
     @StateObject private var dashboardCardSettingsViewModel: DashboardCardSettingsViewModel
@@ -39,6 +41,7 @@ struct AppRootView: View {
     ) {
         _diagnosticsViewModel = StateObject(wrappedValue: dependencies.diagnosticsViewModel)
         _batteryHealthViewModel = StateObject(wrappedValue: dependencies.batteryHealthViewModel)
+        _bikeLockSettingsViewModel = StateObject(wrappedValue: dependencies.bikeLockSettingsViewModel)
         _onboardingViewModel = StateObject(wrappedValue: dependencies.onboardingViewModel)
         _appSettingsViewModel = StateObject(wrappedValue: dependencies.appSettingsViewModel)
         _dashboardCardSettingsViewModel = StateObject(
@@ -105,8 +108,14 @@ struct AppRootView: View {
                             onOpenDashboardCards: { path.append(.dashboardCards) },
                             onOpenPowerModes: { path.append(.powerModes) },
                             onOpenRideHistory: { path.append(.rideHistory) },
+                            bikeLockModeTitle: bikeLockSettingsViewModel.viewState.isAvailable
+                                ? bikeLockSettingsViewModel.viewState.currentModeTitle
+                                : nil,
+                            onOpenBikeLock: { path.append(.bikeLockSettings) },
                             accessory: settingsAccessory
                         )
+                    case .bikeLockSettings:
+                        BikeLockSettingsView(viewModel: bikeLockSettingsViewModel)
                     case .dashboardCards:
                         DashboardCardSettingsView(viewModel: dashboardCardSettingsViewModel)
                     case .powerModes:
@@ -142,6 +151,7 @@ struct AppRootView: View {
             await lifecycleController.start()
             await consumeIncomingMapLink()
             synchronizeOnboardingObservation()
+            bikeLockSettingsViewModel.start()
             updateInterfaceOrientation()
         }
         .onAppear(perform: updateInterfaceOrientation)
@@ -179,6 +189,7 @@ struct AppRootView: View {
         }
         .onDisappear {
             onboardingViewModel.stopObserving()
+            bikeLockSettingsViewModel.stop()
             lifecycleController.stop()
         }
     }
@@ -307,6 +318,7 @@ private extension AppRootView {
         case dashboardCards
         case powerModes
         case rideHistory
+        case bikeLockSettings
     }
 
     private struct IncomingNavigationResource: Equatable {

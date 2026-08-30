@@ -31,7 +31,7 @@ struct DashboardCardConfigurationTests {
         ])
 
         #expect(configuration.sections.map(\.id) == [
-            .navigation, .efficiency, .currentTrip, .range, .systemHealth, .rideDynamics
+            .bikeLock, .navigation, .efficiency, .currentTrip, .range, .systemHealth, .rideDynamics
         ])
         let efficiency = configuration.section(id: .efficiency)
         #expect(!efficiency.isVisible)
@@ -56,7 +56,7 @@ struct DashboardCardConfigurationTests {
         let configuration = try JSONDecoder().decode(DashboardCardConfiguration.self, from: data)
 
         #expect(configuration.sections.map(\.id) == [
-            .navigation, .range, .currentTrip, .efficiency, .systemHealth, .rideDynamics
+            .bikeLock, .navigation, .range, .currentTrip, .efficiency, .systemHealth, .rideDynamics
         ])
         #expect(!configuration.section(id: .range).isVisible)
         #expect(configuration.section(id: .range).pages.map(\.id) == [.batteryTrip, .range])

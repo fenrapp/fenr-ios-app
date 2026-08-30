@@ -1,3 +1,4 @@
+import BikeDomain
 import DashboardCardSettings
 import SettingsDomain
 import Testing
@@ -8,13 +9,68 @@ import TestSupport
 struct DashboardCardSettingsViewModelTests {
     @Test("Publishes fixed cards and configurable sections")
     func publishesPresentationState() {
-        let state = DashboardCardSettingsViewStateMapper().map(configuration: .init())
+        let state = DashboardCardSettingsViewStateMapper().map(
+            settings: .init(),
+            bikeLockCapability: .init()
+        )
 
         #expect(state.fixedCards.map(\.title) == ["Speedometer", "Charging"])
         #expect(state.sections.map(\.title) == [
             "Ride Navigation", "Current Trip", "Efficiency", "Range", "System Health", "Ride Dynamics"
         ])
         #expect(state.sections.first?.detail == "Open ride navigation from the dashboard")
+    }
+
+    @Test("Publishes compatible Bike Lock and prevents hiding configured protection")
+    func publishesBikeLockAvailability() {
+        var settings = AppSettings()
+        let available = BikeLockCapabilityState(
+            vehicleIdentifier: "FENRTEST000000001",
+            isAvailable: true
+        )
+        let mapper = DashboardCardSettingsViewStateMapper()
+
+        let unconfigured = mapper.map(settings: settings, bikeLockCapability: available)
+        #expect(unconfigured.sections.first?.id == DashboardCardSectionID.bikeLock.rawValue)
+        #expect(unconfigured.sections.first?.isVisibilityEnabled == true)
+
+        settings.setBikeLockSettings(
+            .init(securityMode: .pin),
+            forVIN: "FENRTEST000000001"
+        )
+        settings.dashboardCardConfiguration.setSectionVisibility(false, id: .bikeLock)
+        let configured = mapper.map(settings: settings, bikeLockCapability: available)
+        let bikeLock = configured.section(id: DashboardCardSectionID.bikeLock.rawValue)
+        #expect(bikeLock?.isVisible == true)
+        #expect(bikeLock?.isVisibilityEnabled == false)
+    }
+
+    @Test("Ignores attempts to hide configured Bike Lock")
+    func keepsConfiguredBikeLockVisible() async {
+        var settings = AppSettings()
+        settings.setBikeLockSettings(
+            .init(securityMode: .pin),
+            forVIN: "FENRTEST000000001"
+        )
+        let repository = DashboardCardSettingsRepository(settings: settings)
+        let capabilityStore = DashboardCardSettingsBikeLockCapabilityStore(state: .init(
+            vehicleIdentifier: "FENRTEST000000001",
+            isAvailable: true
+        ))
+        let viewModel = makeViewModel(
+            repository: repository,
+            capabilityStore: capabilityStore
+        )
+        viewModel.start()
+        #expect(await waitUntil {
+            viewModel.viewState.section(id: DashboardCardSectionID.bikeLock.rawValue) != nil
+        })
+
+        viewModel.setSectionVisibility(false, id: DashboardCardSectionID.bikeLock.rawValue)
+
+        #expect(await repository.settings.dashboardCardConfiguration.section(id: .bikeLock).isVisible)
+        #expect(await repository.saveCallCount == 0)
+        viewModel.stop()
     }
 
     @Test("Saves section order and visibility immediately")
@@ -42,7 +98,7 @@ struct DashboardCardSettingsViewModelTests {
         #expect(viewModel.viewState.section(id: DashboardCardSectionID.efficiency.rawValue)?.isVisible == false)
         #expect(await waitUntil {
             let configuration = await repository.settings.dashboardCardConfiguration
-            return configuration.sections.map(\.id).first == .range
+            return configuration.sections.map(\.id).first(where: { $0 != .bikeLock }) == .range
                 && !configuration.section(id: .efficiency).isVisible
         })
         let savedSettings = await repository.savedSettings
@@ -134,7 +190,8 @@ struct DashboardCardSettingsViewModelTests {
     }
 
     private func makeViewModel(
-        repository: DashboardCardSettingsRepository
+        repository: DashboardCardSettingsRepository,
+        capabilityStore: DashboardCardSettingsBikeLockCapabilityStore = .init()
     ) -> DashboardCardSettingsViewModel {
         DashboardCardSettingsViewModel(
             useCases: .init(
@@ -142,7 +199,8 @@ struct DashboardCardSettingsViewModelTests {
                 observeSettings: .init(repository: repository),
                 saveSettings: .init(repository: repository)
             ),
-            mapper: DashboardCardSettingsViewStateMapper()
+            mapper: DashboardCardSettingsViewStateMapper(),
+            bikeLockCapabilityStore: capabilityStore
         )
     }
 }

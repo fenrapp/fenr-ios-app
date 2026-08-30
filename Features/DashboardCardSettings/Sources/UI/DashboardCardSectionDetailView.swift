@@ -19,6 +19,7 @@ struct DashboardCardSectionDetailView: View {
                         DashboardCardVisibilityToggle(
                             title: page.title,
                             isEnabled: page.canHide,
+                            disabledHint: "At least one card must remain visible",
                             isVisible: visibilityBinding(for: page)
                         )
                     }

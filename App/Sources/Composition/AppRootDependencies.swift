@@ -1,6 +1,7 @@
 import AppSettings
 import BatteryHealth
 import BikeDiagnostics
+import BikeLockSettings
 import BikeOnboarding
 import DashboardCardSettings
 import PowerModeSettings
@@ -13,6 +14,7 @@ import RideNavigationDomain
 struct AppRootDependencies {
     let diagnosticsViewModel: BikeDiagnosticsViewModel
     let batteryHealthViewModel: BatteryHealthViewModel
+    let bikeLockSettingsViewModel: BikeLockSettingsViewModel
     let rideDashboardFactory: any RideDashboardFeatureBuilding
     let onboardingViewModel: BikeOnboardingViewModel
     let appSettingsViewModel: AppSettingsViewModel

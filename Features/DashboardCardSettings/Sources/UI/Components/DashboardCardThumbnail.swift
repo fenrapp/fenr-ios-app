@@ -80,6 +80,9 @@ struct DashboardCardThumbnail: View {
                 Image(systemName: state.systemImage)
                     .font(.caption.weight(.bold))
             }
+        case .lock:
+            Image(systemName: state.systemImage)
+                .font(.title3.weight(.semibold))
         }
     }
 

@@ -1,9 +1,13 @@
+import BikeDomain
 import SettingsDomain
 
 public struct DashboardCardSettingsViewStateMapper: Sendable {
     public init() {}
 
-    public func map(configuration: DashboardCardConfiguration) -> DashboardCardSettingsViewState {
+    public func map(
+        settings: AppSettings,
+        bikeLockCapability: BikeLockCapabilityState
+    ) -> DashboardCardSettingsViewState {
         .init(
             fixedCards: [
                 .init(
@@ -19,25 +23,65 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
                     thumbnail: .init(style: .charging, systemImage: "bolt.fill", accent: .positive)
                 )
             ],
-            sections: configuration.sections.map(section)
+            sections: settings.dashboardCardConfiguration.sections.compactMap {
+                section($0, settings: settings, bikeLockCapability: bikeLockCapability)
+            }
         )
     }
 
-    private func section(_ configuration: DashboardCardSectionConfiguration) -> DashboardCardSectionRowViewData {
+    private func section(
+        _ configuration: DashboardCardSectionConfiguration,
+        settings: AppSettings,
+        bikeLockCapability: BikeLockCapabilityState
+    ) -> DashboardCardSectionRowViewData? {
+        if configuration.id == .bikeLock, !bikeLockCapability.isAvailable {
+            return nil
+        }
         let pages = configuration.pages.map { page($0, in: configuration) }
+        let bikeLockRequiresPIN = configuration.id == .bikeLock
+            && settings.bikeLockSettings(
+                forVIN: bikeLockCapability.vehicleIdentifier
+            ).securityMode.requiresPIN
         let visibleCount = pages.filter(\.isVisible).count
         let firstVisibleTitle = pages.first(where: \.isVisible)?.title ?? pages.first?.title ?? ""
-        let detail = pages.isEmpty
-            ? "Open ride navigation from the dashboard"
-            : "\(visibleCount) of \(pages.count) cards visible · \(firstVisibleTitle) first"
+        let detail = sectionDetail(
+            configuration.id,
+            pages: pages,
+            visibleCount: visibleCount,
+            firstVisibleTitle: firstVisibleTitle,
+            bikeLockIsConfigured: bikeLockRequiresPIN
+        )
         return .init(
             id: configuration.id.rawValue,
             title: sectionTitle(configuration.id),
             detail: detail,
-            isVisible: configuration.isVisible,
+            isVisible: configuration.isVisible || bikeLockRequiresPIN,
+            isVisibilityEnabled: !bikeLockRequiresPIN,
+            disabledVisibilityHint: bikeLockRequiresPIN
+                ? "Bike Lock must remain visible while unlock protection is configured"
+                : nil,
             thumbnail: sectionThumbnail(configuration.id),
             pages: pages
         )
+    }
+
+    private func sectionDetail(
+        _ id: DashboardCardSectionID,
+        pages: [DashboardCardPageRowViewData],
+        visibleCount: Int,
+        firstVisibleTitle: String,
+        bikeLockIsConfigured: Bool
+    ) -> String {
+        switch id {
+        case .bikeLock:
+            bikeLockIsConfigured
+                ? "Required while unlock protection is configured"
+                : "Lock and unlock the motorcycle from the dashboard"
+        case .navigation:
+            "Open ride navigation from the dashboard"
+        default:
+            "\(visibleCount) of \(pages.count) cards visible · \(firstVisibleTitle) first"
+        }
     }
 
     private func page(
@@ -55,6 +99,7 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
 
     private func sectionTitle(_ id: DashboardCardSectionID) -> String {
         switch id {
+        case .bikeLock: "Bike Lock"
         case .navigation: "Ride Navigation"
         case .currentTrip: "Current Trip"
         case .efficiency: "Efficiency"
@@ -83,6 +128,7 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
 
     private func sectionThumbnail(_ id: DashboardCardSectionID) -> DashboardCardThumbnailViewData {
         switch id {
+        case .bikeLock: .init(style: .lock, systemImage: "lock.fill", accent: .accent)
         case .navigation: .init(style: .compass, systemImage: "location.north.fill", accent: .accent)
         case .currentTrip: .init(style: .metrics, systemImage: "timer", accent: .accent)
         case .efficiency: .init(style: .chart, systemImage: "leaf.fill", accent: .positive)

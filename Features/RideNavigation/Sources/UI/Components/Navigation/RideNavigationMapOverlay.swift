@@ -1,6 +1,5 @@
 import DesignSystem
 import SwiftUI
-
 struct RideNavigationMapOverlay: View {
     let state: RideNavigationViewState
     let showsControls: Bool
