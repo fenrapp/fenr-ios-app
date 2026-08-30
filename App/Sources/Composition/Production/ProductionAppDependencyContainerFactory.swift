@@ -77,7 +77,11 @@ enum ProductionAppDependencyContainerFactory {
 
     private static func makeIncomingMapLinkStore() -> UserDefaultsIncomingMapLinkStore {
         (try? UserDefaultsIncomingMapLinkStore.shared())
-            ?? UserDefaultsIncomingMapLinkStore(userDefaults: .standard)
+            ?? UserDefaultsIncomingMapLinkStore(
+                userDefaults: .standard,
+                encoder: JSONEncoder(),
+                decoder: JSONDecoder()
+            )
     }
 
     private static func makeRideTripRepository() -> SwiftDataRideTripRepository {

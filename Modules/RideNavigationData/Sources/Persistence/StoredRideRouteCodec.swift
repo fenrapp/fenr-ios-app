@@ -7,14 +7,22 @@ public struct StoredRideRouteCodec: Sendable {
 
     public func encode(_ route: RideRoute) throws -> Data {
         let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
+        encoder.dateEncodingStrategy = .secondsSince1970
         return try encoder.encode(StoredRoute(route))
     }
 
     public func decode(_ data: Data) throws -> RideRoute {
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return try decoder.decode(StoredRoute.self, from: data).domain
+        decoder.dateDecodingStrategy = .secondsSince1970
+        let storedRoute: StoredRoute
+        do {
+            storedRoute = try decoder.decode(StoredRoute.self, from: data)
+        } catch {
+            let legacyDecoder = JSONDecoder()
+            legacyDecoder.dateDecodingStrategy = .iso8601
+            storedRoute = try legacyDecoder.decode(StoredRoute.self, from: data)
+        }
+        return try storedRoute.domain()
     }
 }
 
@@ -33,13 +41,13 @@ private struct StoredRoute: Codable {
         segments = route.segments.map(StoredSegment.init)
     }
 
-    var domain: RideRoute {
+    func domain() throws -> RideRoute {
         RideRoute(
             id: id,
             name: name,
             createdAt: createdAt,
             updatedAt: updatedAt,
-            segments: segments.map(\.domain)
+            segments: try segments.map { try $0.domain() }
         )
     }
 }
@@ -53,8 +61,8 @@ private struct StoredSegment: Codable {
         points = segment.points.map(StoredPoint.init)
     }
 
-    var domain: RideRouteSegment {
-        RideRouteSegment(id: id, points: points.compactMap(\.domain))
+    func domain() throws -> RideRouteSegment {
+        RideRouteSegment(id: id, points: try points.map { try $0.domain() })
     }
 }
 
@@ -73,11 +81,11 @@ private struct StoredPoint: Codable {
         horizontalAccuracyMeters = point.horizontalAccuracyMeters
     }
 
-    var domain: RideRoutePoint? {
+    func domain() throws -> RideRoutePoint {
         guard let coordinate = GeographicCoordinate(
             latitudeDegrees: latitude,
             longitudeDegrees: longitude
-        ) else { return nil }
+        ) else { throw StoredRideRouteDecodingError.invalidCoordinate }
         return RideRoutePoint(
             coordinate: coordinate,
             elevationMeters: elevationMeters,
@@ -85,4 +93,8 @@ private struct StoredPoint: Codable {
             horizontalAccuracyMeters: horizontalAccuracyMeters
         )
     }
+}
+
+private enum StoredRideRouteDecodingError: Error {
+    case invalidCoordinate
 }

@@ -31,8 +31,7 @@ public struct GPXRouteExporter: GPXRouteExporting, Sendable {
             xml += "    </trkseg>\n"
         }
         xml += "  </trk>\n</gpx>\n"
-        guard let data = xml.data(using: .utf8) else { throw GPXRouteExporterError.encodingFailed }
-        return data
+        return Data(xml.utf8)
     }
 
     private func escape(_ value: String) -> String {
@@ -43,8 +42,4 @@ public struct GPXRouteExporter: GPXRouteExporting, Sendable {
             .replacingOccurrences(of: "\"", with: "&quot;")
             .replacingOccurrences(of: "'", with: "&apos;")
     }
-}
-
-public enum GPXRouteExporterError: Error {
-    case encodingFailed
 }

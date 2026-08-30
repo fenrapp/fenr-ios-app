@@ -124,7 +124,11 @@ enum DebugAppDependencyContainerFactory {
 
     private static func makeIncomingMapLinkStore() -> UserDefaultsIncomingMapLinkStore {
         (try? UserDefaultsIncomingMapLinkStore.shared())
-            ?? UserDefaultsIncomingMapLinkStore(userDefaults: .standard)
+            ?? UserDefaultsIncomingMapLinkStore(
+                userDefaults: .standard,
+                encoder: JSONEncoder(),
+                decoder: JSONDecoder()
+            )
     }
 
     private static func launchValue(after flag: String, in arguments: [String]) -> String? {

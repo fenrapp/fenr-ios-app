@@ -558,7 +558,7 @@ extension RideNavigationViewModel {
         let gainedAccess = url.startAccessingSecurityScopedResource()
         defer { if gainedAccess { url.stopAccessingSecurityScopedResource() } }
         do {
-            let data = try Data(contentsOf: url)
+            let data = try Data(contentsOf: url, options: .mappedIfSafe)
             let fallbackName = url.deletingPathExtension().lastPathComponent
             let routes = try importer.importRoutes(from: data, fallbackName: fallbackName)
             guard let route = routes.first else { return }

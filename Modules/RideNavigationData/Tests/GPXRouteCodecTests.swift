@@ -22,7 +22,8 @@ struct GPXRouteCodecTests {
         let imported = try GPXRouteParser(
             now: { date },
             dateFormat: format,
-            fallbackDateFormat: .init()
+            fallbackDateFormat: .init(),
+            limits: .init(maximumFileSizeBytes: 1_000_000, maximumPointCount: 1_000)
         )
             .importRoutes(from: data, fallbackName: "Fallback")
         let decoded = try #require(imported.first)
@@ -32,6 +33,8 @@ struct GPXRouteCodecTests {
         #expect(decoded.name == route.name)
         #expect(decoded.segments.count == 2)
         #expect(decoded.points.count == 3)
+        #expect(decoded.points.allSatisfy { $0.elevationMeters == 100 })
+        #expect(decoded.points.allSatisfy { $0.timestamp == date })
     }
 
     @Test
@@ -45,11 +48,49 @@ struct GPXRouteCodecTests {
         let routes = try GPXRouteParser(
             now: { Date(timeIntervalSince1970: 1) },
             dateFormat: .init(includingFractionalSeconds: true),
-            fallbackDateFormat: .init()
+            fallbackDateFormat: .init(),
+            limits: .init(maximumFileSizeBytes: 1_000_000, maximumPointCount: 1_000)
         ).importRoutes(from: data, fallbackName: "Fallback")
 
         #expect(routes.first?.name == "Trail")
         #expect(routes.first?.points.count == 2)
+    }
+
+    @Test("Uses metadata name for an unnamed first route before explicit route names")
+    func usesMetadataNameForUnnamedFirstRoute() throws {
+        let data = Data(
+            #"""
+            <gpx version="1.1">
+              <metadata><name>Document</name></metadata>
+              <trk><trkseg><trkpt lat="41" lon="2"/></trkseg></trk>
+              <rte><name>Named</name><rtept lat="42" lon="3"/></rte>
+            </gpx>
+            """#.utf8
+        )
+
+        let routes = try RideNavigationDataFixtures.makeParser()
+            .importRoutes(from: data, fallbackName: "Imported")
+
+        #expect(routes.map(\.name) == ["Document", "Named"])
+    }
+
+    @Test("Does not shift metadata name past a named first route")
+    func usesIndexedFallbacksAfterNamedFirstRoute() throws {
+        let data = Data(
+            #"""
+            <gpx version="1.1">
+              <metadata><name>Document</name></metadata>
+              <trk><name>Primary</name><trkseg><trkpt lat="41" lon="2"/></trkseg></trk>
+              <rte><rtept lat="42" lon="3"/></rte>
+              <trk><trkseg><trkpt lat="43" lon="4"/></trkseg></trk>
+            </gpx>
+            """#.utf8
+        )
+
+        let routes = try RideNavigationDataFixtures.makeParser()
+            .importRoutes(from: data, fallbackName: "Imported")
+
+        #expect(routes.map(\.name) == ["Primary", "Imported 2", "Imported 3"])
     }
 
     private func point(_ latitude: Double, _ longitude: Double, _ date: Date) -> RideRoutePoint {
