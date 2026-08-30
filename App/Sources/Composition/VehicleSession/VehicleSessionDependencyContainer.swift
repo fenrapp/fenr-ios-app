@@ -32,7 +32,7 @@ enum VehicleSessionDependencyContainer {
             speedResolver: .init(
                 now: Date.init,
                 maximumAccuracyMetersPerSecond: Constants.maximumGPSAccuracyMetersPerSecond,
-                maximumSampleAge: FENRRuntimeConstants.RideDashboard.deviceSpeedMaximumSampleAge
+                maximumSampleAge: FENRRuntimeConstants.VehicleSession.locationSampleMaximumAge
             ),
             motionEstimator: .init(
                 profile: dependencies.imuProfile,
@@ -40,7 +40,7 @@ enum VehicleSessionDependencyContainer {
                 maximumSampleAge: Constants.maximumMotionSampleAge,
                 minimumGPSCourseSpeedKilometersPerHour: Constants.minimumGPSCourseSpeedKilometersPerHour,
                 maximumGPSCourseAccuracyDegrees: Constants.maximumGPSCourseAccuracyDegrees,
-                maximumLocationSampleAge: FENRRuntimeConstants.RideDashboard.deviceSpeedMaximumSampleAge
+                maximumLocationSampleAge: FENRRuntimeConstants.VehicleSession.locationSampleMaximumAge
             )
         )
     }

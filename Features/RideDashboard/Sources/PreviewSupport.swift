@@ -3,6 +3,7 @@ import ChargeControl
 import Foundation
 import RideSession
 import RideSessionDomain
+import RuntimeConfiguration
 import SettingsDomain
 import VehicleSession
 
@@ -15,7 +16,7 @@ enum RideDashboardPreviewFactory {
             cardLayoutMapper: DashboardCardLayoutMapper(),
             vehicleSession: PreviewVehicleSessionService(),
             initialConnectionStabilityPeriod: .zero,
-            reconnectionGracePeriod: .seconds(30)
+            reconnectionGracePeriod: FENRRuntimeConstants.RideDashboard.reconnectionGracePeriod
         )
         viewModel.setPreviewState(state)
         return viewModel

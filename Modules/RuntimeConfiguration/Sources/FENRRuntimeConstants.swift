@@ -13,8 +13,10 @@ public enum FENRRuntimeConstants {
 
     public enum RideDashboard {
         public static let reconnectionGracePeriod: Duration = .seconds(30)
-        public static let clockRefreshInterval: TimeInterval = 60
-        public static let deviceSpeedMaximumSampleAge: TimeInterval = 3
+    }
+
+    public enum VehicleSession {
+        public static let locationSampleMaximumAge: TimeInterval = 3
     }
 
     public enum BatteryHealth {
