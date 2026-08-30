@@ -847,7 +847,8 @@ targets:
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
   StarkProtocolTests:
     type: bundle.unit-test
-    platform: iOS
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
     sources:
       - path: Modules/StarkProtocol/Tests
     dependencies:
@@ -1474,6 +1475,7 @@ schemes:
     build:
       targets:
         FENRWatchDebug: all
+        StarkProtocolTests: [test]
         AsyncSupportTests: [test]
         BLETraceDomainTests: [test]
         BikeDomainTests: [test]
@@ -1485,6 +1487,7 @@ schemes:
         WatchOnboardingTests: [test]
     test:
       targets:
+        - StarkProtocolTests
         - AsyncSupportTests
         - BLETraceDomainTests
         - BikeDomainTests

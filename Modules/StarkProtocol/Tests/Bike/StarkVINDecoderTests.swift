@@ -1,3 +1,4 @@
+import Foundation
 import StarkProtocol
 import Testing
 
@@ -8,5 +9,12 @@ struct StarkVINDecoderTests {
         let payload = try StarkVINDecoder().decode(StarkProtocolFixtures.vinPadded)
 
         #expect(payload.value == StarkProtocolFixtures.referenceVIN)
+    }
+
+    @Test("Empty VIN payload reports required length")
+    func emptyVINPayload() {
+        #expect(throws: StarkProtocolError.payloadTooShort(expected: 1, actual: 0)) {
+            try StarkVINDecoder().decode(Data())
+        }
     }
 }

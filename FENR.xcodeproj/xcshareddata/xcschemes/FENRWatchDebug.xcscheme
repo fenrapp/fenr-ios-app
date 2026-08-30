@@ -113,6 +113,20 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C453FEFC1E038CB490AD2E39"
+               BuildableName = "StarkProtocolTests.xctest"
+               BlueprintName = "StarkProtocolTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "28F27724F8C61BA761C6C1E7"
                BuildableName = "TestSupportTests.xctest"
                BlueprintName = "TestSupportTests"
@@ -165,6 +179,17 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C453FEFC1E038CB490AD2E39"
+               BuildableName = "StarkProtocolTests.xctest"
+               BlueprintName = "StarkProtocolTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
          <TestableReference
             skipped = "NO"
             parallelizable = "NO">
