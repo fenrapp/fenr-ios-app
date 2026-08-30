@@ -1,3 +1,4 @@
+import Foundation
 import SettingsDomain
 import Testing
 
@@ -36,5 +37,14 @@ struct PowerModeNameTests {
     func comparesIgnoringCase() throws {
         #expect(try PowerModeName("Eco").matchesIgnoringCase(PowerModeName("ECO")))
         #expect(try !PowerModeName("Eco").matchesIgnoringCase(PowerModeName("Enduro")))
+    }
+
+    @Test("Revalidates persisted names while decoding")
+    func revalidatesPersistedNames() {
+        let data = Data(#"{"value":"ECO MODE"}"#.utf8)
+
+        #expect(throws: PowerModeNameValidationError.invalidCharacters) {
+            try JSONDecoder().decode(PowerModeName.self, from: data)
+        }
     }
 }

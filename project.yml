@@ -949,6 +949,17 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.chargecontrol.tests
+  SettingsDomainTests:
+    type: bundle.unit-test
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
+    sources:
+      - path: Modules/SettingsDomain/Tests
+    dependencies:
+      - target: SettingsDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.settingsdomain.tests
   SettingsDataTests:
     type: bundle.unit-test
     platform: iOS
@@ -1368,6 +1379,7 @@ schemes:
         BikeDataTests: [test]
         BikeEmulatorTests: [test]
         ChargeControlTests: [test]
+        SettingsDomainTests: [test]
         SettingsDataTests: [test]
         EnvironmentDomainTests: [test]
         EnvironmentDataTests: [test]
@@ -1404,6 +1416,7 @@ schemes:
         - BikeDataTests
         - BikeEmulatorTests
         - ChargeControlTests
+        - SettingsDomainTests
         - SettingsDataTests
         - EnvironmentDomainTests
         - EnvironmentDataTests
@@ -1464,6 +1477,7 @@ schemes:
         AsyncSupportTests: [test]
         BLETraceDomainTests: [test]
         EnvironmentDomainTests: [test]
+        SettingsDomainTests: [test]
         TestSupportTests: [test]
         MeasurementPresentationTests: [test]
         WatchDashboardTests: [test]
@@ -1473,6 +1487,7 @@ schemes:
         - AsyncSupportTests
         - BLETraceDomainTests
         - EnvironmentDomainTests
+        - SettingsDomainTests
         - TestSupportTests
         - MeasurementPresentationTests
         - WatchDashboardTests

@@ -81,6 +81,7 @@ struct AppSettingsViewModelTests {
         )
         #expect(!viewModel.viewState.showsDashboardTemperatures)
         #expect(viewModel.viewState.measurementSystem.options.map(\.title) == ["System", "Metric", "Imperial"])
+        #expect(viewModel.viewState.batteryCapacity.options.map(\.title) == ["6.8 kWh", "7.2 kWh"])
 
         viewModel.selectSpeedSource(id: SpeedSource.motorcycle.rawValue)
         #expect(viewModel.viewState.speedSource.locationPermission == nil)

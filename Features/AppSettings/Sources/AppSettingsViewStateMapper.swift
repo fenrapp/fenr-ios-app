@@ -57,7 +57,7 @@ public struct AppSettingsViewStateMapper: Sendable {
             batteryCapacity: .init(
                 selectedID: settings.batteryPackCapacity(forVIN: profile?.vin).rawValue,
                 options: BatteryPackCapacity.allCases.map {
-                    .init(id: $0.rawValue, title: $0.displayName)
+                    .init(id: $0.rawValue, title: batteryPackCapacityTitle($0))
                 }
             ),
             powerTier: powerTier(
@@ -188,6 +188,13 @@ public struct AppSettingsViewStateMapper: Sendable {
         case .system: "System"
         case .metric: "Metric"
         case .imperial: "Imperial"
+        }
+    }
+
+    private func batteryPackCapacityTitle(_ capacity: BatteryPackCapacity) -> String {
+        switch capacity {
+        case .sixPointEightKilowattHours: "6.8 kWh"
+        case .sevenPointTwoKilowattHours: "7.2 kWh"
         }
     }
 
