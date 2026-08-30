@@ -652,6 +652,7 @@
 		5A200940CAE40B829F7A24DD /* BikeIndicatorState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FEEC2A80C6D267926F370B1 /* BikeIndicatorState.swift */; };
 		5A2DF8FFCEAE5D0F6403A1F8 /* RideNavigationViewState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C45153F3F8D10374BD8B704E /* RideNavigationViewState.swift */; };
 		5A3162E08B7413D3E6CB45EE /* DashboardEfficiencyLiveCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBE7848C2C9D0B58C214582E /* DashboardEfficiencyLiveCard.swift */; };
+		5A53FA7B21C3808DB20F78A7 /* VehicleMeasurementTextFormatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88DEB72E059B3D0DB41D215 /* VehicleMeasurementTextFormatterTests.swift */; };
 		5A580ED170C996E39A7E6EC0 /* RideHistoryDetailHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F20996BB35879A4D82CFE51 /* RideHistoryDetailHeader.swift */; };
 		5A7561FF2C4D284868DF1AF4 /* BikeDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66791CC3437C3C3CF15B7DC3 /* BikeDomain.framework */; };
 		5A8BF53A7A6C0383755E7B9F /* RideNavigationDomain.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C07FD07C532857FBA34412EE /* RideNavigationDomain.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -1066,6 +1067,7 @@
 		962358273E802F2A04247AE2 /* DashboardProgressBarViewData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAFD6551D05410E502603E97 /* DashboardProgressBarViewData.swift */; };
 		9695B7FE02EC583979A1F521 /* OnboardingRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B9C3292DA01093C062264F /* OnboardingRepository.swift */; };
 		96B69396BCEFD4F87A258462 /* RideHistory.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E0D071982753DF101F1F6A7C /* RideHistory.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		96BF656D7498E42E51545F1B /* VehicleMeasurement.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C76E9CBE73ED888FE36124 /* VehicleMeasurement.swift */; };
 		96FFBCDB6BD1400FA2B00321 /* DesignSystem.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A1B178C8151F119B97D8663 /* DesignSystem.framework */; };
 		972E38D336AA1F88398B4391 /* VehicleSessionDependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1DC0B2345D0E51FAA60364A /* VehicleSessionDependencyContainer.swift */; };
 		974A9E66AABDFD269E18C7EF /* TestSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1D674CFDAA4FD88EF70612B /* TestSupport.framework */; };
@@ -5628,6 +5630,7 @@
 		A0441E4ED2E1BD12D61371B9 /* RideHistorySelectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideHistorySelectionState.swift; sourceTree = "<group>"; };
 		A07B0DABA80EDA50CD73DFE6 /* ObserveBikeBatteryHealthUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObserveBikeBatteryHealthUseCase.swift; sourceTree = "<group>"; };
 		A0BEA5C50DE555E6423D7A16 /* ConnectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionState.swift; sourceTree = "<group>"; };
+		A0C76E9CBE73ED888FE36124 /* VehicleMeasurement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleMeasurement.swift; sourceTree = "<group>"; };
 		A144C59C7B2202540E48508C /* BikeLiveActivityPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeLiveActivityPresentation.swift; sourceTree = "<group>"; };
 		A174BE3C35080E97ECD653A4 /* StarkBatteryTemperaturesPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkBatteryTemperaturesPayload.swift; sourceTree = "<group>"; };
 		A1D674CFDAA4FD88EF70612B /* TestSupport.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = TestSupport.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -5894,6 +5897,7 @@
 		D811D696B23A7D6BFD721766 /* VehicleMotionCalibrationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleMotionCalibrationStore.swift; sourceTree = "<group>"; };
 		D8478128B6DD1E19FD42EE5A /* AppleExternalMapLinkResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleExternalMapLinkResolverTests.swift; sourceTree = "<group>"; };
 		D86761FCE3404D310D46B6C4 /* RideSessionSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideSessionSnapshotTests.swift; sourceTree = "<group>"; };
+		D88DEB72E059B3D0DB41D215 /* VehicleMeasurementTextFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleMeasurementTextFormatterTests.swift; sourceTree = "<group>"; };
 		D92D4A878D1B2004CD1E6AF2 /* AppSettingsViewStateMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsViewStateMapper.swift; sourceTree = "<group>"; };
 		D9AA12D960569D2077BC78C8 /* BikeConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeConnection.swift; sourceTree = "<group>"; };
 		D9B76714B523FEEFE0901CCF /* BikeTelemetryToBadgesMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeTelemetryToBadgesMapper.swift; sourceTree = "<group>"; };
@@ -8124,7 +8128,6 @@
 				18C4B86F5E39810EF0DE8514 /* BikeLockSetupView.swift */,
 				98EFDECF3B356222EBA10F28 /* DashboardBikeLockCard.swift */,
 				3407C29702AEECF6A0929107 /* DashboardBikeLockStatusBadge.swift */,
-				A3BC47688117460C80F94ED7 /* Components */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -9731,6 +9734,7 @@
 		947E31208FDE89A8787F8E8F /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				A0C76E9CBE73ED888FE36124 /* VehicleMeasurement.swift */,
 				D667DA9F82333D7B649058C1 /* VehicleMeasurementMapper.swift */,
 				97899678ADFFC62E4039A64C /* VehicleMeasurementTextFormatter.swift */,
 			);
@@ -9950,13 +9954,6 @@
 				149B01661953FE9D43E8AB13 /* Tests */,
 			);
 			path = BikeSDK;
-			sourceTree = "<group>";
-		};
-		A3BC47688117460C80F94ED7 /* Components */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Components;
 			sourceTree = "<group>";
 		};
 		A3DF07C440925EFB0701B2D8 /* Tests */ = {
@@ -11708,6 +11705,7 @@
 			isa = PBXGroup;
 			children = (
 				6F5932834C6421FC80DD7804 /* VehicleMeasurementMapperTests.swift */,
+				D88DEB72E059B3D0DB41D215 /* VehicleMeasurementTextFormatterTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -14855,6 +14853,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				96BF656D7498E42E51545F1B /* VehicleMeasurement.swift in Sources */,
 				E95C0E165D2B1F5BB80EB140 /* VehicleMeasurementMapper.swift in Sources */,
 				58FD1DC3F1169B1FD5FFCE41 /* VehicleMeasurementTextFormatter.swift in Sources */,
 			);
@@ -15588,6 +15587,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D55231F18AEAECE591D6F346 /* VehicleMeasurementMapperTests.swift in Sources */,
+				5A53FA7B21C3808DB20F78A7 /* VehicleMeasurementTextFormatterTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -17885,8 +17885,12 @@
 					"@loader_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.fenr.measurementpresentation.tests;
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator watchos watchsimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2,4";
 			};
 			name = Release;
 		};
@@ -20292,8 +20296,12 @@
 					"@loader_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.fenr.measurementpresentation.tests;
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator watchos watchsimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2,4";
 			};
 			name = Debug;
 		};

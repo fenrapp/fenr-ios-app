@@ -26,16 +26,24 @@ public struct VehicleMeasurementTextFormatter: Sendable {
         fractionDigits: Int = 1,
         minimumFractionDigits: Int = 0
     ) -> String {
-        value.formatted(
+        let precision = normalizedFractionPrecision(
+            maximumFractionDigits: fractionDigits,
+            minimumFractionDigits: minimumFractionDigits
+        )
+        return value.formatted(
             .number
                 .locale(locale)
-                .precision(.fractionLength(minimumFractionDigits ... fractionDigits))
+                .precision(.fractionLength(precision))
         )
     }
 
     public func percentage(_ value: Int, fractionDigits: Int = 0) -> String {
-        (Double(value) / Constants.percentDivisor).formatted(
-            .percent.precision(.fractionLength(fractionDigits)).locale(locale)
+        let precision = normalizedFractionPrecision(
+            maximumFractionDigits: fractionDigits,
+            minimumFractionDigits: 0
+        )
+        return (Double(value) / Constants.percentDivisor).formatted(
+            .percent.precision(.fractionLength(precision)).locale(locale)
         )
     }
 
@@ -46,23 +54,36 @@ public struct VehicleMeasurementTextFormatter: Sendable {
     ) -> String {
         string(
             value,
-            unit: "V",
+            unit: UnitElectricPotentialDifference.volts.symbol,
             fractionDigits: fractionDigits,
             minimumFractionDigits: minimumFractionDigits
         )
     }
 
     public func current(_ value: Double, fractionDigits: Int = 1) -> String {
-        string(value, unit: "A", fractionDigits: fractionDigits)
+        string(
+            value,
+            unit: UnitElectricCurrent.amperes.symbol,
+            fractionDigits: fractionDigits
+        )
     }
 
     public func power(_ watts: Double, fractionDigits: Int = 1) -> String {
         let isKilowatts = abs(watts) >= Constants.wattsPerKilowatt
         return string(
             isKilowatts ? watts / Constants.wattsPerKilowatt : watts,
-            unit: isKilowatts ? "kW" : "W",
+            unit: isKilowatts ? UnitPower.kilowatts.symbol : UnitPower.watts.symbol,
             fractionDigits: fractionDigits
         )
+    }
+
+    private func normalizedFractionPrecision(
+        maximumFractionDigits: Int,
+        minimumFractionDigits: Int
+    ) -> ClosedRange<Int> {
+        let maximum = max(0, maximumFractionDigits)
+        let minimum = min(max(0, minimumFractionDigits), maximum)
+        return minimum ... maximum
     }
 
     private func string(

@@ -1074,7 +1074,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.designsystem.tests
   MeasurementPresentationTests:
     type: bundle.unit-test
-    platform: iOS
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
     sources:
       - path: Modules/MeasurementPresentation/Tests
     dependencies:
@@ -1437,11 +1438,13 @@ schemes:
         FENRWatchDebug: all
         AsyncSupportTests: [test]
         TestSupportTests: [test]
+        MeasurementPresentationTests: [test]
         WatchDashboardTests: [test]
         WatchOnboardingTests: [test]
     test:
       targets:
         - AsyncSupportTests
         - TestSupportTests
+        - MeasurementPresentationTests
         - WatchDashboardTests
         - WatchOnboardingTests

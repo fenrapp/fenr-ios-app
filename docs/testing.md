@@ -52,6 +52,21 @@ xcodebuild -project FENR.xcodeproj -scheme FENRWatchDebug \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test
 ```
 
+The debug Watch app starts in the emulator's charging scenario. After building,
+use the Watch simulator UDID reported by `xcrun simctl list devices available`
+to launch the default or an explicit dashboard scenario. Unknown or malformed
+scenario values also fall back to charging.
+
+```sh
+FENR_WATCH_SIMULATOR_ID='<watch-simulator-udid>'
+xcrun simctl launch --terminate-running-process \
+  "$FENR_WATCH_SIMULATOR_ID" com.fenr.watch.debug
+xcrun simctl launch --terminate-running-process \
+  "$FENR_WATCH_SIMULATOR_ID" com.fenr.watch.debug -debugScenario=riding
+xcrun simctl launch --terminate-running-process \
+  "$FENR_WATCH_SIMULATOR_ID" com.fenr.watch.debug -debugScenario=charging
+```
+
 Before handoff, validate both production release schemes without signing:
 
 ```sh
