@@ -14,6 +14,8 @@ struct RideNavigationMiniModeTests {
         let fixture = RideNavigationViewModelFixture(routes: [context.route])
         await start(context.route, at: context.start, fixture: fixture)
 
+        fixture.viewModel.setMapStyle(MapSourceDescriptor.appleHybrid.id)
+        fixture.viewModel.setMapHeadingUp(false)
         fixture.viewModel.setPresentationMode(.mini)
         await fixture.deviceSpeedRepository.send(
             deviceSpeedSample(next, seconds: 5, courseDegrees: 90)
@@ -25,7 +27,14 @@ struct RideNavigationMiniModeTests {
         #expect(fixture.viewModel.miniViewState.mapScene.polylines.contains {
             $0.role == .completed && $0.points.count >= 2
         })
-        #expect(fixture.viewModel.miniViewState.mapScene.displayStyle == .focus)
+        #expect(fixture.viewModel.miniViewState.mapScene.displayStyle == .map)
+        #expect(fixture.viewModel.miniViewState.mapScene.source == .appleHybrid)
+        guard case .follow(_, let heading) = fixture.viewModel.miniViewState.mapScene.camera else {
+            Issue.record("Mini navigation should keep the selected follow orientation")
+            fixture.viewModel.stop()
+            return
+        }
+        #expect(heading == nil)
         #expect(fixture.viewModel.miniViewState.mapScene.markers.isEmpty)
 
         let position = RideNavigationMiniViewState.Position(
@@ -33,18 +42,18 @@ struct RideNavigationMiniModeTests {
             verticalFraction: 0.98
         )
         fixture.viewModel.setMiniMapPosition(position)
-        fixture.viewModel.setMiniMapScale(1.3)
+        fixture.viewModel.setMiniMapScale(1.5)
         fixture.viewModel.toggleMiniMapLayoutOrientation()
         #expect(await waitUntil {
             let settings = await fixture.settingsRepository.load().rideNavigation
             return settings.miniMapPosition.horizontalFraction == 0.02
                 && settings.miniMapPosition.verticalFraction == 0.98
-                && settings.miniMapScale.value == 1.3
+                && settings.miniMapScale.value == 1.5
                 && settings.miniMapLayoutOrientation == .landscape
         })
         #expect(fixture.viewModel.miniViewState.position == position)
-        #expect(fixture.viewModel.miniViewState.scale == 1.3)
-        #expect(fixture.viewModel.miniViewState.scaleRange == 0.7 ... 1.3)
+        #expect(fixture.viewModel.miniViewState.scale == 1.5)
+        #expect(fixture.viewModel.miniViewState.scaleRange == 0.5 ... 1.5)
         #expect(fixture.viewModel.miniViewState.isLandscape)
         fixture.viewModel.stop()
     }
@@ -53,7 +62,7 @@ struct RideNavigationMiniModeTests {
     func miniMapLayoutRespectsScreenMargins() {
         let layout = RideNavigationMiniView.MiniMapLayout(
             containerSize: CGSize(width: 900, height: 400),
-            scale: 1.3,
+            scale: 1.5,
             isLandscape: false
         )
         let topLeading = layout.position(for: .init(horizontalFraction: 0, verticalFraction: 0))
@@ -69,18 +78,34 @@ struct RideNavigationMiniModeTests {
     func miniMapLayoutRotatesAndScales() {
         let compact = RideNavigationMiniView.MiniMapLayout(
             containerSize: CGSize(width: 900, height: 400),
-            scale: 0.7,
+            scale: 0.5,
             isLandscape: false
         )
         let expanded = RideNavigationMiniView.MiniMapLayout(
             containerSize: CGSize(width: 900, height: 400),
-            scale: 1.3,
+            scale: 1.5,
             isLandscape: true
         )
 
         #expect(compact.cardSize.height > compact.cardSize.width)
         #expect(expanded.cardSize.width > expanded.cardSize.height)
         #expect(expanded.cardSize.width > compact.cardSize.width)
+    }
+
+    @Test("mini map drag preserves the original pickup point")
+    func miniMapDragUsesTranslationFromItsRestingPosition() {
+        let layout = RideNavigationMiniView.MiniMapLayout(
+            containerSize: CGSize(width: 900, height: 400),
+            scale: 1,
+            isLandscape: true
+        )
+        let origin = CGPoint(x: 400, y: 220)
+        let translated = layout.translatedPosition(
+            from: origin,
+            by: CGSize(width: 75, height: -30)
+        )
+
+        #expect(translated == CGPoint(x: 475, y: 190))
     }
 
     @Test("an automatic trail arrival remains compact until expanded")
