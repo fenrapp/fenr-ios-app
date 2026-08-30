@@ -342,6 +342,19 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.dashboardcardsettings
+  BikeLockSettings:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Features/BikeLockSettings/Sources
+    dependencies:
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: VehicleSession
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikelocksettings
   PowerModeSettings:
     type: framework
     platform: iOS
@@ -504,6 +517,7 @@ targets:
       - target: ChargeControl
       - target: AppSettings
       - target: DashboardCardSettings
+      - target: BikeLockSettings
       - target: PowerModeSettings
       - target: RideHistory
       - target: RideNavigation
@@ -639,6 +653,7 @@ targets:
       - target: ChargeControl
       - target: AppSettings
       - target: DashboardCardSettings
+      - target: BikeLockSettings
       - target: PowerModeSettings
       - target: RideHistory
       - target: RideNavigation
@@ -1175,6 +1190,20 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.dashboardcardsettings.tests
+  BikeLockSettingsTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Features/BikeLockSettings/Tests
+    dependencies:
+      - target: BikeLockSettings
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: VehicleSession
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikelocksettings.tests
   PowerModeSettingsTests:
     type: bundle.unit-test
     platform: iOS
@@ -1229,6 +1258,7 @@ targets:
       - target: MeasurementPresentation
       - target: AppSettings
       - target: DashboardCardSettings
+      - target: BikeLockSettings
       - target: PowerModeSettings
       - target: RideHistory
       - target: RideNavigation
@@ -1271,6 +1301,7 @@ targets:
       - target: BLETraceDomain
       - target: AppSettings
       - target: DashboardCardSettings
+      - target: BikeLockSettings
       - target: PowerModeSettings
       - target: RideHistory
       - target: RideNavigation
@@ -1330,6 +1361,7 @@ schemes:
         BatteryHealthTests: [test]
         AppSettingsTests: [test]
         DashboardCardSettingsTests: [test]
+        BikeLockSettingsTests: [test]
         PowerModeSettingsTests: [test]
         RideHistoryTests: [test]
         TestSupportTests: [test]
@@ -1362,6 +1394,7 @@ schemes:
         - BatteryHealthTests
         - AppSettingsTests
         - DashboardCardSettingsTests
+        - BikeLockSettingsTests
         - PowerModeSettingsTests
         - RideHistoryTests
         - FENRTests

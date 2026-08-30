@@ -2,6 +2,7 @@ import AppSettings
 import BatteryHealth
 import BikeDiagnostics
 import BikeDomain
+import BikeLockSettings
 import BikeOnboarding
 import BLETraceDomain
 import ChargeControl
@@ -171,6 +172,7 @@ struct AppDependencyContainer {
         return AppRootDependencies(
             diagnosticsViewModel: makeBikeDiagnosticsViewModel(session: session),
             batteryHealthViewModel: makeBatteryHealthViewModel(session: session),
+            bikeLockSettingsViewModel: makeBikeLockSettingsViewModel(),
             rideDashboardFactory: rideDashboardFactory,
             onboardingViewModel: makeOnboardingViewModel { vin in
                 setupFlow.complete(vin: vin)
@@ -195,6 +197,19 @@ struct AppDependencyContainer {
                 bleTraceStoragePreparer: bleTraceLogRepository
             ),
             interfaceOrientationController: .shared
+        )
+    }
+
+    func makeBikeLockSettingsViewModel() -> BikeLockSettingsViewModel {
+        BikeLockSettingsViewModel(
+            vehicleSession: vehicleSession,
+            capabilityStore: bikeLockCapabilityStore,
+            credentialStore: bikeLockCredentialStore,
+            authenticator: bikeLockAuthenticator,
+            updateSecurity: UpdateBikeLockSecurityUseCase(
+                repository: settingsRepository,
+                credentialStore: bikeLockCredentialStore
+            )
         )
     }
 

@@ -7,6 +7,8 @@ public struct AppSettingsView: View {
     private let onOpenDashboardCards: () -> Void
     private let onOpenPowerModes: () -> Void
     private let onOpenRideHistory: () -> Void
+    private let bikeLockModeTitle: String?
+    private let onOpenBikeLock: () -> Void
     private let accessory: () -> AnyView
 
     public init(
@@ -15,6 +17,8 @@ public struct AppSettingsView: View {
         onOpenDashboardCards: @escaping () -> Void = {},
         onOpenPowerModes: @escaping () -> Void = {},
         onOpenRideHistory: @escaping () -> Void = {},
+        bikeLockModeTitle: String? = nil,
+        onOpenBikeLock: @escaping () -> Void = {},
         accessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
         self.viewModel = viewModel
@@ -22,6 +26,8 @@ public struct AppSettingsView: View {
         self.onOpenDashboardCards = onOpenDashboardCards
         self.onOpenPowerModes = onOpenPowerModes
         self.onOpenRideHistory = onOpenRideHistory
+        self.bikeLockModeTitle = bikeLockModeTitle
+        self.onOpenBikeLock = onOpenBikeLock
         self.accessory = accessory
     }
 
@@ -119,6 +125,12 @@ public struct AppSettingsView: View {
                     state: viewModel.viewState.powerModes,
                     action: onOpenPowerModes
                 )
+                if let bikeLockModeTitle {
+                    Button(action: onOpenBikeLock) {
+                        LabeledContent("Bike Lock", value: bikeLockModeTitle)
+                    }
+                    .foregroundStyle(.primary)
+                }
             }
 
             Section("Rides") {
