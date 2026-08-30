@@ -35,7 +35,7 @@ func makeBLETraceDataTestContext(
         ),
         fileManager: .default,
         lineEncoder: BLETraceJSONLineEncoder(),
-        sessionHub: AsyncEventHub(replaysLatestValue: true),
+        sessionHub: AsyncEventHub(bufferingPolicy: .bufferingNewest(1), replaysLatestValue: true),
         now: now,
         uptimeNanoseconds: { 200_000_000_000 }
     )

@@ -24,7 +24,7 @@ struct BLETraceDependencyContainer {
                 configuration: BLETraceFileStoreConfiguration(),
                 fileManager: fileManager,
                 lineEncoder: BLETraceJSONLineEncoder(),
-                sessionHub: AsyncEventHub(replaysLatestValue: true),
+                sessionHub: AsyncEventHub(bufferingPolicy: .bufferingNewest(1), replaysLatestValue: true),
                 now: Date.init,
                 uptimeNanoseconds: { DispatchTime.now().uptimeNanoseconds }
             )

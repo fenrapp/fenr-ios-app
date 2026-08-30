@@ -858,7 +858,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.protocol.tests
   AsyncSupportTests:
     type: bundle.unit-test
-    platform: iOS
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
     sources:
       - path: Modules/AsyncSupport/Tests
     dependencies:
@@ -1433,9 +1434,11 @@ schemes:
     build:
       targets:
         FENRWatchDebug: all
+        AsyncSupportTests: [test]
         WatchDashboardTests: [test]
         WatchOnboardingTests: [test]
     test:
       targets:
+        - AsyncSupportTests
         - WatchDashboardTests
         - WatchOnboardingTests

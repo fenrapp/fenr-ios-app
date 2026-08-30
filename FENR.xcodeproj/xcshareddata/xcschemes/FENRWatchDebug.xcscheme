@@ -8,6 +8,20 @@
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C4CF7DCAF8635785666B76B1"
+               BuildableName = "AsyncSupportTests.xctest"
+               BlueprintName = "AsyncSupportTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
             buildForRunning = "YES"
             buildForProfiling = "YES"
             buildForArchiving = "YES"
@@ -65,6 +79,17 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C4CF7DCAF8635785666B76B1"
+               BuildableName = "AsyncSupportTests.xctest"
+               BlueprintName = "AsyncSupportTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
          <TestableReference
             skipped = "NO"
             parallelizable = "NO">

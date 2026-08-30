@@ -11,16 +11,33 @@ public enum BikeEmulatorRepositoryFactory {
             powerModePreset: powerModePreset,
             activeMapNumber: activeMap,
             channels: BikeEmulatorChannels(
-                telemetry: BikeEmulatorEventHub<BikeTelemetry>(replaysLatestValue: true),
-                connection: BikeEmulatorEventHub<BikeConnection>(replaysLatestValue: true),
-                imu: BikeEmulatorEventHub<BikeIMUSample>(replaysLatestValue: false),
-                debugEvent: BikeEmulatorEventHub<BikeDebugEvent>(replaysLatestValue: true),
-                batteryHealth: BikeEmulatorEventHub<BikeBatteryHealth>(replaysLatestValue: true),
+                telemetry: makeStateEventHub(),
+                connection: makeStateEventHub(),
+                imu: makeStateEventHub(replaysLatestValue: false),
+                debugEvent: BikeEmulatorEventHub(
+                    bufferingPolicy: .bufferingNewest(Buffering.debugEventLimit),
+                    replaysLatestValue: true
+                ),
+                batteryHealth: makeStateEventHub(),
                 capture: BikeEmulatorCaptureHub(),
-                discoveredBikes: BikeEmulatorEventHub<[DiscoveredBike]>(replaysLatestValue: true)
+                discoveredBikes: makeStateEventHub()
             ),
             powerCalculator: BikePowerTelemetryCalculator()
         )
+    }
+
+    private static func makeStateEventHub<Value: Sendable>(
+        replaysLatestValue: Bool = true
+    ) -> BikeEmulatorEventHub<Value> {
+        BikeEmulatorEventHub(
+            bufferingPolicy: .bufferingNewest(Buffering.stateEventLimit),
+            replaysLatestValue: replaysLatestValue
+        )
+    }
+
+    private enum Buffering {
+        static let stateEventLimit = 1
+        static let debugEventLimit = 128
     }
 }
 
