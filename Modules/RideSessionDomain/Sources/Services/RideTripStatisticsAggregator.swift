@@ -9,16 +9,13 @@ public struct RideTripStatisticsAggregator: Sendable {
         var maximumSpeed = 0.0
 
         for trip in trips {
-            totalDistance += max(trip.distanceKilometers, .zero)
-            totalElapsed += max(trip.elapsedSeconds, .zero)
-            maximumSpeed = max(maximumSpeed, trip.maximumSpeedKilometersPerHour)
+            totalDistance += normalized(trip.distanceKilometers)
+            totalElapsed += normalized(trip.elapsedSeconds)
+            maximumSpeed = max(maximumSpeed, normalized(trip.maximumSpeedKilometersPerHour))
 
-            let sampleDuration = effectiveSampleDuration(for: trip)
-            totalSpeedSampleDuration += sampleDuration
-            totalSpeedIntegral += effectiveSpeedIntegral(
-                for: trip,
-                sampleDuration: sampleDuration
-            )
+            let speedObservation = speedObservation(for: trip)
+            totalSpeedSampleDuration += speedObservation.duration
+            totalSpeedIntegral += speedObservation.integral
         }
 
         return RideTripStatistics(
@@ -32,22 +29,37 @@ public struct RideTripStatisticsAggregator: Sendable {
         )
     }
 
-    private func effectiveSampleDuration(for trip: RideTrip) -> Double {
-        if trip.speedSampleDurationSeconds > .zero {
-            return trip.speedSampleDurationSeconds
-        }
-        return trip.averageSpeedKilometersPerHour > .zero
-            ? max(trip.elapsedSeconds, .zero)
-            : .zero
+    private func normalized(_ value: Double) -> Double {
+        guard value.isFinite, value >= .zero else { return .zero }
+        return value
     }
 
-    private func effectiveSpeedIntegral(
-        for trip: RideTrip,
-        sampleDuration: Double
-    ) -> Double {
-        if trip.speedSampleDurationSeconds > .zero {
-            return max(trip.accumulatedSpeedKilometersPerHourSeconds, .zero)
+    private func speedObservation(for trip: RideTrip) -> SpeedObservation {
+        let recordedDuration = trip.speedSampleDurationSeconds
+        if recordedDuration > .zero {
+            guard recordedDuration.isFinite,
+                  trip.accumulatedSpeedKilometersPerHourSeconds.isFinite,
+                  trip.accumulatedSpeedKilometersPerHourSeconds >= .zero else { return .zero }
+            return .init(
+                duration: recordedDuration,
+                integral: trip.accumulatedSpeedKilometersPerHourSeconds
+            )
         }
-        return max(trip.averageSpeedKilometersPerHour, .zero) * sampleDuration
+
+        guard recordedDuration == .zero,
+              trip.elapsedSeconds.isFinite,
+              trip.elapsedSeconds >= .zero,
+              trip.averageSpeedKilometersPerHour.isFinite,
+              trip.averageSpeedKilometersPerHour >= .zero else { return .zero }
+        let integral = trip.averageSpeedKilometersPerHour * trip.elapsedSeconds
+        guard integral.isFinite else { return .zero }
+        return .init(duration: trip.elapsedSeconds, integral: integral)
+    }
+
+    private struct SpeedObservation {
+        let duration: Double
+        let integral: Double
+
+        static let zero = Self(duration: .zero, integral: .zero)
     }
 }

@@ -133,7 +133,7 @@ public struct RideTrip: Equatable, Identifiable, Sendable {
         speedKilometersPerHour: Double?
     ) -> Self {
         guard endedAt == nil, !isPaused else { return self }
-        let effectiveDate = max(date, startedAt)
+        let effectiveDate = max(max(date, startedAt), updatedAt)
         let currentOdometer = validOdometer(odometerKilometers)
         let rebasedOdometer = rebasedStartingOdometer(from: currentOdometer)
         let startingOdometer = rebasedOdometer
@@ -209,6 +209,7 @@ public struct RideTrip: Equatable, Identifiable, Sendable {
     }
 
     public func completed(at date: Date) -> Self {
+        guard endedAt == nil else { return self }
         let completionDate = max(date, updatedAt)
         let updated = isPaused
             ? self

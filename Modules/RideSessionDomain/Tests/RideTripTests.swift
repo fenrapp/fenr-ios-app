@@ -274,3 +274,57 @@ struct RideTripTests {
         #expect(!trip.isEfficiencyEligibleForHistory)
     }
 }
+
+extension RideTripTests {
+    @Test("Keeps weighted speed time monotonic when a stale sample arrives")
+    func ignoresStaleSampleTime() {
+        let startedAt = Date(timeIntervalSince1970: 1_000)
+        let initialSample = RideTrip(
+            vehicleIdentity: .vin("FENRTEST000000001"),
+            applicationSessionID: UUID(),
+            startedAt: startedAt
+        ).updating(
+            at: startedAt,
+            odometerKilometers: nil,
+            speedKilometersPerHour: 20
+        )
+        let currentSample = initialSample.updating(
+            at: startedAt.addingTimeInterval(10),
+            odometerKilometers: nil,
+            speedKilometersPerHour: 40
+        )
+        let staleSample = currentSample.updating(
+            at: startedAt.addingTimeInterval(5),
+            odometerKilometers: nil,
+            speedKilometersPerHour: 60
+        )
+        let nextSample = staleSample.updating(
+            at: startedAt.addingTimeInterval(20),
+            odometerKilometers: nil,
+            speedKilometersPerHour: 80
+        )
+
+        #expect(staleSample.updatedAt == currentSample.updatedAt)
+        #expect(staleSample.elapsedSeconds == 10)
+        #expect(staleSample.speedSampleDurationSeconds == 10)
+        #expect(staleSample.accumulatedSpeedKilometersPerHourSeconds == 200)
+        #expect(nextSample.elapsedSeconds == 20)
+        #expect(nextSample.speedSampleDurationSeconds == 20)
+        #expect(nextSample.accumulatedSpeedKilometersPerHourSeconds == 800)
+        #expect(nextSample.averageSpeedKilometersPerHour == 40)
+    }
+
+    @Test("Completing an already completed trip is idempotent")
+    func completionIsIdempotent() {
+        let startedAt = Date(timeIntervalSince1970: 1_000)
+        let completed = RideTrip(
+            vehicleIdentity: .vin("FENRTEST000000001"),
+            applicationSessionID: UUID(),
+            startedAt: startedAt
+        ).completed(at: startedAt.addingTimeInterval(30))
+
+        let completedAgain = completed.completed(at: startedAt.addingTimeInterval(90))
+
+        #expect(completedAgain == completed)
+    }
+}
