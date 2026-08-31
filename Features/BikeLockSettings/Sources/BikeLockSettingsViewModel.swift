@@ -13,11 +13,14 @@ public final class BikeLockSettingsViewModel: ObservableObject {
     private let credentialStore: any BikeLockCredentialStoring
     private let authenticator: any BikeLockAuthenticating
     private let updateSecurity: UpdateBikeLockSecurityUseCase
-    private var snapshot = VehicleSessionSnapshot()
+    private let mapper: BikeLockSettingsViewStateMapper
+    private var activeVIN: String?
+    private var settings = AppSettings()
     private var capability = BikeLockCapabilityState()
     private var observationTask: Task<Void, Never>?
     private var capabilityTask: Task<Void, Never>?
     private var operationTask: Task<Void, Never>?
+    private var operationGeneration = 0
     private var actionAfterAuthentication: BikeLockSettingsDestination?
 
     public init(
@@ -25,13 +28,15 @@ public final class BikeLockSettingsViewModel: ObservableObject {
         capabilityStore: any BikeLockCapabilityStateStoring,
         credentialStore: any BikeLockCredentialStoring,
         authenticator: any BikeLockAuthenticating,
-        updateSecurity: UpdateBikeLockSecurityUseCase
+        updateSecurity: UpdateBikeLockSecurityUseCase,
+        mapper: BikeLockSettingsViewStateMapper
     ) {
         self.vehicleSession = vehicleSession
         self.capabilityStore = capabilityStore
         self.credentialStore = credentialStore
         self.authenticator = authenticator
         self.updateSecurity = updateSecurity
+        self.mapper = mapper
     }
 
     deinit {
@@ -41,23 +46,24 @@ public final class BikeLockSettingsViewModel: ObservableObject {
     }
 
     public func start() {
-        guard observationTask == nil else { return }
+        guard observationTask == nil, capabilityTask == nil else { return }
         capability = capabilityStore.currentState
+        render()
+
         let vehicleSession = vehicleSession
         observationTask = Task { [weak self] in
             let stream = await vehicleSession.observe()
-            for await value in stream {
+            for await snapshot in stream {
                 guard !Task.isCancelled else { return }
-                self?.snapshot = value
-                self?.render()
+                self?.receive(snapshot)
             }
         }
+
         let capabilityStore = capabilityStore
         capabilityTask = Task { [weak self] in
-            for await value in capabilityStore.observe() {
+            for await capability in capabilityStore.observe() {
                 guard !Task.isCancelled else { return }
-                self?.capability = value
-                self?.render()
+                self?.receive(capability)
             }
         }
     }
@@ -67,147 +73,257 @@ public final class BikeLockSettingsViewModel: ObservableObject {
         observationTask = nil
         capabilityTask?.cancel()
         capabilityTask = nil
-        operationTask?.cancel()
-        operationTask = nil
-        actionAfterAuthentication = nil
-        render(destination: .set(nil), isWorking: false)
+        invalidateOperation()
+        activeVIN = nil
+        settings = AppSettings()
+        capability = BikeLockCapabilityState()
+        render(destination: .set(nil), error: .set(nil), isWorking: false)
     }
 
-    public func changeProtection() { authenticateIfNeeded(then: .chooseProtection) }
-    public func changePIN() { authenticateIfNeeded(then: .changePIN) }
+    public func changeProtection() {
+        guard canBeginAction else { return }
+        authenticateIfNeeded(then: .chooseProtection)
+    }
+
+    public func changePIN() {
+        guard canBeginAction, currentMode.requiresPIN else { return }
+        authenticateIfNeeded(then: .changePIN)
+    }
 
     public func submitCurrentPIN(_ pin: String) {
-        guard let vin = activeVIN, let destination = actionAfterAuthentication else { return }
-        runOperation {
-            guard await self.credentialStore.verify(pin: pin, for: vin) else {
+        guard canBeginAction,
+              viewState.destination == .verifyCurrentPIN,
+              let vin = activeVIN,
+              let destination = actionAfterAuthentication else { return }
+        let credentialStore = credentialStore
+        runOperation(for: vin) {
+            guard await credentialStore.verify(pin: pin, for: vin) else {
                 throw BikeLockSettingsError.incorrectPIN
             }
-            self.actionAfterAuthentication = nil
-            self.render(destination: .set(destination), isWorking: false)
+            return { viewModel in
+                viewModel.actionAfterAuthentication = nil
+                viewModel.render(destination: .set(destination), error: .set(nil), isWorking: false)
+            }
         }
     }
 
-    public func select(_ mode: BikeLockSecurityMode) {
-        guard mode != .notConfigured else { return }
-        if mode.requiresPIN, !currentMode.requiresPIN {
-            render(destination: .set(.createPIN(mode)), isWorking: false)
+    public func select(_ optionID: BikeLockProtectionOptionID) {
+        guard canBeginAction,
+              viewState.destination == .chooseProtection,
+              let option = viewState.protectionOptions.first(where: { $0.id == optionID }),
+              !option.isSelected,
+              !option.requiresPINSetup else { return }
+        update(mode: mapper.securityMode(for: optionID), newPIN: nil)
+    }
+
+    public func saveNewPIN(
+        _ pin: String,
+        confirmation: String,
+        optionID: BikeLockProtectionOptionID? = nil
+    ) {
+        guard canBeginAction else { return }
+        let mode: BikeLockSecurityMode
+        if viewState.destination == .changePIN, optionID == nil, currentMode.requiresPIN {
+            mode = currentMode
+        } else if viewState.destination == .chooseProtection,
+                  let optionID,
+                  let option = viewState.protectionOptions.first(where: { $0.id == optionID }),
+                  option.requiresPINSetup {
+            mode = mapper.securityMode(for: optionID)
         } else {
-            update(mode: mode, newPIN: nil)
-        }
-    }
-
-    public func saveNewPIN(_ pin: String, confirmation: String, mode: BikeLockSecurityMode? = nil) {
-        guard pin == confirmation else {
-            render(error: BikeLockSettingsError.pinMismatch.localizedDescription)
             return
         }
-        update(mode: mode ?? currentMode, newPIN: pin)
+        guard pin == confirmation else {
+            render(error: .set(BikeLockSettingsError.pinMismatch.localizedDescription))
+            return
+        }
+        update(mode: mode, newPIN: pin)
     }
 
     public func dismissDestination() {
-        actionAfterAuthentication = nil
-        render(destination: .set(nil), isWorking: false)
+        guard viewState.isAvailable else { return }
+        invalidateOperation()
+        render(destination: .set(nil), error: .set(nil), isWorking: false)
     }
 }
 
 private extension BikeLockSettingsViewModel {
-    var activeVIN: String? { snapshot.profile?.vin }
-    var currentMode: BikeLockSecurityMode { snapshot.settings.bikeLockSettings(forVIN: activeVIN).securityMode }
+    typealias OperationCompletion = @MainActor @Sendable (BikeLockSettingsViewModel) -> Void
+
+    var currentMode: BikeLockSecurityMode {
+        settings.bikeLockSettings(forVIN: activeVIN).securityMode
+    }
+
+    var canBeginAction: Bool {
+        viewState.isAvailable && operationTask == nil
+    }
+
+    func receive(_ snapshot: VehicleSessionSnapshot) {
+        let previousVIN = activeVIN
+        activeVIN = snapshot.profile?.vin
+        settings = snapshot.settings
+        if previousVIN != nil, previousVIN != activeVIN {
+            invalidateOperation()
+        }
+        if !isCurrentContextAvailable {
+            invalidateOperation()
+        }
+        render()
+    }
+
+    func receive(_ newCapability: BikeLockCapabilityState) {
+        capability = newCapability
+        if !isCurrentContextAvailable {
+            invalidateOperation()
+        }
+        render()
+    }
+
+    var isCurrentContextAvailable: Bool {
+        activeVIN != nil
+            && capability.isAvailable
+            && capability.vehicleIdentifier == activeVIN
+    }
 
     func authenticateIfNeeded(then destination: BikeLockSettingsDestination) {
         guard currentMode.requiresPIN else {
-            render(destination: .set(destination), isWorking: false)
+            render(destination: .set(destination), error: .set(nil), isWorking: false)
             return
         }
         actionAfterAuthentication = destination
         if currentMode == .pin {
-            render(destination: .set(.verifyCurrentPIN), isWorking: false)
+            render(destination: .set(.verifyCurrentPIN), error: .set(nil), isWorking: false)
             return
         }
         guard let vin = activeVIN else { return }
-        runOperation {
-            guard await self.credentialStore.containsPIN(for: vin) else {
+        let credentialStore = credentialStore
+        let authenticator = authenticator
+        runOperation(for: vin) {
+            guard await credentialStore.containsPIN(for: vin) else {
                 throw BikeLockSettingsError.missingCredential
             }
-            let authenticated = (try? await self.authenticator.authenticate(
-                reason: "Change Bike Lock protection"
-            )) ?? false
-            if authenticated {
-                self.actionAfterAuthentication = nil
-                self.render(destination: .set(destination), isWorking: false)
-            } else {
-                self.render(destination: .set(.verifyCurrentPIN), isWorking: false)
+            let authenticated: Bool
+            do {
+                authenticated = try await authenticator.authenticate(
+                    reason: "Change Bike Lock protection"
+                )
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                authenticated = false
+            }
+            return { viewModel in
+                if authenticated {
+                    viewModel.actionAfterAuthentication = nil
+                    viewModel.render(destination: .set(destination), error: .set(nil), isWorking: false)
+                } else {
+                    viewModel.render(
+                        destination: .set(.verifyCurrentPIN),
+                        error: .set(nil),
+                        isWorking: false
+                    )
+                }
             }
         }
     }
 
     func update(mode: BikeLockSecurityMode, newPIN: String?) {
         guard let vin = activeVIN else { return }
-        runOperation {
-            try await self.updateSecurity.execute(vehicleIdentifier: vin, securityMode: mode, newPIN: newPIN)
-            var updated = self.snapshot.settings
-            updated.setBikeLockSettings(.init(securityMode: mode), forVIN: vin)
-            self.snapshot = .init(
-                telemetry: self.snapshot.telemetry,
-                connection: self.snapshot.connection,
-                settings: updated,
-                profile: self.snapshot.profile,
-                resolvedSpeedKilometersPerHour: self.snapshot.resolvedSpeedKilometersPerHour,
-                speedSource: self.snapshot.speedSource,
-                isGPSAvailable: self.snapshot.isGPSAvailable,
-                batteryHealth: self.snapshot.batteryHealth,
-                batteryHealthMonitoringState: self.snapshot.batteryHealthMonitoringState,
-                motion: self.snapshot.motion,
-                hasReceivedSettings: self.snapshot.hasReceivedSettings,
-                hasReceivedProfile: self.snapshot.hasReceivedProfile
+        guard !mode.requiresPIN || currentMode.requiresPIN || newPIN != nil else { return }
+        let updateSecurity = updateSecurity
+        runOperation(for: vin) {
+            try await updateSecurity.execute(
+                vehicleIdentifier: vin,
+                securityMode: mode,
+                newPIN: newPIN
             )
-            self.render(destination: .set(nil), isWorking: false)
-        }
-    }
-
-    func runOperation(_ operation: @escaping @MainActor () async throws -> Void) {
-        guard operationTask == nil else { return }
-        render(isWorking: true)
-        operationTask = Task { [weak self] in
-            do {
-                try await operation()
-                guard !Task.isCancelled else { return }
-                self?.operationTask = nil
-            } catch is CancellationError {
-                return
-            } catch {
-                guard !Task.isCancelled else { return }
-                self?.operationTask = nil
-                self?.render(error: error.localizedDescription, isWorking: false)
+            return { viewModel in
+                viewModel.settings.setBikeLockSettings(.init(securityMode: mode), forVIN: vin)
+                viewModel.actionAfterAuthentication = nil
+                viewModel.render(destination: .set(nil), error: .set(nil), isWorking: false)
             }
         }
     }
 
+    func runOperation(
+        for vin: String,
+        _ operation: @escaping @Sendable () async throws -> OperationCompletion
+    ) {
+        guard operationTask == nil, isCurrentContextAvailable, activeVIN == vin else { return }
+        operationGeneration &+= 1
+        let generation = operationGeneration
+        render(error: .set(nil), isWorking: true)
+        operationTask = Task { [weak self] in
+            do {
+                let completion = try await operation()
+                guard !Task.isCancelled else { throw CancellationError() }
+                self?.completeOperation(completion, generation: generation, vin: vin)
+            } catch is CancellationError {
+                self?.completeCancellation(generation: generation, vin: vin)
+            } catch {
+                self?.completeOperation(
+                    { viewModel in
+                        viewModel.render(error: .set(error.localizedDescription), isWorking: false)
+                    },
+                    generation: generation,
+                    vin: vin
+                )
+            }
+        }
+    }
+
+    func completeOperation(
+        _ completion: OperationCompletion,
+        generation: Int,
+        vin: String
+    ) {
+        guard generation == operationGeneration,
+              activeVIN == vin,
+              isCurrentContextAvailable else { return }
+        operationTask = nil
+        completion(self)
+    }
+
+    func completeCancellation(generation: Int, vin: String) {
+        guard generation == operationGeneration,
+              activeVIN == vin,
+              isCurrentContextAvailable else { return }
+        operationTask = nil
+        render(error: .set(nil), isWorking: false)
+    }
+
+    func invalidateOperation() {
+        operationGeneration &+= 1
+        operationTask?.cancel()
+        operationTask = nil
+        actionAfterAuthentication = nil
+        render(destination: .set(nil), error: .set(nil), isWorking: false)
+    }
+
     func render(
-        destination: DestinationUpdate = .preserve,
-        error: String? = nil,
+        destination: ValueUpdate<BikeLockSettingsDestination?> = .preserve,
+        error: ValueUpdate<String?> = .preserve,
         isWorking: Bool? = nil
     ) {
-        let vin = activeVIN
-        let available = vin != nil && capability.isAvailable && capability.vehicleIdentifier == vin
-        viewState = .init(
-            isAvailable: available,
-            currentMode: currentMode,
+        viewState = mapper.map(
+            settings: settings,
+            vehicleIdentifier: activeVIN,
+            capability: capability,
             isWorking: isWorking ?? viewState.isWorking,
-            errorMessage: error,
-            destination: available ? destination.resolve(previous: viewState.destination) : nil
+            errorMessage: error.resolve(previous: viewState.errorMessage),
+            destination: destination.resolve(previous: viewState.destination)
         )
     }
 }
 
-private enum DestinationUpdate {
+private enum ValueUpdate<Value> {
     case preserve
-    case set(BikeLockSettingsDestination?)
+    case set(Value)
 
-    func resolve(previous: BikeLockSettingsDestination?) -> BikeLockSettingsDestination? {
+    func resolve(previous: Value) -> Value {
         switch self {
         case .preserve: previous
-        case .set(let destination): destination
+        case .set(let value): value
         }
     }
 }

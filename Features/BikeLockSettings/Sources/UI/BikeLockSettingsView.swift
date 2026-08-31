@@ -1,5 +1,3 @@
-import DesignSystem
-import SettingsDomain
 import SwiftUI
 
 public struct BikeLockSettingsView: View {
@@ -10,28 +8,13 @@ public struct BikeLockSettingsView: View {
     }
 
     public var body: some View {
-        Form {
-            Section("Unlock protection") {
-                LabeledContent("Current mode", value: viewModel.viewState.currentModeTitle)
-                Button("Change protection", action: viewModel.changeProtection)
-                if viewModel.viewState.canChangePIN {
-                    Button("Change PIN", action: viewModel.changePIN)
-                }
-            }
-
-            Section {
-                Text("These settings protect unlocking in FENR. They do not lock or unlock the motorcycle.")
-                    .foregroundStyle(.secondary)
-            }
-
-            if let error = viewModel.viewState.errorMessage {
-                Section { Text(error).foregroundStyle(.red) }
-            }
-        }
+        BikeLockSettingsContent(
+            viewState: viewModel.viewState,
+            onChangeProtection: viewModel.changeProtection,
+            onChangePIN: viewModel.changePIN
+        )
         .navigationTitle("Bike Lock")
         .navigationBarTitleDisplayMode(.inline)
-        .disabled(viewModel.viewState.isWorking)
-        .overlay { if viewModel.viewState.isWorking { ProgressView() } }
         .navigationDestination(
             isPresented: Binding(
                 get: { viewModel.viewState.destination != nil },
@@ -46,23 +29,26 @@ public struct BikeLockSettingsView: View {
     private var destinationView: some View {
         switch viewModel.viewState.destination {
         case .verifyCurrentPIN:
-            BikeLockPINInputView(title: "Enter Current PIN") { pin in
+            BikeLockPINInputView(
+                title: "Enter Current PIN",
+                errorMessage: viewModel.viewState.errorMessage
+            ) { pin in
                 viewModel.submitCurrentPIN(pin)
             }
         case .chooseProtection:
             BikeLockProtectionSelectionView(
-                selection: viewModel.viewState.currentMode,
+                options: viewModel.viewState.protectionOptions,
+                errorMessage: viewModel.viewState.errorMessage,
                 onSelect: viewModel.select,
-                onSaveNewPIN: { mode, pin, confirmation in
-                    viewModel.saveNewPIN(pin, confirmation: confirmation, mode: mode)
+                onSaveNewPIN: { optionID, pin, confirmation in
+                    viewModel.saveNewPIN(pin, confirmation: confirmation, optionID: optionID)
                 }
             )
-        case .createPIN(let mode):
-            BikeLockNewPINView(title: "Create PIN") { pin, confirmation in
-                viewModel.saveNewPIN(pin, confirmation: confirmation, mode: mode)
-            }
         case .changePIN:
-            BikeLockNewPINView(title: "Change PIN") { pin, confirmation in
+            BikeLockNewPINView(
+                title: "Change PIN",
+                errorMessage: viewModel.viewState.errorMessage
+            ) { pin, confirmation in
                 viewModel.saveNewPIN(pin, confirmation: confirmation)
             }
         case nil:

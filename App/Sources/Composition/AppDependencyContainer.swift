@@ -209,7 +209,8 @@ struct AppDependencyContainer {
             updateSecurity: UpdateBikeLockSecurityUseCase(
                 repository: settingsRepository,
                 credentialStore: bikeLockCredentialStore
-            )
+            ),
+            mapper: BikeLockSettingsViewStateMapper()
         )
     }
 
