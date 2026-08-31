@@ -72,11 +72,12 @@ struct TestEventHubTests {
         let hub = TestEventHub<Int>(bufferingPolicy: .unbounded) { duration in
             await sleepRecorder.record(duration)
         }
-        _ = await hub.stream()
+        let stream = await hub.stream()
 
         #expect(await hub.waitForSubscriber(timeout: .seconds(5)))
         let recordedSleeps = await sleepRecorder.recordedValues()
         #expect(recordedSleeps.isEmpty)
+        withExtendedLifetime(stream) {}
     }
 
     @Test("Waits for a later subscriber")
