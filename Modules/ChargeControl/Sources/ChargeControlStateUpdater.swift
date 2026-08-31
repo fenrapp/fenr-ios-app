@@ -15,6 +15,13 @@ public struct ChargeControlStateUpdater {
 
     func applyPreparation(_ snapshot: BikeChargePowerControlSnapshot, to state: inout ChargeControlState) {
         state.isVisible = true
+        guard snapshot.isFirmwareCompatible else {
+            state.isEnabled = false
+            state.status = "Unsupported firmware"
+            state.phase = .failed
+            state.error = "VCU firmware is not compatible with charge control"
+            return
+        }
         state.isEnabled = snapshot.didPassNoOpWrite
         state.status = snapshot.didPassNoOpWrite ? "Ready" : "No-op guard failed"
         state.phase = snapshot.didPassNoOpWrite ? .ready : .failed
