@@ -15,6 +15,7 @@ enum RideDashboardPreviewFactory {
             mapper: RideDashboardMapperFactory.makeRideMapper(locale: .autoupdatingCurrent),
             cardLayoutMapper: DashboardCardLayoutMapper(),
             vehicleSession: PreviewVehicleSessionService(),
+            timing: .live,
             initialConnectionStabilityPeriod: .zero,
             reconnectionGracePeriod: FENRRuntimeConstants.RideDashboard.reconnectionGracePeriod
         )

@@ -45,7 +45,7 @@ import SwiftUI
     VStack(alignment: .leading, spacing: DesignSpace.large) {
         DashboardBatteryPanel(
             state: previewBattery(percentage: 78, emphasis: .positive),
-            displayMode: .estimatedRange,
+            showsEstimatedRange: true,
             estimatedRange: .init(
                 valueText: "212",
                 unitText: "km",
@@ -54,7 +54,7 @@ import SwiftUI
         )
         DashboardBatteryPanel(
             state: previewBattery(percentage: 78, emphasis: .positive),
-            displayMode: .estimatedRange
+            showsEstimatedRange: true
         )
         DashboardBatteryPanel(state: previewBattery(percentage: 28, emphasis: .warning))
         DashboardBatteryPanel(state: previewBattery(percentage: 8, emphasis: .critical))

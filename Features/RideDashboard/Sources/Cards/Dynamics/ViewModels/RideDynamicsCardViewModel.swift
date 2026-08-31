@@ -13,6 +13,7 @@ public final class RideDynamicsCardViewModel: ObservableObject {
     private let locationConsumerID = UUID()
     private var observationTask: Task<Void, Never>?
     private var locationRequestTask: Task<Void, Never>?
+    private var calibrationTask: Task<Void, Never>?
     private var isVisible = false
     private var isRequestingLocation = false
 
@@ -28,11 +29,13 @@ public final class RideDynamicsCardViewModel: ObservableObject {
 
     deinit {
         observationTask?.cancel()
-        locationRequestTask?.cancel()
+        calibrationTask?.cancel()
         guard isRequestingLocation else { return }
+        let previousRequest = locationRequestTask
         let vehicleSession = vehicleSession
         let consumerID = locationConsumerID
         Task {
+            await previousRequest?.value
             await vehicleSession.setLocationMonitoringRequired(false, consumerID: consumerID)
         }
     }
@@ -51,7 +54,13 @@ public final class RideDynamicsCardViewModel: ObservableObject {
     }
 
     func calibrate() {
-        Task { [vehicleSession] in await vehicleSession.zeroBikeAttitude() }
+        guard calibrationTask == nil else { return }
+        let vehicleSession = vehicleSession
+        calibrationTask = Task { [weak self] in
+            await vehicleSession.zeroBikeAttitude()
+            guard !Task.isCancelled else { return }
+            self?.calibrationTask = nil
+        }
     }
 
 #if DEBUG

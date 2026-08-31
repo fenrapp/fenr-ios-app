@@ -46,6 +46,32 @@ struct DashboardDeviceBatteryViewModelTests {
         #expect(monitor.stopCount == 1)
     }
 
+    @Test("Deinit stops active battery monitoring")
+    func deinitStopsActiveBatteryMonitoring() {
+        let monitor = TestDashboardDeviceBatteryMonitor()
+        var viewModel: DashboardDeviceBatteryViewModel? = makeViewModel(monitor: monitor)
+
+        viewModel?.start()
+        viewModel = nil
+
+        #expect(monitor.stopCount == 1)
+    }
+
+    @Test("Stop is idempotent across repeated lifecycle events")
+    func stopIsIdempotentAcrossRepeatedLifecycleEvents() {
+        let monitor = TestDashboardDeviceBatteryMonitor()
+        let viewModel = makeViewModel(monitor: monitor)
+
+        viewModel.start()
+        viewModel.stop()
+        viewModel.stop()
+        #expect(monitor.stopCount == 1)
+
+        viewModel.start()
+        viewModel.stop()
+        #expect(monitor.stopCount == 2)
+    }
+
     @Test("Starts with icon and percentage and persists visible display mode cycles")
     func persistsDisplayMode() async {
         let monitor = TestDashboardDeviceBatteryMonitor()
@@ -53,26 +79,32 @@ struct DashboardDeviceBatteryViewModelTests {
         let viewModel = makeViewModel(monitor: monitor, repository: repository)
 
         viewModel.start()
-        #expect(viewModel.viewState.displayMode == .iconAndText)
+        #expect(viewModel.viewState.showsIcon)
+        #expect(viewModel.viewState.showsPercentage)
 
         viewModel.toggleDisplayMode()
 
-        #expect(viewModel.viewState.displayMode == .textOnly)
+        #expect(!viewModel.viewState.showsIcon)
+        #expect(viewModel.viewState.showsPercentage)
         #expect(await waitUntil { await repository.load().dashboardDeviceBatteryDisplayMode == .textOnly })
 
         viewModel.toggleDisplayMode()
         viewModel.toggleDisplayMode()
         viewModel.toggleDisplayMode()
 
-        #expect(viewModel.viewState.displayMode == .textOnly)
+        #expect(!viewModel.viewState.showsIcon)
+        #expect(viewModel.viewState.showsPercentage)
         #expect(await waitUntil { await repository.load().dashboardDeviceBatteryDisplayMode == .textOnly })
 
         viewModel.stop()
         viewModel.start()
-        #expect(await waitUntil { viewModel.viewState.displayMode == .textOnly })
+        #expect(await waitUntil {
+            !viewModel.viewState.showsIcon && viewModel.viewState.showsPercentage
+        })
 
         viewModel.toggleDisplayMode()
-        #expect(viewModel.viewState.displayMode == .iconOnly)
+        #expect(viewModel.viewState.showsIcon)
+        #expect(!viewModel.viewState.showsPercentage)
         #expect(await waitUntil { await repository.load().dashboardDeviceBatteryDisplayMode == .iconOnly })
     }
 
@@ -83,7 +115,8 @@ struct DashboardDeviceBatteryViewModelTests {
         DashboardDeviceBatteryViewModel(
             monitor: monitor,
             loadSettings: LoadAppSettingsUseCase(repository: repository),
-            saveSettings: SaveAppSettingsUseCase(repository: repository)
+            saveSettings: SaveAppSettingsUseCase(repository: repository),
+            mapper: DashboardDeviceBatteryMapper()
         )
     }
 }

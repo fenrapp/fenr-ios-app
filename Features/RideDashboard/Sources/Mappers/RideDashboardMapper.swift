@@ -66,7 +66,7 @@ public struct RideDashboardMapper: Sendable {
                 measurementMapper: measurementMapper
             ),
             battery: battery(percentage: hasTelemetry ? telemetry.batteryLevel.percent : nil),
-            batteryIndicatorMode: batteryIndicatorMode,
+            showsEstimatedRangeBatteryIndicator: batteryIndicatorMode == .estimatedRange,
             temperatureSummary: DashboardTemperatureSummaryMapper.map(
                 telemetry: telemetry, isVisible: hasTelemetry && showsTemperatures, measurementMapper: measurementMapper
             ),

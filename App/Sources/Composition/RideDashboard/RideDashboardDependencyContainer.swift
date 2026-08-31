@@ -33,7 +33,8 @@ struct RideDashboardDependencyContainer {
                     notificationCenter: .default
                 ),
                 loadSettings: LoadAppSettingsUseCase(repository: dependencies.settingsRepository),
-                saveSettings: SaveAppSettingsUseCase(repository: dependencies.settingsRepository)
+                saveSettings: SaveAppSettingsUseCase(repository: dependencies.settingsRepository),
+                mapper: DashboardDeviceBatteryMapper()
             ),
             currentTripViewModel: tripViewModels.currentTrip,
             tripStatisticsViewModel: tripViewModels.statistics,
@@ -75,6 +76,7 @@ struct RideDashboardDependencyContainer {
             mapper: RideDashboardMapperFactory.makeRideMapper(locale: .autoupdatingCurrent),
             cardLayoutMapper: DashboardCardLayoutMapper(),
             vehicleSession: vehicleSession,
+            timing: .live,
             initialConnectionStabilityPeriod:
                 FENRRuntimeConstants.Telemetry.connectionStabilityPeriod,
             reconnectionGracePeriod: FENRRuntimeConstants.RideDashboard.reconnectionGracePeriod

@@ -198,7 +198,7 @@ struct DashboardChargingCard: View {
         }
         return switch viewState.readout.emphasis {
         case .charging: DesignColor.positive
-        case .balancing: colorScheme == .dark ? Color.cyan : Constants.lightBalancingAccent
+        case .balancing: colorScheme == .dark ? Color.cyan : DashboardSemanticColor.lightBalancing
         case .warning: DesignColor.warning
         case .critical: DesignColor.critical
         }
@@ -267,7 +267,6 @@ struct DashboardChargingCard: View {
         static let readoutMinimumScaleFactor = 0.7
         static let disabledOpacity = 0.55
         static let wattsPerKilowatt = 1_000.0
-        static let lightBalancingAccent = Color(red: 0, green: 0.66, blue: 0.86)
         static let statusAnimationDuration = 0.18
     }
 }

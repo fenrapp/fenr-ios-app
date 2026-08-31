@@ -8,31 +8,39 @@ public final class DashboardDeviceBatteryViewModel: ObservableObject {
     private let monitor: any DashboardDeviceBatteryMonitoring
     private let loadSettings: LoadAppSettingsUseCase
     private let saveSettings: SaveAppSettingsUseCase
+    private let mapper: DashboardDeviceBatteryMapper
     private var snapshot = DashboardDeviceBatterySnapshot(level: nil, isCharging: false)
     private var displayMode = DashboardDeviceBatteryDisplayMode.iconAndText
     private var observationTask: Task<Void, Never>?
     private var settingsLoadTask: Task<Void, Never>?
     private var settingsSaveTask: Task<Void, Never>?
     private var pendingDisplayMode: DashboardDeviceBatteryDisplayMode?
+    private var isMonitoring = false
 
     public init(
         monitor: any DashboardDeviceBatteryMonitoring,
         loadSettings: LoadAppSettingsUseCase,
-        saveSettings: SaveAppSettingsUseCase
+        saveSettings: SaveAppSettingsUseCase,
+        mapper: DashboardDeviceBatteryMapper
     ) {
         self.monitor = monitor
         self.loadSettings = loadSettings
         self.saveSettings = saveSettings
+        self.mapper = mapper
     }
 
-    deinit {
+    isolated deinit {
         observationTask?.cancel()
         settingsLoadTask?.cancel()
         settingsSaveTask?.cancel()
+        if isMonitoring {
+            monitor.stop()
+        }
     }
 
     func start() {
         guard observationTask == nil else { return }
+        isMonitoring = true
         monitor.start()
         observationTask = Task { [weak self, monitor] in
             let stream = monitor.observe()
@@ -45,6 +53,8 @@ public final class DashboardDeviceBatteryViewModel: ObservableObject {
     }
 
     func stop() {
+        guard isMonitoring else { return }
+        isMonitoring = false
         observationTask?.cancel()
         observationTask = nil
         settingsLoadTask?.cancel()
@@ -72,7 +82,7 @@ public final class DashboardDeviceBatteryViewModel: ObservableObject {
     }
 
     private func render() {
-        viewState = Self.map(snapshot, displayMode: displayMode)
+        viewState = mapper.map(snapshot: snapshot, displayMode: displayMode)
     }
 
     private func loadDisplayMode() {
@@ -116,44 +126,4 @@ public final class DashboardDeviceBatteryViewModel: ObservableObject {
         return pendingDisplayMode
     }
 
-    private static func map(
-        _ snapshot: DashboardDeviceBatterySnapshot,
-        displayMode: DashboardDeviceBatteryDisplayMode
-    ) -> DashboardDeviceBatteryViewData {
-        guard let level = snapshot.level, level.isFinite, level >= .zero else {
-            return .init(displayMode: displayMode)
-        }
-        let percent = min(max(Int((level * Constants.percentageScale).rounded()), .zero), 100)
-        let emphasis: DashboardDeviceBatteryViewData.Emphasis
-        if snapshot.isCharging {
-            emphasis = .charging
-        } else if percent <= Constants.lowBatteryPercent {
-            emphasis = .low
-        } else {
-            emphasis = .normal
-        }
-        let chargingText = snapshot.isCharging ? ", charging" : ""
-        return .init(
-            percentageText: "\(percent)%",
-            systemImage: batterySymbol(percent: percent),
-            emphasis: emphasis,
-            accessibilityLabel: "iPhone battery \(percent) percent\(chargingText)",
-            displayMode: displayMode
-        )
-    }
-
-    private static func batterySymbol(percent: Int) -> String {
-        switch percent {
-        case ...10: "battery.0percent"
-        case ...37: "battery.25percent"
-        case ...62: "battery.50percent"
-        case ...87: "battery.75percent"
-        default: "battery.100percent"
-        }
-    }
-
-    private enum Constants {
-        static let percentageScale = 100.0
-        static let lowBatteryPercent = 20
-    }
 }

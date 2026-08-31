@@ -11,6 +11,7 @@ public final class RideDashboardViewModel: ObservableObject {
     private let mapper: RideDashboardMapper
     private let cardLayoutMapper: DashboardCardLayoutMapper
     private let vehicleSession: any VehicleSessionService
+    private let timing: RideDashboardTiming
     private let temperatureMonitoringConsumerID = UUID()
     private var snapshot = VehicleSessionSnapshot()
     private var observationTask: Task<Void, Never>?
@@ -29,12 +30,14 @@ public final class RideDashboardViewModel: ObservableObject {
         mapper: RideDashboardMapper,
         cardLayoutMapper: DashboardCardLayoutMapper,
         vehicleSession: any VehicleSessionService,
+        timing: RideDashboardTiming,
         initialConnectionStabilityPeriod: Duration,
         reconnectionGracePeriod: Duration
     ) {
         self.mapper = mapper
         self.cardLayoutMapper = cardLayoutMapper
         self.vehicleSession = vehicleSession
+        self.timing = timing
         self.initialConnectionStabilityPeriod = initialConnectionStabilityPeriod
         self.reconnectionGracePeriod = reconnectionGracePeriod
     }
@@ -149,9 +152,10 @@ public final class RideDashboardViewModel: ObservableObject {
     private func startConnectionStabilityPeriod() {
         guard connectionStabilityTask == nil else { return }
         let stabilityPeriod = initialConnectionStabilityPeriod
+        let timing = timing
         connectionStabilityTask = Task { [weak self] in
             do {
-                try await Task.sleep(for: stabilityPeriod)
+                try await timing.sleep(stabilityPeriod)
             } catch {
                 return
             }
@@ -181,9 +185,10 @@ public final class RideDashboardViewModel: ObservableObject {
     private func startReconnectionGracePeriod() {
         guard reconnectionGraceTask == nil else { return }
         let gracePeriod = reconnectionGracePeriod
+        let timing = timing
         reconnectionGraceTask = Task { [weak self] in
             do {
-                try await Task.sleep(for: gracePeriod)
+                try await timing.sleep(gracePeriod)
             } catch {
                 return
             }

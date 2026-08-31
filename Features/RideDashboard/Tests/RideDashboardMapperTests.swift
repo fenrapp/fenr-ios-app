@@ -61,7 +61,7 @@ struct RideDashboardMapperTests {
         #expect(state.odometer.accessibilityLabel == "Odometer 180,0 km")
         #expect(state.battery.percentageText == "60%")
         #expect(state.battery.emphasis == .positive)
-        #expect(state.batteryIndicatorMode == .estimatedRange)
+        #expect(state.showsEstimatedRangeBatteryIndicator)
         #expect(state.gear == .init(display: .text("3"), isActive: true, accessibilityLabel: "Power mode 3"))
         #expect(state.centerMode == .riding)
         #expect(state.indicators.first(where: { $0.id == "highBeam" })?.isActive == true)
