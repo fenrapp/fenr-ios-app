@@ -9,9 +9,3 @@ struct TelemetryActionRow: View {
         }
     }
 }
-
-#Preview("Telemetry action") {
-    Form {
-        TelemetryActionRow(action: {})
-    }
-}

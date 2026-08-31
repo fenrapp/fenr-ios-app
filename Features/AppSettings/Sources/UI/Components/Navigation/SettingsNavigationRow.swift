@@ -1,19 +1,23 @@
 import SwiftUI
 
-struct RideHistoryNavigationRow: View {
+struct SettingsNavigationRow: View {
+    let icon: String
+    let title: String
+    let detail: String
+    let accessibilityIdentifier: String
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: Constants.spacing) {
-                Image(systemName: "clock.arrow.circlepath")
+                Image(systemName: icon)
                     .foregroundStyle(.tint)
                     .frame(width: Constants.iconWidth)
 
                 VStack(alignment: .leading, spacing: Constants.labelSpacing) {
-                    Text("Ride history")
+                    Text(title)
                         .foregroundStyle(.primary)
-                    Text("Review saved rides and recent comparisons")
+                    Text(detail)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -27,20 +31,12 @@ struct RideHistoryNavigationRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityIdentifier("settings.rideHistory")
+        .accessibilityIdentifier(accessibilityIdentifier)
     }
 
     private enum Constants {
         static let spacing: CGFloat = 10
         static let labelSpacing: CGFloat = 2
         static let iconWidth: CGFloat = 24
-    }
-}
-
-#Preview("Ride history navigation") {
-    List {
-        Section("Rides") {
-            RideHistoryNavigationRow(action: {})
-        }
     }
 }

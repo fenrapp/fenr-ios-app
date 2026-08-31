@@ -92,9 +92,7 @@ public struct AppSettingsViewStateMapper: Sendable {
         let declared = profile?.declaredPowerTier ?? .standard
         let evidence = profile?.alphaEvidence ?? []
         let status: String
-        if let verificationMessage {
-            status = verificationMessage
-        } else if !evidence.isEmpty, declared == .standard {
+        if !evidence.isEmpty, declared == .standard {
             status = "Tier mismatch: bike reports Alpha evidence"
         } else if !evidence.isEmpty {
             status = "Alpha detected"
@@ -112,6 +110,7 @@ public struct AppSettingsViewStateMapper: Sendable {
             ),
             status: status,
             evidence: evidenceDescription(profile: profile),
+            verificationMessage: verificationMessage,
             isVerifyEnabled: isAuthenticated(connection.state) && !isVerifying,
             isVerifying: isVerifying
         )

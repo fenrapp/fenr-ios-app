@@ -32,7 +32,6 @@ public struct WatchDashboardView: View {
                 )
             }
         }
-        .toolbar(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button(action: onOpenSettings) {

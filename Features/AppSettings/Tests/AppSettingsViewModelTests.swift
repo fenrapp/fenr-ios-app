@@ -10,14 +10,13 @@ import TestSupport
 struct AppSettingsViewModelTests {
     @Test("Saves selected settings")
     func savesSelectedSettings() async {
-        let repository = SettingsRepository()
-        let viewModel = AppSettingsViewModel(
-            useCases: makeUseCases(repository: repository),
-            mapper: AppSettingsViewStateMapper()
+        let fixture = AppSettingsViewModelFixture(
+            profile: .init(vin: AppSettingsViewModelFixture.vin, declaredPowerTier: .alpha)
         )
+        let viewModel = fixture.viewModel
 
-        viewModel.start()
-        try? await Task.sleep(for: .milliseconds(10))
+        await fixture.start()
+        #expect(await waitUntil { viewModel.viewState.powerTier.status == "Pending bike verification" })
         viewModel.selectSpeedSource(id: SpeedSource.hybrid.rawValue)
         viewModel.selectDashboardProgressBarMode(id: DashboardProgressBarMode.hidden.rawValue)
         viewModel.selectDashboardBatteryIndicatorMode(id: DashboardBatteryIndicatorMode.estimatedRange.rawValue)
@@ -35,10 +34,10 @@ struct AppSettingsViewModelTests {
         )
         expectedSettings.setBatteryPackCapacity(
             .sixPointEightKilowattHours,
-            forVIN: TestProfileRepository.vin
+            forVIN: AppSettingsViewModelFixture.vin
         )
         let didSave = await waitUntil {
-            await repository.settings == expectedSettings
+            await fixture.settingsRepository.settings == expectedSettings
         }
 
         #expect(didSave)
@@ -47,13 +46,10 @@ struct AppSettingsViewModelTests {
 
     @Test("Publishes controls shaped for direct rendering")
     func publishesPresentationControls() async {
-        let repository = SettingsRepository()
-        let viewModel = AppSettingsViewModel(
-            useCases: makeUseCases(repository: repository),
-            mapper: AppSettingsViewStateMapper()
-        )
+        let fixture = AppSettingsViewModelFixture()
+        let viewModel = fixture.viewModel
 
-        viewModel.start()
+        await fixture.start()
         viewModel.selectSpeedSource(id: SpeedSource.gps.rawValue)
         #expect(await waitUntil {
             viewModel.viewState.speedSource.locationPermission == .authorized
@@ -88,23 +84,83 @@ struct AppSettingsViewModelTests {
         viewModel.stop()
     }
 
-    private func makeUseCases(repository: SettingsRepository) -> AppSettingsUseCases {
-        .init(
-            saveSettings: .init(repository: repository),
-            observeSettings: .init(repository: repository),
-            locationAuthorizationStatus: .init(repository: repository),
-            requestLocationAuthorization: .init(repository: repository),
-            loadBikeProfile: .init(repository: TestProfileRepository()),
-            observeBikeProfile: .init(repository: TestProfileRepository())
+    @Test("Serializes declared power tier saves")
+    func serializesDeclaredPowerTierSaves() async {
+        let fixture = AppSettingsViewModelFixture(
+            profile: .init(vin: AppSettingsViewModelFixture.vin, declaredPowerTier: .alpha)
         )
+        await fixture.profileRepository.setShouldBlockSaves(true)
+        var saveStarts = await fixture.profileRepository.observeSaveStarts().makeAsyncIterator()
+
+        await fixture.start()
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.powerTier.status == "Pending bike verification"
+        })
+        fixture.viewModel.selectDeclaredPowerTier(id: BikeDeclaredPowerTier.standard.rawValue)
+        let firstSave = await saveStarts.next()
+
+        fixture.viewModel.selectDeclaredPowerTier(id: BikeDeclaredPowerTier.alpha.rawValue)
+        #expect(await fixture.profileRepository.savedProfiles.count == 1)
+
+        await fixture.profileRepository.releaseNextSave()
+        let secondSave = await saveStarts.next()
+        await fixture.profileRepository.releaseNextSave()
+
+        #expect(firstSave?.declaredPowerTier == .standard)
+        #expect(secondSave?.declaredPowerTier == .alpha)
+        #expect(await fixture.profileRepository.savedProfiles.map(\.declaredPowerTier) == [.standard, .alpha])
     }
 
-}
+    @Test("Publishes power tier verification success")
+    func publishesPowerTierVerificationSuccess() async {
+        let fixture = AppSettingsViewModelFixture()
+        var refreshStarts = await fixture.bikeRepository.observeRefreshStarts().makeAsyncIterator()
 
-private actor TestProfileRepository: BikeProfileRepository {
-    static let vin = "TESTVIN0000000001"
+        await fixture.start()
+        fixture.viewModel.verifyPowerTierWithBike()
+        _ = await refreshStarts.next()
 
-    func loadProfile() -> BikeProfile? { .init(vin: Self.vin) }
-    func saveProfile(_: BikeProfile) {}
-    func clearProfile() {}
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.powerTier.verificationMessage == "Bike verification completed"
+        })
+        #expect(fixture.viewModel.viewState.powerTier.status == "Standard baseline · 60 HP max")
+        #expect(!fixture.viewModel.viewState.powerTier.isVerifying)
+        fixture.viewModel.stop()
+    }
+
+    @Test("Publishes power tier verification failure")
+    func publishesPowerTierVerificationFailure() async {
+        let fixture = AppSettingsViewModelFixture(refreshBehavior: .failure)
+        var refreshStarts = await fixture.bikeRepository.observeRefreshStarts().makeAsyncIterator()
+
+        await fixture.start()
+        fixture.viewModel.verifyPowerTierWithBike()
+        _ = await refreshStarts.next()
+
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.powerTier.verificationMessage == "Verification failed: Refresh failed"
+        })
+        #expect(fixture.viewModel.viewState.powerTier.status == "Standard baseline · 60 HP max")
+        #expect(!fixture.viewModel.viewState.powerTier.isVerifying)
+        fixture.viewModel.stop()
+    }
+
+    @Test("Stop cancels power tier verification")
+    func stopCancelsPowerTierVerification() async {
+        let fixture = AppSettingsViewModelFixture(refreshBehavior: .suspended)
+        var refreshStarts = await fixture.bikeRepository.observeRefreshStarts().makeAsyncIterator()
+        var refreshCancellations = await fixture.bikeRepository.observeRefreshCancellations().makeAsyncIterator()
+
+        await fixture.start()
+        fixture.viewModel.verifyPowerTierWithBike()
+        _ = await refreshStarts.next()
+        #expect(fixture.viewModel.viewState.powerTier.isVerifying)
+
+        fixture.viewModel.stop()
+        _ = await refreshCancellations.next()
+
+        #expect(!fixture.viewModel.viewState.powerTier.isVerifying)
+        #expect(fixture.viewModel.viewState.powerTier.verificationMessage == nil)
+    }
+
 }

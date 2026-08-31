@@ -1210,6 +1210,7 @@ targets:
       - path: Features/AppSettings/Tests
     dependencies:
       - target: AppSettings
+      - target: BikeDomain
       - target: SettingsDomain
       - target: EnvironmentDomain
       - target: TestSupport
