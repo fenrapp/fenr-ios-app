@@ -40,7 +40,6 @@ struct RideSessionPersistenceCoordinatorTests {
                 at: .distantFuture
             )
         }
-        await Task.yield()
         await repository.releaseBlockedSave()
         _ = await resetTask.value
         await coordinator.flush()
@@ -61,11 +60,53 @@ struct RideSessionPersistenceCoordinatorTests {
         let deleteTask = Task {
             await coordinator.deleteCompletedTrip(id: completedID, vin: "TESTVIN0000000001")
         }
-        await Task.yield()
         await repository.releaseBlockedSave()
 
         #expect(await deleteTask.value)
         #expect(await repository.events() == [.save(active.id), .delete(completedID)])
+        #expect(await repository.maximumConcurrentWrites() == 1)
+    }
+
+    @Test("Identity promotion remains an ordered persistence barrier")
+    func promotionBarrierPreservesSaveOrdering() async {
+        let repository = BlockingRideTripRepository()
+        let coordinator = RideSessionPersistenceCoordinator(repository: repository)
+        let temporaryID = UUID(uuidString: "00000000-0000-0000-0000-000000000003")!
+        let temporaryTrip = RideTrip(
+            id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
+            vehicleIdentity: .temporary(temporaryID),
+            applicationSessionID: UUID(),
+            startedAt: .distantPast
+        )
+        let promotedTrip = RideTrip(
+            id: temporaryTrip.id,
+            vehicleIdentity: .vin("FENRTEST000000001"),
+            applicationSessionID: temporaryTrip.applicationSessionID,
+            startedAt: temporaryTrip.startedAt
+        )
+        await repository.blockNextSave()
+        await repository.blockNextPromotion()
+
+        await coordinator.saveActiveTrip(temporaryTrip)
+        await repository.waitForBlockedSave()
+        let promotionTask = Task {
+            await coordinator.promoteTemporaryIdentity(
+                temporaryID,
+                toVIN: "FENRTEST000000001"
+            )
+        }
+        await repository.releaseBlockedSave()
+        await repository.waitForBlockedPromotion()
+        await coordinator.saveActiveTrip(promotedTrip)
+        await repository.releaseBlockedPromotion()
+        #expect(await promotionTask.value)
+        await coordinator.flush()
+
+        #expect(await repository.events() == [
+            .save(temporaryTrip.id),
+            .promote(temporaryID, "FENRTEST000000001"),
+            .save(temporaryTrip.id)
+        ])
         #expect(await repository.maximumConcurrentWrites() == 1)
     }
 

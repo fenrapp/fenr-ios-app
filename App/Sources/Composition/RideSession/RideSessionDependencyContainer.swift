@@ -20,7 +20,8 @@ enum RideSessionDependencyContainer {
                 applicationSessionID: dependencies.applicationSessionID,
                 vehicleIdentity: .temporary(UUID())
             ),
-            now: Date.init
+            now: Date.init,
+            sleep: { duration in try await Task.sleep(for: duration) }
         )
     }
 }

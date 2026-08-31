@@ -3,6 +3,7 @@ import RideSessionDomain
 
 extension LiveRideSessionService {
     func transitionToVehicle(identity: RideVehicleIdentity) async {
+        guard stopTask == nil else { return }
         await completeCurrentTrip()
         recorder = CurrentTripRecorder(context: .init(
             applicationSessionID: recorder.context.applicationSessionID,
@@ -15,11 +16,12 @@ extension LiveRideSessionService {
     }
 
     func startTickerIfNeeded() {
-        guard tickerTask == nil else { return }
+        guard stopTask == nil, tickerTask == nil else { return }
+        let sleep = sleep
         tickerTask = Task { [weak self] in
             while !Task.isCancelled {
                 do {
-                    try await Task.sleep(for: Constants.tickInterval)
+                    try await sleep(Constants.tickInterval)
                 } catch {
                     return
                 }
@@ -30,6 +32,10 @@ extension LiveRideSessionService {
     }
 
     func tick() async -> Bool {
+        guard stopTask == nil else {
+            tickerTask = nil
+            return false
+        }
         guard updateTripAtCurrentTime() != nil else {
             tickerTask = nil
             return false
@@ -49,7 +55,7 @@ extension LiveRideSessionService {
     }
 
     func updateCurrentTrip() async {
-        guard isPrepared, isReceivingTelemetry else { return }
+        guard stopTask == nil, isPrepared, isReceivingTelemetry else { return }
         let previousTripID = recorder.trip?.id
         guard var trip = recorder.record(
             runState: vehicleSnapshot.telemetry.runState,
@@ -111,7 +117,11 @@ extension LiveRideSessionService {
     }
 
     func prepareIfNeeded() {
-        guard vehicleSnapshot.hasReceivedProfile, !isPrepared, preparationTask == nil else { return }
+        guard stopTask == nil,
+              vehicleSnapshot.hasReceivedProfile,
+              !isPrepared,
+              preparationTask == nil
+        else { return }
         let prepare = useCases.prepare
         let context = recorder.context
         preparationTask = Task { [weak self] in
@@ -123,6 +133,7 @@ extension LiveRideSessionService {
 
     func finishPreparation(_ restoredTrip: RideTrip?, context: BikeSessionContext) async {
         preparationTask = nil
+        guard stopTask == nil else { return }
         guard recorder.context == context else {
             prepareIfNeeded()
             return

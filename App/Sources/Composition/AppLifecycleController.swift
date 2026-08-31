@@ -66,8 +66,6 @@ final class AppLifecycleController {
             await pendingChangeBike?.value
             await pendingPersistence?.value
             await bikeLiveActivityController.stop()
-            await rideSession.completeCurrentTrip()
-            await rideSession.flush()
             await rideSession.stop()
             await vehicleSession.stop()
             await sessionController.stop()
@@ -107,11 +105,13 @@ final class AppLifecycleController {
             defer { self?.changeBikeTask = nil }
             await pendingPersistence?.value
             guard !Task.isCancelled else { return }
-            await rideSession.completeCurrentTrip()
-            await rideSession.flush()
+            await rideSession.stop()
+            guard !Task.isCancelled else { return }
             await sessionController.disconnect()
             guard !Task.isCancelled else { return }
             await setupFlow.reset()
+            guard !Task.isCancelled else { return }
+            await rideSession.start()
             guard !Task.isCancelled else { return }
             bikeLiveActivityController.setIsSetupCompleted(false)
             onCompleted()
