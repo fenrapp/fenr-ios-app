@@ -61,4 +61,20 @@ struct AppleExternalMapLinkResolverTests {
             _ = try await resolver.destination(from: shortURL)
         }
     }
+
+    @Test("rejects an oversized URL returned by the redirect resolver")
+    func rejectsOversizedResolvedURL() async throws {
+        let shortURL = try #require(URL(string: "https://maps.app.goo.gl/example"))
+        let oversizedURL = try #require(
+            URL(string: "https://maps.apple.com/?daddr=\(String(repeating: "a", count: 2_048))")
+        )
+        let resolver = AppleExternalMapLinkResolver(
+            redirectResolver: StubMapLinkRedirectResolver(result: oversizedURL),
+            placeSearch: StubPlaceSearch(result: [])
+        )
+
+        await #expect(throws: ExternalMapLinkResolutionError.unsupportedURL) {
+            _ = try await resolver.destination(from: shortURL)
+        }
+    }
 }

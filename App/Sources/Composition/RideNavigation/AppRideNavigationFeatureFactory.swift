@@ -20,7 +20,8 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
         let iso8601 = Date.ISO8601FormatStyle(includingFractionalSeconds: true)
         let placeSearch = ApplePlaceSearchService()
         let roadRouteCalculator = AppleRoadRouteCalculator()
-        let redirectSession = Self.makeRedirectSession()
+        let mapLinkSecurityPolicy = AppleMapLinkSecurityPolicy.standard
+        let redirectSession = Self.makeRedirectSession(policy: mapLinkSecurityPolicy)
         return RideNavigationFeatureModel(
             viewModel: RideNavigationViewModel(
                 dependencies: RideNavigationViewModelDependencies(
@@ -43,8 +44,9 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
                         placeSearch: placeSearch,
                         roadRouteCalculator: roadRouteCalculator,
                         externalMapLinkResolver: AppleExternalMapLinkResolver(
-                            redirectResolver: URLSessionMapLinkRedirectResolver(session: redirectSession),
-                            placeSearch: placeSearch
+                            redirectResolver: URLSessionMapLinkRedirectResolver(ownedSession: redirectSession),
+                            placeSearch: placeSearch,
+                            securityPolicy: mapLinkSecurityPolicy
                         ),
                         trailExitFinder: AppleTrailExitFinder(
                             candidateSearch: AppleTrailExitCandidateSearch(),
@@ -79,32 +81,22 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
         )
     }
 
-    nonisolated private static func makeRedirectSession() -> URLSession {
+    nonisolated private static func makeRedirectSession(
+        policy: AppleMapLinkSecurityPolicy
+    ) -> URLSession {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = Constants.mapLinkTimeoutSeconds
         configuration.timeoutIntervalForResource = Constants.mapLinkTimeoutSeconds
         return URLSession(
             configuration: configuration,
-            delegate: AllowedMapLinkRedirectDelegate(
-                allowedHosts: Constants.allowedMapLinkHosts,
-                maximumRedirects: Constants.maximumMapLinkRedirects
-            ),
+            delegate: AllowedMapLinkRedirectDelegate(policy: policy),
             delegateQueue: nil
         )
     }
 
     private enum Constants {
         static let mapLinkTimeoutSeconds: TimeInterval = 5
-        static let maximumMapLinkRedirects = 5
         static let maximumGPXFileSizeBytes = 25 * 1_024 * 1_024
         static let maximumGPXPointCount = 100_000
-        static let allowedMapLinkHosts: Set<String> = [
-            "maps.app.goo.gl",
-            "goo.gl",
-            "google.com",
-            "www.google.com",
-            "maps.google.com",
-            "maps.apple.com"
-        ]
     }
 }

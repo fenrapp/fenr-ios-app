@@ -329,13 +329,3 @@ private extension NavigationMapCamera {
         return false
     }
 }
-
-private extension NavigationMapCoordinate {
-    var clCoordinate: CLLocationCoordinate2D {
-        CLLocationCoordinate2D(latitude: latitudeDegrees, longitude: longitudeDegrees)
-    }
-}
-
-private extension CLLocationCoordinate2D {
-    var mapPoint: MKMapPoint { MKMapPoint(self) }
-}

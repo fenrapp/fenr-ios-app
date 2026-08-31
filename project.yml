@@ -1053,8 +1053,10 @@ targets:
       - path: Modules/RideNavigationAppleMaps/Tests
     dependencies:
       - target: EnvironmentDomain
+      - target: RideNavigation
       - target: RideNavigationAppleMaps
       - target: RideNavigationDomain
+      - target: TestSupport
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigationapplemaps.tests

@@ -6,17 +6,20 @@ import RideNavigationDomain
 public struct AppleExternalMapLinkResolver: ExternalMapLinkResolving {
     private let redirectResolver: any MapLinkRedirectResolving
     private let placeSearch: any PlaceSearching
+    private let securityPolicy: AppleMapLinkSecurityPolicy
 
     public init(
         redirectResolver: any MapLinkRedirectResolving,
-        placeSearch: any PlaceSearching
+        placeSearch: any PlaceSearching,
+        securityPolicy: AppleMapLinkSecurityPolicy = .standard
     ) {
         self.redirectResolver = redirectResolver
         self.placeSearch = placeSearch
+        self.securityPolicy = securityPolicy
     }
 
     public func destination(from url: URL) async throws -> NavigationPlace {
-        guard url.absoluteString.count <= Constants.maximumURLLength else {
+        guard securityPolicy.allows(url) else {
             throw ExternalMapLinkResolutionError.unsupportedURL
         }
         if MKDirections.Request.isDirectionsRequest(url) {
@@ -33,9 +36,8 @@ public struct AppleExternalMapLinkResolver: ExternalMapLinkResolving {
         }
 
         let resolvedURL = try await resolvedMapURL(url)
-        guard resolvedURL.scheme?.lowercased() == "https",
-              let host = resolvedURL.host?.lowercased(),
-              Constants.allowedHosts.contains(host) else {
+        guard securityPolicy.allows(resolvedURL),
+              let host = resolvedURL.host?.lowercased() else {
             throw ExternalMapLinkResolutionError.unsupportedURL
         }
         guard let candidate = destinationCandidate(in: resolvedURL) else {
@@ -51,12 +53,7 @@ public struct AppleExternalMapLinkResolver: ExternalMapLinkResolving {
     }
 
     private func resolvedMapURL(_ url: URL) async throws -> URL {
-        guard url.scheme?.lowercased() == "https",
-              let host = url.host?.lowercased(),
-              Constants.allowedHosts.contains(host) else {
-            throw ExternalMapLinkResolutionError.unsupportedURL
-        }
-        if Constants.shortLinkHosts.contains(host) {
+        if securityPolicy.isShortLink(url) {
             return try await redirectResolver.resolve(url)
         }
         return url
@@ -97,82 +94,6 @@ public struct AppleExternalMapLinkResolver: ExternalMapLinkResolving {
     }
 
     private enum Constants {
-        static let maximumURLLength = 2_048
         static let destinationQueryKeys = ["destination", "daddr", "address", "ll", "query", "q"]
-        static let shortLinkHosts: Set<String> = ["maps.app.goo.gl", "goo.gl"]
-        static let allowedHosts: Set<String> = [
-            "maps.app.goo.gl",
-            "goo.gl",
-            "google.com",
-            "www.google.com",
-            "maps.google.com",
-            "maps.apple.com"
-        ]
-    }
-}
-
-public struct URLSessionMapLinkRedirectResolver: MapLinkRedirectResolving {
-    private let session: URLSession
-
-    public init(session: URLSession) {
-        self.session = session
-    }
-
-    public func resolve(_ url: URL) async throws -> URL {
-        let (_, response) = try await session.data(from: url)
-        guard let resolvedURL = response.url else {
-            throw ExternalMapLinkResolutionError.destinationUnavailable
-        }
-        return resolvedURL
-    }
-}
-
-public final class AllowedMapLinkRedirectDelegate: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
-    private let allowedHosts: Set<String>
-    private let maximumRedirects: Int
-    private let lock = NSLock()
-    private var redirectCounts: [Int: Int] = [:]
-
-    public init(allowedHosts: Set<String>, maximumRedirects: Int) {
-        self.allowedHosts = allowedHosts
-        self.maximumRedirects = maximumRedirects
-    }
-
-    public func urlSession(
-        _ session: URLSession,
-        task: URLSessionTask,
-        willPerformHTTPRedirection response: HTTPURLResponse,
-        newRequest request: URLRequest,
-        completionHandler: @escaping (URLRequest?) -> Void
-    ) {
-        let redirectCount = lock.withLock {
-            let value = (redirectCounts[task.taskIdentifier] ?? .zero) + 1
-            redirectCounts[task.taskIdentifier] = value
-            return value
-        }
-        guard redirectCount <= maximumRedirects,
-              request.url?.scheme?.lowercased() == "https",
-              let host = request.url?.host?.lowercased(),
-              allowedHosts.contains(host) else {
-            completionHandler(nil)
-            return
-        }
-        completionHandler(request)
-    }
-
-    public func urlSession(
-        _: URLSession,
-        task: URLSessionTask,
-        didCompleteWithError _: (any Error)?
-    ) {
-        lock.withLock {
-            redirectCounts[task.taskIdentifier] = nil
-        }
-    }
-}
-
-private extension GeographicCoordinate {
-    init?(_ coordinate: CLLocationCoordinate2D) {
-        self.init(latitudeDegrees: coordinate.latitude, longitudeDegrees: coordinate.longitude)
     }
 }

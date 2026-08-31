@@ -137,13 +137,3 @@ public struct AppleTrailExitFinder: TrailExitFinding {
         static let maximumRouteAttempts = 8
     }
 }
-
-private extension GeographicCoordinate {
-    init?(_ coordinate: CLLocationCoordinate2D) {
-        self.init(latitudeDegrees: coordinate.latitude, longitudeDegrees: coordinate.longitude)
-    }
-
-    var clCoordinate: CLLocationCoordinate2D {
-        CLLocationCoordinate2D(latitude: latitudeDegrees, longitude: longitudeDegrees)
-    }
-}

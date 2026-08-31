@@ -112,21 +112,3 @@ public final class AppleNavigationGuidanceClient: NavigationGuidanceClient {
         notificationGenerator.notificationOccurred(.success)
     }
 }
-
-private extension MKPolyline {
-    var coordinates: [CLLocationCoordinate2D] {
-        var coordinates = Array(repeating: CLLocationCoordinate2D(), count: pointCount)
-        getCoordinates(&coordinates, range: NSRange(location: 0, length: pointCount))
-        return coordinates
-    }
-}
-
-private extension GeographicCoordinate {
-    init?(_ coordinate: CLLocationCoordinate2D) {
-        self.init(latitudeDegrees: coordinate.latitude, longitudeDegrees: coordinate.longitude)
-    }
-
-    var clCoordinate: CLLocationCoordinate2D {
-        CLLocationCoordinate2D(latitude: latitudeDegrees, longitude: longitudeDegrees)
-    }
-}
