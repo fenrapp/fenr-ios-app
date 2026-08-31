@@ -1,62 +1,86 @@
 import BikeEmulator
 import Combine
 
+private enum DebugScenarioCommand: Sendable {
+    case scenario(BikeEmulatorScenario)
+    case powerModePreset(BikeEmulatorPowerModePreset)
+    case activeMap(Int)
+    case barrier(CheckedContinuation<Void, Never>)
+}
+
 @MainActor
 final class DebugScenarioController: ObservableObject {
     @Published private(set) var selectedScenario: BikeEmulatorScenario
     @Published private(set) var selectedPowerModePreset: BikeEmulatorPowerModePreset
     @Published private(set) var selectedMap: Int
 
-    private let repository: BikeEmulatorRepository
     private let store: DebugScenarioStore
-    private let profileRepository: DebugBikeProfileRepository
-    private var scenarioTask: Task<Void, Never>?
+    private let commandContinuation: AsyncStream<DebugScenarioCommand>.Continuation
+    private let commandTask: Task<Void, Never>
 
     init(
         repository: BikeEmulatorRepository,
         store: DebugScenarioStore,
-        profileRepository: DebugBikeProfileRepository = DebugBikeProfileRepository(),
+        profileRepository: DebugBikeProfileRepository,
         initialPowerModePreset: BikeEmulatorPowerModePreset = .standard,
         initialMap: Int = 4
     ) {
-        self.repository = repository
         self.store = store
-        self.profileRepository = profileRepository
         selectedScenario = store.load()
         selectedPowerModePreset = initialPowerModePreset
         selectedMap = initialMap
+
+        let (commands, continuation) = AsyncStream<DebugScenarioCommand>.makeStream(
+            bufferingPolicy: .unbounded
+        )
+        commandContinuation = continuation
+        commandTask = Task {
+            for await command in commands {
+                guard !Task.isCancelled else { return }
+                switch command {
+                case .scenario(let scenario):
+                    await repository.setScenario(scenario)
+                case .powerModePreset(let preset):
+                    await repository.setPowerModePreset(preset)
+                    await profileRepository.apply(preset: preset)
+                case .activeMap(let map):
+                    await repository.setActiveMap(map)
+                case .barrier(let continuation):
+                    continuation.resume()
+                }
+            }
+        }
+    }
+
+    deinit {
+        commandContinuation.finish()
+        commandTask.cancel()
     }
 
     func select(_ preset: BikeEmulatorPowerModePreset) {
         guard preset != selectedPowerModePreset else { return }
         selectedPowerModePreset = preset
         store.save(preset)
-        Task { [repository, profileRepository] in
-            await repository.setPowerModePreset(preset)
-            await profileRepository.apply(preset: preset)
-        }
+        commandContinuation.yield(.powerModePreset(preset))
     }
 
     func selectMap(_ map: Int) {
         guard 1 ... 5 ~= map, map != selectedMap else { return }
         selectedMap = map
         store.saveActiveMap(map)
-        Task { [repository] in await repository.setActiveMap(map) }
-    }
-
-    deinit {
-        scenarioTask?.cancel()
+        commandContinuation.yield(.activeMap(map))
     }
 
     func select(_ scenario: BikeEmulatorScenario) {
         guard scenario != selectedScenario else { return }
         selectedScenario = scenario
         store.save(scenario)
-        let previousSelection = scenarioTask
-        scenarioTask = Task { [repository] in
-            await previousSelection?.value
-            guard !Task.isCancelled else { return }
-            await repository.setScenario(scenario)
+        commandContinuation.yield(.scenario(scenario))
+    }
+
+    func waitForPendingCommands() async {
+        await withCheckedContinuation { continuation in
+            commandContinuation.yield(.barrier(continuation))
         }
     }
 }

@@ -929,12 +929,14 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikedata.tests
   BikeEmulatorTests:
     type: bundle.unit-test
-    platform: iOS
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
     sources:
       - path: Modules/BikeEmulator/Tests
     dependencies:
       - target: BikeEmulator
       - target: BikeDomain
+      - target: TestSupport
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikeemulator.tests
@@ -1481,6 +1483,7 @@ schemes:
         AsyncSupportTests: [test]
         BLETraceDomainTests: [test]
         BikeDomainTests: [test]
+        BikeEmulatorTests: [test]
         EnvironmentDomainTests: [test]
         SettingsDomainTests: [test]
         SettingsDataTests: [test]
@@ -1494,6 +1497,7 @@ schemes:
         - AsyncSupportTests
         - BLETraceDomainTests
         - BikeDomainTests
+        - BikeEmulatorTests
         - EnvironmentDomainTests
         - SettingsDomainTests
         - SettingsDataTests

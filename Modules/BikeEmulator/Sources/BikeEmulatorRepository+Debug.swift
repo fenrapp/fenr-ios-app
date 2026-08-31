@@ -2,6 +2,7 @@ import BikeDomain
 
 extension BikeEmulatorRepository {
     func publishDebugEvent(title: String, detail: String) async {
-        await debugEventHub.send(BikeDebugEvent(title: title, detail: detail))
+        let date = await runtime.now()
+        await debugEventHub.send(BikeDebugEvent(date: date, title: title, detail: detail))
     }
 }

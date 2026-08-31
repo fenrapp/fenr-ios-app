@@ -1,3 +1,4 @@
+import AsyncSupport
 import BikeDomain
 
 public enum BikeEmulatorRepositoryFactory {
@@ -5,6 +6,20 @@ public enum BikeEmulatorRepositoryFactory {
         scenario: BikeEmulatorScenario = .charging,
         powerModePreset: BikeEmulatorPowerModePreset = .standard,
         activeMap: Int = 4
+    ) -> BikeEmulatorRepository {
+        make(
+            scenario: scenario,
+            powerModePreset: powerModePreset,
+            activeMap: activeMap,
+            runtime: .live
+        )
+    }
+
+    static func make(
+        scenario: BikeEmulatorScenario,
+        powerModePreset: BikeEmulatorPowerModePreset,
+        activeMap: Int,
+        runtime: BikeEmulatorRuntime
     ) -> BikeEmulatorRepository {
         BikeEmulatorRepository(
             scenario: scenario,
@@ -14,7 +29,7 @@ public enum BikeEmulatorRepositoryFactory {
                 telemetry: makeStateEventHub(),
                 connection: makeStateEventHub(),
                 imu: makeStateEventHub(replaysLatestValue: false),
-                debugEvent: BikeEmulatorEventHub(
+                debugEvent: AsyncEventHub(
                     bufferingPolicy: .bufferingNewest(Buffering.debugEventLimit),
                     replaysLatestValue: true
                 ),
@@ -22,14 +37,15 @@ public enum BikeEmulatorRepositoryFactory {
                 capture: BikeEmulatorCaptureHub(),
                 discoveredBikes: makeStateEventHub()
             ),
-            powerCalculator: BikePowerTelemetryCalculator()
+            powerCalculator: BikePowerTelemetryCalculator(),
+            runtime: runtime
         )
     }
 
     private static func makeStateEventHub<Value: Sendable>(
         replaysLatestValue: Bool = true
-    ) -> BikeEmulatorEventHub<Value> {
-        BikeEmulatorEventHub(
+    ) -> AsyncEventHub<Value> {
+        AsyncEventHub(
             bufferingPolicy: .bufferingNewest(Buffering.stateEventLimit),
             replaysLatestValue: replaysLatestValue
         )
@@ -42,11 +58,11 @@ public enum BikeEmulatorRepositoryFactory {
 }
 
 struct BikeEmulatorChannels {
-    let telemetry: BikeEmulatorEventHub<BikeTelemetry>
-    let connection: BikeEmulatorEventHub<BikeConnection>
-    let imu: BikeEmulatorEventHub<BikeIMUSample>
-    let debugEvent: BikeEmulatorEventHub<BikeDebugEvent>
-    let batteryHealth: BikeEmulatorEventHub<BikeBatteryHealth>
+    let telemetry: AsyncEventHub<BikeTelemetry>
+    let connection: AsyncEventHub<BikeConnection>
+    let imu: AsyncEventHub<BikeIMUSample>
+    let debugEvent: AsyncEventHub<BikeDebugEvent>
+    let batteryHealth: AsyncEventHub<BikeBatteryHealth>
     let capture: BikeEmulatorCaptureHub
-    let discoveredBikes: BikeEmulatorEventHub<[DiscoveredBike]>
+    let discoveredBikes: AsyncEventHub<[DiscoveredBike]>
 }
