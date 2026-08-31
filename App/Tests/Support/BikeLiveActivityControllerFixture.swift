@@ -46,7 +46,8 @@ final class BikeLiveActivityControllerFixture {
                 maximumSampleAge: 5,
                 minimumGPSCourseSpeedKilometersPerHour: 5,
                 maximumGPSCourseAccuracyDegrees: 35
-            )
+            ),
+            sleep: { duration in try await Task.sleep(for: duration) }
         )
         controller = BikeLiveActivityController(
             vehicleSession: vehicleSession,

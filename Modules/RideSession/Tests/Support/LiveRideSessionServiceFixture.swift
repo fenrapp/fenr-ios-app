@@ -42,7 +42,8 @@ func makeLiveRideSessionServiceFixture(
             maximumSampleAge: 5,
             minimumGPSCourseSpeedKilometersPerHour: 5,
             maximumGPSCourseAccuracyDegrees: 35
-        )
+        ),
+        sleep: { duration in try await Task.sleep(for: duration) }
     )
     let service = LiveRideSessionService(
         useCases: .init(prepare: .init(repository: tripRepository)),

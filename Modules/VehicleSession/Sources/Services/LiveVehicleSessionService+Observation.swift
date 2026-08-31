@@ -134,9 +134,10 @@ extension LiveVehicleSessionService {
             deviceSpeedExpiryTask = nil
             return
         }
+        let sleep = sleep
         deviceSpeedExpiryTask = Task { [weak self] in
             do {
-                try await Task.sleep(for: .seconds(remainingValidity))
+                try await sleep(.seconds(remainingValidity))
             } catch {
                 return
             }
@@ -154,7 +155,9 @@ extension LiveVehicleSessionService {
     }
 
     private func updateIMUMonitoring() async {
-        guard isReceivingTelemetry else {
+        guard isReceivingTelemetry, !isStopping else {
+            imuMonitoringGeneration &+= 1
+            imuMonitoringStartTask?.cancel()
             if isIMUMonitoring {
                 await useCases.stopIMUMonitoring.execute()
                 isIMUMonitoring = false
@@ -166,15 +169,24 @@ extension LiveVehicleSessionService {
             await refreshMotion()
             return
         }
-        guard !isIMUMonitoring else { return }
-        do {
-            try await useCases.startIMUMonitoring.execute()
-            isIMUMonitoring = true
-        } catch {
-            isIMUMonitoring = false
-            imuSample = nil
-            motionEstimator.reset()
-            await refreshMotion()
+        guard !isIMUMonitoring, imuMonitoringStartTask == nil else { return }
+        imuMonitoringGeneration &+= 1
+        let generation = imuMonitoringGeneration
+        imuMonitoringStartGeneration = generation
+        let start = useCases.startIMUMonitoring
+        imuMonitoringStartTask = Task { [weak self] in
+            let didStart: Bool
+            do {
+                try await start.execute()
+                didStart = true
+            } catch {
+                didStart = false
+            }
+            await self?.finishIMUMonitoringStart(
+                generation: generation,
+                didStart: didStart,
+                wasCancelled: Task.isCancelled
+            )
         }
     }
 
@@ -188,9 +200,16 @@ extension LiveVehicleSessionService {
 
     private func scheduleIMUExpiry(for sample: BikeIMUSample) {
         imuExpiryTask?.cancel()
+        guard let remainingFreshness = motionEstimator.remainingFreshnessDuration(
+            for: sample.observedAt
+        ) else {
+            imuExpiryTask = nil
+            return
+        }
+        let sleep = sleep
         imuExpiryTask = Task { [weak self] in
             do {
-                try await Task.sleep(for: .milliseconds(750))
+                try await sleep(remainingFreshness)
             } catch {
                 return
             }
@@ -204,6 +223,36 @@ extension LiveVehicleSessionService {
         guard imuSample == sample else { return }
         await refreshMotion()
         publish()
+    }
+
+    private func finishIMUMonitoringStart(
+        generation: Int,
+        didStart: Bool,
+        wasCancelled: Bool
+    ) async {
+        guard imuMonitoringStartGeneration == generation else {
+            if didStart {
+                await useCases.stopIMUMonitoring.execute()
+            }
+            return
+        }
+        imuMonitoringStartTask = nil
+        imuMonitoringStartGeneration = nil
+        let isCurrent = generation == imuMonitoringGeneration
+        if didStart, isCurrent, !wasCancelled, isReceivingTelemetry, !isStopping {
+            isIMUMonitoring = true
+            return
+        }
+        if didStart {
+            await useCases.stopIMUMonitoring.execute()
+        }
+        if isCurrent {
+            imuSample = nil
+            motionEstimator.reset()
+            await refreshMotion()
+        } else if isReceivingTelemetry, !isStopping {
+            await updateIMUMonitoring()
+        }
     }
 
     private func loadMotionCalibration(for profile: BikeProfile?) async {

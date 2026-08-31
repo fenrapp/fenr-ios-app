@@ -41,7 +41,8 @@ enum VehicleSessionDependencyContainer {
                 minimumGPSCourseSpeedKilometersPerHour: Constants.minimumGPSCourseSpeedKilometersPerHour,
                 maximumGPSCourseAccuracyDegrees: Constants.maximumGPSCourseAccuracyDegrees,
                 maximumLocationSampleAge: FENRRuntimeConstants.VehicleSession.locationSampleMaximumAge
-            )
+            ),
+            sleep: { duration in try await Task.sleep(for: duration) }
         )
     }
 }
