@@ -1,4 +1,3 @@
-import EnvironmentDomain
 import MapKit
 import RideNavigation
 import SwiftUI
@@ -274,7 +273,7 @@ private struct FocusNavigationViewport {
         (scene.userHeadingDegrees ?? .zero) - rotationDegrees
     }
 
-    func point(for coordinate: GeographicCoordinate) -> CGPoint {
+    func point(for coordinate: NavigationMapCoordinate) -> CGPoint {
         let mapPoint = MKMapPoint(coordinate.clCoordinate)
         let metersPerMapPoint = MKMetersPerMapPointAtLatitude(coordinate.latitudeDegrees)
         let eastMeters = (mapPoint.x - center.x) * metersPerMapPoint
@@ -288,12 +287,12 @@ private struct FocusNavigationViewport {
         )
     }
 
-    private static func visibleCoordinates(in scene: NavigationMapScene) -> [GeographicCoordinate] {
+    private static func visibleCoordinates(in scene: NavigationMapScene) -> [NavigationMapCoordinate] {
         scene.polylines.flatMap(\.points) + scene.markers.map(\.coordinate) + [scene.userCoordinate].compactMap { $0 }
     }
 
     private static func overviewViewport(
-        coordinates: [GeographicCoordinate],
+        coordinates: [NavigationMapCoordinate],
         size: CGSize
     ) -> (center: MKMapPoint, scale: Double) {
         guard let first = coordinates.first else {
@@ -331,7 +330,7 @@ private extension NavigationMapCamera {
     }
 }
 
-private extension GeographicCoordinate {
+private extension NavigationMapCoordinate {
     var clCoordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitudeDegrees, longitude: longitudeDegrees)
     }

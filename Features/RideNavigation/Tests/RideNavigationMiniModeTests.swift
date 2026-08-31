@@ -20,7 +20,7 @@ struct RideNavigationMiniModeTests {
         )
 
         #expect(await waitUntil {
-            fixture.viewModel.miniViewState.mapScene.userCoordinate == next
+            fixture.viewModel.miniViewState.mapScene.userCoordinate == mapCoordinate(next)
         })
         #expect(fixture.viewModel.miniViewState.mapScene.polylines.contains {
             $0.role == .completed && $0.points.count >= 2
@@ -169,7 +169,7 @@ struct RideNavigationMiniModeTests {
         )
         #expect(await waitUntil {
             fixture.viewModel.viewState.savedRoutes.count == 1
-                && fixture.viewModel.viewState.mapScene.userCoordinate == coordinate
+                && fixture.viewModel.viewState.mapScene.userCoordinate == mapCoordinate(coordinate)
         })
         fixture.viewModel.openSavedRoute(id: route.id)
         fixture.viewModel.startPreviewedRoute()
@@ -215,6 +215,13 @@ struct RideNavigationMiniModeTests {
 
     private func coordinate(latitude: Double) -> GeographicCoordinate {
         GeographicCoordinate(latitudeDegrees: latitude, longitudeDegrees: 2)!
+    }
+
+    private func mapCoordinate(_ coordinate: GeographicCoordinate) -> NavigationMapCoordinate? {
+        NavigationMapCoordinate(
+            latitudeDegrees: coordinate.latitudeDegrees,
+            longitudeDegrees: coordinate.longitudeDegrees
+        )
     }
 
     private struct RouteContext {

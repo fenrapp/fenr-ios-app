@@ -2,6 +2,7 @@ import DesignSystem
 import SwiftUI
 
 struct RideNavigationRoutePlanningOptionsView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let state: RideNavigationViewState
     let onSelectRouteOption: (Int) -> Void
     let onAvoidTolls: (Bool) -> Void
@@ -27,6 +28,7 @@ struct RideNavigationRoutePlanningOptionsView: View {
                 )
             }
         }
+        .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
     }
 
     private enum Constants {
@@ -35,6 +37,7 @@ struct RideNavigationRoutePlanningOptionsView: View {
 }
 
 struct RideNavigationRoutePreferencesView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let avoidsTolls: Bool
     let avoidsHighways: Bool
     let isLoading: Bool
@@ -42,7 +45,19 @@ struct RideNavigationRoutePreferencesView: View {
     let onAvoidHighways: (Bool) -> Void
 
     var body: some View {
-        HStack(spacing: DesignSpace.extraSmall) {
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: DesignSpace.extraSmall) { preferenceControls }
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                HStack(spacing: DesignSpace.extraSmall) { preferenceControls }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var preferenceControls: some View {
             preferenceButton(
                 title: "Avoid Tolls",
                 systemImage: "creditcard.fill",
@@ -61,8 +76,6 @@ struct RideNavigationRoutePreferencesView: View {
                     .padding(.horizontal, DesignSpace.extraSmall)
                     .accessibilityLabel("Updating routes")
             }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func preferenceButton(
@@ -74,7 +87,11 @@ struct RideNavigationRoutePreferencesView: View {
         Button(action: action) {
             Label(title, systemImage: isSelected ? "checkmark.circle.fill" : systemImage)
                 .font(.subheadline.weight(.semibold))
-                .lineLimit(1)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+                .fixedSize(
+                    horizontal: false,
+                    vertical: dynamicTypeSize.isAccessibilitySize
+                )
                 .padding(.horizontal, DesignSpace.small)
                 .frame(minHeight: Constants.controlHeight)
                 .background(
@@ -83,7 +100,11 @@ struct RideNavigationRoutePreferencesView: View {
                 )
         }
         .buttonStyle(.plain)
-        .fixedSize(horizontal: true, vertical: false)
+        .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : nil, alignment: .leading)
+        .fixedSize(
+            horizontal: !dynamicTypeSize.isAccessibilitySize,
+            vertical: dynamicTypeSize.isAccessibilitySize
+        )
         .rideNavigationGlassChip()
         .accessibilityValue(isSelected ? "On" : "Off")
     }

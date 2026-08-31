@@ -2,6 +2,7 @@ import DesignSystem
 import SwiftUI
 
 struct RideNavigationSavedRoutesPanel: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let routes: [RideNavigationRouteRow]
     let errorText: String?
     let onOpenRoute: (UUID) -> Void
@@ -21,7 +22,7 @@ struct RideNavigationSavedRoutesPanel: View {
             routeList
         }
         .padding(DesignSpace.medium)
-        .frame(width: Constants.panelWidth)
+        .frame(maxWidth: Constants.panelWidth)
         .frame(maxHeight: .infinity, alignment: .top)
         .background(
             Color.black.opacity(Constants.interactionShieldOpacity),
@@ -89,11 +90,11 @@ struct RideNavigationSavedRoutesPanel: View {
             VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
                 Text(route.title)
                     .font(.subheadline.weight(.semibold))
-                    .lineLimit(1)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
                 Text(route.detail)
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
             }
             Spacer()
             Image(systemName: "chevron.right")

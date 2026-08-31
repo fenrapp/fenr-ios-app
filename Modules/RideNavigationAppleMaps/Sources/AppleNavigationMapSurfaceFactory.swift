@@ -1,4 +1,3 @@
-import EnvironmentDomain
 import MapKit
 import RideNavigation
 import SwiftUI
@@ -363,7 +362,7 @@ private final class RiderAnnotationView: MKAnnotationView {
     }
 }
 
-private extension GeographicCoordinate {
+private extension NavigationMapCoordinate {
     var clCoordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitudeDegrees, longitude: longitudeDegrees)
     }

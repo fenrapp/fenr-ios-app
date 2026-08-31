@@ -31,6 +31,7 @@ struct RideNavigationMapSourceMenu: View {
 }
 
 struct RideNavigationMapSourcePicker: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let sources: [MapSourceDescriptor]
     let selectedStyleID: String
     let allowsFocus: Bool
@@ -58,7 +59,9 @@ struct RideNavigationMapSourcePicker: View {
             }
         }
         .padding(Constants.popoverPadding)
-        .frame(width: Constants.popoverWidth)
+        .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : Constants.popoverWidth)
+        .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : nil)
+        .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
         .rideNavigationGlassSurface(cornerRadius: Constants.popoverCornerRadius)
     }
 
@@ -68,6 +71,11 @@ struct RideNavigationMapSourcePicker: View {
         } label: {
             HStack(spacing: Constants.rowSpacing) {
                 Label(title, systemImage: systemImage)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+                    .fixedSize(
+                        horizontal: false,
+                        vertical: dynamicTypeSize.isAccessibilitySize
+                    )
                 Spacer(minLength: Constants.rowSpacing)
                 if selectedStyleID == id {
                     Image(systemName: "checkmark")
@@ -75,9 +83,11 @@ struct RideNavigationMapSourcePicker: View {
                 }
             }
             .contentShape(Rectangle())
+            .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity, minHeight: Constants.rowHeight, alignment: .leading)
+        .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
     }
 
     private enum Constants {

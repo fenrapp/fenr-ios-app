@@ -4,35 +4,47 @@ import SettingsDomain
 
 public struct RideNavigationPresentationMapper: Sendable {
     private let locale: Locale
+    private let minuteSecondStyle: Duration.TimeFormatStyle
+    private let hourMinuteSecondStyle: Duration.TimeFormatStyle
+    private let travelTimeStyle: Duration.UnitsFormatStyle
 
     public init(locale: Locale) {
         self.locale = locale
+        minuteSecondStyle = Duration.TimeFormatStyle(
+            pattern: .minuteSecond(padMinuteToLength: 2)
+        ).locale(locale)
+        hourMinuteSecondStyle = Duration.TimeFormatStyle(
+            pattern: .hourMinuteSecond(padHourToLength: 1, fractionalSecondsLength: 0)
+        ).locale(locale)
+        travelTimeStyle = Duration.UnitsFormatStyle(
+            allowedUnits: [.hours, .minutes],
+            width: .abbreviated,
+            maximumUnitCount: 2
+        ).locale(locale)
     }
 
     func speed(kilometersPerHour: Double?, measurementSystem: MeasurementSystem) -> (String, String) {
         guard let kilometersPerHour, kilometersPerHour.isFinite else { return ("--", "km/h") }
-        if measurementSystem.resolved(for: locale) == .us {
-            return (String(Int((kilometersPerHour * Constants.milesPerKilometer).rounded())), "mph")
-        }
-        return (String(Int(kilometersPerHour.rounded())), "km/h")
+        let metric = Measurement(value: kilometersPerHour, unit: UnitSpeed.kilometersPerHour)
+        let measurement = measurementSystem.resolved(for: locale) == .us
+            ? metric.converted(to: .milesPerHour)
+            : metric
+        return (format(measurement.value, fractionDigits: 0), measurement.unit.symbol)
     }
 
     func distance(meters: Double, measurementSystem: MeasurementSystem) -> String {
         guard meters.isFinite, meters >= .zero else { return "-- km" }
-        if measurementSystem.resolved(for: locale) == .us {
-            return String(format: "%.1f mi", meters / Constants.metersPerMile)
-        }
-        return String(format: "%.1f km", meters / Constants.metersPerKilometer)
+        let metric = Measurement(value: meters, unit: UnitLength.meters)
+        let measurement = measurementSystem.resolved(for: locale) == .us
+            ? metric.converted(to: .miles)
+            : metric.converted(to: .kilometers)
+        return "\(format(measurement.value, fractionDigits: 1)) \(measurement.unit.symbol)"
     }
 
     func elapsed(_ seconds: TimeInterval) -> String {
         let value = max(Int(seconds.rounded(.down)), .zero)
-        let hours = value / 3_600
-        let minutes = (value % 3_600) / 60
-        let remainingSeconds = value % 60
-        return hours > .zero
-            ? String(format: "%d:%02d:%02d", hours, minutes, remainingSeconds)
-            : String(format: "%02d:%02d", minutes, remainingSeconds)
+        let duration = Duration.seconds(value)
+        return duration.formatted(value >= Constants.secondsPerHour ? hourMinuteSecondStyle : minuteSecondStyle)
     }
 
     func routeDetail(_ route: RideRoute, measurementSystem: MeasurementSystem) -> String {
@@ -80,16 +92,16 @@ public struct RideNavigationPresentationMapper: Sendable {
 
     private func travelTime(_ seconds: TimeInterval) -> String {
         let totalMinutes = max(Int((seconds / 60).rounded()), 1)
-        let hours = totalMinutes / 60
-        let minutes = totalMinutes % 60
-        if hours > .zero, minutes > .zero { return "\(hours) hr \(minutes) min" }
-        if hours > .zero { return "\(hours) hr" }
-        return "\(minutes) min"
+        return Duration.seconds(totalMinutes * 60).formatted(travelTimeStyle)
+    }
+
+    private func format(_ value: Double, fractionDigits: Int) -> String {
+        value.formatted(
+            .number.locale(locale).precision(.fractionLength(fractionDigits))
+        )
     }
 
     private enum Constants {
-        static let milesPerKilometer = 0.621_371
-        static let metersPerMile = 1_609.344
-        static let metersPerKilometer = 1_000.0
+        static let secondsPerHour = 3_600
     }
 }

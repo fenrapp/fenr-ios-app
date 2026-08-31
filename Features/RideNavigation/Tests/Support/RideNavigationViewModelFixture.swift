@@ -18,7 +18,16 @@ struct RideNavigationViewModelFixture {
         routes: [RideRoute] = [],
         settings: AppSettings = .init(),
         repository: (any RecordedRouteRepository)? = nil,
-        trailExitFinder: any TrailExitFinding = StubTrailExitFinder()
+        externalMapLinkResolver: any ExternalMapLinkResolving = StubExternalMapLinkResolver(),
+        trailExitFinder: any TrailExitFinding = StubTrailExitFinder(),
+        timing: RideNavigationTiming = RideNavigationTiming(
+            now: { Date(timeIntervalSince1970: 1_700_000_000) },
+            sleep: { duration in
+                if duration == .seconds(1) {
+                    try await Task.sleep(for: .seconds(60))
+                }
+            }
+        )
     ) {
         let vehicleSession = TestVehicleSessionService()
         let deviceSpeedRepository = TestDeviceSpeedRepository()
@@ -33,22 +42,29 @@ struct RideNavigationViewModelFixture {
         self.settingsRepository = settingsRepository
         self.guidance = guidance
         viewModel = RideNavigationViewModel(
-            vehicleSession: vehicleSession,
-            observeDeviceSpeed: ObserveDeviceSpeedUseCase(repository: deviceSpeedRepository),
-            repository: repository ?? StubRecordedRouteRepository(routes: routes),
-            importer: StubGPXRouteImporter(),
-            exporter: StubGPXRouteExporter(),
-            placeSearch: placeSearch,
-            roadRouteCalculator: roadRouteCalculator,
-            externalMapLinkResolver: StubExternalMapLinkResolver(),
-            trailExitFinder: trailExitFinder,
-            guidance: guidance,
-            loadSettings: LoadAppSettingsUseCase(repository: settingsRepository),
-            saveSettings: SaveAppSettingsUseCase(repository: settingsRepository),
-            mapper: RideNavigationPresentationMapper(locale: Locale(identifier: "en_US")),
+            dependencies: RideNavigationViewModelDependencies(
+                vehicleSession: vehicleSession,
+                observeDeviceSpeed: ObserveDeviceSpeedUseCase(repository: deviceSpeedRepository),
+                routeLibrary: RideNavigationRouteLibraryService(
+                    repository: repository ?? StubRecordedRouteRepository(routes: routes),
+                    importer: StubGPXRouteImporter(),
+                    exporter: StubGPXRouteExporter()
+                ),
+                planning: RideNavigationPlanningService(
+                    placeSearch: placeSearch,
+                    roadRouteCalculator: roadRouteCalculator,
+                    externalMapLinkResolver: externalMapLinkResolver,
+                    trailExitFinder: trailExitFinder
+                ),
+                guidance: guidance,
+                loadSettings: LoadAppSettingsUseCase(repository: settingsRepository),
+                saveSettings: SaveAppSettingsUseCase(repository: settingsRepository),
+                presentationMapper: RideNavigationPresentationMapper(locale: Locale(identifier: "en_US")),
+                mapPresentationMapper: RideNavigationMapPresentationMapper(),
+                timing: timing
+            ),
             recorder: RideRouteRecorder(),
-            breadcrumbRecorder: RideRouteRecorder(),
-            now: { Date(timeIntervalSince1970: 1_700_000_000) }
+            breadcrumbRecorder: RideRouteRecorder()
         )
     }
 }

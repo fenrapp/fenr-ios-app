@@ -7,13 +7,20 @@ actor StubAppSettingsRepository: AppSettingsRepository {
     private var shouldSuspendNextSave = false
     private var suspendedSaveContinuation: CheckedContinuation<Void, Never>?
     private var saveSuspendedWaiters: [CheckedContinuation<Void, Never>] = []
+    private var loadContinuations: [CheckedContinuation<AppSettings, Never>] = []
+    private var blocksLoads = false
 
     init(settings: AppSettings = .init()) {
         self.settings = settings
     }
 
-    func load() -> AppSettings {
-        settings
+    func load() async -> AppSettings {
+        if blocksLoads {
+            return await withCheckedContinuation { continuation in
+                loadContinuations.append(continuation)
+            }
+        }
+        return settings
     }
 
     func save(_ settings: AppSettings) async {
@@ -63,5 +70,20 @@ actor StubAppSettingsRepository: AppSettingsRepository {
 
     func savedSettings() -> [AppSettings] {
         saves
+    }
+
+    func blockLoads() {
+        blocksLoads = true
+    }
+
+    var pendingLoadCount: Int {
+        loadContinuations.count
+    }
+
+    func resumeLoads(with settings: AppSettings) {
+        blocksLoads = false
+        let continuations = loadContinuations
+        loadContinuations.removeAll()
+        continuations.forEach { $0.resume(returning: settings) }
     }
 }

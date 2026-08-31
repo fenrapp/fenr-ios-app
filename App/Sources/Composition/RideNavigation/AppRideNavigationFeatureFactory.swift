@@ -20,53 +20,49 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
         let iso8601 = Date.ISO8601FormatStyle(includingFractionalSeconds: true)
         let placeSearch = ApplePlaceSearchService()
         let roadRouteCalculator = AppleRoadRouteCalculator()
-        let redirectConfiguration = URLSessionConfiguration.ephemeral
-        redirectConfiguration.timeoutIntervalForRequest = Constants.mapLinkTimeoutSeconds
-        redirectConfiguration.timeoutIntervalForResource = Constants.mapLinkTimeoutSeconds
-        let redirectDelegate = AllowedMapLinkRedirectDelegate(
-            allowedHosts: Constants.allowedMapLinkHosts,
-            maximumRedirects: Constants.maximumMapLinkRedirects
-        )
-        let redirectSession = URLSession(
-            configuration: redirectConfiguration,
-            delegate: redirectDelegate,
-            delegateQueue: nil
-        )
+        let redirectSession = Self.makeRedirectSession()
         return RideNavigationFeatureModel(
             viewModel: RideNavigationViewModel(
-                vehicleSession: vehicleSession,
-                observeDeviceSpeed: observeDeviceSpeed,
-                repository: repository,
-                importer: GPXRouteParser(
-                    now: Date.init,
-                    dateFormat: iso8601,
-                    fallbackDateFormat: Date.ISO8601FormatStyle(),
-                    limits: GPXRouteImportLimits(
-                        maximumFileSizeBytes: Constants.maximumGPXFileSizeBytes,
-                        maximumPointCount: Constants.maximumGPXPointCount
-                    )
+                dependencies: RideNavigationViewModelDependencies(
+                    vehicleSession: vehicleSession,
+                    observeDeviceSpeed: observeDeviceSpeed,
+                    routeLibrary: RideNavigationRouteLibraryService(
+                        repository: repository,
+                        importer: GPXRouteParser(
+                            now: Date.init,
+                            dateFormat: iso8601,
+                            fallbackDateFormat: Date.ISO8601FormatStyle(),
+                            limits: GPXRouteImportLimits(
+                                maximumFileSizeBytes: Constants.maximumGPXFileSizeBytes,
+                                maximumPointCount: Constants.maximumGPXPointCount
+                            )
+                        ),
+                        exporter: GPXRouteExporter(dateFormat: iso8601)
+                    ),
+                    planning: RideNavigationPlanningService(
+                        placeSearch: placeSearch,
+                        roadRouteCalculator: roadRouteCalculator,
+                        externalMapLinkResolver: AppleExternalMapLinkResolver(
+                            redirectResolver: URLSessionMapLinkRedirectResolver(session: redirectSession),
+                            placeSearch: placeSearch
+                        ),
+                        trailExitFinder: AppleTrailExitFinder(
+                            candidateSearch: AppleTrailExitCandidateSearch(),
+                            roadRouteCalculator: roadRouteCalculator
+                        )
+                    ),
+                    guidance: AppleNavigationGuidanceClient(
+                        synthesizer: AVSpeechSynthesizer(),
+                        notificationGenerator: UINotificationFeedbackGenerator()
+                    ),
+                    loadSettings: LoadAppSettingsUseCase(repository: settingsRepository),
+                    saveSettings: SaveAppSettingsUseCase(repository: settingsRepository),
+                    presentationMapper: RideNavigationPresentationMapper(locale: .autoupdatingCurrent),
+                    mapPresentationMapper: RideNavigationMapPresentationMapper(),
+                    timing: .live
                 ),
-                exporter: GPXRouteExporter(dateFormat: iso8601),
-                placeSearch: placeSearch,
-                roadRouteCalculator: roadRouteCalculator,
-                externalMapLinkResolver: AppleExternalMapLinkResolver(
-                    redirectResolver: URLSessionMapLinkRedirectResolver(session: redirectSession),
-                    placeSearch: placeSearch
-                ),
-                trailExitFinder: AppleTrailExitFinder(
-                    candidateSearch: AppleTrailExitCandidateSearch(),
-                    roadRouteCalculator: roadRouteCalculator
-                ),
-                guidance: AppleNavigationGuidanceClient(
-                    synthesizer: AVSpeechSynthesizer(),
-                    notificationGenerator: UINotificationFeedbackGenerator()
-                ),
-                loadSettings: LoadAppSettingsUseCase(repository: settingsRepository),
-                saveSettings: SaveAppSettingsUseCase(repository: settingsRepository),
-                mapper: RideNavigationPresentationMapper(locale: .autoupdatingCurrent),
                 recorder: RideRouteRecorder(),
-                breadcrumbRecorder: RideRouteRecorder(),
-                now: Date.init
+                breadcrumbRecorder: RideRouteRecorder()
             ),
             mapSurfaceFactory: AppleNavigationMapSurfaceFactory().makeFactory()
         )
@@ -80,6 +76,20 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
             fileManager: fileManager,
             directoryURL: base.appendingPathComponent("RideNavigation", isDirectory: true),
             codec: StoredRideRouteCodec()
+        )
+    }
+
+    nonisolated private static func makeRedirectSession() -> URLSession {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest = Constants.mapLinkTimeoutSeconds
+        configuration.timeoutIntervalForResource = Constants.mapLinkTimeoutSeconds
+        return URLSession(
+            configuration: configuration,
+            delegate: AllowedMapLinkRedirectDelegate(
+                allowedHosts: Constants.allowedMapLinkHosts,
+                maximumRedirects: Constants.maximumMapLinkRedirects
+            ),
+            delegateQueue: nil
         )
     }
 
