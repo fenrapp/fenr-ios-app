@@ -5,29 +5,51 @@ actor DashboardCardSettingsRepository: AppSettingsRepository {
     private(set) var settings: AppSettings
     private(set) var savedSettings: [AppSettings] = []
     private(set) var saveCallCount = 0
-    private let saveDelay: Duration
     private var continuations: [UUID: AsyncStream<AppSettings>.Continuation] = [:]
+    private var shouldBlockNextSave = false
+    private var blockedSaveContinuation: CheckedContinuation<Void, Never>?
+    private var blockedSaveWaiters: [CheckedContinuation<Void, Never>] = []
 
-    init(
-        settings: AppSettings = .init(),
-        saveDelay: Duration = .zero
-    ) {
+    init(settings: AppSettings = .init()) {
         self.settings = settings
-        self.saveDelay = saveDelay
     }
 
     func load() -> AppSettings { settings }
 
     func save(_ settings: AppSettings) async {
-        if saveDelay > .zero {
-            try? await Task.sleep(for: saveDelay)
+        saveCallCount += 1
+        if shouldBlockNextSave {
+            shouldBlockNextSave = false
+            await withCheckedContinuation { continuation in
+                blockedSaveContinuation = continuation
+                let waiters = blockedSaveWaiters
+                blockedSaveWaiters.removeAll()
+                waiters.forEach { $0.resume() }
+            }
         }
         guard !Task.isCancelled else { return }
-        saveCallCount += 1
         guard settings != self.settings else { return }
         self.settings = settings
         savedSettings.append(settings)
         continuations.values.forEach { $0.yield(settings) }
+    }
+
+    func blockNextSave() {
+        precondition(!shouldBlockNextSave && blockedSaveContinuation == nil)
+        shouldBlockNextSave = true
+    }
+
+    func waitForBlockedSave() async {
+        guard blockedSaveContinuation == nil else { return }
+        await withCheckedContinuation { continuation in
+            blockedSaveWaiters.append(continuation)
+        }
+    }
+
+    func releaseBlockedSave() {
+        let continuation = blockedSaveContinuation
+        blockedSaveContinuation = nil
+        continuation?.resume()
     }
 
     func observe() -> AsyncStream<AppSettings> {

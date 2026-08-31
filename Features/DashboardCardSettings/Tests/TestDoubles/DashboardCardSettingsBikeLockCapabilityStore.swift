@@ -20,6 +20,19 @@ final class DashboardCardSettingsBikeLockCapabilityStore: BikeLockCapabilityStat
         let (stream, continuation) = AsyncStream<BikeLockCapabilityState>.makeStream()
         continuations[id] = continuation
         continuation.yield(currentState)
+        continuation.onTermination = { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.removeContinuation(id)
+            }
+        }
         return stream
+    }
+
+    var observerCount: Int {
+        continuations.count
+    }
+
+    private func removeContinuation(_ id: UUID) {
+        continuations[id] = nil
     }
 }

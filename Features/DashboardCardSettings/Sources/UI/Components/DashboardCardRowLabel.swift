@@ -1,29 +1,46 @@
+import DesignSystem
 import SwiftUI
 
 struct DashboardCardRowLabel: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let title: String
     let detail: String?
     let thumbnail: DashboardCardThumbnailViewData
 
     var body: some View {
-        HStack(spacing: Constants.spacing) {
-            DashboardCardThumbnail(state: thumbnail)
-
-            VStack(alignment: .leading, spacing: Constants.labelSpacing) {
-                Text(title)
-                    .foregroundStyle(.primary)
-                if let detail {
-                    Text(detail)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(Constants.detailLineLimit)
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: Constants.spacing) {
+                    DashboardCardThumbnail(state: thumbnail)
+                    labelText
+                }
+            } else {
+                HStack(spacing: Constants.spacing) {
+                    DashboardCardThumbnail(state: thumbnail)
+                    labelText
                 }
             }
         }
     }
 
+    private var labelText: some View {
+        VStack(alignment: .leading, spacing: Constants.labelSpacing) {
+            Text(title)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
+            if let detail {
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : Constants.detailLineLimit)
+                    .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
+            }
+        }
+    }
+
     private enum Constants {
-        static let spacing: CGFloat = 12
+        static let spacing = DesignSpace.small
         static let labelSpacing: CGFloat = 2
         static let detailLineLimit = 2
     }

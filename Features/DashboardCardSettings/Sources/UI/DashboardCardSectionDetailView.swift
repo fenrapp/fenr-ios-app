@@ -9,22 +9,19 @@ struct DashboardCardSectionDetailView: View {
             Section {
                 ForEach(pageRowsBinding, editActions: .move) { row in
                     let page = row.wrappedValue
-                    HStack(spacing: Constants.rowSpacing) {
+                    DashboardCardVisibilityRow(
+                        title: page.title,
+                        isEnabled: page.canHide,
+                        disabledHint: "At least one card must remain visible",
+                        isVisible: visibilityBinding(for: page)
+                    ) {
                         DashboardCardRowLabel(
                             title: page.title,
                             detail: page.isVisible ? "Visible" : "Hidden",
                             thumbnail: page.thumbnail
                         )
-                        Spacer(minLength: Constants.minimumSpacer)
-                        DashboardCardVisibilityToggle(
-                            title: page.title,
-                            isEnabled: page.canHide,
-                            disabledHint: "At least one card must remain visible",
-                            isVisible: visibilityBinding(for: page)
-                        )
                     }
                     .moveDisabled(false)
-                    .accessibilityElement(children: .contain)
                 }
             } header: {
                 Text("Cards")
@@ -65,10 +62,5 @@ struct DashboardCardSectionDetailView: View {
             },
             set: { viewModel.setPageVisibility($0, id: page.id, sectionID: sectionID) }
         )
-    }
-
-    private enum Constants {
-        static let rowSpacing: CGFloat = 8
-        static let minimumSpacer: CGFloat = 8
     }
 }
