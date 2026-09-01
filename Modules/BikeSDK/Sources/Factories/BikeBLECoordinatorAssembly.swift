@@ -29,6 +29,7 @@ enum BikeBLECoordinatorAssembly {
             eventEmitter: dependencies.eventEmitter,
             peripheralOperations: dependencies.peripheralOperations
         )
+        let transactionGate = BikeBLEVCUConfigurationTransactionGate()
         let configurationTransport = BikeBLEVCUConfigurationTransport(
             sessionStore: dependencies.sessionStore,
             eventEmitter: dependencies.eventEmitter,
@@ -36,7 +37,8 @@ enum BikeBLECoordinatorAssembly {
             configurationReadinessWaiter: .init(
                 checkInterval: .milliseconds(50),
                 maximumCheckCount: 100
-            )
+            ),
+            transactionGate: transactionGate
         )
         let experimentalCaptureCoordinator = BikeBLEExperimentalCaptureCoordinator(
             sessionStore: dependencies.sessionStore,

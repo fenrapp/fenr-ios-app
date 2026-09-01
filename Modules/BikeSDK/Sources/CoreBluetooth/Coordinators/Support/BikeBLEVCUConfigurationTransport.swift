@@ -7,7 +7,7 @@ final class BikeBLEVCUConfigurationTransport {
     private let eventEmitter: BikeBLEEventEmitter
     private let peripheralOperations: BikeBLEPeripheralOperations
     let configurationReadinessWaiter: BikeBLEConfigurationReadinessWaiter
-    private let transactionGate = BikeBLEVCUConfigurationTransactionGate()
+    private let transactionGate: BikeBLEVCUConfigurationTransactionGate
     var activeOperation: BikeBLEVCUConfigurationOperation?
     var expectedConfigurationResponse: BikeBLEVCUConfigurationExpectedResponse?
     var bufferedConfigurationResponse: Result<Data, BikeSDKError>?
@@ -18,12 +18,29 @@ final class BikeBLEVCUConfigurationTransport {
         sessionStore: BLESessionStore,
         eventEmitter: BikeBLEEventEmitter,
         peripheralOperations: BikeBLEPeripheralOperations,
-        configurationReadinessWaiter: BikeBLEConfigurationReadinessWaiter
+        configurationReadinessWaiter: BikeBLEConfigurationReadinessWaiter,
+        transactionGate: BikeBLEVCUConfigurationTransactionGate
     ) {
         self.sessionStore = sessionStore
         self.eventEmitter = eventEmitter
         self.peripheralOperations = peripheralOperations
         self.configurationReadinessWaiter = configurationReadinessWaiter
+        self.transactionGate = transactionGate
+    }
+
+    convenience init(
+        sessionStore: BLESessionStore,
+        eventEmitter: BikeBLEEventEmitter,
+        peripheralOperations: BikeBLEPeripheralOperations,
+        configurationReadinessWaiter: BikeBLEConfigurationReadinessWaiter
+    ) {
+        self.init(
+            sessionStore: sessionStore,
+            eventEmitter: eventEmitter,
+            peripheralOperations: peripheralOperations,
+            configurationReadinessWaiter: configurationReadinessWaiter,
+            transactionGate: BikeBLEVCUConfigurationTransactionGate()
+        )
     }
 
     deinit { timeoutTask?.cancel() }
