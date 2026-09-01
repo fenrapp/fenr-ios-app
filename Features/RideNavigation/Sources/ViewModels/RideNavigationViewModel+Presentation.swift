@@ -194,11 +194,20 @@ extension RideNavigationViewModel {
     }
 
     func makeMapScene() -> NavigationMapScene {
-        var polylines: [NavigationMapPolyline] = []
-        var markers: [NavigationMapMarker] = []
-        var directionalIndicators: [NavigationMapDirectionalIndicator] = []
-        appendSelectedRoute(to: &polylines, markers: &markers)
-        appendDirectionalIndicators(to: &directionalIndicators)
+        let guidanceSnapshot = trailGuidance.snapshot
+        let trailOverlay = mapMapper.trailOverlay(
+            RideNavigationMapPresentationMapper.TrailOverlayInput(
+                hasSelectedRoute: selectedRoute != nil,
+                activity: activity,
+                isPresentingTrailExit: trailExitPreview != nil
+                    || roadNavigationPurpose == .trailExit,
+                trailMap: trailMap.presentationSnapshot,
+                guidancePlan: guidanceSnapshot.plan,
+                guidance: guidanceSnapshot.guidance
+            )
+        )
+        var polylines = trailOverlay.polylines
+        var markers = trailOverlay.markers
         appendRoadRoutes(to: &polylines, markers: &markers)
         appendRejoinGuide(to: &polylines)
         appendRecordedRoutes(to: &polylines)
@@ -210,7 +219,7 @@ extension RideNavigationViewModel {
             userHeadingDegrees: locationSnapshot.courseDegrees,
             polylines: polylines,
             markers: markers,
-            directionalIndicators: directionalIndicators
+            directionalIndicators: trailOverlay.directionalIndicators
         )
     }
 
@@ -360,9 +369,6 @@ extension RideNavigationViewModel {
         static let minimumSearchCharacters = 2
         static let searchDebounceMilliseconds = 300
         static let maximumSearchResults = 8
-        static let maximumPreviewIndicators = 200
-        static let previewMinimumIndicatorSpacingMeters = 40.0
-        static let indicatorBearingLookAheadMeters = 5.0
         static let halfCircleDegrees = 180.0
         static let fullCircleDegrees = 360.0
         static let roadStepAdvanceDistanceMeters = 30.0

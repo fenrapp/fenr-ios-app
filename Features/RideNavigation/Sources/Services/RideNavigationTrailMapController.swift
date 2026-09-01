@@ -1,11 +1,19 @@
 @MainActor
 public final class RideNavigationTrailMapController {
-    private(set) var routeSegments: [[NavigationMapCoordinate]] = []
+    struct PresentationSnapshot: Equatable, Sendable {
+        let segments: [[NavigationMapCoordinate]]
+        let startCoordinate: NavigationMapCoordinate?
+        let finishCoordinate: NavigationMapCoordinate?
+        let revision: Int
+        let completedPolylines: [NavigationMapPolyline]
+    }
+
+    private var routeSegments: [[NavigationMapCoordinate]] = []
     private(set) var overviewCoordinates: [NavigationMapCoordinate] = []
-    private(set) var startCoordinate: NavigationMapCoordinate?
-    private(set) var finishCoordinate: NavigationMapCoordinate?
+    private var startCoordinate: NavigationMapCoordinate?
+    private var finishCoordinate: NavigationMapCoordinate?
     private(set) var routeDistanceMeters = 0.0
-    private(set) var routeRevision = 0
+    private var routeRevision = 0
     private var completionChunks: [RideNavigationTrailMapPlan.CompletionChunk] = []
     private var completedPolylines: [NavigationMapPolyline] = []
     private var partialCompletedPolyline: NavigationMapPolyline?
@@ -13,6 +21,20 @@ public final class RideNavigationTrailMapController {
     private var completedDistanceMeters = 0.0
 
     public init() {}
+
+    var presentationSnapshot: PresentationSnapshot {
+        var orderedCompletedPolylines = completedPolylines
+        if let partialCompletedPolyline {
+            orderedCompletedPolylines.append(partialCompletedPolyline)
+        }
+        return PresentationSnapshot(
+            segments: routeSegments,
+            startCoordinate: startCoordinate,
+            finishCoordinate: finishCoordinate,
+            revision: routeRevision,
+            completedPolylines: orderedCompletedPolylines
+        )
+    }
 
     func apply(_ plan: RideNavigationTrailMapPlan) {
         routeSegments = plan.routeSegments
@@ -43,10 +65,7 @@ public final class RideNavigationTrailMapController {
     }
 
     func appendCompletedPolylines(to polylines: inout [NavigationMapPolyline]) {
-        polylines.append(contentsOf: completedPolylines)
-        if let partialCompletedPolyline {
-            polylines.append(partialCompletedPolyline)
-        }
+        polylines.append(contentsOf: presentationSnapshot.completedPolylines)
     }
 
     func resetCompletion() {
