@@ -59,6 +59,7 @@ enum BikeLiveActivityPhase: String, Codable, Hashable {
     case neutral
     case crawl
     case fault
+    case reconnecting
     case stale
     case connectionLost
 
@@ -71,6 +72,7 @@ enum BikeLiveActivityPhase: String, Codable, Hashable {
         case .neutral: "Neutral"
         case .crawl: "Crawl"
         case .fault: "Fault active"
+        case .reconnecting: "Reconnecting"
         case .stale: "Waiting for update"
         case .connectionLost: "Connection lost"
         }

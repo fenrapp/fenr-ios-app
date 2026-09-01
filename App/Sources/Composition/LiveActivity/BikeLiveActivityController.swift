@@ -1,4 +1,5 @@
 import Foundation
+import RideDashboard
 import VehicleSession
 
 @MainActor
@@ -6,7 +7,10 @@ final class BikeLiveActivityController {
     private let vehicleSession: any VehicleSessionService
     private let activityClient: BikeLiveActivityClient
     private let clock: any BikeLiveActivityClock
+    private let timing: BikeLiveActivityTiming
+    private let continuityPolicy: RideDashboardContinuityPolicy
     private let updateInterval: TimeInterval
+    private let reconnectionNoticeDelay: Duration
     private let stateMapper: BikeLiveActivityStateMapper
 
     private var snapshot = VehicleSessionSnapshot()
@@ -19,25 +23,37 @@ final class BikeLiveActivityController {
     private let batteryHealthConsumerID = UUID()
     private var isRequestingBatteryHealth = false
     private var lastContentState: BikeLiveActivityContentState?
+    private var lastStableContentState: BikeLiveActivityContentState?
     private var lastUpdateDate: Date?
+    private var reconnectionNoticeTask: Task<Void, Never>?
+    private var reconnectionNoticeGeneration = 0
+    private var isShowingReconnectionNotice = false
+    private var requiresImmediateRecoveryUpdate = false
 
     init(
         vehicleSession: any VehicleSessionService,
         activityClient: BikeLiveActivityClient,
         clock: any BikeLiveActivityClock,
+        timing: BikeLiveActivityTiming,
+        continuityPolicy: RideDashboardContinuityPolicy,
         updateInterval: TimeInterval,
+        reconnectionNoticeDelay: Duration,
         stateMapper: BikeLiveActivityStateMapper
     ) {
         self.vehicleSession = vehicleSession
         self.activityClient = activityClient
         self.clock = clock
+        self.timing = timing
+        self.continuityPolicy = continuityPolicy
         self.updateInterval = updateInterval
+        self.reconnectionNoticeDelay = reconnectionNoticeDelay
         self.stateMapper = stateMapper
     }
 
     deinit {
         observationTask?.cancel()
         evaluationTask?.cancel()
+        reconnectionNoticeTask?.cancel()
     }
 
     func start() {
@@ -61,6 +77,12 @@ final class BikeLiveActivityController {
         evaluationTask?.cancel()
         await evaluationTask?.value
         evaluationTask = nil
+        reconnectionNoticeGeneration &+= 1
+        reconnectionNoticeTask?.cancel()
+        await reconnectionNoticeTask?.value
+        reconnectionNoticeTask = nil
+        isShowingReconnectionNotice = false
+        requiresImmediateRecoveryUpdate = false
         needsEvaluation = false
         await setBatteryHealthRequired(false)
     }
@@ -74,8 +96,10 @@ final class BikeLiveActivityController {
         isSetupCompleted = isCompleted
         scheduleEvaluation()
     }
+}
 
-    private func scheduleEvaluation() {
+private extension BikeLiveActivityController {
+    func scheduleEvaluation() {
         needsEvaluation = true
         guard evaluationTask == nil, isStarted else { return }
         evaluationTask = Task { [weak self] in
@@ -103,6 +127,22 @@ final class BikeLiveActivityController {
         )
         let state = snapshot.contentState
 
+        let continuityPhase = continuityPolicy.phase(
+            connectionState: self.snapshot.connection.state,
+            hasLiveTelemetry: snapshot.hasRecentTelemetry
+                && snapshot.hasDisplayableTelemetry
+                && snapshot.isReceivingTelemetry
+                && self.snapshot.isCanonicalTelemetryAvailable,
+            hasValidPresentation: activityClient.isActive && lastStableContentState != nil
+        )
+        if continuityPhase == .recovering, activityClient.isActive {
+            requiresImmediateRecoveryUpdate = true
+            await preserveActivityDuringRecovery()
+            return
+        }
+        let shouldForceUpdate = requiresImmediateRecoveryUpdate
+        cancelReconnectionNotice()
+
         if !activityClient.isActive {
             guard canShowLiveActivity else { return }
             guard canStartActivity(with: snapshot) else { return }
@@ -110,6 +150,7 @@ final class BikeLiveActivityController {
                 try await activityClient.start(vin: activityVIN, state: state)
                 guard isStarted, !Task.isCancelled else { return }
                 lastContentState = state
+                lastStableContentState = state
                 lastUpdateDate = clock.now
                 await updateBatteryHealthMonitoring(for: state)
             } catch {
@@ -123,21 +164,27 @@ final class BikeLiveActivityController {
             guard isStarted, !Task.isCancelled else { return }
             await setBatteryHealthRequired(false)
             lastContentState = nil
+            lastStableContentState = nil
             lastUpdateDate = nil
             return
         }
 
         await updateBatteryHealthMonitoring(for: state)
         guard isStarted, !Task.isCancelled else { return }
-        guard shouldUpdate(with: state) else { return }
+        guard shouldForceUpdate || shouldUpdate(with: state) else { return }
         await activityClient.update(state: state)
         guard isStarted, !Task.isCancelled else { return }
+        requiresImmediateRecoveryUpdate = false
         lastContentState = state
+        if continuityPhase == .live {
+            lastStableContentState = state
+        }
         lastUpdateDate = clock.now
     }
 
     private func canStartActivity(with snapshot: BikeLiveActivitySnapshot) -> Bool {
         isSetupCompleted
+            && self.snapshot.isCanonicalTelemetryAvailable
             && snapshot.hasRecentTelemetry
             && snapshot.hasDisplayableTelemetry
             && snapshot.isReceivingTelemetry
@@ -189,6 +236,65 @@ final class BikeLiveActivityController {
             return true
         }
         return false
+    }
+
+    private func preserveActivityDuringRecovery() async {
+        guard let stableState = lastStableContentState else { return }
+        await updateBatteryHealthMonitoring(for: stableState)
+        if isShowingReconnectionNotice {
+            var reconnectingState = stableState
+            reconnectingState.phase = .reconnecting
+            reconnectingState.isConnectionLost = false
+            guard shouldUpdate(with: reconnectingState) else { return }
+            await activityClient.update(state: reconnectingState)
+            guard isStarted, isShowingReconnectionNotice else { return }
+            lastContentState = reconnectingState
+            lastUpdateDate = clock.now
+            return
+        }
+        guard reconnectionNoticeTask == nil, !isShowingReconnectionNotice else { return }
+        let timing = timing
+        let delay = reconnectionNoticeDelay
+        let generation = reconnectionNoticeGeneration
+        reconnectionNoticeTask = Task { [weak self] in
+            do {
+                try await timing.sleep(delay)
+            } catch {
+                return
+            }
+            guard !Task.isCancelled else { return }
+            await self?.publishReconnectionNotice(generation: generation)
+        }
+    }
+
+    private func publishReconnectionNotice(generation: Int) async {
+        guard generation == reconnectionNoticeGeneration,
+              isStarted,
+              activityClient.isActive,
+              let stableState = lastStableContentState else {
+            return
+        }
+        let mapped = stateMapper.map(snapshot: snapshot, now: clock.now)
+        guard continuityPolicy.phase(
+            connectionState: snapshot.connection.state,
+            hasLiveTelemetry: mapped.hasRecentTelemetry
+                && mapped.hasDisplayableTelemetry
+                && mapped.isReceivingTelemetry
+                && snapshot.isCanonicalTelemetryAvailable,
+            hasValidPresentation: true
+        ) == .recovering else {
+            return
+        }
+        reconnectionNoticeTask = nil
+        isShowingReconnectionNotice = true
+        scheduleEvaluation()
+    }
+
+    private func cancelReconnectionNotice() {
+        reconnectionNoticeGeneration &+= 1
+        reconnectionNoticeTask?.cancel()
+        reconnectionNoticeTask = nil
+        isShowingReconnectionNotice = false
     }
 
     private var activityVIN: String {

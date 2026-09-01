@@ -15,6 +15,8 @@ enum BikeLiveActivityIcon {
             "tortoise.fill"
         case .fault:
             "exclamationmark.triangle.fill"
+        case .reconnecting:
+            "arrow.triangle.2.circlepath"
         case .stale:
             "clock.fill"
         case .connectionLost:

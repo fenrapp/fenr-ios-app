@@ -20,6 +20,8 @@ enum BikeLiveActivityPresentation {
             DesignColor.warning
         case .fault:
             DesignColor.critical
+        case .reconnecting:
+            DesignColor.warning
         case .stale:
             DesignColor.warning
         case .connectionLost:
