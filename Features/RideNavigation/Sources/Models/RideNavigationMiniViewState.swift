@@ -17,6 +17,8 @@ public struct RideNavigationMiniViewState: Equatable, Sendable {
     public let scaleRange: ClosedRange<Double>
     public let isLandscape: Bool
     public let statusText: String?
+    public let forkGuidance: RideNavigationForkGuidance?
+    public let isArrivalPending: Bool
     public let accessibilityLabel: String
 
     public init(
@@ -26,6 +28,8 @@ public struct RideNavigationMiniViewState: Equatable, Sendable {
         scaleRange: ClosedRange<Double> = 0.5 ... 1.5,
         isLandscape: Bool = false,
         statusText: String? = nil,
+        forkGuidance: RideNavigationForkGuidance? = nil,
+        isArrivalPending: Bool = false,
         accessibilityLabel: String = "Mini navigation map"
     ) {
         self.mapScene = mapScene
@@ -34,6 +38,8 @@ public struct RideNavigationMiniViewState: Equatable, Sendable {
         self.scaleRange = scaleRange
         self.isLandscape = isLandscape
         self.statusText = statusText
+        self.forkGuidance = forkGuidance
+        self.isArrivalPending = isArrivalPending
         self.accessibilityLabel = accessibilityLabel
     }
 }

@@ -23,7 +23,7 @@ struct RideNavigationMiniModeTests {
             fixture.viewModel.miniViewState.mapScene.userCoordinate == mapCoordinate(next)
         })
         #expect(fixture.viewModel.miniViewState.mapScene.polylines.contains {
-            $0.role == .completed && $0.points.count >= 2
+            $0.role == .trailCompleted && $0.points.count >= 2
         })
         guard case .follow(_, let heading) = fixture.viewModel.miniViewState.mapScene.camera else {
             Issue.record("Mini navigation should follow the latest route location")
@@ -148,11 +148,14 @@ struct RideNavigationMiniModeTests {
             deviceSpeedSample(context.finish, seconds: 10, courseDegrees: .zero)
         )
         #expect(await waitUntil {
-            fixture.viewModel.miniViewState.statusText == "Trail complete"
+            fixture.viewModel.miniViewState.statusText == "END REACHED · TAP"
         })
-        #expect(await waitUntil { await fixture.deviceSpeedRepository.activeObserverCount() == 0 })
+        #expect(await fixture.deviceSpeedRepository.activeObserverCount() == 1)
 
         fixture.viewModel.setPresentationMode(.fullScreen)
+        #expect(fixture.viewModel.viewState.screen == .map)
+        #expect(fixture.viewModel.viewState.arrivalPrompt != nil)
+        fixture.viewModel.finishAfterTrailArrival()
         #expect(fixture.viewModel.viewState.screen == .summary)
         #expect(fixture.viewModel.viewState.summaryTitle == "Trail complete")
         fixture.viewModel.stop()
@@ -165,7 +168,7 @@ struct RideNavigationMiniModeTests {
     ) async {
         fixture.viewModel.start()
         await fixture.deviceSpeedRepository.send(
-            deviceSpeedSample(coordinate, seconds: .zero, courseDegrees: 90)
+            deviceSpeedSample(coordinate, seconds: .zero, courseDegrees: 0)
         )
         #expect(await waitUntil {
             fixture.viewModel.viewState.savedRoutes.count == 1
@@ -173,6 +176,7 @@ struct RideNavigationMiniModeTests {
         })
         fixture.viewModel.openSavedRoute(id: route.id)
         fixture.viewModel.startPreviewedRoute()
+        #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
     }
 
     private func makeRoute(name: String, finishLatitude: Double) -> RouteContext {

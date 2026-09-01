@@ -14,6 +14,10 @@ actor ControllableRecordedRouteRepository: RecordedRouteRepository {
     private var draftSaves = 0
     private(set) var saveWasCancelled: Bool?
 
+    init(routes: [RideRoute] = []) {
+        self.routes = routes
+    }
+
     func loadRoutes() async -> [RideRoute] {
         if blocksLoads {
             return await withCheckedContinuation { continuation in
@@ -65,6 +69,10 @@ actor ControllableRecordedRouteRepository: RecordedRouteRepository {
 
     var saveRequestCount: Int {
         saveRequests.count
+    }
+
+    var storedRoutes: [RideRoute] {
+        routes
     }
 
     func blockRouteLoads() {

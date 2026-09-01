@@ -75,27 +75,8 @@ extension RideNavigationViewModel {
             }
             return
         }
-        guard activity == .following,
-              let location = locationSnapshot.coordinate,
-              let route = orientedRoute,
-              let progress = RideRouteGeometry.progress(
-                  from: location,
-                  along: route,
-                  lookAheadMeters: Constants.enduroLookAheadMeters,
-                  minimumDistanceAlongMeters: trailProgress?.distanceAlongRouteMeters ?? .zero
-              ) else { return }
-        trailProgress = progress
-        if progress.distanceFromRouteMeters > Constants.offRouteDistanceMeters,
-           !didAnnounceOffRoute {
-            didAnnounceOffRoute = true
-            announce("You are off trail. Follow the arrow back to the track")
-            replaceGuidanceTask { [guidance] in await guidance.notifyWarning() }
-        } else if progress.distanceFromRouteMeters < Constants.routeRecoveryDistanceMeters {
-            didAnnounceOffRoute = false
-        }
-        if progress.remainingDistanceMeters <= Constants.arrivalDistanceMeters {
-            finishActivity(reason: .trailComplete)
-        }
+        guard activity == .following, let sample = trailGuidanceSample else { return }
+        updateTrailGuidance(with: sample)
     }
 
     func startClock() {
@@ -233,7 +214,12 @@ extension RideNavigationViewModel {
 
     func announce(_ text: String) {
         guard !isVoiceMuted else { return }
-        replaceGuidanceTask { [guidance] in await guidance.announce(text) }
+        let generation = operations.begin(.voiceAnnouncement)
+        voiceAnnouncementTask = Task { [guidance] in
+            guard !Task.isCancelled else { return }
+            await guidance.announce(text)
+            _ = generation
+        }
     }
 
     func startBreadcrumb(at date: Date) {
@@ -261,6 +247,15 @@ extension RideNavigationViewModel {
     ) {
         _ = operations.begin(.guidance)
         guidanceTask = Task {
+            await operation()
+        }
+    }
+
+    func replaceFeedbackTask(
+        _ operation: @escaping @Sendable () async -> Void
+    ) {
+        _ = operations.begin(.feedback)
+        feedbackTask = Task {
             await operation()
         }
     }

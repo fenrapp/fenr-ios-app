@@ -36,6 +36,7 @@ public struct RideNavigationViewState: Equatable, Sendable {
     public let avoidsHighways: Bool
     public let showsRoadRoutePreferences: Bool
     public let isCalculatingRoadRoutes: Bool
+    public let isPreparingTrail: Bool
     public let isRerouting: Bool
     public let isSearching: Bool
     public let errorText: String?
@@ -48,7 +49,12 @@ public struct RideNavigationViewState: Equatable, Sendable {
     public let trailExitPreview: RideNavigationTrailExitPreview?
     public let showsIncomingDestinationPrompt: Bool
     public let incomingDestinationTitle: String?
+    public let trailEntryPrompt: RideNavigationTrailEntryPrompt?
+    public let arrivalPrompt: RideNavigationArrivalPrompt?
+    public let forkGuidance: RideNavigationForkGuidance?
+    public let routePersistence: RideNavigationRoutePersistenceState
     public let canSaveCompletedRoute: Bool
+    public let completedRouteName: String?
     public let summaryTitle: String
     public let summaryDetail: String
 
@@ -76,6 +82,7 @@ public struct RideNavigationViewState: Equatable, Sendable {
         avoidsHighways: Bool = false,
         showsRoadRoutePreferences: Bool = false,
         isCalculatingRoadRoutes: Bool = false,
+        isPreparingTrail: Bool = false,
         isRerouting: Bool = false,
         isSearching: Bool = false,
         errorText: String? = nil,
@@ -88,7 +95,12 @@ public struct RideNavigationViewState: Equatable, Sendable {
         trailExitPreview: RideNavigationTrailExitPreview? = nil,
         showsIncomingDestinationPrompt: Bool = false,
         incomingDestinationTitle: String? = nil,
+        trailEntryPrompt: RideNavigationTrailEntryPrompt? = nil,
+        arrivalPrompt: RideNavigationArrivalPrompt? = nil,
+        forkGuidance: RideNavigationForkGuidance? = nil,
+        routePersistence: RideNavigationRoutePersistenceState = .idle,
         canSaveCompletedRoute: Bool = false,
+        completedRouteName: String? = nil,
         summaryTitle: String = "Ride complete",
         summaryDetail: String = ""
     ) {
@@ -115,6 +127,7 @@ public struct RideNavigationViewState: Equatable, Sendable {
         self.avoidsHighways = avoidsHighways
         self.showsRoadRoutePreferences = showsRoadRoutePreferences
         self.isCalculatingRoadRoutes = isCalculatingRoadRoutes
+        self.isPreparingTrail = isPreparingTrail
         self.isRerouting = isRerouting
         self.isSearching = isSearching
         self.errorText = errorText
@@ -127,7 +140,12 @@ public struct RideNavigationViewState: Equatable, Sendable {
         self.trailExitPreview = trailExitPreview
         self.showsIncomingDestinationPrompt = showsIncomingDestinationPrompt
         self.incomingDestinationTitle = incomingDestinationTitle
+        self.trailEntryPrompt = trailEntryPrompt
+        self.arrivalPrompt = arrivalPrompt
+        self.forkGuidance = forkGuidance
+        self.routePersistence = routePersistence
         self.canSaveCompletedRoute = canSaveCompletedRoute
+        self.completedRouteName = completedRouteName
         self.summaryTitle = summaryTitle
         self.summaryDetail = summaryDetail
     }

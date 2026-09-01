@@ -62,7 +62,7 @@ extension RideNavigationViewModel {
                 trailExitPreview = result
                 isFindingTrailExit = false
                 cameraMode = .overview(
-                    mapMapper.coordinates((orientedRoute?.points.map(\.coordinate) ?? []) + result.route.points)
+                    trailMap.overviewCoordinates + mapMapper.coordinates(result.route.points)
                 )
                 render()
             } catch is CancellationError {
@@ -116,6 +116,12 @@ extension RideNavigationViewModel {
         activity = .following
         trailProgress = nil
         didAnnounceOffRoute = false
+        if trailGuidance.session == nil {
+            trailGuidance.startSession(at: nil)
+        }
+        if let sample = trailGuidanceSample {
+            updateTrailGuidance(with: sample)
+        }
         cameraMode = followCamera
         errorText = nil
         render()
@@ -157,6 +163,7 @@ extension RideNavigationViewModel {
                 resetRoadStepGuidance()
                 selectedDestination = destination
                 selectedRoute = nil
+                trailMap.reset()
                 trailProgress = nil
                 screen = .map
                 activity = .preview
@@ -362,6 +369,7 @@ extension RideNavigationViewModel {
         activity = .preview
         mapDisplayStyle = .map
         selectedRoute = nil
+        trailMap.reset()
         trailProgress = nil
         trailExitPreview = nil
         roadNavigationPurpose = .destination

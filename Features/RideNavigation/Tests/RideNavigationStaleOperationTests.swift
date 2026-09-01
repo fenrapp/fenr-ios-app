@@ -80,6 +80,7 @@ struct RideNavigationStaleOperationTests {
         #expect(await waitUntil { fixture.viewModel.viewState.savedRoutes.count == 1 })
         fixture.viewModel.openSavedRoute(id: route.id)
         fixture.viewModel.startPreviewedRoute()
+        #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
 
         fixture.viewModel.findTrailExit()
         #expect(await waitUntil { await finder.requestCount == 1 })
@@ -121,8 +122,8 @@ struct RideNavigationStaleOperationTests {
         fixture.viewModel.stop()
     }
 
-    @Test("a newer route save ignores a canceled rollback")
-    func newerRouteSaveIgnoresCanceledRollback() async {
+    @Test("a completed route save is serialized and can be retried")
+    func completedRouteSaveSerializesAndRetries() async {
         let repository = ControllableRecordedRouteRepository()
         let fixture = RideNavigationViewModelFixture(repository: repository)
         fixture.viewModel.start()
@@ -131,15 +132,18 @@ struct RideNavigationStaleOperationTests {
         fixture.viewModel.saveCompletedRoute(name: "First")
         #expect(await waitUntil { await repository.saveRequestCount == 1 })
         fixture.viewModel.saveCompletedRoute(name: "Latest")
-        #expect(await waitUntil { await repository.saveRequestCount == 2 })
+        #expect(await repository.saveRequestCount == 1)
 
-        await repository.succeedSave(request: 1)
-        #expect(await waitUntil {
-            fixture.viewModel.viewState.savedRoutes.first?.title == "Latest"
-        })
         await repository.failSave(request: 0)
+        #expect(await waitUntil {
+            if case .failed = fixture.viewModel.viewState.routePersistence { return true }
+            return false
+        })
+        fixture.viewModel.retryCompletedRouteSave(name: "Latest")
+        #expect(await waitUntil { await repository.saveRequestCount == 1 })
+        await repository.succeedSave(request: 0)
 
-        #expect(await waitUntil { await repository.saveRequestCount == 0 })
+        #expect(await waitUntil { fixture.viewModel.viewState.routePersistence == .saved })
         #expect(fixture.viewModel.viewState.savedRoutes.first?.title == "Latest")
         #expect(fixture.viewModel.viewState.errorText == nil)
         fixture.viewModel.stop()
@@ -185,6 +189,22 @@ struct RideNavigationStaleOperationTests {
         #expect(fixture.viewModel.viewState.errorText == nil)
         fixture.viewModel.stop()
         #expect(await waitUntil { await timing.pendingSleepCount() == 0 })
+    }
+
+    @Test("voice and feedback operations do not cancel each other")
+    func voiceAndFeedbackHaveIndependentOwnership() async {
+        let fixture = RideNavigationViewModelFixture()
+
+        fixture.viewModel.announce("Keep right")
+        fixture.viewModel.replaceFeedbackTask { [guidance = fixture.guidance] in
+            await guidance.notifySuccess()
+        }
+
+        #expect(await waitUntil {
+            let announcements = await fixture.guidance.recordedAnnouncements()
+            let successes = await fixture.guidance.recordedSuccessCount()
+            return announcements == ["Keep right"] && successes == 1
+        })
     }
 
     private func route(name: String) -> RideRoute {
@@ -236,6 +256,8 @@ struct RideNavigationStaleOperationTests {
         DeviceSpeedSample(
             kilometersPerHour: 12,
             accuracyMetersPerSecond: 1,
+            courseDegrees: 0,
+            courseAccuracyDegrees: 5,
             horizontalAccuracyMeters: 5,
             coordinate: coordinate,
             observedAt: Date(timeIntervalSince1970: 1_700_000_000)

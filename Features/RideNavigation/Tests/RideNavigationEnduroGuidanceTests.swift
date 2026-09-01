@@ -25,11 +25,12 @@ struct RideNavigationEnduroGuidanceTests {
         let fixture = RideNavigationViewModelFixture(routes: [route])
 
         fixture.viewModel.start()
-        await fixture.deviceSpeedRepository.send(sample(start, date: date, courseDegrees: 90))
+        await fixture.deviceSpeedRepository.send(sample(start, date: date, courseDegrees: 0))
         #expect(await waitUntil { fixture.viewModel.viewState.savedRoutes.count == 1 })
 
         fixture.viewModel.openSavedRoute(id: route.id)
         fixture.viewModel.startPreviewedRoute()
+        #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
         await fixture.deviceSpeedRepository.send(
             sample(next, date: date.addingTimeInterval(5), courseDegrees: 90)
         )
@@ -38,7 +39,7 @@ struct RideNavigationEnduroGuidanceTests {
             fixture.viewModel.viewState.guidance?.text == "ENDURO · FOLLOW THE ARROW"
                 && fixture.viewModel.viewState.mapScene.userCoordinate == mapCoordinate(next)
                 && fixture.viewModel.viewState.mapScene.polylines.contains {
-                    $0.role == .completed && $0.points.count >= 2
+                    $0.role == .trailCompleted && $0.points.count >= 2
                 }
         })
         #expect(fixture.viewModel.viewState.activity == .following)
@@ -73,6 +74,7 @@ struct RideNavigationEnduroGuidanceTests {
         })
         fixture.viewModel.openSavedRoute(id: route.id)
         fixture.viewModel.startPreviewedRoute()
+        #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
 
         let offTrail = coordinate(latitude: 41.002, longitude: 2.002)
         await fixture.deviceSpeedRepository.send(sample(offTrail, date: date, courseDegrees: .zero))
@@ -107,6 +109,7 @@ struct RideNavigationEnduroGuidanceTests {
         #expect(await waitUntil { fixture.viewModel.viewState.savedRoutes.count == 1 })
         fixture.viewModel.openSavedRoute(id: route.id)
         fixture.viewModel.startPreviewedRoute()
+        #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
 
         fixture.viewModel.finishActivity()
 
@@ -156,6 +159,7 @@ struct RideNavigationEnduroGuidanceTests {
         })
         fixture.viewModel.openSavedRoute(id: route.id)
         fixture.viewModel.startPreviewedRoute()
+        #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
 
         fixture.viewModel.findTrailExit()
         #expect(await waitUntil {

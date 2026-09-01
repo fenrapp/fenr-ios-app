@@ -64,21 +64,13 @@ extension RideNavigationViewModel {
             frozenMiniMapScene = makeMiniMapScene()
             miniCompletionTitle = reason.title
         }
-        if reason == .rideRecorded {
-            completedRecording = recorder.finish(at: date)
-            summaryDetail = completedRecording.map { route in
-                let distance = mapper.distance(
-                    meters: route.distanceMeters,
-                    measurementSystem: measurementSystem
-                )
-                return "\(distance) · \(elapsedText(at: date))"
-            } ?? "No valid GPS points were recorded."
-            replaceDraftPersistenceTask { [repository] in try? await repository.saveDraft(nil) }
-        } else {
-            summaryDetail = "\(elapsedText(at: date)) · \(currentDistanceText)"
-        }
+        let completedTrailRouteToSave = prepareCompletionSummary(
+            reason: reason,
+            finishedActivity: finishedActivity,
+            at: date
+        )
         summaryTitle = reason.title
-        if finishedActivity == .following || finishedActivity == .navigating {
+        if finishedActivity == .navigating {
             _ = breadcrumbRecorder.finish(at: date)
         }
         activityStartedAt = nil
@@ -96,8 +88,55 @@ extension RideNavigationViewModel {
             locationObservationTask = nil
         }
         if reason.emitsSuccessFeedback {
-            replaceGuidanceTask { [guidance] in await guidance.notifySuccess() }
+            replaceFeedbackTask { [guidance] in await guidance.notifySuccess() }
         }
+        if let completedTrailRouteToSave {
+            beginCompletedRouteSave(completedTrailRouteToSave)
+        }
+    }
+
+    private func prepareCompletionSummary(
+        reason: CompletionReason,
+        finishedActivity: RideNavigationViewState.Activity,
+        at date: Date
+    ) -> RideRoute? {
+        if reason == .rideRecorded {
+            completedRecording = recorder.finish(at: date)
+            summaryDetail = completedRecording.map { route in
+                let distance = mapper.distance(
+                    meters: route.distanceMeters,
+                    measurementSystem: measurementSystem
+                )
+                return "\(distance) · \(elapsedText(at: date))"
+            } ?? "No valid GPS points were recorded."
+            replaceDraftPersistenceTask { [repository] in try? await repository.saveDraft(nil) }
+            return nil
+        }
+        guard finishedActivity == .following else {
+            summaryDetail = "\(elapsedText(at: date)) · \(currentDistanceText)"
+            return nil
+        }
+        guard let breadcrumb = breadcrumbRecorder.finish(at: date) else {
+            completedRecording = nil
+            state.routePersistence.reset()
+            summaryDetail = "No valid GPS points were recorded."
+            return nil
+        }
+        let route = RideRoute(
+            id: UUID(),
+            name: "Ride · \(selectedRoute?.name ?? "Trail")",
+            createdAt: breadcrumb.createdAt,
+            updatedAt: date,
+            segments: breadcrumb.segments
+        )
+        completedRecording = route
+        state.routePersistence.beginCompletedRouteSave()
+        let distance = mapper.distance(
+            meters: route.distanceMeters,
+            measurementSystem: measurementSystem
+        )
+        summaryDetail = "\(distance) · \(elapsedText(at: date))"
+        return route
     }
 
     var currentGuidance: RideNavigationGuidance? {
@@ -168,7 +207,7 @@ extension RideNavigationViewModel {
         } else if let roadRoute {
             meters = roadRoute.distanceMeters
         } else {
-            meters = orientedRoute?.distanceMeters ?? .zero
+            meters = trailMap.routeDistanceMeters
         }
         return mapper.distance(meters: meters, measurementSystem: measurementSystem)
     }
@@ -184,7 +223,7 @@ extension RideNavigationViewModel {
     }
 
     var allVisibleCoordinates: [NavigationMapCoordinate] {
-        if let route = orientedRoute { return mapMapper.coordinates(route.points.map(\.coordinate)) }
+        if selectedRoute != nil { return trailMap.overviewCoordinates }
         if let roadRoute { return mapMapper.coordinates(roadRoute.points) }
         return mapMapper.coordinates(recorder.snapshot(at: now()).route?.points.map(\.coordinate) ?? [])
     }
@@ -198,16 +237,20 @@ extension RideNavigationViewModel {
     }
 
     public func discardActivity() {
+        guard !state.routePersistence.status.isSaving else { return }
         let destinationToOpen = openIncomingDestinationAfterSummary ? pendingExternalDestination : nil
         recorder.reset()
         breadcrumbRecorder.reset()
         completedRecording = nil
+        trailGuidance.reset()
+        state.routePersistence.reset()
         frozenMiniMapScene = nil
         miniCompletionTitle = nil
         trailProgress = nil
         didAnnounceOffRoute = false
         lastRoadRerouteAt = nil
         selectedRoute = nil
+        trailMap.reset()
         roadRoute = nil
         roadRoutes = []
         roadNavigationPurpose = nil

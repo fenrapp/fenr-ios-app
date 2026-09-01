@@ -29,18 +29,22 @@ public final class RideNavigationViewModel: ObservableObject {
     }
 
     deinit {
-        operations.invalidateAll()
+        operations.invalidateAll(preserving: [.completedRouteSave])
     }
 
     var vehicleSession: any VehicleSessionService { dependencies.vehicleSession }
     var observeDeviceSpeed: ObserveDeviceSpeedUseCase { dependencies.observeDeviceSpeed }
     var repository: any RecordedRouteRepository { dependencies.routeLibrary.repository }
+    var routePersistence: RideNavigationRoutePersistenceService { dependencies.routePersistence }
     var importer: any GPXRouteImporting { dependencies.routeLibrary.importer }
     var exporter: any GPXRouteExporting { dependencies.routeLibrary.exporter }
     var placeSearch: any PlaceSearching { dependencies.planning.placeSearch }
     var roadRouteCalculator: any RoadRouteCalculating { dependencies.planning.roadRouteCalculator }
     var externalMapLinkResolver: any ExternalMapLinkResolving { dependencies.planning.externalMapLinkResolver }
     var trailExitFinder: any TrailExitFinding { dependencies.planning.trailExitFinder }
+    var trailGuidance: RideNavigationTrailGuidanceController { dependencies.trailGuidance }
+    var trailMapPreparer: any RideNavigationTrailMapPreparing { dependencies.trailMapPreparer }
+    var trailMap: RideNavigationTrailMapController { dependencies.trailMap }
     var guidance: any NavigationGuidanceClient { dependencies.guidance }
     var loadSettings: LoadAppSettingsUseCase { dependencies.loadSettings }
     var saveSettings: SaveAppSettingsUseCase { dependencies.saveSettings }
@@ -97,6 +101,26 @@ public final class RideNavigationViewModel: ObservableObject {
         get { operations[.routeSave] }
         set { operations[.routeSave] = newValue }
     }
+    var trailPreparationTask: Task<Void, Never>? {
+        get { operations[.trailPreparation] }
+        set { operations[.trailPreparation] = newValue }
+    }
+    var plannedRouteSaveTask: Task<Void, Never>? {
+        get { operations[.plannedRouteSave] }
+        set { operations[.plannedRouteSave] = newValue }
+    }
+    var completedRouteSaveTask: Task<Void, Never>? {
+        get { operations[.completedRouteSave] }
+        set { operations[.completedRouteSave] = newValue }
+    }
+    var voiceAnnouncementTask: Task<Void, Never>? {
+        get { operations[.voiceAnnouncement] }
+        set { operations[.voiceAnnouncement] = newValue }
+    }
+    var feedbackTask: Task<Void, Never>? {
+        get { operations[.feedback] }
+        set { operations[.feedback] = newValue }
+    }
     var routeDeletionTasks: [UUID: Task<Void, Never>] {
         get { operations.routeDeletionTasks }
         set { operations.routeDeletionTasks = newValue }
@@ -142,7 +166,13 @@ public final class RideNavigationViewModel: ObservableObject {
         get { state.selectedDirection }
         set { state.selectedDirection = newValue }
     }
-    var roadRoute: RoadNavigationRoute? { get { state.roadRoute } set { state.roadRoute = newValue } }
+    var roadRoute: RoadNavigationRoute? {
+        get { state.roadRoute }
+        set {
+            state.roadRouteRevision &+= 1
+            state.roadRoute = newValue
+        }
+    }
     var roadRoutes: [RoadNavigationRoute] { get { state.roadRoutes } set { state.roadRoutes = newValue } }
     var selectedRoadRouteIndex: Int {
         get { state.selectedRoadRouteIndex }
@@ -166,7 +196,10 @@ public final class RideNavigationViewModel: ObservableObject {
     }
     var trailExitPreview: TrailExitRoute? {
         get { state.trailExitPreview }
-        set { state.trailExitPreview = newValue }
+        set {
+            state.trailExitPreviewRevision &+= 1
+            state.trailExitPreview = newValue
+        }
     }
     var pendingExternalDestination: NavigationPlace? {
         get { state.pendingExternalDestination }
