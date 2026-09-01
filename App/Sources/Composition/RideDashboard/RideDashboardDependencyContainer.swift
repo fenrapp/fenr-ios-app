@@ -64,6 +64,7 @@ struct RideDashboardDependencyContainer {
                 credentialStore: dependencies.bikeLockCredentialStore,
                 authenticator: dependencies.bikeLockAuthenticator,
                 capabilityStore: dependencies.bikeLockCapabilityStore,
+                mapper: BikeLockCardViewStateMapper(),
                 allowsExperimentalControl: dependencies.allowsExperimentalBikeLockControl
             )
         )

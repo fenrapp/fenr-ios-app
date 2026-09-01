@@ -163,6 +163,7 @@ enum BikeLockCardPreviewFactory {
             credentialStore: credentialStore,
             authenticator: PreviewBikeLockAuthenticator(),
             capabilityStore: PreviewBikeLockCapabilityStore(),
+            mapper: BikeLockCardViewStateMapper(),
             allowsExperimentalControl: false
         )
         viewModel.setPreviewState(state)
