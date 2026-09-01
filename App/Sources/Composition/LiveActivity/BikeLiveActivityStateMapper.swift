@@ -123,6 +123,7 @@ struct BikeLiveActivityStateMapper {
     ) -> BikeLiveActivityMode {
         switch phase {
         case .connectionLost: .connectionLost
+        case .reconnecting: runState == .charging ? .charging : .riding
         case .stale: .stale
         case .charging, .balancing, .complete: .charging
         case .riding, .neutral, .crawl, .fault:

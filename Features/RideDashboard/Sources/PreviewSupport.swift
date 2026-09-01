@@ -16,8 +16,9 @@ enum RideDashboardPreviewFactory {
             cardLayoutMapper: DashboardCardLayoutMapper(),
             vehicleSession: PreviewVehicleSessionService(),
             timing: .live,
+            continuityPolicy: RideDashboardContinuityPolicy(),
             initialConnectionStabilityPeriod: .zero,
-            reconnectionGracePeriod: FENRRuntimeConstants.RideDashboard.reconnectionGracePeriod
+            reconnectionNoticeDelay: FENRRuntimeConstants.RideDashboard.reconnectionNoticeDelay
         )
         viewModel.setPreviewState(state)
         return viewModel

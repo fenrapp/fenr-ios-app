@@ -3,6 +3,7 @@ import SwiftUI
 
 struct DashboardRideHeader: View {
     let deviceBattery: DashboardDeviceBatteryViewData
+    let connectionNotice: DashboardConnectionNoticeViewData?
     let toggleDeviceBatteryDisplayMode: () -> Void
 
     var body: some View {
@@ -12,9 +13,25 @@ struct DashboardRideHeader: View {
                 separator
                 phoneBattery
             }
+            if let connectionNotice {
+                separator
+                reconnectingChip(connectionNotice)
+            }
         }
         .font(.system(size: Constants.fontSize, weight: .semibold, design: .rounded))
         .monospacedDigit()
+    }
+
+    private func reconnectingChip(_ notice: DashboardConnectionNoticeViewData) -> some View {
+        Label(notice.text, systemImage: "arrow.triangle.2.circlepath")
+            .font(.system(size: Constants.noticeFontSize, weight: .semibold, design: .rounded))
+            .foregroundStyle(DesignColor.warning)
+            .padding(.horizontal, Constants.noticeHorizontalPadding)
+            .padding(.vertical, Constants.noticeVerticalPadding)
+            .background(DesignColor.warning.opacity(Constants.noticeBackgroundOpacity), in: Capsule())
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(notice.accessibilityLabel)
+            .accessibilityIdentifier("dashboard.reconnecting")
     }
 
     private var clock: some View {
@@ -73,5 +90,9 @@ struct DashboardRideHeader: View {
         static let separatorWidth: CGFloat = 1
         static let separatorHeight: CGFloat = 17
         static let minuteInterval: TimeInterval = 60
+        static let noticeFontSize: CGFloat = 13
+        static let noticeHorizontalPadding: CGFloat = 9
+        static let noticeVerticalPadding: CGFloat = 5
+        static let noticeBackgroundOpacity = 0.16
     }
 }

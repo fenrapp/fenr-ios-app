@@ -22,6 +22,7 @@ public final class BikeLockSettingsViewModel: ObservableObject {
     private var operationTask: Task<Void, Never>?
     private var operationGeneration = 0
     private var actionAfterAuthentication: BikeLockSettingsDestination?
+    private var isCanonicalTelemetryAvailable = false
 
     public init(
         vehicleSession: any VehicleSessionService,
@@ -77,6 +78,7 @@ public final class BikeLockSettingsViewModel: ObservableObject {
         activeVIN = nil
         settings = AppSettings()
         capability = BikeLockCapabilityState()
+        isCanonicalTelemetryAvailable = false
         render(destination: .set(nil), error: .set(nil), isWorking: false)
     }
 
@@ -155,13 +157,14 @@ private extension BikeLockSettingsViewModel {
     }
 
     var canBeginAction: Bool {
-        viewState.isAvailable && operationTask == nil
+        viewState.isAvailable && isCanonicalTelemetryAvailable && operationTask == nil
     }
 
     func receive(_ snapshot: VehicleSessionSnapshot) {
         let previousVIN = activeVIN
         activeVIN = snapshot.profile?.vin
         settings = snapshot.settings
+        isCanonicalTelemetryAvailable = snapshot.isCanonicalTelemetryAvailable
         if previousVIN != nil, previousVIN != activeVIN {
             invalidateOperation()
         }
@@ -183,6 +186,7 @@ private extension BikeLockSettingsViewModel {
         activeVIN != nil
             && capability.isAvailable
             && capability.vehicleIdentifier == activeVIN
+            && isCanonicalTelemetryAvailable
     }
 
     func authenticateIfNeeded(then destination: BikeLockSettingsDestination) {
@@ -311,7 +315,8 @@ private extension BikeLockSettingsViewModel {
             capability: capability,
             isWorking: isWorking ?? viewState.isWorking,
             errorMessage: error.resolve(previous: viewState.errorMessage),
-            destination: destination.resolve(previous: viewState.destination)
+            destination: destination.resolve(previous: viewState.destination),
+            isCanonicalTelemetryAvailable: isCanonicalTelemetryAvailable
         )
     }
 }

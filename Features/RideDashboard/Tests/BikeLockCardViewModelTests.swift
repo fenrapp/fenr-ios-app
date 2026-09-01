@@ -23,7 +23,7 @@ struct BikeLockCardViewModelTests {
         ))
     }
 
-    @Test("Invalidates preparation on disconnect and prepares again after reconnect")
+    @Test("Keeps descriptive state disabled on disconnect and prepares again after reconnect")
     func repreparesAfterReconnect() async {
         let fixture = BikeLockCardViewModelTestFactory.make()
         fixture.viewModel.start()
@@ -33,12 +33,60 @@ struct BikeLockCardViewModelTests {
         await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot(
             connectionState: .disconnected(reason: nil)
         ))
-        #expect(await waitUntil { !fixture.viewModel.viewState.isAvailable })
-        #expect(!fixture.capabilityStore.currentState.isAvailable)
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.isAvailable
+                && !fixture.viewModel.viewState.isActionEnabled
+        })
+        fixture.viewModel.performPrimaryAction()
+        #expect(await fixture.repository.recordedLockRequests().isEmpty)
         await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot())
 
         #expect(await waitUntil { await fixture.repository.recordedPrepareRequests() == 2 })
         #expect(fixture.viewModel.viewState.isAvailable)
+        #expect(fixture.viewModel.viewState.isActionEnabled)
+    }
+
+    @Test("Suspending preserves status while dismissing and disabling control")
+    func suspensionPreservesStatusAndDisablesControl() async {
+        let fixture = BikeLockCardViewModelTestFactory.make()
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot())
+        #expect(await waitUntil { fixture.viewModel.viewState.isActionEnabled })
+        fixture.viewModel.performPrimaryAction()
+        #expect(fixture.viewModel.viewState.sheet == .setup)
+
+        fixture.viewModel.suspend()
+
+        #expect(fixture.viewModel.viewState.isAvailable)
+        #expect(!fixture.viewModel.viewState.isActionEnabled)
+        #expect(fixture.viewModel.viewState.sheet == nil)
+    }
+
+    @Test("Suspending cancels an in-flight biometric authentication")
+    func suspensionCancelsAuthentication() async {
+        var settings = AppSettings()
+        settings.setBikeLockSettings(
+            .init(securityMode: .pinAndFaceID),
+            forVIN: BikeLockCardFixtures.vin
+        )
+        let authenticator = SuspendedBikeLockCardAuthenticator()
+        let fixture = BikeLockCardViewModelTestFactory.make(
+            isLocked: true,
+            settings: settings,
+            authenticator: authenticator
+        )
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot(settings: settings))
+        #expect(await waitUntil { fixture.viewModel.viewState.isActionEnabled })
+
+        fixture.viewModel.performPrimaryAction()
+        #expect(await waitUntil { await authenticator.hasPendingAuthentication() })
+        fixture.viewModel.suspend()
+
+        #expect(await waitUntil { await authenticator.recordedCancellationCount() == 1 })
+        #expect(!fixture.viewModel.viewState.isActionEnabled)
+        #expect(fixture.viewModel.viewState.sheet == nil)
+        #expect(await fixture.repository.recordedLockRequests().isEmpty)
     }
 
     @Test("No PIN protection does not force the dashboard card visible")

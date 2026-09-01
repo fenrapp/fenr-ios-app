@@ -288,7 +288,10 @@ struct AppDependencyContainer {
             vehicleSession: vehicleSession,
             activityClient: activityClient,
             clock: SystemBikeLiveActivityClock(),
+            timing: .live,
+            continuityPolicy: RideDashboardContinuityPolicy(),
             updateInterval: FENRRuntimeConstants.LiveActivity.chargingUpdateInterval,
+            reconnectionNoticeDelay: FENRRuntimeConstants.RideDashboard.reconnectionNoticeDelay,
             stateMapper: BikeLiveActivityStateMapper(
                 makeDashboardMapper: { settings in
                     RideDashboardMapperFactory.makeChargingMapper(

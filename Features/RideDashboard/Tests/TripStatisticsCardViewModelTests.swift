@@ -36,7 +36,8 @@ struct TripStatisticsCardViewModelTests {
             completedTrips: [makeTrip(distance: 12, maximumSpeed: 80)]
         )
         let session = TestRideSessionService(snapshot: .init(
-            vehicleIdentity: .vin(CurrentTripTestIdentity.vin)
+            vehicleIdentity: .vin(CurrentTripTestIdentity.vin),
+            isCanonicalTelemetryAvailable: true
         ))
         let viewModel = makeViewModel(repository: repository, session: session)
         viewModel.setIsVisible(true)
@@ -49,7 +50,8 @@ struct TripStatisticsCardViewModelTests {
         ])
         await session.send(.init(
             vehicleIdentity: .vin(CurrentTripTestIdentity.vin),
-            historyRevision: 1
+            historyRevision: 1,
+            isCanonicalTelemetryAvailable: true
         ))
         await Task.yield()
         #expect(await repository.loadCount() == 1)
@@ -66,7 +68,8 @@ struct TripStatisticsCardViewModelTests {
         session: TestRideSessionService? = nil
     ) -> TripStatisticsCardViewModel {
         let session = session ?? TestRideSessionService(snapshot: .init(
-            vehicleIdentity: .vin(CurrentTripTestIdentity.vin)
+            vehicleIdentity: .vin(CurrentTripTestIdentity.vin),
+            isCanonicalTelemetryAvailable: true
         ))
         return TripStatisticsCardViewModel(
             useCases: .init(

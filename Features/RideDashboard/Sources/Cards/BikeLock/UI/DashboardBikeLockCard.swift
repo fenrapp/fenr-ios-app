@@ -40,7 +40,7 @@ struct DashboardBikeLockCard: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                .disabled(viewState.isWorking)
+                .disabled(!viewState.isActionEnabled)
                 .accessibilityIdentifier("dashboard.bike-lock.action")
             }
             .padding(Constants.cardPadding)

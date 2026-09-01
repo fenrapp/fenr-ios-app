@@ -14,6 +14,7 @@ public struct VehicleSessionSnapshot: Equatable, Sendable {
     public let motion: VehicleMotionSnapshot
     public let hasReceivedSettings: Bool
     public let hasReceivedProfile: Bool
+    public let isCanonicalTelemetryAvailable: Bool
 
     public init(
         telemetry: BikeTelemetry = .init(),
@@ -27,7 +28,8 @@ public struct VehicleSessionSnapshot: Equatable, Sendable {
         batteryHealthMonitoringState: VehicleBatteryHealthMonitoringState = .inactive,
         motion: VehicleMotionSnapshot = .init(),
         hasReceivedSettings: Bool = false,
-        hasReceivedProfile: Bool = false
+        hasReceivedProfile: Bool = false,
+        isCanonicalTelemetryAvailable: Bool? = nil
     ) {
         self.telemetry = telemetry
         self.connection = connection
@@ -41,5 +43,13 @@ public struct VehicleSessionSnapshot: Equatable, Sendable {
         self.motion = motion
         self.hasReceivedSettings = hasReceivedSettings
         self.hasReceivedProfile = hasReceivedProfile
+        self.isCanonicalTelemetryAvailable = isCanonicalTelemetryAvailable
+            ?? (connection.state.isReceivingTelemetry && telemetry.lastUpdated != nil)
+    }
+}
+
+private extension ConnectionState {
+    var isReceivingTelemetry: Bool {
+        if case .receivingTelemetry = self { true } else { false }
     }
 }

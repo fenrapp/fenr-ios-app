@@ -234,7 +234,8 @@ extension LiveRideSessionService {
             batteryCapacityWattHours: vehicleSnapshot.settings.batteryPackCapacity(
                 forVIN: recorder.context.vehicleIdentity.confirmedVIN
             ).wattHours,
-            motion: vehicleSnapshot.motion
+            motion: vehicleSnapshot.motion,
+            isCanonicalTelemetryAvailable: vehicleSnapshot.isCanonicalTelemetryAvailable
         )
     }
 

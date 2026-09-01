@@ -73,7 +73,8 @@ actor TestRideSessionService: RideSessionService {
 
     init(
         snapshot: RideSessionSnapshot = .init(
-            vehicleIdentity: .vin(CurrentTripTestIdentity.vin)
+            vehicleIdentity: .vin(CurrentTripTestIdentity.vin),
+            isCanonicalTelemetryAvailable: true
         ),
         pauseCommandDelay: Duration = .zero
     ) {

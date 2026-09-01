@@ -72,6 +72,42 @@ struct SystemHealthCardViewModelTests {
         })
     }
 
+    @Test("Keeps SOH and inverter temperature across independent partial datasets")
+    func keepsIndependentHealthDatasets() async {
+        let session = SystemHealthVehicleSession()
+        let viewModel = makeViewModel(session: session)
+        viewModel.setIsVisible(true)
+
+        await session.send(.init(
+            settings: .init(measurementSystem: .metric),
+            batteryHealth: .init(stateOfHealth: .known(percent: 93)),
+            batteryHealthMonitoringState: .active
+        ))
+        #expect(await waitUntil(timeout: .seconds(2)) {
+            viewModel.viewState.stateOfHealthText == "93%"
+        })
+
+        await session.send(.init(
+            telemetry: .init(inverterTemperaturesCelsius: [60, nil, 42]),
+            settings: .init(measurementSystem: .metric),
+            batteryHealthMonitoringState: .active
+        ))
+        #expect(await waitUntil(timeout: .seconds(2)) {
+            viewModel.viewState.stateOfHealthText == "93%"
+                && viewModel.viewState.inverterTemperatureText == "60°C"
+        })
+
+        await session.send(.init(
+            settings: .init(measurementSystem: .metric),
+            batteryHealthMonitoringState: .failed("Synthetic failure")
+        ))
+        #expect(await waitUntil(timeout: .seconds(2)) {
+            viewModel.viewState.status == .unavailable
+                && viewModel.viewState.stateOfHealthText == "93%"
+                && viewModel.viewState.inverterTemperatureText == "60°C"
+        })
+    }
+
     @Test("Releases BMS monitoring when destroyed while visible")
     func releasesMonitoringOnDeinit() async {
         let session = SystemHealthVehicleSession()

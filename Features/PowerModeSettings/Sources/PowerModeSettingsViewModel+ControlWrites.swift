@@ -21,6 +21,7 @@ public extension PowerModeSettingsViewModel {
 extension PowerModeSettingsViewModel {
     func applyBaseAdjustment(id: PowerModeAdjustmentID, value: Double) {
         guard !isRefreshing,
+              isCanonicalTelemetryAvailable,
               controlTask == nil,
               preparedBaseMapIndex == selectedMapIndex,
               let configuration = telemetry.powerModeConfigurations[selectedMapIndex],
@@ -66,6 +67,7 @@ extension PowerModeSettingsViewModel {
 
     func applyTractionAdjustment(id: PowerModeAdjustmentID, value: Double) {
         guard !isRefreshing,
+              isCanonicalTelemetryAvailable,
               controlTask == nil,
               preparedTractionMapIndex == selectedMapIndex,
               let configuration = telemetry.powerModeConfigurations[selectedMapIndex],
@@ -130,7 +132,8 @@ private extension PowerModeSettingsViewModel {
         error: String?
     ) {
         guard generation == controlGeneration,
-              mapIndex == selectedMapIndex
+              mapIndex == selectedMapIndex,
+              isCanonicalTelemetryAvailable
         else {
             return
         }

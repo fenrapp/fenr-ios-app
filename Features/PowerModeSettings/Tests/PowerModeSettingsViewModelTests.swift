@@ -327,7 +327,6 @@ extension PowerModeSettingsViewModelTests {
         })
         fixture.viewModel.stop()
     }
-
     private func makeFixture(bikeRepository: PowerModeSettingsBikeRepository = .init()) -> Fixture {
         let repository = PowerModeSettingsRepository()
         let vehicleSession = PowerModeSettingsVehicleSession()
@@ -349,13 +348,13 @@ extension PowerModeSettingsViewModelTests {
             bikeRepository: bikeRepository
         )
     }
-
     private func snapshot(settings: AppSettings = .init()) -> VehicleSessionSnapshot {
         .init(
             settings: settings,
             profile: .init(vin: vin),
             hasReceivedSettings: true,
-            hasReceivedProfile: true
+            hasReceivedProfile: true,
+            isCanonicalTelemetryAvailable: true
         )
     }
 
@@ -383,7 +382,8 @@ extension PowerModeSettingsViewModelTests {
             settings: .init(),
             profile: .init(vin: vin),
             hasReceivedSettings: true,
-            hasReceivedProfile: true
+            hasReceivedProfile: true,
+            isCanonicalTelemetryAvailable: true
         )
     }
 

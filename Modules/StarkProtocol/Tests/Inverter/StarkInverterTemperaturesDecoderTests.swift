@@ -28,7 +28,19 @@ struct StarkInverterTemperaturesDecoderTests {
     func rejectsShortPayload() {
         let data = Data(repeating: 0, count: StarkInverterTemperaturesPayloadLayout.requiredLength - 1)
 
-        #expect(throws: StarkProtocolError.payloadTooShort(
+        #expect(throws: StarkProtocolError.invalidPayloadLength(
+            expected: StarkInverterTemperaturesPayloadLayout.requiredLength,
+            actual: data.count
+        )) {
+            try StarkInverterTemperaturesDecoder().decode(data)
+        }
+    }
+
+    @Test("Rejects payloads longer than all eight sensor slots")
+    func rejectsLongPayload() {
+        let data = Data(repeating: 0, count: StarkInverterTemperaturesPayloadLayout.requiredLength + 1)
+
+        #expect(throws: StarkProtocolError.invalidPayloadLength(
             expected: StarkInverterTemperaturesPayloadLayout.requiredLength,
             actual: data.count
         )) {

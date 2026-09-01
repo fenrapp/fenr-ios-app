@@ -9,6 +9,8 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     let sleep: @Sendable (Duration) async throws -> Void
     var motionEstimator: VehicleMotionEstimator
     var telemetry = BikeTelemetry()
+    var telemetryRevision = 0
+    var minimumCanonicalTelemetryRevision = 0
     var connection = BikeConnection()
     var settings = AppSettings()
     var profile: BikeProfile?
@@ -33,6 +35,8 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     var motionCalibrationTask: Task<Void, Never>?
     var batteryHealthTask: Task<Void, Never>?
     var batteryHealthStartTask: Task<Void, Never>?
+    var batteryHealthStartGeneration: Int?
+    var batteryHealthMonitoringGeneration = 0
     var batteryHealthStopTask: Task<Void, Never>?
     var batteryHealthConsumers: Set<UUID> = []
     var powerModeRefreshTask: Task<Void, Never>?
@@ -124,6 +128,8 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         hasLoadedMotionCalibration = false
         motionEstimator.reset()
         motion = .init()
+        batteryHealthMonitoringGeneration &+= 1
+        batteryHealthStartTask?.cancel()
         batteryHealthConsumers.removeAll()
         if let batteryHealthStartTask {
             await batteryHealthStartTask.value
@@ -135,8 +141,10 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         }
         batteryHealthTask?.cancel()
         batteryHealthTask = nil
+        batteryHealthStartGeneration = nil
         batteryHealthMonitoringState = .inactive
         batteryHealth = .init()
+        minimumCanonicalTelemetryRevision = telemetryRevision + 1
         resetPowerModeRefresh()
         publish()
         isStopping = false
@@ -163,9 +171,10 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     }
 
     public func setBatteryHealthMonitoringRequired(_ required: Bool, consumerID: UUID) async {
+        guard !isStopping else { return }
         if required {
             batteryHealthConsumers.insert(consumerID)
-            if batteryHealthMonitoringState == .inactive || isMonitoringFailed {
+            if isReceivingTelemetry, shouldBeginBatteryHealthMonitoring {
                 beginBatteryHealthMonitoring()
             }
         } else {
@@ -210,12 +219,19 @@ extension LiveVehicleSessionService {
             batteryHealthMonitoringState: batteryHealthMonitoringState,
             motion: motion,
             hasReceivedSettings: hasReceivedSettings,
-            hasReceivedProfile: hasReceivedProfile
+            hasReceivedProfile: hasReceivedProfile,
+            isCanonicalTelemetryAvailable: isReceivingTelemetry
+                && telemetry.lastUpdated != nil
+                && telemetryRevision >= minimumCanonicalTelemetryRevision
         )
     }
 
-    private var isMonitoringFailed: Bool {
+    var isMonitoringFailed: Bool {
         if case .failed = batteryHealthMonitoringState { true } else { false }
+    }
+
+    var shouldBeginBatteryHealthMonitoring: Bool {
+        batteryHealthMonitoringState == .inactive || isMonitoringFailed
     }
 
     func publish() {

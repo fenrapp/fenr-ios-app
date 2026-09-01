@@ -17,6 +17,7 @@ struct PowerModeSettingsMappingInput: Sendable {
     let isTractionControlReady: Bool
     let controlMessage: String?
     let controlError: String?
+    let isCanonicalTelemetryAvailable: Bool
 
     init(
         telemetry: BikeTelemetry,
@@ -33,7 +34,8 @@ struct PowerModeSettingsMappingInput: Sendable {
         isBaseControlReady: Bool = false,
         isTractionControlReady: Bool = false,
         controlMessage: String? = nil,
-        controlError: String? = nil
+        controlError: String? = nil,
+        isCanonicalTelemetryAvailable: Bool = false
     ) {
         self.telemetry = telemetry
         self.connection = connection
@@ -50,5 +52,6 @@ struct PowerModeSettingsMappingInput: Sendable {
         self.isTractionControlReady = isTractionControlReady
         self.controlMessage = controlMessage
         self.controlError = controlError
+        self.isCanonicalTelemetryAvailable = isCanonicalTelemetryAvailable
     }
 }

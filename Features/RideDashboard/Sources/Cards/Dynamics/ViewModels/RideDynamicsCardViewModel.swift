@@ -16,6 +16,11 @@ public final class RideDynamicsCardViewModel: ObservableObject {
     private var calibrationTask: Task<Void, Never>?
     private var isVisible = false
     private var isRequestingLocation = false
+    private var isCanonicalTelemetryAvailable = false
+    private var snapshot = RideSessionSnapshot(
+        vehicleIdentity: .temporary(UUID()),
+        isCanonicalTelemetryAvailable: false
+    )
 
     public init(
         rideSession: any RideSessionService,
@@ -49,12 +54,21 @@ public final class RideDynamicsCardViewModel: ObservableObject {
         } else {
             observationTask?.cancel()
             observationTask = nil
+            calibrationTask?.cancel()
+            calibrationTask = nil
+            isCanonicalTelemetryAvailable = false
+            viewState = viewState.withCalibrationEnabled(false)
             setLocationRequired(false)
         }
     }
 
     func calibrate() {
-        guard calibrationTask == nil else { return }
+        guard isVisible,
+              isCanonicalTelemetryAvailable,
+              viewState.canCalibrate,
+              calibrationTask == nil else {
+            return
+        }
         let vehicleSession = vehicleSession
         calibrationTask = Task { [weak self] in
             await vehicleSession.zeroBikeAttitude()
@@ -84,7 +98,15 @@ private extension RideDynamicsCardViewModel {
 
     func receive(_ snapshot: RideSessionSnapshot) {
         guard isVisible else { return }
-        let next = mapper.map(snapshot)
+        self.snapshot = snapshot
+        isCanonicalTelemetryAvailable = snapshot.isCanonicalTelemetryAvailable
+        guard isCanonicalTelemetryAvailable else {
+            let next = viewState.withCalibrationEnabled(false)
+            guard next != viewState else { return }
+            viewState = next
+            return
+        }
+        let next = mapper.map(snapshot).withCalibrationEnabled(isCanonicalTelemetryAvailable)
         guard next != viewState else { return }
         viewState = next
     }

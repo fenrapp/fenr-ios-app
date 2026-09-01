@@ -87,9 +87,7 @@ public extension BikeLockCardViewModel {
                 }
                 let receivesTelemetry = Self.receivesTelemetry(snapshot)
                 if !receivesTelemetry {
-                    invalidateControlPreparation()
-                    capabilityStore.update(.init(vehicleIdentifier: vin))
-                    render()
+                    suspendControlPreparation()
                     continue
                 }
                 if !isReceivingTelemetry {
@@ -128,8 +126,14 @@ public extension BikeLockCardViewModel {
         invalidateVehicle(clearsCapability: false)
     }
 
+    func suspend() {
+        observationTask?.cancel()
+        observationTask = nil
+        suspendControlPreparation()
+    }
+
     func performPrimaryAction() {
-        guard viewState.isAvailable, !viewState.isWorking else { return }
+        guard viewState.isActionEnabled else { return }
         guard isVehicleStationary else {
             render(error: "Stop the motorcycle and disengage the gear before using Bike Lock.")
             return
@@ -155,6 +159,7 @@ public extension BikeLockCardViewModel {
     }
 
     func configure(securityOptionID: String, pin: String) {
+        guard isReceivingTelemetry, isVehicleStationary else { return }
         guard let mode = BikeLockSecurityMode(rawValue: securityOptionID), mode.isConfigured,
               let vehicleIdentifier else { return }
         guard !mode.requiresPIN || Self.isValidPIN(pin) else {
@@ -183,6 +188,7 @@ public extension BikeLockCardViewModel {
     }
 
     func submitPIN(_ pin: String) {
+        guard isReceivingTelemetry, isVehicleStationary else { return }
         guard let vehicleIdentifier, Self.isValidPIN(pin) else {
             render(error: "Enter a 6-digit PIN", sheetUpdate: .present(.enterPIN))
             return
@@ -308,6 +314,15 @@ private extension BikeLockCardViewModel {
         hasAttemptedPreparation = false
     }
 
+    private func suspendControlPreparation() {
+        operationTask?.cancel()
+        operationTask = nil
+        isReceivingTelemetry = false
+        isVehicleStationary = false
+        hasAttemptedPreparation = false
+        render(sheetUpdate: .dismiss)
+    }
+
     private func invalidateVehicle(clearsCapability: Bool = true) {
         operationTask?.cancel()
         operationTask = nil
@@ -336,6 +351,10 @@ extension BikeLockCardViewModel {
             isAvailable: isAvailable,
             isLocked: isLocked,
             isWorking: isWorking,
+            isActionEnabled: isAvailable
+                && isReceivingTelemetry
+                && isVehicleStationary
+                && !isWorking,
             isConfigured: settings.securityMode.isConfigured,
             statusText: isAvailable ? status : "Unavailable",
             actionTitle: actionTitle,
@@ -358,8 +377,7 @@ extension BikeLockCardViewModel {
     }
 
     private static func receivesTelemetry(_ snapshot: VehicleSessionSnapshot) -> Bool {
-        guard case .receivingTelemetry = snapshot.connection.state else { return false }
-        return snapshot.telemetry.lastUpdated != nil
+        snapshot.isCanonicalTelemetryAvailable
     }
 
     private static func isValidPIN(_ pin: String) -> Bool {
@@ -367,6 +385,8 @@ extension BikeLockCardViewModel {
     }
 
 #if DEBUG
+    var isObservingForTesting: Bool { observationTask != nil }
+
     func setPreviewState(_ state: BikeLockCardViewState) {
         viewState = state
     }

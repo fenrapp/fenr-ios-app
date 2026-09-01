@@ -6,9 +6,12 @@ actor RideDashboardVehicleSession: VehicleSessionService {
     private let hub = TestEventHub<VehicleSessionSnapshot>(bufferingPolicy: .unbounded)
     private var refreshCount = 0
     private var batteryHealthMonitoringRequests: [Bool] = []
+    private var currentSnapshot = VehicleSessionSnapshot()
+    private var observationCount = 0
 
     func observe() async -> AsyncStream<VehicleSessionSnapshot> {
-        await hub.stream()
+        observationCount += 1
+        return await hub.stream(replay: currentSnapshot)
     }
 
     func start() {}
@@ -24,6 +27,7 @@ actor RideDashboardVehicleSession: VehicleSessionService {
     }
 
     func send(_ snapshot: VehicleSessionSnapshot) async {
+        currentSnapshot = snapshot
         _ = await hub.waitForSubscriber()
         await hub.send(snapshot)
     }
@@ -34,5 +38,9 @@ actor RideDashboardVehicleSession: VehicleSessionService {
 
     func recordedBatteryHealthMonitoringRequests() -> [Bool] {
         batteryHealthMonitoringRequests
+    }
+
+    func recordedObservationCount() -> Int {
+        observationCount
     }
 }

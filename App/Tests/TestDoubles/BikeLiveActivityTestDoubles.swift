@@ -95,6 +95,8 @@ final class FakeBikeLiveActivityClient: BikeLiveActivityClient {
     private(set) var endedStates: [BikeLiveActivityContentState] = []
     private var active = false
     private var delaysNextStart = false
+    private var blocksNextUpdate = false
+    private var updateContinuation: CheckedContinuation<Void, Never>?
 
     var isActive: Bool { active }
 
@@ -110,6 +112,12 @@ final class FakeBikeLiveActivityClient: BikeLiveActivityClient {
     }
 
     func update(state: BikeLiveActivityContentState) async {
+        if blocksNextUpdate {
+            blocksNextUpdate = false
+            await withCheckedContinuation { continuation in
+                updateContinuation = continuation
+            }
+        }
         updateCount += 1
         updatedStates.append(state)
     }
@@ -124,6 +132,19 @@ final class FakeBikeLiveActivityClient: BikeLiveActivityClient {
         delaysNextStart = true
     }
 
+    func blockNextUpdate() {
+        blocksNextUpdate = true
+    }
+
+    var hasPendingUpdate: Bool {
+        updateContinuation != nil
+    }
+
+    func releasePendingUpdate() {
+        updateContinuation?.resume()
+        updateContinuation = nil
+    }
+
     private enum Constants {
         static let delayedStartDuration: Duration = .milliseconds(100)
     }
@@ -134,6 +155,65 @@ final class FakeBikeLiveActivityClock: BikeLiveActivityClock, @unchecked Sendabl
 
     func advance(by seconds: TimeInterval) {
         now = now.addingTimeInterval(seconds)
+    }
+}
+
+actor ControllableBikeLiveActivityTiming {
+    private struct PendingSleep {
+        let id: UUID
+        let duration: Duration
+        let continuation: CheckedContinuation<Void, any Error>
+    }
+
+    private var sleeps: [PendingSleep] = []
+    private var canceledBeforeRegistration: Set<UUID> = []
+
+    nonisolated func makeTiming() -> BikeLiveActivityTiming {
+        BikeLiveActivityTiming { [weak self] duration in
+            guard let self else { throw CancellationError() }
+            try await self.sleep(for: duration)
+        }
+    }
+
+    func sleep(for duration: Duration) async throws {
+        try Task.checkCancellation()
+        let id = UUID()
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                register(id: id, duration: duration, continuation: continuation)
+            }
+        } onCancel: {
+            Task { await self.cancel(id: id) }
+        }
+    }
+
+    func pendingCount(for duration: Duration) -> Int {
+        sleeps.count { $0.duration == duration }
+    }
+
+    func resumeFirst(for duration: Duration) {
+        guard let index = sleeps.firstIndex(where: { $0.duration == duration }) else { return }
+        sleeps.remove(at: index).continuation.resume()
+    }
+
+    private func register(
+        id: UUID,
+        duration: Duration,
+        continuation: CheckedContinuation<Void, any Error>
+    ) {
+        guard canceledBeforeRegistration.remove(id) == nil else {
+            continuation.resume(throwing: CancellationError())
+            return
+        }
+        sleeps.append(.init(id: id, duration: duration, continuation: continuation))
+    }
+
+    private func cancel(id: UUID) {
+        guard let index = sleeps.firstIndex(where: { $0.id == id }) else {
+            canceledBeforeRegistration.insert(id)
+            return
+        }
+        sleeps.remove(at: index).continuation.resume(throwing: CancellationError())
     }
 }
 

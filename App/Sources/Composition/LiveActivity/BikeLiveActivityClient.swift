@@ -68,3 +68,11 @@ protocol BikeLiveActivityClock: Sendable {
 struct SystemBikeLiveActivityClock: BikeLiveActivityClock {
     var now: Date { Date() }
 }
+
+struct BikeLiveActivityTiming: Sendable {
+    let sleep: @Sendable (Duration) async throws -> Void
+
+    static let live = BikeLiveActivityTiming { duration in
+        try await Task.sleep(for: duration)
+    }
+}

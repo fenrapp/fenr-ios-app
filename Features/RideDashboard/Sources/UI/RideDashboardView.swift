@@ -23,8 +23,10 @@ public struct RideDashboardView: View {
     private let onNavigation: () -> Void
     private let isNavigationActive: Bool
     private let isPresentationActive: Bool
+}
 
-    public init(
+public extension RideDashboardView {
+    init(
         feature: RideDashboardFeatureModel,
         onSettings: @escaping () -> Void = {},
         onNavigation: @escaping () -> Void = {},
@@ -43,13 +45,16 @@ public struct RideDashboardView: View {
         _dynamicsViewModel = ObservedObject(wrappedValue: feature.dynamicsViewModel)
         _chargingViewModel = ObservedObject(wrappedValue: feature.chargingViewModel)
         _bikeLockViewModel = ObservedObject(wrappedValue: feature.bikeLockViewModel)
+        _cardSelection = State(initialValue: .init(layout: feature.dashboardViewModel.cardLayout))
         self.onSettings = onSettings
         self.onNavigation = onNavigation
         self.isNavigationActive = isNavigationActive
         self.isPresentationActive = isPresentationActive
         self.onDiagnostics = onDiagnostics
     }
+}
 
+extension RideDashboardView {
     public var body: some View {
         GeometryReader { proxy in
             Group {
@@ -173,6 +178,7 @@ public struct RideDashboardView: View {
             .overlay(alignment: .topLeading) {
                 DashboardRideHeader(
                     deviceBattery: deviceBatteryViewModel.viewState,
+                    connectionNotice: viewModel.viewState.connectionNotice,
                     toggleDeviceBatteryDisplayMode: deviceBatteryViewModel.toggleDisplayMode
                 )
                     .padding(Constants.accessoryEdgePadding)
@@ -202,17 +208,18 @@ public struct RideDashboardView: View {
         .background(Color(uiColor: .systemBackground).ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .task {
+            feature.start()
             if isPresentationActive {
-                feature.start()
+                feature.setPresentationActive(true)
                 synchronizeCardLifecycles()
             }
         }
         .onChange(of: isPresentationActive) {
             if isPresentationActive {
-                feature.start()
+                feature.setPresentationActive(true)
                 synchronizeCardLifecycles()
             } else {
-                feature.stopPresentation()
+                feature.setPresentationActive(false)
             }
         }
         .onChange(of: viewModel.viewState.centerMode) {
@@ -252,14 +259,13 @@ public struct RideDashboardView: View {
             }
         }
         .onAppear {
-            cardSelection = .init(layout: viewModel.cardLayout)
             UIApplication.shared.isIdleTimerDisabled = true
         }
         .onDisappear {
             hiddenPageResetTask?.cancel()
             hiddenPageResetTask = nil
             UIApplication.shared.isIdleTimerDisabled = false
-            feature.stopPresentation()
+            feature.setPresentationActive(false)
         }
     }
 

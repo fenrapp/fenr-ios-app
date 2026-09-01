@@ -14,5 +14,6 @@ struct RideSessionSnapshotTests {
         #expect(snapshot.trip == nil)
         #expect(snapshot.resolvedSpeedKilometersPerHour == nil)
         #expect(snapshot.livePowerSamples.isEmpty)
+        #expect(!snapshot.isCanonicalTelemetryAvailable)
     }
 }

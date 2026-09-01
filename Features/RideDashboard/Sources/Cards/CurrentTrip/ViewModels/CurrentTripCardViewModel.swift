@@ -20,7 +20,10 @@ public final class CurrentTripCardViewModel: ObservableObject {
     ) {
         self.session = session
         self.mapper = mapper
-        snapshot = .init(vehicleIdentity: .temporary(UUID()))
+        snapshot = .init(
+            vehicleIdentity: .temporary(UUID()),
+            isCanonicalTelemetryAvailable: false
+        )
     }
 
     deinit {
@@ -67,7 +70,9 @@ private extension CurrentTripCardViewModel {
             for await snapshot in stream {
                 guard !Task.isCancelled else { return }
                 self?.snapshot = snapshot
-                self?.renderIfVisible()
+                if snapshot.isCanonicalTelemetryAvailable {
+                    self?.renderIfVisible()
+                }
             }
         }
     }
@@ -83,6 +88,7 @@ private extension CurrentTripCardViewModel {
     }
 
     func enqueue(_ command: Command) {
+        guard isVisible, snapshot.isCanonicalTelemetryAvailable else { return }
         let previousCommand = commandTask
         let session = session
         commandTask = Task {

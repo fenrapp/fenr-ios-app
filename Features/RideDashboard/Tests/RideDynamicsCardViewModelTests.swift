@@ -56,6 +56,8 @@ struct RideDynamicsCardViewModelTests {
     func coalescesCalibrationWhileInFlight() async {
         let fixture = makeFixture()
         await fixture.vehicleSession.blockNextCalibration()
+        fixture.viewModel.setIsVisible(true)
+        #expect(await waitUntil { fixture.viewModel.viewState.canCalibrate })
 
         fixture.viewModel.calibrate()
         fixture.viewModel.calibrate()
@@ -73,6 +75,8 @@ struct RideDynamicsCardViewModelTests {
     func allowsCalibrationAgainAfterCompletion() async {
         let fixture = makeFixture()
         await fixture.vehicleSession.blockNextCalibration()
+        fixture.viewModel.setIsVisible(true)
+        #expect(await waitUntil { fixture.viewModel.viewState.canCalibrate })
         fixture.viewModel.calibrate()
         #expect(await waitUntil {
             await fixture.vehicleSession.recordedCalibrationRequestCount() == 1
@@ -88,6 +92,51 @@ struct RideDynamicsCardViewModelTests {
         })
     }
 
+    @Test("Preserves dynamics values while canonical telemetry recovers")
+    func preservesPresentationDuringRecovery() async {
+        let fixture = makeFixture()
+        fixture.viewModel.setIsVisible(true)
+        #expect(await fixture.rideSession.waitForSubscriber())
+        await fixture.rideSession.send(.init(
+            vehicleIdentity: .vin("FENRTEST000000001"),
+            motion: .init(
+                rollDegrees: -12,
+                pitchDegrees: 4,
+                availability: .available,
+                observedAt: .init(timeIntervalSinceReferenceDate: 1)
+            ),
+            isCanonicalTelemetryAvailable: true
+        ))
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.leanDegrees == -12
+                && fixture.viewModel.viewState.canCalibrate
+        })
+
+        await fixture.rideSession.send(.init(
+            vehicleIdentity: .vin("FENRTEST000000001"),
+            isCanonicalTelemetryAvailable: false
+        ))
+        #expect(await waitUntil { !fixture.viewModel.viewState.canCalibrate })
+        #expect(fixture.viewModel.viewState.leanDegrees == -12)
+        #expect(fixture.viewModel.viewState.pitchDegrees == 4)
+
+        await fixture.rideSession.send(.init(
+            vehicleIdentity: .vin("FENRTEST000000001"),
+            motion: .init(
+                rollDegrees: 7,
+                pitchDegrees: -2,
+                availability: .available,
+                observedAt: .init(timeIntervalSinceReferenceDate: 2)
+            ),
+            isCanonicalTelemetryAvailable: true
+        ))
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.leanDegrees == 7
+                && fixture.viewModel.viewState.pitchDegrees == -2
+                && fixture.viewModel.viewState.canCalibrate
+        })
+    }
+
     private func makeFixture() -> Fixture {
         let rideSession = RideDynamicsTestRideSession()
         let vehicleSession = RideDynamicsTestVehicleSession()
@@ -96,7 +145,8 @@ struct RideDynamicsCardViewModelTests {
                 rideSession: rideSession,
                 vehicleSession: vehicleSession
             ),
-            vehicleSession: vehicleSession
+            vehicleSession: vehicleSession,
+            rideSession: rideSession
         )
     }
 
@@ -116,5 +166,6 @@ struct RideDynamicsCardViewModelTests {
     private struct Fixture {
         let viewModel: RideDynamicsCardViewModel
         let vehicleSession: RideDynamicsTestVehicleSession
+        let rideSession: RideDynamicsTestRideSession
     }
 }

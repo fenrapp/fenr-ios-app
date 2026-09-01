@@ -72,3 +72,30 @@ public struct DashboardRideDynamicsViewData: Equatable, Sendable {
         self.canCalibrate = canCalibrate
     }
 }
+
+extension DashboardRideDynamicsViewData {
+    func withCalibrationEnabled(_ isEnabled: Bool) -> Self {
+        .init(
+            status: status,
+            leanDegrees: leanDegrees,
+            leanText: leanText,
+            leanDirectionText: leanDirectionText,
+            maximumLeftLeanText: maximumLeftLeanText,
+            maximumRightLeanText: maximumRightLeanText,
+            pitchDegrees: pitchDegrees,
+            pitchText: pitchText,
+            pitchDirectionText: pitchDirectionText,
+            maximumUphillPitchText: maximumUphillPitchText,
+            maximumDownhillPitchText: maximumDownhillPitchText,
+            headingDegrees: headingDegrees,
+            isHeadingAvailable: isHeadingAvailable,
+            headingText: headingText,
+            cardinalDirectionText: cardinalDirectionText,
+            headingSourceText: headingSourceText,
+            altitudeText: altitudeText,
+            latitudeText: latitudeText,
+            longitudeText: longitudeText,
+            canCalibrate: canCalibrate && isEnabled
+        )
+    }
+}

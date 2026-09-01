@@ -12,6 +12,7 @@ final class BikeLiveActivityControllerFixture {
     let settingsRepository = BikeLiveActivitySettingsRepository()
     let activityClient = FakeBikeLiveActivityClient()
     let clock = FakeBikeLiveActivityClock()
+    let timing = ControllableBikeLiveActivityTiming()
     let vehicleSession: LiveVehicleSessionService
     let controller: BikeLiveActivityController
 
@@ -52,7 +53,10 @@ final class BikeLiveActivityControllerFixture {
             vehicleSession: vehicleSession,
             activityClient: activityClient,
             clock: clock,
+            timing: timing.makeTiming(),
+            continuityPolicy: RideDashboardContinuityPolicy(),
             updateInterval: FENRRuntimeConstants.LiveActivity.chargingUpdateInterval,
+            reconnectionNoticeDelay: FENRRuntimeConstants.RideDashboard.reconnectionNoticeDelay,
             stateMapper: BikeLiveActivityStateMapper(
                 makeDashboardMapper: { settings in
                     RideDashboardMapperFactory.makeChargingMapper(

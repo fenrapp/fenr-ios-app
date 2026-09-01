@@ -16,7 +16,8 @@ struct BikeLockSettingsViewStateMapperTests {
         let state = mapper.map(
             settings: settings,
             vehicleIdentifier: vin,
-            capability: .init(vehicleIdentifier: vin, isAvailable: true)
+            capability: .init(vehicleIdentifier: vin, isAvailable: true),
+            isCanonicalTelemetryAvailable: true
         )
 
         #expect(state.isAvailable)
@@ -32,7 +33,8 @@ struct BikeLockSettingsViewStateMapperTests {
         let initial = mapper.map(
             settings: AppSettings(),
             vehicleIdentifier: vin,
-            capability: .init(vehicleIdentifier: vin, isAvailable: true)
+            capability: .init(vehicleIdentifier: vin, isAvailable: true),
+            isCanonicalTelemetryAvailable: true
         )
         #expect(initial.protectionOptions.first(where: { $0.id == .pin })?.requiresPINSetup == true)
         #expect(initial.protectionOptions.first(where: { $0.id == .pinAndFaceID })?.requiresPINSetup == true)
@@ -43,7 +45,8 @@ struct BikeLockSettingsViewStateMapperTests {
         let protected = mapper.map(
             settings: protectedSettings,
             vehicleIdentifier: vin,
-            capability: .init(vehicleIdentifier: vin, isAvailable: true)
+            capability: .init(vehicleIdentifier: vin, isAvailable: true),
+            isCanonicalTelemetryAvailable: true
         )
         #expect(protected.protectionOptions.allSatisfy { !$0.requiresPINSetup })
     }

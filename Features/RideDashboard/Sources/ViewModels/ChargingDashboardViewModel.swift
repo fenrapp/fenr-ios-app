@@ -1,3 +1,4 @@
+import BikeDomain
 import ChargeControl
 import Combine
 import Foundation
@@ -18,6 +19,7 @@ public final class ChargingDashboardViewModel: ObservableObject {
     private var isRequestingBatteryHealth = false
     private var batteryHealthRequirementTask: Task<Void, Never>?
     private var chargeControlCancellable: AnyCancellable?
+    private var hasCanonicalTelemetry = false
 
     public init(
         vehicleSession: any VehicleSessionService,
@@ -59,18 +61,27 @@ public final class ChargingDashboardViewModel: ObservableObject {
     }
 
     func stop() {
-        observationTask?.cancel()
-        observationTask = nil
-        setBatteryHealthRequired(false)
-        chargeControl.receive(.init())
+        suspend()
+        snapshot = .init()
         viewState = .init()
     }
 
+    func suspend() {
+        observationTask?.cancel()
+        observationTask = nil
+        setBatteryHealthRequired(false)
+        hasCanonicalTelemetry = false
+        chargeControl.receive(.init())
+        render()
+    }
+
     func setChargePowerLimit(watts: Double) {
+        guard hasCanonicalTelemetry else { return }
         chargeControl.setPowerLimit(watts: watts)
     }
 
     func setChargeTarget(percent: Double) {
+        guard hasCanonicalTelemetry else { return }
         chargeControl.setTarget(percent: percent)
     }
 
@@ -81,11 +92,47 @@ public final class ChargingDashboardViewModel: ObservableObject {
 #endif
 
     private func receive(_ snapshot: VehicleSessionSnapshot) {
+        guard Self.hasCanonicalTelemetry(snapshot) else {
+            hasCanonicalTelemetry = false
+            chargeControl.receive(.init())
+            if Self.isTerminal(snapshot.connection.state) {
+                setBatteryHealthRequired(false)
+            }
+            render()
+            return
+        }
+        hasCanonicalTelemetry = true
         self.snapshot = snapshot
         mapper = makeMapper(snapshot.settings, snapshot.profile?.vin)
         chargeControl.receive(snapshot.batteryHealth)
         setBatteryHealthRequired(snapshot.telemetry.statusFlags.isChargerConnected)
         render()
+    }
+
+    private static func hasCanonicalTelemetry(_ snapshot: VehicleSessionSnapshot) -> Bool {
+        snapshot.isCanonicalTelemetryAvailable
+    }
+
+    private static func isTerminal(_ state: ConnectionState) -> Bool {
+        switch state {
+        case .bluetoothUnavailable,
+             .bluetoothUnauthorized,
+             .bluetoothPoweredOff,
+             .pairingResetRequired,
+             .disconnected,
+             .failed:
+            true
+        case .idle,
+             .scanning,
+             .connecting,
+             .discovering,
+             .authenticating,
+             .authenticated,
+             .subscribed,
+             .receivingTelemetry,
+             .reconnecting:
+            false
+        }
     }
 
     private func setBatteryHealthRequired(_ required: Bool) {

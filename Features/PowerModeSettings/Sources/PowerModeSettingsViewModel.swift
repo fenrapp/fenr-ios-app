@@ -35,6 +35,7 @@ public final class PowerModeSettingsViewModel: ObservableObject {
     var controlTask: Task<Void, Never>?
     private var refreshGeneration = 0
     var controlGeneration = 0
+    var isCanonicalTelemetryAvailable = false
 
     public init(
         vehicleSession: any VehicleSessionService,
@@ -161,13 +162,14 @@ extension PowerModeSettingsViewModel {
         connection = snapshot.connection
         settings = snapshot.settings
         profile = snapshot.profile
+        isCanonicalTelemetryAvailable = snapshot.isCanonicalTelemetryAvailable
         if !didSelectInitialMap,
            let activeMapIndex = snapshot.telemetry.mode.powerModeConfigurationIndex {
             selectedMapIndex = activeMapIndex
             didSelectInitialMap = true
         }
         let isConnected = isAuthenticated(snapshot.connection.state)
-        if !isConnected {
+        if !isConnected || !isCanonicalTelemetryAvailable {
             cancelRefresh(resetRequest: true)
             resetControlState()
         }
@@ -229,7 +231,8 @@ extension PowerModeSettingsViewModel {
             isBaseControlReady: preparedBaseMapIndex == selectedMapIndex,
             isTractionControlReady: preparedTractionMapIndex == selectedMapIndex,
             controlMessage: controlMessage,
-            controlError: controlError
+            controlError: controlError,
+            isCanonicalTelemetryAvailable: isCanonicalTelemetryAvailable
         ))
         guard nextState != viewState else { return }
         viewState = nextState

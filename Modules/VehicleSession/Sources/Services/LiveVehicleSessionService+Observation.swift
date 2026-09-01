@@ -63,6 +63,7 @@ extension LiveVehicleSessionService {
 
     private func receive(_ value: BikeTelemetry) async {
         telemetry = value
+        telemetryRevision &+= 1
         updatePowerModeRefresh(for: value)
         await updateDeviceSpeedObservation()
         await refreshMotion()
@@ -70,11 +71,18 @@ extension LiveVehicleSessionService {
     }
 
     private func receive(_ value: BikeConnection) async {
+        let wasReceivingTelemetry = isReceivingTelemetry
         connection = value
         if isReceivingTelemetry {
             updatePowerModeRefresh(for: telemetry)
         } else {
             resetPowerModeRefresh()
+        }
+        if wasReceivingTelemetry, !isReceivingTelemetry {
+            minimumCanonicalTelemetryRevision = telemetryRevision + 1
+            invalidateBatteryHealthMonitoringForConnectionLoss()
+        } else if !wasReceivingTelemetry, isReceivingTelemetry {
+            resumeBatteryHealthMonitoringIfNeeded()
         }
         await updateIMUMonitoring()
         publish()
@@ -296,7 +304,7 @@ extension LiveVehicleSessionService {
         await useCases.saveMotionCalibration.execute(calibration)
     }
 
-    private var isReceivingTelemetry: Bool {
+    var isReceivingTelemetry: Bool {
         if case .receivingTelemetry = connection.state { true } else { false }
     }
 }

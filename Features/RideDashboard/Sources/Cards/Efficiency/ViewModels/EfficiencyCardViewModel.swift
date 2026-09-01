@@ -10,7 +10,10 @@ public final class EfficiencyCardViewModel: ObservableObject {
     private let useCases: EfficiencyCardUseCases
     private let mapper: EfficiencyCardMapper
     private let session: any RideSessionService
-    private var snapshot = RideSessionSnapshot(vehicleIdentity: .temporary(UUID()))
+    private var snapshot = RideSessionSnapshot(
+        vehicleIdentity: .temporary(UUID()),
+        isCanonicalTelemetryAvailable: false
+    )
     private var trendTrips: [RideTrip] = []
     private var selectedPage = EfficiencyDashboardPage.live
     private var loadedKey: DashboardRideHistoryKey?
@@ -53,6 +56,11 @@ public final class EfficiencyCardViewModel: ObservableObject {
         trendTrips = []
     }
 
+    func pause() {
+        isVisible = false
+        stopPublishing()
+    }
+
 #if DEBUG
     func setPreviewState(_ viewState: DashboardEfficiencyViewData) {
         self.viewState = viewState
@@ -73,6 +81,7 @@ private extension EfficiencyCardViewModel {
     }
 
     func receive(_ snapshot: RideSessionSnapshot) {
+        guard snapshot.isCanonicalTelemetryAvailable else { return }
         let previousVIN = self.snapshot.vehicleIdentity.confirmedVIN
         self.snapshot = snapshot
         if previousVIN != snapshot.vehicleIdentity.confirmedVIN {
