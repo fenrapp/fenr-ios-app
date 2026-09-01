@@ -210,6 +210,37 @@ struct LiveVehicleSessionServiceTests {
         await fixture.service.stop()
     }
 
+    @Test("Requires a fresh telemetry sample after reconnect")
+    func requiresFreshTelemetryAfterReconnect() async {
+        let fixture = makeFixture()
+        await fixture.service.start()
+        #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
+        await fixture.repository.sendTelemetry(.init(
+            batteryLevel: .known(percent: 72),
+            lastUpdated: .init(timeIntervalSinceReferenceDate: 1)
+        ))
+        #expect(await waitUntil { await fixture.latestSnapshot().isCanonicalTelemetryAvailable })
+
+        await fixture.repository.sendConnection(.init(state: .reconnecting(
+            vin: "FENRTEST000000001",
+            attempt: 1,
+            maximumAttempts: 5
+        )))
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
+
+        #expect(await waitUntil { !(await fixture.latestSnapshot().isCanonicalTelemetryAvailable) })
+        await fixture.repository.sendTelemetry(.init(
+            batteryLevel: .known(percent: 73),
+            lastUpdated: .init(timeIntervalSinceReferenceDate: 2)
+        ))
+        #expect(await waitUntil { await fixture.latestSnapshot().isCanonicalTelemetryAvailable })
+    }
+
     @Test("Balances a stale successful BMS start before rearming")
     func balancesStaleBatteryHealthStartAcrossReconnect() async {
         let fixture = makeFixture()
@@ -228,16 +259,35 @@ struct LiveVehicleSessionServiceTests {
             attempt: 1,
             maximumAttempts: 5
         )))
+        #expect(await waitUntil {
+            if case .reconnecting = await fixture.latestSnapshot().connection.state {
+                true
+            } else {
+                false
+            }
+        })
         await fixture.repository.sendConnection(.init(
             state: .receivingTelemetry(peripheralName: "TEST")
         ))
+        #expect(await waitUntil {
+            if case .receivingTelemetry = await fixture.latestSnapshot().connection.state {
+                true
+            } else {
+                false
+            }
+        })
         await fixture.repository.resumeStart()
 
-        #expect(await waitUntil { await fixture.repository.monitoringCounts() == (2, 1) })
+        #expect(await waitUntil(timeout: .seconds(2)) {
+            await fixture.repository.monitoringCounts() == (2, 1)
+        })
         #expect(await fixture.latestSnapshot().batteryHealthMonitoringState == .active)
         await fixture.service.stop()
     }
 
+}
+
+extension LiveVehicleSessionServiceTests {
     @Test("Expires a GPS sample without waiting for another source event")
     func expiresDeviceSpeedSample() async {
         let sleepRecorder = VehicleSessionTestSleepRecorder()

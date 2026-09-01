@@ -52,6 +52,10 @@ final class AppRootRouter: ObservableObject {
     @Published private(set) var rideNavigationPresentation: RideNavigationPresentationMode
     @Published private(set) var incomingNavigationResource: IncomingNavigationResource?
 
+    var isDashboardPresentationActive: Bool {
+        path.isEmpty && rideNavigationPresentation != .fullScreen
+    }
+
     private let setupFlow: BikeSetupFlowController
     private let onboardingViewModel: BikeOnboardingViewModel
     private let incomingMapLinkStore: any IncomingMapLinkStoring

@@ -116,7 +116,7 @@ extension LiveVehicleSessionService {
 
     func resumeBatteryHealthMonitoringIfNeeded() {
         guard !batteryHealthConsumers.isEmpty,
-              (batteryHealthMonitoringState == .inactive || isMonitoringFailed) else {
+              shouldBeginBatteryHealthMonitoring else {
             return
         }
         beginBatteryHealthMonitoring()

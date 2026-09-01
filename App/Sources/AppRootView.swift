@@ -65,7 +65,7 @@ struct AppRootView: View {
                             },
                             onNavigation: { router.showRideNavigation(reduceMotion: reduceMotion) },
                             isNavigationActive: router.rideNavigationPresentation == .mini,
-                            isPresentationActive: router.rideNavigationPresentation != .fullScreen,
+                            isPresentationActive: router.isDashboardPresentationActive,
                             onDiagnostics: {
                                 router.navigate(to: .diagnostics, reduceMotion: reduceMotion)
                             }

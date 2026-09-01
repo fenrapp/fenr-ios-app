@@ -27,6 +27,7 @@ public struct RideSessionSnapshot: Equatable, Sendable {
     public let batteryStateOfChargePercent: Int?
     public let batteryCapacityWattHours: Double
     public let motion: VehicleMotionSnapshot
+    public let isCanonicalTelemetryAvailable: Bool
 
     public init(
         trip: RideTrip? = nil,
@@ -39,7 +40,8 @@ public struct RideSessionSnapshot: Equatable, Sendable {
         historyRevision: Int = .zero,
         batteryStateOfChargePercent: Int? = nil,
         batteryCapacityWattHours: Double = .zero,
-        motion: VehicleMotionSnapshot = .init()
+        motion: VehicleMotionSnapshot = .init(),
+        isCanonicalTelemetryAvailable: Bool = false
     ) {
         self.trip = trip
         self.vehicleIdentity = vehicleIdentity
@@ -52,5 +54,6 @@ public struct RideSessionSnapshot: Equatable, Sendable {
         self.batteryStateOfChargePercent = batteryStateOfChargePercent
         self.batteryCapacityWattHours = batteryCapacityWattHours
         self.motion = motion
+        self.isCanonicalTelemetryAvailable = isCanonicalTelemetryAvailable
     }
 }

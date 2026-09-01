@@ -53,6 +53,22 @@ struct AppRootRouterTests {
         #expect(fixture.router.rideNavigationPresentation == .fullScreen)
     }
 
+    @Test("Dashboard presentation is active only at the root outside fullscreen navigation")
+    func dashboardPresentationActivityFollowsRootVisibility() {
+        let fixture = AppRootRouterFixture()
+        #expect(fixture.router.isDashboardPresentationActive)
+
+        fixture.router.minimizeRideNavigation(reduceMotion: true)
+        #expect(fixture.router.isDashboardPresentationActive)
+
+        fixture.router.expandRideNavigation(reduceMotion: true)
+        #expect(!fixture.router.isDashboardPresentationActive)
+
+        fixture.router.hideRideNavigation(reduceMotion: true)
+        fixture.router.navigate(to: .settings, reduceMotion: true)
+        #expect(!fixture.router.isDashboardPresentationActive)
+    }
+
     @Test("Requests orientation from the root presentation state")
     func requestsOrientationFromRootPresentationState() {
         let fixture = AppRootRouterFixture()

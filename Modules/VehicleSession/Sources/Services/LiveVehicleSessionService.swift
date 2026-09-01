@@ -9,6 +9,8 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     let sleep: @Sendable (Duration) async throws -> Void
     var motionEstimator: VehicleMotionEstimator
     var telemetry = BikeTelemetry()
+    var telemetryRevision = 0
+    var minimumCanonicalTelemetryRevision = 0
     var connection = BikeConnection()
     var settings = AppSettings()
     var profile: BikeProfile?
@@ -142,6 +144,7 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         batteryHealthStartGeneration = nil
         batteryHealthMonitoringState = .inactive
         batteryHealth = .init()
+        minimumCanonicalTelemetryRevision = telemetryRevision + 1
         resetPowerModeRefresh()
         publish()
         isStopping = false
@@ -171,8 +174,7 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         guard !isStopping else { return }
         if required {
             batteryHealthConsumers.insert(consumerID)
-            if isReceivingTelemetry,
-               (batteryHealthMonitoringState == .inactive || isMonitoringFailed) {
+            if isReceivingTelemetry, shouldBeginBatteryHealthMonitoring {
                 beginBatteryHealthMonitoring()
             }
         } else {
@@ -217,12 +219,19 @@ extension LiveVehicleSessionService {
             batteryHealthMonitoringState: batteryHealthMonitoringState,
             motion: motion,
             hasReceivedSettings: hasReceivedSettings,
-            hasReceivedProfile: hasReceivedProfile
+            hasReceivedProfile: hasReceivedProfile,
+            isCanonicalTelemetryAvailable: isReceivingTelemetry
+                && telemetry.lastUpdated != nil
+                && telemetryRevision >= minimumCanonicalTelemetryRevision
         )
     }
 
     var isMonitoringFailed: Bool {
         if case .failed = batteryHealthMonitoringState { true } else { false }
+    }
+
+    var shouldBeginBatteryHealthMonitoring: Bool {
+        batteryHealthMonitoringState == .inactive || isMonitoringFailed
     }
 
     func publish() {

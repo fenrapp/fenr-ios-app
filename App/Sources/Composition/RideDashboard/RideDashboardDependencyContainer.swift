@@ -77,9 +77,10 @@ struct RideDashboardDependencyContainer {
             cardLayoutMapper: DashboardCardLayoutMapper(),
             vehicleSession: vehicleSession,
             timing: .live,
+            continuityPolicy: RideDashboardContinuityPolicy(),
             initialConnectionStabilityPeriod:
                 FENRRuntimeConstants.Telemetry.connectionStabilityPeriod,
-            reconnectionGracePeriod: FENRRuntimeConstants.RideDashboard.reconnectionGracePeriod
+            reconnectionNoticeDelay: FENRRuntimeConstants.RideDashboard.reconnectionNoticeDelay
         )
     }
 }

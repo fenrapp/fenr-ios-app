@@ -63,6 +63,7 @@ extension LiveVehicleSessionService {
 
     private func receive(_ value: BikeTelemetry) async {
         telemetry = value
+        telemetryRevision &+= 1
         updatePowerModeRefresh(for: value)
         await updateDeviceSpeedObservation()
         await refreshMotion()
@@ -78,6 +79,7 @@ extension LiveVehicleSessionService {
             resetPowerModeRefresh()
         }
         if wasReceivingTelemetry, !isReceivingTelemetry {
+            minimumCanonicalTelemetryRevision = telemetryRevision + 1
             invalidateBatteryHealthMonitoringForConnectionLoss()
         } else if !wasReceivingTelemetry, isReceivingTelemetry {
             resumeBatteryHealthMonitoringIfNeeded()

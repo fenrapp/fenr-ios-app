@@ -12,6 +12,8 @@ public struct RideDashboardViewState: Equatable, Sendable {
     public let connectionDetail: String
     public let hasTelemetry: Bool
     public let showsConnectionProgress: Bool
+    public let continuityPhase: RideDashboardContinuityPhase
+    public let connectionNotice: DashboardConnectionNoticeViewData?
     public let indicators: [DashboardIndicatorViewData]
 
     public init(
@@ -28,6 +30,8 @@ public struct RideDashboardViewState: Equatable, Sendable {
         connectionDetail: String = "Restoring bike session",
         hasTelemetry: Bool = false,
         showsConnectionProgress: Bool = true,
+        continuityPhase: RideDashboardContinuityPhase = .cold,
+        connectionNotice: DashboardConnectionNoticeViewData? = nil,
         indicators: [DashboardIndicatorViewData] = []
     ) {
         self.speedometer = speedometer
@@ -43,6 +47,8 @@ public struct RideDashboardViewState: Equatable, Sendable {
         self.connectionDetail = connectionDetail
         self.hasTelemetry = hasTelemetry
         self.showsConnectionProgress = showsConnectionProgress
+        self.continuityPhase = continuityPhase
+        self.connectionNotice = connectionNotice
         self.indicators = indicators
     }
 
@@ -50,7 +56,33 @@ public struct RideDashboardViewState: Equatable, Sendable {
         .init(
             showsEstimatedRangeBatteryIndicator: showsEstimatedRangeBatteryIndicator,
             connectionDetail: "Verifying a stable telemetry stream",
-            showsConnectionProgress: true
+            showsConnectionProgress: true,
+            continuityPhase: .cold
+        )
+    }
+
+    func withContinuity(
+        _ phase: RideDashboardContinuityPhase,
+        notice: DashboardConnectionNoticeViewData? = nil,
+        powerMode: DashboardPowerModeViewData? = nil
+    ) -> Self {
+        .init(
+            speedometer: speedometer,
+            showsCompactSpeedReadout: showsCompactSpeedReadout,
+            odometer: odometer,
+            progressBar: progressBar,
+            battery: battery,
+            showsEstimatedRangeBatteryIndicator: showsEstimatedRangeBatteryIndicator,
+            temperatureSummary: temperatureSummary,
+            gear: gear,
+            powerMode: powerMode ?? self.powerMode,
+            centerMode: centerMode,
+            connectionDetail: connectionDetail,
+            hasTelemetry: hasTelemetry,
+            showsConnectionProgress: showsConnectionProgress,
+            continuityPhase: phase,
+            connectionNotice: notice,
+            indicators: indicators
         )
     }
 

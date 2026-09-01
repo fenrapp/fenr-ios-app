@@ -12,7 +12,7 @@ public enum FENRRuntimeConstants {
     }
 
     public enum RideDashboard {
-        public static let reconnectionGracePeriod: Duration = .seconds(30)
+        public static let reconnectionNoticeDelay: Duration = .seconds(5)
     }
 
     public enum VehicleSession {

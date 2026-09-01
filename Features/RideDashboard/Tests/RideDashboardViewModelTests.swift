@@ -64,13 +64,13 @@ struct RideDashboardViewModelTests {
         fixture.viewModel.stopObserving()
     }
 
-    @Test("Keeps live presentation during a brief reconnect and expires it")
-    func preservesPresentationDuringReconnectionGrace() async {
-        let gracePeriod = Duration.seconds(30)
+    @Test("Keeps live presentation and shows one notice after reconnect delay")
+    func preservesPresentationDuringReconnect() async {
+        let noticeDelay = Duration.seconds(5)
         let timing = ControllableRideDashboardTiming()
         let fixture = makeFixture(
             timing: timing.makeTiming(),
-            reconnectionGracePeriod: gracePeriod
+            reconnectionNoticeDelay: noticeDelay
         )
         fixture.viewModel.startObserving()
         await fixture.vehicleSession.send(ridingSnapshot(speed: 51))
@@ -79,15 +79,21 @@ struct RideDashboardViewModelTests {
         #expect(await waitUntil { fixture.viewModel.viewState.hasTelemetry })
 
         await fixture.vehicleSession.send(.init(
-            connection: .init(state: .disconnected(reason: "Synthetic disconnect")),
+            connection: .init(state: .reconnecting(
+                vin: "FENRTEST000000001",
+                attempt: 1,
+                maximumAttempts: 5
+            )),
             hasReceivedSettings: true,
             hasReceivedProfile: true
         ))
 
         #expect(fixture.viewModel.viewState.hasTelemetry)
-        #expect(await waitUntil { await timing.pendingSleepCount(for: gracePeriod) == 1 })
-        await timing.resumeFirstSleep(for: gracePeriod)
-        #expect(await waitUntil { !fixture.viewModel.viewState.hasTelemetry })
+        #expect(fixture.viewModel.viewState.connectionNotice == nil)
+        #expect(await waitUntil { await timing.pendingSleepCount(for: noticeDelay) == 1 })
+        await timing.resumeFirstSleep(for: noticeDelay)
+        #expect(await waitUntil { fixture.viewModel.viewState.connectionNotice?.text == "Reconnecting" })
+        #expect(fixture.viewModel.viewState.hasTelemetry)
         fixture.viewModel.stopObserving()
     }
 
@@ -167,13 +173,13 @@ struct RideDashboardViewModelTests {
         fixture.viewModel.stopObserving()
     }
 
-    @Test("Fresh telemetry cancels reconnection grace expiry")
-    func freshTelemetryCancelsReconnectionGraceExpiry() async {
-        let gracePeriod = Duration.seconds(30)
+    @Test("Fresh telemetry cancels the reconnect notice")
+    func freshTelemetryCancelsReconnectNotice() async {
+        let noticeDelay = Duration.seconds(5)
         let timing = ControllableRideDashboardTiming()
         let fixture = makeFixture(
             timing: timing.makeTiming(),
-            reconnectionGracePeriod: gracePeriod
+            reconnectionNoticeDelay: noticeDelay
         )
         fixture.viewModel.startObserving()
 
@@ -183,16 +189,127 @@ struct RideDashboardViewModelTests {
         #expect(await waitUntil { fixture.viewModel.viewState.hasTelemetry })
 
         await fixture.vehicleSession.send(.init(
+            connection: .init(state: .reconnecting(
+                vin: "FENRTEST000000001",
+                attempt: 1,
+                maximumAttempts: 5
+            )),
+            hasReceivedSettings: true,
+            hasReceivedProfile: true
+        ))
+        #expect(await waitUntil { await timing.pendingSleepCount(for: noticeDelay) == 1 })
+
+        await fixture.vehicleSession.send(ridingSnapshot(speed: 52))
+        #expect(await waitUntil { await timing.pendingSleepCount(for: noticeDelay) == 0 })
+        #expect(fixture.viewModel.viewState.hasTelemetry)
+        #expect(fixture.viewModel.viewState.speedometer.valueText == "52")
+        #expect(fixture.viewModel.viewState.connectionNotice == nil)
+        fixture.viewModel.stopObserving()
+    }
+
+}
+
+extension RideDashboardViewModelTests {
+    @Test("Empty telemetry during a receiving reset keeps the last presentation")
+    func emptyTelemetryRaceKeepsPresentation() async {
+        let fixture = makeFixture()
+        fixture.viewModel.startObserving()
+        await fixture.vehicleSession.send(ridingSnapshot(speed: 38))
+        #expect(await waitUntil { fixture.viewModel.viewState.hasTelemetry })
+
+        await fixture.vehicleSession.send(.init(
+            connection: .init(state: .receivingTelemetry(peripheralName: "SYNTHETIC")),
+            hasReceivedSettings: true,
+            hasReceivedProfile: true
+        ))
+
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.hasTelemetry
+                && fixture.viewModel.viewState.speedometer.valueText == "38"
+                && fixture.viewModel.viewState.continuityPhase == .recovering
+        })
+        fixture.viewModel.stopObserving()
+    }
+
+    @Test("Cached telemetry cannot complete reconnect before a fresh sample")
+    func cachedTelemetryCannotCompleteReconnect() async {
+        let fixture = makeFixture()
+        fixture.viewModel.startObserving()
+        await fixture.vehicleSession.send(ridingSnapshot(speed: 38))
+        #expect(await waitUntil { fixture.viewModel.viewState.hasTelemetry })
+
+        await fixture.vehicleSession.send(ridingSnapshot(
+            speed: 91,
+            isCanonicalTelemetryAvailable: false
+        ))
+
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.continuityPhase == .recovering
+        })
+        #expect(fixture.viewModel.viewState.speedometer.valueText == "38")
+        fixture.viewModel.stopObserving()
+    }
+
+    @Test("Explicit disconnect invalidates the cached presentation immediately")
+    func explicitDisconnectIsTerminal() async {
+        let fixture = makeFixture()
+        fixture.viewModel.startObserving()
+        await fixture.vehicleSession.send(ridingSnapshot(speed: 38))
+        #expect(await waitUntil { fixture.viewModel.viewState.hasTelemetry })
+
+        await fixture.vehicleSession.send(.init(
             connection: .init(state: .disconnected(reason: "Synthetic disconnect")),
             hasReceivedSettings: true,
             hasReceivedProfile: true
         ))
-        #expect(await waitUntil { await timing.pendingSleepCount(for: gracePeriod) == 1 })
 
-        await fixture.vehicleSession.send(ridingSnapshot(speed: 52))
-        #expect(await waitUntil { await timing.pendingSleepCount(for: gracePeriod) == 0 })
+        #expect(await waitUntil {
+            !fixture.viewModel.viewState.hasTelemetry
+                && fixture.viewModel.viewState.continuityPhase == .terminal
+        })
+        fixture.viewModel.stopObserving()
+    }
+
+    @Test("Resuming presentation replays live state without verifying again")
+    func resumeDoesNotRepeatInitialVerification() async {
+        let stabilityPeriod = Duration.seconds(1)
+        let timing = ControllableRideDashboardTiming()
+        let fixture = makeFixture(
+            timing: timing.makeTiming(),
+            initialConnectionStabilityPeriod: stabilityPeriod
+        )
+        fixture.viewModel.startObserving()
+        await fixture.vehicleSession.send(ridingSnapshot(speed: 44))
+        #expect(await waitUntil { await timing.pendingSleepCount(for: stabilityPeriod) == 1 })
+        await timing.resumeFirstSleep(for: stabilityPeriod)
+        #expect(await waitUntil { fixture.viewModel.viewState.hasTelemetry })
+
+        fixture.viewModel.pausePresentation()
+        fixture.viewModel.startObserving()
+
+        #expect(await waitUntil { await fixture.vehicleSession.recordedObservationCount() == 2 })
         #expect(fixture.viewModel.viewState.hasTelemetry)
-        #expect(fixture.viewModel.viewState.speedometer.valueText == "52")
+        #expect(fixture.viewModel.viewState.speedometer.valueText == "44")
+        #expect(await timing.requestedSleepCount(for: stabilityPeriod) == 1)
+        fixture.viewModel.stopObserving()
+    }
+
+    @Test("Preserves power details only while the active map index is unchanged")
+    func powerModeContinuityIsScopedToActiveMap() async {
+        let fixture = makeFixture()
+        fixture.viewModel.startObserving()
+        await fixture.vehicleSession.send(powerModeSnapshot(mode: 1, includesConfiguration: true))
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.powerMode.horsepower == "60"
+        })
+
+        await fixture.vehicleSession.send(powerModeSnapshot(mode: 1, includesConfiguration: false))
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.powerMode.horsepower == "60"
+        })
+
+        await fixture.vehicleSession.send(powerModeSnapshot(mode: 2, includesConfiguration: false))
+        #expect(await waitUntil { !fixture.viewModel.viewState.powerMode.isVisible })
         fixture.viewModel.stopObserving()
     }
 
@@ -223,52 +340,4 @@ struct RideDashboardViewModelTests {
         }
     }
 
-    private func makeFixture(
-        timing: RideDashboardTiming = .live,
-        initialConnectionStabilityPeriod: Duration = .zero,
-        reconnectionGracePeriod: Duration = .seconds(30)
-    ) -> Fixture {
-        let vehicleSession = RideDashboardVehicleSession()
-        return Fixture(
-            viewModel: RideDashboardViewModel(
-                mapper: RideDashboardMapperFactory.makeRideMapper(
-                    locale: Locale(identifier: "en_GB")
-                ),
-                cardLayoutMapper: DashboardCardLayoutMapper(),
-                vehicleSession: vehicleSession,
-                timing: timing,
-                initialConnectionStabilityPeriod: initialConnectionStabilityPeriod,
-                reconnectionGracePeriod: reconnectionGracePeriod
-            ),
-            vehicleSession: vehicleSession
-        )
-    }
-
-    private func ridingSnapshot(
-        speed: Double,
-        showsTemperatures: Bool = false
-    ) -> VehicleSessionSnapshot {
-        .init(
-            telemetry: .init(
-                batteryLevel: .known(percent: 64),
-                speed: .known(kmh: speed, kmhX10: Int((speed * 10).rounded())),
-                statusFlags: .init(isOn: true, isInGear: true)
-            ),
-            connection: .init(state: .receivingTelemetry(peripheralName: "SYNTHETIC")),
-            settings: .init(
-                dashboardProgressBarMode: .speed,
-                dashboardBatteryIndicatorMode: .estimatedRange,
-                showsDashboardTemperatures: showsTemperatures,
-                measurementSystem: .metric
-            ),
-            resolvedSpeedKilometersPerHour: speed,
-            hasReceivedSettings: true,
-            hasReceivedProfile: true
-        )
-    }
-
-    private struct Fixture {
-        let viewModel: RideDashboardViewModel
-        let vehicleSession: RideDashboardVehicleSession
-    }
 }

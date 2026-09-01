@@ -12,6 +12,11 @@ public final class RideDashboardFeatureModel: ObservableObject {
     let dynamicsViewModel: RideDynamicsCardViewModel
     let chargingViewModel: ChargingDashboardViewModel
     let bikeLockViewModel: BikeLockCardViewModel
+    private var isStarted = false
+    private var isPresentationActive = false
+    private var continuityObservation: AnyCancellable?
+    private var latestCenterMode: RideDashboardViewState.CenterMode?
+    private var latestSelection: DashboardCardSelectionState?
 
     public init(
         dashboardViewModel: RideDashboardViewModel,
@@ -38,26 +43,92 @@ public final class RideDashboardFeatureModel: ObservableObject {
     }
 
     func start() {
-        dashboardViewModel.startObserving()
-        deviceBatteryViewModel.start()
-        rangeViewModel.start()
-        bikeLockViewModel.start()
+        guard !isStarted else { return }
+        isStarted = true
+        continuityObservation = dashboardViewModel.$viewState
+            .map(\.continuityPhase)
+            .removeDuplicates()
+            .sink { [weak self] phase in
+                self?.applyCardLifecycles(for: phase)
+            }
     }
 
-    func stopPresentation() {
-        dashboardViewModel.stopObserving()
+    func setPresentationActive(_ isActive: Bool) {
+        if isActive, !isStarted {
+            start()
+        }
+        guard isPresentationActive != isActive else { return }
+        isPresentationActive = isActive
+        if isActive {
+            resumePresentation()
+        } else {
+            pausePresentation()
+        }
+    }
+
+    func invalidateSession() {
+        setPresentationActive(false)
+        dashboardViewModel.invalidateSession()
+        continuityObservation?.cancel()
+        continuityObservation = nil
+        latestCenterMode = nil
+        latestSelection = nil
+        isStarted = false
+    }
+
+    private func resumePresentation() {
+        dashboardViewModel.startObserving()
+        deviceBatteryViewModel.start()
+    }
+
+    private func pausePresentation() {
+        dashboardViewModel.pausePresentation()
         deviceBatteryViewModel.stop()
-        chargingViewModel.stop()
+        chargingViewModel.suspend()
         currentTripViewModel.setIsVisible(false)
-        tripStatisticsViewModel.stop()
-        efficiencyViewModel.stop()
-        rangeViewModel.stop()
+        tripStatisticsViewModel.pause()
+        efficiencyViewModel.pause()
+        rangeViewModel.pause()
         systemHealthViewModel.setIsVisible(false)
         dynamicsViewModel.setIsVisible(false)
-        bikeLockViewModel.stop()
+        bikeLockViewModel.suspend()
     }
 
     func synchronizeCardLifecycles(
+        centerMode: RideDashboardViewState.CenterMode,
+        selection: DashboardCardSelectionState
+    ) {
+        latestCenterMode = centerMode
+        latestSelection = selection
+        applyCardLifecycles(for: dashboardViewModel.viewState.continuityPhase)
+    }
+
+    private func applyCardLifecycles(for phase: RideDashboardContinuityPhase) {
+        guard isPresentationActive else { return }
+        switch phase {
+        case .live:
+            guard let latestCenterMode, let latestSelection else { return }
+            rangeViewModel.start()
+            bikeLockViewModel.start()
+            synchronizeLiveCardLifecycles(
+                centerMode: latestCenterMode,
+                selection: latestSelection
+            )
+        case .recovering:
+            pauseRecoverySensitiveCards()
+            guard let latestCenterMode, let latestSelection else {
+                systemHealthViewModel.setIsVisible(false)
+                return
+            }
+            systemHealthViewModel.setIsVisible(
+                latestSelection.isSystemHealthVisible(in: latestCenterMode)
+            )
+        case .cold, .terminal:
+            pauseAllCards()
+        }
+    }
+
+    private func synchronizeLiveCardLifecycles(
         centerMode: RideDashboardViewState.CenterMode,
         selection: DashboardCardSelectionState
     ) {
@@ -81,5 +152,20 @@ public final class RideDashboardFeatureModel: ObservableObject {
         rangeViewModel.setIsVisible(selection.isRangeVisible(in: centerMode))
         systemHealthViewModel.setIsVisible(selection.isSystemHealthVisible(in: centerMode))
         dynamicsViewModel.setIsVisible(selection.isDynamicsVisible(in: centerMode))
+    }
+
+    private func pauseRecoverySensitiveCards() {
+        currentTripViewModel.setIsVisible(false)
+        tripStatisticsViewModel.pause()
+        efficiencyViewModel.pause()
+        rangeViewModel.pause()
+        dynamicsViewModel.setIsVisible(false)
+    }
+
+    private func pauseAllCards() {
+        chargingViewModel.suspend()
+        pauseRecoverySensitiveCards()
+        systemHealthViewModel.setIsVisible(false)
+        bikeLockViewModel.suspend()
     }
 }
