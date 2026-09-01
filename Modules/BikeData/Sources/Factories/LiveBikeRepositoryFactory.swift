@@ -28,7 +28,9 @@ public enum LiveBikeRepositoryFactory {
                 batteryHealthMapper: BikeSDKTelemetryPayloadToBatteryHealthMapper(),
                 batteryDatasetMapper: BikeSDKBatteryDatasetToDomainMapper(),
                 connectionSessionPolicy: BikeConnectionSessionPolicy(),
-                profileRepository: profileRepository,
+                alphaEvidencePersistence: BikeAlphaEvidencePersistence(
+                    profileRepository: profileRepository
+                ),
                 now: Date.init
             ),
             stateStore: BikeRepositoryStateStore(),

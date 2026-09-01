@@ -10,7 +10,7 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
     private let batteryHealthMapper: BikeSDKTelemetryPayloadToBatteryHealthMapper
     private let batteryDatasetMapper: BikeSDKBatteryDatasetToDomainMapper
     private let connectionSessionPolicy: BikeConnectionSessionPolicy
-    private let profileRepository: (any BikeProfileRepository)?
+    private let alphaEvidencePersistence: BikeAlphaEvidencePersistence
     private let now: @Sendable () -> Date
 
     init(
@@ -21,7 +21,7 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
         batteryHealthMapper: BikeSDKTelemetryPayloadToBatteryHealthMapper,
         batteryDatasetMapper: BikeSDKBatteryDatasetToDomainMapper,
         connectionSessionPolicy: BikeConnectionSessionPolicy,
-        profileRepository: (any BikeProfileRepository)? = nil,
+        alphaEvidencePersistence: BikeAlphaEvidencePersistence,
         now: @escaping @Sendable () -> Date
     ) {
         self.telemetryMapper = telemetryMapper
@@ -31,7 +31,7 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
         self.batteryHealthMapper = batteryHealthMapper
         self.batteryDatasetMapper = batteryDatasetMapper
         self.connectionSessionPolicy = connectionSessionPolicy
-        self.profileRepository = profileRepository
+        self.alphaEvidencePersistence = alphaEvidencePersistence
         self.now = now
     }
 
@@ -114,7 +114,12 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
         targets: LiveBikeRepositoryEventTargets
     ) async {
         let date = now()
-        let persistedEvidence = await persistedAlphaEvidence(for: payload)
+        let persistedEvidence: Set<BikeAlphaEvidence>
+        if case .vin(let vin) = payload {
+            persistedEvidence = await alphaEvidencePersistence.persistedEvidence(matching: vin)
+        } else {
+            persistedEvidence = []
+        }
         let telemetry = await targets.stateStore.updateTelemetryIf {
             let didApply = telemetryMapper.apply(payload, to: &$0, date: date)
             if !persistedEvidence.isEmpty {
@@ -126,26 +131,12 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
         }
         if let telemetry {
             await targets.telemetryHub.send(telemetry)
-            await persistAlphaEvidenceIfNeeded(from: telemetry, date: date)
+            await alphaEvidencePersistence.persistNewEvidence(
+                from: telemetry,
+                observedAt: date
+            )
         }
         await updateBatteryHealth(payload, targets: targets, date: date)
-    }
-
-    private func persistAlphaEvidenceIfNeeded(
-        from telemetry: BikeTelemetry,
-        date: Date
-    ) async {
-        guard let profileRepository,
-              case .alpha(let evidence) = telemetry.detectedPowerTier,
-              !evidence.isEmpty,
-              var profile = await profileRepository.loadProfile(),
-              telemetry.vin.isEmpty || telemetry.vin == profile.vin
-        else { return }
-        let mergedEvidence = profile.alphaEvidence.union(evidence)
-        guard mergedEvidence != profile.alphaEvidence else { return }
-        profile.alphaEvidence = mergedEvidence
-        profile.alphaDetectedAt = date
-        await profileRepository.saveProfile(profile)
     }
 
     private func updateBatteryHealth(
@@ -161,14 +152,4 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
         }
     }
 
-    private func persistedAlphaEvidence(
-        for payload: BikeSDKTelemetryPayload
-    ) async -> Set<BikeAlphaEvidence> {
-        guard case .vin(let vin) = payload,
-              let profileRepository,
-              let profile = await profileRepository.loadProfile(),
-              profile.vin == vin
-        else { return [] }
-        return profile.alphaEvidence
-    }
 }

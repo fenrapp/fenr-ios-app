@@ -46,7 +46,7 @@ private func makeEventHandler(
         batteryHealthMapper: .init(),
         batteryDatasetMapper: .init(),
         connectionSessionPolicy: .init(),
-        profileRepository: profileRepository,
+        alphaEvidencePersistence: .init(profileRepository: profileRepository),
         now: now
     )
 }
