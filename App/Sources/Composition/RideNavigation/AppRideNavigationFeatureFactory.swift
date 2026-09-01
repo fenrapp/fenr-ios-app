@@ -42,9 +42,6 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
                         ),
                         exporter: GPXRouteExporter(dateFormat: iso8601)
                     ),
-                    routePersistence: RideNavigationRoutePersistenceService(
-                        repository: repository
-                    ),
                     planning: RideNavigationPlanningService(
                         placeSearch: placeSearch,
                         roadRouteCalculator: roadRouteCalculator,

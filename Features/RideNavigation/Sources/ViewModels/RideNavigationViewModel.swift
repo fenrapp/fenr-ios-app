@@ -34,10 +34,6 @@ public final class RideNavigationViewModel: ObservableObject {
 
     var vehicleSession: any VehicleSessionService { dependencies.vehicleSession }
     var observeDeviceSpeed: ObserveDeviceSpeedUseCase { dependencies.observeDeviceSpeed }
-    var repository: any RecordedRouteRepository { dependencies.routeLibrary.repository }
-    var routePersistence: RideNavigationRoutePersistenceService { dependencies.routePersistence }
-    var importer: any GPXRouteImporting { dependencies.routeLibrary.importer }
-    var exporter: any GPXRouteExporting { dependencies.routeLibrary.exporter }
     var placeSearch: any PlaceSearching { dependencies.planning.placeSearch }
     var roadRouteCalculator: any RoadRouteCalculating { dependencies.planning.roadRouteCalculator }
     var externalMapLinkResolver: any ExternalMapLinkResolving { dependencies.planning.externalMapLinkResolver }

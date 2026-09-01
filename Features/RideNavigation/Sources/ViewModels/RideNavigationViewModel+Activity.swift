@@ -109,7 +109,9 @@ extension RideNavigationViewModel {
                 )
                 return "\(distance) · \(elapsedText(at: date))"
             } ?? "No valid GPS points were recorded."
-            replaceDraftPersistenceTask { [repository] in try? await repository.saveDraft(nil) }
+            replaceDraftPersistenceTask { [routeLibrary = dependencies.routeLibrary] in
+                try? await routeLibrary.saveDraft(nil)
+            }
             return nil
         }
         guard finishedActivity == .following else {
@@ -267,7 +269,9 @@ extension RideNavigationViewModel {
         screen = .home
         stopClock()
         synchronizePresentationObservations()
-        replaceDraftPersistenceTask { [repository] in try? await repository.saveDraft(nil) }
+        replaceDraftPersistenceTask { [routeLibrary = dependencies.routeLibrary] in
+            try? await routeLibrary.saveDraft(nil)
+        }
         render()
         if let destinationToOpen {
             pendingExternalDestination = nil

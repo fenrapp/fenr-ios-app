@@ -199,13 +199,13 @@ extension RideNavigationViewModel {
     func scheduleDraftSave() {
         draftSaveTask?.cancel()
         guard let route = recorder.snapshot(at: now()).route else { return }
-        let repository = repository
+        let routeLibrary = dependencies.routeLibrary
         let sleep = timing.sleep
         draftSaveTask = Task {
             do {
                 try await sleep(.seconds(2))
                 try Task.checkCancellation()
-                try await repository.saveDraft(route)
+                try await routeLibrary.saveDraft(route)
             } catch {
                 return
             }

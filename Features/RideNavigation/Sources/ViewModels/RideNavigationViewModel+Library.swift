@@ -19,10 +19,10 @@ extension RideNavigationViewModel {
         completedRecording = route
         errorText = nil
         render()
-        let routePersistence = routePersistence
+        let routeLibrary = dependencies.routeLibrary
         completedRouteSaveTask = Task { [weak self] in
             do {
-                let routes = try await routePersistence.saveAndReload(route)
+                let routes = try await routeLibrary.saveAndReload(route)
                 guard let self,
                       operations.isCurrent(
                           .completedRouteSave,
@@ -105,7 +105,7 @@ extension RideNavigationViewModel {
         do {
             exportRequest = GPXExportRequest(
                 filename: sanitizedFilename(route.name) + ".gpx",
-                data: try exporter.export(route)
+                data: try dependencies.routeLibrary.export(route)
             )
         } catch {
             errorText = "The GPX file could not be created."
@@ -122,7 +122,7 @@ extension RideNavigationViewModel {
         do {
             shareRequest = GPXExportRequest(
                 filename: sanitizedFilename(route.name) + ".gpx",
-                data: try exporter.export(route)
+                data: try dependencies.routeLibrary.export(route)
             )
             errorText = nil
             render()
@@ -146,18 +146,18 @@ extension RideNavigationViewModel {
         errorText = nil
         render()
 
-        let repository = repository
+        let routeLibrary = dependencies.routeLibrary
         routeDeletionTasks[id] = Task { [weak self] in
             do {
-                try await repository.delete(id: id)
+                try await routeLibrary.delete(id: id)
                 try Task.checkCancellation()
-                let routes = await repository.loadRoutes()
+                let routes = await routeLibrary.loadRoutes()
                 try Task.checkCancellation()
                 self?.receiveRouteDeletion(routes, id: id, errorText: nil)
             } catch is CancellationError {
                 return
             } catch {
-                let routes = await repository.loadRoutes()
+                let routes = await routeLibrary.loadRoutes()
                 guard !Task.isCancelled else { return }
                 self?.receiveRouteDeletion(
                     routes,
@@ -227,7 +227,10 @@ extension RideNavigationViewModel {
         do {
             let data = try Data(contentsOf: url, options: .mappedIfSafe)
             let fallbackName = url.deletingPathExtension().lastPathComponent
-            let routes = try importer.importRoutes(from: data, fallbackName: fallbackName)
+            let routes = try dependencies.routeLibrary.importRoutes(
+                from: data,
+                fallbackName: fallbackName
+            )
             guard let route = routes.first else { return }
             selectedRoute = route
             selectedDirection = .forward

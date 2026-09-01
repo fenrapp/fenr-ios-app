@@ -171,10 +171,10 @@ extension RideNavigationViewModel {
         state.routePersistence.beginPlannedRouteSave()
         errorText = nil
         render()
-        let routePersistence = routePersistence
+        let routeLibrary = dependencies.routeLibrary
         plannedRouteSaveTask = Task { [weak self] in
             do {
-                let routes = try await routePersistence.saveAndReload(route)
+                let routes = try await routeLibrary.saveAndReload(route)
                 guard let self,
                       operations.isCurrent(
                           .plannedRouteSave,

@@ -53,9 +53,6 @@ struct RideNavigationViewModelFixture {
                     importer: importer,
                     exporter: StubGPXRouteExporter()
                 ),
-                routePersistence: RideNavigationRoutePersistenceService(
-                    repository: routeRepository
-                ),
                 planning: RideNavigationPlanningService(
                     placeSearch: placeSearch,
                     roadRouteCalculator: roadRouteCalculator,
