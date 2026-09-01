@@ -35,6 +35,9 @@ final class BikeLiveActivityControllerFixture {
                 stopBatteryHealthMonitoring: .init(repository: repository),
                 readBikeStatusSnapshot: .init(repository: repository)
             ),
+            powerModeRefreshCoordinator: .init(
+                refreshPowerModeConfiguration: nil, refreshTractionControlConfiguration: nil
+            ),
             speedResolver: .init(
                 now: { Date() },
                 maximumAccuracyMetersPerSecond: 5,

@@ -64,7 +64,10 @@ extension LiveVehicleSessionService {
     private func receive(_ value: BikeTelemetry) async {
         telemetry = value
         telemetryRevision &+= 1
-        updatePowerModeRefresh(for: value)
+        await powerModeRefreshCoordinator.update(
+            telemetry: value,
+            isReceivingTelemetry: isReceivingTelemetry
+        )
         await updateDeviceSpeedObservation()
         await refreshMotion()
         publish()
@@ -74,9 +77,12 @@ extension LiveVehicleSessionService {
         let wasReceivingTelemetry = isReceivingTelemetry
         connection = value
         if isReceivingTelemetry {
-            updatePowerModeRefresh(for: telemetry)
+            await powerModeRefreshCoordinator.update(
+                telemetry: telemetry,
+                isReceivingTelemetry: true
+            )
         } else {
-            resetPowerModeRefresh()
+            await powerModeRefreshCoordinator.reset()
         }
         if wasReceivingTelemetry, !isReceivingTelemetry {
             minimumCanonicalTelemetryRevision = telemetryRevision + 1

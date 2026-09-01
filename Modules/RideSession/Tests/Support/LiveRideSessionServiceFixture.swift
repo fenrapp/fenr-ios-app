@@ -34,6 +34,7 @@ func makeLiveRideSessionServiceFixture(
             stopBatteryHealthMonitoring: .init(repository: batteryHealthRepository),
             readBikeStatusSnapshot: .init(repository: bikeRepository)
         ),
+        powerModeRefreshCoordinator: makeVehiclePowerModeRefreshCoordinator(),
         speedResolver: .init(
             now: { date },
             maximumAccuracyMetersPerSecond: 5,
@@ -69,6 +70,13 @@ func makeLiveRideSessionServiceFixture(
         tripRepository: tripRepository,
         sleepController: sleepController,
         date: date
+    )
+}
+
+private func makeVehiclePowerModeRefreshCoordinator() -> VehiclePowerModeRefreshCoordinator {
+    .init(
+        refreshPowerModeConfiguration: nil,
+        refreshTractionControlConfiguration: nil
     )
 }
 

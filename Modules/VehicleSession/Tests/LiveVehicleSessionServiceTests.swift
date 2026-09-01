@@ -549,6 +549,12 @@ extension LiveVehicleSessionServiceTests {
         let imu = VehicleSessionTestIMURepository()
         let motionCalibration = VehicleSessionTestMotionCalibrationRepository()
         let fixtureDate = now()
+        let refreshPowerModeConfiguration = RefreshBikePowerModeConfigurationUseCase(
+            repository: repository
+        )
+        let refreshTractionControlConfiguration = RefreshBikeTractionControlConfigurationUseCase(
+            repository: repository
+        )
         let service = LiveVehicleSessionService(
             useCases: .init(
                 observeTelemetry: .init(repository: repository),
@@ -565,8 +571,12 @@ extension LiveVehicleSessionServiceTests {
                 startBatteryHealthMonitoring: .init(repository: repository),
                 stopBatteryHealthMonitoring: .init(repository: repository),
                 readBikeStatusSnapshot: .init(repository: repository),
-                refreshPowerModeConfiguration: .init(repository: repository),
-                refreshTractionControlConfiguration: .init(repository: repository)
+                refreshPowerModeConfiguration: refreshPowerModeConfiguration,
+                refreshTractionControlConfiguration: refreshTractionControlConfiguration
+            ),
+            powerModeRefreshCoordinator: .init(
+                refreshPowerModeConfiguration: refreshPowerModeConfiguration,
+                refreshTractionControlConfiguration: refreshTractionControlConfiguration
             ),
             speedResolver: .init(
                 now: now,

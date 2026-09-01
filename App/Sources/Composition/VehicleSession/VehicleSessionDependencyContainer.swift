@@ -10,6 +10,12 @@ enum VehicleSessionDependencyContainer {
         dependencies: VehicleSessionDependencies
     ) -> any VehicleSessionService {
         let repository = dependencies.repository
+        let refreshPowerModeConfiguration = RefreshBikePowerModeConfigurationUseCase(
+            repository: repository
+        )
+        let refreshTractionControlConfiguration = RefreshBikeTractionControlConfigurationUseCase(
+            repository: repository
+        )
         return LiveVehicleSessionService(
             useCases: .init(
                 observeTelemetry: .init(repository: repository),
@@ -26,8 +32,12 @@ enum VehicleSessionDependencyContainer {
                 startBatteryHealthMonitoring: .init(repository: repository),
                 stopBatteryHealthMonitoring: .init(repository: repository),
                 readBikeStatusSnapshot: .init(repository: repository),
-                refreshPowerModeConfiguration: .init(repository: repository),
-                refreshTractionControlConfiguration: .init(repository: repository)
+                refreshPowerModeConfiguration: refreshPowerModeConfiguration,
+                refreshTractionControlConfiguration: refreshTractionControlConfiguration
+            ),
+            powerModeRefreshCoordinator: .init(
+                refreshPowerModeConfiguration: refreshPowerModeConfiguration,
+                refreshTractionControlConfiguration: refreshTractionControlConfiguration
             ),
             speedResolver: .init(
                 now: Date.init,

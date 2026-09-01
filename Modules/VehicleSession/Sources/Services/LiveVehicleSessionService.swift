@@ -5,6 +5,7 @@ import SettingsDomain
 
 public actor LiveVehicleSessionService: VehicleSessionService {
     let useCases: VehicleSessionUseCases
+    let powerModeRefreshCoordinator: VehiclePowerModeRefreshCoordinator
     let speedResolver: VehicleSpeedResolver
     let sleep: @Sendable (Duration) async throws -> Void
     var motionEstimator: VehicleMotionEstimator
@@ -39,29 +40,27 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     var batteryHealthMonitoringGeneration = 0
     var batteryHealthStopTask: Task<Void, Never>?
     var batteryHealthConsumers: Set<UUID> = []
-    var powerModeRefreshTask: Task<Void, Never>?
-    var powerModeRefreshGeneration = 0
-    var pendingPowerModeRefresh: VehiclePowerModeRefreshRequest?
-    var visitedPowerModeIndex: Int?
-    var didAttemptPowerModeBaseRefresh = false
-    var didAttemptPowerModeTractionRefresh = false
     var observers: [UUID: AsyncStream<VehicleSessionSnapshot>.Continuation] = [:]
     var isStopping = false
     var shouldStartAfterStopping = false
 
     public init(
         useCases: VehicleSessionUseCases,
+        powerModeRefreshCoordinator: VehiclePowerModeRefreshCoordinator,
         speedResolver: VehicleSpeedResolver,
         motionEstimator: VehicleMotionEstimator,
         sleep: @escaping @Sendable (Duration) async throws -> Void
     ) {
         self.useCases = useCases
+        self.powerModeRefreshCoordinator = powerModeRefreshCoordinator
         self.speedResolver = speedResolver
         self.motionEstimator = motionEstimator
         self.sleep = sleep
     }
 
     deinit {
+        let powerModeRefreshCoordinator = powerModeRefreshCoordinator
+        Task { await powerModeRefreshCoordinator.reset() }
         observationTasks.forEach { $0.cancel() }
         deviceSpeedTask?.cancel()
         deviceSpeedExpiryTask?.cancel()
@@ -71,7 +70,6 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         batteryHealthTask?.cancel()
         batteryHealthStartTask?.cancel()
         batteryHealthStopTask?.cancel()
-        powerModeRefreshTask?.cancel()
     }
 
     public func observe() -> AsyncStream<VehicleSessionSnapshot> {
@@ -145,7 +143,7 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         batteryHealthMonitoringState = .inactive
         batteryHealth = .init()
         minimumCanonicalTelemetryRevision = telemetryRevision + 1
-        resetPowerModeRefresh()
+        await powerModeRefreshCoordinator.reset()
         publish()
         isStopping = false
         if shouldStartAfterStopping {
