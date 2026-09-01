@@ -1,4 +1,5 @@
 import BikeDomain
+import Foundation
 import PowerModeSettings
 import SettingsDomain
 import VehicleSession
@@ -20,7 +21,7 @@ struct PowerModeSettingsDependencyContainer {
                 prepareTractionControl: .init(repository: bikeRepository),
                 setTractionControlConfiguration: .init(repository: bikeRepository)
             ),
-            mapper: PowerModeSettingsViewStateMapper()
+            mapper: PowerModeSettingsViewStateMapper(locale: .autoupdatingCurrent)
         )
     }
 }

@@ -1,5 +1,7 @@
+import Foundation
+
 public struct PowerModeAdjustmentViewState: Equatable, Identifiable, Sendable {
-    public let id: String
+    public let id: PowerModeAdjustmentID
     public let title: String
     public let value: Double?
     public let valueText: String
@@ -8,9 +10,10 @@ public struct PowerModeAdjustmentViewState: Equatable, Identifiable, Sendable {
     public let maximum: Double
     public let step: Double
     public let isEnabled: Bool
+    public let localeIdentifier: String
 
     public init(
-        id: String,
+        id: PowerModeAdjustmentID,
         title: String,
         value: Double?,
         valueText: String,
@@ -18,7 +21,8 @@ public struct PowerModeAdjustmentViewState: Equatable, Identifiable, Sendable {
         minimum: Double,
         maximum: Double,
         step: Double,
-        isEnabled: Bool
+        isEnabled: Bool,
+        localeIdentifier: String
     ) {
         self.id = id
         self.title = title
@@ -29,5 +33,6 @@ public struct PowerModeAdjustmentViewState: Equatable, Identifiable, Sendable {
         self.maximum = maximum
         self.step = step
         self.isEnabled = isEnabled
+        self.localeIdentifier = localeIdentifier
     }
 }

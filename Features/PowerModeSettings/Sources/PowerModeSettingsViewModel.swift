@@ -18,6 +18,7 @@ public final class PowerModeSettingsViewModel: ObservableObject {
     var selectedMapIndex = 0
     private var didSelectInitialMap = false
     private var didRequestRefresh = false
+    private var isStarted = false
     var isRefreshing = false
     private var refreshError: String?
     private var nameError: String?
@@ -32,6 +33,8 @@ public final class PowerModeSettingsViewModel: ObservableObject {
     private var refreshTask: Task<Void, Never>?
     private var settingsSaveTask: Task<Void, Never>?
     var controlTask: Task<Void, Never>?
+    private var refreshGeneration = 0
+    var controlGeneration = 0
 
     public init(
         vehicleSession: any VehicleSessionService,
@@ -52,6 +55,7 @@ public final class PowerModeSettingsViewModel: ObservableObject {
 
     public func start() {
         guard observationTask == nil else { return }
+        isStarted = true
         let vehicleSession = vehicleSession
         observationTask = Task { [weak self] in
             let stream = await vehicleSession.observe()
@@ -63,19 +67,11 @@ public final class PowerModeSettingsViewModel: ObservableObject {
     }
 
     public func stop() {
+        isStarted = false
         observationTask?.cancel()
         observationTask = nil
-        refreshTask?.cancel()
-        refreshTask = nil
-        controlTask?.cancel()
-        controlTask = nil
-        isRefreshing = false
-        didRequestRefresh = false
-        preparedBaseMapIndex = nil
-        preparedTractionMapIndex = nil
-        attemptedPreparationMapIndex = nil
-        isPreparingControl = false
-        isApplyingControl = false
+        cancelRefresh(resetRequest: true)
+        resetControlState()
         nameError = nil
         render()
     }
@@ -122,7 +118,13 @@ public final class PowerModeSettingsViewModel: ObservableObject {
     }
 
     public func refresh() {
-        guard refreshTask == nil, let refreshPowerModes = useCases.refreshPowerModes else { return }
+        guard isStarted,
+              refreshTask == nil,
+              controlTask == nil,
+              isAuthenticated(connection.state)
+        else {
+            return
+        }
         didRequestRefresh = true
         isRefreshing = true
         refreshError = nil
@@ -132,16 +134,22 @@ public final class PowerModeSettingsViewModel: ObservableObject {
         preparedTractionMapIndex = nil
         attemptedPreparationMapIndex = nil
         render()
+        refreshGeneration += 1
+        let generation = refreshGeneration
+        let refreshPowerModes = useCases.refreshPowerModes
         refreshTask = Task { [weak self] in
             do {
                 try await refreshPowerModes.execute()
                 guard !Task.isCancelled else { return }
-                self?.finishRefresh(error: nil)
+                self?.finishRefresh(generation: generation, error: nil)
             } catch is CancellationError {
                 return
             } catch {
                 guard !Task.isCancelled else { return }
-                self?.finishRefresh(error: "Unable to read power modes: \(error.localizedDescription)")
+                self?.finishRefresh(
+                    generation: generation,
+                    error: "Unable to read power modes: \(error.localizedDescription)"
+                )
             }
         }
     }
@@ -158,22 +166,35 @@ extension PowerModeSettingsViewModel {
             selectedMapIndex = activeMapIndex
             didSelectInitialMap = true
         }
-        if !isAuthenticated(snapshot.connection.state) {
+        let isConnected = isAuthenticated(snapshot.connection.state)
+        if !isConnected {
+            cancelRefresh(resetRequest: true)
             resetControlState()
         }
         render()
-        if isAuthenticated(snapshot.connection.state), !didRequestRefresh {
+        if isConnected, !didRequestRefresh {
             refresh()
         }
         prepareControlIfPossible()
     }
 
-    private func finishRefresh(error: String?) {
+    private func finishRefresh(generation: Int, error: String?) {
+        guard generation == refreshGeneration else { return }
         refreshTask = nil
         isRefreshing = false
         refreshError = error
         render()
         prepareControlIfPossible()
+    }
+
+    private func cancelRefresh(resetRequest: Bool) {
+        refreshGeneration += 1
+        refreshTask?.cancel()
+        refreshTask = nil
+        isRefreshing = false
+        if resetRequest {
+            didRequestRefresh = false
+        }
     }
 
     private func isDuplicate(_ candidate: PowerModeName, vin: String) -> Bool {
@@ -199,6 +220,7 @@ extension PowerModeSettingsViewModel {
             settings: settings,
             profile: profile,
             selectedMapIndex: selectedMapIndex,
+            isStarted: isStarted,
             isRefreshing: isRefreshing,
             refreshError: refreshError,
             nameError: nameError,

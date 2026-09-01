@@ -3,9 +3,13 @@ import Foundation
 import SettingsDomain
 
 public struct PowerModeSettingsViewStateMapper: Sendable {
-    public init() {}
+    private let locale: Locale
 
-    public func map(_ input: PowerModeSettingsMappingInput) -> PowerModeSettingsViewState {
+    public init(locale: Locale) {
+        self.locale = locale
+    }
+
+    func map(_ input: PowerModeSettingsMappingInput) -> PowerModeSettingsViewState {
         let telemetry = input.telemetry
         let profile = input.profile
         let selectedMapIndex = input.selectedMapIndex
@@ -15,6 +19,7 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
             detectedTier: telemetry.detectedPowerTier,
             declaredTier: profile?.declaredPowerTier
         )
+        let isTractionConfigurationSupported = isSupportedTractionConfiguration(configuration)
         let maps = (0 ... 4).map { mapIndex in
             let mapNumber = mapIndex + 1
             let name = names[mapIndex]?.value
@@ -27,6 +32,8 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
         }
         let status = status(
             configuration: configuration,
+            isTractionControlReady: input.isTractionControlReady
+                && isTractionConfigurationSupported,
             input: input
         )
         return PowerModeSettingsViewState(
@@ -43,11 +50,18 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
             ),
             statusText: status.text,
             statusIsError: status.isError,
+            canRefresh: input.isStarted
+                && isAuthenticated(input.connection.state)
+                && !input.isRefreshing
+                && !input.isPreparingControl
+                && !input.isApplyingControl,
             adjustments: adjustments(
                 configuration: configuration,
                 powerMaximum: powerMaximum,
                 isBaseControlReady: input.isBaseControlReady && !input.isApplyingControl,
-                isTractionControlReady: input.isTractionControlReady && !input.isApplyingControl
+                isTractionControlReady: input.isTractionControlReady
+                    && isTractionConfigurationSupported
+                    && !input.isApplyingControl
             )
         )
     }
@@ -60,7 +74,7 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
     ) -> [PowerModeAdjustmentViewState] {
         [
             adjustment(.init(
-                id: "power",
+                id: .power,
                 title: "Power",
                 value: configuration?.horsepower.map(Double.init),
                 unit: "HP",
@@ -70,7 +84,7 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
                 isEnabled: isBaseControlReady
             )),
             adjustment(.init(
-                id: "regeneration",
+                id: .regeneration,
                 title: "Regenerative braking",
                 value: configuration?.regenerativeBrakingPercent,
                 unit: "%",
@@ -80,7 +94,7 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
                 isEnabled: isBaseControlReady
             )),
             adjustment(.init(
-                id: "powerTraction",
+                id: .powerTraction,
                 title: "Traction control",
                 value: configuration?.powerTractionPercent,
                 unit: "%",
@@ -90,7 +104,7 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
                 isEnabled: isTractionControlReady
             )),
             adjustment(.init(
-                id: "brakingTraction",
+                id: .brakingTraction,
                 title: "Regen traction control",
                 value: configuration?.brakingTractionPercent,
                 unit: "%",
@@ -112,12 +126,13 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
             minimum: input.minimum,
             maximum: input.maximum,
             step: input.step,
-            isEnabled: input.isEnabled && input.value != nil
+            isEnabled: input.isEnabled && input.value != nil,
+            localeIdentifier: locale.identifier
         )
     }
 
     private struct AdjustmentInput {
-        let id: String
+        let id: PowerModeAdjustmentID
         let title: String
         let value: Double?
         let unit: String
@@ -129,10 +144,11 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
 
     private func formatted(_ value: Double?) -> String {
         guard let value else { return "Unavailable" }
-        if value.rounded() == value {
-            return String(Int(value))
-        }
-        return String(format: "%.1f", locale: Locale(identifier: "en_US_POSIX"), value)
+        return value.formatted(
+            .number
+                .locale(locale)
+                .precision(.fractionLength(0 ... 1))
+        )
     }
 
     private func maximumHorsepower(
@@ -158,6 +174,7 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
 
     private func status(
         configuration: BikePowerModeConfiguration?,
+        isTractionControlReady: Bool,
         input: PowerModeSettingsMappingInput
     ) -> (text: String, isError: Bool) {
         if input.isRefreshing {
@@ -182,7 +199,7 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
             return (controlMessage, false)
         }
         if input.isBaseControlReady {
-            let text = input.isTractionControlReady
+            let text = isTractionControlReady
                 ? "All map controls ready"
                 : "Power and regeneration controls ready"
             return (text, false)
@@ -202,5 +219,27 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
         case .disconnected(let reason): reason ?? "Bike disconnected"
         case .idle: "Bike unavailable"
         }
+    }
+
+    private func isAuthenticated(_ state: ConnectionState) -> Bool {
+        switch state {
+        case .authenticated, .subscribed, .receivingTelemetry: true
+        default: false
+        }
+    }
+
+    private func isSupportedTractionConfiguration(
+        _ configuration: BikePowerModeConfiguration?
+    ) -> Bool {
+        guard let power = configuration?.powerTractionPercent,
+              let braking = configuration?.brakingTractionPercent
+        else {
+            return false
+        }
+        return isSupportedTractionValue(power) && isSupportedTractionValue(braking)
+    }
+
+    private func isSupportedTractionValue(_ value: Double) -> Bool {
+        value.isFinite && 0 ... 100 ~= value && value.rounded() == value
     }
 }

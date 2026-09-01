@@ -6,7 +6,7 @@ import Testing
 
 @Suite("Power mode settings presentation")
 struct PowerModeSettingsViewStateMapperTests {
-    private let mapper = PowerModeSettingsViewStateMapper()
+    private let mapper = PowerModeSettingsViewStateMapper(locale: Locale(identifier: "en_US"))
     private let vin = "FENRTEST000000001"
 
     @Test("Maps five named modes and confirmed configuration")
@@ -88,6 +88,136 @@ struct PowerModeSettingsViewStateMapperTests {
 
         #expect(state.adjustments.map(\.isEnabled) == [true, true, true, true])
         #expect(state.statusText == "All map controls ready")
+    }
+
+    @Test("Maps typed adjustment IDs, supported ranges, and injected locale")
+    func mapsTypedAdjustmentIDsRangesAndLocale() {
+        let localizedMapper = PowerModeSettingsViewStateMapper(
+            locale: Locale(identifier: "es_ES")
+        )
+        let state = localizedMapper.map(.init(
+            telemetry: .init(powerModeConfigurations: [
+                0: .init(
+                    mapIndex: 0,
+                    horsepower: 35,
+                    regenerativeBrakingPercent: -42.5,
+                    powerTractionPercent: 12,
+                    brakingTractionPercent: 30
+                )
+            ]),
+            connection: .init(state: .receivingTelemetry(peripheralName: "FENR Debug")),
+            settings: .init(),
+            profile: .init(vin: vin, declaredPowerTier: .alpha),
+            selectedMapIndex: 0,
+            isRefreshing: false,
+            refreshError: nil,
+            nameError: nil
+        ))
+
+        #expect(state.adjustments.map(\.id) == PowerModeAdjustmentID.allCases)
+        #expect(state.adjustments.map(\.minimum) == [10, -100, 0, 0])
+        #expect(state.adjustments.map(\.maximum) == [80, 100, 100, 100])
+        #expect(state.adjustments.map(\.valueText) == ["35", "-42,5", "12", "30"])
+        #expect(state.adjustments.allSatisfy { $0.localeIdentifier == "es_ES" })
+    }
+
+    @Test("Does not enable traction controls for unsupported configuration")
+    func doesNotEnableTractionControlsForUnsupportedConfiguration() {
+        let unsupportedConfigurations: [(power: Double, braking: Double)] = [
+            (-1, 10),
+            (10, 101),
+            (.nan, 10),
+            (10, 12.5)
+        ]
+
+        for configuration in unsupportedConfigurations {
+            let state = mapper.map(.init(
+                telemetry: .init(powerModeConfigurations: [
+                    0: .init(
+                        mapIndex: 0,
+                        horsepower: 35,
+                        regenerativeBrakingPercent: -40,
+                        powerTractionPercent: configuration.power,
+                        brakingTractionPercent: configuration.braking
+                    )
+                ]),
+                connection: .init(state: .receivingTelemetry(peripheralName: "FENR Debug")),
+                settings: .init(),
+                profile: .init(vin: vin),
+                selectedMapIndex: 0,
+                isRefreshing: false,
+                refreshError: nil,
+                nameError: nil,
+                isBaseControlReady: true,
+                isTractionControlReady: true
+            ))
+
+            #expect(state.adjustments.map(\.isEnabled) == [true, true, false, false])
+            #expect(state.statusText == "Power and regeneration controls ready")
+        }
+    }
+
+    @Test("Prioritizes refresh and control statuses")
+    func prioritizesRefreshAndControlStatuses() {
+        let refreshing = mapper.map(statusInput(
+            isRefreshing: true,
+            refreshError: "refresh failed",
+            controlError: "control failed",
+            isApplyingControl: true,
+            isPreparingControl: true
+        ))
+        #expect(refreshing.statusText == "Reading power modes")
+        #expect(!refreshing.statusIsError)
+
+        let refreshFailure = mapper.map(statusInput(
+            refreshError: "refresh failed",
+            controlError: "control failed",
+            isApplyingControl: true,
+            isPreparingControl: true
+        ))
+        #expect(refreshFailure.statusText == "refresh failed")
+        #expect(refreshFailure.statusIsError)
+
+        let controlFailure = mapper.map(statusInput(
+            controlError: "control failed",
+            isApplyingControl: true,
+            isPreparingControl: true
+        ))
+        #expect(controlFailure.statusText == "control failed")
+        #expect(controlFailure.statusIsError)
+
+        let applying = mapper.map(statusInput(
+            isApplyingControl: true,
+            isPreparingControl: true
+        ))
+        #expect(applying.statusText == "Applying and verifying map")
+
+        let preparing = mapper.map(statusInput(isPreparingControl: true))
+        #expect(preparing.statusText == "Verifying map write safety")
+    }
+
+    private func statusInput(
+        isRefreshing: Bool = false,
+        refreshError: String? = nil,
+        controlError: String? = nil,
+        isApplyingControl: Bool = false,
+        isPreparingControl: Bool = false
+    ) -> PowerModeSettingsMappingInput {
+        .init(
+            telemetry: .init(powerModeConfigurations: [
+                0: .init(mapIndex: 0, horsepower: 35, regenerativeBrakingPercent: 40)
+            ]),
+            connection: .init(state: .receivingTelemetry(peripheralName: "FENR Debug")),
+            settings: .init(),
+            profile: .init(vin: vin),
+            selectedMapIndex: 0,
+            isRefreshing: isRefreshing,
+            refreshError: refreshError,
+            nameError: nil,
+            isPreparingControl: isPreparingControl,
+            isApplyingControl: isApplyingControl,
+            controlError: controlError
+        )
     }
 
 }

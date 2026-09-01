@@ -1,28 +1,30 @@
 import BikeDomain
 import SettingsDomain
 
-public struct PowerModeSettingsMappingInput: Sendable {
-    public let telemetry: BikeTelemetry
-    public let connection: BikeConnection
-    public let settings: AppSettings
-    public let profile: BikeProfile?
-    public let selectedMapIndex: Int
-    public let isRefreshing: Bool
-    public let refreshError: String?
-    public let nameError: String?
-    public let isPreparingControl: Bool
-    public let isApplyingControl: Bool
-    public let isBaseControlReady: Bool
-    public let isTractionControlReady: Bool
-    public let controlMessage: String?
-    public let controlError: String?
+struct PowerModeSettingsMappingInput: Sendable {
+    let telemetry: BikeTelemetry
+    let connection: BikeConnection
+    let settings: AppSettings
+    let profile: BikeProfile?
+    let selectedMapIndex: Int
+    let isStarted: Bool
+    let isRefreshing: Bool
+    let refreshError: String?
+    let nameError: String?
+    let isPreparingControl: Bool
+    let isApplyingControl: Bool
+    let isBaseControlReady: Bool
+    let isTractionControlReady: Bool
+    let controlMessage: String?
+    let controlError: String?
 
-    public init(
+    init(
         telemetry: BikeTelemetry,
         connection: BikeConnection,
         settings: AppSettings,
         profile: BikeProfile?,
         selectedMapIndex: Int,
+        isStarted: Bool = true,
         isRefreshing: Bool,
         refreshError: String?,
         nameError: String?,
@@ -38,6 +40,7 @@ public struct PowerModeSettingsMappingInput: Sendable {
         self.settings = settings
         self.profile = profile
         self.selectedMapIndex = selectedMapIndex
+        self.isStarted = isStarted
         self.isRefreshing = isRefreshing
         self.refreshError = refreshError
         self.nameError = nameError

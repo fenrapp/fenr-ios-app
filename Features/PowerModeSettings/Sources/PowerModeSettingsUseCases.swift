@@ -3,19 +3,19 @@ import SettingsDomain
 
 public struct PowerModeSettingsUseCases: Sendable {
     let saveSettings: SaveAppSettingsUseCase
-    let refreshPowerModes: RefreshBikePowerModesUseCase?
-    let preparePowerModeControl: PrepareBikePowerModeControlUseCase?
-    let setPowerModeConfiguration: SetBikePowerModeConfigurationUseCase?
-    let prepareTractionControl: PrepareBikeTractionControlUseCase?
-    let setTractionControlConfiguration: SetBikeTractionControlConfigurationUseCase?
+    let refreshPowerModes: RefreshBikePowerModesUseCase
+    let preparePowerModeControl: PrepareBikePowerModeControlUseCase
+    let setPowerModeConfiguration: SetBikePowerModeConfigurationUseCase
+    let prepareTractionControl: PrepareBikeTractionControlUseCase
+    let setTractionControlConfiguration: SetBikeTractionControlConfigurationUseCase
 
     public init(
         saveSettings: SaveAppSettingsUseCase,
-        refreshPowerModes: RefreshBikePowerModesUseCase? = nil,
-        preparePowerModeControl: PrepareBikePowerModeControlUseCase? = nil,
-        setPowerModeConfiguration: SetBikePowerModeConfigurationUseCase? = nil,
-        prepareTractionControl: PrepareBikeTractionControlUseCase? = nil,
-        setTractionControlConfiguration: SetBikeTractionControlConfigurationUseCase? = nil
+        refreshPowerModes: RefreshBikePowerModesUseCase,
+        preparePowerModeControl: PrepareBikePowerModeControlUseCase,
+        setPowerModeConfiguration: SetBikePowerModeConfigurationUseCase,
+        prepareTractionControl: PrepareBikeTractionControlUseCase,
+        setTractionControlConfiguration: SetBikeTractionControlConfigurationUseCase
     ) {
         self.saveSettings = saveSettings
         self.refreshPowerModes = refreshPowerModes
