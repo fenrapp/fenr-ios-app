@@ -9,6 +9,7 @@ public struct PowerModeSettingsViewState: Equatable, Sendable {
     public let capabilityText: String
     public let statusText: String
     public let statusIsError: Bool
+    public let canRefresh: Bool
     public let adjustments: [PowerModeAdjustmentViewState]
 
     public init(
@@ -22,6 +23,7 @@ public struct PowerModeSettingsViewState: Equatable, Sendable {
         capabilityText: String = "Capability unavailable",
         statusText: String = "Waiting for bike data",
         statusIsError: Bool = false,
+        canRefresh: Bool = false,
         adjustments: [PowerModeAdjustmentViewState] = []
     ) {
         self.maps = maps
@@ -34,6 +36,7 @@ public struct PowerModeSettingsViewState: Equatable, Sendable {
         self.capabilityText = capabilityText
         self.statusText = statusText
         self.statusIsError = statusIsError
+        self.canRefresh = canRefresh
         self.adjustments = adjustments
     }
 }

@@ -24,25 +24,25 @@ public enum BLETraceRepositoryError: Error, Equatable, Sendable {
     case unableToExport
 }
 
-public actor NoOpBLETraceRepository: BLETraceRecording, BLETraceLogRepository {
+public struct NoOpBLETraceRepository: BLETraceRecording, BLETraceLogRepository, Sendable {
     public init() {}
 
-    public func startSession(_ context: BLETraceSessionContext) {}
-    public func record(_ event: BLETraceEvent) {}
-    public func finishSession(reason: BLETraceSessionEndReason) {}
-    public func prepareStorage() {}
+    public func startSession(_ context: BLETraceSessionContext) async {}
+    public func record(_ event: BLETraceEvent) async {}
+    public func finishSession(reason: BLETraceSessionEndReason) async {}
+    public func prepareStorage() async {}
 
-    public func observeSessions() -> AsyncStream<[BLETraceSessionSummary]> {
+    public func observeSessions() async -> AsyncStream<[BLETraceSessionSummary]> {
         AsyncStream { continuation in
             continuation.yield([])
             continuation.finish()
         }
     }
 
-    public func prepareExport(sessionID: UUID) throws -> URL {
+    public func prepareExport(sessionID: UUID) async throws -> URL {
         throw BLETraceRepositoryError.sessionNotFound
     }
 
-    public func deleteSession(id: UUID) throws {}
-    public func deleteAllSessions() throws {}
+    public func deleteSession(id: UUID) async throws {}
+    public func deleteAllSessions() async throws {}
 }

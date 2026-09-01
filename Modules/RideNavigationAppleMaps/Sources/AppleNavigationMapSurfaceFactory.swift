@@ -1,4 +1,3 @@
-import EnvironmentDomain
 import MapKit
 import RideNavigation
 import SwiftUI
@@ -101,12 +100,13 @@ private struct AppleNavigationMapView: UIViewRepresentable {
     }
 
     private func updateCamera(on map: MKMapView, coordinator: Coordinator) {
-        guard coordinator.renderedCamera != scene.camera else { return }
-        coordinator.renderedCamera = scene.camera
+        let renderState = AppleNavigationMapCameraRenderState(scene: scene)
+        guard coordinator.renderedCamera != renderState else { return }
+        coordinator.renderedCamera = renderState
 
-        switch scene.camera {
+        switch renderState.camera {
         case .automatic:
-            if let coordinate = scene.userCoordinate?.clCoordinate {
+            if let coordinate = renderState.userCoordinate?.clCoordinate {
                 let region = MKCoordinateRegion(
                     center: coordinate,
                     latitudinalMeters: Constants.automaticRegionMeters,
@@ -155,7 +155,7 @@ private struct AppleNavigationMapView: UIViewRepresentable {
         var renderedSource: MapSourceDescriptor?
         var renderedPolylines: [NavigationMapPolyline] = []
         var renderedMarkers: [NavigationMapMarker] = []
-        var renderedCamera: NavigationMapCamera?
+        var renderedCamera: AppleNavigationMapCameraRenderState?
         private var riderAnnotation: RiderAnnotation?
 
         init(
@@ -292,6 +292,20 @@ private struct AppleNavigationMapView: UIViewRepresentable {
     }
 }
 
+struct AppleNavigationMapCameraRenderState: Equatable {
+    let camera: NavigationMapCamera
+    let userCoordinate: NavigationMapCoordinate?
+
+    init(scene: NavigationMapScene) {
+        camera = scene.camera
+        if case .automatic = scene.camera {
+            userCoordinate = scene.userCoordinate
+        } else {
+            userCoordinate = nil
+        }
+    }
+}
+
 private final class NavigationPolyline: MKPolyline {
     var role = NavigationMapPolylineRole.planned
 }
@@ -360,11 +374,5 @@ private final class RiderAnnotationView: MKAnnotationView {
         static let shadowRadius: CGFloat = 3
         static let shadowOffset = CGSize(width: .zero, height: 2)
         static let halfCircleDegrees = 180.0
-    }
-}
-
-private extension GeographicCoordinate {
-    var clCoordinate: CLLocationCoordinate2D {
-        CLLocationCoordinate2D(latitude: latitudeDegrees, longitude: longitudeDegrees)
     }
 }

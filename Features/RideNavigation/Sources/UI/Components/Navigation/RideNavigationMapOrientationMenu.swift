@@ -19,6 +19,7 @@ struct RideNavigationMapOrientationMenu: View {
 }
 
 struct RideNavigationMapOrientationPicker: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let isHeadingUp: Bool
     let onSelect: (Bool) -> Void
 
@@ -33,6 +34,11 @@ struct RideNavigationMapOrientationPicker: View {
         } label: {
             HStack(spacing: Constants.rowSpacing) {
                 Label(title, systemImage: systemImage)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+                    .fixedSize(
+                        horizontal: false,
+                        vertical: dynamicTypeSize.isAccessibilitySize
+                    )
                 Spacer(minLength: Constants.rowSpacing)
                 if isSelected {
                     Image(systemName: "checkmark")
@@ -40,9 +46,11 @@ struct RideNavigationMapOrientationPicker: View {
                 }
             }
             .contentShape(Rectangle())
+            .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity, minHeight: Constants.rowHeight, alignment: .leading)
+        .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
     }
 
     var body: some View {
@@ -63,7 +71,9 @@ struct RideNavigationMapOrientationPicker: View {
             )
         }
         .padding(Constants.popoverPadding)
-        .frame(width: Constants.popoverWidth)
+        .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : Constants.popoverWidth)
+        .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : nil)
+        .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
         .rideNavigationGlassSurface(cornerRadius: Constants.popoverCornerRadius)
     }
 

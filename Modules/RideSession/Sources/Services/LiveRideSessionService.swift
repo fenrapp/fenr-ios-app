@@ -10,11 +10,13 @@ public actor LiveRideSessionService: RideSessionService {
     let persistence: RideSessionPersistenceCoordinator
     let identityResolver: any RideVehicleIdentityResolving
     let now: @Sendable () -> Date
+    let sleep: @Sendable (Duration) async throws -> Void
     var recorder: CurrentTripRecorder
     var vehicleSnapshot = VehicleSessionSnapshot()
     var observationTasks: [Task<Void, Never>] = []
     var preparationTask: Task<Void, Never>?
     var tickerTask: Task<Void, Never>?
+    var stopTask: Task<Void, Never>?
     var isPrepared = false
     var lastPersistenceDate: Date?
     var lastElectricalSampleDate: Date?
@@ -29,13 +31,15 @@ public actor LiveRideSessionService: RideSessionService {
         persistence: RideSessionPersistenceCoordinator,
         identityResolver: any RideVehicleIdentityResolving,
         initialContext: BikeSessionContext,
-        now: @escaping @Sendable () -> Date
+        now: @escaping @Sendable () -> Date,
+        sleep: @escaping @Sendable (Duration) async throws -> Void
     ) {
         self.useCases = useCases
         self.vehicleSession = vehicleSession
         self.persistence = persistence
         self.identityResolver = identityResolver
         self.now = now
+        self.sleep = sleep
         recorder = CurrentTripRecorder(context: initialContext)
     }
 
@@ -43,6 +47,7 @@ public actor LiveRideSessionService: RideSessionService {
         observationTasks.forEach { $0.cancel() }
         preparationTask?.cancel()
         tickerTask?.cancel()
+        stopTask?.cancel()
     }
 
     public func observe() -> AsyncStream<RideSessionSnapshot> {
@@ -56,22 +61,32 @@ public actor LiveRideSessionService: RideSessionService {
         }
     }
 
-    public func start() {
+    public func start() async {
+        if let stopTask {
+            await stopTask.value
+            self.stopTask = nil
+        }
         guard observationTasks.isEmpty else { return }
         observeVehicleSession()
     }
 
     public func stop() async {
-        observationTasks.forEach { $0.cancel() }
-        observationTasks.removeAll()
-        preparationTask?.cancel()
-        preparationTask = nil
-        tickerTask?.cancel()
-        tickerTask = nil
-        await persistence.flush()
+        if let stopTask {
+            await stopTask.value
+            self.stopTask = nil
+            return
+        }
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.performStop()
+        }
+        stopTask = task
+        await task.value
+        stopTask = nil
     }
 
     public func persistCurrentTrip() async {
+        guard stopTask == nil else { return }
         guard let trip = updateTripAtCurrentTime() else { return }
         await persistence.saveActiveTrip(trip)
         lastPersistenceDate = trip.updatedAt
@@ -80,6 +95,11 @@ public actor LiveRideSessionService: RideSessionService {
     }
 
     public func completeCurrentTrip() async {
+        guard stopTask == nil else { return }
+        await finalizeCurrentTrip()
+    }
+
+    func finalizeCurrentTrip() async {
         let date = now()
         guard let trip = updateTripAtCurrentTime() else {
             await persistence.flush()
@@ -102,7 +122,7 @@ public actor LiveRideSessionService: RideSessionService {
     }
 
     public func togglePauseCurrentTrip() async {
-        guard isPrepared, let trip = recorder.trip else { return }
+        guard stopTask == nil, isPrepared, let trip = recorder.trip else { return }
         let date = now()
         if trip.isPaused {
             guard recorder.resume(
@@ -127,6 +147,7 @@ public actor LiveRideSessionService: RideSessionService {
     }
 
     public func resetCurrentTrip() async {
+        guard stopTask == nil else { return }
         let date = now()
         let speed = resolvedSpeed()
         guard let trip = recorder.record(
@@ -164,12 +185,37 @@ public actor LiveRideSessionService: RideSessionService {
 
     @discardableResult
     public func deleteCompletedTrip(id: UUID, vin: String) async -> Bool {
+        guard stopTask == nil else { return false }
         guard recorder.context.vehicleIdentity.confirmedVIN == vin else { return false }
         let didDelete = await persistence.deleteCompletedTrip(id: id, vin: vin)
         guard didDelete else { return false }
         historyRevision += 1
         publish()
         return true
+    }
+}
+
+private extension LiveRideSessionService {
+    func performStop() async {
+        let tasksToDrain = observationTasks
+        tasksToDrain.forEach { $0.cancel() }
+        for task in tasksToDrain {
+            await task.value
+        }
+        observationTasks.removeAll()
+
+        let preparationToDrain = preparationTask
+        preparationToDrain?.cancel()
+        await preparationToDrain?.value
+        preparationTask = nil
+
+        let tickerToDrain = tickerTask
+        tickerToDrain?.cancel()
+        await tickerToDrain?.value
+        tickerTask = nil
+
+        await finalizeCurrentTrip()
+        await persistence.flush()
     }
 }
 

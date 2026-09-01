@@ -57,6 +57,20 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A7D34EB549EB91C1186B3A15"
+               BuildableName = "BLETraceDomainTests.xctest"
+               BlueprintName = "BLETraceDomainTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "4336F947375CBE0D8AE09C36"
                BuildableName = "BatteryHealthTests.xctest"
                BlueprintName = "BatteryHealthTests"
@@ -219,6 +233,20 @@
          </BuildActionEntry>
          <BuildActionEntry
             buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "6E3F61F6793BFE222B4B8EF6"
+               BuildableName = "EnvironmentDomainTests.xctest"
+               BlueprintName = "EnvironmentDomainTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
             buildForRunning = "YES"
             buildForProfiling = "YES"
             buildForArchiving = "YES"
@@ -242,6 +270,20 @@
                BlueprintIdentifier = "A55FCD9248F9890B0383E0B1"
                BuildableName = "FENRDebugTests.xctest"
                BlueprintName = "FENRDebugTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "6166FC7623544981EC8B618C"
+               BuildableName = "FENRShareExtensionTests.xctest"
+               BlueprintName = "FENRShareExtensionTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -435,6 +477,20 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "464C3F927D9F021D0705E218"
+               BuildableName = "SettingsDomainTests.xctest"
+               BlueprintName = "SettingsDomainTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "C453FEFC1E038CB490AD2E39"
                BuildableName = "StarkProtocolTests.xctest"
                BlueprintName = "StarkProtocolTests"
@@ -495,6 +551,28 @@
                BlueprintIdentifier = "C453FEFC1E038CB490AD2E39"
                BuildableName = "StarkProtocolTests.xctest"
                BlueprintName = "StarkProtocolTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C4CF7DCAF8635785666B76B1"
+               BuildableName = "AsyncSupportTests.xctest"
+               BlueprintName = "AsyncSupportTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A7D34EB549EB91C1186B3A15"
+               BuildableName = "BLETraceDomainTests.xctest"
+               BlueprintName = "BLETraceDomainTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </TestableReference>
@@ -569,9 +647,31 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "464C3F927D9F021D0705E218"
+               BuildableName = "SettingsDomainTests.xctest"
+               BlueprintName = "SettingsDomainTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "4F60C80AD9FE8D96269B7741"
                BuildableName = "SettingsDataTests.xctest"
                BlueprintName = "SettingsDataTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "6E3F61F6793BFE222B4B8EF6"
+               BuildableName = "EnvironmentDomainTests.xctest"
+               BlueprintName = "EnvironmentDomainTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </TestableReference>
@@ -792,6 +892,28 @@
                BlueprintIdentifier = "79CCE32E9EF6E96F5FB83B8E"
                BuildableName = "RideHistoryTests.xctest"
                BlueprintName = "RideHistoryTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "6166FC7623544981EC8B618C"
+               BuildableName = "FENRShareExtensionTests.xctest"
+               BlueprintName = "FENRShareExtensionTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "28F27724F8C61BA761C6C1E7"
+               BuildableName = "TestSupportTests.xctest"
+               BlueprintName = "TestSupportTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </TestableReference>

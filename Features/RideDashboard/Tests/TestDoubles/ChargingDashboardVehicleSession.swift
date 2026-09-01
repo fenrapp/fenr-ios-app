@@ -3,7 +3,7 @@ import TestSupport
 import VehicleSession
 
 actor ChargingDashboardVehicleSession: VehicleSessionService {
-    private let hub = TestEventHub<VehicleSessionSnapshot>()
+    private let hub = TestEventHub<VehicleSessionSnapshot>(bufferingPolicy: .unbounded)
     private var monitoringRequirements: [Bool] = []
     private var startedMonitoringRequirements: [Bool] = []
     private let monitoringEnableDelay: Duration
@@ -30,7 +30,7 @@ actor ChargingDashboardVehicleSession: VehicleSessionService {
     }
 
     func send(_ snapshot: VehicleSessionSnapshot) async {
-        await hub.waitForSubscriber()
+        _ = await hub.waitForSubscriber()
         await hub.send(snapshot)
     }
 

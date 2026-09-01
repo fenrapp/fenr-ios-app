@@ -1,7 +1,12 @@
 import UIKit
 
 @MainActor
-final class InterfaceOrientationController {
+protocol InterfaceOrientationControlling: AnyObject {
+    func request(_ orientations: UIInterfaceOrientationMask)
+}
+
+@MainActor
+final class InterfaceOrientationController: InterfaceOrientationControlling {
     static let shared = InterfaceOrientationController()
 
     private var requestedOrientations: UIInterfaceOrientationMask = .portrait

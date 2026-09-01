@@ -64,8 +64,14 @@ struct WatchAppDependencyContainer {
     func makeSettingsViewModel() -> AppSettingsViewModel {
         AppSettingsViewModel(
             useCases: .init(
-                saveSettings: .init(repository: settingsRepository),
-                observeSettings: .init(repository: settingsRepository)
+                settings: .init(
+                    save: .init(repository: settingsRepository),
+                    observe: .init(repository: settingsRepository)
+                ),
+                profile: .init(
+                    observe: .init(repository: profileRepository),
+                    save: .init(repository: profileRepository)
+                )
             ),
             mapper: AppSettingsViewStateMapper()
         )

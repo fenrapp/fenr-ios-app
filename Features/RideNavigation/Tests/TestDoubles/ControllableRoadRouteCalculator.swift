@@ -2,7 +2,11 @@ import EnvironmentDomain
 import RideNavigationDomain
 
 actor ControllableRoadRouteCalculator: RoadRouteCalculating {
-    private var continuation: CheckedContinuation<[RoadNavigationRoute], any Error>?
+    enum Failure: Error {
+        case unavailable
+    }
+
+    private var continuations: [CheckedContinuation<[RoadNavigationRoute], any Error>] = []
     private(set) var lastPreferences: RoadRoutePreferences?
     private(set) var completionCount = 0
 
@@ -13,18 +17,30 @@ actor ControllableRoadRouteCalculator: RoadRouteCalculating {
     ) async throws -> [RoadNavigationRoute] {
         lastPreferences = preferences
         let routes = try await withCheckedThrowingContinuation { continuation in
-            self.continuation = continuation
+            continuations.append(continuation)
         }
         completionCount += 1
         return routes
     }
 
     var hasPendingRequest: Bool {
-        continuation != nil
+        !continuations.isEmpty
     }
 
     func succeed(routes: [RoadNavigationRoute]) {
-        continuation?.resume(returning: routes)
-        continuation = nil
+        guard !continuations.isEmpty else { return }
+        continuations.removeFirst().resume(returning: routes)
+    }
+
+    var requestCount: Int {
+        continuations.count
+    }
+
+    func succeed(request index: Int, routes: [RoadNavigationRoute]) {
+        continuations.remove(at: index).resume(returning: routes)
+    }
+
+    func fail(request index: Int) {
+        continuations.remove(at: index).resume(throwing: Failure.unavailable)
     }
 }

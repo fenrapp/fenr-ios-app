@@ -1,6 +1,7 @@
 @testable import BikeSDK
 import Foundation
 import Testing
+import TestSupport
 
 @Suite("VCU 4005 transaction gate")
 struct BikeBLEVCUConfigurationTransactionGateTests {
@@ -23,6 +24,55 @@ struct BikeBLEVCUConfigurationTransactionGateTests {
 
         #expect(await probe.maximumConcurrentTransactions == 1)
         #expect(await probe.completedIdentifiers.count == 10)
+    }
+
+    @Test("Cancellation removes a queued transaction while preserving FIFO and reuse")
+    func cancellationRemovesQueuedTransaction() async throws {
+        let gate = BikeBLEVCUConfigurationTransactionGate()
+        let probe = ConfigurationTransactionProbe()
+
+        await gate.acquire()
+
+        let cancelledWaiter = Task {
+            try await gate.acquireCancellable()
+            await probe.recordEntry("cancelled")
+            await gate.release()
+        }
+        #expect(await waitUntil { await gate.pendingWaiterCount == 1 })
+
+        let firstSurvivor = Task {
+            try await gate.acquireCancellable()
+            await probe.recordEntry("first survivor")
+            await gate.release()
+        }
+        #expect(await waitUntil { await gate.pendingWaiterCount == 2 })
+
+        let secondSurvivor = Task {
+            try await gate.acquireCancellable()
+            await probe.recordEntry("second survivor")
+            await gate.release()
+        }
+        #expect(await waitUntil { await gate.pendingWaiterCount == 3 })
+
+        cancelledWaiter.cancel()
+        await #expect(throws: CancellationError.self) {
+            try await cancelledWaiter.value
+        }
+        #expect(await waitUntil { await gate.pendingWaiterCount == 2 })
+
+        await gate.release()
+        try await firstSurvivor.value
+        try await secondSurvivor.value
+
+        try await gate.acquireCancellable()
+        await probe.recordEntry("reused")
+        await gate.release()
+
+        #expect(await probe.enteredTransactions == [
+            "first survivor",
+            "second survivor",
+            "reused"
+        ])
     }
 }
 
@@ -100,6 +150,7 @@ struct BikeBLEConfigurationReadinessWaiterTests {
 private actor ConfigurationTransactionProbe {
     private(set) var maximumConcurrentTransactions = 0
     private(set) var completedIdentifiers: Set<Int> = []
+    private(set) var enteredTransactions: [String] = []
     private var activeTransactions = 0
 
     func start() {
@@ -110,5 +161,9 @@ private actor ConfigurationTransactionProbe {
     func finish(_ identifier: Int) {
         activeTransactions -= 1
         completedIdentifiers.insert(identifier)
+    }
+
+    func recordEntry(_ transaction: String) {
+        enteredTransactions.append(transaction)
     }
 }

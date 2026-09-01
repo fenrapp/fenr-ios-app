@@ -1,6 +1,10 @@
+import DesignSystem
+import Foundation
 import SwiftUI
 
 struct PowerModeAdjustmentRow: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let state: PowerModeAdjustmentViewState
     let commit: (Double) -> Void
     @State private var draftValue: Double
@@ -15,16 +19,9 @@ struct PowerModeAdjustmentRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.spacing) {
-            HStack {
-                Text(state.title)
-                    .font(.callout.weight(.medium))
-                Spacer()
-                Text(valueText)
-                    .font(.callout.weight(.semibold))
-                    .monospacedDigit()
-            }
+            adjustmentHeader
 
-            if let value = state.value {
+            if state.value != nil {
                 Slider(
                     value: $draftValue,
                     in: state.minimum ... state.maximum,
@@ -35,12 +32,41 @@ struct PowerModeAdjustmentRow: View {
                     }
                 )
                 .disabled(!state.isEnabled)
-                .onChange(of: value) { nextValue in
-                    draftValue = Self.clamped(nextValue, to: state)
+                .onChange(of: state) { _, nextState in
+                    guard let nextValue = nextState.value else { return }
+                    draftValue = Self.clamped(nextValue, to: nextState)
                 }
             }
         }
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
+    }
+
+    @ViewBuilder
+    private var adjustmentHeader: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
+                title
+                value
+            }
+            .fixedSize(horizontal: false, vertical: true)
+        } else {
+            HStack {
+                title
+                Spacer()
+                value
+            }
+        }
+    }
+
+    private var title: some View {
+        Text(state.title)
+            .font(.callout.weight(.medium))
+    }
+
+    private var value: some View {
+        Text(valueText)
+            .font(.callout.weight(.semibold))
+            .monospacedDigit()
     }
 
     private var valueText: String {
@@ -50,7 +76,11 @@ struct PowerModeAdjustmentRow: View {
     }
 
     private func formatted(_ value: Double) -> String {
-        value.rounded() == value ? String(Int(value)) : String(format: "%.1f", value)
+        value.formatted(
+            .number
+                .locale(Locale(identifier: state.localeIdentifier))
+                .precision(.fractionLength(0 ... 1))
+        )
     }
 
     private static func clamped(_ value: Double, to state: PowerModeAdjustmentViewState) -> Double {
@@ -58,6 +88,6 @@ struct PowerModeAdjustmentRow: View {
     }
 
     private enum Constants {
-        static let spacing: CGFloat = 8
+        static let spacing = DesignSpace.extraSmall
     }
 }

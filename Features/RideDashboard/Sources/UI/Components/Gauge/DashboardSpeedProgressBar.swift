@@ -49,8 +49,8 @@ struct DashboardSpeedProgressBar: View {
         case .light:
             .init(
                 informational: Constants.lightInformational,
-                positive: Constants.lightPositive,
-                warning: Constants.lightWarning
+                positive: DashboardSemanticColor.lightProgressPositive,
+                warning: DashboardSemanticColor.lightProgressWarning
             )
         @unknown default:
             .init(
@@ -72,7 +72,5 @@ struct DashboardSpeedProgressBar: View {
         static let horizontalOverflow: CGFloat = 24
         static let animationDuration = 0.32
         static let lightInformational = Color(red: 0, green: 0.48, blue: 0.52)
-        static let lightPositive = Color(red: 0.04, green: 0.5, blue: 0.18)
-        static let lightWarning = Color(red: 0.82, green: 0.32, blue: 0)
     }
 }

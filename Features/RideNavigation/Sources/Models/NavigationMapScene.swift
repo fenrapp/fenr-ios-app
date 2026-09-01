@@ -1,10 +1,8 @@
-import EnvironmentDomain
-
 public struct NavigationMapScene: Equatable, Sendable {
     public let source: MapSourceDescriptor
     public let displayStyle: NavigationMapDisplayStyle
     public let camera: NavigationMapCamera
-    public let userCoordinate: GeographicCoordinate?
+    public let userCoordinate: NavigationMapCoordinate?
     public let userHeadingDegrees: Double?
     public let polylines: [NavigationMapPolyline]
     public let markers: [NavigationMapMarker]
@@ -13,7 +11,7 @@ public struct NavigationMapScene: Equatable, Sendable {
         source: MapSourceDescriptor = .appleStandard,
         displayStyle: NavigationMapDisplayStyle = .map,
         camera: NavigationMapCamera = .automatic,
-        userCoordinate: GeographicCoordinate? = nil,
+        userCoordinate: NavigationMapCoordinate? = nil,
         userHeadingDegrees: Double? = nil,
         polylines: [NavigationMapPolyline] = [],
         markers: [NavigationMapMarker] = []

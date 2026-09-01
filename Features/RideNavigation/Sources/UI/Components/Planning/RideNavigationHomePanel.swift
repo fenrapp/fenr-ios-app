@@ -3,6 +3,7 @@ import SwiftUI
 import UIKit
 
 struct RideNavigationHomePanel: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let state: RideNavigationViewState
     let onClose: () -> Void
     let onImport: () -> Void
@@ -58,24 +59,58 @@ struct RideNavigationHomePanel: View {
         }
     }
 
+    @ViewBuilder
     private var homeCards: some View {
-        HStack(alignment: .top, spacing: DesignSpace.medium) {
-            panel
-
-            if showsSavedRoutesPanel {
-                RideNavigationSavedRoutesPanel(
-                    routes: state.savedRoutes,
-                    errorText: state.errorText,
-                    onOpenRoute: onOpenRoute,
-                    onShareRoute: onShareRoute,
-                    onDeleteRoute: onDeleteRoute
-                )
-                .frame(height: homePanelHeight)
-                .transition(.move(edge: .trailing).combined(with: .opacity))
+        if dynamicTypeSize.isAccessibilitySize {
+            verticalHomeScroll
+        } else {
+            ViewThatFits(in: .horizontal) {
+                horizontalCards
+                verticalHomeScroll
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .animation(.snappy(duration: Constants.searchTransitionDuration), value: showsSavedRoutesPanel)
+    }
+
+    private var verticalHomeScroll: some View {
+        ScrollView(.vertical) {
+            verticalCards
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .top)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .contentShape(Rectangle())
+        .scrollIndicators(dynamicTypeSize.isAccessibilitySize ? .visible : .hidden)
+    }
+
+    private var horizontalCards: some View {
+        HStack(alignment: .top, spacing: DesignSpace.medium) {
+            panel
+            savedRoutesPanel
+        }
+    }
+
+    private var verticalCards: some View {
+        VStack(alignment: .leading, spacing: DesignSpace.medium) {
+            panel
+                .frame(maxWidth: .infinity)
+            savedRoutesPanel
+                .frame(maxWidth: .infinity)
+        }
+    }
+
+    @ViewBuilder
+    private var savedRoutesPanel: some View {
+        if showsSavedRoutesPanel {
+            RideNavigationSavedRoutesPanel(
+                routes: state.savedRoutes,
+                errorText: state.errorText,
+                onOpenRoute: onOpenRoute,
+                onShareRoute: onShareRoute,
+                onDeleteRoute: onDeleteRoute
+            )
+            .frame(height: dynamicTypeSize.isAccessibilitySize ? nil : homePanelHeight)
+            .transition(.move(edge: .trailing).combined(with: .opacity))
+        }
     }
 
     private var panel: some View {
@@ -102,10 +137,11 @@ struct RideNavigationHomePanel: View {
         }
         .padding(isSearchMode ? DesignSpace.small : DesignSpace.medium)
         .frame(
-            width: isSearchMode ? Constants.searchPanelWidth : Constants.panelWidth,
-            height: isSearchMode ? nil : homePanelHeight,
-            alignment: .top
+            maxWidth: dynamicTypeSize.isAccessibilitySize || isSearchMode
+                ? Constants.searchPanelWidth
+                : Constants.panelWidth
         )
+        .frame(height: dynamicTypeSize.isAccessibilitySize || isSearchMode ? nil : homePanelHeight, alignment: .top)
         .frame(maxHeight: isSearchMode ? .infinity : nil, alignment: .top)
         .background(
             Color.black.opacity(Constants.interactionShieldOpacity),
@@ -113,7 +149,6 @@ struct RideNavigationHomePanel: View {
         )
         .rideNavigationGlassSurface(cornerRadius: Constants.panelRadius)
         .contentShape(RoundedRectangle(cornerRadius: Constants.panelRadius, style: .continuous))
-        .onTapGesture {}
         .onAppear { query = state.searchQuery }
         .animation(.snappy(duration: Constants.searchTransitionDuration), value: isSearchMode)
     }
@@ -183,8 +218,9 @@ struct RideNavigationHomePanel: View {
         .background(DesignColor.groupedSurface, in: RoundedRectangle(cornerRadius: DesignRadius.medium))
     }
 
+    @ViewBuilder
     private var rideActions: some View {
-        HStack(spacing: DesignSpace.small) {
+        let actions = Group {
             RideNavigationQuickAction(
                 title: "Import GPX",
                 subtitle: "Open a trail",
@@ -200,8 +236,19 @@ struct RideNavigationHomePanel: View {
                 action: onRecord
             )
         }
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(spacing: DesignSpace.small) {
+                actions
+            }
+        } else {
+            HStack(spacing: DesignSpace.small) {
+                actions
+            }
+        }
     }
+}
 
+private extension RideNavigationHomePanel {
     private var isSearchMode: Bool {
         isSearchFieldFocused || !query.isEmpty || state.isSearching || !state.searchResults.isEmpty
     }

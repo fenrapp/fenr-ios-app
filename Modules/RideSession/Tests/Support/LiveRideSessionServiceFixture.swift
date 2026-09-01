@@ -5,7 +5,11 @@ import SettingsDomain
 import VehicleSession
 
 func makeLiveRideSessionServiceFixture(
-    speedSource: SpeedSource = .motorcycle
+    speedSource: SpeedSource = .motorcycle,
+    rideVehicleSession: (any VehicleSessionService)? = nil,
+    tripRepository: SessionTripRepository = .init(),
+    sleepController: SessionSleepController = .init(),
+    identityResolver: any RideVehicleIdentityResolving = SessionIdentityResolver()
 ) -> LiveRideSessionServiceFixture {
     let date = Date(timeIntervalSince1970: 1_000)
     let bikeRepository = SessionBikeRepository()
@@ -13,8 +17,7 @@ func makeLiveRideSessionServiceFixture(
     let deviceSpeedRepository = SessionDeviceSpeedRepository()
     let profileRepository = SessionProfileRepository()
     let batteryHealthRepository = SessionBatteryHealthRepository()
-    let tripRepository = SessionTripRepository()
-    let vehicleService = LiveVehicleSessionService(
+    let liveVehicleService = LiveVehicleSessionService(
         useCases: .init(
             observeTelemetry: .init(repository: bikeRepository),
             observeConnection: .init(repository: bikeRepository),
@@ -42,18 +45,21 @@ func makeLiveRideSessionServiceFixture(
             maximumSampleAge: 5,
             minimumGPSCourseSpeedKilometersPerHour: 5,
             maximumGPSCourseAccuracyDegrees: 35
-        )
+        ),
+        sleep: { duration in try await Task.sleep(for: duration) }
     )
+    let vehicleService = rideVehicleSession ?? liveVehicleService
     let service = LiveRideSessionService(
         useCases: .init(prepare: .init(repository: tripRepository)),
         vehicleSession: vehicleService,
         persistence: .init(repository: tripRepository),
-        identityResolver: SessionIdentityResolver(),
+        identityResolver: identityResolver,
         initialContext: .init(
             applicationSessionID: UUID(),
             vehicleIdentity: .temporary(UUID())
         ),
-        now: { date }
+        now: { date },
+        sleep: { duration in try await sleepController.sleep(for: duration) }
     )
     return LiveRideSessionServiceFixture(
         service: service,
@@ -61,16 +67,18 @@ func makeLiveRideSessionServiceFixture(
         bikeRepository: bikeRepository,
         deviceSpeedRepository: deviceSpeedRepository,
         tripRepository: tripRepository,
+        sleepController: sleepController,
         date: date
     )
 }
 
 struct LiveRideSessionServiceFixture {
     let service: LiveRideSessionService
-    let vehicleService: LiveVehicleSessionService
+    let vehicleService: any VehicleSessionService
     let bikeRepository: SessionBikeRepository
     let deviceSpeedRepository: SessionDeviceSpeedRepository
     let tripRepository: SessionTripRepository
+    let sleepController: SessionSleepController
     let date: Date
 
     func start() async {

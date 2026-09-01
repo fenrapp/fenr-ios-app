@@ -3,6 +3,7 @@ import Foundation
 public protocol RideSessionService: Sendable {
     func observe() async -> AsyncStream<RideSessionSnapshot>
     func start() async
+    /// Completes and flushes the active trip after all owned producers have stopped.
     func stop() async
     func persistCurrentTrip() async
     func completeCurrentTrip() async

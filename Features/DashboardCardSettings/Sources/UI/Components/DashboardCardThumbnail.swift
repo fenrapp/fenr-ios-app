@@ -11,6 +11,7 @@ struct DashboardCardThumbnail: View {
             RoundedRectangle(cornerRadius: DesignRadius.small, style: .continuous)
                 .stroke(DesignColor.border, lineWidth: Constants.borderWidth)
             content
+                .dynamicTypeSize(.large)
                 .foregroundStyle(accentColor)
                 .padding(Constants.contentPadding)
         }

@@ -229,9 +229,7 @@ struct BikeDataRepositoryTests {
 
     @Test("Restores persisted Alpha evidence when the matching VIN returns")
     func restoresPersistedAlphaEvidence() async throws {
-        let suiteName = "fenr.alpha-restore.\(UUID().uuidString)"
-        let profileRepository = UserDefaultsBikeProfileRepository(suiteName: suiteName)
-        await profileRepository.saveProfile(.init(
+        let profileRepository = ControllableBikeProfileRepository(profile: .init(
             vin: "FENRTEST000000001",
             alphaEvidence: [.powerAboveStandard],
             alphaDetectedAt: .now
@@ -247,16 +245,20 @@ struct BikeDataRepositoryTests {
         let telemetry = try #require(await iterator.next())
 
         #expect(telemetry.detectedPowerTier.alphaEvidence == [.powerAboveStandard])
-        UserDefaults.standard.removePersistentDomain(forName: suiteName)
     }
 
     @Test("Persists new Alpha evidence without later Standard data removing it")
     func persistsAlphaEvidence() async throws {
-        let suiteName = "fenr.alpha-persist.\(UUID().uuidString)"
-        let profileRepository = UserDefaultsBikeProfileRepository(suiteName: suiteName)
-        await profileRepository.saveProfile(.init(vin: "FENRTEST000000001"))
+        let profileRepository = ControllableBikeProfileRepository(
+            profile: .init(vin: "FENRTEST000000001")
+        )
         let client = FakeBikeTelemetryClient()
-        let repository = makeRepository(client: client, profileRepository: profileRepository)
+        let observedAt = Date(timeIntervalSince1970: 1_700_000_000)
+        let repository = makeRepository(
+            client: client,
+            profileRepository: profileRepository,
+            now: { observedAt }
+        )
         await repository.start()
         let stream = await repository.observeTelemetry()
         var iterator = stream.makeAsyncIterator()
@@ -281,8 +283,7 @@ struct BikeDataRepositoryTests {
 
         let profile = try #require(await profileRepository.loadProfile())
         #expect(profile.alphaEvidence == [.powerAboveStandard])
-        #expect(profile.alphaDetectedAt != nil)
-        UserDefaults.standard.removePersistentDomain(forName: suiteName)
+        #expect(profile.alphaDetectedAt == observedAt)
     }
 }
 

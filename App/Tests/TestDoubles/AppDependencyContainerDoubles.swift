@@ -52,6 +52,7 @@ actor LifecycleVehicleSessionSpy: VehicleSessionService {
 actor LifecycleRideSessionSpy: RideSessionService {
     private var events: [String] = []
     private var delaysPersistence = false
+    private var persistenceContinuation: CheckedContinuation<Void, Never>?
 
     func observe() -> AsyncStream<RideSessionSnapshot> { .init { _ in } }
     func start() { events.append("start") }
@@ -60,7 +61,9 @@ actor LifecycleRideSessionSpy: RideSessionService {
     func persistCurrentTrip() async {
         if delaysPersistence {
             delaysPersistence = false
-            try? await Task.sleep(for: .milliseconds(100))
+            await withCheckedContinuation { continuation in
+                persistenceContinuation = continuation
+            }
         }
         events.append("persist")
     }
@@ -71,5 +74,37 @@ actor LifecycleRideSessionSpy: RideSessionService {
     func resetCurrentTrip() {}
 
     func delayNextPersistence() { delaysPersistence = true }
+    func hasPendingPersistence() -> Bool { persistenceContinuation != nil }
+    func resumePersistence() {
+        persistenceContinuation?.resume()
+        persistenceContinuation = nil
+    }
     func recordedEvents() -> [String] { events }
+}
+
+actor ControllableAppStartupPreparer: AppStartupPreparing {
+    private var prepares = 0
+    private var shouldBlock = false
+    private var continuation: CheckedContinuation<Void, Never>?
+
+    func prepare() async {
+        prepares += 1
+        guard shouldBlock else { return }
+        await withCheckedContinuation { continuation in
+            self.continuation = continuation
+        }
+    }
+
+    func blockNextPreparation() {
+        shouldBlock = true
+    }
+
+    func preparationCount() -> Int { prepares }
+    func hasPendingPreparation() -> Bool { continuation != nil }
+
+    func resumePreparation() {
+        shouldBlock = false
+        continuation?.resume()
+        continuation = nil
+    }
 }

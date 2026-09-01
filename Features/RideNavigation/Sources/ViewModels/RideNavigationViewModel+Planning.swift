@@ -1,0 +1,372 @@
+import EnvironmentDomain
+import Foundation
+import RideNavigationDomain
+
+@MainActor
+extension RideNavigationViewModel {
+    public func updateSearchQuery(_ value: String) {
+        searchQuery = value
+        searchTask?.cancel()
+        let query = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        errorText = nil
+        guard query.count >= Constants.minimumSearchCharacters else {
+            searchResults = []
+            render(isSearching: false)
+            return
+        }
+        render(isSearching: true)
+        startSearch(query, debounce: true)
+    }
+
+    public func search() {
+        let query = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard query.count >= Constants.minimumSearchCharacters else { return }
+        searchTask?.cancel()
+        render(isSearching: true)
+        startSearch(query, debounce: false)
+    }
+
+    public func selectSearchResult(id: UUID) {
+        guard let destination = searchResults.first(where: { $0.id == id }),
+              let origin = locationSnapshot.coordinate else {
+            errorText = "A current location is required to calculate this route."
+            render()
+            return
+        }
+        calculateRoadPreview(from: origin, to: destination, showsSearchLoading: true)
+    }
+
+    public func findTrailExit() {
+        guard activity == .following,
+              selectedRoute != nil,
+              let origin = locationSnapshot.coordinate else {
+            errorText = "A current location is required to find a road-accessible exit."
+            render()
+            return
+        }
+        let generation = operations.begin(.trailExit)
+        let lifecycle = operations.lifecycleGeneration
+        isFindingTrailExit = true
+        errorText = nil
+        render()
+        let trailExitFinder = trailExitFinder
+        let preferences = roadRoutePreferences
+        trailExitTask = Task { [weak self] in
+            do {
+                let result = try await trailExitFinder.findExit(from: origin, preferences: preferences)
+                try Task.checkCancellation()
+                guard let self,
+                      operations.isCurrent(.trailExit, generation: generation, lifecycle: lifecycle),
+                      isStarted,
+                      activity == .following else { return }
+                trailExitPreview = result
+                isFindingTrailExit = false
+                cameraMode = .overview(
+                    mapMapper.coordinates((orientedRoute?.points.map(\.coordinate) ?? []) + result.route.points)
+                )
+                render()
+            } catch is CancellationError {
+                return
+            } catch {
+                guard let self,
+                      operations.isCurrent(.trailExit, generation: generation, lifecycle: lifecycle),
+                      isStarted else { return }
+                isFindingTrailExit = false
+                errorText = "No road-accessible exit could be found."
+                render()
+            }
+        }
+    }
+
+    public func cancelTrailExitPreview() {
+        trailExitTask?.cancel()
+        trailExitPreview = nil
+        isFindingTrailExit = false
+        cameraMode = followCamera
+        render()
+    }
+
+    public func startTrailExit() {
+        guard activity == .following, let exit = trailExitPreview else { return }
+        roadRoute = exit.route
+        roadRoutes = [exit.route]
+        selectedRoadRouteIndex = .zero
+        selectedDestination = exit.destination
+        roadNavigationPurpose = .trailExit
+        trailExitPreview = nil
+        resetRoadStepGuidance()
+        activity = .navigating
+        applyPreferredMapStyleForActiveNavigation()
+        cameraMode = followCamera
+        errorText = nil
+        render()
+        announce("Exit navigation started")
+    }
+
+    public func resumeGPX() {
+        guard activity == .navigating,
+              roadNavigationPurpose == .trailExit,
+              selectedRoute != nil else { return }
+        routeTask?.cancel()
+        roadRoute = nil
+        roadRoutes = []
+        selectedDestination = nil
+        roadNavigationPurpose = nil
+        resetRoadStepGuidance()
+        activity = .following
+        trailProgress = nil
+        didAnnounceOffRoute = false
+        cameraMode = followCamera
+        errorText = nil
+        render()
+        announce("Enduro navigation resumed")
+    }
+
+    func calculateRoadPreview(
+        from origin: GeographicCoordinate,
+        to destination: NavigationPlace,
+        showsSearchLoading: Bool
+    ) {
+        roadRoutes = []
+        selectedRoadRouteIndex = .zero
+        let generation = operations.begin(.route)
+        let lifecycle = operations.lifecycleGeneration
+        isCalculatingRoadRoutes = true
+        render(isSearching: showsSearchLoading)
+        let roadRouteCalculator = roadRouteCalculator
+        let preferences = roadRoutePreferences
+        routeTask = Task { [weak self] in
+            do {
+                let calculatedRoutes = try await roadRouteCalculator.routes(
+                    from: origin,
+                    to: destination,
+                    preferences: preferences
+                )
+                try Task.checkCancellation()
+                guard let self,
+                      operations.isCurrent(.route, generation: generation, lifecycle: lifecycle),
+                      isStarted else { return }
+                guard let firstRoute = calculatedRoutes.first else {
+                    throw RoadRouteCalculationError.routeUnavailable
+                }
+                roadRoutes = calculatedRoutes
+                selectedRoadRouteIndex = .zero
+                roadRoute = firstRoute
+                roadNavigationPurpose = .destination
+                trailExitPreview = nil
+                resetRoadStepGuidance()
+                selectedDestination = destination
+                selectedRoute = nil
+                trailProgress = nil
+                screen = .map
+                activity = .preview
+                mapDisplayStyle = .map
+                cameraMode = .overview(mapMapper.coordinates(roadRoute?.points ?? []))
+                errorText = nil
+            } catch is CancellationError {
+                return
+            } catch {
+                guard let self,
+                      operations.isCurrent(.route, generation: generation, lifecycle: lifecycle),
+                      isStarted else { return }
+                errorText = "Apple Maps could not calculate this route."
+            }
+            guard let self,
+                  operations.isCurrent(.route, generation: generation, lifecycle: lifecycle),
+                  isStarted else { return }
+            isCalculatingRoadRoutes = false
+            render(isSearching: false)
+        }
+    }
+
+    public func selectRoadRouteOption(_ index: Int) {
+        guard roadRoutes.indices.contains(index) else { return }
+        selectedRoadRouteIndex = index
+        roadRoute = roadRoutes[index]
+        resetRoadStepGuidance()
+        cameraMode = .overview(mapMapper.coordinates(roadRoutes[index].points))
+        render()
+    }
+
+    func startSearch(_ query: String, debounce: Bool) {
+        let placeSearch = placeSearch
+        let coordinate = locationSnapshot.coordinate
+        let sleep = timing.sleep
+        let generation = operations.begin(.search)
+        let lifecycle = operations.lifecycleGeneration
+        searchTask = Task { [weak self] in
+            do {
+                if debounce {
+                    try await sleep(.milliseconds(Constants.searchDebounceMilliseconds))
+                }
+                try Task.checkCancellation()
+                let places = try await placeSearch.search(query, near: coordinate)
+                try Task.checkCancellation()
+                guard let self,
+                      operations.isCurrent(.search, generation: generation, lifecycle: lifecycle) else { return }
+                receiveSearchResults(places, query: query)
+            } catch is CancellationError {
+                return
+            } catch {
+                guard !Task.isCancelled,
+                      let self,
+                      operations.isCurrent(.search, generation: generation, lifecycle: lifecycle) else { return }
+                receiveSearchFailure(query: query)
+            }
+        }
+    }
+
+    func receiveSearchResults(_ places: [NavigationPlace], query: String) {
+        guard query == normalizedSearchQuery else { return }
+        searchResults = Array(places.prefix(Constants.maximumSearchResults))
+        errorText = searchResults.isEmpty ? "No destinations found." : nil
+        render(isSearching: false)
+    }
+
+    func receiveSearchFailure(query: String) {
+        guard query == normalizedSearchQuery else { return }
+        errorText = "Search is unavailable. Check your connection."
+        render(isSearching: false)
+    }
+
+    func recalculatePreviewRoutes(
+        from origin: GeographicCoordinate,
+        to destination: NavigationPlace
+    ) {
+        let generation = operations.begin(.route)
+        let lifecycle = operations.lifecycleGeneration
+        isCalculatingRoadRoutes = true
+        errorText = nil
+        render()
+        let roadRouteCalculator = roadRouteCalculator
+        let preferences = roadRoutePreferences
+        routeTask = Task { [weak self] in
+            do {
+                let routes = try await roadRouteCalculator.routes(
+                    from: origin,
+                    to: destination,
+                    preferences: preferences
+                )
+                try Task.checkCancellation()
+                guard let self,
+                      operations.isCurrent(.route, generation: generation, lifecycle: lifecycle),
+                      isStarted,
+                      let firstRoute = routes.first else {
+                    throw RoadRouteCalculationError.routeUnavailable
+                }
+                roadRoutes = routes
+                selectedRoadRouteIndex = .zero
+                roadRoute = firstRoute
+                resetRoadStepGuidance()
+                cameraMode = .overview(mapMapper.coordinates(firstRoute.points))
+                errorText = nil
+                isCalculatingRoadRoutes = false
+                render()
+            } catch is CancellationError {
+                return
+            } catch {
+                guard let self,
+                      operations.isCurrent(.route, generation: generation, lifecycle: lifecycle),
+                      isStarted else { return }
+                isCalculatingRoadRoutes = false
+                errorText = "Apple Maps could not update these route preferences."
+                render()
+            }
+        }
+    }
+
+    func routePoint(from snapshot: RideNavigationLocationSnapshot) -> RideRoutePoint? {
+        guard let coordinate = snapshot.coordinate,
+              let observedAt = snapshot.observedAt else { return nil }
+        return RideRoutePoint(
+            coordinate: coordinate,
+            elevationMeters: snapshot.altitudeMeters,
+            timestamp: observedAt,
+            horizontalAccuracyMeters: snapshot.horizontalAccuracyMeters
+        )
+    }
+
+    func relativeBearingDegrees(_ absoluteBearingDegrees: Double) -> Double {
+        let courseDegrees = locationSnapshot.courseDegrees ?? .zero
+        var delta = (absoluteBearingDegrees - courseDegrees)
+            .truncatingRemainder(dividingBy: Constants.fullCircleDegrees)
+        if delta > Constants.halfCircleDegrees {
+            delta -= Constants.fullCircleDegrees
+        } else if delta < -Constants.halfCircleDegrees {
+            delta += Constants.fullCircleDegrees
+        }
+        return delta
+    }
+
+    func startApproachRoute(
+        from origin: GeographicCoordinate,
+        to start: GeographicCoordinate
+    ) {
+        let destination = NavigationPlace(
+            name: selectedDirection == .forward ? "Trail start" : "Trail finish",
+            detail: "Road approach to the selected trail entry",
+            coordinate: start
+        )
+        roadRoutes = []
+        selectedRoadRouteIndex = .zero
+        let generation = operations.begin(.route)
+        let lifecycle = operations.lifecycleGeneration
+        let roadRouteCalculator = roadRouteCalculator
+        let preferences = roadRoutePreferences
+        routeTask = Task { [weak self] in
+            do {
+                let calculatedRoute = try await roadRouteCalculator.route(
+                    from: origin,
+                    to: destination,
+                    preferences: preferences
+                )
+                try Task.checkCancellation()
+                guard let self,
+                      operations.isCurrent(.route, generation: generation, lifecycle: lifecycle),
+                      isStarted else { return }
+                roadRoute = calculatedRoute
+                roadNavigationPurpose = .trailApproach
+                resetRoadStepGuidance()
+                selectedDestination = destination
+                let date = now()
+                startBreadcrumb(at: date)
+                activityStartedAt = date
+                activity = .navigating
+                applyPreferredMapStyleForActiveNavigation()
+                cameraMode = followCamera
+                startClock()
+                errorText = nil
+                render()
+                announce("Road navigation to the trail entry started")
+            } catch is CancellationError {
+                return
+            } catch {
+                guard let self,
+                      operations.isCurrent(.route, generation: generation, lifecycle: lifecycle),
+                      isStarted else { return }
+                errorText = "The approach route could not be calculated."
+                render()
+            }
+        }
+    }
+
+    func previewExternalDestination(_ destination: NavigationPlace) {
+        guard let origin = locationSnapshot.coordinate else {
+            pendingExternalDestination = destination
+            errorText = "A current location is required to calculate this route."
+            render()
+            return
+        }
+        stopClock()
+        screen = .map
+        activity = .preview
+        mapDisplayStyle = .map
+        selectedRoute = nil
+        trailProgress = nil
+        trailExitPreview = nil
+        roadNavigationPurpose = .destination
+        selectedDestination = destination
+        errorText = nil
+        calculateRoadPreview(from: origin, to: destination, showsSearchLoading: false)
+    }
+}

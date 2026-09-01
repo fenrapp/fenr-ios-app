@@ -17,16 +17,22 @@ struct BLETraceDependencyContainer {
             return NoOpBLETraceRepository()
         }
         do {
-            return try FileBLETraceLogRepository(
+            return try FileBLETraceLogRepository.make(
                 directory: applicationSupport.appendingPathComponent("BLELogs", isDirectory: true),
                 exportDirectory: caches.appendingPathComponent("BLELogExports", isDirectory: true),
                 environment: makeEnvironment(),
                 configuration: BLETraceFileStoreConfiguration(),
-                fileManager: fileManager,
-                lineEncoder: BLETraceJSONLineEncoder(),
-                sessionHub: AsyncEventHub(replaysLatestValue: true),
-                now: Date.init,
-                uptimeNanoseconds: { DispatchTime.now().uptimeNanoseconds }
+                dependencies: BLETraceFileStoreDependencies(
+                    fileManager: fileManager,
+                    lineEncoder: BLETraceJSONLineEncoder(),
+                    sessionHub: AsyncEventHub(
+                        bufferingPolicy: .bufferingNewest(1),
+                        replaysLatestValue: true
+                    ),
+                    now: Date.init,
+                    uptimeNanoseconds: { DispatchTime.now().uptimeNanoseconds },
+                    writerTaskStarter: LiveBLETraceWriterTaskStarter()
+                )
             )
         } catch {
             return NoOpBLETraceRepository()

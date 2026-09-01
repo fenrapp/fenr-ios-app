@@ -30,21 +30,27 @@ struct RideNavigationFinishConfirmationOverlay: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            HStack(spacing: DesignSpace.small) {
-                Button("Keep Riding", action: onCancel)
-                    .controlSize(.large)
-                    .rideNavigationSecondaryButton()
-                Button(confirmTitle, action: onConfirm)
-                    .controlSize(.large)
-                    .tint(confirmTint)
-                    .rideNavigationPrimaryButton()
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: DesignSpace.small) { actionButtons }
+                VStack(alignment: .leading, spacing: DesignSpace.small) { actionButtons }
             }
         }
         .padding(DesignSpace.large)
-        .frame(width: Constants.width)
+        .frame(maxWidth: Constants.width)
         .rideNavigationGlassSurface(cornerRadius: Constants.cornerRadius)
         .contentShape(RoundedRectangle(cornerRadius: Constants.cornerRadius, style: .continuous))
         .onTapGesture {}
+    }
+
+    @ViewBuilder
+    private var actionButtons: some View {
+        Button("Keep Riding", action: onCancel)
+            .controlSize(.large)
+            .rideNavigationSecondaryButton()
+        Button(confirmTitle, action: onConfirm)
+            .controlSize(.large)
+            .tint(confirmTint)
+            .rideNavigationPrimaryButton()
     }
 
     private var isRecording: Bool {

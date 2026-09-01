@@ -4,41 +4,51 @@ import Testing
 
 @Suite("Vehicle measurement mapper")
 struct VehicleMeasurementMapperTests {
-    @Test("Converts ride measurements using the selected system")
-    func convertsRideMeasurements() {
-        let metric = VehicleMeasurementMapper(measurementSystem: .metric)
-        let imperial = VehicleMeasurementMapper(measurementSystem: .us)
+    @Test("Maps metric ride values and symbols")
+    func mapsMetricRideMeasurements() {
+        let mapper = VehicleMeasurementMapper(measurementSystem: .metric)
 
-        #expect(metric.speed(kilometersPerHour: 42) == .init(value: 42, unit: "km/h"))
-        #expect(metric.distance(kilometers: 180) == .init(value: 180, unit: "km"))
-        #expect(metric.temperature(celsius: 22) == .init(value: 22, unit: "°C"))
-        #expect(imperial.speed(kilometersPerHour: 42).unit == "mph")
-        #expect(imperial.distance(kilometers: 180).unit == "mi")
-        #expect(imperial.temperature(celsius: 22).unit == "°F")
+        expect(mapper.speed(kilometersPerHour: 100), value: 100, unit: "km/h")
+        expect(mapper.distance(kilometers: 10), value: 10, unit: "km")
+        expect(mapper.temperature(celsius: 20), value: 20, unit: "°C")
     }
 
-    @Test("Formats a measurement with its unit")
-    func formatsMeasurementText() {
-        let text = VehicleMeasurementTextFormatter(locale: Locale(identifier: "en_US"))
-            .string(from: .init(value: 13.6, unit: "A"))
+    @Test("Maps US ride values and symbols")
+    func mapsUSRideMeasurements() {
+        let mapper = VehicleMeasurementMapper(measurementSystem: .us)
 
-        #expect(text == "13.6 A")
+        expect(mapper.speed(kilometersPerHour: 100), value: 62.137_119, unit: "mph")
+        expect(mapper.distance(kilometers: 10), value: 6.213_712, unit: "mi")
+        expect(mapper.temperature(celsius: 20), value: 68, unit: "°F")
     }
 
-    @Test("Formats shared electrical and percentage presentation values")
-    func formatsSharedElectricalValues() {
-        let formatter = VehicleMeasurementTextFormatter(locale: Locale(identifier: "en_US"))
+    @Test("Maps UK distance and speed while retaining Celsius")
+    func mapsUKRideMeasurements() {
+        let mapper = VehicleMeasurementMapper(measurementSystem: .uk)
 
-        #expect(formatter.percentage(76) == "76%")
-        #expect(formatter.voltage(418.2) == "418.2 V")
-        #expect(formatter.current(2.5) == "2.5 A")
-        #expect(formatter.power(167.3) == "167.3 W")
-        #expect(formatter.power(1_000) == "1 kW")
+        expect(mapper.speed(kilometersPerHour: 100), value: 62.137_119, unit: "mph")
+        expect(mapper.distance(kilometers: 10), value: 6.213_712, unit: "mi")
+        expect(mapper.temperature(celsius: 20), value: 20, unit: "°C")
     }
 
-    @Test("Clamps a value to a closed range")
-    func clampsValues() {
-        #expect((-2.0).clamped(to: 0 ... 1) == 0)
-        #expect(2.0.clamped(to: 0 ... 1) == 1)
+    @Test("Preserves zero and negative electrical values")
+    func mapsZeroAndNegativeValues() {
+        let mapper = VehicleMeasurementMapper(measurementSystem: .metric)
+
+        expect(mapper.speed(kilometersPerHour: 0), value: 0, unit: "km/h")
+        expect(mapper.temperature(celsius: -40), value: -40, unit: "°C")
+        expect(mapper.power(watts: 0), value: 0, unit: "kW")
+        expect(mapper.power(watts: -1_500), value: -1.5, unit: "kW")
+        expect(mapper.current(amperes: 0), value: 0, unit: "A")
+        expect(mapper.current(amperes: -2.5), value: -2.5, unit: "A")
+    }
+
+    private func expect(
+        _ measurement: VehicleMeasurement,
+        value: Double,
+        unit: String
+    ) {
+        #expect(abs(measurement.value - value) < 0.000_1)
+        #expect(measurement.unit == unit)
     }
 }

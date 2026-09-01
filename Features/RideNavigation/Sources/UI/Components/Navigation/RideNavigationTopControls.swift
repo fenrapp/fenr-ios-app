@@ -12,17 +12,28 @@ struct RideNavigationTopControls: View {
     let onRecenter: () -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: DesignSpace.small) {
-            routeHeader
-            Spacer(minLength: DesignSpace.medium)
-            RideNavigationMapControls(
-                state: state,
-                onToggleVoice: onToggleVoice,
-                onOverview: onOverview,
-                onRecenter: onRecenter,
-                activeSelector: $activeMapSelector
-            )
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .top, spacing: DesignSpace.small) {
+                routeHeader
+                Spacer(minLength: DesignSpace.medium)
+                mapControls
+            }
+            VStack(alignment: .leading, spacing: DesignSpace.small) {
+                routeHeader
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                mapControls
+            }
         }
+    }
+
+    private var mapControls: some View {
+        RideNavigationMapControls(
+            state: state,
+            onToggleVoice: onToggleVoice,
+            onOverview: onOverview,
+            onRecenter: onRecenter,
+            activeSelector: $activeMapSelector
+        )
     }
 
     private var routeHeader: some View {
@@ -39,7 +50,7 @@ struct RideNavigationTopControls: View {
                     recordingIndicator
                     Text(state.routeTitle ?? activityTitle)
                         .font(.headline.weight(.semibold))
-                        .lineLimit(1)
+                        .lineLimit(2)
                 }
                 Text("\(state.distanceText) · \(state.elapsedText)")
                     .font(.caption.monospacedDigit())
@@ -47,8 +58,9 @@ struct RideNavigationTopControls: View {
             }
             .padding(.trailing, DesignSpace.medium)
             .frame(minWidth: Constants.routeHeaderMinimumWidth, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(height: Self.height)
+        .frame(minHeight: Self.height)
         .rideNavigationGlassSurface(cornerRadius: Constants.controlRadius)
     }
 

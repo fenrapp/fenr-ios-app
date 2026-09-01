@@ -92,7 +92,11 @@ struct DashboardChargingProgressBorder: View {
         case .dark:
             [Color.cyan, Color.indigo, Color.cyan]
         case .light:
-            [Constants.lightBalancingStart, Constants.lightBalancingMiddle, Constants.lightBalancingStart]
+            [
+                DashboardSemanticColor.lightBalancing,
+                Constants.lightBalancingMiddle,
+                DashboardSemanticColor.lightBalancing
+            ]
         @unknown default:
             [Color.cyan, Color.indigo, Color.cyan]
         }
@@ -100,7 +104,7 @@ struct DashboardChargingProgressBorder: View {
 
     private var progressHeadColor: Color {
         if isBalancing {
-            return colorScheme == .dark ? Color.cyan : Constants.lightBalancingStart
+            return colorScheme == .dark ? Color.cyan : DashboardSemanticColor.lightBalancing
         }
         return colorScheme == .dark ? Color.mint : Constants.lightPositive
     }
@@ -200,7 +204,6 @@ struct DashboardChargingProgressBorder: View {
         static let balancingPulseDuration = 1.15
         static let lightInformational = Color(red: 0, green: 0.64, blue: 0.68)
         static let lightPositive = Color(red: 0.1, green: 0.7, blue: 0.3)
-        static let lightBalancingStart = Color(red: 0, green: 0.66, blue: 0.86)
         static let lightBalancingMiddle = Color(red: 0.26, green: 0.56, blue: 0.96)
     }
 }

@@ -1,3 +1,4 @@
+import DesignSystem
 import Foundation
 import SwiftUI
 
@@ -57,7 +58,7 @@ struct RideHistoryEditingToolbar: ToolbarContent {
     private var selectionLabel: some View {
         Text(selectionText)
             .font(.subheadline.weight(.medium))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(DesignColor.secondaryText)
             .monospacedDigit()
     }
 
@@ -70,7 +71,7 @@ struct RideHistoryEditingToolbar: ToolbarContent {
                     alignment: .center
                 )
         }
-        .tint(.red)
+        .tint(DesignColor.critical)
         .disabled(selectedRideIDs.isEmpty || isDeleting)
         .accessibilityLabel("Delete selected rides")
     }

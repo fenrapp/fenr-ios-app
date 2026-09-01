@@ -3,10 +3,10 @@ import SettingsDomain
 import TestSupport
 
 actor WatchDashboardRepository: BikeRepository, BikeBatteryHealthRepository {
-    private let telemetry = TestEventHub<BikeTelemetry>()
+    private let telemetry = TestEventHub<BikeTelemetry>(bufferingPolicy: .unbounded)
     private let connectionStream = AsyncStream<BikeConnection> { _ in }
-    private let debugEvents = TestEventHub<BikeDebugEvent>()
-    private let health = TestEventHub<BikeBatteryHealth>()
+    private let debugEvents = TestEventHub<BikeDebugEvent>(bufferingPolicy: .unbounded)
+    private let health = TestEventHub<BikeBatteryHealth>(bufferingPolicy: .unbounded)
     private(set) var startMonitoringCalls = 0
     private(set) var stopMonitoringCalls = 0
     private var suspendsMonitoringStop = false
@@ -34,17 +34,17 @@ actor WatchDashboardRepository: BikeRepository, BikeBatteryHealthRepository {
     func observeBatteryHealth() async -> AsyncStream<BikeBatteryHealth> { await health.stream() }
     func observeBatteryDatasetCaptures() async -> AsyncStream<BatteryDatasetCapture> { AsyncStream { _ in } }
     func send(_ value: BikeTelemetry) async {
-        await telemetry.waitForSubscriber()
+        _ = await telemetry.waitForSubscriber()
         await telemetry.send(value)
     }
 
     func send(_ value: BikeBatteryHealth) async {
-        await health.waitForSubscriber()
+        _ = await health.waitForSubscriber()
         await health.send(value)
     }
 
     func send(_ event: BikeDebugEvent) async {
-        await debugEvents.waitForSubscriber()
+        _ = await debugEvents.waitForSubscriber()
         await debugEvents.send(event)
     }
 

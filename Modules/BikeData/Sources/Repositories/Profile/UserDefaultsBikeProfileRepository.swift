@@ -12,12 +12,12 @@ public actor UserDefaultsBikeProfileRepository: BikeProfileRepository {
     private let userDefaults: UserDefaults
     private var observers: [UUID: AsyncStream<BikeProfileState>.Continuation] = [:]
 
-    public init() {
-        userDefaults = .standard
+    public init(userDefaults: UserDefaults) {
+        self.userDefaults = userDefaults
     }
 
-    init(suiteName: String) {
-        userDefaults = UserDefaults(suiteName: suiteName) ?? .standard
+    deinit {
+        observers.values.forEach { $0.finish() }
     }
 
     public func loadProfile() -> BikeProfile? {
@@ -56,12 +56,14 @@ public actor UserDefaultsBikeProfileRepository: BikeProfileRepository {
 
     public func observeProfile() async -> AsyncStream<BikeProfileState> {
         let identifier = UUID()
-        let (stream, continuation) = AsyncStream<BikeProfileState>.makeStream()
-        observers[identifier] = continuation
-        continuation.yield(BikeProfileState(profile: loadProfile()))
+        let (stream, continuation) = AsyncStream<BikeProfileState>.makeStream(
+            bufferingPolicy: .bufferingNewest(1)
+        )
         continuation.onTermination = { [weak self] _ in
             Task { await self?.removeObserver(identifier) }
         }
+        observers[identifier] = continuation
+        continuation.yield(BikeProfileState(profile: loadProfile()))
         return stream
     }
 

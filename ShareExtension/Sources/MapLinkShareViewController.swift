@@ -1,18 +1,49 @@
-import RideNavigationData
-import RideNavigationDomain
 import UIKit
-import UniformTypeIdentifiers
 
+@MainActor
 final class MapLinkShareViewController: UIViewController {
     private let statusLabel = UILabel()
     private let doneButton = UIButton(type: .system)
+    private let processor: (any MapLinkShareProcessing)?
     private var loadingTask: Task<Void, Never>?
+
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        processor = try? MapLinkShareProcessor.live()
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+    }
+
+    required init?(coder: NSCoder) {
+        processor = try? MapLinkShareProcessor.live()
+        super.init(coder: coder)
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
         configureView()
-        loadingTask = Task { [weak self] in
-            await self?.receiveSharedURL()
+        let context = extensionContext
+        let statusLabel = statusLabel
+        let doneButton = doneButton
+        guard let processor else {
+            statusLabel.text = "FENR could not read this map link."
+            doneButton.isHidden = false
+            return
+        }
+        loadingTask = Task { @MainActor [processor, context, statusLabel, doneButton] in
+            let message: String
+            do {
+                let inputItems = (context?.inputItems ?? []).compactMap { item in
+                    item as? NSExtensionItem
+                }
+                try await processor.process(inputItems: inputItems)
+                message = "Route ready in FENR"
+            } catch is CancellationError {
+                return
+            } catch {
+                message = "FENR could not read this map link."
+            }
+            guard !Task.isCancelled else { return }
+            statusLabel.text = message
+            doneButton.isHidden = false
         }
     }
 
@@ -46,52 +77,13 @@ final class MapLinkShareViewController: UIViewController {
         ])
     }
 
-    private func receiveSharedURL() async {
-        do {
-            guard let provider = extensionContext?.inputItems
-                .compactMap({ $0 as? NSExtensionItem })
-                .compactMap(\.attachments)
-                .flatMap({ $0 })
-                .first(where: { $0.hasItemConformingToTypeIdentifier(UTType.url.identifier) }) else {
-                throw ShareError.missingURL
-            }
-            let item = try await provider.loadItem(forTypeIdentifier: UTType.url.identifier)
-            guard let url = item as? URL, Self.isAllowed(url) else {
-                throw ShareError.unsupportedURL
-            }
-            let store = try UserDefaultsIncomingMapLinkStore.shared()
-            try await store.save(IncomingMapLink(url: url, receivedAt: Date()))
-            statusLabel.text = "Route ready in FENR"
-        } catch {
-            statusLabel.text = "FENR could not read this map link."
-        }
-        doneButton.isHidden = false
-    }
-
     @objc private func finish() {
+        loadingTask?.cancel()
+        loadingTask = nil
         extensionContext?.completeRequest(returningItems: nil)
-    }
-
-    private static func isAllowed(_ url: URL) -> Bool {
-        if url.pathExtension.lowercased() == "directionsrequest" { return true }
-        guard url.scheme?.lowercased() == "https", let host = url.host?.lowercased() else { return false }
-        return Constants.allowedHosts.contains(host)
-    }
-
-    private enum ShareError: Error {
-        case missingURL
-        case unsupportedURL
     }
 
     private enum Constants {
         static let spacing: CGFloat = 24
-        static let allowedHosts: Set<String> = [
-            "maps.app.goo.gl",
-            "goo.gl",
-            "google.com",
-            "www.google.com",
-            "maps.google.com",
-            "maps.apple.com"
-        ]
     }
 }

@@ -1,21 +1,5 @@
 import Foundation
 
-public struct VehicleMeasurement: Sendable, Equatable {
-    public let value: Double
-    public let unit: String
-
-    public init(value: Double, unit: String) {
-        self.value = value
-        self.unit = unit
-    }
-}
-
-public extension Double {
-    func clamped(to range: ClosedRange<Double>) -> Double {
-        min(max(self, range.lowerBound), range.upperBound)
-    }
-}
-
 public struct VehicleMeasurementMapper: Sendable {
     private let measurementSystem: Locale.MeasurementSystem
 
@@ -67,6 +51,6 @@ public struct VehicleMeasurementMapper: Sendable {
     }
 
     private var temperatureUnit: UnitTemperature {
-        measurementSystem == .metric ? .celsius : .fahrenheit
+        measurementSystem == .us ? .fahrenheit : .celsius
     }
 }

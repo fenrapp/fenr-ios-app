@@ -1,6 +1,8 @@
 import SwiftUI
 
 public struct MetricTile: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     private let title: String
     private let value: String
 
@@ -13,11 +15,11 @@ public struct MetricTile: View {
         VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
             Text(title)
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignColor.secondaryText)
             Text(value)
                 .font(.system(.title3, design: .rounded).weight(.bold))
-                .lineLimit(Constants.valueLineLimit)
-                .minimumScaleFactor(Constants.minimumScaleFactor)
+                .lineLimit(valueLineLimit)
+                .minimumScaleFactor(valueMinimumScaleFactor)
         }
         .frame(maxWidth: .infinity, minHeight: Constants.minimumHeight, alignment: .leading)
         .padding(DesignSpace.small)
@@ -29,6 +31,15 @@ public struct MetricTile: View {
             RoundedRectangle(cornerRadius: DesignRadius.small, style: .continuous)
                 .stroke(DesignColor.border, lineWidth: Constants.borderWidth)
         )
+        .accessibilityElement(children: .combine)
+    }
+
+    private var valueLineLimit: Int? {
+        dynamicTypeSize.isAccessibilitySize ? nil : Constants.valueLineLimit
+    }
+
+    private var valueMinimumScaleFactor: CGFloat {
+        dynamicTypeSize.isAccessibilitySize ? 1 : Constants.minimumScaleFactor
     }
 
     private enum Constants {
@@ -39,7 +50,21 @@ public struct MetricTile: View {
     }
 }
 
+private enum MetricTilePreviewConstants {
+    static let width: CGFloat = 240
+}
+
 #Preview("Metric tile") {
     MetricTile(title: "Battery", value: "91%")
         .padding()
+}
+
+#Preview("Metric tile - long Dynamic Type") {
+    MetricTile(
+        title: "Estimated remaining range",
+        value: "123.4 kilometers"
+    )
+    .frame(width: MetricTilePreviewConstants.width)
+    .padding()
+    .environment(\.dynamicTypeSize, .accessibility3)
 }

@@ -6,6 +6,7 @@ public final class CoreLocationDeviceSpeedRepository: NSObject, DeviceSpeedRepos
     @preconcurrency CLLocationManagerDelegate {
     private let locationManager: CLLocationManager
     private var continuations: [UUID: AsyncStream<DeviceSpeedSample>.Continuation] = [:]
+    private var isUpdatingLocation = false
 
     public init(locationManager: CLLocationManager) {
         self.locationManager = locationManager
@@ -18,12 +19,14 @@ public final class CoreLocationDeviceSpeedRepository: NSObject, DeviceSpeedRepos
 
     public func observeDeviceSpeed() -> AsyncStream<DeviceSpeedSample> {
         let id = UUID()
-        let (stream, continuation) = AsyncStream<DeviceSpeedSample>.makeStream()
-        continuations[id] = continuation
-        updateLocationMonitoring()
+        let (stream, continuation) = AsyncStream<DeviceSpeedSample>.makeStream(
+            bufferingPolicy: .bufferingNewest(1)
+        )
         continuation.onTermination = { [weak self] _ in
             Task { @MainActor in self?.removeContinuation(id) }
         }
+        continuations[id] = continuation
+        updateLocationMonitoring()
         return stream
     }
 
@@ -49,17 +52,32 @@ public final class CoreLocationDeviceSpeedRepository: NSObject, DeviceSpeedRepos
 
     private func updateLocationMonitoring() {
         guard !continuations.isEmpty else {
-            locationManager.stopUpdatingLocation()
+            stopUpdatingLocationIfNeeded()
             return
         }
         switch locationManager.authorizationStatus {
         case .authorizedAlways, .authorizedWhenInUse:
-            locationManager.startUpdatingLocation()
+            startUpdatingLocationIfNeeded()
         case .notDetermined:
+            stopUpdatingLocationIfNeeded()
             locationManager.requestWhenInUseAuthorization()
-        default:
-            break
+        case .denied, .restricted:
+            stopUpdatingLocationIfNeeded()
+        @unknown default:
+            stopUpdatingLocationIfNeeded()
         }
+    }
+
+    private func startUpdatingLocationIfNeeded() {
+        guard !isUpdatingLocation else { return }
+        isUpdatingLocation = true
+        locationManager.startUpdatingLocation()
+    }
+
+    private func stopUpdatingLocationIfNeeded() {
+        guard isUpdatingLocation else { return }
+        isUpdatingLocation = false
+        locationManager.stopUpdatingLocation()
     }
 
     public func locationManagerDidChangeAuthorization(_: CLLocationManager) {

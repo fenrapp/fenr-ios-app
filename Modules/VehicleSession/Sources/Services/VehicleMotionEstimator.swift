@@ -168,6 +168,12 @@ public struct VehicleMotionEstimator: Sendable {
         didRefreshBiasThisSession = false
         isZeroRequested = false
     }
+
+    func remainingFreshnessDuration(for date: Date) -> Duration? {
+        let age = now().timeIntervalSince(date)
+        guard age.isFinite, age >= .zero, age < maximumSampleAge else { return nil }
+        return .seconds(maximumSampleAge - age)
+    }
 }
 
 private extension VehicleMotionEstimator {
@@ -378,8 +384,7 @@ private extension VehicleMotionEstimator {
     }
 
     func isFresh(_ date: Date) -> Bool {
-        let age = now().timeIntervalSince(date)
-        return age >= .zero && age <= maximumSampleAge
+        remainingFreshnessDuration(for: date) != nil
     }
 
     mutating func resetTracking() {

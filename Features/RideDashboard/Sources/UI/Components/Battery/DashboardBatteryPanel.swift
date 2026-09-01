@@ -1,41 +1,35 @@
 import DesignSystem
-import SettingsDomain
 import SwiftUI
 
 struct DashboardBatteryPanel: View {
     let state: RideDashboardViewState.Battery
-    let displayMode: DashboardBatteryIndicatorMode
+    let showsEstimatedRange: Bool
     let estimatedRange: DashboardRangeViewData.Summary?
 
     @State private var showsRangeExplanation = false
 
     init(
         state: RideDashboardViewState.Battery,
-        displayMode: DashboardBatteryIndicatorMode = .percentage,
+        showsEstimatedRange: Bool = false,
         estimatedRange: DashboardRangeViewData.Summary? = nil
     ) {
         self.state = state
-        self.displayMode = displayMode
+        self.showsEstimatedRange = showsEstimatedRange
         self.estimatedRange = estimatedRange
     }
 
     var body: some View {
         Group {
-            switch displayMode {
-            case .percentage:
-                percentageIndicator
-            case .estimatedRange:
-                if let estimatedRange {
-                    Button {
-                        showsRangeExplanation = true
-                    } label: {
-                        estimatedRangeIndicator(estimatedRange)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityHint("Shows how the estimate is calculated")
-                } else {
-                    percentageIndicator
+            if showsEstimatedRange, let estimatedRange {
+                Button {
+                    showsRangeExplanation = true
+                } label: {
+                    estimatedRangeIndicator(estimatedRange)
                 }
+                .buttonStyle(.plain)
+                .accessibilityHint("Shows how the estimate is calculated")
+            } else {
+                percentageIndicator
             }
         }
         .alert("Estimated range", isPresented: $showsRangeExplanation) {

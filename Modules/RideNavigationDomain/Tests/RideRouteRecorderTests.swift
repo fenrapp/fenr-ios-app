@@ -23,7 +23,7 @@ struct RideRouteRecorderTests {
     }
 
     @Test
-    func inaccurateLocationsAreIgnored() {
+    func inaccurateLocationsDoNotCreateARecordedRoute() {
         let start = Date(timeIntervalSince1970: 1_000)
         var recorder = RideRouteRecorder()
         recorder.start(at: start)
@@ -35,7 +35,55 @@ struct RideRouteRecorderTests {
             )
         )
 
-        #expect(recorder.snapshot(at: start).route?.points.isEmpty == true)
+        #expect(recorder.snapshot(at: start).route == nil)
+        #expect(recorder.finish(at: start.addingTimeInterval(10)) == nil)
+        #expect(recorder.phase == .finished)
+    }
+
+    @Test
+    func oneAcceptedPointCreatesARecordedRoute() throws {
+        let start = Date(timeIntervalSince1970: 1_000)
+        let acceptedPoint = point(latitude: 41, longitude: 2, date: start)
+        var recorder = RideRouteRecorder()
+        recorder.start(at: start)
+        recorder.append(acceptedPoint)
+
+        let route = recorder.finish(at: start.addingTimeInterval(10))
+        let finishedRoute = try #require(route)
+
+        #expect(finishedRoute.segments.count == 1)
+        #expect(finishedRoute.points == [acceptedPoint])
+        #expect(recorder.phase == .finished)
+    }
+
+    @Test
+    func staleAcceptedPointAndLifecycleDatesRemainMonotonic() throws {
+        let start = Date(timeIntervalSince1970: 1_000)
+        let currentPoint = point(latitude: 41, longitude: 2, date: start.addingTimeInterval(10))
+        let stalePoint = point(latitude: 41.001, longitude: 2, date: start.addingTimeInterval(5))
+        var recorder = RideRouteRecorder()
+        recorder.start(at: start)
+        recorder.append(currentPoint)
+        recorder.append(stalePoint)
+
+        let recordingSnapshot = recorder.snapshot(at: start.addingTimeInterval(5))
+        let recordingRoute = try #require(recordingSnapshot.route)
+        #expect(recordingRoute.points == [currentPoint, stalePoint])
+        #expect(recordingRoute.updatedAt == start.addingTimeInterval(10))
+        #expect(recordingSnapshot.activeElapsedSeconds == 10)
+
+        recorder.pause(at: start.addingTimeInterval(7))
+        let pausedSnapshot = recorder.snapshot(at: start.addingTimeInterval(7))
+        #expect(pausedSnapshot.route?.updatedAt == start.addingTimeInterval(10))
+        #expect(pausedSnapshot.activeElapsedSeconds == 10)
+
+        recorder.resume(at: start.addingTimeInterval(8))
+        #expect(recorder.snapshot(at: start.addingTimeInterval(8)).activeElapsedSeconds == 10)
+
+        let route = recorder.finish(at: start.addingTimeInterval(9))
+        let finishedRoute = try #require(route)
+        #expect(finishedRoute.updatedAt == start.addingTimeInterval(10))
+        #expect(recorder.snapshot(at: start.addingTimeInterval(9)).activeElapsedSeconds == 10)
     }
 
     @Test

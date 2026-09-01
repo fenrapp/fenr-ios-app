@@ -18,7 +18,7 @@ enum ProductionAppDependencyContainerFactory {
         let bikeDataContainer = BikeDataDependencyContainer()
         let bleTraceRepository = BLETraceDependencyContainer().makeRepository()
         let client = bikeSDKContainer.makeBikeTelemetryClient(traceRecorder: bleTraceRepository)
-        let profileRepository = UserDefaultsBikeProfileRepository()
+        let profileRepository = UserDefaultsBikeProfileRepository(userDefaults: .standard)
         let repository = bikeDataContainer.makeBikeRepository(
             client: client,
             profileRepository: profileRepository
@@ -28,7 +28,7 @@ enum ProductionAppDependencyContainerFactory {
             pinDeriver: bikeDataContainer.makeBikePinDeriver()
         )
         let chargeControl = ChargeControlDependencyContainer().makeSession(repository: repository)
-        let settingsRepository = UserDefaultsAppSettingsRepository()
+        let settingsRepository = UserDefaultsAppSettingsRepository(userDefaults: .standard)
         let deviceSpeedRepository = CoreLocationDeviceSpeedRepository(
             locationManager: CLLocationManager()
         )
@@ -67,7 +67,8 @@ enum ProductionAppDependencyContainerFactory {
             bikeLockCredentialStore: makeBikeLockCredentialStore(),
             bikeLockAuthenticator: LocalAuthenticationBikeLockAuthenticator(),
             bikeLockCapabilityStore: bikeLockCapabilityStore,
-            allowsExperimentalBikeLockControl: true
+            allowsExperimentalBikeLockControl: true,
+            startupPreparer: NoOpAppStartupPreparer()
         )
     }
 
@@ -77,12 +78,18 @@ enum ProductionAppDependencyContainerFactory {
 
     private static func makeIncomingMapLinkStore() -> UserDefaultsIncomingMapLinkStore {
         (try? UserDefaultsIncomingMapLinkStore.shared())
-            ?? UserDefaultsIncomingMapLinkStore(userDefaults: .standard)
+            ?? UserDefaultsIncomingMapLinkStore(
+                userDefaults: .standard,
+                encoder: JSONEncoder(),
+                decoder: JSONDecoder()
+            )
     }
 
     private static func makeRideTripRepository() -> SwiftDataRideTripRepository {
         do {
-            return try SwiftDataRideTripRepository(
+            let modelContainer = try SwiftDataRideTripRepository.makeModelContainer()
+            return SwiftDataRideTripRepository(
+                modelContainer: modelContainer,
                 mapper: RideTripRecordMapper(),
                 energyBucketMapper: RideEnergyBucketRecordMapper()
             )

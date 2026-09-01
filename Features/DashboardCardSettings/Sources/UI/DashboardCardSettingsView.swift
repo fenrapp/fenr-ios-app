@@ -1,6 +1,8 @@
+import DesignSystem
 import SwiftUI
 
 public struct DashboardCardSettingsView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ObservedObject private var viewModel: DashboardCardSettingsViewModel
 
     public init(viewModel: DashboardCardSettingsViewModel) {
@@ -11,17 +13,7 @@ public struct DashboardCardSettingsView: View {
         List {
             Section {
                 ForEach(viewModel.viewState.fixedCards) { card in
-                    HStack(spacing: Constants.rowSpacing) {
-                        DashboardCardRowLabel(
-                            title: card.title,
-                            detail: card.detail,
-                            thumbnail: card.thumbnail
-                        )
-                        Spacer(minLength: Constants.minimumSpacer)
-                        Image(systemName: "lock.fill")
-                            .foregroundStyle(.secondary)
-                            .accessibilityLabel("Locked")
-                    }
+                    fixedRow(card)
                     .moveDisabled(true)
                 }
             } header: {
@@ -33,17 +25,15 @@ public struct DashboardCardSettingsView: View {
             Section {
                 ForEach(sectionRowsBinding, editActions: .move) { row in
                     let section = row.wrappedValue
-                    HStack(spacing: Constants.rowSpacing) {
+                    DashboardCardVisibilityRow(
+                        title: section.title,
+                        isEnabled: section.isVisibilityEnabled,
+                        disabledHint: section.disabledVisibilityHint,
+                        isVisible: visibilityBinding(for: section)
+                    ) {
                         sectionLabel(section)
-                        DashboardCardVisibilityToggle(
-                            title: section.title,
-                            isEnabled: section.isVisibilityEnabled,
-                            disabledHint: section.disabledVisibilityHint,
-                            isVisible: visibilityBinding(for: section)
-                        )
                     }
                     .moveDisabled(false)
-                    .accessibilityElement(children: .contain)
                 }
             } header: {
                 Text("Riding Cards")
@@ -77,6 +67,41 @@ public struct DashboardCardSettingsView: View {
     }
 
     @ViewBuilder
+    private func fixedRow(_ card: DashboardCardFixedRowViewData) -> some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
+                fixedRowLabel(card)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                HStack {
+                    Spacer(minLength: DesignSpace.extraSmall)
+                    fixedRowLock
+                }
+            }
+        } else {
+            HStack(spacing: DesignSpace.extraSmall) {
+                fixedRowLabel(card)
+                Spacer(minLength: DesignSpace.extraSmall)
+                fixedRowLock
+            }
+        }
+    }
+
+    private func fixedRowLabel(_ card: DashboardCardFixedRowViewData) -> some View {
+        DashboardCardRowLabel(
+            title: card.title,
+            detail: card.detail,
+            thumbnail: card.thumbnail
+        )
+    }
+
+    private var fixedRowLock: some View {
+        Image(systemName: "lock.fill")
+            .foregroundStyle(.secondary)
+            .accessibilityLabel("Locked")
+    }
+
+    @ViewBuilder
     private func sectionLabel(_ section: DashboardCardSectionRowViewData) -> some View {
         if section.pages.isEmpty {
             DashboardCardRowLabel(
@@ -101,8 +126,4 @@ public struct DashboardCardSettingsView: View {
         }
     }
 
-    private enum Constants {
-        static let rowSpacing: CGFloat = 8
-        static let minimumSpacer: CGFloat = 8
-    }
 }

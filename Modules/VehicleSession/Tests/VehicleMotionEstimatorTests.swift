@@ -604,6 +604,44 @@ struct VehicleMotionEstimatorTests {
 
         #expect(result.snapshot.availability == .stale)
     }
+
+    @Test("Current samples retain the full freshness lifetime")
+    func remainingFreshnessDurationUsesFullLifetimeForCurrentSample() {
+        let estimator = makeEstimator()
+
+        #expect(estimator.remainingFreshnessDuration(for: now) == .milliseconds(750))
+    }
+
+    @Test("Elapsed sample age is subtracted from freshness")
+    func remainingFreshnessDurationSubtractsElapsedAge() {
+        let estimator = makeEstimator()
+
+        #expect(
+            estimator.remainingFreshnessDuration(for: now.addingTimeInterval(-0.5))
+                == .milliseconds(250)
+        )
+    }
+
+    @Test("Future samples have no remaining freshness")
+    func remainingFreshnessDurationRejectsFutureSample() {
+        let estimator = makeEstimator()
+
+        #expect(estimator.remainingFreshnessDuration(for: now.addingTimeInterval(0.1)) == nil)
+    }
+
+    @Test("Samples at the freshness boundary are expired")
+    func remainingFreshnessDurationRejectsExactBoundary() {
+        let estimator = makeEstimator()
+
+        #expect(estimator.remainingFreshnessDuration(for: now.addingTimeInterval(-0.75)) == nil)
+    }
+
+    @Test("Samples beyond the freshness boundary are expired")
+    func remainingFreshnessDurationRejectsExpiredSample() {
+        let estimator = makeEstimator()
+
+        #expect(estimator.remainingFreshnessDuration(for: now.addingTimeInterval(-0.8)) == nil)
+    }
 }
 
 private extension VehicleMotionEstimatorTests {

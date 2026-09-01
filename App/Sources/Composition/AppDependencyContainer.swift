@@ -88,6 +88,7 @@ struct AppDependencyContainer {
     private let bikeLockAuthenticator: any BikeLockAuthenticating
     private let bikeLockCapabilityStore: any BikeLockCapabilityStateStoring
     private let allowsExperimentalBikeLockControl: Bool
+    private let startupPreparer: any AppStartupPreparing
 
     init(
         diagnosticsContainer: BikeDiagnosticsDependencyContainer,
@@ -111,6 +112,7 @@ struct AppDependencyContainer {
         bikeLockAuthenticator: any BikeLockAuthenticating,
         bikeLockCapabilityStore: any BikeLockCapabilityStateStoring,
         allowsExperimentalBikeLockControl: Bool,
+        startupPreparer: any AppStartupPreparing,
         initialOnboardingVIN: String? = nil,
         forceOnboarding: Bool = false
     ) {
@@ -138,21 +140,23 @@ struct AppDependencyContainer {
         self.bikeLockAuthenticator = bikeLockAuthenticator
         self.bikeLockCapabilityStore = bikeLockCapabilityStore
         self.allowsExperimentalBikeLockControl = allowsExperimentalBikeLockControl
+        self.startupPreparer = startupPreparer
     }
 
-    func makeRootDependencies() -> AppRootDependencies {
+    func makeRootDependencies(opensRideNavigationOnLaunch: Bool = false) -> AppRootDependencies {
         let setupFlow = BikeSetupFlowController(
             useCases: makeBikeProfileUseCases(),
             forceOnboarding: forceOnboarding
         )
-        let sessionController = BikeSessionController(
-            useCases: .init(
-                startRepository: .init(repository: session.repository),
-                stopRepository: .init(repository: session.repository),
-                connectToBike: .init(repository: session.repository),
-                disconnectFromBike: .init(repository: session.repository)
-            )
+        let onboardingViewModel = makeOnboardingViewModel { vin in
+            setupFlow.complete(vin: vin)
+        }
+        let router = makeRootRouter(
+            setupFlow: setupFlow,
+            onboardingViewModel: onboardingViewModel,
+            opensRideNavigationOnLaunch: opensRideNavigationOnLaunch
         )
+        let sessionController = makeSessionController()
         let bikeLiveActivityController = makeBikeLiveActivityController()
         let rideDashboardFactory = AppRideDashboardFeatureFactory(
             container: dashboardContainer,
@@ -174,9 +178,7 @@ struct AppDependencyContainer {
             batteryHealthViewModel: makeBatteryHealthViewModel(session: session),
             bikeLockSettingsViewModel: makeBikeLockSettingsViewModel(),
             rideDashboardFactory: rideDashboardFactory,
-            onboardingViewModel: makeOnboardingViewModel { vin in
-                setupFlow.complete(vin: vin)
-            },
+            onboardingViewModel: onboardingViewModel,
             appSettingsViewModel: makeAppSettingsViewModel(),
             dashboardCardSettingsViewModel: makeDashboardCardSettingsViewModel(),
             powerModeSettingsViewModel: makePowerModeSettingsViewModel(),
@@ -186,17 +188,17 @@ struct AppDependencyContainer {
                 observeDeviceSpeed: ObserveDeviceSpeedUseCase(repository: deviceSpeedRepository),
                 settingsRepository: settingsRepository
             ),
-            incomingMapLinkStore: incomingMapLinkStore,
             setupFlow: setupFlow,
+            router: router,
             lifecycleController: AppLifecycleController(
                 sessionController: sessionController,
                 setupFlow: setupFlow,
                 bikeLiveActivityController: bikeLiveActivityController,
                 rideSession: rideSession,
                 vehicleSession: vehicleSession,
-                bleTraceStoragePreparer: bleTraceLogRepository
-            ),
-            interfaceOrientationController: .shared
+                bleTraceStoragePreparer: bleTraceLogRepository,
+                startupPreparer: startupPreparer
+            )
         )
     }
 
@@ -209,7 +211,8 @@ struct AppDependencyContainer {
             updateSecurity: UpdateBikeLockSecurityUseCase(
                 repository: settingsRepository,
                 credentialStore: bikeLockCredentialStore
-            )
+            ),
+            mapper: BikeLockSettingsViewStateMapper()
         )
     }
 
@@ -301,6 +304,34 @@ struct AppDependencyContainer {
                 },
                 telemetryFreshnessInterval: FENRRuntimeConstants.Telemetry.freshnessInterval,
                 completeBatteryPercent: FENRRuntimeConstants.LiveActivity.completeBatteryPercent
+            )
+        )
+    }
+}
+
+private extension AppDependencyContainer {
+    func makeRootRouter(
+        setupFlow: BikeSetupFlowController,
+        onboardingViewModel: BikeOnboardingViewModel,
+        opensRideNavigationOnLaunch: Bool
+    ) -> AppRootRouter {
+        AppRootRouter(
+            setupFlow: setupFlow,
+            onboardingViewModel: onboardingViewModel,
+            incomingMapLinkStore: incomingMapLinkStore,
+            interfaceOrientationController: InterfaceOrientationController.shared,
+            animator: SwiftUIAppRootAnimator(),
+            opensRideNavigationOnLaunch: opensRideNavigationOnLaunch
+        )
+    }
+
+    func makeSessionController() -> BikeSessionController {
+        BikeSessionController(
+            useCases: .init(
+                startRepository: .init(repository: session.repository),
+                stopRepository: .init(repository: session.repository),
+                connectToBike: .init(repository: session.repository),
+                disconnectFromBike: .init(repository: session.repository)
             )
         )
     }

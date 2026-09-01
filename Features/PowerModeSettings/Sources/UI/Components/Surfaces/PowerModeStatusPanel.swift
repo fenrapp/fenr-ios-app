@@ -1,3 +1,4 @@
+import DesignSystem
 import SwiftUI
 
 struct PowerModeStatusPanel: View {
@@ -11,12 +12,12 @@ struct PowerModeStatusPanel: View {
             Label(connectionText, systemImage: "motorcycle")
             Label(capabilityText, systemImage: "bolt.fill")
             Label(statusText, systemImage: statusIsError ? "exclamationmark.triangle.fill" : "checkmark.shield")
-                .foregroundStyle(statusIsError ? Color.red : Color.secondary)
+                .foregroundStyle(statusIsError ? DesignColor.critical : DesignColor.secondaryText)
         }
         .font(.footnote)
     }
 
     private enum Constants {
-        static let spacing: CGFloat = 7
+        static let spacing = DesignSpace.extraSmall
     }
 }

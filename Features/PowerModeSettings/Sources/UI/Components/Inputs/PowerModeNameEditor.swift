@@ -1,6 +1,9 @@
+import DesignSystem
 import SwiftUI
 
 struct PowerModeNameEditor: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let mapIndex: Int
     let currentName: String
     let maximumLength: Int
@@ -38,37 +41,78 @@ struct PowerModeNameEditor: View {
                 .onSubmit(submit)
                 .disabled(!isEnabled)
 
-            HStack {
-                Text("One word · letters and numbers only")
-                Spacer()
-                Text("\(draft.count)/\(maximumLength)")
-                    .foregroundStyle(draft.count > maximumLength ? Color.red : Color.secondary)
-            }
+            nameGuidance
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(DesignColor.secondaryText)
 
             if let error {
                 Text(error)
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(DesignColor.critical)
+                    .accessibilityLabel("Error: \(error)")
             }
 
-            HStack {
-                Button("Save", action: submit)
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!canSave)
-
-                if !currentName.isEmpty {
-                    Button("Reset name", role: .destructive, action: reset)
-                        .buttonStyle(.bordered)
-                }
-            }
+            nameActions
         }
         .onChange(of: mapIndex) {
             draft = currentName
         }
         .onChange(of: currentName) {
             draft = currentName
+        }
+    }
+
+    @ViewBuilder
+    private var nameGuidance: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
+                Text("One word · letters and numbers only")
+                characterCount
+            }
+        } else {
+            HStack {
+                Text("One word · letters and numbers only")
+                Spacer()
+                characterCount
+            }
+        }
+    }
+
+    private var characterCount: some View {
+        Text("\(draft.count)/\(maximumLength)")
+            .foregroundStyle(
+                draft.count > maximumLength
+                    ? DesignColor.critical
+                    : DesignColor.secondaryText
+            )
+    }
+
+    @ViewBuilder
+    private var nameActions: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
+                saveButton
+                resetButton
+            }
+        } else {
+            HStack {
+                saveButton
+                resetButton
+            }
+        }
+    }
+
+    private var saveButton: some View {
+        Button("Save", action: submit)
+            .buttonStyle(.borderedProminent)
+            .disabled(!canSave)
+    }
+
+    @ViewBuilder
+    private var resetButton: some View {
+        if !currentName.isEmpty {
+            Button("Reset name", role: .destructive, action: reset)
+                .buttonStyle(.bordered)
         }
     }
 
@@ -82,6 +126,6 @@ struct PowerModeNameEditor: View {
     }
 
     private enum Constants {
-        static let spacing: CGFloat = 8
+        static let spacing = DesignSpace.extraSmall
     }
 }

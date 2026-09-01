@@ -16,7 +16,7 @@ public struct SurfacePanel<Content: View>: View {
         VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
             Text(title)
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignColor.secondaryText)
                 .textCase(.uppercase)
 
             content
@@ -36,6 +36,7 @@ public struct SurfacePanel<Content: View>: View {
 
 private enum SurfacePanelConstants {
     static let borderWidth: CGFloat = 1
+    static let previewWidth: CGFloat = 280
 }
 
 #Preview("Surface panel") {
@@ -44,4 +45,15 @@ private enum SurfacePanelConstants {
             .font(.title3.bold())
     }
     .padding()
+}
+
+#Preview("Surface panel - multiline content") {
+    SurfacePanel(title: "Battery health and charging summary") {
+        Text("Battery temperature is within the recommended operating range.")
+        Text("Last updated a few moments ago")
+            .foregroundStyle(DesignColor.secondaryText)
+    }
+    .frame(width: SurfacePanelConstants.previewWidth)
+    .padding()
+    .environment(\.dynamicTypeSize, .accessibility3)
 }

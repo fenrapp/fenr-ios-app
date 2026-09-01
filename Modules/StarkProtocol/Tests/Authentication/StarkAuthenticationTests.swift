@@ -56,4 +56,15 @@ struct StarkAuthenticationTests {
             )
         }
     }
+
+    @Test("V2 authentication rejects a VIN that normalizes to empty")
+    func versionTwoAuthenticationRejectsEmptyNormalizedVIN() {
+        #expect(throws: StarkProtocolError.invalidVIN) {
+            try StarkAuthenticationPayloadBuilder().buildVersionTwo(
+                vin: " - ",
+                pairingDate: StarkProtocolFixtures.fallbackPairingDate,
+                nonce: StarkProtocolFixtures.authenticationNonce
+            )
+        }
+    }
 }

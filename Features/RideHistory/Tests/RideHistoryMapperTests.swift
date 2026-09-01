@@ -6,7 +6,10 @@ import Testing
 
 @Suite("Ride history mapper")
 struct RideHistoryMapperTests {
-    private let mapper = RideHistoryMapper(locale: Locale(identifier: "en_US"))
+    private let mapper = RideHistoryMapper(
+        locale: Locale(identifier: "en_US"),
+        measurementMapperFactory: RideHistoryMeasurementMapperFactory()
+    )
 
     @Test("Maps summary rows and imperial measurements")
     func mapsList() {

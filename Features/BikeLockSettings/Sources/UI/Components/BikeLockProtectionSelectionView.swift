@@ -1,58 +1,66 @@
-import SettingsDomain
+import DesignSystem
 import SwiftUI
 
 struct BikeLockProtectionSelectionView: View {
-    let selection: BikeLockSecurityMode
-    let onSelect: (BikeLockSecurityMode) -> Void
-    let onSaveNewPIN: (BikeLockSecurityMode, String, String) -> Void
+    let options: [BikeLockProtectionOptionViewData]
+    let errorMessage: String?
+    let onSelect: (BikeLockProtectionOptionID) -> Void
+    let onSaveNewPIN: (BikeLockProtectionOptionID, String, String) -> Void
+    @AccessibilityFocusState private var isErrorFocused: Bool
 
     var body: some View {
-        List(options, id: \.self) { mode in
-            if mode.requiresPIN, !selection.requiresPIN {
-                NavigationLink {
-                    BikeLockNewPINView(title: "Create PIN") { pin, confirmation in
-                        onSaveNewPIN(mode, pin, confirmation)
+        List {
+            if let errorMessage {
+                Text(errorMessage)
+                    .foregroundStyle(DesignColor.critical)
+                    .accessibilityLabel("Error: \(errorMessage)")
+                    .accessibilityFocused($isErrorFocused)
+            }
+
+            ForEach(options) { option in
+                if option.requiresPINSetup {
+                    NavigationLink {
+                        BikeLockNewPINView(
+                            title: "Create PIN",
+                            errorMessage: errorMessage
+                        ) { pin, confirmation in
+                            onSaveNewPIN(option.id, pin, confirmation)
+                        }
+                    } label: {
+                        row(for: option)
                     }
-                } label: {
-                    row(for: mode)
+                } else {
+                    Button { onSelect(option.id) } label: { row(for: option) }
+                        .buttonStyle(.plain)
                 }
-            } else {
-                Button { onSelect(mode) } label: { row(for: mode) }
-                    .buttonStyle(.plain)
             }
         }
         .navigationTitle("Unlock Protection")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { focusErrorIfNeeded(errorMessage) }
+        .onChange(of: errorMessage) { _, newValue in focusErrorIfNeeded(newValue) }
     }
 
-    private let options: [BikeLockSecurityMode] = [.pinAndFaceID, .pin, .withoutPIN]
-
-    private func row(for mode: BikeLockSecurityMode) -> some View {
+    private func row(for option: BikeLockProtectionOptionViewData) -> some View {
         HStack {
-            VStack(alignment: .leading, spacing: Constants.spacing) {
-                Text(mode.title).foregroundStyle(.primary)
-                Text(mode.detail).font(.footnote).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
+                Text(option.title).foregroundStyle(DesignColor.primaryText)
+                Text(option.detail)
+                    .font(.footnote)
+                    .foregroundStyle(DesignColor.secondaryText)
             }
-            Spacer()
-            if mode == selection { Image(systemName: "checkmark.circle.fill") }
+            Spacer(minLength: DesignSpace.small)
+            if option.isSelected { Image(systemName: "checkmark.circle.fill") }
         }
         .frame(maxWidth: .infinity, minHeight: Constants.minimumHeight, alignment: .leading)
         .contentShape(Rectangle())
     }
 
-    private enum Constants {
-        static let spacing: CGFloat = 4
-        static let minimumHeight: CGFloat = 52
+    private func focusErrorIfNeeded(_ errorMessage: String?) {
+        isErrorFocused = errorMessage != nil
     }
-}
 
-private extension BikeLockSecurityMode {
-    var detail: String {
-        switch self {
-        case .pinAndFaceID: "Use Face ID first, with your PIN as a fallback."
-        case .pin: "Enter a 6-digit PIN whenever you unlock."
-        case .withoutPIN: "Lock and unlock immediately from the card."
-        case .notConfigured: ""
-        }
+    private enum Constants {
+        static let minimumHeight: CGFloat = 52
     }
 }

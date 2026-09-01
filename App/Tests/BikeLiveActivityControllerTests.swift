@@ -1,5 +1,6 @@
 import BikeDomain
 import Testing
+import TestSupport
 
 @MainActor
 @Suite("Bike Live Activity controller")
@@ -319,7 +320,9 @@ struct BikeLiveActivityUpdateTests {
 
         await fixture.controller.stop()
 
-        #expect(await fixture.repository.monitoringStopCount() == 1)
+        #expect(await waitUntil {
+            await fixture.repository.monitoringStopCount() == 1
+        })
     }
 
 }

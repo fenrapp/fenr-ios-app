@@ -5,6 +5,7 @@ import RideSession
 import RideSessionDomain
 import SettingsDomain
 import TestSupport
+import VehicleSession
 
 actor SessionBatteryHealthRepository: BikeBatteryHealthRepository {
     func startBatteryHealthMonitoring() async throws {}
@@ -14,8 +15,8 @@ actor SessionBatteryHealthRepository: BikeBatteryHealthRepository {
 }
 
 actor SessionBikeRepository: BikeRepository {
-    private let telemetryHub = TestEventHub<BikeTelemetry>()
-    private let connectionHub = TestEventHub<BikeConnection>()
+    private let telemetryHub = TestEventHub<BikeTelemetry>(bufferingPolicy: .unbounded)
+    private let connectionHub = TestEventHub<BikeConnection>(bufferingPolicy: .unbounded)
 
     func start() {}
     func stop() {}
@@ -28,8 +29,8 @@ actor SessionBikeRepository: BikeRepository {
     func observeConnection() async -> AsyncStream<BikeConnection> { await connectionHub.stream() }
 
     func waitForSubscribers() async {
-        async let telemetry: Void = telemetryHub.waitForSubscriber()
-        async let connection: Void = connectionHub.waitForSubscriber()
+        async let telemetry: Bool = telemetryHub.waitForSubscriber()
+        async let connection: Bool = connectionHub.waitForSubscriber()
         _ = await (telemetry, connection)
     }
 
@@ -52,12 +53,12 @@ actor SessionSettingsRepository: AppSettingsRepository {
 }
 
 actor SessionDeviceSpeedRepository: DeviceSpeedRepository {
-    private let hub = TestEventHub<DeviceSpeedSample>()
+    private let hub = TestEventHub<DeviceSpeedSample>(bufferingPolicy: .unbounded)
 
     func observeDeviceSpeed() async -> AsyncStream<DeviceSpeedSample> { await hub.stream() }
     func locationAuthorizationStatus() -> LocationAuthorizationStatus { .authorized }
     func requestLocationAuthorization() {}
-    func waitForSubscriber() async { await hub.waitForSubscriber() }
+    func waitForSubscriber() async { _ = await hub.waitForSubscriber() }
     func send(_ sample: DeviceSpeedSample) async { await hub.send(sample) }
 }
 
@@ -79,28 +80,94 @@ actor SessionProfileRepository: BikeProfileRepository {
 }
 
 actor SessionTripRepository: RideTripRepository {
+    enum Event: Equatable {
+        case save(UUID)
+        case complete(UUID)
+        case promote(UUID, String)
+        case delete(UUID)
+    }
+
     private var active: RideTrip?
     private var deleteSucceeds = true
     private var deletedTripIDs: [UUID] = []
+    private var recordedEvents: [Event] = []
+    private var completed: [RideTrip] = []
+    private var shouldBlockNextPreparation = false
+    private var shouldBlockNextCompletion = false
+    private var shouldBlockNextPromotion = false
+    private var preparationContinuation: CheckedContinuation<Void, Never>?
+    private var completionContinuation: CheckedContinuation<Void, Never>?
+    private var promotionContinuation: CheckedContinuation<Void, Never>?
 
-    func prepare(context _: BikeSessionContext) -> RideTrip? { active }
+    func prepare(context _: BikeSessionContext) async -> RideTrip? {
+        if shouldBlockNextPreparation {
+            shouldBlockNextPreparation = false
+            await withCheckedContinuation { preparationContinuation = $0 }
+        }
+        return active
+    }
     func saveActiveTrip(_ trip: RideTrip) -> Bool {
         active = trip
+        recordedEvents.append(.save(trip.id))
         return true
     }
-    func completeTrip(_ trip: RideTrip, at date: Date) -> Bool {
-        active = trip.completed(at: date)
+    func completeTrip(_ trip: RideTrip, at date: Date) async -> Bool {
+        recordedEvents.append(.complete(trip.id))
+        if shouldBlockNextCompletion {
+            shouldBlockNextCompletion = false
+            await withCheckedContinuation { completionContinuation = $0 }
+        }
+        let completedTrip = trip.completed(at: date)
+        active = nil
+        completed.append(completedTrip)
         return true
     }
     func loadCompletedTrips(vin _: String) -> [RideTrip] { [] }
     func deleteCompletedTrip(id: UUID, vin _: String) -> Bool {
         deletedTripIDs.append(id)
+        recordedEvents.append(.delete(id))
         return deleteSucceeds
     }
-    func promoteTemporaryIdentity(_: UUID, toVIN _: String) -> Bool { true }
+    func promoteTemporaryIdentity(_ temporaryID: UUID, toVIN vin: String) async -> Bool {
+        recordedEvents.append(.promote(temporaryID, vin))
+        if shouldBlockNextPromotion {
+            shouldBlockNextPromotion = false
+            await withCheckedContinuation { promotionContinuation = $0 }
+        }
+        return true
+    }
     func activeTrip() -> RideTrip? { active }
+    func completedTrips() -> [RideTrip] { completed }
+    func events() -> [Event] { recordedEvents }
+    func saveCount() -> Int {
+        recordedEvents.count { if case .save = $0 { true } else { false } }
+    }
+    func completionCount() -> Int {
+        recordedEvents.count { if case .complete = $0 { true } else { false } }
+    }
     func setDeleteSucceeds(_ succeeds: Bool) { deleteSucceeds = succeeds }
     func deletedIDs() -> [UUID] { deletedTripIDs }
+
+    func blockNextPreparation() { shouldBlockNextPreparation = true }
+    func hasBlockedPreparation() -> Bool { preparationContinuation != nil }
+    func resumePreparation() {
+        preparationContinuation?.resume()
+        preparationContinuation = nil
+    }
+
+    func blockNextCompletion() { shouldBlockNextCompletion = true }
+    func hasBlockedCompletion() -> Bool { completionContinuation != nil }
+    func resumeCompletion() {
+        completionContinuation?.resume()
+        completionContinuation = nil
+    }
+
+    func blockNextPromotion() { shouldBlockNextPromotion = true }
+    func hasBlockedPromotion() -> Bool { promotionContinuation != nil }
+    func resumePromotion() {
+        promotionContinuation?.resume()
+        promotionContinuation = nil
+    }
 }
 
 struct SessionIdentityResolver: RideVehicleIdentityResolving {
@@ -113,13 +180,17 @@ actor BlockingRideTripRepository: RideTripRepository {
     enum Event: Equatable {
         case save(UUID)
         case reset(UUID, UUID?)
+        case promote(UUID, String)
         case delete(UUID)
     }
 
     private var recordedEvents: [Event] = []
     private var shouldBlockNextSave = false
+    private var shouldBlockNextPromotion = false
     private var blockedSaveContinuation: CheckedContinuation<Void, Never>?
     private var blockedSaveStartedContinuation: CheckedContinuation<Void, Never>?
+    private var blockedPromotionContinuation: CheckedContinuation<Void, Never>?
+    private var blockedPromotionStartedContinuation: CheckedContinuation<Void, Never>?
     private var activeWrites = 0
     private var maximumActiveWrites = 0
 
@@ -153,7 +224,18 @@ actor BlockingRideTripRepository: RideTripRepository {
         recordedEvents.append(.delete(id))
         return true
     }
-    func promoteTemporaryIdentity(_: UUID, toVIN _: String) -> Bool { true }
+    func promoteTemporaryIdentity(_ temporaryID: UUID, toVIN vin: String) async -> Bool {
+        recordedEvents.append(.promote(temporaryID, vin))
+        if shouldBlockNextPromotion {
+            shouldBlockNextPromotion = false
+            blockedPromotionStartedContinuation?.resume()
+            blockedPromotionStartedContinuation = nil
+            await withCheckedContinuation { continuation in
+                blockedPromotionContinuation = continuation
+            }
+        }
+        return true
+    }
 
     func blockNextSave() {
         shouldBlockNextSave = true
@@ -171,6 +253,22 @@ actor BlockingRideTripRepository: RideTripRepository {
         blockedSaveContinuation = nil
     }
 
+    func blockNextPromotion() {
+        shouldBlockNextPromotion = true
+    }
+
+    func waitForBlockedPromotion() async {
+        guard blockedPromotionContinuation == nil else { return }
+        await withCheckedContinuation { continuation in
+            blockedPromotionStartedContinuation = continuation
+        }
+    }
+
+    func releaseBlockedPromotion() {
+        blockedPromotionContinuation?.resume()
+        blockedPromotionContinuation = nil
+    }
+
     func savedTripIDs() -> [UUID] {
         recordedEvents.compactMap {
             guard case .save(let id) = $0 else { return nil }
@@ -180,4 +278,103 @@ actor BlockingRideTripRepository: RideTripRepository {
 
     func events() -> [Event] { recordedEvents }
     func maximumConcurrentWrites() -> Int { maximumActiveWrites }
+}
+
+actor SessionVehicleSessionService: VehicleSessionService {
+    private var snapshot = VehicleSessionSnapshot()
+    private var continuations: [UUID: AsyncStream<VehicleSessionSnapshot>.Continuation] = [:]
+    private var subscriptions = 0
+    private var starts = 0
+    private var stops = 0
+
+    func observe() -> AsyncStream<VehicleSessionSnapshot> {
+        subscriptions += 1
+        return AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation in
+            let id = UUID()
+            continuations[id] = continuation
+            continuation.yield(snapshot)
+            continuation.onTermination = { [weak self] _ in
+                Task { await self?.removeContinuation(id) }
+            }
+        }
+    }
+
+    func start() { starts += 1 }
+    func stop() { stops += 1 }
+    func refreshBikeStatus() {}
+    func zeroBikeAttitude() {}
+    func setBatteryHealthMonitoringRequired(_: Bool, consumerID _: UUID) {}
+    func setLocationMonitoringRequired(_: Bool, consumerID _: UUID) {}
+
+    func send(_ snapshot: VehicleSessionSnapshot) {
+        self.snapshot = snapshot
+        continuations.values.forEach { $0.yield(snapshot) }
+    }
+
+    func subscriptionCounts() -> (total: Int, active: Int) {
+        (subscriptions, continuations.count)
+    }
+
+    private func removeContinuation(_ id: UUID) {
+        continuations[id] = nil
+    }
+}
+
+actor SessionSleepController {
+    private let ignoresCancellation: Bool
+    private var requestedDurations: [Duration] = []
+    private var waiters: [UUID: CheckedContinuation<Void, any Error>] = [:]
+    private var cancelledIdentifiers: Set<UUID> = []
+
+    init(ignoresCancellation: Bool = false) {
+        self.ignoresCancellation = ignoresCancellation
+    }
+
+    func sleep(for duration: Duration) async throws {
+        let id = UUID()
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+                requestedDurations.append(duration)
+                if cancelledIdentifiers.remove(id) != nil, !ignoresCancellation {
+                    continuation.resume(throwing: CancellationError())
+                } else {
+                    waiters[id] = continuation
+                }
+            }
+        } onCancel: {
+            Task { await self.cancel(id) }
+        }
+    }
+
+    func hasPendingSleep() -> Bool { !waiters.isEmpty }
+    func durations() -> [Duration] { requestedDurations }
+
+    func resumeAll() {
+        let continuations = Array(waiters.values)
+        waiters.removeAll()
+        continuations.forEach { $0.resume() }
+    }
+
+    private func cancel(_ id: UUID) {
+        guard !ignoresCancellation else { return }
+        guard let continuation = waiters.removeValue(forKey: id) else {
+            cancelledIdentifiers.insert(id)
+            return
+        }
+        continuation.resume(throwing: CancellationError())
+    }
+}
+
+actor SessionCompletionProbe {
+    private var completions = 0
+
+    func complete() { completions += 1 }
+    func count() -> Int { completions }
+}
+
+actor SessionCallProbe {
+    private var calls = 0
+
+    func recordCall() { calls += 1 }
+    func count() -> Int { calls }
 }

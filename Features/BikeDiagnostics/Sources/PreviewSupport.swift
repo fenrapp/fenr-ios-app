@@ -100,9 +100,18 @@ private actor PreviewAppSettingsRepository: AppSettingsRepository {
 }
 
 private actor PreviewBikeRepository: BikeRepository {
-    private let telemetry = PreviewEventHub<BikeTelemetry>(replaysLatestValue: true)
-    private let connection = PreviewEventHub<BikeConnection>(replaysLatestValue: true)
-    private let debug = PreviewEventHub<BikeDebugEvent>(replaysLatestValue: true)
+    private let telemetry = PreviewEventHub<BikeTelemetry>(
+        bufferingPolicy: .bufferingNewest(Buffering.stateEventLimit),
+        replaysLatestValue: true
+    )
+    private let connection = PreviewEventHub<BikeConnection>(
+        bufferingPolicy: .bufferingNewest(Buffering.stateEventLimit),
+        replaysLatestValue: true
+    )
+    private let debug = PreviewEventHub<BikeDebugEvent>(
+        bufferingPolicy: .bufferingNewest(Buffering.debugEventLimit),
+        replaysLatestValue: true
+    )
     private var isSeeded = false
 
     func start() async {
@@ -173,6 +182,11 @@ private actor PreviewBikeRepository: BikeRepository {
             humidityRaw: 5_012,
             humidityPercent: 50.12
         )
+    }
+
+    private enum Buffering {
+        static let stateEventLimit = 1
+        static let debugEventLimit = 128
     }
 }
 

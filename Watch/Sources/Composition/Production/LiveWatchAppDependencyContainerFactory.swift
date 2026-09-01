@@ -1,7 +1,8 @@
-import BLETraceDomain
 import BikeData
 import BikeDomain
 import BikeSDK
+import BLETraceDomain
+import Foundation
 import SettingsData
 
 @MainActor
@@ -15,8 +16,8 @@ enum LiveWatchAppDependencyContainerFactory {
         )
         return WatchAppDependencyContainer(
             repository: LiveBikeRepositoryFactory.makeDefault(client: client),
-            profileRepository: UserDefaultsBikeProfileRepository(),
-            settingsRepository: UserDefaultsAppSettingsRepository(),
+            profileRepository: UserDefaultsBikeProfileRepository(userDefaults: .standard),
+            settingsRepository: UserDefaultsAppSettingsRepository(userDefaults: .standard),
             initialProfile: nil
         )
     }

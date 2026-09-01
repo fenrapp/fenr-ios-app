@@ -3,6 +3,7 @@ import ChargeControl
 import Foundation
 import RideSession
 import RideSessionDomain
+import RuntimeConfiguration
 import SettingsDomain
 import VehicleSession
 
@@ -14,8 +15,9 @@ enum RideDashboardPreviewFactory {
             mapper: RideDashboardMapperFactory.makeRideMapper(locale: .autoupdatingCurrent),
             cardLayoutMapper: DashboardCardLayoutMapper(),
             vehicleSession: PreviewVehicleSessionService(),
+            timing: .live,
             initialConnectionStabilityPeriod: .zero,
-            reconnectionGracePeriod: .seconds(30)
+            reconnectionGracePeriod: FENRRuntimeConstants.RideDashboard.reconnectionGracePeriod
         )
         viewModel.setPreviewState(state)
         return viewModel
@@ -255,7 +257,8 @@ private final class PreviewBikeLockCapabilityStore: BikeLockCapabilityStateStori
     }
 }
 
-private actor RideDashboardPreviewRepository: BikeRepository, BikeBatteryHealthRepository {
+private actor RideDashboardPreviewRepository: BikeRepository, BikeBatteryHealthRepository,
+    BikeChargePowerControlRepository {
     func start() async {}
     func stop() async {}
     func connect(vin _: String) async throws {}

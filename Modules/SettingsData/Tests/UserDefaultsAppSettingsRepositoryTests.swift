@@ -51,106 +51,6 @@ struct UserDefaultsAppSettingsRepositoryTests {
         #expect(await reloadedRepository.load() == expected)
     }
 
-    @Test("Decodes legacy settings with dashboard display defaults")
-    func decodesLegacySettings() async throws {
-        let suiteName = makeSuiteName()
-        let defaults = makeDefaults(suiteName: suiteName)
-        defaults.set(
-            try JSONSerialization.data(withJSONObject: [
-                "speedSource": "gps",
-                "measurementSystem": "metric",
-                "defaultBatteryPackCapacity": "sevenPointTwoKilowattHours",
-                "batteryPackCapacitiesByVIN": [:]
-            ]),
-            forKey: "fenr.app.settings"
-        )
-
-        let repository = UserDefaultsAppSettingsRepository(userDefaults: defaults)
-
-        #expect(await repository.load().dashboardProgressBarMode == .energy)
-        #expect(await repository.load().dashboardBatteryIndicatorMode == .percentage)
-        #expect(await repository.load().dashboardDeviceBatteryDisplayMode == .iconAndText)
-        #expect(!(await repository.load().showsDashboardTemperatures))
-        #expect(await repository.load().dashboardCardConfiguration == .init())
-        #expect(await repository.load().rideNavigation == .init())
-        #expect(await repository.load().powerModeNamesByVIN.isEmpty)
-    }
-
-    @Test("Migrates legacy dashboard phone battery display modes")
-    func migratesLegacyDeviceBatteryDisplayModes() async throws {
-        for (rawValue, expected) in [
-            ("icon", DashboardDeviceBatteryDisplayMode.iconAndText),
-            ("text", DashboardDeviceBatteryDisplayMode.textOnly)
-        ] {
-            let defaults = makeDefaults()
-            defaults.set(
-                try JSONSerialization.data(withJSONObject: [
-                    "dashboardDeviceBatteryDisplayMode": rawValue
-                ]),
-                forKey: "fenr.app.settings"
-            )
-
-            let settings = await UserDefaultsAppSettingsRepository(userDefaults: defaults).load()
-
-            #expect(settings.dashboardDeviceBatteryDisplayMode == expected)
-        }
-    }
-
-    @Test("Decodes legacy ride navigation settings with heading up")
-    func decodesLegacyRideNavigationSettings() async throws {
-        let suiteName = makeSuiteName()
-        let defaults = makeDefaults(suiteName: suiteName)
-        defaults.set(
-            try JSONSerialization.data(withJSONObject: [
-                "rideNavigation": [
-                    "avoidsTolls": true,
-                    "avoidsHighways": false,
-                    "preferredMapStyle": "standard"
-                ]
-            ]),
-            forKey: "fenr.app.settings"
-        )
-
-        let settings = await UserDefaultsAppSettingsRepository(userDefaults: defaults).load()
-
-        #expect(settings.rideNavigation.mapOrientation == .headingUp)
-        #expect(settings.rideNavigation.miniMapPosition == .topTrailing)
-        #expect(settings.rideNavigation.miniMapScale == .initial)
-        #expect(settings.rideNavigation.miniMapLayoutOrientation == .portrait)
-    }
-
-    @Test("Migrates a saved mini map corner to its normalized position")
-    func migratesLegacyMiniMapCorner() async throws {
-        let defaults = makeDefaults()
-        defaults.set(
-            try JSONSerialization.data(withJSONObject: [
-                "rideNavigation": ["miniMapCorner": "bottomLeading"]
-            ]),
-            forKey: "fenr.app.settings"
-        )
-
-        let settings = await UserDefaultsAppSettingsRepository(userDefaults: defaults).load()
-
-        #expect(settings.rideNavigation.miniMapPosition == MiniMapPosition(
-            horizontalFraction: 0.15,
-            verticalFraction: 0.65
-        ))
-    }
-
-    @Test("Clamps a mini map position to normalized screen coordinates")
-    func clampsMiniMapPositionToScreen() {
-        let position = MiniMapPosition(horizontalFraction: -0.4, verticalFraction: 1.8)
-
-        #expect(position.horizontalFraction == 0)
-        #expect(position.verticalFraction == 1)
-    }
-
-    @Test("Clamps the persisted mini map scale to its supported range")
-    func clampsMiniMapScale() {
-        #expect(MiniMapScale(0.2).value == MiniMapScale.minimumValue)
-        #expect(MiniMapScale(2).value == MiniMapScale.maximumValue)
-    }
-
     @Test("Persists power mode names independently by bike and map")
     func persistsPowerModeNames() async throws {
         let suiteName = makeSuiteName()
@@ -211,7 +111,7 @@ struct UserDefaultsAppSettingsRepositoryTests {
         let repository = UserDefaultsAppSettingsRepository(userDefaults: makeDefaults())
         let stream = await repository.observe()
         var iterator = stream.makeAsyncIterator()
-        _ = await iterator.next()
+        #expect(await iterator.next() == AppSettings())
         let metric = AppSettings(measurementSystem: .metric)
         let imperial = AppSettings(measurementSystem: .imperial)
 
@@ -221,6 +121,78 @@ struct UserDefaultsAppSettingsRepositoryTests {
         await repository.save(imperial)
 
         #expect(await iterator.next() == imperial)
+    }
+
+    @Test("Loads the legacy blob from the stable settings key without rewriting it")
+    func loadsLegacyBlobFromStableKey() async {
+        let suiteName = makeSuiteName()
+        let setupDefaults = makeDefaults(suiteName: suiteName)
+        setupDefaults.set(
+            AppSettingsPersistenceFixtures.legacySettingsData,
+            forKey: AppSettingsPersistenceFixtures.settingsKey
+        )
+        let repository = UserDefaultsAppSettingsRepository(
+            userDefaults: makeDefaults(suiteName: suiteName, clearsDomain: false)
+        )
+
+        let settings = await repository.load()
+        let verificationDefaults = makeDefaults(suiteName: suiteName, clearsDomain: false)
+
+        #expect(settings.speedSource == .gps)
+        #expect(settings.measurementSystem == .metric)
+        #expect(
+            verificationDefaults.data(forKey: AppSettingsPersistenceFixtures.settingsKey)
+                == AppSettingsPersistenceFixtures.legacySettingsData
+        )
+    }
+
+    @Test("Returns defaults for corrupt data without mutating the stored blob")
+    func returnsDefaultsForCorruptData() async {
+        let suiteName = makeSuiteName()
+        let setupDefaults = makeDefaults(suiteName: suiteName)
+        setupDefaults.set(
+            AppSettingsPersistenceFixtures.corruptSettingsData,
+            forKey: AppSettingsPersistenceFixtures.settingsKey
+        )
+        let repository = UserDefaultsAppSettingsRepository(
+            userDefaults: makeDefaults(suiteName: suiteName, clearsDomain: false)
+        )
+
+        #expect(await repository.load() == AppSettings())
+        let verificationDefaults = makeDefaults(suiteName: suiteName, clearsDomain: false)
+        #expect(
+            verificationDefaults.data(forKey: AppSettingsPersistenceFixtures.settingsKey)
+                == AppSettingsPersistenceFixtures.corruptSettingsData
+        )
+    }
+
+    @Test("Broadcasts the same saved settings to every observer")
+    func broadcastsSettingsToEveryObserver() async {
+        let repository = UserDefaultsAppSettingsRepository(userDefaults: makeDefaults())
+        let firstStream = await repository.observe()
+        let secondStream = await repository.observe()
+        var firstIterator = firstStream.makeAsyncIterator()
+        var secondIterator = secondStream.makeAsyncIterator()
+        #expect(await firstIterator.next() == AppSettings())
+        #expect(await secondIterator.next() == AppSettings())
+        let expected = AppSettings(measurementSystem: .metric)
+
+        await repository.save(expected)
+
+        #expect(await firstIterator.next() == expected)
+        #expect(await secondIterator.next() == expected)
+    }
+
+    @Test("A delayed observer receives only the latest pending settings")
+    func delayedObserverReceivesLatestPendingSettings() async {
+        let repository = UserDefaultsAppSettingsRepository(userDefaults: makeDefaults())
+        let stream = await repository.observe()
+        await repository.save(AppSettings(measurementSystem: .metric))
+        let expected = AppSettings(measurementSystem: .imperial)
+        await repository.save(expected)
+        var iterator = stream.makeAsyncIterator()
+
+        #expect(await iterator.next() == expected)
     }
 
     nonisolated private func makeSuiteName() -> String {

@@ -36,13 +36,13 @@ struct RideNavigationEnduroGuidanceTests {
 
         #expect(await waitUntil {
             fixture.viewModel.viewState.guidance?.text == "ENDURO · FOLLOW THE ARROW"
-                && fixture.viewModel.viewState.mapScene.userCoordinate == next
+                && fixture.viewModel.viewState.mapScene.userCoordinate == mapCoordinate(next)
                 && fixture.viewModel.viewState.mapScene.polylines.contains {
                     $0.role == .completed && $0.points.count >= 2
                 }
         })
         #expect(fixture.viewModel.viewState.activity == .following)
-        #expect(fixture.viewModel.viewState.mapScene.userCoordinate == next)
+        #expect(fixture.viewModel.viewState.mapScene.userCoordinate == mapCoordinate(next))
         #expect((fixture.viewModel.viewState.guidance?.rotationDegrees ?? .zero) < -80)
         #expect(!(await fixture.roadRouteCalculator.hasPendingRequest))
         #expect(fixture.viewModel.viewState.mapScene.displayStyle == .focus)
@@ -69,7 +69,7 @@ struct RideNavigationEnduroGuidanceTests {
         await fixture.deviceSpeedRepository.send(sample(start, date: date, courseDegrees: .zero))
         #expect(await waitUntil {
             fixture.viewModel.viewState.savedRoutes.count == 1
-                && fixture.viewModel.viewState.mapScene.userCoordinate == start
+                && fixture.viewModel.viewState.mapScene.userCoordinate == mapCoordinate(start)
         })
         fixture.viewModel.openSavedRoute(id: route.id)
         fixture.viewModel.startPreviewedRoute()
@@ -152,7 +152,7 @@ struct RideNavigationEnduroGuidanceTests {
         await fixture.deviceSpeedRepository.send(sample(start, date: date, courseDegrees: .zero))
         #expect(await waitUntil {
             fixture.viewModel.viewState.savedRoutes.count == 1
-                && fixture.viewModel.viewState.mapScene.userCoordinate == start
+                && fixture.viewModel.viewState.mapScene.userCoordinate == mapCoordinate(start)
         })
         fixture.viewModel.openSavedRoute(id: route.id)
         fixture.viewModel.startPreviewedRoute()
@@ -205,5 +205,12 @@ struct RideNavigationEnduroGuidanceTests {
         longitude: Double = 2
     ) -> GeographicCoordinate {
         GeographicCoordinate(latitudeDegrees: latitude, longitudeDegrees: longitude)!
+    }
+
+    private func mapCoordinate(_ coordinate: GeographicCoordinate) -> NavigationMapCoordinate? {
+        NavigationMapCoordinate(
+            latitudeDegrees: coordinate.latitudeDegrees,
+            longitudeDegrees: coordinate.longitudeDegrees
+        )
     }
 }

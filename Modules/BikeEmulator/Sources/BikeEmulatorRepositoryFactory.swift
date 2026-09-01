@@ -1,3 +1,4 @@
+import AsyncSupport
 import BikeDomain
 
 public enum BikeEmulatorRepositoryFactory {
@@ -6,30 +7,62 @@ public enum BikeEmulatorRepositoryFactory {
         powerModePreset: BikeEmulatorPowerModePreset = .standard,
         activeMap: Int = 4
     ) -> BikeEmulatorRepository {
+        make(
+            scenario: scenario,
+            powerModePreset: powerModePreset,
+            activeMap: activeMap,
+            runtime: .live
+        )
+    }
+
+    static func make(
+        scenario: BikeEmulatorScenario,
+        powerModePreset: BikeEmulatorPowerModePreset,
+        activeMap: Int,
+        runtime: BikeEmulatorRuntime
+    ) -> BikeEmulatorRepository {
         BikeEmulatorRepository(
             scenario: scenario,
             powerModePreset: powerModePreset,
             activeMapNumber: activeMap,
             channels: BikeEmulatorChannels(
-                telemetry: BikeEmulatorEventHub<BikeTelemetry>(replaysLatestValue: true),
-                connection: BikeEmulatorEventHub<BikeConnection>(replaysLatestValue: true),
-                imu: BikeEmulatorEventHub<BikeIMUSample>(replaysLatestValue: false),
-                debugEvent: BikeEmulatorEventHub<BikeDebugEvent>(replaysLatestValue: true),
-                batteryHealth: BikeEmulatorEventHub<BikeBatteryHealth>(replaysLatestValue: true),
+                telemetry: makeStateEventHub(),
+                connection: makeStateEventHub(),
+                imu: makeStateEventHub(replaysLatestValue: false),
+                debugEvent: AsyncEventHub(
+                    bufferingPolicy: .bufferingNewest(Buffering.debugEventLimit),
+                    replaysLatestValue: true
+                ),
+                batteryHealth: makeStateEventHub(),
                 capture: BikeEmulatorCaptureHub(),
-                discoveredBikes: BikeEmulatorEventHub<[DiscoveredBike]>(replaysLatestValue: true)
+                discoveredBikes: makeStateEventHub()
             ),
-            powerCalculator: BikePowerTelemetryCalculator()
+            powerCalculator: BikePowerTelemetryCalculator(),
+            runtime: runtime
         )
+    }
+
+    private static func makeStateEventHub<Value: Sendable>(
+        replaysLatestValue: Bool = true
+    ) -> AsyncEventHub<Value> {
+        AsyncEventHub(
+            bufferingPolicy: .bufferingNewest(Buffering.stateEventLimit),
+            replaysLatestValue: replaysLatestValue
+        )
+    }
+
+    private enum Buffering {
+        static let stateEventLimit = 1
+        static let debugEventLimit = 128
     }
 }
 
 struct BikeEmulatorChannels {
-    let telemetry: BikeEmulatorEventHub<BikeTelemetry>
-    let connection: BikeEmulatorEventHub<BikeConnection>
-    let imu: BikeEmulatorEventHub<BikeIMUSample>
-    let debugEvent: BikeEmulatorEventHub<BikeDebugEvent>
-    let batteryHealth: BikeEmulatorEventHub<BikeBatteryHealth>
+    let telemetry: AsyncEventHub<BikeTelemetry>
+    let connection: AsyncEventHub<BikeConnection>
+    let imu: AsyncEventHub<BikeIMUSample>
+    let debugEvent: AsyncEventHub<BikeDebugEvent>
+    let batteryHealth: AsyncEventHub<BikeBatteryHealth>
     let capture: BikeEmulatorCaptureHub
-    let discoveredBikes: BikeEmulatorEventHub<[DiscoveredBike]>
+    let discoveredBikes: AsyncEventHub<[DiscoveredBike]>
 }

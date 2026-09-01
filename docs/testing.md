@@ -26,18 +26,54 @@ Prioritize changes to:
 ## Commands
 
 ```sh
-xcodegen generate
+.xcodegen/generate-local.sh
 swiftlint lint --strict
-FENR_SIMULATOR='<an installed iOS Simulator name>'
+FENR_IOS_SIMULATOR='iPhone 17'
+FENR_WATCH_SIMULATOR='Apple Watch Series 11 (46mm)'
 xcodebuild -project FENR.xcodeproj -scheme FENR \
-  -destination "platform=iOS Simulator,name=$FENR_SIMULATOR" test
+  -destination "platform=iOS Simulator,name=$FENR_IOS_SIMULATOR,OS=26.5" test
 ```
 
-For UI work, also build `FENRDebug` and inspect the intended orientation/device in the simulator.
+The reproducible local baseline uses Xcode 26.6, iPhone 17 with iOS 26.5, and Apple Watch Series 11 (46mm) with watchOS 26.5.
+
+For UI work, also build `FENRDebug` without signing and inspect the intended orientation/device in the simulator.
+
+```sh
+xcodebuild -project FENR.xcodeproj -scheme FENRDebug \
+  -destination "platform=iOS Simulator,name=$FENR_IOS_SIMULATOR,OS=26.5" \
+  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+```
 
 For Watch changes, build `FENRWatchDebug` with an installed watchOS runtime and inspect both the ride and charging states. The Watch dashboard test target is `WatchDashboardTests`.
 
 ```sh
-xcodebuild -project FENR.xcodeproj -scheme WatchDashboard \
-  -destination "platform=watchOS Simulator,name=$FENR_WATCH_SIMULATOR" test
+xcodebuild -project FENR.xcodeproj -scheme FENRWatchDebug \
+  -destination "platform=watchOS Simulator,name=$FENR_WATCH_SIMULATOR,OS=26.5" \
+  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test
+```
+
+The debug Watch app starts in the emulator's charging scenario. After building,
+use the Watch simulator UDID reported by `xcrun simctl list devices available`
+to launch the default or an explicit dashboard scenario. Unknown or malformed
+scenario values also fall back to charging.
+
+```sh
+FENR_WATCH_SIMULATOR_ID='<watch-simulator-udid>'
+xcrun simctl launch --terminate-running-process \
+  "$FENR_WATCH_SIMULATOR_ID" com.fenr.watch.debug
+xcrun simctl launch --terminate-running-process \
+  "$FENR_WATCH_SIMULATOR_ID" com.fenr.watch.debug -debugScenario=riding
+xcrun simctl launch --terminate-running-process \
+  "$FENR_WATCH_SIMULATOR_ID" com.fenr.watch.debug -debugScenario=charging
+```
+
+Before handoff, validate both production release schemes without signing:
+
+```sh
+xcodebuild -project FENR.xcodeproj -scheme FENR -configuration Release \
+  -destination "platform=iOS Simulator,name=$FENR_IOS_SIMULATOR,OS=26.5" \
+  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+xcodebuild -project FENR.xcodeproj -scheme FENRWatch -configuration Release \
+  -destination "platform=watchOS Simulator,name=$FENR_WATCH_SIMULATOR,OS=26.5" \
+  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
 ```

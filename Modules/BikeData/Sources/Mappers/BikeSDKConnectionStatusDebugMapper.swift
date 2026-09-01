@@ -13,28 +13,28 @@ public struct BikeSDKConnectionStatusDebugMapper: Sendable {
             "Bluetooth unauthorized"
         case .bluetoothPoweredOff:
             "Bluetooth powered off"
-        case .scanning(let vin):
-            "Scanning for \(vin)"
-        case .connecting(let vin, let peripheralName):
-            "Connecting to \(peripheralName ?? vin)"
-        case .discovering(let peripheralName):
-            "Discovering \(peripheralName ?? "bike")"
-        case .authenticating(let peripheralName):
-            "Authenticating \(peripheralName ?? "bike")"
-        case .authenticated(let peripheralName):
-            "Authenticated \(peripheralName ?? "bike")"
-        case .subscribed(let peripheralName):
-            "Subscribed \(peripheralName ?? "bike")"
-        case .receivingTelemetry(let peripheralName):
-            "Receiving telemetry from \(peripheralName ?? "bike")"
-        case .reconnecting(let vin, let attempt, let maximumAttempts):
-            "Reconnecting to \(vin) (\(attempt)/\(maximumAttempts))"
-        case .pairingResetRequired(let message):
-            "Pairing reset required: \(message)"
-        case .disconnected(let reason):
-            "Disconnected \(reason ?? "")"
-        case .failed(let message):
-            "Failed \(message)"
+        case .scanning:
+            "Scanning for bike"
+        case .connecting:
+            "Connecting to bike"
+        case .discovering:
+            "Discovering bike"
+        case .authenticating:
+            "Authenticating bike"
+        case .authenticated:
+            "Authenticated bike"
+        case .subscribed:
+            "Subscribed to bike"
+        case .receivingTelemetry:
+            "Receiving telemetry"
+        case .reconnecting(_, let attempt, let maximumAttempts):
+            "Reconnecting (\(attempt)/\(maximumAttempts))"
+        case .pairingResetRequired:
+            "Pairing reset required"
+        case .disconnected:
+            "Disconnected"
+        case .failed:
+            "Connection failed"
         }
     }
 }

@@ -19,12 +19,7 @@ public struct BikeBatteryHealth: Equatable, Sendable {
     }
 
     public var isFaultActive: Bool {
-        get {
-            isVehicleFaultActive || isBMSFaultActive
-        }
-        set {
-            isVehicleFaultActive = newValue
-        }
+        isVehicleFaultActive || isBMSFaultActive
     }
 
     public init(
@@ -32,7 +27,7 @@ public struct BikeBatteryHealth: Equatable, Sendable {
         stateOfHealth: HealthLevel = .unknown,
         dcBusVoltage: BatteryVoltage = .unknown,
         chargeState: BatteryChargeState = .unknown,
-        isFaultActive: Bool = false,
+        isVehicleFaultActive: Bool = false,
         positiveBMSFaultBits: UInt32 = 0,
         negativeBMSFaultBits: UInt32 = 0,
         cellVoltages: [BatteryCellVoltage] = [],
@@ -52,6 +47,6 @@ public struct BikeBatteryHealth: Equatable, Sendable {
         self.temperatures = temperatures
         self.chargingStatus = chargingStatus
         self.lastUpdated = lastUpdated
-        self.isVehicleFaultActive = isFaultActive
+        self.isVehicleFaultActive = isVehicleFaultActive
     }
 }

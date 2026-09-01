@@ -1,5 +1,3 @@
-import SettingsDomain
-
 public struct DashboardDeviceBatteryViewData: Equatable, Sendable {
     public enum Emphasis: Equatable, Sendable {
         case unavailable
@@ -12,19 +10,28 @@ public struct DashboardDeviceBatteryViewData: Equatable, Sendable {
     public let systemImage: String
     public let emphasis: Emphasis
     public let accessibilityLabel: String
-    public let displayMode: DashboardDeviceBatteryDisplayMode
+    public let isVisible: Bool
+    public let showsIcon: Bool
+    public let showsPercentage: Bool
+    public let displayModeAccessibilityHint: String
 
     public init(
         percentageText: String = "--%",
         systemImage: String = "battery.0percent",
         emphasis: Emphasis = .unavailable,
         accessibilityLabel: String = "iPhone battery unavailable",
-        displayMode: DashboardDeviceBatteryDisplayMode = .iconAndText
+        isVisible: Bool = true,
+        showsIcon: Bool = true,
+        showsPercentage: Bool = true,
+        displayModeAccessibilityHint: String = "Switches to percentage-only display"
     ) {
         self.percentageText = percentageText
         self.systemImage = systemImage
         self.emphasis = emphasis
         self.accessibilityLabel = accessibilityLabel
-        self.displayMode = displayMode
+        self.isVisible = isVisible
+        self.showsIcon = showsIcon
+        self.showsPercentage = showsPercentage
+        self.displayModeAccessibilityHint = displayModeAccessibilityHint
     }
 }

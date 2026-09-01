@@ -7,44 +7,6 @@ import TestSupport
 @MainActor
 @Suite("Dashboard card settings view model")
 struct DashboardCardSettingsViewModelTests {
-    @Test("Publishes fixed cards and configurable sections")
-    func publishesPresentationState() {
-        let state = DashboardCardSettingsViewStateMapper().map(
-            settings: .init(),
-            bikeLockCapability: .init()
-        )
-
-        #expect(state.fixedCards.map(\.title) == ["Speedometer", "Charging"])
-        #expect(state.sections.map(\.title) == [
-            "Ride Navigation", "Current Trip", "Efficiency", "Range", "System Health", "Ride Dynamics"
-        ])
-        #expect(state.sections.first?.detail == "Open ride navigation from the dashboard")
-    }
-
-    @Test("Publishes compatible Bike Lock and prevents hiding configured protection")
-    func publishesBikeLockAvailability() {
-        var settings = AppSettings()
-        let available = BikeLockCapabilityState(
-            vehicleIdentifier: "FENRTEST000000001",
-            isAvailable: true
-        )
-        let mapper = DashboardCardSettingsViewStateMapper()
-
-        let unconfigured = mapper.map(settings: settings, bikeLockCapability: available)
-        #expect(unconfigured.sections.first?.id == DashboardCardSectionID.bikeLock.rawValue)
-        #expect(unconfigured.sections.first?.isVisibilityEnabled == true)
-
-        settings.setBikeLockSettings(
-            .init(securityMode: .pin),
-            forVIN: "FENRTEST000000001"
-        )
-        settings.dashboardCardConfiguration.setSectionVisibility(false, id: .bikeLock)
-        let configured = mapper.map(settings: settings, bikeLockCapability: available)
-        let bikeLock = configured.section(id: DashboardCardSectionID.bikeLock.rawValue)
-        #expect(bikeLock?.isVisible == true)
-        #expect(bikeLock?.isVisibilityEnabled == false)
-    }
-
     @Test("Ignores attempts to hide configured Bike Lock")
     func keepsConfiguredBikeLockVisible() async {
         var settings = AppSettings()
@@ -57,10 +19,11 @@ struct DashboardCardSettingsViewModelTests {
             vehicleIdentifier: "FENRTEST000000001",
             isAvailable: true
         ))
-        let viewModel = makeViewModel(
+        let fixture = DashboardCardSettingsViewModelFixture(
             repository: repository,
             capabilityStore: capabilityStore
         )
+        let viewModel = fixture.viewModel
         viewModel.start()
         #expect(await waitUntil {
             viewModel.viewState.section(id: DashboardCardSectionID.bikeLock.rawValue) != nil
@@ -75,8 +38,10 @@ struct DashboardCardSettingsViewModelTests {
 
     @Test("Saves section order and visibility immediately")
     func savesSectionChanges() async {
-        let repository = DashboardCardSettingsRepository(saveDelay: .milliseconds(100))
-        let viewModel = makeViewModel(repository: repository)
+        let repository = DashboardCardSettingsRepository()
+        await repository.blockNextSave()
+        let fixture = DashboardCardSettingsViewModelFixture(repository: repository)
+        let viewModel = fixture.viewModel
         viewModel.start()
         #expect(await waitUntil { viewModel.viewState.sections.count == 6 })
 
@@ -88,14 +53,13 @@ struct DashboardCardSettingsViewModelTests {
             DashboardCardSectionID.systemHealth.rawValue,
             DashboardCardSectionID.rideDynamics.rawValue
         ])
+        await repository.waitForBlockedSave()
         viewModel.setSectionVisibility(false, id: DashboardCardSectionID.efficiency.rawValue)
 
         #expect(viewModel.viewState.sections.first?.id == DashboardCardSectionID.range.rawValue)
         #expect(viewModel.viewState.section(id: DashboardCardSectionID.efficiency.rawValue)?.isVisible == false)
-        #expect(await waitUntil { await repository.savedSettings.count == 1 })
-        await Task.yield()
-        #expect(viewModel.viewState.sections.first?.id == DashboardCardSectionID.range.rawValue)
-        #expect(viewModel.viewState.section(id: DashboardCardSectionID.efficiency.rawValue)?.isVisible == false)
+        #expect(await repository.savedSettings.isEmpty)
+        await repository.releaseBlockedSave()
         #expect(await waitUntil {
             let configuration = await repository.settings.dashboardCardConfiguration
             return configuration.sections.map(\.id).first(where: { $0 != .bikeLock }) == .range
@@ -110,8 +74,9 @@ struct DashboardCardSettingsViewModelTests {
 
     @Test("Reorders pages and refuses to hide the final visible page")
     func updatesPagesSafely() async {
-        let repository = DashboardCardSettingsRepository()
-        let viewModel = makeViewModel(repository: repository)
+        let fixture = DashboardCardSettingsViewModelFixture()
+        let repository = fixture.repository
+        let viewModel = fixture.viewModel
         viewModel.start()
         #expect(await waitUntil { viewModel.viewState.sections.count == 6 })
 
@@ -143,12 +108,16 @@ struct DashboardCardSettingsViewModelTests {
 
     @Test("Keeps one observation alive across nested settings screens")
     func sharesObservationLifecycle() async {
-        let repository = DashboardCardSettingsRepository()
-        let viewModel = makeViewModel(repository: repository)
+        let fixture = DashboardCardSettingsViewModelFixture()
+        let repository = fixture.repository
+        let capabilityStore = fixture.capabilityStore
+        let viewModel = fixture.viewModel
 
         viewModel.start()
         viewModel.start()
-        #expect(await waitUntil { await repository.observerCount == 1 })
+        #expect(await waitUntil {
+            await repository.observerCount == 1 && capabilityStore.observerCount == 1
+        })
 
         viewModel.stop()
         var externalSettings = AppSettings()
@@ -159,9 +128,12 @@ struct DashboardCardSettingsViewModelTests {
             viewModel.viewState.section(id: DashboardCardSectionID.range.rawValue)?.isVisible == false
         })
         #expect(await repository.observerCount == 1)
+        #expect(capabilityStore.observerCount == 1)
 
         viewModel.stop()
-        #expect(await waitUntil { await repository.observerCount == 0 })
+        #expect(await waitUntil {
+            await repository.observerCount == 0 && capabilityStore.observerCount == 0
+        })
     }
 
     @Test("Accepts later repository changes after a duplicate save is skipped")
@@ -173,7 +145,8 @@ struct DashboardCardSettingsViewModelTests {
         let repository = DashboardCardSettingsRepository(
             settings: AppSettings(dashboardCardConfiguration: initialConfiguration)
         )
-        let viewModel = makeViewModel(repository: repository)
+        let fixture = DashboardCardSettingsViewModelFixture(repository: repository)
+        let viewModel = fixture.viewModel
 
         viewModel.setSectionOrder(ids: initialConfiguration.sections.map { $0.id.rawValue })
         #expect(await waitUntil { await repository.saveCallCount == 1 })
@@ -189,18 +162,24 @@ struct DashboardCardSettingsViewModelTests {
         viewModel.stop()
     }
 
-    private func makeViewModel(
-        repository: DashboardCardSettingsRepository,
-        capabilityStore: DashboardCardSettingsBikeLockCapabilityStore = .init()
-    ) -> DashboardCardSettingsViewModel {
-        DashboardCardSettingsViewModel(
-            useCases: .init(
-                loadSettings: .init(repository: repository),
-                observeSettings: .init(repository: repository),
-                saveSettings: .init(repository: repository)
-            ),
-            mapper: DashboardCardSettingsViewStateMapper(),
-            bikeLockCapabilityStore: capabilityStore
-        )
+    @Test("Allows a pending save to finish after observation stops")
+    func stopAllowsPendingSaveToFinish() async {
+        let repository = DashboardCardSettingsRepository()
+        await repository.blockNextSave()
+        let fixture = DashboardCardSettingsViewModelFixture(repository: repository)
+        let viewModel = fixture.viewModel
+        viewModel.start()
+        #expect(await waitUntil { viewModel.viewState.sections.count == 6 })
+
+        viewModel.setSectionVisibility(false, id: DashboardCardSectionID.range.rawValue)
+        await repository.waitForBlockedSave()
+        viewModel.stop()
+
+        #expect(await repository.savedSettings.isEmpty)
+        await repository.releaseBlockedSave()
+        #expect(await waitUntil {
+            await repository.settings.dashboardCardConfiguration.section(id: .range).isVisible == false
+        })
+        #expect(await repository.savedSettings.count == 1)
     }
 }

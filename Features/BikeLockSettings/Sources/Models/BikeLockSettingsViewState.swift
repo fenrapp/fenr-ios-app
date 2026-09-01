@@ -1,37 +1,27 @@
-import SettingsDomain
-
 public struct BikeLockSettingsViewState: Equatable, Sendable {
     public let isAvailable: Bool
-    public let currentMode: BikeLockSecurityMode
+    public let currentModeTitle: String
+    public let canChangePIN: Bool
+    public let protectionOptions: [BikeLockProtectionOptionViewData]
     public let isWorking: Bool
     public let errorMessage: String?
     public let destination: BikeLockSettingsDestination?
 
     public init(
         isAvailable: Bool = false,
-        currentMode: BikeLockSecurityMode = .notConfigured,
+        currentModeTitle: String = "Not set up",
+        canChangePIN: Bool = false,
+        protectionOptions: [BikeLockProtectionOptionViewData] = [],
         isWorking: Bool = false,
         errorMessage: String? = nil,
         destination: BikeLockSettingsDestination? = nil
     ) {
         self.isAvailable = isAvailable
-        self.currentMode = currentMode
+        self.currentModeTitle = currentModeTitle
+        self.canChangePIN = canChangePIN
+        self.protectionOptions = protectionOptions
         self.isWorking = isWorking
         self.errorMessage = errorMessage
         self.destination = destination
-    }
-
-    public var currentModeTitle: String { currentMode.title }
-    public var canChangePIN: Bool { currentMode.requiresPIN }
-}
-
-public extension BikeLockSecurityMode {
-    var title: String {
-        switch self {
-        case .notConfigured: "Not set up"
-        case .withoutPIN: "No PIN"
-        case .pin: "PIN"
-        case .pinAndFaceID: "PIN + Face ID"
-        }
     }
 }

@@ -42,6 +42,22 @@ struct PowerTierSettingsMapperTests {
         #expect(connected.powerTier.isVerifyEnabled)
     }
 
+    @Test("Verification feedback does not replace detected tier status")
+    func verificationFeedbackDoesNotReplaceDetectedTierStatus() {
+        let state = mapper.map(
+            settings: AppSettings(),
+            locationAuthorizationStatus: .notDetermined,
+            profile: .init(
+                vin: syntheticVIN,
+                alphaEvidence: [.powerAboveStandard]
+            ),
+            verificationMessage: "Bike verification completed"
+        )
+
+        #expect(state.powerTier.status == "Tier mismatch: bike reports Alpha evidence")
+        #expect(state.powerTier.verificationMessage == "Bike verification completed")
+    }
+
     private func map(
         profile: BikeProfile,
         connection: BikeConnection = .init()

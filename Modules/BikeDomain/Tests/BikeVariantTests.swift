@@ -10,9 +10,9 @@ struct BikeVariantTests {
         #expect(BikeVariant(vin: "UDUSMTEST00000001") == .sm)
     }
 
-    @Test("Matches normalized VIN prefixes case-insensitively")
-    func matchesCaseInsensitively() {
-        #expect(BikeVariant(vin: "udusmtest00000001") == .sm)
+    @Test("Rejects VIN prefixes that are not canonical uppercase")
+    func requiresCanonicalCase() {
+        #expect(BikeVariant(vin: "udusmtest00000001") == .unknown)
     }
 
     @Test("Keeps unrecognized product prefixes forward compatible")

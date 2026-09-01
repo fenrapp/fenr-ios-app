@@ -80,7 +80,10 @@ struct DashboardEnergyProgressBar: View {
         case .dark:
             .init(regeneration: DesignColor.positive, consumption: DesignColor.warning)
         case .light:
-            .init(regeneration: Constants.lightRegeneration, consumption: Constants.lightConsumption)
+            .init(
+                regeneration: DashboardSemanticColor.lightProgressPositive,
+                consumption: DashboardSemanticColor.lightProgressWarning
+            )
         @unknown default:
             .init(regeneration: DesignColor.positive, consumption: DesignColor.warning)
         }
@@ -99,7 +102,5 @@ struct DashboardEnergyProgressBar: View {
         static let centerMarkerOpacity = 0.7
         static let centerColorOpacity = 0.32
         static let animationDuration = 0.32
-        static let lightRegeneration = Color(red: 0.04, green: 0.5, blue: 0.18)
-        static let lightConsumption = Color(red: 0.82, green: 0.32, blue: 0)
     }
 }

@@ -1,6 +1,6 @@
 import BikeDomain
 
-actor ChargeControlRepository: BikeBatteryHealthRepository {
+actor ChargeControlRepository: BikeChargePowerControlRepository {
     private var prepareCalls = 0
     private var powerWrites: [Int] = []
     private var targetWrites: [Int] = []
@@ -11,22 +11,20 @@ actor ChargeControlRepository: BikeBatteryHealthRepository {
     private var powerWriteWaiters: [CheckedContinuation<Void, Never>] = []
     private var currentPowerWatts = 1_000
     private var currentTargetPercent = 100
+    private let isFirmwareCompatible: Bool
     private let passesNoOpWrite: Bool
     private let preparationDelay: Duration?
     private var cancelledPreparations = 0
 
     init(
+        isFirmwareCompatible: Bool = true,
         passesNoOpWrite: Bool = true,
         preparationDelay: Duration? = nil
     ) {
+        self.isFirmwareCompatible = isFirmwareCompatible
         self.passesNoOpWrite = passesNoOpWrite
         self.preparationDelay = preparationDelay
     }
-
-    func startBatteryHealthMonitoring() async throws {}
-    func stopBatteryHealthMonitoring() async {}
-    func observeBatteryHealth() async -> AsyncStream<BikeBatteryHealth> { .init { _ in } }
-    func observeBatteryDatasetCaptures() async -> AsyncStream<BatteryDatasetCapture> { .init { _ in } }
 
     func prepareChargePowerControl(
         chargingStatus: BikeChargingStatus
@@ -94,7 +92,7 @@ actor ChargeControlRepository: BikeBatteryHealthRepository {
     private func snapshot(watts: Int, target: Int) -> BikeChargePowerControlSnapshot {
         .init(
             vcuFirmware: "1.12.0",
-            isFirmwareCompatible: true,
+            isFirmwareCompatible: isFirmwareCompatible,
             readRequestHex: "00 04",
             readResponseHex: "01 04",
             parsedConfig: .init(

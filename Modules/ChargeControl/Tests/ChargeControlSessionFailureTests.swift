@@ -6,6 +6,32 @@ import TestSupport
 @MainActor
 @Suite("Charge control failures")
 struct ChargeControlSessionFailureTests {
+    @Test("Incompatible firmware disables writes even when no-op passes")
+    func incompatibleFirmwareDisablesWritesEvenWhenNoOpPasses() async {
+        let repository = ChargeControlRepository(
+            isFirmwareCompatible: false,
+            passesNoOpWrite: true
+        )
+        let session = ChargeControlSessionTestFactory.make(
+            repository: repository,
+            debounceDelay: .milliseconds(10)
+        )
+
+        session.receive(ChargeControlFixtures.chargingHealth())
+        #expect(await waitUntil { session.state.phase == .failed })
+
+        #expect(session.state.isVisible)
+        #expect(!session.state.isEnabled)
+        #expect(session.state.status == "Unsupported firmware")
+        #expect(session.state.error == "VCU firmware is not compatible with charge control")
+
+        session.setPowerLimit(watts: 1_500)
+        session.setTarget(percent: 80)
+
+        #expect(await repository.writtenPowerValues().isEmpty)
+        #expect(await repository.writtenTargetValues().isEmpty)
+    }
+
     @Test("A failed no-op guard keeps writes disabled")
     func failedNoOpGuardDisablesWrites() async {
         let repository = ChargeControlRepository(passesNoOpWrite: false)

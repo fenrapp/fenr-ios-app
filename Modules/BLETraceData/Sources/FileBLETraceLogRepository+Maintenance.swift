@@ -1,6 +1,101 @@
+import BLETraceDomain
 import Foundation
 
 extension FileBLETraceLogRepository {
+    public func prepareExport(sessionID: UUID) async throws -> URL {
+        try Task.checkCancellation()
+        await prepareStorage()
+        try Task.checkCancellation()
+        guard hasPreparedStorage else { throw BLETraceRepositoryError.unableToExport }
+
+        let sourceURL: URL
+        let exportName: String
+        var activeSnapshot: ActiveSession?
+        if activeSession?.context.id == sessionID {
+            await drainPendingLines()
+            try Task.checkCancellation()
+            guard let session = activeSession, session.context.id == sessionID else {
+                throw BLETraceRepositoryError.sessionNotFound
+            }
+            try session.fileHandle.synchronize()
+            activeSnapshot = session
+            sourceURL = session.url
+            exportName = session.url.deletingPathExtension().lastPathComponent + ".jsonl"
+        } else if let stored = completedSessions.first(where: { $0.summary.id == sessionID }) {
+            sourceURL = stored.url
+            exportName = stored.summary.fileName
+        } else {
+            throw BLETraceRepositoryError.sessionNotFound
+        }
+
+        let destination = exportDirectory.appendingPathComponent(exportName)
+        do {
+            try Task.checkCancellation()
+            try Self.removeItemIfPresent(destination, fileManager: fileManager)
+            try fileManager.copyItem(at: sourceURL, to: destination)
+            try Task.checkCancellation()
+            if let activeSnapshot {
+                try appendSnapshotFooter(to: destination, session: activeSnapshot)
+            }
+            try Task.checkCancellation()
+            try Self.configureLogFile(destination, fileManager: fileManager)
+            return destination
+        } catch is CancellationError {
+            try? Self.removeItemIfPresent(destination, fileManager: fileManager)
+            throw CancellationError()
+        } catch {
+            try? Self.removeItemIfPresent(destination, fileManager: fileManager)
+            throw BLETraceRepositoryError.unableToExport
+        }
+    }
+
+    public func deleteSession(id: UUID) async throws {
+        try Task.checkCancellation()
+        await prepareStorage()
+        try Task.checkCancellation()
+        if activeSession?.context.id == id {
+            throw BLETraceRepositoryError.activeSessionCannotBeDeleted
+        }
+        guard let stored = completedSessions.first(where: { $0.summary.id == id }) else {
+            throw BLETraceRepositoryError.sessionNotFound
+        }
+        do {
+            try Self.removeExactExport(
+                named: stored.summary.fileName,
+                exportDirectory: exportDirectory,
+                fileManager: fileManager
+            )
+            try fileManager.removeItem(at: stored.url)
+        } catch {
+            reconcileCompletedSessionsFromDisk()
+            throw error
+        }
+        reconcileCompletedSessionsFromDisk()
+        await publishSessions()
+    }
+
+    public func deleteAllSessions() async throws {
+        try Task.checkCancellation()
+        await prepareStorage()
+        try Task.checkCancellation()
+        do {
+            for stored in completedSessions {
+                try Self.removeExactExport(
+                    named: stored.summary.fileName,
+                    exportDirectory: exportDirectory,
+                    fileManager: fileManager
+                )
+                try fileManager.removeItem(at: stored.url)
+            }
+            try Self.removeDirectoryContents(exportDirectory, fileManager: fileManager)
+        } catch {
+            reconcileCompletedSessionsFromDisk()
+            throw error
+        }
+        reconcileCompletedSessionsFromDisk()
+        await publishSessions()
+    }
+
     func appendSnapshotFooter(to url: URL, session: ActiveSession) throws {
         let snapshotAt = now()
         let input = FooterInput(
@@ -23,12 +118,18 @@ extension FileBLETraceLogRepository {
     }
 
     func pruneBeforeStartingSession() throws {
-        completedSessions = try Self.prune(
-            completedSessions,
-            configuration: configuration,
-            fileManager: fileManager,
-            reservingSessionSlot: true
-        )
+        do {
+            completedSessions = try Self.prune(
+                completedSessions,
+                configuration: configuration,
+                fileManager: fileManager,
+                exportDirectory: exportDirectory,
+                reservingSessionSlot: true
+            )
+        } catch {
+            reconcileCompletedSessionsFromDisk()
+            throw error
+        }
     }
 
     func reserveStorageForActiveSession() throws {
@@ -38,18 +139,17 @@ extension FileBLETraceLogRepository {
             let oldest = completedSessions.last {
             completedSessions.removeLast()
             retainedBytes -= oldest.summary.fileSizeBytes
-            try fileManager.removeItem(at: oldest.url)
-        }
-    }
-
-    func removeExistingExport(for id: UUID) throws {
-        guard fileManager.fileExists(atPath: exportDirectory.path) else { return }
-        let marker = id.uuidString.lowercased()
-        for url in try fileManager.contentsOfDirectory(
-            at: exportDirectory,
-            includingPropertiesForKeys: nil
-        ) where url.lastPathComponent.lowercased().contains(marker) {
-            try fileManager.removeItem(at: url)
+            do {
+                try Self.removeExactExport(
+                    named: oldest.summary.fileName,
+                    exportDirectory: exportDirectory,
+                    fileManager: fileManager
+                )
+                try fileManager.removeItem(at: oldest.url)
+            } catch {
+                reconcileCompletedSessionsFromDisk()
+                throw error
+            }
         }
     }
 }

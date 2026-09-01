@@ -6,6 +6,7 @@ import SettingsDomain
 public actor LiveVehicleSessionService: VehicleSessionService {
     let useCases: VehicleSessionUseCases
     let speedResolver: VehicleSpeedResolver
+    let sleep: @Sendable (Duration) async throws -> Void
     var motionEstimator: VehicleMotionEstimator
     var telemetry = BikeTelemetry()
     var connection = BikeConnection()
@@ -25,6 +26,9 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     var deviceSpeedExpiryTask: Task<Void, Never>?
     var locationConsumers: Set<UUID> = []
     var imuExpiryTask: Task<Void, Never>?
+    var imuMonitoringStartTask: Task<Void, Never>?
+    var imuMonitoringStartGeneration: Int?
+    var imuMonitoringGeneration = 0
     var isIMUMonitoring = false
     var motionCalibrationTask: Task<Void, Never>?
     var batteryHealthTask: Task<Void, Never>?
@@ -32,20 +36,25 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     var batteryHealthStopTask: Task<Void, Never>?
     var batteryHealthConsumers: Set<UUID> = []
     var powerModeRefreshTask: Task<Void, Never>?
+    var powerModeRefreshGeneration = 0
     var pendingPowerModeRefresh: VehiclePowerModeRefreshRequest?
     var visitedPowerModeIndex: Int?
     var didAttemptPowerModeBaseRefresh = false
     var didAttemptPowerModeTractionRefresh = false
     var observers: [UUID: AsyncStream<VehicleSessionSnapshot>.Continuation] = [:]
+    var isStopping = false
+    var shouldStartAfterStopping = false
 
     public init(
         useCases: VehicleSessionUseCases,
         speedResolver: VehicleSpeedResolver,
-        motionEstimator: VehicleMotionEstimator
+        motionEstimator: VehicleMotionEstimator,
+        sleep: @escaping @Sendable (Duration) async throws -> Void
     ) {
         self.useCases = useCases
         self.speedResolver = speedResolver
         self.motionEstimator = motionEstimator
+        self.sleep = sleep
     }
 
     deinit {
@@ -53,6 +62,7 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         deviceSpeedTask?.cancel()
         deviceSpeedExpiryTask?.cancel()
         imuExpiryTask?.cancel()
+        imuMonitoringStartTask?.cancel()
         motionCalibrationTask?.cancel()
         batteryHealthTask?.cancel()
         batteryHealthStartTask?.cancel()
@@ -72,12 +82,25 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     }
 
     public func start() {
+        guard !isStopping else {
+            shouldStartAfterStopping = true
+            return
+        }
         guard observationTasks.isEmpty else { return }
         observeSources()
     }
 
     public func stop() async {
-        observationTasks.forEach { $0.cancel() }
+        guard !isStopping else { return }
+        isStopping = true
+        shouldStartAfterStopping = false
+        imuMonitoringGeneration &+= 1
+        imuMonitoringStartTask?.cancel()
+        let tasksToDrain = observationTasks
+        tasksToDrain.forEach { $0.cancel() }
+        for task in tasksToDrain {
+            await task.value
+        }
         observationTasks.removeAll()
         deviceSpeedTask?.cancel()
         deviceSpeedTask = nil
@@ -87,6 +110,9 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         locationConsumers.removeAll()
         imuExpiryTask?.cancel()
         imuExpiryTask = nil
+        if let imuMonitoringStartTask {
+            await imuMonitoringStartTask.value
+        }
         if isIMUMonitoring {
             await useCases.stopIMUMonitoring.execute()
             isIMUMonitoring = false
@@ -111,13 +137,13 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         batteryHealthTask = nil
         batteryHealthMonitoringState = .inactive
         batteryHealth = .init()
-        powerModeRefreshTask?.cancel()
-        powerModeRefreshTask = nil
-        pendingPowerModeRefresh = nil
-        visitedPowerModeIndex = nil
-        didAttemptPowerModeBaseRefresh = false
-        didAttemptPowerModeTractionRefresh = false
+        resetPowerModeRefresh()
         publish()
+        isStopping = false
+        if shouldStartAfterStopping {
+            shouldStartAfterStopping = false
+            observeSources()
+        }
     }
 
     public func refreshBikeStatus() async {

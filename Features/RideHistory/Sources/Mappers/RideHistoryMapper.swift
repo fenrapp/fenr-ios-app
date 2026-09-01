@@ -5,9 +5,14 @@ import SettingsDomain
 public struct RideHistoryMapper: Sendable {
     let locale: Locale
     let durationStyle: Duration.TimeFormatStyle
+    let measurementMapperFactory: RideHistoryMeasurementMapperFactory
 
-    public init(locale: Locale) {
+    public init(
+        locale: Locale,
+        measurementMapperFactory: RideHistoryMeasurementMapperFactory
+    ) {
         self.locale = locale
+        self.measurementMapperFactory = measurementMapperFactory
         durationStyle = Duration.TimeFormatStyle(
             pattern: .hourMinute(padHourToLength: 2, roundSeconds: .towardZero)
         ).locale(locale)

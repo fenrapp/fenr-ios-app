@@ -30,11 +30,14 @@ public struct RideRouteRecorder: Sendable {
         guard phase == .recording else { return }
         guard shouldAppend(point) else { return }
         activeSegmentPoints.append(point)
-        updatedAt = point.timestamp ?? updatedAt
+        if let timestamp = point.timestamp {
+            updatedAt = effectiveDate(timestamp)
+        }
     }
 
     public mutating func pause(at date: Date) {
         guard phase == .recording else { return }
+        let date = effectiveDate(date)
         closeActiveSegment()
         accumulateActiveTime(at: date)
         activeStartedAt = nil
@@ -44,6 +47,7 @@ public struct RideRouteRecorder: Sendable {
 
     public mutating func resume(at date: Date) {
         guard phase == .paused else { return }
+        let date = effectiveDate(date)
         activeSegmentPoints = []
         activeStartedAt = date
         updatedAt = date
@@ -52,6 +56,7 @@ public struct RideRouteRecorder: Sendable {
 
     public mutating func finish(at date: Date) -> RideRoute? {
         guard phase == .recording || phase == .paused else { return nil }
+        let date = effectiveDate(date)
         if phase == .recording {
             closeActiveSegment()
             accumulateActiveTime(at: date)
@@ -75,27 +80,26 @@ public struct RideRouteRecorder: Sendable {
     }
 
     private var route: RideRoute? {
-        guard let id, let createdAt else { return nil }
+        makeRoute(segments: segments)
+    }
+
+    private var routeIncludingActiveSegment: RideRoute? {
+        let active = activeSegmentPoints.isEmpty
+            ? segments
+            : segments + [RideRouteSegment(points: activeSegmentPoints)]
+        return makeRoute(segments: active)
+    }
+
+    private func makeRoute(segments: [RideRouteSegment]) -> RideRoute? {
+        guard let id,
+              let createdAt,
+              segments.contains(where: { !$0.points.isEmpty }) else { return nil }
         return RideRoute(
             id: id,
             name: name,
             createdAt: createdAt,
             updatedAt: updatedAt,
             segments: segments
-        )
-    }
-
-    private var routeIncludingActiveSegment: RideRoute? {
-        guard let id, let createdAt else { return nil }
-        let active = activeSegmentPoints.isEmpty
-            ? segments
-            : segments + [RideRouteSegment(points: activeSegmentPoints)]
-        return RideRoute(
-            id: id,
-            name: name,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-            segments: active
         )
     }
 
@@ -112,7 +116,14 @@ public struct RideRouteRecorder: Sendable {
 
     private func activeElapsed(at date: Date) -> TimeInterval {
         guard phase == .recording, let activeStartedAt else { return accumulatedActiveSeconds }
-        return accumulatedActiveSeconds + max(date.timeIntervalSince(activeStartedAt), .zero)
+        return accumulatedActiveSeconds + max(
+            effectiveDate(date).timeIntervalSince(activeStartedAt),
+            .zero
+        )
+    }
+
+    private func effectiveDate(_ date: Date) -> Date {
+        max(date, updatedAt ?? createdAt ?? date)
     }
 
     private func shouldAppend(_ point: RideRoutePoint) -> Bool {

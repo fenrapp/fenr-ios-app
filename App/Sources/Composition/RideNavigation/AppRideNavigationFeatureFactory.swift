@@ -16,79 +16,87 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
     let settingsRepository: any AppSettingsRepository
 
     func makeFeature() -> RideNavigationFeatureModel {
-        let directoryURL = routesDirectoryURL(fileManager: FileManager())
-        let repository = FileRecordedRouteRepository(
-            fileManager: FileManager(),
-            directoryURL: directoryURL,
-            codec: StoredRideRouteCodec()
-        )
+        let repository = Self.makeRecordedRouteRepository()
         let iso8601 = Date.ISO8601FormatStyle(includingFractionalSeconds: true)
         let placeSearch = ApplePlaceSearchService()
         let roadRouteCalculator = AppleRoadRouteCalculator()
-        let redirectConfiguration = URLSessionConfiguration.ephemeral
-        redirectConfiguration.timeoutIntervalForRequest = Constants.mapLinkTimeoutSeconds
-        redirectConfiguration.timeoutIntervalForResource = Constants.mapLinkTimeoutSeconds
-        let redirectDelegate = AllowedMapLinkRedirectDelegate(
-            allowedHosts: Constants.allowedMapLinkHosts,
-            maximumRedirects: Constants.maximumMapLinkRedirects
-        )
-        let redirectSession = URLSession(
-            configuration: redirectConfiguration,
-            delegate: redirectDelegate,
-            delegateQueue: nil
-        )
+        let mapLinkSecurityPolicy = AppleMapLinkSecurityPolicy.standard
+        let redirectSession = Self.makeRedirectSession(policy: mapLinkSecurityPolicy)
         return RideNavigationFeatureModel(
             viewModel: RideNavigationViewModel(
-                vehicleSession: vehicleSession,
-                observeDeviceSpeed: observeDeviceSpeed,
-                repository: repository,
-                importer: GPXRouteParser(
-                    now: Date.init,
-                    dateFormat: iso8601,
-                    fallbackDateFormat: Date.ISO8601FormatStyle()
+                dependencies: RideNavigationViewModelDependencies(
+                    vehicleSession: vehicleSession,
+                    observeDeviceSpeed: observeDeviceSpeed,
+                    routeLibrary: RideNavigationRouteLibraryService(
+                        repository: repository,
+                        importer: GPXRouteParser(
+                            now: Date.init,
+                            dateFormat: iso8601,
+                            fallbackDateFormat: Date.ISO8601FormatStyle(),
+                            limits: GPXRouteImportLimits(
+                                maximumFileSizeBytes: Constants.maximumGPXFileSizeBytes,
+                                maximumPointCount: Constants.maximumGPXPointCount
+                            )
+                        ),
+                        exporter: GPXRouteExporter(dateFormat: iso8601)
+                    ),
+                    planning: RideNavigationPlanningService(
+                        placeSearch: placeSearch,
+                        roadRouteCalculator: roadRouteCalculator,
+                        externalMapLinkResolver: AppleExternalMapLinkResolver(
+                            redirectResolver: URLSessionMapLinkRedirectResolver(ownedSession: redirectSession),
+                            placeSearch: placeSearch,
+                            securityPolicy: mapLinkSecurityPolicy
+                        ),
+                        trailExitFinder: AppleTrailExitFinder(
+                            candidateSearch: AppleTrailExitCandidateSearch(),
+                            roadRouteCalculator: roadRouteCalculator
+                        )
+                    ),
+                    guidance: AppleNavigationGuidanceClient(
+                        synthesizer: AVSpeechSynthesizer(),
+                        notificationGenerator: UINotificationFeedbackGenerator()
+                    ),
+                    loadSettings: LoadAppSettingsUseCase(repository: settingsRepository),
+                    saveSettings: SaveAppSettingsUseCase(repository: settingsRepository),
+                    presentationMapper: RideNavigationPresentationMapper(locale: .autoupdatingCurrent),
+                    mapPresentationMapper: RideNavigationMapPresentationMapper(),
+                    timing: .live
                 ),
-                exporter: GPXRouteExporter(dateFormat: iso8601),
-                placeSearch: placeSearch,
-                roadRouteCalculator: roadRouteCalculator,
-                externalMapLinkResolver: AppleExternalMapLinkResolver(
-                    redirectResolver: URLSessionMapLinkRedirectResolver(session: redirectSession),
-                    placeSearch: placeSearch
-                ),
-                trailExitFinder: AppleTrailExitFinder(
-                    candidateSearch: AppleTrailExitCandidateSearch(),
-                    roadRouteCalculator: roadRouteCalculator
-                ),
-                guidance: AppleNavigationGuidanceClient(
-                    synthesizer: AVSpeechSynthesizer(),
-                    notificationGenerator: UINotificationFeedbackGenerator()
-                ),
-                loadSettings: LoadAppSettingsUseCase(repository: settingsRepository),
-                saveSettings: SaveAppSettingsUseCase(repository: settingsRepository),
-                mapper: RideNavigationPresentationMapper(locale: .autoupdatingCurrent),
                 recorder: RideRouteRecorder(),
-                breadcrumbRecorder: RideRouteRecorder(),
-                now: Date.init
+                breadcrumbRecorder: RideRouteRecorder()
             ),
             mapSurfaceFactory: AppleNavigationMapSurfaceFactory().makeFactory()
         )
     }
 
-    private func routesDirectoryURL(fileManager: FileManager) -> URL {
+    nonisolated private static func makeRecordedRouteRepository() -> FileRecordedRouteRepository {
+        let fileManager = FileManager()
         let base = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? fileManager.temporaryDirectory
-        return base.appendingPathComponent("RideNavigation", isDirectory: true)
+        return FileRecordedRouteRepository(
+            fileManager: fileManager,
+            directoryURL: base.appendingPathComponent("RideNavigation", isDirectory: true),
+            codec: StoredRideRouteCodec()
+        )
+    }
+
+    nonisolated private static func makeRedirectSession(
+        policy: AppleMapLinkSecurityPolicy
+    ) -> URLSession {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest = Constants.mapLinkTimeoutSeconds
+        configuration.timeoutIntervalForResource = Constants.mapLinkTimeoutSeconds
+        return URLSession(
+            configuration: configuration,
+            delegate: AllowedMapLinkRedirectDelegate(policy: policy),
+            delegateQueue: nil
+        )
     }
 
     private enum Constants {
         static let mapLinkTimeoutSeconds: TimeInterval = 5
-        static let maximumMapLinkRedirects = 5
-        static let allowedMapLinkHosts: Set<String> = [
-            "maps.app.goo.gl",
-            "goo.gl",
-            "google.com",
-            "www.google.com",
-            "maps.google.com",
-            "maps.apple.com"
-        ]
+        static let maximumGPXFileSizeBytes = 25 * 1_024 * 1_024
+        static let maximumGPXPointCount = 100_000
     }
 }

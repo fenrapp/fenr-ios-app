@@ -6,17 +6,88 @@ on:
     branches: [main]
 
 jobs:
-  verify:
+  lint:
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v5
+      - name: Select Xcode 26.6
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
       - name: Install tooling
         run: brew install xcodegen swiftlint
       - name: Generate Xcode project
         run: xcodegen generate
       - name: Lint
         run: swiftlint lint --strict
-      - name: Test
+
+  ios-debug:
+    needs: lint
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+      - name: Select Xcode 26.6
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Test iOS debug
         run: >-
           xcodebuild -project FENR.xcodeproj -scheme FENR
-          -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' test
+          -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5'
+          CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test
+      - name: Build iOS debug app
+        run: >-
+          xcodebuild -project FENR.xcodeproj -scheme FENRDebug
+          -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5'
+          CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+
+  ios-release:
+    needs: lint
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+      - name: Select Xcode 26.6
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build iOS release
+        run: >-
+          xcodebuild -project FENR.xcodeproj -scheme FENR -configuration Release
+          -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5'
+          CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+
+  watch-debug:
+    needs: lint
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+      - name: Select Xcode 26.6
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Test Watch debug
+        run: >-
+          xcodebuild -project FENR.xcodeproj -scheme FENRWatchDebug
+          -destination 'platform=watchOS Simulator,name=Apple Watch Series 11 (46mm),OS=26.5'
+          CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test
+
+  watch-release:
+    needs: lint
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+      - name: Select Xcode 26.6
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build Watch release
+        run: >-
+          xcodebuild -project FENR.xcodeproj -scheme FENRWatch -configuration Release
+          -destination 'platform=watchOS Simulator,name=Apple Watch Series 11 (46mm),OS=26.5'
+          CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build

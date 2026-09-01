@@ -11,6 +11,7 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
     private let batteryDatasetMapper: BikeSDKBatteryDatasetToDomainMapper
     private let connectionSessionPolicy: BikeConnectionSessionPolicy
     private let profileRepository: (any BikeProfileRepository)?
+    private let now: @Sendable () -> Date
 
     init(
         telemetryMapper: BikeSDKTelemetryPayloadToDomainMapper,
@@ -20,7 +21,8 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
         batteryHealthMapper: BikeSDKTelemetryPayloadToBatteryHealthMapper,
         batteryDatasetMapper: BikeSDKBatteryDatasetToDomainMapper,
         connectionSessionPolicy: BikeConnectionSessionPolicy,
-        profileRepository: (any BikeProfileRepository)? = nil
+        profileRepository: (any BikeProfileRepository)? = nil,
+        now: @escaping @Sendable () -> Date
     ) {
         self.telemetryMapper = telemetryMapper
         self.eventMapper = eventMapper
@@ -30,6 +32,11 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
         self.batteryDatasetMapper = batteryDatasetMapper
         self.connectionSessionPolicy = connectionSessionPolicy
         self.profileRepository = profileRepository
+        self.now = now
+    }
+
+    func resetSession() async {
+        await imuRateLimiter.reset()
     }
 
     func handle(
@@ -85,7 +92,7 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
     ) async {
         let connectionState = eventMapper.connectionState(from: status)
         if connectionSessionPolicy.shouldResetSession(for: connectionState) {
-            await imuRateLimiter.reset()
+            await resetSession()
             let state = await targets.stateStore.resetSession(connectionState: connectionState)
             await targets.telemetryHub.send(state.telemetry)
             await targets.connectionHub.send(state.connection)
@@ -106,7 +113,7 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
         _ payload: BikeSDKTelemetryPayload,
         targets: LiveBikeRepositoryEventTargets
     ) async {
-        let date = Date()
+        let date = now()
         let persistedEvidence = await persistedAlphaEvidence(for: payload)
         let telemetry = await targets.stateStore.updateTelemetryIf {
             let didApply = telemetryMapper.apply(payload, to: &$0, date: date)
@@ -119,12 +126,15 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
         }
         if let telemetry {
             await targets.telemetryHub.send(telemetry)
-            await persistAlphaEvidenceIfNeeded(from: telemetry)
+            await persistAlphaEvidenceIfNeeded(from: telemetry, date: date)
         }
         await updateBatteryHealth(payload, targets: targets, date: date)
     }
 
-    private func persistAlphaEvidenceIfNeeded(from telemetry: BikeTelemetry) async {
+    private func persistAlphaEvidenceIfNeeded(
+        from telemetry: BikeTelemetry,
+        date: Date
+    ) async {
         guard let profileRepository,
               case .alpha(let evidence) = telemetry.detectedPowerTier,
               !evidence.isEmpty,
@@ -134,7 +144,7 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
         let mergedEvidence = profile.alphaEvidence.union(evidence)
         guard mergedEvidence != profile.alphaEvidence else { return }
         profile.alphaEvidence = mergedEvidence
-        profile.alphaDetectedAt = Date()
+        profile.alphaDetectedAt = date
         await profileRepository.saveProfile(profile)
     }
 

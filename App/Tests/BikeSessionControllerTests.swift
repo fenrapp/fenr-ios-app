@@ -1,5 +1,6 @@
 import BikeDomain
 import Testing
+import TestSupport
 
 @MainActor
 @Suite("Bike session controller")
@@ -26,6 +27,23 @@ struct BikeSessionControllerTests {
         await controller.connectAutomatically(vin: "FENRTEST000000001")
 
         #expect(await repository.lastVIN() == "FENRTEST000000001")
+    }
+
+    @Test("Stopping during start leaves the bike repository stopped")
+    func stopDuringStartLeavesBikeRepositoryStopped() async {
+        let repository = SessionSpyRepository()
+        await repository.blockNextStart()
+        let controller = makeController(repository: repository)
+        let startTask = Task { await controller.start() }
+
+        #expect(await waitUntil { await repository.hasPendingStart() })
+        let stopTask = Task { await controller.stop() }
+        await repository.resumeStart()
+        await startTask.value
+        await stopTask.value
+
+        #expect(await repository.startCount() == 1)
+        #expect(await repository.stopCount() == 1)
     }
 
     private func makeController(repository: any BikeRepository) -> BikeSessionController {

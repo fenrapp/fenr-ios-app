@@ -1,7 +1,7 @@
 public struct RefreshBikePowerModesUseCase: Sendable {
-    private let repository: BikeRepository
+    private let repository: any BikeControlRepository
 
-    public init(repository: BikeRepository) {
+    public init(repository: any BikeControlRepository) {
         self.repository = repository
     }
 

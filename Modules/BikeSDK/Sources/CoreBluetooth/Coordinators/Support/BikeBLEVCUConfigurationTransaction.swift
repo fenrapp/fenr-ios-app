@@ -48,6 +48,11 @@ struct BikeBLEVCUConfigurationExpectedResponse {
 actor BikeBLEVCUConfigurationTransactionGate {
     private var isLocked = false
     private var waiters: [CheckedContinuation<Void, Never>] = []
+    private var waiterTokens: [UInt64?] = []
+    private var cancelledWaiterTokens: Set<UInt64> = []
+    private var nextWaiterToken: UInt64 = 0
+
+    var pendingWaiterCount: Int { waiters.count }
 
     func acquire() async {
         guard isLocked else {
@@ -56,6 +61,37 @@ actor BikeBLEVCUConfigurationTransactionGate {
         }
         await withCheckedContinuation { continuation in
             waiters.append(continuation)
+            waiterTokens.append(nil)
+        }
+    }
+
+    func acquireCancellable() async throws {
+        try Task.checkCancellation()
+        guard isLocked else {
+            isLocked = true
+            return
+        }
+
+        let token = nextWaiterToken
+        nextWaiterToken &+= 1
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { continuation in
+                waiters.append(continuation)
+                waiterTokens.append(token)
+            }
+        } onCancel: {
+            Task { await self.cancelWaiter(token) }
+        }
+
+        if cancelledWaiterTokens.remove(token) != nil {
+            throw CancellationError()
+        }
+
+        do {
+            try Task.checkCancellation()
+        } catch {
+            release()
+            throw error
         }
     }
 
@@ -64,6 +100,15 @@ actor BikeBLEVCUConfigurationTransactionGate {
             isLocked = false
             return
         }
+        waiterTokens.removeFirst()
         waiters.removeFirst().resume()
+    }
+
+    private func cancelWaiter(_ token: UInt64) {
+        guard let index = waiterTokens.firstIndex(where: { $0 == token }) else { return }
+        waiterTokens.remove(at: index)
+        let continuation = waiters.remove(at: index)
+        cancelledWaiterTokens.insert(token)
+        continuation.resume()
     }
 }

@@ -31,10 +31,4 @@ struct LocationPermissionRow: View {
         openURL(url)
     }
 }
-
-#Preview("Location permission") {
-    Form {
-        LocationPermissionRow(status: .notDetermined, onRequestAccess: {})
-    }
-}
 #endif

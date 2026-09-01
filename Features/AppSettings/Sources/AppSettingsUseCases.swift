@@ -3,35 +3,66 @@ import EnvironmentDomain
 import SettingsDomain
 
 public struct AppSettingsUseCases: Sendable {
-    let saveSettings: SaveAppSettingsUseCase
-    let observeSettings: ObserveAppSettingsUseCase
-    let locationAuthorizationStatus: LocationAuthorizationStatusUseCase?
-    let requestLocationAuthorization: RequestLocationAuthorizationUseCase?
-    let loadBikeProfile: LoadBikeProfileUseCase?
-    let observeBikeProfile: ObserveBikeProfileUseCase?
-    let saveBikeProfile: SaveBikeProfileUseCase?
-    let observeBikeConnection: ObserveBikeConnectionUseCase?
-    let refreshBikePowerModes: RefreshBikePowerModesUseCase?
+    public struct Settings: Sendable {
+        let save: SaveAppSettingsUseCase
+        let observe: ObserveAppSettingsUseCase
+
+        public init(save: SaveAppSettingsUseCase, observe: ObserveAppSettingsUseCase) {
+            self.save = save
+            self.observe = observe
+        }
+    }
+
+    public struct Location: Sendable {
+        let authorizationStatus: LocationAuthorizationStatusUseCase
+        let requestAuthorization: RequestLocationAuthorizationUseCase
+
+        public init(
+            authorizationStatus: LocationAuthorizationStatusUseCase,
+            requestAuthorization: RequestLocationAuthorizationUseCase
+        ) {
+            self.authorizationStatus = authorizationStatus
+            self.requestAuthorization = requestAuthorization
+        }
+    }
+
+    public struct Profile: Sendable {
+        let observe: ObserveBikeProfileUseCase
+        let save: SaveBikeProfileUseCase
+
+        public init(observe: ObserveBikeProfileUseCase, save: SaveBikeProfileUseCase) {
+            self.observe = observe
+            self.save = save
+        }
+    }
+
+    public struct PowerTierVerification: Sendable {
+        let observeConnection: ObserveBikeConnectionUseCase
+        let refreshPowerModes: RefreshBikePowerModesUseCase
+
+        public init(
+            observeConnection: ObserveBikeConnectionUseCase,
+            refreshPowerModes: RefreshBikePowerModesUseCase
+        ) {
+            self.observeConnection = observeConnection
+            self.refreshPowerModes = refreshPowerModes
+        }
+    }
+
+    let settings: Settings
+    let location: Location?
+    let profile: Profile?
+    let powerTierVerification: PowerTierVerification?
 
     public init(
-        saveSettings: SaveAppSettingsUseCase,
-        observeSettings: ObserveAppSettingsUseCase,
-        locationAuthorizationStatus: LocationAuthorizationStatusUseCase? = nil,
-        requestLocationAuthorization: RequestLocationAuthorizationUseCase? = nil,
-        loadBikeProfile: LoadBikeProfileUseCase? = nil,
-        observeBikeProfile: ObserveBikeProfileUseCase? = nil,
-        saveBikeProfile: SaveBikeProfileUseCase? = nil,
-        observeBikeConnection: ObserveBikeConnectionUseCase? = nil,
-        refreshBikePowerModes: RefreshBikePowerModesUseCase? = nil
+        settings: Settings,
+        location: Location? = nil,
+        profile: Profile? = nil,
+        powerTierVerification: PowerTierVerification? = nil
     ) {
-        self.saveSettings = saveSettings
-        self.observeSettings = observeSettings
-        self.locationAuthorizationStatus = locationAuthorizationStatus
-        self.requestLocationAuthorization = requestLocationAuthorization
-        self.loadBikeProfile = loadBikeProfile
-        self.observeBikeProfile = observeBikeProfile
-        self.saveBikeProfile = saveBikeProfile
-        self.observeBikeConnection = observeBikeConnection
-        self.refreshBikePowerModes = refreshBikePowerModes
+        self.settings = settings
+        self.location = location
+        self.profile = profile
+        self.powerTierVerification = powerTierVerification
     }
 }

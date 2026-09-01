@@ -1,14 +1,21 @@
 @testable import BikeData
 import BikeDomain
 import BikeSDK
+import Foundation
 
 func makeRepository(
     client: BikeTelemetryClient,
-    profileRepository: (any BikeProfileRepository)? = nil
+    profileRepository: (any BikeProfileRepository)? = nil,
+    imuMinimumInterval: TimeInterval = .zero,
+    now: @escaping @Sendable () -> Date = Date.init
 ) -> LiveBikeRepository {
     LiveBikeRepository(
         client: client,
-        eventHandler: makeEventHandler(profileRepository: profileRepository),
+        eventHandler: makeEventHandler(
+            profileRepository: profileRepository,
+            imuMinimumInterval: imuMinimumInterval,
+            now: now
+        ),
         stateStore: .init(),
         telemetryHub: .init(bufferingPolicy: .unbounded),
         connectionHub: .init(bufferingPolicy: .unbounded),
@@ -23,7 +30,9 @@ func makeRepository(
 }
 
 private func makeEventHandler(
-    profileRepository: (any BikeProfileRepository)?
+    profileRepository: (any BikeProfileRepository)?,
+    imuMinimumInterval: TimeInterval,
+    now: @escaping @Sendable () -> Date
 ) -> LiveBikeRepositoryEventHandler {
     LiveBikeRepositoryEventHandler(
         telemetryMapper: .init(powerCalculator: .init(), maximumPowerInputSkew: 2),
@@ -33,10 +42,11 @@ private func makeEventHandler(
             notificationDebugMapper: .init()
         ),
         imuMapper: .init(),
-        imuRateLimiter: .init(minimumInterval: .zero),
+        imuRateLimiter: .init(minimumInterval: imuMinimumInterval),
         batteryHealthMapper: .init(),
         batteryDatasetMapper: .init(),
         connectionSessionPolicy: .init(),
-        profileRepository: profileRepository
+        profileRepository: profileRepository,
+        now: now
     )
 }

@@ -2,9 +2,9 @@ import BikeDomain
 import Foundation
 import TestSupport
 
-actor FakeBatteryHealthRepository: BikeBatteryHealthRepository {
-    private let healthHub = TestEventHub<BikeBatteryHealth>()
-    private let captureHub = TestEventHub<BatteryDatasetCapture>()
+actor FakeBatteryHealthRepository: BikeBatteryHealthRepository, BikeChargePowerControlRepository {
+    private let healthHub = TestEventHub<BikeBatteryHealth>(bufferingPolicy: .unbounded)
+    private let captureHub = TestEventHub<BatteryDatasetCapture>(bufferingPolicy: .unbounded)
     private var latestHealth = BikeBatteryHealth()
     private var didStartMonitoring = false
     private var didStopMonitoring = false
@@ -55,12 +55,12 @@ actor FakeBatteryHealthRepository: BikeBatteryHealthRepository {
 
     func sendHealth(_ health: BikeBatteryHealth) async {
         latestHealth = health
-        await healthHub.waitForSubscriber()
+        _ = await healthHub.waitForSubscriber()
         await healthHub.send(health)
     }
 
     func sendCapture(_ capture: BatteryDatasetCapture) async {
-        await captureHub.waitForSubscriber()
+        _ = await captureHub.waitForSubscriber()
         await captureHub.send(capture)
     }
 

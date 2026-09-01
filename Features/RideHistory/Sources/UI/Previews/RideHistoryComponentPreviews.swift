@@ -49,4 +49,12 @@ import SwiftUI
     }
     .environment(\.dynamicTypeSize, .accessibility3)
 }
+
+#Preview("Summary and chart accessibility") {
+    List {
+        RideHistorySummaryHeader(summary: RideHistoryPreviewData.summary)
+        RideHistoryEnergyChart(state: RideHistoryPreviewData.detailState)
+    }
+    .environment(\.dynamicTypeSize, .accessibility3)
+}
 #endif

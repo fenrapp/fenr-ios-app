@@ -1,7 +1,10 @@
 included:
   - App
   - Features
+  - LiveActivityExtension
   - Modules
+  - ShareExtension
+  - Watch
 
 excluded:
   - FENR.xcodeproj

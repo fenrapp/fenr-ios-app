@@ -10,8 +10,8 @@ public actor UserDefaultsIncomingMapLinkStore: IncomingMapLinkStoring {
     public init(
         userDefaults: UserDefaults,
         key: String = "ride-navigation.pending-map-link",
-        encoder: JSONEncoder = JSONEncoder(),
-        decoder: JSONDecoder = JSONDecoder()
+        encoder: JSONEncoder,
+        decoder: JSONDecoder
     ) {
         self.userDefaults = userDefaults
         self.key = key
@@ -19,25 +19,24 @@ public actor UserDefaultsIncomingMapLinkStore: IncomingMapLinkStoring {
         self.decoder = decoder
     }
 
-    public init(suiteName: String, key: String = "ride-navigation.pending-map-link") throws {
-        guard let userDefaults = UserDefaults(suiteName: suiteName) else {
-            throw IncomingMapLinkStoreError.sharedContainerUnavailable
-        }
-        self.init(userDefaults: userDefaults, key: key)
-    }
-
     public static func shared() throws -> UserDefaultsIncomingMapLinkStore {
         guard let userDefaults = UserDefaults(suiteName: Constants.appGroupIdentifier) else {
             throw IncomingMapLinkStoreError.sharedContainerUnavailable
         }
-        return UserDefaultsIncomingMapLinkStore(userDefaults: userDefaults)
+        return UserDefaultsIncomingMapLinkStore(
+            userDefaults: userDefaults,
+            encoder: JSONEncoder(),
+            decoder: JSONDecoder()
+        )
     }
 
     public func save(_ link: IncomingMapLink) throws {
+        try Task.checkCancellation()
         userDefaults.set(try encoder.encode(link), forKey: key)
     }
 
     public func consume() throws -> IncomingMapLink? {
+        try Task.checkCancellation()
         guard let data = userDefaults.data(forKey: key) else { return nil }
         defer { userDefaults.removeObject(forKey: key) }
         return try decoder.decode(IncomingMapLink.self, from: data)

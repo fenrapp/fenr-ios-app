@@ -1,3 +1,4 @@
+import AsyncSupport
 import BikeDomain
 import BikeSDK
 import Foundation
@@ -27,7 +28,8 @@ public enum LiveBikeRepositoryFactory {
                 batteryHealthMapper: BikeSDKTelemetryPayloadToBatteryHealthMapper(),
                 batteryDatasetMapper: BikeSDKBatteryDatasetToDomainMapper(),
                 connectionSessionPolicy: BikeConnectionSessionPolicy(),
-                profileRepository: profileRepository
+                profileRepository: profileRepository,
+                now: Date.init
             ),
             stateStore: BikeRepositoryStateStore(),
             telemetryHub: AsyncEventHub(

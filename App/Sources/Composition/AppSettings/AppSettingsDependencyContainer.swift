@@ -13,19 +13,26 @@ struct AppSettingsDependencyContainer {
     ) -> AppSettingsViewModel {
         AppSettingsViewModel(
             useCases: .init(
-                saveSettings: SaveAppSettingsUseCase(repository: settingsRepository),
-                observeSettings: ObserveAppSettingsUseCase(repository: settingsRepository),
-                locationAuthorizationStatus: LocationAuthorizationStatusUseCase(
-                    repository: deviceSpeedRepository
+                settings: .init(
+                    save: SaveAppSettingsUseCase(repository: settingsRepository),
+                    observe: ObserveAppSettingsUseCase(repository: settingsRepository)
                 ),
-                requestLocationAuthorization: RequestLocationAuthorizationUseCase(
-                    repository: deviceSpeedRepository
+                location: .init(
+                    authorizationStatus: LocationAuthorizationStatusUseCase(
+                        repository: deviceSpeedRepository
+                    ),
+                    requestAuthorization: RequestLocationAuthorizationUseCase(
+                        repository: deviceSpeedRepository
+                    )
                 ),
-                loadBikeProfile: LoadBikeProfileUseCase(repository: profileRepository),
-                observeBikeProfile: ObserveBikeProfileUseCase(repository: profileRepository),
-                saveBikeProfile: SaveBikeProfileUseCase(repository: profileRepository),
-                observeBikeConnection: ObserveBikeConnectionUseCase(repository: bikeRepository),
-                refreshBikePowerModes: RefreshBikePowerModesUseCase(repository: bikeRepository)
+                profile: .init(
+                    observe: ObserveBikeProfileUseCase(repository: profileRepository),
+                    save: SaveBikeProfileUseCase(repository: profileRepository)
+                ),
+                powerTierVerification: .init(
+                    observeConnection: ObserveBikeConnectionUseCase(repository: bikeRepository),
+                    refreshPowerModes: RefreshBikePowerModesUseCase(repository: bikeRepository)
+                )
             ),
             mapper: AppSettingsViewStateMapper()
         )

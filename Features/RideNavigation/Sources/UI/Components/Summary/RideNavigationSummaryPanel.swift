@@ -37,7 +37,7 @@ struct RideNavigationSummaryPanel: View {
             errorMessage
         }
         .padding(DesignSpace.large)
-        .frame(width: Constants.panelWidth)
+        .frame(maxWidth: Constants.panelWidth)
         .rideNavigationGlassSurface(cornerRadius: Constants.panelRadius)
         .overlay(alignment: .topTrailing) {
             closeButton
@@ -83,9 +83,11 @@ struct RideNavigationSummaryPanel: View {
         VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
             Text(state.summaryTitle)
                 .font(.title2.weight(.bold))
+                .fixedSize(horizontal: false, vertical: true)
             Text(state.summaryDetail)
                 .font(.subheadline.monospacedDigit())
                 .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -117,7 +119,14 @@ struct RideNavigationSummaryPanel: View {
     }
 
     private var actions: some View {
-        HStack(spacing: DesignSpace.small) {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: DesignSpace.small) { actionButtons }
+            VStack(spacing: DesignSpace.small) { actionButtons }
+        }
+    }
+
+    @ViewBuilder
+    private var actionButtons: some View {
             if state.canSaveCompletedRoute {
                 Button(action: onSave) {
                     Label("Save", systemImage: "square.and.arrow.down.fill")
@@ -131,7 +140,6 @@ struct RideNavigationSummaryPanel: View {
             }
             .controlSize(.large)
             .rideNavigationSecondaryButton()
-        }
     }
 
     private enum Constants {

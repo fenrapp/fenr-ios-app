@@ -39,6 +39,7 @@ extension LiveVehicleSessionService {
     }
 
     func resetPowerModeRefresh() {
+        powerModeRefreshGeneration &+= 1
         visitedPowerModeIndex = nil
         pendingPowerModeRefresh = nil
         powerModeRefreshTask?.cancel()
@@ -54,6 +55,7 @@ private extension LiveVehicleSessionService {
               let request = pendingPowerModeRefresh
         else { return }
         pendingPowerModeRefresh = nil
+        let generation = powerModeRefreshGeneration
         let refreshBase = useCases.refreshPowerModeConfiguration
         let refreshTraction = useCases.refreshTractionControlConfiguration
         powerModeRefreshTask = Task { [weak self] in
@@ -65,11 +67,12 @@ private extension LiveVehicleSessionService {
                let refreshTraction {
                 try? await refreshTraction.execute(mapIndex: request.mapIndex)
             }
-            await self?.finishPowerModeRefresh()
+            await self?.finishPowerModeRefresh(generation: generation)
         }
     }
 
-    func finishPowerModeRefresh() {
+    func finishPowerModeRefresh(generation: Int) {
+        guard generation == powerModeRefreshGeneration else { return }
         powerModeRefreshTask = nil
         startPendingPowerModeRefreshIfNeeded()
     }

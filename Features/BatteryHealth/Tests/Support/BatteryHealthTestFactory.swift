@@ -5,7 +5,9 @@ import Foundation
 import MeasurementPresentation
 
 @MainActor
-func makeBatteryHealthViewModel(repository: any BikeBatteryHealthRepository) -> BatteryHealthViewModel {
+func makeBatteryHealthViewModel(
+    repository: any BikeBatteryHealthRepository & BikeChargePowerControlRepository
+) -> BatteryHealthViewModel {
     BatteryHealthViewModel(
         useCases: .init(
             observeCaptures: .init(repository: repository)
@@ -19,7 +21,7 @@ func makeBatteryHealthViewModel(repository: any BikeBatteryHealthRepository) -> 
 }
 
 @MainActor
-func makeChargeControlSession(repository: any BikeBatteryHealthRepository) -> ChargeControlSession {
+func makeChargeControlSession(repository: any BikeChargePowerControlRepository) -> ChargeControlSession {
     ChargeControlSession(
         useCases: .init(
             prepare: .init(repository: repository),

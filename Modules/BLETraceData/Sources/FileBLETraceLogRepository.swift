@@ -8,17 +8,50 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
     let configuration: BLETraceFileStoreConfiguration
     let fileManager: FileManager
     let lineEncoder: BLETraceJSONLineEncoder
+    let writerTaskStarter: any BLETraceWriterTaskStarter
     private let sessionHub: AsyncEventHub<[BLETraceSessionSummary]>
     let now: @Sendable () -> Date
     private let uptimeNanoseconds: @Sendable () -> UInt64
-    private var activeSession: ActiveSession?
+    var activeSession: ActiveSession?
     var completedSessions: [StoredSession]
     var hasPreparedStorage = false
     private var pendingLines: [PendingLine] = []
     private var pendingLineIndex = 0
     private var pendingByteCount: Int64 = 0
     private var writerTask: Task<Void, Never>?
-    public init(
+    private var writerTaskID: UUID?
+
+    public static func make(
+        directory: URL,
+        exportDirectory: URL,
+        environment: BLETraceEnvironment,
+        configuration: BLETraceFileStoreConfiguration,
+        dependencies: sending BLETraceFileStoreDependencies
+    ) throws -> FileBLETraceLogRepository {
+        do {
+            try prepareDirectories(
+                directory: directory,
+                exportDirectory: exportDirectory,
+                fileManager: dependencies.fileManager
+            )
+        } catch {
+            throw BLETraceRepositoryError.unableToCreateStorage
+        }
+        return FileBLETraceLogRepository(
+            directory: directory,
+            exportDirectory: exportDirectory,
+            environment: environment,
+            configuration: configuration,
+            fileManager: dependencies.fileManager,
+            lineEncoder: dependencies.lineEncoder,
+            sessionHub: dependencies.sessionHub,
+            now: dependencies.now,
+            uptimeNanoseconds: dependencies.uptimeNanoseconds,
+            writerTaskStarter: dependencies.writerTaskStarter
+        )
+    }
+
+    init(
         directory: URL,
         exportDirectory: URL,
         environment: BLETraceEnvironment,
@@ -27,8 +60,9 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
         lineEncoder: BLETraceJSONLineEncoder,
         sessionHub: AsyncEventHub<[BLETraceSessionSummary]>,
         now: @escaping @Sendable () -> Date,
-        uptimeNanoseconds: @escaping @Sendable () -> UInt64
-    ) throws {
+        uptimeNanoseconds: @escaping @Sendable () -> UInt64,
+        writerTaskStarter: any BLETraceWriterTaskStarter
+    ) {
         self.directory = directory
         self.exportDirectory = exportDirectory
         self.environment = environment
@@ -38,15 +72,8 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
         self.sessionHub = sessionHub
         self.now = now
         self.uptimeNanoseconds = uptimeNanoseconds
+        self.writerTaskStarter = writerTaskStarter
         completedSessions = []
-        do {
-            try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
-            try fileManager.createDirectory(at: exportDirectory, withIntermediateDirectories: true)
-            try Self.configureDirectory(directory, fileManager: fileManager)
-            try Self.configureDirectory(exportDirectory, fileManager: fileManager)
-        } catch {
-            throw BLETraceRepositoryError.unableToCreateStorage
-        }
     }
     deinit {
         writerTask?.cancel()
@@ -55,6 +82,7 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
 
     public func startSession(_ context: BLETraceSessionContext) async {
         await prepareStorage()
+        guard hasPreparedStorage else { return }
         if activeSession != nil {
             await finishSession(reason: .clientStopped)
         }
@@ -115,7 +143,7 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
             characteristicUUID: event.characteristicUUID,
             characteristicProperties: event.characteristicProperties,
             byteCount: event.byteCount,
-            payloadHex: event.payloadHex,
+            payloadHex: event.payloadRedacted ? nil : event.payloadHex,
             payloadRedacted: event.payloadRedacted,
             decodeStatus: event.decodeStatus?.rawValue,
             readPending: event.readPending,
@@ -153,85 +181,38 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
         return await sessionHub.stream(replay: currentSummaries())
     }
 
-    public func prepareExport(sessionID: UUID) async throws -> URL {
-        await prepareStorage()
-        try fileManager.createDirectory(at: exportDirectory, withIntermediateDirectories: true)
-        try removeExistingExport(for: sessionID)
-
-        let sourceURL: URL
-        let exportName: String
-        var activeSnapshot: ActiveSession?
-        if activeSession?.context.id == sessionID {
-            await drainPendingLines()
-            guard let session = activeSession, session.context.id == sessionID else {
-                throw BLETraceRepositoryError.sessionNotFound
-            }
-            try session.fileHandle.synchronize()
-            activeSnapshot = session
-            sourceURL = session.url
-            exportName = session.url.deletingPathExtension().lastPathComponent + ".jsonl"
-        } else if let stored = completedSessions.first(where: { $0.summary.id == sessionID }) {
-            sourceURL = stored.url
-            exportName = stored.summary.fileName
-        } else {
-            throw BLETraceRepositoryError.sessionNotFound
-        }
-
-        let destination = exportDirectory.appendingPathComponent(exportName)
-        do {
-            try fileManager.copyItem(at: sourceURL, to: destination)
-            if let activeSnapshot {
-                try appendSnapshotFooter(to: destination, session: activeSnapshot)
-            }
-            try Self.configureLogFile(destination, fileManager: fileManager)
-            return destination
-        } catch {
-            throw BLETraceRepositoryError.unableToExport
-        }
-    }
-
-    public func deleteSession(id: UUID) async throws {
-        await prepareStorage()
-        if activeSession?.context.id == id {
-            throw BLETraceRepositoryError.activeSessionCannotBeDeleted
-        }
-        guard let index = completedSessions.firstIndex(where: { $0.summary.id == id }) else {
-            throw BLETraceRepositoryError.sessionNotFound
-        }
-        let stored = completedSessions.remove(at: index)
-        try fileManager.removeItem(at: stored.url)
-        try? removeExistingExport(for: id)
-        await publishSessions()
-    }
-
-    public func deleteAllSessions() async throws {
-        await prepareStorage()
-        for stored in completedSessions {
-            try fileManager.removeItem(at: stored.url)
-        }
-        completedSessions.removeAll()
-        if fileManager.fileExists(atPath: exportDirectory.path) {
-            try fileManager.removeItem(at: exportDirectory)
-            try fileManager.createDirectory(at: exportDirectory, withIntermediateDirectories: true)
-            try Self.configureDirectory(exportDirectory, fileManager: fileManager)
-        }
-        await publishSessions()
-    }
 }
 
-private extension FileBLETraceLogRepository {
+extension FileBLETraceLogRepository {
     func enqueue(_ data: Data, sessionID: UUID) {
         pendingLines.append(PendingLine(sessionID: sessionID, data: data))
         pendingByteCount += Int64(data.count)
         guard writerTask == nil else { return }
-        writerTask = Task { [weak self] in
-            await self?.drainPendingLines()
+        let taskID = UUID()
+        writerTaskID = taskID
+        writerTask = writerTaskStarter.start { [weak self] in
+            await self?.drainPendingLines(writerTaskID: taskID)
         }
     }
 
     func drainPendingLines() async {
+        writerTask?.cancel()
+        writerTask = nil
+        writerTaskID = nil
+        await writePendingLines(writerTaskID: nil)
+    }
+
+    func drainPendingLines(writerTaskID taskID: UUID) async {
+        guard writerTaskID == taskID else { return }
+        await writePendingLines(writerTaskID: taskID)
+        guard writerTaskID == taskID else { return }
+        writerTask = nil
+        writerTaskID = nil
+    }
+
+    func writePendingLines(writerTaskID taskID: UUID?) async {
         while pendingLineIndex < pendingLines.count {
-            guard !Task.isCancelled else { break }
+            if let taskID, writerTaskID != taskID { return }
             let pending = pendingLines[pendingLineIndex]
             pendingLineIndex += 1
             pendingByteCount -= Int64(pending.data.count)
@@ -251,7 +232,6 @@ private extension FileBLETraceLogRepository {
             pendingLineIndex = 0
             pendingByteCount = 0
         }
-        writerTask = nil
     }
 
     func truncateActiveSession() async {
@@ -317,37 +297,33 @@ private extension FileBLETraceLogRepository {
             status: status,
             reason: reason
         )
-        if let data = try? Self.encodeFooter(footerInput, lineEncoder: lineEncoder) {
-            try? session.fileHandle.write(contentsOf: data)
-            session.bytesWritten += Int64(data.count)
-        }
-        try? session.fileHandle.synchronize()
-        try? session.fileHandle.close()
-
         let finalURL = session.url.deletingPathExtension().appendingPathExtension("jsonl")
         do {
+            let data = try Self.encodeFooter(footerInput, lineEncoder: lineEncoder)
+            try session.fileHandle.write(contentsOf: data)
+            session.bytesWritten += Int64(data.count)
+            try session.fileHandle.synchronize()
+            try session.fileHandle.close()
+            try Self.configureLogFile(session.url, fileManager: fileManager)
             if fileManager.fileExists(atPath: finalURL.path) {
                 try fileManager.removeItem(at: finalURL)
             }
             try fileManager.moveItem(at: session.url, to: finalURL)
-            let summary = BLETraceSessionSummary(
-                id: session.context.id,
-                startedAt: session.context.startedAt,
-                endedAt: endedAt,
-                duration: endedAt.timeIntervalSince(session.context.startedAt),
-                fileSizeBytes: Self.fileSize(finalURL, fileManager: fileManager),
-                eventCount: session.eventCount,
-                status: status,
-                fileName: finalURL.lastPathComponent
+            try Self.configureLogFile(finalURL, fileManager: fileManager)
+            completedSessions = try Self.loadStoredSessions(
+                in: directory,
+                fileManager: fileManager
             )
-            completedSessions.insert(StoredSession(summary: summary, url: finalURL), at: 0)
             completedSessions = try Self.prune(
                 completedSessions,
                 configuration: configuration,
-                fileManager: fileManager
+                fileManager: fileManager,
+                exportDirectory: exportDirectory
             )
         } catch {
+            try? session.fileHandle.close()
             // The partial file remains recoverable on the next launch.
+            reconcileCompletedSessionsFromDisk()
         }
         activeSession = nil
         await publishSessions()
@@ -356,6 +332,7 @@ private extension FileBLETraceLogRepository {
     func closeActiveSessionAfterFailure() {
         writerTask?.cancel()
         writerTask = nil
+        writerTaskID = nil
         pendingLines.removeAll()
         pendingLineIndex = 0
         pendingByteCount = 0
@@ -384,6 +361,13 @@ private extension FileBLETraceLogRepository {
 
     func publishSessions() async {
         await sessionHub.send(currentSummaries())
+    }
+
+    func reconcileCompletedSessionsFromDisk() {
+        completedSessions = (try? Self.loadStoredSessions(
+            in: directory,
+            fileManager: fileManager
+        )) ?? []
     }
 
 }

@@ -86,7 +86,7 @@ extension RideHistoryMapper {
     }
 
     func makeMeasurementMapper(_ system: MeasurementSystem) -> VehicleMeasurementMapper {
-        VehicleMeasurementMapper(measurementSystem: system.resolved(for: locale))
+        measurementMapperFactory.make(measurementSystem: system, locale: locale)
     }
 
     func timeRange(_ trip: RideTrip) -> String {

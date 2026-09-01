@@ -65,7 +65,8 @@ private actor BatteryHealthPreviewVehicleSession: VehicleSessionService {
     func setBatteryHealthMonitoringRequired(_: Bool, consumerID _: UUID) {}
 }
 
-private struct BatteryHealthPreviewRepository: BikeBatteryHealthRepository {
+private struct BatteryHealthPreviewRepository: BikeBatteryHealthRepository,
+    BikeChargePowerControlRepository {
     func startBatteryHealthMonitoring() async throws {}
     func stopBatteryHealthMonitoring() async {}
 

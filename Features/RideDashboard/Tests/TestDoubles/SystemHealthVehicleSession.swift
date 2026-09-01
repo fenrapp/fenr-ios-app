@@ -3,7 +3,7 @@ import TestSupport
 import VehicleSession
 
 actor SystemHealthVehicleSession: VehicleSessionService {
-    private let hub = TestEventHub<VehicleSessionSnapshot>()
+    private let hub = TestEventHub<VehicleSessionSnapshot>(bufferingPolicy: .unbounded)
     private var monitoringRequirements: [Bool] = []
 
     func observe() async -> AsyncStream<VehicleSessionSnapshot> {
@@ -21,7 +21,7 @@ actor SystemHealthVehicleSession: VehicleSessionService {
 
     func send(_ snapshot: VehicleSessionSnapshot, waitsForSubscriber: Bool = true) async {
         if waitsForSubscriber {
-            await hub.waitForSubscriber()
+            _ = await hub.waitForSubscriber()
         }
         await hub.send(snapshot)
     }

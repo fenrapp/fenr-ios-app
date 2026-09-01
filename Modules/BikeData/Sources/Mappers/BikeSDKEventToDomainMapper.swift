@@ -29,12 +29,21 @@ public struct BikeSDKEventToDomainMapper: Sendable {
         BikeDebugEvent(title: "RSSI", detail: "\(rssi) dBm")
     }
 
-    public func peripheralDebug(name: String?, identifier: UUID) -> BikeDebugEvent {
-        BikeDebugEvent(title: "Peripheral", detail: "\(name ?? "Unknown") \(identifier.uuidString)")
+    public func peripheralDebug(name _: String?, identifier _: UUID) -> BikeDebugEvent {
+        BikeDebugEvent(title: "Peripheral", detail: "Peripheral discovered")
     }
 
     public func notificationDebug(_ notification: BikeSDKNotificationDebug) -> BikeDebugEvent {
-        notificationDebugMapper.map(notification)
+        let event = notificationDebugMapper.map(notification)
+        return BikeDebugEvent(
+            id: event.id,
+            date: event.date,
+            title: event.title,
+            detail: event.detail.replacingOccurrences(
+                of: "\(notification.characteristic.uuidString) ",
+                with: ""
+            )
+        )
     }
 
     public func sdkDebug(_ event: BikeSDKDebugEvent) -> BikeDebugEvent {

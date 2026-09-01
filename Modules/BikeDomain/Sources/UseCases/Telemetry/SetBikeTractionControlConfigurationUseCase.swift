@@ -1,7 +1,7 @@
 public struct SetBikeTractionControlConfigurationUseCase: Sendable {
-    private let repository: any BikeRepository
+    private let repository: any BikeControlRepository
 
-    public init(repository: any BikeRepository) {
+    public init(repository: any BikeControlRepository) {
         self.repository = repository
     }
 

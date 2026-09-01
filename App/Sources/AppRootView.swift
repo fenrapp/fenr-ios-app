@@ -8,7 +8,6 @@ import PowerModeSettings
 import RideDashboard
 import RideHistory
 import RideNavigation
-import RideNavigationDomain
 import SwiftUI
 import UIKit
 
@@ -24,19 +23,14 @@ struct AppRootView: View {
     @StateObject private var powerModeSettingsViewModel: PowerModeSettingsViewModel
     @StateObject private var rideHistoryViewModel: RideHistoryViewModel
     @StateObject private var setupFlow: BikeSetupFlowController
-    @State private var path: [Route] = []
-    @State private var rideNavigationPresentation: RideNavigationPresentationMode
-    @State private var incomingNavigationResource: IncomingNavigationResource?
+    @StateObject private var router: AppRootRouter
     private let lifecycleController: AppLifecycleController
     private let rideDashboardFactory: any RideDashboardFeatureBuilding
-    private let interfaceOrientationController: InterfaceOrientationController
     private let rideNavigationFactory: any RideNavigationFeatureBuilding
-    private let incomingMapLinkStore: any IncomingMapLinkStoring
     private let settingsAccessory: () -> AnyView
 
     init(
         dependencies: AppRootDependencies,
-        opensRideNavigationOnLaunch: Bool = false,
         settingsAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
         _diagnosticsViewModel = StateObject(wrappedValue: dependencies.diagnosticsViewModel)
@@ -50,68 +44,80 @@ struct AppRootView: View {
         _powerModeSettingsViewModel = StateObject(wrappedValue: dependencies.powerModeSettingsViewModel)
         _rideHistoryViewModel = StateObject(wrappedValue: dependencies.rideHistoryViewModel)
         _setupFlow = StateObject(wrappedValue: dependencies.setupFlow)
-        _rideNavigationPresentation = State(
-            initialValue: opensRideNavigationOnLaunch ? .fullScreen : .hidden
-        )
+        _router = StateObject(wrappedValue: dependencies.router)
         lifecycleController = dependencies.lifecycleController
         rideDashboardFactory = dependencies.rideDashboardFactory
         rideNavigationFactory = dependencies.rideNavigationFactory
-        incomingMapLinkStore = dependencies.incomingMapLinkStore
-        interfaceOrientationController = dependencies.interfaceOrientationController
         self.settingsAccessory = settingsAccessory
     }
 
     var body: some View {
         ZStack {
-            NavigationStack(path: $path) {
+            NavigationStack(path: $router.path) {
                 Group {
                     if !setupFlow.isLoaded {
                         ProgressView()
                     } else if setupFlow.isCompleted {
                         RideDashboardScene(
                             factory: rideDashboardFactory,
-                            onSettings: { navigateFromDashboard(to: .settings) },
-                            onNavigation: showRideNavigation,
-                            isNavigationActive: rideNavigationPresentation == .mini,
-                            isPresentationActive: rideNavigationPresentation != .fullScreen,
-                            onDiagnostics: { navigateFromDashboard(to: .diagnostics) }
+                            onSettings: {
+                                router.navigate(to: .settings, reduceMotion: reduceMotion)
+                            },
+                            onNavigation: { router.showRideNavigation(reduceMotion: reduceMotion) },
+                            isNavigationActive: router.rideNavigationPresentation == .mini,
+                            isPresentationActive: router.rideNavigationPresentation != .fullScreen,
+                            onDiagnostics: {
+                                router.navigate(to: .diagnostics, reduceMotion: reduceMotion)
+                            }
                         )
                     } else {
                         BikeOnboardingView(
                             viewModel: onboardingViewModel,
                             managesObservation: false,
-                            onNavigateToStep: navigateToOnboardingStep
+                            onNavigateToStep: router.navigateToOnboardingStep
                         )
                     }
                 }
-                .navigationDestination(for: Route.self) { route in
+                .navigationDestination(for: AppRootRouter.Route.self) { route in
                     switch route {
                     case .onboarding(let step):
                         BikeOnboardingView(
                             viewModel: onboardingViewModel,
                             visibleStep: step,
                             managesObservation: false,
-                            onNavigateToStep: navigateToOnboardingStep
+                            onNavigateToStep: router.navigateToOnboardingStep
                         )
                     case .batteryHealth:
                         BatteryHealthView(viewModel: batteryHealthViewModel)
                     case .diagnostics:
                         BikeDiagnosticsView(
                             viewModel: diagnosticsViewModel,
-                            onBatteryHealth: { path.append(.batteryHealth) },
+                            onBatteryHealth: {
+                                router.navigate(to: .batteryHealth, reduceMotion: reduceMotion)
+                            },
                             onChangeBike: changeBike
                         )
                     case .settings:
                         AppSettingsView(
                             viewModel: appSettingsViewModel,
-                            onOpenTelemetry: { path.append(.diagnostics) },
-                            onOpenDashboardCards: { path.append(.dashboardCards) },
-                            onOpenPowerModes: { path.append(.powerModes) },
-                            onOpenRideHistory: { path.append(.rideHistory) },
+                            onOpenTelemetry: {
+                                router.navigate(to: .diagnostics, reduceMotion: reduceMotion)
+                            },
+                            onOpenDashboardCards: {
+                                router.navigate(to: .dashboardCards, reduceMotion: reduceMotion)
+                            },
+                            onOpenPowerModes: {
+                                router.navigate(to: .powerModes, reduceMotion: reduceMotion)
+                            },
+                            onOpenRideHistory: {
+                                router.navigate(to: .rideHistory, reduceMotion: reduceMotion)
+                            },
                             bikeLockModeTitle: bikeLockSettingsViewModel.viewState.isAvailable
                                 ? bikeLockSettingsViewModel.viewState.currentModeTitle
                                 : nil,
-                            onOpenBikeLock: { path.append(.bikeLockSettings) },
+                            onOpenBikeLock: {
+                                router.navigate(to: .bikeLockSettings, reduceMotion: reduceMotion)
+                            },
                             accessory: settingsAccessory
                         )
                     case .bikeLockSettings:
@@ -126,53 +132,41 @@ struct AppRootView: View {
                 }
             }
 
-            if rideNavigationPresentation != .hidden {
+            if router.rideNavigationPresentation != .hidden {
                 RideNavigationScene(
                     factory: rideNavigationFactory,
-                    presentationMode: rideNavigationPresentation,
-                    importedURL: incomingNavigationResource?.url,
-                    importedURLToken: incomingNavigationResource?.id,
-                    onClose: hideRideNavigation,
-                    onMinimize: minimizeRideNavigation,
-                    onExpand: expandRideNavigation
+                    presentationMode: router.rideNavigationPresentation,
+                    importedURL: router.incomingNavigationResource?.url,
+                    importedURLToken: router.incomingNavigationResource?.id,
+                    onClose: { router.hideRideNavigation(reduceMotion: reduceMotion) },
+                    onMinimize: { router.minimizeRideNavigation(reduceMotion: reduceMotion) },
+                    onExpand: { router.expandRideNavigation(reduceMotion: reduceMotion) }
                 )
                 .zIndex(1)
             }
         }
         .onOpenURL { url in
-            if url.scheme == "fenr-app", url.host == "ride-navigation" {
-                expandRideNavigation()
-                return
-            }
-            openRideNavigationResource(url)
+            router.open(url, reduceMotion: reduceMotion)
         }
         .task {
-            updateInterfaceOrientation()
+            router.rootPresentationDidStart()
             await lifecycleController.start()
-            await consumeIncomingMapLink()
-            synchronizeOnboardingObservation()
+            await router.consumeIncomingMapLink(reduceMotion: reduceMotion)
             bikeLockSettingsViewModel.start()
-            updateInterfaceOrientation()
         }
-        .onAppear(perform: updateInterfaceOrientation)
+        .onAppear(perform: router.rootPresentationDidStart)
         .onChange(of: setupFlow.isCompleted) {
-            if setupFlow.isCompleted {
-                path.removeAll()
-            }
             lifecycleController.setIsSetupCompleted(setupFlow.isCompleted)
-            synchronizeOnboardingObservation()
-            updateInterfaceOrientation()
+            router.setupStateDidChange()
         }
         .onChange(of: setupFlow.isLoaded) {
-            synchronizeOnboardingObservation()
-            updateInterfaceOrientation()
+            router.setupStateDidChange()
         }
-        .onChange(of: path) {
-            updateInterfaceOrientation()
-            synchronizeOnboardingBackNavigation()
+        .onChange(of: router.path) {
+            router.pathDidChange()
         }
         .onChange(of: onboardingViewModel.viewState.step) {
-            navigateToCurrentOnboardingStep()
+            router.onboardingStepDidChange()
         }
         .onChange(of: scenePhase) {
             lifecycleController.setCanShowLiveActivity(scenePhase != .active)
@@ -182,13 +176,13 @@ struct AppRootView: View {
         }
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }
-            await consumeIncomingMapLink()
+            await router.consumeIncomingMapLink(reduceMotion: reduceMotion)
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willTerminateNotification)) { _ in
             lifecycleController.terminate()
         }
         .onDisappear {
-            onboardingViewModel.stopObserving()
+            router.rootPresentationDidStop()
             bikeLockSettingsViewModel.stop()
             lifecycleController.stop()
         }
@@ -196,138 +190,9 @@ struct AppRootView: View {
 }
 
 private extension AppRootView {
-    private func changeBike() {
+    func changeBike() {
         lifecycleController.changeBike {
-            path.removeAll()
-            synchronizeOnboardingObservation()
-            updateInterfaceOrientation()
+            router.changeBikeDidComplete()
         }
-    }
-
-    private func openRideNavigationResource(_ url: URL) {
-        let scheme = url.scheme?.lowercased()
-        let isSupported = url.pathExtension.lowercased() == "gpx"
-            || url.pathExtension.lowercased() == "directionsrequest"
-            || scheme == "https"
-        guard isSupported else { return }
-        incomingNavigationResource = IncomingNavigationResource(url: url)
-        expandRideNavigation()
-    }
-
-    private func consumeIncomingMapLink() async {
-        guard let link = try? await incomingMapLinkStore.consume() else { return }
-        openRideNavigationResource(link.url)
-    }
-
-    private func updateInterfaceOrientation() {
-        let shouldUseDashboardOrientation = rideNavigationPresentation != .hidden
-            || (setupFlow.isCompleted && path.isEmpty)
-        interfaceOrientationController.request(
-            shouldUseDashboardOrientation ? .landscape : .portrait
-        )
-    }
-
-    private func showRideNavigation() {
-        expandRideNavigation()
-    }
-
-    private func minimizeRideNavigation() {
-        withAnimation(navigationTransitionAnimation) {
-            rideNavigationPresentation = .mini
-        }
-        updateInterfaceOrientation()
-    }
-
-    private func expandRideNavigation() {
-        withAnimation(navigationTransitionAnimation) {
-            rideNavigationPresentation = .fullScreen
-        }
-        updateInterfaceOrientation()
-    }
-
-    private func hideRideNavigation() {
-        withAnimation(navigationTransitionAnimation) {
-            rideNavigationPresentation = .hidden
-        }
-        incomingNavigationResource = nil
-        updateInterfaceOrientation()
-    }
-
-    private var navigationTransitionAnimation: Animation {
-        reduceMotion
-            ? .easeOut(duration: Constants.reducedNavigationTransitionDuration)
-            : .smooth(duration: Constants.navigationTransitionDuration)
-    }
-
-    private func navigateFromDashboard(to route: Route) {
-        guard rideNavigationPresentation != .mini else {
-            expandRideNavigation()
-            return
-        }
-        path.append(route)
-    }
-
-    private func navigateToOnboardingStep(_ step: BikeOnboardingStep) {
-        guard setupFlow.isLoaded, !setupFlow.isCompleted else { return }
-        let route = Route.onboarding(step)
-        guard path.last != route else { return }
-        path.append(route)
-    }
-
-    private func synchronizeOnboardingBackNavigation() {
-        guard setupFlow.isLoaded, !setupFlow.isCompleted else { return }
-
-        let visibleStep: BikeOnboardingStep
-        if case .onboarding(let step)? = path.last {
-            visibleStep = step
-        } else {
-            visibleStep = .welcome
-        }
-
-        while onboardingViewModel.viewState.step.rawValue > visibleStep.rawValue {
-            onboardingViewModel.back()
-        }
-    }
-
-    private func navigateToCurrentOnboardingStep() {
-        guard setupFlow.isLoaded, !setupFlow.isCompleted else { return }
-        let visibleStep: BikeOnboardingStep
-        if case .onboarding(let step)? = path.last {
-            visibleStep = step
-        } else {
-            visibleStep = .welcome
-        }
-        let viewModelStep = onboardingViewModel.viewState.step
-        guard viewModelStep.rawValue > visibleStep.rawValue else { return }
-        navigateToOnboardingStep(viewModelStep)
-    }
-
-    private func synchronizeOnboardingObservation() {
-        if setupFlow.isLoaded && !setupFlow.isCompleted {
-            onboardingViewModel.startObserving()
-        } else {
-            onboardingViewModel.stopObserving()
-        }
-    }
-
-    private enum Route: Hashable {
-        case onboarding(BikeOnboardingStep)
-        case batteryHealth
-        case diagnostics
-        case settings
-        case dashboardCards
-        case powerModes
-        case rideHistory
-        case bikeLockSettings
-    }
-
-    private struct IncomingNavigationResource: Equatable {
-        let id = UUID()
-        let url: URL
-    }
-
-    private enum Constants {
-        static let navigationTransitionDuration = 0.35
-        static let reducedNavigationTransitionDuration = 0.12
     }
 }

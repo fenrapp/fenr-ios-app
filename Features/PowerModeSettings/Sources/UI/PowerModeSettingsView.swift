@@ -61,6 +61,7 @@ public struct PowerModeSettingsView: View {
                 Button(action: viewModel.refresh) {
                     Image(systemName: "arrow.clockwise")
                 }
+                .disabled(!viewModel.viewState.canRefresh)
                 .accessibilityLabel("Refresh power modes")
             }
         }

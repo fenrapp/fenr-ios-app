@@ -10,9 +10,9 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var rideNavigation: RideNavigationSettings
     public var measurementSystem: MeasurementSystem
     public var defaultBatteryPackCapacity: BatteryPackCapacity
-    public var batteryPackCapacitiesByVIN: [String: BatteryPackCapacity]
-    public var powerModeNamesByVIN: [String: [Int: PowerModeName]]
-    public var bikeLockSettingsByVIN: [String: BikeLockSettings]
+    public private(set) var batteryPackCapacitiesByVIN: [String: BatteryPackCapacity]
+    public private(set) var powerModeNamesByVIN: [String: [Int: PowerModeName]]
+    public private(set) var bikeLockSettingsByVIN: [String: BikeLockSettings]
 
     public var batteryPackCapacity: BatteryPackCapacity {
         defaultBatteryPackCapacity
@@ -183,100 +183,6 @@ public struct AppSettings: Codable, Equatable, Sendable {
             if !sanitized.isEmpty {
                 result[entry.key] = sanitized
             }
-        }
-    }
-}
-
-public enum DashboardProgressBarMode: String, Codable, CaseIterable, Sendable {
-    case energy
-    case speed
-    case hidden
-}
-
-public enum DashboardBatteryIndicatorMode: String, Codable, CaseIterable, Sendable {
-    case percentage
-    case estimatedRange
-}
-
-public enum DashboardDeviceBatteryDisplayMode: String, Codable, CaseIterable, Sendable {
-    case iconAndText
-    case textOnly
-    case iconOnly
-    case hidden
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let rawValue = try container.decode(String.self)
-        switch rawValue {
-        case "icon", Self.iconAndText.rawValue:
-            self = .iconAndText
-        case "text", Self.textOnly.rawValue:
-            self = .textOnly
-        case Self.iconOnly.rawValue:
-            self = .iconOnly
-        case Self.hidden.rawValue:
-            self = .hidden
-        default:
-            throw DecodingError.dataCorruptedError(
-                in: container,
-                debugDescription: "Unsupported dashboard device battery display mode"
-            )
-        }
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(rawValue)
-    }
-
-    public var nextVisibleMode: Self {
-        switch self {
-        case .iconAndText: .textOnly
-        case .textOnly: .iconOnly
-        case .iconOnly, .hidden: .iconAndText
-        }
-    }
-}
-
-public enum SpeedSource: String, Codable, CaseIterable, Sendable {
-    case motorcycle
-    case gps
-    case hybrid
-
-    public var usesDeviceLocation: Bool {
-        self != .motorcycle
-    }
-}
-
-public enum MeasurementSystem: String, Codable, CaseIterable, Sendable {
-    case system
-    case metric
-    case imperial
-
-    public func resolved(for locale: Locale = .autoupdatingCurrent) -> Locale.MeasurementSystem {
-        switch self {
-        case .system: locale.measurementSystem
-        case .metric: .metric
-        case .imperial: .us
-        }
-    }
-}
-
-public enum BatteryPackCapacity: String, Codable, CaseIterable, Sendable {
-    case sixPointEightKilowattHours
-    case sevenPointTwoKilowattHours
-
-    public var wattHours: Double {
-        switch self {
-        case .sixPointEightKilowattHours: 6_800
-        case .sevenPointTwoKilowattHours: 7_200
-        }
-    }
-
-    public var displayName: String {
-        switch self {
-        case .sixPointEightKilowattHours: "6.8 kWh"
-        case .sevenPointTwoKilowattHours: "7.2 kWh"
         }
     }
 }

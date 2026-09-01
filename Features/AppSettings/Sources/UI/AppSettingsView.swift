@@ -1,4 +1,3 @@
-import DesignSystem
 import SwiftUI
 
 public struct AppSettingsView: View {
@@ -34,95 +33,33 @@ public struct AppSettingsView: View {
     public var body: some View {
         Form {
             #if os(iOS)
-            Section("Ride dashboard") {
-                Picker("Progress bar", selection: dashboardProgressBarModeBinding) {
-                    ForEach(viewModel.viewState.dashboardProgressBarMode.selection.options) { option in
-                        Text(option.title).tag(option.id)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                Text(viewModel.viewState.dashboardProgressBarMode.description)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-
-                Picker("Phone battery", selection: dashboardDeviceBatteryDisplayModeBinding) {
-                    ForEach(viewModel.viewState.dashboardDeviceBatteryDisplayMode.options) { option in
-                        Text(option.title).tag(option.id)
-                    }
-                }
-                .pickerStyle(.menu)
-
-                Text("Controls how the phone battery appears beside the dashboard clock.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-
-                Toggle("Battery and inverter temperatures", isOn: showsDashboardTemperaturesBinding)
-
-                Text("Shows available thermal readings on the ride dashboard.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-
-                Picker("Speed source", selection: speedSourceBinding) {
-                    ForEach(viewModel.viewState.speedSource.selection.options) { option in
-                        Text(option.title).tag(option.id)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                Text(viewModel.viewState.speedSource.description)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-
-                if let locationPermission = viewModel.viewState.speedSource.locationPermission {
-                    LocationPermissionRow(
-                        status: locationPermission,
-                        onRequestAccess: viewModel.requestLocationAccess
-                    )
-                }
-
-                DashboardCardsNavigationRow(action: onOpenDashboardCards)
-            }
+            RideDashboardSettingsSection(
+                progressBarMode: viewModel.viewState.dashboardProgressBarMode,
+                deviceBatteryDisplayMode: viewModel.viewState.dashboardDeviceBatteryDisplayMode,
+                showsTemperatures: viewModel.viewState.showsDashboardTemperatures,
+                speedSource: viewModel.viewState.speedSource,
+                onSelectProgressBarMode: viewModel.selectDashboardProgressBarMode,
+                onSelectDeviceBatteryDisplayMode: viewModel.selectDashboardDeviceBatteryDisplayMode,
+                onSetShowsTemperatures: viewModel.setShowsDashboardTemperatures,
+                onSelectSpeedSource: viewModel.selectSpeedSource,
+                onRequestLocationAccess: viewModel.requestLocationAccess,
+                onOpenDashboardCards: onOpenDashboardCards
+            )
             #endif
 
             #if os(iOS)
-            Section("Bike power tier") {
-                Picker("Declared model", selection: powerTierBinding) {
-                    ForEach(viewModel.viewState.powerTier.selection.options) { option in
-                        Text(option.title).tag(option.id)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                Text(viewModel.viewState.powerTier.status)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                if let evidence = viewModel.viewState.powerTier.evidence {
-                    Text(evidence)
-                        .font(.footnote)
-                }
-                Button {
-                    viewModel.verifyPowerTierWithBike()
-                } label: {
-                    if viewModel.viewState.powerTier.isVerifying {
-                        ProgressView()
-                    } else {
-                        Text("Verify with bike")
-                    }
-                }
-                .disabled(!viewModel.viewState.powerTier.isVerifyEnabled)
-
-                Text(
-                    "The manual selection is only an expectation. "
-                        + "Bike telemetry determines HP, TC and the effective tier."
-                )
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            PowerTierSettingsSection(
+                state: viewModel.viewState.powerTier,
+                onSelectDeclaredTier: viewModel.selectDeclaredPowerTier,
+                onVerify: viewModel.verifyPowerTierWithBike
+            )
 
             Section("Bike") {
-                PowerModesNavigationRow(
-                    state: viewModel.viewState.powerModes,
+                SettingsNavigationRow(
+                    icon: "slider.horizontal.3",
+                    title: "Power modes",
+                    detail: viewModel.viewState.powerModes.detail,
+                    accessibilityIdentifier: "settings.powerModes",
                     action: onOpenPowerModes
                 )
                 if let bikeLockModeTitle {
@@ -134,7 +71,13 @@ public struct AppSettingsView: View {
             }
 
             Section("Rides") {
-                RideHistoryNavigationRow(action: onOpenRideHistory)
+                SettingsNavigationRow(
+                    icon: "clock.arrow.circlepath",
+                    title: "Ride history",
+                    detail: "Review saved rides and recent comparisons",
+                    accessibilityIdentifier: "settings.rideHistory",
+                    action: onOpenRideHistory
+                )
             }
             #endif
 
@@ -147,31 +90,12 @@ public struct AppSettingsView: View {
                 .pickerStyle(selectionPickerStyle)
             }
 
-            Section("Battery") {
-                #if os(iOS)
-                Picker("Dashboard display", selection: dashboardBatteryIndicatorModeBinding) {
-                    ForEach(viewModel.viewState.dashboardBatteryIndicatorMode.options) { option in
-                        Text(option.title).tag(option.id)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                Text("Falls back to battery percentage until an estimated range is available.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                #endif
-
-                Picker("Pack capacity", selection: batteryPackCapacityBinding) {
-                    ForEach(viewModel.viewState.batteryCapacity.options) { option in
-                        Text(option.title).tag(option.id)
-                    }
-                }
-                .pickerStyle(selectionPickerStyle)
-
-                Text("Used to estimate the remaining charging time.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
+            BatterySettingsSection(
+                dashboardIndicatorMode: viewModel.viewState.dashboardBatteryIndicatorMode,
+                capacity: viewModel.viewState.batteryCapacity,
+                onSelectDashboardIndicatorMode: viewModel.selectDashboardBatteryIndicatorMode,
+                onSelectCapacity: viewModel.selectBatteryPackCapacity
+            )
 
             #if os(iOS)
             Section("Diagnostics") {
@@ -187,34 +111,6 @@ public struct AppSettingsView: View {
         .onDisappear { viewModel.stop() }
     }
 
-    private var speedSourceBinding: Binding<String> {
-        .init(
-            get: { viewModel.viewState.speedSource.selection.selectedID },
-            set: { viewModel.selectSpeedSource(id: $0) }
-        )
-    }
-
-    private var dashboardProgressBarModeBinding: Binding<String> {
-        .init(
-            get: { viewModel.viewState.dashboardProgressBarMode.selection.selectedID },
-            set: { viewModel.selectDashboardProgressBarMode(id: $0) }
-        )
-    }
-
-    private var showsDashboardTemperaturesBinding: Binding<Bool> {
-        .init(
-            get: { viewModel.viewState.showsDashboardTemperatures },
-            set: { viewModel.setShowsDashboardTemperatures($0) }
-        )
-    }
-
-    private var dashboardDeviceBatteryDisplayModeBinding: Binding<String> {
-        .init(
-            get: { viewModel.viewState.dashboardDeviceBatteryDisplayMode.selectedID },
-            set: { viewModel.selectDashboardDeviceBatteryDisplayMode(id: $0) }
-        )
-    }
-
     private var selectionPickerStyle: some PickerStyle {
         #if os(watchOS)
         NavigationLinkPickerStyle()
@@ -227,27 +123,6 @@ public struct AppSettingsView: View {
         .init(
             get: { viewModel.viewState.measurementSystem.selectedID },
             set: { viewModel.selectMeasurementSystem(id: $0) }
-        )
-    }
-
-    private var batteryPackCapacityBinding: Binding<String> {
-        .init(
-            get: { viewModel.viewState.batteryCapacity.selectedID },
-            set: { viewModel.selectBatteryPackCapacity(id: $0) }
-        )
-    }
-
-    private var dashboardBatteryIndicatorModeBinding: Binding<String> {
-        .init(
-            get: { viewModel.viewState.dashboardBatteryIndicatorMode.selectedID },
-            set: { viewModel.selectDashboardBatteryIndicatorMode(id: $0) }
-        )
-    }
-
-    private var powerTierBinding: Binding<String> {
-        .init(
-            get: { viewModel.viewState.powerTier.selection.selectedID },
-            set: { viewModel.selectDeclaredPowerTier(id: $0) }
         )
     }
 

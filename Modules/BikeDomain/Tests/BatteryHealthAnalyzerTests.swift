@@ -104,7 +104,7 @@ struct BatteryHealthAnalyzerTests {
 
     @Test("Does not promote a generic vehicle alert to a BMS fault")
     func keepsVehicleAlertSeparateFromBMSFault() {
-        let analysis = analyzer.analyze(health(isFaultActive: true))
+        let analysis = analyzer.analyze(health(isVehicleFaultActive: true))
 
         #expect(analysis.severity == .unknown)
         #expect(!analysis.isBMSFaultActive)
@@ -152,14 +152,14 @@ struct BatteryHealthAnalyzerTests {
         cells: [BatteryCellVoltage] = [],
         balancingIndexes: Set<Int> = [],
         temperatures: [BatteryTemperature] = [],
-        isFaultActive: Bool = false,
+        isVehicleFaultActive: Bool = false,
         positiveBMSFaultBits: UInt32 = 0,
         negativeBMSFaultBits: UInt32 = 0
     ) -> BikeBatteryHealth {
         .init(
             stateOfCharge: stateOfCharge.map(BatteryLevel.known) ?? .unknown,
             stateOfHealth: stateOfHealth.map(HealthLevel.known) ?? .unknown,
-            isFaultActive: isFaultActive,
+            isVehicleFaultActive: isVehicleFaultActive,
             positiveBMSFaultBits: positiveBMSFaultBits,
             negativeBMSFaultBits: negativeBMSFaultBits,
             cellVoltages: cells,

@@ -1,7 +1,7 @@
 public struct SetChargeTargetUseCase: Sendable {
-    private let repository: any BikeBatteryHealthRepository
+    private let repository: any BikeChargePowerControlRepository
 
-    public init(repository: any BikeBatteryHealthRepository) {
+    public init(repository: any BikeChargePowerControlRepository) {
         self.repository = repository
     }
 

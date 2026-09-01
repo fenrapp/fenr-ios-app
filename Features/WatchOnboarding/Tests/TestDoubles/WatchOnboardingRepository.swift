@@ -2,9 +2,9 @@ import BikeDomain
 import TestSupport
 
 actor WatchOnboardingRepository: BikeRepository, BikeDiscoveryRepository, BikeProfileRepository {
-    private let connections = TestEventHub<BikeConnection>()
-    private let discoveredBikes = TestEventHub<[DiscoveredBike]>()
-    private let debugEvents = TestEventHub<BikeDebugEvent>()
+    private let connections = TestEventHub<BikeConnection>(bufferingPolicy: .unbounded)
+    private let discoveredBikes = TestEventHub<[DiscoveredBike]>(bufferingPolicy: .unbounded)
+    private let debugEvents = TestEventHub<BikeDebugEvent>(bufferingPolicy: .unbounded)
     private var profile: BikeProfile?
     private(set) var connectedVIN: String?
     private var discoveryStarts = 0
@@ -46,17 +46,17 @@ actor WatchOnboardingRepository: BikeRepository, BikeDiscoveryRepository, BikePr
     }
 
     func sendConnection(_ connection: BikeConnection) async {
-        await connections.waitForSubscriber()
+        _ = await connections.waitForSubscriber()
         await connections.send(connection)
     }
 
     func sendDebugEvent(_ event: BikeDebugEvent) async {
-        await debugEvents.waitForSubscriber()
+        _ = await debugEvents.waitForSubscriber()
         await debugEvents.send(event)
     }
 
     func sendDiscoveredBikes(_ bikes: [DiscoveredBike]) async {
-        await discoveredBikes.waitForSubscriber()
+        _ = await discoveredBikes.waitForSubscriber()
         await discoveredBikes.send(bikes)
     }
 }

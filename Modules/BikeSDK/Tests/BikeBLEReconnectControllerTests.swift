@@ -50,7 +50,7 @@ struct BikeBLEReconnectControllerTests {
     }
 
     @Test("Backoff resets only after telemetry remains stable")
-    func stableTelemetryResetsBackoff() async throws {
+    func stableTelemetryResetsBackoff() async {
         let recorder = MainActorValueRecorder()
         let controller = BikeBLEReconnectController(
             delay: BikeBLEReconnectDelay(),
@@ -75,7 +75,7 @@ struct BikeBLEReconnectControllerTests {
 
         controller.cancelPending()
         controller.markConnectionReady()
-        try await Task.sleep(for: .milliseconds(30))
+        #expect(await waitUntil { !controller.hasPendingStabilityReset })
         #expect(await schedule())
         #expect(recorder.values == [1, 2, 3, 1])
         controller.cancelPending()

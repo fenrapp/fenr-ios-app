@@ -8,7 +8,7 @@ struct DashboardRideHeader: View {
     var body: some View {
         HStack(spacing: Constants.itemSpacing) {
             clock
-            if deviceBattery.displayMode != .hidden {
+            if deviceBattery.isVisible {
                 separator
                 phoneBattery
             }
@@ -28,14 +28,13 @@ struct DashboardRideHeader: View {
 
     private var phoneBattery: some View {
         Button(action: toggleDeviceBatteryDisplayMode) {
-            switch deviceBattery.displayMode {
-            case .iconAndText:
+            if deviceBattery.showsIcon, deviceBattery.showsPercentage {
                 Label(deviceBattery.percentageText, systemImage: deviceBattery.systemImage)
-            case .textOnly:
+            } else if deviceBattery.showsPercentage {
                 Text(deviceBattery.percentageText)
-            case .iconOnly:
+            } else if deviceBattery.showsIcon {
                 Image(systemName: deviceBattery.systemImage)
-            case .hidden:
+            } else {
                 EmptyView()
             }
         }
@@ -44,7 +43,7 @@ struct DashboardRideHeader: View {
         .lineLimit(1)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(deviceBattery.accessibilityLabel)
-        .accessibilityHint(deviceBatteryDisplayModeHint)
+        .accessibilityHint(deviceBattery.displayModeAccessibilityHint)
         .accessibilityIdentifier("dashboard.phone-battery")
     }
 
@@ -61,15 +60,6 @@ struct DashboardRideHeader: View {
         case .normal: DesignColor.primaryText
         case .low: DesignColor.critical
         case .charging: DesignColor.positive
-        }
-    }
-
-    private var deviceBatteryDisplayModeHint: String {
-        switch deviceBattery.displayMode {
-        case .iconAndText: "Switches to percentage-only display"
-        case .textOnly: "Switches to icon-only display"
-        case .iconOnly: "Switches to icon and percentage display"
-        case .hidden: ""
         }
     }
 

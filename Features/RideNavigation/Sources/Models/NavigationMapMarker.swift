@@ -1,14 +1,12 @@
-import EnvironmentDomain
-
 public struct NavigationMapMarker: Equatable, Identifiable, Sendable {
     public let id: String
-    public let coordinate: GeographicCoordinate
+    public let coordinate: NavigationMapCoordinate
     public let title: String
     public let role: NavigationMapMarkerRole
 
     public init(
         id: String,
-        coordinate: GeographicCoordinate,
+        coordinate: NavigationMapCoordinate,
         title: String,
         role: NavigationMapMarkerRole
     ) {

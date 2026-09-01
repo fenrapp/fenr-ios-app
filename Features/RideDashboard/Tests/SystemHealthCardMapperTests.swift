@@ -79,7 +79,7 @@ struct SystemHealthCardMapperTests {
         let state = mapper.map(snapshot(health: .init(
             stateOfCharge: .known(percent: 80),
             stateOfHealth: .known(percent: 94),
-            isFaultActive: true,
+            isVehicleFaultActive: true,
             cellVoltages: [.init(position: 1, volts: 3.9)]
         )))
 
