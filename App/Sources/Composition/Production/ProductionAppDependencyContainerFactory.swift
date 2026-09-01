@@ -67,7 +67,8 @@ enum ProductionAppDependencyContainerFactory {
             bikeLockCredentialStore: makeBikeLockCredentialStore(),
             bikeLockAuthenticator: LocalAuthenticationBikeLockAuthenticator(),
             bikeLockCapabilityStore: bikeLockCapabilityStore,
-            allowsExperimentalBikeLockControl: true
+            allowsExperimentalBikeLockControl: true,
+            startupPreparer: NoOpAppStartupPreparer()
         )
     }
 

@@ -133,4 +133,56 @@ struct AppDependencyContainerTests {
         #expect(await fixture.repository.startCount() == 1)
         #expect(completionCount == 1)
     }
+
+    @Test("Stopping during startup rolls back started services")
+    func lifecycleStopDuringStartupRollsBackInReverseOrder() async {
+        let tracePreparer = LifecycleBLETraceStoragePreparer()
+        let fixture = AppLifecycleControllerFixture(bleTraceStoragePreparer: tracePreparer)
+        let startTask = Task { await fixture.lifecycleController.start() }
+
+        #expect(await waitUntil { await tracePreparer.preparationHasStarted() })
+        fixture.lifecycleController.stop()
+        await tracePreparer.finishPreparation()
+        await startTask.value
+
+        #expect(await waitUntil {
+            let rideEvents = await fixture.rideSession.recordedEvents()
+            let vehicleStopCount = await fixture.vehicleSession.stopCount()
+            return rideEvents == ["start", "stop"] && vehicleStopCount == 1
+        })
+        #expect(await fixture.repository.startCount() == 0)
+        #expect(await fixture.repository.stopCount() == 0)
+    }
+
+    @Test("Lifecycle restarts after shutdown completes")
+    func lifecycleRestartsAfterShutdownCompletes() async {
+        let fixture = AppLifecycleControllerFixture()
+        await fixture.lifecycleController.start()
+        fixture.lifecycleController.stop()
+        #expect(await waitUntil { await fixture.repository.stopCount() == 1 })
+
+        await fixture.lifecycleController.start()
+
+        #expect(await fixture.vehicleSession.startCount() == 2)
+        #expect(await fixture.rideSession.recordedEvents() == ["start", "stop", "start"])
+        #expect(await fixture.repository.startCount() == 2)
+    }
+
+    @Test("Lifecycle awaits startup preparation before starting sessions")
+    func lifecycleAwaitsStartupPreparationBeforeStartingSessions() async {
+        let preparer = ControllableAppStartupPreparer()
+        await preparer.blockNextPreparation()
+        let fixture = AppLifecycleControllerFixture(startupPreparer: preparer)
+        let startTask = Task { await fixture.lifecycleController.start() }
+
+        #expect(await waitUntil { await preparer.hasPendingPreparation() })
+        #expect(await fixture.vehicleSession.startCount() == 0)
+        #expect(await fixture.rideSession.recordedEvents().isEmpty)
+        #expect(await fixture.repository.startCount() == 0)
+
+        await preparer.resumePreparation()
+        await startTask.value
+        #expect(await fixture.vehicleSession.startCount() == 1)
+        #expect(await fixture.repository.startCount() == 1)
+    }
 }

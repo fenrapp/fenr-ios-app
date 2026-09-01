@@ -9,7 +9,11 @@ struct FENRDebugApp: App {
 
     init() {
         let context = DebugAppDependencyContainerFactory.makeDefault()
-        dependencies = context.container.makeRootDependencies()
+        dependencies = context.container.makeRootDependencies(
+            opensRideNavigationOnLaunch: ProcessInfo.processInfo.arguments.contains(
+                "-openRideNavigation"
+            )
+        )
         _scenarioController = StateObject(wrappedValue: context.scenarioController)
     }
 
@@ -17,9 +21,6 @@ struct FENRDebugApp: App {
         WindowGroup {
             AppRootView(
                 dependencies: dependencies,
-                opensRideNavigationOnLaunch: ProcessInfo.processInfo.arguments.contains(
-                    "-openRideNavigation"
-                ),
                 settingsAccessory: {
                     AnyView(DebugPowerModeControls(controller: scenarioController))
                 }

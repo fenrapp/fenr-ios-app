@@ -4,16 +4,29 @@ import VehicleSession
 
 @MainActor
 final class AppLifecycleController {
+    private enum State {
+        case stopped
+        case starting
+        case started
+        case stopping
+    }
+
     private let sessionController: BikeSessionController
     private let setupFlow: BikeSetupFlowController
     private let bikeLiveActivityController: BikeLiveActivityController
     private let rideSession: any RideSessionService
     private let vehicleSession: any VehicleSessionService
     private let bleTraceStoragePreparer: any BLETraceStoragePreparing
+    private let startupPreparer: any AppStartupPreparing
     private var changeBikeTask: Task<Void, Never>?
     private var persistenceTask: Task<Void, Never>?
+    private var startTask: Task<Void, Never>?
     private var stopTask: Task<Void, Never>?
-    private var hasStarted = false
+    private var state = State.stopped
+    private var didStartVehicleSession = false
+    private var didStartRideSession = false
+    private var didStartLiveActivity = false
+    private var didStartBikeRepository = false
 
     init(
         sessionController: BikeSessionController,
@@ -21,7 +34,8 @@ final class AppLifecycleController {
         bikeLiveActivityController: BikeLiveActivityController,
         rideSession: any RideSessionService,
         vehicleSession: any VehicleSessionService,
-        bleTraceStoragePreparer: any BLETraceStoragePreparing
+        bleTraceStoragePreparer: any BLETraceStoragePreparing,
+        startupPreparer: any AppStartupPreparing
     ) {
         self.sessionController = sessionController
         self.setupFlow = setupFlow
@@ -29,51 +43,83 @@ final class AppLifecycleController {
         self.rideSession = rideSession
         self.vehicleSession = vehicleSession
         self.bleTraceStoragePreparer = bleTraceStoragePreparer
+        self.startupPreparer = startupPreparer
     }
 
     deinit {
         changeBikeTask?.cancel()
         persistenceTask?.cancel()
+        startTask?.cancel()
         // Shutdown deliberately owns its dependencies and may outlive the composition root.
     }
 
     func start() async {
-        guard !hasStarted, stopTask == nil else { return }
-        hasStarted = true
-        async let traceStoragePreparation: Void = bleTraceStoragePreparer.prepareStorage()
-        await vehicleSession.start()
-        guard !Task.isCancelled else { return }
-        await rideSession.start()
-        guard !Task.isCancelled else { return }
-        await setupFlow.load()
-        guard !Task.isCancelled else { return }
-        bikeLiveActivityController.start()
-        bikeLiveActivityController.setIsSetupCompleted(setupFlow.isCompleted)
-        guard let vin = setupFlow.configuredVIN else { return }
-        await traceStoragePreparation
-        guard !Task.isCancelled else { return }
-        await sessionController.start()
-        guard !Task.isCancelled else { return }
-        await sessionController.connectAutomatically(vin: vin)
+        switch state {
+        case .started:
+            return
+        case .starting:
+            await startTask?.value
+            return
+        case .stopping:
+            await stopTask?.value
+            await start()
+        case .stopped:
+            state = .starting
+            let task = Task { [weak self] in
+                guard let self else { return }
+                await self.performStart()
+            }
+            startTask = task
+            await withTaskCancellationHandler {
+                await task.value
+            } onCancel: {
+                task.cancel()
+            }
+            if task.isCancelled {
+                stop()
+            }
+        }
     }
 
     func stop() {
-        guard stopTask == nil else { return }
+        guard state != .stopped, state != .stopping else { return }
+        state = .stopping
         changeBikeTask?.cancel()
+        startTask?.cancel()
+        let pendingStart = startTask
         let pendingChangeBike = changeBikeTask
         let pendingPersistence = persistenceTask
-        stopTask = Task { [sessionController, bikeLiveActivityController, rideSession, vehicleSession] in
+        stopTask = Task { [weak self] in
+            guard let self else { return }
+            await pendingStart?.value
             await pendingChangeBike?.value
             await pendingPersistence?.value
-            await bikeLiveActivityController.stop()
-            await rideSession.stop()
-            await vehicleSession.stop()
-            await sessionController.stop()
+            if didStartLiveActivity {
+                await bikeLiveActivityController.stop()
+            }
+            if didStartRideSession {
+                await rideSession.stop()
+            }
+            if didStartVehicleSession {
+                await vehicleSession.stop()
+            }
+            if didStartBikeRepository {
+                await sessionController.stop()
+            }
+            didStartLiveActivity = false
+            didStartRideSession = false
+            didStartVehicleSession = false
+            didStartBikeRepository = false
+            changeBikeTask = nil
+            persistenceTask = nil
+            startTask = nil
+            stopTask = nil
+            state = .stopped
         }
     }
 
     func persistRideSession() {
-        guard stopTask == nil else { return }
+        guard state == .started else { return }
         let precedingPersistence = persistenceTask
         persistenceTask = Task { [rideSession] in
             await precedingPersistence?.value
@@ -95,7 +141,7 @@ final class AppLifecycleController {
     }
 
     func changeBike(onCompleted: @escaping @MainActor () -> Void) {
-        guard changeBikeTask == nil, stopTask == nil else { return }
+        guard state == .started, changeBikeTask == nil else { return }
         let sessionController = sessionController
         let setupFlow = setupFlow
         let bikeLiveActivityController = bikeLiveActivityController
@@ -116,5 +162,53 @@ final class AppLifecycleController {
             bikeLiveActivityController.setIsSetupCompleted(false)
             onCompleted()
         }
+    }
+}
+
+private extension AppLifecycleController {
+    func performStart() async {
+        await startupPreparer.prepare()
+        guard canContinueStarting else { return }
+
+        await vehicleSession.start()
+        didStartVehicleSession = true
+        guard canContinueStarting else { return }
+
+        await rideSession.start()
+        didStartRideSession = true
+        guard canContinueStarting else { return }
+
+        await setupFlow.load()
+        guard canContinueStarting else { return }
+
+        bikeLiveActivityController.start()
+        didStartLiveActivity = true
+        bikeLiveActivityController.setIsSetupCompleted(setupFlow.isCompleted)
+        guard let vin = setupFlow.configuredVIN, canContinueStarting else {
+            completeStartWithoutRepository()
+            return
+        }
+
+        await bleTraceStoragePreparer.prepareStorage()
+        guard canContinueStarting else { return }
+
+        await sessionController.start()
+        didStartBikeRepository = true
+        guard canContinueStarting else { return }
+
+        await sessionController.connectAutomatically(vin: vin)
+        guard canContinueStarting else { return }
+        startTask = nil
+        state = .started
+    }
+
+    var canContinueStarting: Bool {
+        state == .starting && !Task.isCancelled
+    }
+
+    func completeStartWithoutRepository() {
+        guard canContinueStarting else { return }
+        startTask = nil
+        state = .started
     }
 }

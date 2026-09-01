@@ -81,3 +81,30 @@ actor LifecycleRideSessionSpy: RideSessionService {
     }
     func recordedEvents() -> [String] { events }
 }
+
+actor ControllableAppStartupPreparer: AppStartupPreparing {
+    private var prepares = 0
+    private var shouldBlock = false
+    private var continuation: CheckedContinuation<Void, Never>?
+
+    func prepare() async {
+        prepares += 1
+        guard shouldBlock else { return }
+        await withCheckedContinuation { continuation in
+            self.continuation = continuation
+        }
+    }
+
+    func blockNextPreparation() {
+        shouldBlock = true
+    }
+
+    func preparationCount() -> Int { prepares }
+    func hasPendingPreparation() -> Bool { continuation != nil }
+
+    func resumePreparation() {
+        shouldBlock = false
+        continuation?.resume()
+        continuation = nil
+    }
+}
