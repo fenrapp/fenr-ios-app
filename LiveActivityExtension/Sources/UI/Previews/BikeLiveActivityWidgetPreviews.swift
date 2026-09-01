@@ -39,3 +39,9 @@ import WidgetKit
     BikeLiveActivityPreviewData.ridingLowBattery
     BikeLiveActivityPreviewData.connectionLost
 }
+
+#Preview("Lock Screen long content", as: .content, using: BikeLiveActivityPreviewData.attributes) {
+    BikeLiveActivityWidget()
+} contentStates: {
+    BikeLiveActivityPreviewData.longChargingContent
+}

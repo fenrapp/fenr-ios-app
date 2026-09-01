@@ -114,4 +114,20 @@ enum BikeLiveActivityPreviewData {
         isFaultActive: false,
         isConnectionLost: true
     )
+
+    static let longChargingContent = BikeLiveActivityContentState(
+        batteryPercent: 93,
+        targetPercent: 100,
+        estimatedTimeRemaining: "1 hour 45 minutes",
+        powerText: "6.8 kilowatts",
+        currentText: "19.5 amperes",
+        temperatureText: "27.8 degrees Celsius",
+        modeIndex: nil,
+        speedText: nil,
+        runState: .charging,
+        mode: .charging,
+        phase: .charging,
+        isFaultActive: false,
+        isConnectionLost: false
+    )
 }

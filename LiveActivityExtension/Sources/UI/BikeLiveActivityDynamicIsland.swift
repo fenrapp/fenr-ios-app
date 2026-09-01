@@ -27,6 +27,9 @@ struct BikeLiveActivityDynamicIsland {
             Text(BikeLiveActivityFormatter.batteryText(context.state.batteryPercent))
                 .font(.caption2.bold())
                 .monospacedDigit()
+                .accessibilityLabel(
+                    BikeLiveActivityText.batteryAccessibilityLabel(context.state.batteryPercent)
+                )
         } compactTrailing: {
             compactTrailing
         } minimal: {
@@ -34,6 +37,7 @@ struct BikeLiveActivityDynamicIsland {
                 .font(.caption2.bold())
                 .monospacedDigit()
                 .foregroundStyle(BikeLiveActivityPresentation.tint(for: context.state.phase))
+                .accessibilityLabel(BikeLiveActivityText.minimalAccessibilityLabel(context.state))
         }
         .widgetURL(BikeLiveActivityPresentation.widgetURL)
         .keylineTint(BikeLiveActivityPresentation.tint(for: context.state.phase))
@@ -46,9 +50,13 @@ struct BikeLiveActivityDynamicIsland {
                 .font(.caption2.bold())
                 .monospacedDigit()
                 .foregroundStyle(BikeLiveActivityPresentation.tint(for: context.state.phase))
+                .accessibilityLabel(
+                    BikeLiveActivityText.modeAccessibilityLabel(context.state.modeIndex)
+                )
         } else {
             Image(systemName: BikeLiveActivityIcon.name(for: context.state.phase))
                 .foregroundStyle(BikeLiveActivityPresentation.tint(for: context.state.phase))
+                .accessibilityLabel(BikeLiveActivityText.statusAccessibilityLabel(context.state))
         }
     }
 }

@@ -7,6 +7,7 @@ struct BikeLiveActivityMetricStack: View {
         case regular
     }
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let state: BikeLiveActivityAttributes.ContentState
     let mode: Mode
 
@@ -24,29 +25,47 @@ struct BikeLiveActivityMetricStack: View {
             ForEach(metrics.prefix(Constants.compactMetricLimit), id: \.title) { metric in
                 Text(metric.value)
                     .font(.caption2.weight(.semibold))
-                    .lineLimit(BikeLiveActivityText.singleLineLimit)
+                    .lineLimit(accessibilityLineLimit)
                     .minimumScaleFactor(Constants.compactMinimumScale)
+                    .fixedSize(horizontal: false, vertical: usesAccessibilityLayout)
+                    .accessibilityLabel("\(metric.title), \(metric.value)")
             }
         }
     }
 
     private var regularMetrics: some View {
-        HStack(alignment: .firstTextBaseline, spacing: DesignSpace.extraSmall) {
-            ForEach(metrics, id: \.title) { metric in
-                VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
-                    Text(metric.title)
-                        .font(.caption2.weight(.medium))
-                        .foregroundStyle(DesignColor.secondaryText)
-                        .lineLimit(BikeLiveActivityText.singleLineLimit)
-                    Text(metric.value)
-                        .font(.caption.weight(.semibold))
-                        .lineLimit(BikeLiveActivityText.singleLineLimit)
-                        .minimumScaleFactor(Constants.metricMinimumScale)
-                        .monospacedDigit()
+        Group {
+            if usesAccessibilityLayout {
+                VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
+                    ForEach(metrics, id: \.title) { metric in
+                        metricView(metric)
+                    }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                HStack(alignment: .firstTextBaseline, spacing: DesignSpace.extraSmall) {
+                    ForEach(metrics, id: \.title) { metric in
+                        metricView(metric)
+                    }
+                }
             }
         }
+    }
+
+    private func metricView(_ metric: BikeLiveActivityMetric) -> some View {
+        VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
+            Text(metric.title)
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(DesignColor.secondaryText)
+                .lineLimit(accessibilityLineLimit)
+            Text(metric.value)
+                .font(.caption.weight(.semibold))
+                .lineLimit(accessibilityLineLimit)
+                .minimumScaleFactor(Constants.metricMinimumScale)
+                .monospacedDigit()
+        }
+        .fixedSize(horizontal: false, vertical: usesAccessibilityLayout)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
     }
 
     private var metrics: [BikeLiveActivityMetric] {
@@ -75,6 +94,14 @@ struct BikeLiveActivityMetricStack: View {
                 OptionalBikeLiveActivityMetric(title: "State", value: state.runState.displayTitle)
             ]
         }
+    }
+
+    private var usesAccessibilityLayout: Bool {
+        dynamicTypeSize.isAccessibilitySize
+    }
+
+    private var accessibilityLineLimit: Int? {
+        usesAccessibilityLayout ? nil : BikeLiveActivityText.singleLineLimit
     }
 
     private enum Constants {

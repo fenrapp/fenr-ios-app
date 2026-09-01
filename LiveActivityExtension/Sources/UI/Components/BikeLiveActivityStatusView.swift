@@ -2,6 +2,7 @@ import DesignSystem
 import SwiftUI
 
 struct BikeLiveActivityStatusView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let state: BikeLiveActivityAttributes.ContentState
 
     var body: some View {
@@ -11,22 +12,16 @@ struct BikeLiveActivityStatusView: View {
                 .foregroundStyle(BikeLiveActivityPresentation.tint(for: state.phase))
             Text(statusText)
                 .font(.caption.weight(.medium))
-                .lineLimit(BikeLiveActivityText.singleLineLimit)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : BikeLiveActivityText.singleLineLimit)
                 .minimumScaleFactor(Constants.minimumScale)
+                .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(BikeLiveActivityText.statusAccessibilityLabel(state))
     }
 
     private var statusText: String {
-        if state.phase == .complete {
-            return BikeLiveActivityText.ready
-        }
-        if let estimatedTimeRemaining = state.estimatedTimeRemaining {
-            return BikeLiveActivityText.remaining(estimatedTimeRemaining)
-        }
-        if state.mode == .riding {
-            return state.runState.displayTitle
-        }
-        return state.phase.displayTitle
+        BikeLiveActivityText.status(state)
     }
 
     private enum Constants {
