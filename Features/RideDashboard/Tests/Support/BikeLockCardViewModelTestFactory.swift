@@ -37,6 +37,7 @@ enum BikeLockCardViewModelTestFactory {
                 credentialStore: credentialStore,
                 authenticator: authenticator,
                 capabilityStore: capabilityStore,
+                mapper: BikeLockCardViewStateMapper(),
                 allowsExperimentalControl: allowsExperimentalControl
             ),
             repository: repository,

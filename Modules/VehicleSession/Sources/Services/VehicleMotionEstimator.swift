@@ -2,7 +2,6 @@ import BikeDomain
 import EnvironmentDomain
 import Foundation
 
-// The complementary filter and its validation helpers intentionally live together.
 // swiftlint:disable file_length
 
 public struct VehicleMotionEstimation: Equatable, Sendable {
@@ -25,10 +24,8 @@ public struct VehicleMotionEstimator: Sendable {
     private let maximumLocationSampleAge: TimeInterval
     private let minimumGPSCourseSpeedKilometersPerHour: Double
     private let maximumGPSCourseAccuracyDegrees: Double
-    private var filteredRollDegrees: Double?
-    private var filteredPitchDegrees: Double?
+    private var attitudeFilter: VehicleAttitudeFilter
     private var filteredHeadingDegrees: Double?
-    private var previousSampleDate: Date?
     private var stableSamples: [BikeIMUSample] = []
     private var stableWindowStartedAt: Date?
     private var didRefreshBiasThisSession = false
@@ -48,6 +45,7 @@ public struct VehicleMotionEstimator: Sendable {
         self.maximumLocationSampleAge = maximumLocationSampleAge ?? maximumSampleAge
         self.minimumGPSCourseSpeedKilometersPerHour = minimumGPSCourseSpeedKilometersPerHour
         self.maximumGPSCourseAccuracyDegrees = maximumGPSCourseAccuracyDegrees
+        attitudeFilter = .init()
     }
 
     // swiftlint:disable:next function_body_length
@@ -103,7 +101,7 @@ public struct VehicleMotionEstimator: Sendable {
             clearStableWindow()
         }
 
-        let baseAngles = updateFilter(
+        let baseAngles = attitudeFilter.update(
             sample: sample,
             calibration: effectiveCalibration,
             profile: profile
@@ -177,11 +175,6 @@ public struct VehicleMotionEstimator: Sendable {
 }
 
 private extension VehicleMotionEstimator {
-    struct Angles {
-        let roll: Double
-        let pitch: Double
-    }
-
     struct LocationContext {
         let heading: Double?
         let headingSource: VehicleMotionHeadingSource
@@ -189,91 +182,10 @@ private extension VehicleMotionEstimator {
         let coordinate: GeographicCoordinate?
     }
 
-    mutating func updateFilter(
-        sample: BikeIMUSample,
-        calibration: VehicleMotionCalibration?,
-        profile: BikeIMUProfile
-    ) -> Angles? {
-        let accelerationAngles = gravityAngles(sample: sample, profile: profile)
-        guard let calibration else {
-            guard let accelerationAngles else {
-                resetTracking()
-                return nil
-            }
-            filteredRollDegrees = accelerationAngles.roll
-            filteredPitchDegrees = accelerationAngles.pitch
-            previousSampleDate = sample.observedAt
-            return accelerationAngles
-        }
-
-        let biasCorrected = BikeIMUVector(
-            x: sample.gyroscopeRaw.x - calibration.gyroscopeBiasXRaw,
-            y: sample.gyroscopeRaw.y - calibration.gyroscopeBiasYRaw,
-            z: sample.gyroscopeRaw.z - calibration.gyroscopeBiasZRaw
-        )
-        let transformedGyroscope = profile.gyroscopeTransform.apply(to: biasCorrected)
-        let rates = BikeIMUVector(
-            x: transformedGyroscope.x * profile.gyroscopeDegreesPerSecondPerRawUnit.x,
-            y: transformedGyroscope.y * profile.gyroscopeDegreesPerSecondPerRawUnit.y,
-            z: transformedGyroscope.z * profile.gyroscopeDegreesPerSecondPerRawUnit.z
-        )
-        guard rates.isFinite else { return nil }
-        guard let previousSampleDate,
-              let previousRoll = filteredRollDegrees,
-              let previousPitch = filteredPitchDegrees
-        else {
-            guard let accelerationAngles else { return nil }
-            filteredRollDegrees = accelerationAngles.roll
-            filteredPitchDegrees = accelerationAngles.pitch
-            self.previousSampleDate = sample.observedAt
-            return accelerationAngles
-        }
-
-        let interval = sample.observedAt.timeIntervalSince(previousSampleDate)
-        guard interval > .zero else {
-            if interval < .zero {
-                resetTracking()
-            }
-            return nil
-        }
-        guard interval <= Constants.maximumIntegrationInterval else {
-            resetTracking()
-            guard let accelerationAngles else { return nil }
-            filteredRollDegrees = accelerationAngles.roll
-            filteredPitchDegrees = accelerationAngles.pitch
-            self.previousSampleDate = sample.observedAt
-            return accelerationAngles
-        }
-        var roll = previousRoll + rates.x * interval
-        var pitch = previousPitch + rates.y * interval
-        if let accelerationAngles {
-            roll = Constants.gyroscopeWeight * roll
-                + (1 - Constants.gyroscopeWeight) * accelerationAngles.roll
-            pitch = Constants.gyroscopeWeight * pitch
-                + (1 - Constants.gyroscopeWeight) * accelerationAngles.pitch
-        }
-        filteredRollDegrees = roll
-        filteredPitchDegrees = pitch
-        self.previousSampleDate = sample.observedAt
-        return .init(roll: roll, pitch: pitch)
-    }
-
-    func gravityAngles(sample: BikeIMUSample, profile: BikeIMUProfile) -> Angles? {
-        let acceleration = profile.accelerationTransform.apply(to: sample.accelerationRaw)
-        let magnitude = acceleration.magnitude
-        guard acceleration.isFinite,
-              magnitude.isFinite,
-              Constants.gravityCorrectionRange.contains(magnitude / profile.oneGRaw)
-        else {
-            return nil
-        }
-        return .init(
-            roll: atan2(acceleration.y, acceleration.z).radiansToDegrees,
-            pitch: atan2(-acceleration.x, hypot(acceleration.y, acceleration.z)).radiansToDegrees
-        )
-    }
-
-    func applyingOffsets(_ angles: Angles, calibration: VehicleMotionCalibration) -> Angles {
+    func applyingOffsets(
+        _ angles: VehicleMotionAngles,
+        calibration: VehicleMotionCalibration
+    ) -> VehicleMotionAngles {
         .init(
             roll: angles.roll + calibration.rollZeroOffsetDegrees,
             pitch: angles.pitch + calibration.pitchZeroOffsetDegrees
@@ -388,9 +300,7 @@ private extension VehicleMotionEstimator {
     }
 
     mutating func resetTracking() {
-        filteredRollDegrees = nil
-        filteredPitchDegrees = nil
-        previousSampleDate = nil
+        attitudeFilter.reset()
     }
 
     mutating func locationContext(_ location: DeviceSpeedSample?) -> LocationContext {
@@ -477,7 +387,6 @@ private extension VehicleMotionEstimator {
     }
 
     enum Constants {
-        static let gyroscopeWeight = 0.98
         static let headingSmoothingFactor = 0.18
         static let maximumIntegrationInterval: TimeInterval = 0.25
         static let gravityCorrectionRange = 0.90 ... 1.10
@@ -496,8 +405,6 @@ private extension BikeIMUVector {
 }
 
 private extension Double {
-    var radiansToDegrees: Double { self * 180 / .pi }
-
     var normalizedDegrees: Double {
         let value = truncatingRemainder(dividingBy: 360)
         return value >= .zero ? value : value + 360

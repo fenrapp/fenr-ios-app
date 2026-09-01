@@ -98,7 +98,7 @@ extension FileBLETraceLogRepository {
 
     func appendSnapshotFooter(to url: URL, session: ActiveSession) throws {
         let snapshotAt = now()
-        let input = FooterInput(
+        let input = BLETraceRecordCodec.FooterInput(
             sessionID: session.context.id,
             endedAt: snapshotAt,
             durationMilliseconds: max(
@@ -113,7 +113,7 @@ extension FileBLETraceLogRepository {
         let handle = try FileHandle(forWritingTo: url)
         defer { try? handle.close() }
         _ = try handle.seekToEnd()
-        try handle.write(contentsOf: Self.encodeFooter(input, lineEncoder: lineEncoder))
+        try handle.write(contentsOf: recordCodec.encodeFooter(input))
         try handle.synchronize()
     }
 

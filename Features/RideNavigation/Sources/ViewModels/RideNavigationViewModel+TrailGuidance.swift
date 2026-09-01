@@ -4,30 +4,30 @@ import RideNavigationDomain
 @MainActor
 extension RideNavigationViewModel {
     func updateTrailGuidance(with sample: RideRouteGuidanceSample) {
-        guard let plan = trailGuidance.plan,
-              let snapshot = trailGuidance.update(with: sample) else { return }
-        let progressDistance = snapshot.completedRange.upperBoundMeters
+        guard let plan = trailGuidance.snapshot.plan,
+              let guidanceSnapshot = trailGuidance.update(with: sample) else { return }
+        let progressDistance = guidanceSnapshot.completedRange.upperBoundMeters
         trailMap.advanceCompletion(to: progressDistance)
         let target = plan.coordinate(
             atDistanceMeters: progressDistance + Constants.enduroLookAheadMeters
-        ) ?? snapshot.projection.coordinate
+        ) ?? guidanceSnapshot.projection.coordinate
         trailProgress = RideRouteProgress(
-            distanceFromRouteMeters: snapshot.projection.distanceFromRouteMeters,
+            distanceFromRouteMeters: guidanceSnapshot.projection.distanceFromRouteMeters,
             distanceAlongRouteMeters: progressDistance,
             remainingDistanceMeters: max(
                 plan.totalDistanceMeters - progressDistance,
                 .zero
             ),
-            rejoinCoordinate: snapshot.projection.coordinate,
+            rejoinCoordinate: guidanceSnapshot.projection.coordinate,
             targetCoordinate: target,
             targetBearingDegrees: RideRouteGeometry.bearingDegrees(
                 from: sample.coordinate,
                 to: target
             )
         )
-        handleTrailRouteState(snapshot.routeState)
-        handleTrailDecision(snapshot.decision)
-        if trailGuidance.presentArrivalIfNeeded(for: snapshot) {
+        handleTrailRouteState(guidanceSnapshot.routeState)
+        handleTrailDecision(guidanceSnapshot.decision)
+        if trailGuidance.presentArrivalIfNeeded(for: guidanceSnapshot) {
             replaceFeedbackTask { [guidance] in await guidance.notifySuccess() }
         }
     }
@@ -115,7 +115,8 @@ extension RideNavigationViewModel {
     func startSelectedTrailRoute() {
         guard let route = selectedRoute,
               !state.routePersistence.status.isSaving else { return }
-        if trailGuidance.isPreparing {
+        let guidanceSnapshot = trailGuidance.snapshot
+        if guidanceSnapshot.isPreparing {
             trailGuidance.requestStartAfterPreparation()
             render()
             return
@@ -124,9 +125,9 @@ extension RideNavigationViewModel {
             savePlannedRouteBeforeStart(route)
             return
         }
-        guard trailGuidance.routeID == route.id,
-              trailGuidance.direction == selectedDirection,
-              trailGuidance.plan != nil else {
+        guard guidanceSnapshot.routeID == route.id,
+              guidanceSnapshot.direction == selectedDirection,
+              guidanceSnapshot.plan != nil else {
             prepareTrailPreview(startAfterPreparation: true)
             return
         }
@@ -137,7 +138,7 @@ extension RideNavigationViewModel {
         trailGuidance.dismissEntryPrompt()
         let routeDirection: RideRouteDirection = direction == .forward ? .forward : .reverse
         guard selectedDirection != routeDirection else {
-            guard let plan = trailGuidance.plan else {
+            guard let plan = trailGuidance.snapshot.plan else {
                 prepareTrailPreview(startAfterPreparation: true)
                 return
             }
@@ -171,10 +172,10 @@ extension RideNavigationViewModel {
         state.routePersistence.beginPlannedRouteSave()
         errorText = nil
         render()
-        let routePersistence = routePersistence
+        let routeLibrary = dependencies.routeLibrary
         plannedRouteSaveTask = Task { [weak self] in
             do {
-                let routes = try await routePersistence.saveAndReload(route)
+                let routes = try await routeLibrary.saveAndReload(route)
                 guard let self,
                       operations.isCurrent(
                           .plannedRouteSave,
@@ -206,7 +207,7 @@ extension RideNavigationViewModel {
     }
 
     private func resolveTrailEntryAndStart() {
-        guard let plan = trailGuidance.plan else { return }
+        guard let plan = trailGuidance.snapshot.plan else { return }
         guard let sample = trailGuidanceSample else {
             beginTrailFollowing(plan: plan, projection: nil)
             return

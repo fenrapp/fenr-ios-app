@@ -116,7 +116,7 @@ extension RideNavigationViewModel {
         activity = .following
         trailProgress = nil
         didAnnounceOffRoute = false
-        if trailGuidance.session == nil {
+        if !trailGuidance.snapshot.hasActiveSession {
             trailGuidance.startSession(at: nil)
         }
         if let sample = trailGuidanceSample {

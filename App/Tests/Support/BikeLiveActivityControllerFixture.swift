@@ -18,37 +18,11 @@ final class BikeLiveActivityControllerFixture {
 
     init() {
         let locale = Locale(identifier: "en_US")
-        vehicleSession = LiveVehicleSessionService(
-            useCases: .init(
-                observeTelemetry: .init(repository: repository),
-                observeConnection: .init(repository: repository),
-                observeSettings: .init(repository: settingsRepository),
-                observeDeviceSpeed: .init(repository: BikeLiveActivityDeviceSpeedRepository()),
-                observeIMU: .init(repository: BikeLiveActivityIMURepository()),
-                startIMUMonitoring: .init(repository: BikeLiveActivityIMURepository()),
-                stopIMUMonitoring: .init(repository: BikeLiveActivityIMURepository()),
-                loadMotionCalibration: .init(repository: BikeLiveActivityMotionCalibrationRepository()),
-                saveMotionCalibration: .init(repository: BikeLiveActivityMotionCalibrationRepository()),
-                observeBikeProfile: .init(repository: BikeLiveActivityProfileRepository()),
-                observeBatteryHealth: .init(repository: repository),
-                startBatteryHealthMonitoring: .init(repository: repository),
-                stopBatteryHealthMonitoring: .init(repository: repository),
-                readBikeStatusSnapshot: .init(repository: repository)
-            ),
-            speedResolver: .init(
-                now: { Date() },
-                maximumAccuracyMetersPerSecond: 5,
-                maximumSampleAge: 5
-            ),
-            motionEstimator: .init(
-                profile: nil,
-                now: Date.init,
-                maximumSampleAge: 5,
-                minimumGPSCourseSpeedKilometersPerHour: 5,
-                maximumGPSCourseAccuracyDegrees: 35
-            ),
-            sleep: { duration in try await Task.sleep(for: duration) }
+        let vehicleSession = makeBikeLiveActivityVehicleSession(
+            repository: repository,
+            settingsRepository: settingsRepository
         )
+        self.vehicleSession = vehicleSession
         controller = BikeLiveActivityController(
             vehicleSession: vehicleSession,
             activityClient: activityClient,
@@ -81,6 +55,51 @@ final class BikeLiveActivityControllerFixture {
         controller.start()
         await Task.yield()
     }
+}
+
+private func makeBikeLiveActivityVehicleSession(
+    repository: BikeLiveActivityRepository,
+    settingsRepository: BikeLiveActivitySettingsRepository
+) -> LiveVehicleSessionService {
+    let observeBatteryHealth = ObserveBikeBatteryHealthUseCase(repository: repository)
+    let startBatteryHealthMonitoring = StartBatteryHealthMonitoringUseCase(repository: repository)
+    let stopBatteryHealthMonitoring = StopBatteryHealthMonitoringUseCase(repository: repository)
+    return LiveVehicleSessionService(
+        useCases: .init(
+            observeTelemetry: .init(repository: repository),
+            observeConnection: .init(repository: repository),
+            observeSettings: .init(repository: settingsRepository),
+            observeDeviceSpeed: .init(repository: BikeLiveActivityDeviceSpeedRepository()),
+            observeIMU: .init(repository: BikeLiveActivityIMURepository()),
+            startIMUMonitoring: .init(repository: BikeLiveActivityIMURepository()),
+            stopIMUMonitoring: .init(repository: BikeLiveActivityIMURepository()),
+            loadMotionCalibration: .init(repository: BikeLiveActivityMotionCalibrationRepository()),
+            saveMotionCalibration: .init(repository: BikeLiveActivityMotionCalibrationRepository()),
+            observeBikeProfile: .init(repository: BikeLiveActivityProfileRepository()),
+            observeBatteryHealth: observeBatteryHealth,
+            startBatteryHealthMonitoring: startBatteryHealthMonitoring,
+            stopBatteryHealthMonitoring: stopBatteryHealthMonitoring,
+            readBikeStatusSnapshot: .init(repository: repository)
+        ),
+        powerModeRefreshCoordinator: .init(
+            refreshPowerModeConfiguration: nil,
+            refreshTractionControlConfiguration: nil
+        ),
+        batteryHealthMonitoringCoordinator: .init(
+            observeBatteryHealth: observeBatteryHealth,
+            startBatteryHealthMonitoring: startBatteryHealthMonitoring,
+            stopBatteryHealthMonitoring: stopBatteryHealthMonitoring
+        ),
+        speedResolver: .init(now: Date.init, maximumAccuracyMetersPerSecond: 5, maximumSampleAge: 5),
+        motionEstimator: .init(
+            profile: nil,
+            now: Date.init,
+            maximumSampleAge: 5,
+            minimumGPSCourseSpeedKilometersPerHour: 5,
+            maximumGPSCourseAccuracyDegrees: 35
+        ),
+        sleep: { duration in try await Task.sleep(for: duration) }
+    )
 }
 
 private actor BikeLiveActivityDeviceSpeedRepository: DeviceSpeedRepository {

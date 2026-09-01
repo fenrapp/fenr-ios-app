@@ -288,6 +288,27 @@ struct LiveVehicleSessionServiceTests {
 }
 
 extension LiveVehicleSessionServiceTests {
+    @Test("Releasing the service balances active BMS monitoring")
+    func deinitBalancesBatteryHealthMonitoring() async {
+        var fixture: Fixture? = makeFixture()
+        guard let repository = fixture?.repository else { return }
+        await fixture?.service.start()
+        #expect(await waitUntil { await repository.sourceSubscriptionCounts() == (1, 1) })
+        await repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
+        await fixture?.service.setBatteryHealthMonitoringRequired(
+            true,
+            consumerID: UUID()
+        )
+        #expect(await waitUntil { await repository.monitoringCounts() == (1, 0) })
+
+        fixture = nil
+
+        #expect(await waitUntil { await repository.monitoringCounts() == (1, 1) })
+        #expect(await waitUntil { await repository.activeHealthSubscriptionCount() == 0 })
+    }
+
     @Test("Expires a GPS sample without waiting for another source event")
     func expiresDeviceSpeedSample() async {
         let sleepRecorder = VehicleSessionTestSleepRecorder()
@@ -549,6 +570,19 @@ extension LiveVehicleSessionServiceTests {
         let imu = VehicleSessionTestIMURepository()
         let motionCalibration = VehicleSessionTestMotionCalibrationRepository()
         let fixtureDate = now()
+        let refreshPowerModeConfiguration = RefreshBikePowerModeConfigurationUseCase(
+            repository: repository
+        )
+        let refreshTractionControlConfiguration = RefreshBikeTractionControlConfigurationUseCase(
+            repository: repository
+        )
+        let observeBatteryHealth = ObserveBikeBatteryHealthUseCase(repository: repository)
+        let startBatteryHealthMonitoring = StartBatteryHealthMonitoringUseCase(
+            repository: repository
+        )
+        let stopBatteryHealthMonitoring = StopBatteryHealthMonitoringUseCase(
+            repository: repository
+        )
         let service = LiveVehicleSessionService(
             useCases: .init(
                 observeTelemetry: .init(repository: repository),
@@ -561,12 +595,21 @@ extension LiveVehicleSessionServiceTests {
                 loadMotionCalibration: .init(repository: motionCalibration),
                 saveMotionCalibration: .init(repository: motionCalibration),
                 observeBikeProfile: .init(repository: profile),
-                observeBatteryHealth: .init(repository: repository),
-                startBatteryHealthMonitoring: .init(repository: repository),
-                stopBatteryHealthMonitoring: .init(repository: repository),
+                observeBatteryHealth: observeBatteryHealth,
+                startBatteryHealthMonitoring: startBatteryHealthMonitoring,
+                stopBatteryHealthMonitoring: stopBatteryHealthMonitoring,
                 readBikeStatusSnapshot: .init(repository: repository),
-                refreshPowerModeConfiguration: .init(repository: repository),
-                refreshTractionControlConfiguration: .init(repository: repository)
+                refreshPowerModeConfiguration: refreshPowerModeConfiguration,
+                refreshTractionControlConfiguration: refreshTractionControlConfiguration
+            ),
+            powerModeRefreshCoordinator: .init(
+                refreshPowerModeConfiguration: refreshPowerModeConfiguration,
+                refreshTractionControlConfiguration: refreshTractionControlConfiguration
+            ),
+            batteryHealthMonitoringCoordinator: .init(
+                observeBatteryHealth: observeBatteryHealth,
+                startBatteryHealthMonitoring: startBatteryHealthMonitoring,
+                stopBatteryHealthMonitoring: stopBatteryHealthMonitoring
             ),
             speedResolver: .init(
                 now: now,

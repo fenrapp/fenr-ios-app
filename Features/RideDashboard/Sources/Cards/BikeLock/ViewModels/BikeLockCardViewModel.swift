@@ -36,6 +36,7 @@ public final class BikeLockCardViewModel: ObservableObject {
     private let credentialStore: any BikeLockCredentialStoring
     private let authenticator: any BikeLockAuthenticating
     private let capabilityStore: any BikeLockCapabilityStateStoring
+    private let mapper: BikeLockCardViewStateMapper
     private let allowsExperimentalControl: Bool
     private var observationTask: Task<Void, Never>?
     private var operationTask: Task<Void, Never>?
@@ -55,6 +56,7 @@ public final class BikeLockCardViewModel: ObservableObject {
         credentialStore: any BikeLockCredentialStoring,
         authenticator: any BikeLockAuthenticating,
         capabilityStore: any BikeLockCapabilityStateStoring,
+        mapper: BikeLockCardViewStateMapper,
         allowsExperimentalControl: Bool
     ) {
         self.prepareControl = prepareControl
@@ -64,6 +66,7 @@ public final class BikeLockCardViewModel: ObservableObject {
         self.credentialStore = credentialStore
         self.authenticator = authenticator
         self.capabilityStore = capabilityStore
+        self.mapper = mapper
         self.allowsExperimentalControl = allowsExperimentalControl
     }
 
@@ -343,27 +346,17 @@ extension BikeLockCardViewModel {
         error: String? = nil,
         sheetUpdate: BikeLockSheetUpdate = .preserve
     ) {
-        let isAvailable = firmware != nil
-        let status = isLocked ? "Locked" : "Unlocked"
-        let actionTitle: String
-        actionTitle = isLocked ? "Unlock" : (settings.securityMode.isConfigured ? "Lock" : "Set Up")
-        viewState = .init(
-            isAvailable: isAvailable,
+        viewState = mapper.map(.init(
+            firmware: firmware,
             isLocked: isLocked,
             isWorking: isWorking,
-            isActionEnabled: isAvailable
-                && isReceivingTelemetry
-                && isVehicleStationary
-                && !isWorking,
-            isConfigured: settings.securityMode.isConfigured,
-            statusText: isAvailable ? status : "Unavailable",
-            actionTitle: actionTitle,
-            detailText: isAvailable
-                ? "VCU PIC \(firmware ?? "")"
-                : "Bike Lock requires VCU PIC 1.6.29 or newer.",
-            errorText: error,
-            sheet: sheetUpdate.resolve(current: viewState.sheet)
-        )
+            isReceivingTelemetry: isReceivingTelemetry,
+            isVehicleStationary: isVehicleStationary,
+            securityMode: settings.securityMode,
+            error: error,
+            sheetUpdate: sheetUpdate,
+            currentSheet: viewState.sheet
+        ))
     }
 
     private static func isSafeToOperate(_ snapshot: VehicleSessionSnapshot) -> Bool {

@@ -14,9 +14,9 @@ extension RideNavigationViewModel {
         startLocationObservation()
         synchronizePresentationObservations()
         let routesGeneration = operations.begin(.initialRoutes)
-        let repository = repository
+        let routeLibrary = dependencies.routeLibrary
         loadingTask = Task { [weak self] in
-            let routes = await repository.loadRoutes()
+            let routes = await routeLibrary.loadRoutes()
             guard !Task.isCancelled else { return }
             guard let self,
                   operations.isCurrent(

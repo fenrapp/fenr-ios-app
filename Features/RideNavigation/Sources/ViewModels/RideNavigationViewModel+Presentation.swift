@@ -16,6 +16,7 @@ extension RideNavigationViewModel {
         let elapsed = elapsedText(at: now())
         let modeText = resolvedModeText
         let batteryText = vehicleSnapshot.telemetry.batteryLevel.percent.map { "\($0)%" } ?? "--%"
+        let trailGuidanceSnapshot = trailGuidance.snapshot
         viewState = RideNavigationViewState(
             screen: screen,
             activity: activity,
@@ -39,7 +40,7 @@ extension RideNavigationViewModel {
             avoidsHighways: appSettings.rideNavigation.avoidsHighways,
             showsRoadRoutePreferences: activity == .preview && selectedDestination != nil,
             isCalculatingRoadRoutes: isCalculatingRoadRoutes,
-            isPreparingTrail: trailGuidance.isPreparing,
+            isPreparingTrail: trailGuidanceSnapshot.isPreparing,
             isRerouting: isRerouting,
             isSearching: isSearching ?? viewState.isSearching,
             errorText: errorText,
@@ -54,8 +55,8 @@ extension RideNavigationViewModel {
             trailExitPreview: presentedTrailExit,
             showsIncomingDestinationPrompt: showsIncomingDestinationPrompt,
             incomingDestinationTitle: pendingExternalDestination?.name,
-            trailEntryPrompt: trailGuidance.entryPrompt,
-            arrivalPrompt: trailGuidance.arrivalPrompt,
+            trailEntryPrompt: trailGuidanceSnapshot.entryPrompt,
+            arrivalPrompt: trailGuidanceSnapshot.arrivalPrompt,
             forkGuidance: presentedForkGuidance,
             routePersistence: state.routePersistence.status,
             canSaveCompletedRoute: completedRecording != nil,
@@ -97,7 +98,8 @@ extension RideNavigationViewModel {
     }
 
     var presentedForkGuidance: RideNavigationForkGuidance? {
-        if trailGuidance.snapshot?.routeState == .wrongFork {
+        let guidance = trailGuidance.snapshot.guidance
+        if guidance?.routeState == .wrongFork {
             return RideNavigationForkGuidance(
                 instructionText: "WRONG FORK",
                 distanceText: "Return to the highlighted track",
@@ -105,7 +107,7 @@ extension RideNavigationViewModel {
                 emphasis: .warning
             )
         }
-        guard let decision = trailGuidance.snapshot?.decision else { return nil }
+        guard let decision = guidance?.decision else { return nil }
         let instruction: String
         let systemImage: String
         switch decision.direction {
@@ -131,14 +133,15 @@ extension RideNavigationViewModel {
 
     func renderMiniViewState() {
         let scene = frozenMiniMapScene ?? makeMiniMapScene()
+        let guidanceSnapshot = trailGuidance.snapshot
         let statusText: String?
         if let miniCompletionTitle {
             statusText = miniCompletionTitle
         } else if isRerouting {
             statusText = "REROUTING"
-        } else if trailGuidance.arrivalPrompt != nil {
+        } else if guidanceSnapshot.arrivalPrompt != nil {
             statusText = "END REACHED · TAP"
-        } else if trailGuidance.snapshot?.routeState == .wrongFork {
+        } else if guidanceSnapshot.guidance?.routeState == .wrongFork {
             statusText = "WRONG FORK"
         } else if activity == .following, didAnnounceOffRoute {
             statusText = "OFF TRAIL"
@@ -155,7 +158,7 @@ extension RideNavigationViewModel {
             isLandscape: appSettings.rideNavigation.miniMapLayoutOrientation == .landscape,
             statusText: statusText,
             forkGuidance: presentedForkGuidance,
-            isArrivalPending: trailGuidance.arrivalPrompt != nil,
+            isArrivalPending: guidanceSnapshot.arrivalPrompt != nil,
             accessibilityLabel: statusText.map { "Mini navigation map, \($0)" }
                 ?? "Mini navigation map"
         )
@@ -191,11 +194,20 @@ extension RideNavigationViewModel {
     }
 
     func makeMapScene() -> NavigationMapScene {
-        var polylines: [NavigationMapPolyline] = []
-        var markers: [NavigationMapMarker] = []
-        var directionalIndicators: [NavigationMapDirectionalIndicator] = []
-        appendSelectedRoute(to: &polylines, markers: &markers)
-        appendDirectionalIndicators(to: &directionalIndicators)
+        let guidanceSnapshot = trailGuidance.snapshot
+        let trailOverlay = mapMapper.trailOverlay(
+            RideNavigationMapPresentationMapper.TrailOverlayInput(
+                hasSelectedRoute: selectedRoute != nil,
+                activity: activity,
+                isPresentingTrailExit: trailExitPreview != nil
+                    || roadNavigationPurpose == .trailExit,
+                trailMap: trailMap.presentationSnapshot,
+                guidancePlan: guidanceSnapshot.plan,
+                guidance: guidanceSnapshot.guidance
+            )
+        )
+        var polylines = trailOverlay.polylines
+        var markers = trailOverlay.markers
         appendRoadRoutes(to: &polylines, markers: &markers)
         appendRejoinGuide(to: &polylines)
         appendRecordedRoutes(to: &polylines)
@@ -207,7 +219,7 @@ extension RideNavigationViewModel {
             userHeadingDegrees: locationSnapshot.courseDegrees,
             polylines: polylines,
             markers: markers,
-            directionalIndicators: directionalIndicators
+            directionalIndicators: trailOverlay.directionalIndicators
         )
     }
 
@@ -357,9 +369,6 @@ extension RideNavigationViewModel {
         static let minimumSearchCharacters = 2
         static let searchDebounceMilliseconds = 300
         static let maximumSearchResults = 8
-        static let maximumPreviewIndicators = 200
-        static let previewMinimumIndicatorSpacingMeters = 40.0
-        static let indicatorBearingLookAheadMeters = 5.0
         static let halfCircleDegrees = 180.0
         static let fullCircleDegrees = 360.0
         static let roadStepAdvanceDistanceMeters = 30.0

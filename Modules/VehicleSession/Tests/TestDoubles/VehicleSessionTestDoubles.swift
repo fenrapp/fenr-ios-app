@@ -16,7 +16,9 @@ actor VehicleSessionTestRepository: BikeRepository, BikeBatteryHealthRepository 
     private var refreshedTractionControlIndexes: [Int] = []
     private var shouldFailNextStart = false
     private var shouldDelayNextStart = false
+    private var shouldDelayNextStop = false
     private var startWaiter: CheckedContinuation<Void, Never>?
+    private var stopWaiter: CheckedContinuation<Void, Never>?
     private var suspendedPowerModeRefreshIndexes: Set<Int> = []
     private var powerModeRefreshWaiters: [Int: [CheckedContinuation<Void, Never>]] = [:]
 
@@ -60,8 +62,11 @@ actor VehicleSessionTestRepository: BikeRepository, BikeBatteryHealthRepository 
         }
     }
 
-    func stopBatteryHealthMonitoring() {
+    func stopBatteryHealthMonitoring() async {
         monitoringStops += 1
+        guard shouldDelayNextStop else { return }
+        shouldDelayNextStop = false
+        await withCheckedContinuation { stopWaiter = $0 }
     }
 
     func observeBatteryHealth() async -> AsyncStream<BikeBatteryHealth> {
@@ -78,6 +83,7 @@ actor VehicleSessionTestRepository: BikeRepository, BikeBatteryHealthRepository 
         await (telemetryHub.subscriberCount(), connectionHub.subscriberCount())
     }
     func monitoringCounts() -> (Int, Int) { (monitoringStarts, monitoringStops) }
+    func activeHealthSubscriptionCount() async -> Int { await healthHub.subscriberCount() }
     func powerModeRefreshes() -> (base: [Int], traction: [Int]) {
         (refreshedPowerModeIndexes, refreshedTractionControlIndexes)
     }
@@ -94,11 +100,19 @@ actor VehicleSessionTestRepository: BikeRepository, BikeBatteryHealthRepository 
     }
     func failNextStart() { shouldFailNextStart = true }
     func delayNextStart() { shouldDelayNextStart = true }
+    func delayNextStop() { shouldDelayNextStop = true }
     func hasPendingStart() -> Bool { startWaiter != nil }
+    func hasPendingStop() -> Bool { stopWaiter != nil }
 
     func resumeStart() {
         let waiter = startWaiter
         startWaiter = nil
+        waiter?.resume()
+    }
+
+    func resumeStop() {
+        let waiter = stopWaiter
+        stopWaiter = nil
         waiter?.resume()
     }
 }
