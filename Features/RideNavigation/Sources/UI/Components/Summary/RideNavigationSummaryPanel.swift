@@ -5,6 +5,8 @@ struct RideNavigationSummaryPanel: View {
     let state: RideNavigationViewState
     @Binding var routeName: String
     let onSave: () -> Void
+    let onRetrySave: () -> Void
+    let onDiscardUnsaved: () -> Void
     let onExport: () -> Void
     let onClose: () -> Void
 
@@ -63,6 +65,7 @@ struct RideNavigationSummaryPanel: View {
                 .background(DesignColor.controlSurface, in: Circle())
         }
         .buttonStyle(.plain)
+        .disabled(state.routePersistence.isSaving)
         .accessibilityLabel("Close ride summary")
     }
 
@@ -101,6 +104,7 @@ struct RideNavigationSummaryPanel: View {
                     .foregroundStyle(.secondary)
                 TextField("Recorded ride", text: $routeName)
                     .submitLabel(.done)
+                    .disabled(state.routePersistence.isSaving)
             }
             .padding(.horizontal, DesignSpace.medium)
             .frame(height: Constants.fieldHeight)
@@ -110,7 +114,7 @@ struct RideNavigationSummaryPanel: View {
 
     @ViewBuilder
     private var errorMessage: some View {
-        if let errorText = state.errorText {
+        if let errorText = persistenceErrorText ?? state.errorText {
             Label(errorText, systemImage: "exclamationmark.triangle.fill")
                 .font(.footnote)
                 .foregroundStyle(DesignColor.warning)
@@ -127,6 +131,27 @@ struct RideNavigationSummaryPanel: View {
 
     @ViewBuilder
     private var actionButtons: some View {
+        if state.routePersistence.isSaving {
+            HStack(spacing: DesignSpace.small) {
+                ProgressView()
+                Text("Saving route...")
+                    .font(.subheadline.weight(.semibold))
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("rideNavigation.routeSaving")
+        } else if case .failed = state.routePersistence {
+            Button(action: onRetrySave) {
+                Label("Retry Save", systemImage: "arrow.clockwise")
+            }
+            .controlSize(.large)
+            .rideNavigationPrimaryButton()
+
+            Button(role: .destructive, action: onDiscardUnsaved) {
+                Label("Discard Ride", systemImage: "trash")
+            }
+            .controlSize(.large)
+            .rideNavigationSecondaryButton()
+        } else {
             if state.canSaveCompletedRoute {
                 Button(action: onSave) {
                     Label("Save", systemImage: "square.and.arrow.down.fill")
@@ -134,12 +159,19 @@ struct RideNavigationSummaryPanel: View {
                 .controlSize(.large)
                 .rideNavigationPrimaryButton()
             }
+        }
 
-            Button(action: onExport) {
+        Button(action: onExport) {
                 Label("Export GPX", systemImage: "square.and.arrow.up")
-            }
-            .controlSize(.large)
-            .rideNavigationSecondaryButton()
+        }
+        .controlSize(.large)
+        .rideNavigationSecondaryButton()
+        .disabled(state.routePersistence.isSaving)
+    }
+
+    private var persistenceErrorText: String? {
+        guard case .failed(let message) = state.routePersistence else { return nil }
+        return message
     }
 
     private enum Constants {

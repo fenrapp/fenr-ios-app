@@ -99,8 +99,14 @@ struct RideNavigationMiniView: View {
             .allowsHitTesting(false)
             .accessibilityHidden(true)
 
-            if let statusText = state.statusText {
-                Text(statusText)
+            if let statusText = miniStatusText {
+                HStack(spacing: DesignSpace.extraSmall) {
+                    if let systemImage = miniStatusSystemImage {
+                        Image(systemName: systemImage)
+                            .accessibilityHidden(true)
+                    }
+                    Text(statusText)
+                }
                     .font(.caption.weight(.bold))
                     .tracking(Constants.statusTracking)
                     .foregroundStyle(Color.black)
@@ -124,6 +130,21 @@ struct RideNavigationMiniView: View {
         .accessibilityAddTraits(.isButton)
         .accessibilityAction(named: Text("Expand navigation"), onExpand)
         .accessibilityIdentifier("rideNavigation.miniMap")
+    }
+
+    private var miniStatusText: String? {
+        if state.isArrivalPending { return "END REACHED - TAP" }
+        if let forkGuidance = state.forkGuidance {
+            return [forkGuidance.instructionText, forkGuidance.distanceText]
+                .compactMap { $0 }
+                .joined(separator: " - ")
+        }
+        return state.statusText
+    }
+
+    private var miniStatusSystemImage: String? {
+        if state.isArrivalPending { return "flag.checkered" }
+        return state.forkGuidance?.systemImage
     }
 
     private func dragGesture(layout: MiniMapLayout) -> some Gesture {

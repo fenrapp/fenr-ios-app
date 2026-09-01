@@ -222,9 +222,15 @@ private extension AppRootRouter {
     }
 
     func requestOrientation() {
-        let usesDashboardOrientation = rideNavigationPresentation != .hidden
-            || (setupFlow.isCompleted && path.isEmpty)
-        interfaceOrientationController.request(usesDashboardOrientation ? .landscape : .portrait)
+        let orientations: UIInterfaceOrientationMask
+        if rideNavigationPresentation != .hidden {
+            orientations = .landscape
+        } else if setupFlow.isCompleted && path.isEmpty {
+            orientations = .landscape
+        } else {
+            orientations = .portrait
+        }
+        interfaceOrientationController.request(orientations)
     }
 
 }

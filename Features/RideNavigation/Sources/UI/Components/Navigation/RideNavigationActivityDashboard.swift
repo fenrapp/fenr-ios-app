@@ -1,0 +1,221 @@
+import DesignSystem
+import SwiftUI
+
+struct RideNavigationActivityDashboard: View {
+    let state: RideNavigationViewState
+    let isFocus: Bool
+    let onStart: () -> Void
+    let onTogglePause: () -> Void
+    let onMinimize: () -> Void
+    let onReverse: () -> Void
+    let onRequestTrailExit: () -> Void
+    let onResumeGPX: () -> Void
+    let onRequestFinish: () -> Void
+
+    var body: some View {
+        if isFocusDriving {
+            focusDashboard
+        } else {
+            standardDashboard
+        }
+    }
+
+    private var standardDashboard: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: DesignSpace.medium) {
+                standardMetrics
+                Spacer(minLength: DesignSpace.small)
+                activityActions
+            }
+            ScrollView {
+                VStack(alignment: .leading, spacing: DesignSpace.small) {
+                    standardMetrics
+                    activityActions
+                }
+            }
+            .scrollIndicators(.hidden)
+        }
+        .padding(.horizontal, DesignSpace.medium)
+        .padding(.vertical, DesignSpace.small)
+        .frame(minHeight: Constants.dashboardHeight)
+        .rideNavigationGlassSurface(cornerRadius: Constants.dashboardRadius)
+    }
+
+    private var focusDashboard: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .bottom, spacing: DesignSpace.medium) {
+                focusMetrics
+                    .padding(DesignSpace.small)
+                    .rideNavigationGlassSurface(cornerRadius: Constants.focusCardRadius)
+                Spacer(minLength: Constants.focusCenterClearance)
+                focusActions
+            }
+            ScrollView {
+                VStack(alignment: .leading, spacing: DesignSpace.small) {
+                    focusMetrics
+                    Divider()
+                    activityActions
+                }
+                .padding(DesignSpace.small)
+                .frame(maxWidth: Constants.focusFallbackWidth, alignment: .leading)
+            }
+            .scrollIndicators(.hidden)
+            .frame(maxHeight: Constants.focusFallbackHeight)
+            .rideNavigationGlassSurface(cornerRadius: Constants.focusCardRadius)
+        }
+        .frame(maxWidth: .infinity, alignment: .bottom)
+    }
+
+    private var focusActions: some View {
+        ScrollView(.vertical) {
+            VStack(alignment: .trailing, spacing: DesignSpace.extraSmall) {
+                activityActions
+            }
+            .padding(DesignSpace.small)
+        }
+        .scrollIndicators(.hidden)
+        .frame(maxWidth: Constants.focusActionsWidth, maxHeight: Constants.focusActionsHeight)
+        .rideNavigationGlassSurface(cornerRadius: Constants.focusCardRadius)
+    }
+
+    @ViewBuilder
+    private var standardMetrics: some View {
+        RideNavigationMetric(value: state.speedText, unit: state.speedUnit, label: "Speed")
+        metricDivider
+        RideNavigationMetric(value: state.modeText, unit: "", label: "Power")
+        metricDivider
+        RideNavigationMetric(value: state.batteryText, unit: "", label: "Bike")
+        metricDivider
+        RideNavigationMetric(value: state.elapsedText, unit: "", label: "Time")
+    }
+
+    private var focusMetrics: some View {
+        Grid(horizontalSpacing: DesignSpace.medium, verticalSpacing: DesignSpace.small) {
+            GridRow {
+                RideNavigationMetric(value: state.speedText, unit: state.speedUnit, label: "Speed")
+                RideNavigationMetric(value: state.modeText, unit: "", label: "Power")
+            }
+            GridRow {
+                RideNavigationMetric(value: state.batteryText, unit: "", label: "Bike")
+                RideNavigationMetric(value: state.elapsedText, unit: "", label: "Time")
+            }
+        }
+        .frame(maxWidth: Constants.focusMetricsWidth)
+    }
+
+    private var metricDivider: some View {
+        Divider().frame(height: Constants.metricDividerHeight)
+    }
+
+    @ViewBuilder
+    private var activityActions: some View {
+        switch state.activity {
+        case .preview:
+            if state.canReverseRoute {
+                actionButton("Reverse", systemImage: "arrow.left.arrow.right", action: onReverse)
+                    .rideNavigationSecondaryButton()
+            }
+            actionButton(
+                previewActionTitle,
+                systemImage: previewActionSystemImage,
+                action: onStart
+            )
+            .rideNavigationPrimaryButton()
+            .disabled(
+                state.isCalculatingRoadRoutes
+                    || state.isPreparingTrail
+                    || state.routePersistence.isSaving
+            )
+        case .recording, .paused:
+            minimizeButton
+            actionButton(
+                state.activity == .paused ? "Resume" : "Pause",
+                systemImage: state.activity == .paused ? "play.fill" : "pause.fill",
+                action: onTogglePause
+            )
+            .rideNavigationSecondaryButton()
+            finishButton
+        case .following, .navigating:
+            minimizeButton
+            if state.canFindTrailExit {
+                actionButton(
+                    state.isFindingTrailExit ? "Finding Exit..." : "Get Me Out",
+                    systemImage: "figure.hiking",
+                    action: onRequestTrailExit
+                )
+                .rideNavigationSecondaryButton()
+                .disabled(state.isFindingTrailExit)
+            }
+            if state.canResumeGPX {
+                actionButton(
+                    "Resume GPX",
+                    systemImage: "point.topleft.down.to.point.bottomright.curvepath",
+                    action: onResumeGPX
+                )
+                .rideNavigationSecondaryButton()
+            }
+            finishButton
+        }
+    }
+
+    private var previewActionTitle: String {
+        if state.isPreparingTrail || state.routePersistence.isSaving { return "Preparing..." }
+        if case .failed = state.routePersistence { return "Retry Save" }
+        return "Start"
+    }
+
+    private var previewActionSystemImage: String {
+        if state.isPreparingTrail || state.routePersistence.isSaving { return "clock" }
+        if case .failed = state.routePersistence { return "arrow.clockwise" }
+        return "location.north.fill"
+    }
+
+    private var finishButton: some View {
+        actionButton("Finish", systemImage: "stop.fill", action: onRequestFinish)
+            .tint(isFocus ? Color.white.opacity(Constants.focusActionOpacity) : DesignColor.critical)
+            .rideNavigationPrimaryButton()
+    }
+
+    private var minimizeButton: some View {
+        actionButton(
+            "Mini",
+            systemImage: "arrow.down.right.and.arrow.up.left",
+            action: onMinimize
+        )
+        .rideNavigationSecondaryButton()
+        .disabled(!state.canMinimize)
+        .accessibilityLabel("Minimize navigation")
+        .accessibilityIdentifier("rideNavigation.minimize")
+    }
+
+    private func actionButton(
+        _ title: String,
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+        }
+        .controlSize(.large)
+    }
+
+    private var isFocusDriving: Bool {
+        isFocus && (state.activity == .following || state.activity == .navigating)
+    }
+
+    private enum Constants {
+        static let dashboardHeight: CGFloat = 76
+        static let dashboardRadius: CGFloat = 24
+        static let metricDividerHeight: CGFloat = 32
+        static let focusActionOpacity = 0.88
+        static let focusCardRadius: CGFloat = 20
+        static let focusCenterClearance: CGFloat = 24
+        static let focusMetricsWidth: CGFloat = 220
+        static let focusActionsWidth: CGFloat = 190
+        static let focusActionsHeight: CGFloat = 190
+        static let focusFallbackWidth: CGFloat = 260
+        static let focusFallbackHeight: CGFloat = 280
+    }
+}

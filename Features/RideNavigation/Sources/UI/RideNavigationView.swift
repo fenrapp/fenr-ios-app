@@ -66,6 +66,10 @@ public struct RideNavigationView: View {
                     onFinish: viewModel.finishActivity,
                     onMinimize: onMinimize,
                     onReverse: viewModel.toggleRouteDirection,
+                    onSelectTrailDirection: viewModel.selectTrailDirection,
+                    onCancelTrailDirectionSelection: viewModel.cancelTrailDirectionSelection,
+                    onFinishAfterArrival: viewModel.finishAfterTrailArrival,
+                    onKeepRidingAfterArrival: viewModel.keepRidingAfterTrailArrival,
                     onSelectRouteOption: viewModel.selectRoadRouteOption,
                     onAvoidTolls: viewModel.setAvoidsTolls,
                     onAvoidHighways: viewModel.setAvoidsHighways,
@@ -87,6 +91,8 @@ public struct RideNavigationView: View {
                     state: viewModel.viewState,
                     routeName: $routeName,
                     onSave: { viewModel.saveCompletedRouteAndClose(name: routeName) },
+                    onRetrySave: { viewModel.retryCompletedRouteSave(name: routeName) },
+                    onDiscardUnsaved: viewModel.discardUnsavedCompletedRoute,
                     onExport: viewModel.exportCompletedRoute,
                     onClose: viewModel.discardActivity
                 )
@@ -111,9 +117,9 @@ public struct RideNavigationView: View {
                 return
             }
         }
-        .onChange(of: viewModel.viewState.summaryTitle) {
-            if viewModel.viewState.screen == .summary, routeName.isEmpty {
-                routeName = "Recorded ride"
+        .onChange(of: viewModel.viewState.screen) {
+            if viewModel.viewState.screen == .summary {
+                routeName = viewModel.viewState.completedRouteName ?? "Recorded ride"
             }
         }
         .onChange(of: activeMapSelector) {

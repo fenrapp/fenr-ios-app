@@ -99,6 +99,7 @@ public final class AppleNavigationGuidanceClient: NavigationGuidanceClient {
     }
 
     public func announce(_ text: String) async {
+        synthesizer.stopSpeaking(at: .immediate)
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: Locale.autoupdatingCurrent.identifier)
         synthesizer.speak(utterance)

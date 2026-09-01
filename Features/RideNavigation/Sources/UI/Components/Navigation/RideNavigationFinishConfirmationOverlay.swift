@@ -4,8 +4,23 @@ import SwiftUI
 struct RideNavigationFinishConfirmationOverlay: View {
     let activity: RideNavigationViewState.Activity
     let isMonochrome: Bool
+    let arrivalPrompt: RideNavigationArrivalPrompt?
     let onCancel: () -> Void
     let onConfirm: () -> Void
+
+    init(
+        activity: RideNavigationViewState.Activity,
+        isMonochrome: Bool,
+        arrivalPrompt: RideNavigationArrivalPrompt? = nil,
+        onCancel: @escaping () -> Void,
+        onConfirm: @escaping () -> Void
+    ) {
+        self.activity = activity
+        self.isMonochrome = isMonochrome
+        self.arrivalPrompt = arrivalPrompt
+        self.onCancel = onCancel
+        self.onConfirm = onConfirm
+    }
 
     var body: some View {
         ZStack {
@@ -58,17 +73,20 @@ struct RideNavigationFinishConfirmationOverlay: View {
     }
 
     private var title: String {
-        isRecording ? "Finish recording?" : "End this route?"
+        if let arrivalPrompt { return arrivalPrompt.title }
+        return isRecording ? "Finish recording?" : "End this route?"
     }
 
     private var message: String {
-        isRecording
+        if let arrivalPrompt { return arrivalPrompt.detail }
+        return isRecording
             ? "Your recorded track will be ready to save or export."
             : "Navigation will stop and you will see your ride summary."
     }
 
     private var confirmTitle: String {
-        isRecording ? "Finish Recording" : "End Route"
+        if arrivalPrompt != nil { return "Finish Route" }
+        return isRecording ? "Finish Recording" : "End Route"
     }
 
     private var confirmTint: Color {

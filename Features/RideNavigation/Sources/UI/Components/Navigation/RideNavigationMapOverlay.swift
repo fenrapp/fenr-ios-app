@@ -12,6 +12,10 @@ struct RideNavigationMapOverlay: View {
     let onFinish: () -> Void
     let onMinimize: () -> Void
     let onReverse: () -> Void
+    let onSelectTrailDirection: (RideNavigationTrailDirection) -> Void
+    let onCancelTrailDirectionSelection: () -> Void
+    let onFinishAfterArrival: () -> Void
+    let onKeepRidingAfterArrival: () -> Void
     let onSelectRouteOption: (Int) -> Void
     let onAvoidTolls: (Bool) -> Void
     let onAvoidHighways: (Bool) -> Void
@@ -43,6 +47,18 @@ struct RideNavigationMapOverlay: View {
                     .transition(.opacity.combined(with: .scale(scale: Constants.confirmationTransitionScale)))
                     .zIndex(3)
             }
+            if let arrivalPrompt = state.arrivalPrompt {
+                RideNavigationFinishConfirmationOverlay(
+                    activity: state.activity,
+                    isMonochrome: isFocus,
+                    arrivalPrompt: arrivalPrompt,
+                    onCancel: onKeepRidingAfterArrival,
+                    onConfirm: onFinishAfterArrival
+                )
+                .ignoresSafeArea()
+                .transition(.opacity.combined(with: .scale(scale: Constants.confirmationTransitionScale)))
+                .zIndex(4)
+            }
         }
         .animation(.smooth(duration: Constants.mapSelectorTransitionDuration), value: activeMapSelector)
         .animation(.smooth(duration: Constants.confirmationTransitionDuration), value: showsFinishConfirmation)
@@ -65,6 +81,21 @@ struct RideNavigationMapOverlay: View {
             Button("Keep Riding", action: onKeepRidingWithIncomingDestination)
         } message: {
             Text("A destination was shared with FENR while this ride is active.")
+        }
+        .confirmationDialog(
+            state.trailEntryPrompt?.title ?? "Choose route direction",
+            isPresented: trailEntryPrompt,
+            titleVisibility: .visible
+        ) {
+            if state.trailEntryPrompt?.availableDirections.contains(.forward) == true {
+                Button("Follow Forward") { onSelectTrailDirection(.forward) }
+            }
+            if state.trailEntryPrompt?.availableDirections.contains(.reverse) == true {
+                Button("Follow in Reverse") { onSelectTrailDirection(.reverse) }
+            }
+            Button("Cancel", role: .cancel, action: onCancelTrailDirectionSelection)
+        } message: {
+            Text(state.trailEntryPrompt?.detail ?? "Select the direction to follow.")
         }
     }
 }
@@ -92,6 +123,7 @@ private extension RideNavigationMapOverlay {
                             .transition(.opacity)
                     }
                     guidance
+                    forkGuidance
                     trailExitPreview
                     Spacer(minLength: DesignSpace.medium)
                 }
@@ -121,6 +153,7 @@ private extension RideNavigationMapOverlay {
                             .transition(.opacity)
                     }
                     guidance
+                    forkGuidance
                     trailExitPreview
                     if usesCompactAccessibilityLayout { compactBottomContent }
                 }
@@ -175,7 +208,7 @@ private extension RideNavigationMapOverlay {
     }
     private var hasAccessibilityMiddleContent: Bool { activeMapSelector != nil
         || (showsControls && hasPlanningOptions) || state.isRerouting
-        || state.guidance != nil || state.trailExitPreview != nil }
+        || state.guidance != nil || state.forkGuidance != nil || state.trailExitPreview != nil }
     private var usesCompactAccessibilityLayout: Bool { dynamicTypeSize.isAccessibilitySize
         && verticalSizeClass == .compact }
     private var hasPlanningOptions: Bool { (state.activity == .preview
@@ -224,132 +257,36 @@ private extension RideNavigationMapOverlay {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
-    private var bottomDashboard: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: DesignSpace.medium) {
-                dashboardMetrics
-                Spacer(minLength: DesignSpace.small)
-                activityActions
-            }
-            ScrollView {
-                VStack(alignment: .leading, spacing: DesignSpace.small) {
-                    dashboardMetrics
-                    activityActions
-                }
-            }
-            .scrollIndicators(.hidden)
+    @ViewBuilder
+    private var forkGuidance: some View {
+        if let forkGuidance = state.forkGuidance {
+            RideNavigationForkGuidanceCard(
+                guidance: forkGuidance,
+                isMonochrome: isFocus
+            )
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, DesignSpace.medium)
-        .padding(.vertical, DesignSpace.small)
-        .frame(minHeight: Constants.dashboardHeight)
-        .rideNavigationGlassSurface(cornerRadius: Constants.dashboardRadius)
+    }
+    private var bottomDashboard: some View {
+        RideNavigationActivityDashboard(
+            state: state,
+            isFocus: isFocus,
+            onStart: onStart,
+            onTogglePause: onTogglePause,
+            onMinimize: onMinimize,
+            onReverse: onReverse,
+            onRequestTrailExit: { perform { showsTrailExitConfirmation = true } },
+            onResumeGPX: { perform(onResumeGPX) },
+            onRequestFinish: { perform { showsFinishConfirmation = true } }
+        )
     }
     @ViewBuilder
     private var compactBottomContent: some View {
         if showsControls {
-            VStack(alignment: .leading, spacing: DesignSpace.small) {
-                dashboardMetrics; activityActions
-            }
-            .padding(.horizontal, DesignSpace.medium)
-            .padding(.vertical, DesignSpace.small)
-            .frame(minHeight: Constants.dashboardHeight)
-            .rideNavigationGlassSurface(cornerRadius: Constants.dashboardRadius)
+            bottomDashboard
         } else {
             RideNavigationCompactDashboard(state: state)
         }
-    }
-    @ViewBuilder
-    private var dashboardMetrics: some View {
-        RideNavigationMetric(value: state.speedText, unit: state.speedUnit, label: "Speed")
-        metricDivider
-        RideNavigationMetric(value: state.modeText, unit: "", label: "Power")
-        metricDivider
-        RideNavigationMetric(value: state.batteryText, unit: "", label: "Bike")
-        metricDivider
-        RideNavigationMetric(value: state.elapsedText, unit: "", label: "Time")
-    }
-    private var metricDivider: some View { Divider().frame(height: Constants.metricDividerHeight) }
-    @ViewBuilder
-    private var activityActions: some View {
-        switch state.activity {
-        case .preview:
-            if state.canReverseRoute {
-                Button(action: onReverse) {
-                    actionLabel("Reverse", systemImage: "arrow.left.arrow.right")
-                }
-                .controlSize(.large)
-                .rideNavigationSecondaryButton()
-            }
-            Button(action: onStart) {
-                actionLabel("Start", systemImage: "location.north.fill")
-            }
-            .controlSize(.large)
-            .rideNavigationPrimaryButton()
-            .disabled(state.isCalculatingRoadRoutes)
-        case .recording, .paused:
-            minimizeButton
-            Button(action: onTogglePause) {
-                actionLabel(
-                    state.activity == .paused ? "Resume" : "Pause",
-                    systemImage: state.activity == .paused ? "play.fill" : "pause.fill"
-                )
-            }
-            .controlSize(.large)
-            .rideNavigationSecondaryButton()
-            finishButton
-        case .following, .navigating:
-            minimizeButton
-            if state.canFindTrailExit {
-                Button(
-                    action: { perform { showsTrailExitConfirmation = true } },
-                    label: {
-                        actionLabel(
-                            state.isFindingTrailExit ? "Finding Exit…" : "Get Me Out",
-                            systemImage: "figure.hiking"
-                        )
-                    }
-                )
-                .controlSize(.large)
-                .rideNavigationSecondaryButton()
-                .disabled(state.isFindingTrailExit)
-            }
-            if state.canResumeGPX {
-                Button(
-                    action: { perform(onResumeGPX) },
-                    label: {
-                        actionLabel(
-                            "Resume GPX",
-                            systemImage: "point.topleft.down.to.point.bottomright.curvepath"
-                        )
-                    }
-                )
-                .controlSize(.large)
-                .rideNavigationSecondaryButton()
-            }
-            finishButton
-        }
-    }
-    private var finishButton: some View {
-        Button(
-            action: { perform { showsFinishConfirmation = true } },
-            label: { actionLabel("Finish", systemImage: "stop.fill") }
-        )
-        .controlSize(.large)
-        .tint(isFocus ? Color.white.opacity(Constants.focusActionOpacity) : DesignColor.critical)
-        .rideNavigationPrimaryButton()
-    }
-    private var minimizeButton: some View {
-        Button(
-            action: { perform(onMinimize) },
-            label: {
-                actionLabel("Mini", systemImage: "arrow.down.right.and.arrow.up.left")
-            }
-        )
-        .controlSize(.large)
-        .rideNavigationSecondaryButton()
-        .disabled(!state.canMinimize)
-        .accessibilityLabel("Minimize navigation")
-        .accessibilityIdentifier("rideNavigation.minimize")
     }
     @ViewBuilder
     private var trailExitPreview: some View {
@@ -364,6 +301,12 @@ private extension RideNavigationMapOverlay {
     private var incomingDestinationPrompt: Binding<Bool> {
         Binding(get: { state.showsIncomingDestinationPrompt },
                 set: { if !$0 { onKeepRidingWithIncomingDestination() } })
+    }
+    private var trailEntryPrompt: Binding<Bool> {
+        Binding(
+            get: { state.trailEntryPrompt != nil },
+            set: { if !$0 { onCancelTrailDirectionSelection() } }
+        )
     }
     private var isFocus: Bool { state.mapScene.displayStyle == .focus }
     private func dismissFinishConfirmation() { perform { showsFinishConfirmation = false } }
@@ -380,17 +323,9 @@ private extension RideNavigationMapOverlay {
         onInteraction()
         action()
     }
-    private func actionLabel(_ title: String, systemImage: String) -> some View {
-        Label(title, systemImage: systemImage)
-            .lineLimit(1)
-            .fixedSize(horizontal: true, vertical: false)
-    }
     private enum Constants {
         static let guidanceWidth: CGFloat = 360, guidanceHeight: CGFloat = 52
-        static let guidanceRadius: CGFloat = 18, dashboardHeight: CGFloat = 76
-        static let dashboardRadius: CGFloat = 24
-        static let metricDividerHeight: CGFloat = 32
-        static let focusActionOpacity = 0.88
+        static let guidanceRadius: CGFloat = 18
         static let compactTransitionScale = 0.96
         static let mapSelectorTransitionScale = 0.94
         static let mapSelectorTransitionDuration = 0.2
