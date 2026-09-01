@@ -152,15 +152,16 @@ struct RideNavigationViewModelLifecycleTests {
         fixture.viewModel.saveCompletedRouteAndClose(name: "Saved recording")
         #expect(await waitUntil { await repository.hasPendingSave })
 
-        #expect(fixture.viewModel.viewState.screen == .home)
-        #expect(fixture.viewModel.viewState.savedRoutes.map(\.title) == ["Saved recording"])
+        #expect(fixture.viewModel.viewState.screen == .summary)
+        #expect(fixture.viewModel.viewState.routePersistence == .saving)
 
         await repository.completeSave()
 
         #expect(await waitUntil { await repository.saveWasCancelled != nil })
         #expect(await repository.saveWasCancelled == false)
         #expect(await waitUntil {
-            fixture.viewModel.viewState.savedRoutes.map(\.title) == ["Saved recording"]
+            fixture.viewModel.viewState.screen == .home
+                && fixture.viewModel.viewState.savedRoutes.map(\.title) == ["Saved recording"]
         })
         fixture.viewModel.stop()
     }

@@ -18,6 +18,7 @@ final class RideNavigationViewModelState {
     var selectedRoute: RideRoute?
     var selectedDirection = RideRouteDirection.forward
     var roadRoute: RoadNavigationRoute?
+    var roadRouteRevision = 0
     var roadRoutes: [RoadNavigationRoute] = []
     var selectedRoadRouteIndex = 0
     var activeRoadStepIndex = 0
@@ -25,6 +26,7 @@ final class RideNavigationViewModelState {
     var selectedDestination: NavigationPlace?
     var roadNavigationPurpose: RoadNavigationPurpose?
     var trailExitPreview: TrailExitRoute?
+    var trailExitPreviewRevision = 0
     var pendingExternalDestination: NavigationPlace?
     var showsIncomingDestinationPrompt = false
     var openIncomingDestinationAfterSummary = false
@@ -32,6 +34,7 @@ final class RideNavigationViewModelState {
     var breadcrumbRecorder: RideRouteRecorder
     var completedRecording: RideRoute?
     var trailProgress: RideRouteProgress?
+    var routePersistence = RoutePersistenceRuntimeState()
     var activityStartedAt: Date?
     var mapSource = MapSourceDescriptor.appleStandard
     var mapDisplayStyle = NavigationMapDisplayStyle.map

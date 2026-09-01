@@ -18,6 +18,7 @@ struct RideNavigationViewModelFixture {
         routes: [RideRoute] = [],
         settings: AppSettings = .init(),
         repository: (any RecordedRouteRepository)? = nil,
+        importer: any GPXRouteImporting = StubGPXRouteImporter(),
         externalMapLinkResolver: any ExternalMapLinkResolving = StubExternalMapLinkResolver(),
         trailExitFinder: any TrailExitFinding = StubTrailExitFinder(),
         timing: RideNavigationTiming = RideNavigationTiming(
@@ -35,20 +36,25 @@ struct RideNavigationViewModelFixture {
         let roadRouteCalculator = ControllableRoadRouteCalculator()
         let settingsRepository = StubAppSettingsRepository(settings: settings)
         let guidance = NoOpNavigationGuidanceClient()
+        let mapPresentationMapper = RideNavigationMapPresentationMapper()
         self.vehicleSession = vehicleSession
         self.deviceSpeedRepository = deviceSpeedRepository
         self.placeSearch = placeSearch
         self.roadRouteCalculator = roadRouteCalculator
         self.settingsRepository = settingsRepository
         self.guidance = guidance
+        let routeRepository = repository ?? StubRecordedRouteRepository(routes: routes)
         viewModel = RideNavigationViewModel(
             dependencies: RideNavigationViewModelDependencies(
                 vehicleSession: vehicleSession,
                 observeDeviceSpeed: ObserveDeviceSpeedUseCase(repository: deviceSpeedRepository),
                 routeLibrary: RideNavigationRouteLibraryService(
-                    repository: repository ?? StubRecordedRouteRepository(routes: routes),
-                    importer: StubGPXRouteImporter(),
+                    repository: routeRepository,
+                    importer: importer,
                     exporter: StubGPXRouteExporter()
+                ),
+                routePersistence: RideNavigationRoutePersistenceService(
+                    repository: routeRepository
                 ),
                 planning: RideNavigationPlanningService(
                     placeSearch: placeSearch,
@@ -56,11 +62,18 @@ struct RideNavigationViewModelFixture {
                     externalMapLinkResolver: externalMapLinkResolver,
                     trailExitFinder: trailExitFinder
                 ),
+                trailGuidance: RideNavigationTrailGuidanceController(
+                    planner: DefaultRideRouteGuidancePlanner()
+                ),
+                trailMapPreparer: RideNavigationTrailMapPreparer(
+                    mapper: mapPresentationMapper
+                ),
+                trailMap: RideNavigationTrailMapController(),
                 guidance: guidance,
                 loadSettings: LoadAppSettingsUseCase(repository: settingsRepository),
                 saveSettings: SaveAppSettingsUseCase(repository: settingsRepository),
                 presentationMapper: RideNavigationPresentationMapper(locale: Locale(identifier: "en_US")),
-                mapPresentationMapper: RideNavigationMapPresentationMapper(),
+                mapPresentationMapper: mapPresentationMapper,
                 timing: timing
             ),
             recorder: RideRouteRecorder(),

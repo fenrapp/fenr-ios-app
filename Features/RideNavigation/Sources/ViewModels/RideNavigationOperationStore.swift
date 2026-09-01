@@ -14,8 +14,13 @@ final class RideNavigationOperationStore: @unchecked Sendable {
         case initialSettings
         case settingsSave
         case routeSave
+        case trailPreparation
+        case plannedRouteSave
+        case completedRouteSave
         case draftPersistence
         case guidance
+        case voiceAnnouncement
+        case feedback
     }
 
     private var tasks: [Kind: Task<Void, Never>] = [:]
@@ -43,15 +48,19 @@ final class RideNavigationOperationStore: @unchecked Sendable {
         generations[kind, default: 0] == generation && lifecycleGeneration == lifecycle
     }
 
+    func isCurrent(_ kind: Kind, generation: UInt) -> Bool {
+        generations[kind, default: 0] == generation
+    }
+
     func invalidate(_ kind: Kind) {
         tasks[kind]?.cancel()
         tasks[kind] = nil
         generations[kind, default: 0] &+= 1
     }
 
-    func invalidateAll() {
+    func invalidateAll(preserving preservedKinds: Set<Kind> = []) {
         lifecycleGeneration &+= 1
-        for kind in Kind.allCases {
+        for kind in Kind.allCases where !preservedKinds.contains(kind) {
             invalidate(kind)
         }
         routeDeletionTasks.values.forEach { $0.cancel() }

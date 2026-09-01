@@ -45,7 +45,9 @@ extension RideNavigationViewModel {
 
     public func stop() {
         isStarted = false
-        operations.invalidateAll()
+        trailGuidance.cancelPreparation()
+        state.routePersistence.cancelTransientSave()
+        operations.invalidateAll(preserving: [.completedRouteSave])
         observationTask?.cancel()
         observationTask = nil
         locationObservationTask?.cancel()

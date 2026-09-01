@@ -4,54 +4,87 @@ import RideNavigationDomain
 @MainActor
 extension RideNavigationViewModel {
     public func saveCompletedRoute(name: String) {
-        guard let completedRecording else { return }
+        guard let completedRecording, !state.routePersistence.status.isSaving else { return }
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let route = completedRecording.renamed(
             trimmed.isEmpty ? completedRecording.name : trimmed,
             at: now()
         )
-        let replacedRoute = savedRoutes.first { $0.id == route.id }
-        publishSavedRoute(route)
-        let generation = operations.begin(.routeSave)
-        let lifecycle = operations.lifecycleGeneration
-        let repository = repository
-        routeSaveTask = Task { [weak self] in
+        beginCompletedRouteSave(route)
+    }
+
+    func beginCompletedRouteSave(_ route: RideRoute) {
+        let generation = operations.begin(.completedRouteSave)
+        state.routePersistence.beginCompletedRouteSave()
+        completedRecording = route
+        errorText = nil
+        render()
+        let routePersistence = routePersistence
+        completedRouteSaveTask = Task { [weak self] in
             do {
-                try await repository.save(route)
-                try Task.checkCancellation()
-                let routes = await repository.loadRoutes()
-                try Task.checkCancellation()
+                let routes = try await routePersistence.saveAndReload(route)
                 guard let self,
-                      operations.isCurrent(.routeSave, generation: generation, lifecycle: lifecycle),
-                      isStarted else { return }
+                      operations.isCurrent(
+                          .completedRouteSave,
+                          generation: generation
+                      ) else { return }
                 savedRoutes = routes
                 if screen == .summary, self.completedRecording?.id == route.id {
                     self.completedRecording = route
                     errorText = nil
                 }
-                render()
+                let shouldClose = state.routePersistence.completeCompletedRouteSave()
+                if shouldClose, isStarted {
+                    discardActivity()
+                } else if isStarted {
+                    render()
+                }
             } catch is CancellationError {
                 return
             } catch {
                 guard let self,
-                      operations.isCurrent(.routeSave, generation: generation, lifecycle: lifecycle),
-                      isStarted else { return }
-                savedRoutes.removeAll { $0.id == route.id }
-                if let replacedRoute {
-                    savedRoutes.insert(replacedRoute, at: .zero)
-                }
-                errorText = "The route could not be saved."
-                render()
+                      operations.isCurrent(
+                          .completedRouteSave,
+                          generation: generation
+                      ) else { return }
+                state.routePersistence.fail(
+                    "The recorded route could not be saved. It is still available to retry."
+                )
+                errorText = nil
+                if isStarted { render() }
             }
         }
     }
 
     public func saveCompletedRouteAndClose(name: String) {
-        guard completedRecording != nil else {
+        guard let completedRecording else {
             discardActivity()
             return
         }
-        saveCompletedRoute(name: name)
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let resolvedName = trimmed.isEmpty ? completedRecording.name : trimmed
+        if state.routePersistence.status == .saved,
+           resolvedName == completedRecording.name {
+            discardActivity()
+            return
+        }
+        state.routePersistence.requestCloseAfterSave()
+        saveCompletedRoute(name: resolvedName)
+    }
+
+    public func retryCompletedRouteSave(name: String? = nil) {
+        guard let completedRecording,
+              case .failed = state.routePersistence.status else { return }
+        let trimmed = name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let route = trimmed.isEmpty
+            ? completedRecording
+            : completedRecording.renamed(trimmed, at: now())
+        beginCompletedRouteSave(route)
+    }
+
+    public func discardUnsavedCompletedRoute() {
+        guard case .failed = state.routePersistence.status else { return }
+        state.routePersistence.clearFailure()
         discardActivity()
     }
 
@@ -108,6 +141,7 @@ extension RideNavigationViewModel {
         savedRoutes.removeAll { $0.id == id }
         if selectedRoute?.id == id {
             selectedRoute = nil
+            trailMap.reset()
         }
         errorText = nil
         render()
@@ -197,6 +231,9 @@ extension RideNavigationViewModel {
             guard let route = routes.first else { return }
             selectedRoute = route
             selectedDirection = .forward
+            trailMap.reset()
+            state.routePersistence.selectImportedRoute()
+            trailGuidance.reset()
             trailProgress = nil
             roadRoute = nil
             roadRoutes = []
@@ -207,11 +244,12 @@ extension RideNavigationViewModel {
             screen = .map
             activity = .preview
             mapDisplayStyle = .map
-            cameraMode = .overview(mapMapper.coordinates(route.points.map(\.coordinate)))
+            cameraMode = .automatic
             errorText = routes.count > 1
                 ? "This GPX contains \(routes.count) tracks. Showing the first track."
                 : nil
             render()
+            prepareTrailPreview()
         } catch {
             errorText = "This GPX file could not be read."
             render()
@@ -222,6 +260,9 @@ extension RideNavigationViewModel {
         guard let route = savedRoutes.first(where: { $0.id == id }) else { return }
         selectedRoute = route
         selectedDirection = .forward
+        trailMap.reset()
+        state.routePersistence.selectSavedRoute()
+        trailGuidance.reset()
         trailProgress = nil
         roadRoute = nil
         roadRoutes = []
@@ -232,27 +273,27 @@ extension RideNavigationViewModel {
         screen = .map
         activity = .preview
         mapDisplayStyle = .map
-        cameraMode = .overview(mapMapper.coordinates(route.points.map(\.coordinate)))
+        cameraMode = .automatic
         errorText = nil
         render()
+        prepareTrailPreview()
     }
 
     public func toggleRouteDirection() {
-        guard let selectedRoute else { return }
+        guard selectedRoute != nil else { return }
         selectedDirection = selectedDirection == .forward ? .reverse : .forward
+        trailMap.reset()
         trailProgress = nil
-        let oriented = selectedDirection == .forward ? selectedRoute : selectedRoute.reversed
-        cameraMode = .overview(mapMapper.coordinates(oriented.points.map(\.coordinate)))
+        trailGuidance.reset()
+        cameraMode = .automatic
         render()
+        prepareTrailPreview()
     }
 
     public func startPreviewedRoute() {
         guard selectedRoute != nil || roadRoute != nil else { return }
-        if let route = orientedRoute,
-           let origin = locationSnapshot.coordinate,
-           let start = route.points.first?.coordinate,
-           RideRouteGeometry.distanceMeters(from: origin, to: start) > Constants.approachDistanceMeters {
-            startApproachRoute(from: origin, to: start)
+        if selectedRoute != nil {
+            startSelectedTrailRoute()
             return
         }
         let date = now()

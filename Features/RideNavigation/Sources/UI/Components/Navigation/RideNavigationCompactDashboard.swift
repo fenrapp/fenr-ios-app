@@ -5,22 +5,35 @@ struct RideNavigationCompactDashboard: View {
     let state: RideNavigationViewState
 
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: DesignSpace.medium) {
-                metrics
-            }
-            VStack(alignment: .leading, spacing: DesignSpace.small) {
-                RideNavigationMetric(value: state.speedText, unit: state.speedUnit, label: "Speed")
-                RideNavigationMetric(value: state.modeText, unit: "", label: "Power")
-                RideNavigationMetric(value: state.batteryText, unit: "", label: "Bike")
+        Group {
+            if isFocusDriving {
+                Grid(horizontalSpacing: DesignSpace.medium, verticalSpacing: DesignSpace.small) {
+                    GridRow {
+                        RideNavigationMetric(value: state.speedText, unit: state.speedUnit, label: "Speed")
+                        RideNavigationMetric(value: state.modeText, unit: "", label: "Power")
+                    }
+                    GridRow {
+                        RideNavigationMetric(value: state.batteryText, unit: "", label: "Bike")
+                        RideNavigationMetric(value: state.elapsedText, unit: "", label: "Time")
+                    }
+                }
+            } else {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: DesignSpace.medium) { metrics }
+                    VStack(alignment: .leading, spacing: DesignSpace.small) {
+                        RideNavigationMetric(value: state.speedText, unit: state.speedUnit, label: "Speed")
+                        RideNavigationMetric(value: state.modeText, unit: "", label: "Power")
+                        RideNavigationMetric(value: state.batteryText, unit: "", label: "Bike")
+                    }
+                }
             }
         }
         .padding(.horizontal, DesignSpace.large)
         .padding(.vertical, DesignSpace.small)
         .frame(minHeight: Constants.height)
         .rideNavigationGlassSurface(cornerRadius: Constants.cornerRadius)
-        .frame(maxWidth: Constants.maximumWidth)
-        .frame(maxWidth: .infinity, alignment: .center)
+        .frame(maxWidth: isFocusDriving ? Constants.focusMaximumWidth : Constants.maximumWidth)
+        .frame(maxWidth: .infinity, alignment: isFocusDriving ? .leading : .center)
     }
 
     @ViewBuilder
@@ -36,10 +49,16 @@ struct RideNavigationCompactDashboard: View {
         Divider().frame(height: Constants.dividerHeight)
     }
 
+    private var isFocusDriving: Bool {
+        state.mapScene.displayStyle == .focus
+            && (state.activity == .following || state.activity == .navigating)
+    }
+
     private enum Constants {
         static let height: CGFloat = 76
         static let cornerRadius: CGFloat = 24
         static let dividerHeight: CGFloat = 32
         static let maximumWidth: CGFloat = 460
+        static let focusMaximumWidth: CGFloat = 220
     }
 }

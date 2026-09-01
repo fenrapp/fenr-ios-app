@@ -6,6 +6,7 @@ public struct NavigationMapScene: Equatable, Sendable {
     public let userHeadingDegrees: Double?
     public let polylines: [NavigationMapPolyline]
     public let markers: [NavigationMapMarker]
+    public let directionalIndicators: [NavigationMapDirectionalIndicator]
 
     public init(
         source: MapSourceDescriptor = .appleStandard,
@@ -14,7 +15,8 @@ public struct NavigationMapScene: Equatable, Sendable {
         userCoordinate: NavigationMapCoordinate? = nil,
         userHeadingDegrees: Double? = nil,
         polylines: [NavigationMapPolyline] = [],
-        markers: [NavigationMapMarker] = []
+        markers: [NavigationMapMarker] = [],
+        directionalIndicators: [NavigationMapDirectionalIndicator] = []
     ) {
         self.source = source
         self.displayStyle = displayStyle
@@ -23,5 +25,6 @@ public struct NavigationMapScene: Equatable, Sendable {
         self.userHeadingDegrees = userHeadingDegrees
         self.polylines = polylines
         self.markers = markers
+        self.directionalIndicators = directionalIndicators
     }
 }

@@ -11,6 +11,7 @@ struct FocusNavigationMapView: View {
     @State private var lastConcreteCamera = NavigationMapCamera.automatic
     @State private var isDragging = false
     @State private var isMagnifying = false
+    @State private var pathCache = FocusNavigationPathCache()
     @GestureState private var dragTranslation = CGSize.zero
     @GestureState private var gestureScale = 1.0
 
@@ -25,6 +26,7 @@ struct FocusNavigationMapView: View {
                         size: size
                     )
                     drawPolylines(in: &context, viewport: viewport)
+                    drawDirectionalIndicators(in: &context, viewport: viewport)
                     drawMarkers(in: &context, viewport: viewport)
                     drawRider(in: &context, viewport: viewport)
                 }
@@ -113,42 +115,26 @@ struct FocusNavigationMapView: View {
         in context: inout GraphicsContext,
         viewport: FocusNavigationViewport
     ) {
-        for polyline in scene.polylines where polyline.points.count > 1 {
-            var path = Path()
-            for (index, coordinate) in polyline.points.enumerated() {
-                let point = viewport.point(for: coordinate)
-                if index == .zero {
-                    path.move(to: point)
-                } else {
-                    path.addLine(to: point)
-                }
-            }
-            context.stroke(
-                path,
-                with: .color(color(for: polyline.role)),
-                style: StrokeStyle(
-                    lineWidth: lineWidth(for: polyline.role),
-                    lineCap: .round,
-                    lineJoin: .round,
-                    dash: polyline.role == .rejoinGuide ? Constants.rejoinDash : []
+        let polylines = scene.polylines.sorted { $0.role.renderPriority < $1.role.renderPriority }
+        for polyline in polylines where polyline.points.count > 1 {
+            let path = pathCache.path(for: polyline)
+            let scale = CGFloat(viewport.mapPointScale)
+            let dash = polyline.role == .rejoinGuide
+                ? Constants.rejoinDash.map { $0 / scale }
+                : []
+            context.drawLayer { layer in
+                layer.concatenate(viewport.mapTransform)
+                layer.stroke(
+                    path,
+                    with: .color(color(for: polyline.role)),
+                    style: StrokeStyle(
+                        lineWidth: lineWidth(for: polyline.role) / scale,
+                        lineCap: .round,
+                        lineJoin: .round,
+                        dash: dash
+                    )
                 )
-            )
-        }
-    }
-
-    private func drawMarkers(
-        in context: inout GraphicsContext,
-        viewport: FocusNavigationViewport
-    ) {
-        for marker in scene.markers {
-            let point = viewport.point(for: marker.coordinate)
-            let rect = CGRect(
-                x: point.x - Constants.markerRadius,
-                y: point.y - Constants.markerRadius,
-                width: Constants.markerRadius * 2,
-                height: Constants.markerRadius * 2
-            )
-            context.fill(Path(ellipseIn: rect), with: .color(markerColor(for: marker.role)))
+            }
         }
     }
 
@@ -178,6 +164,9 @@ struct FocusNavigationMapView: View {
     private func color(for role: NavigationMapPolylineRole) -> Color {
         switch role {
         case .planned: Constants.planned
+        case .trailActive: Constants.active
+        case .trailCompleted: Constants.completed
+        case .trailFuture: Constants.trailFuture
         case .approach: Constants.approach
         case .completed: Constants.completed
         case .recorded: Constants.recorded
@@ -188,38 +177,33 @@ struct FocusNavigationMapView: View {
     private func lineWidth(for role: NavigationMapPolylineRole) -> CGFloat {
         switch role {
         case .completed: Constants.completedLineWidth
+        case .trailActive: Constants.activeLineWidth
+        case .trailCompleted: Constants.completedLineWidth
+        case .trailFuture: Constants.trailFutureLineWidth
         case .planned, .approach: Constants.routeLineWidth
         case .recorded: Constants.recordedLineWidth
         case .rejoinGuide: Constants.rejoinLineWidth
         }
     }
 
-    private func markerColor(for role: NavigationMapMarkerRole) -> Color {
-        switch role {
-        case .start: Constants.markerPrimary
-        case .finish: Constants.markerPrimary
-        case .waypoint: Constants.markerSecondary
-        case .participant: Constants.markerSecondary
-        }
-    }
-
     private enum Constants {
         static let background = Color.black
         static let planned = Color.white
+        static let active = Color.white
+        static let trailFuture = Color(white: 0.72)
         static let approach = Color.white
         static let completed = Color(white: 0.35)
         static let recorded = Color(white: 0.7)
         static let rejoin = Color.white
-        static let markerPrimary = Color.white
-        static let markerSecondary = Color(white: 0.55)
         static let rider = Color.white
         static let riderOutline = Color(white: 0.35)
         static let routeLineWidth: CGFloat = 8
+        static let activeLineWidth: CGFloat = 11
+        static let trailFutureLineWidth: CGFloat = 5
         static let completedLineWidth: CGFloat = 6
         static let recordedLineWidth: CGFloat = 7
         static let rejoinLineWidth: CGFloat = 4
         static let rejoinDash: [CGFloat] = [2, 10]
-        static let markerRadius: CGFloat = 6
         static let riderLength: CGFloat = 18
         static let riderHalfWidth: CGFloat = 12
         static let riderOutlineWidth: CGFloat = 3
@@ -230,7 +214,7 @@ struct FocusNavigationMapView: View {
     }
 }
 
-private struct FocusNavigationViewport {
+struct FocusNavigationViewport {
     let scene: NavigationMapScene
     let size: CGSize
     let center: MKMapPoint
@@ -273,22 +257,38 @@ private struct FocusNavigationViewport {
         (scene.userHeadingDegrees ?? .zero) - rotationDegrees
     }
 
-    func point(for coordinate: NavigationMapCoordinate) -> CGPoint {
-        let mapPoint = MKMapPoint(coordinate.clCoordinate)
-        let metersPerMapPoint = MKMetersPerMapPointAtLatitude(coordinate.latitudeDegrees)
-        let eastMeters = (mapPoint.x - center.x) * metersPerMapPoint
-        let southMeters = (mapPoint.y - center.y) * metersPerMapPoint
+    var mapTransform: CGAffineTransform {
         let radians = rotationDegrees * .pi / Constants.halfCircleDegrees
-        let rotatedX = eastMeters * cos(radians) + southMeters * sin(radians)
-        let rotatedY = -eastMeters * sin(radians) + southMeters * cos(radians)
-        return CGPoint(
-            x: anchor.x + CGFloat(rotatedX * scale),
-            y: anchor.y + CGFloat(rotatedY * scale)
+        let cosine = cos(radians)
+        let sine = sin(radians)
+        let matrixA = CGFloat(mapPointScale * cosine)
+        let matrixB = CGFloat(-mapPointScale * sine)
+        let matrixC = CGFloat(mapPointScale * sine)
+        let matrixD = CGFloat(mapPointScale * cosine)
+        return CGAffineTransform(
+            a: matrixA,
+            b: matrixB,
+            c: matrixC,
+            d: matrixD,
+            tx: anchor.x - matrixA * CGFloat(center.x) - matrixC * CGFloat(center.y),
+            ty: anchor.y - matrixB * CGFloat(center.x) - matrixD * CGFloat(center.y)
         )
     }
 
+    var mapPointScale: Double {
+        MKMetersPerMapPointAtLatitude(center.coordinate.latitude) * scale
+    }
+
+    func point(for coordinate: NavigationMapCoordinate) -> CGPoint {
+        let mapPoint = MKMapPoint(coordinate.clCoordinate)
+        return CGPoint(x: mapPoint.x, y: mapPoint.y).applying(mapTransform)
+    }
+
     private static func visibleCoordinates(in scene: NavigationMapScene) -> [NavigationMapCoordinate] {
-        scene.polylines.flatMap(\.points) + scene.markers.map(\.coordinate) + [scene.userCoordinate].compactMap { $0 }
+        scene.polylines.flatMap(\.points)
+            + scene.markers.map(\.coordinate)
+            + scene.directionalIndicators.map(\.coordinate)
+            + [scene.userCoordinate].compactMap { $0 }
     }
 
     private static func overviewViewport(
@@ -320,6 +320,34 @@ private struct FocusNavigationViewport {
         static let verticalPadding: CGFloat = 220
         static let minimumSpanMeters = 200.0
         static let halfCircleDegrees = 180.0
+    }
+}
+
+@MainActor
+private final class FocusNavigationPathCache {
+    private struct Entry {
+        let revision: Int
+        let path: Path
+    }
+
+    private var entries: [String: Entry] = [:]
+
+    func path(for polyline: NavigationMapPolyline) -> Path {
+        if let entry = entries[polyline.id], entry.revision == polyline.revision {
+            return entry.path
+        }
+        var path = Path()
+        for (index, coordinate) in polyline.points.enumerated() {
+            let point = MKMapPoint(coordinate.clCoordinate)
+            let renderPoint = CGPoint(x: point.x, y: point.y)
+            if index == .zero {
+                path.move(to: renderPoint)
+            } else {
+                path.addLine(to: renderPoint)
+            }
+        }
+        entries[polyline.id] = Entry(revision: polyline.revision, path: path)
+        return path
     }
 }
 

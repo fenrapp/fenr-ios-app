@@ -14,6 +14,8 @@ private struct RideNavigationSummaryPreview: View {
             ),
             routeName: $name,
             onSave: {},
+            onRetrySave: {},
+            onDiscardUnsaved: {},
             onExport: {},
             onClose: {}
         )

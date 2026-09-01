@@ -20,6 +20,8 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
         let iso8601 = Date.ISO8601FormatStyle(includingFractionalSeconds: true)
         let placeSearch = ApplePlaceSearchService()
         let roadRouteCalculator = AppleRoadRouteCalculator()
+        let mapPresentationMapper = RideNavigationMapPresentationMapper()
+        let trailGuidance = RideNavigationTrailGuidanceController(planner: DefaultRideRouteGuidancePlanner())
         let mapLinkSecurityPolicy = AppleMapLinkSecurityPolicy.standard
         let redirectSession = Self.makeRedirectSession(policy: mapLinkSecurityPolicy)
         return RideNavigationFeatureModel(
@@ -40,6 +42,9 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
                         ),
                         exporter: GPXRouteExporter(dateFormat: iso8601)
                     ),
+                    routePersistence: RideNavigationRoutePersistenceService(
+                        repository: repository
+                    ),
                     planning: RideNavigationPlanningService(
                         placeSearch: placeSearch,
                         roadRouteCalculator: roadRouteCalculator,
@@ -53,6 +58,9 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
                             roadRouteCalculator: roadRouteCalculator
                         )
                     ),
+                    trailGuidance: trailGuidance,
+                    trailMapPreparer: RideNavigationTrailMapPreparer(mapper: mapPresentationMapper),
+                    trailMap: RideNavigationTrailMapController(),
                     guidance: AppleNavigationGuidanceClient(
                         synthesizer: AVSpeechSynthesizer(),
                         notificationGenerator: UINotificationFeedbackGenerator()
@@ -60,7 +68,7 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
                     loadSettings: LoadAppSettingsUseCase(repository: settingsRepository),
                     saveSettings: SaveAppSettingsUseCase(repository: settingsRepository),
                     presentationMapper: RideNavigationPresentationMapper(locale: .autoupdatingCurrent),
-                    mapPresentationMapper: RideNavigationMapPresentationMapper(),
+                    mapPresentationMapper: mapPresentationMapper,
                     timing: .live
                 ),
                 recorder: RideRouteRecorder(),

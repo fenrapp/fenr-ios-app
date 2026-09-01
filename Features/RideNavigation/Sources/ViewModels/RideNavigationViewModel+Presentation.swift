@@ -11,11 +11,7 @@ extension RideNavigationViewModel {
             renderMiniViewState()
             return
         }
-        let speed = mapper.speed(
-            kilometersPerHour: vehicleSnapshot.resolvedSpeedKilometersPerHour
-                ?? latestDeviceSpeedKilometersPerHour,
-            measurementSystem: measurementSystem
-        )
+        let speed = presentedSpeed
         let mapScene = makeMapScene()
         let elapsed = elapsedText(at: now())
         let modeText = resolvedModeText
@@ -43,6 +39,7 @@ extension RideNavigationViewModel {
             avoidsHighways: appSettings.rideNavigation.avoidsHighways,
             showsRoadRoutePreferences: activity == .preview && selectedDestination != nil,
             isCalculatingRoadRoutes: isCalculatingRoadRoutes,
+            isPreparingTrail: trailGuidance.isPreparing,
             isRerouting: isRerouting,
             isSearching: isSearching ?? viewState.isSearching,
             errorText: errorText,
@@ -57,11 +54,24 @@ extension RideNavigationViewModel {
             trailExitPreview: presentedTrailExit,
             showsIncomingDestinationPrompt: showsIncomingDestinationPrompt,
             incomingDestinationTitle: pendingExternalDestination?.name,
+            trailEntryPrompt: trailGuidance.entryPrompt,
+            arrivalPrompt: trailGuidance.arrivalPrompt,
+            forkGuidance: presentedForkGuidance,
+            routePersistence: state.routePersistence.status,
             canSaveCompletedRoute: completedRecording != nil,
+            completedRouteName: completedRecording?.name,
             summaryTitle: summaryTitle,
             summaryDetail: summaryDetail
         )
         renderMiniViewState()
+    }
+
+    private var presentedSpeed: (String, String) {
+        mapper.speed(
+            kilometersPerHour: vehicleSnapshot.resolvedSpeedKilometersPerHour
+                ?? latestDeviceSpeedKilometersPerHour,
+            measurementSystem: measurementSystem
+        )
     }
 
     var routeRows: [RideNavigationRouteRow] {
@@ -86,6 +96,39 @@ extension RideNavigationViewModel {
         }
     }
 
+    var presentedForkGuidance: RideNavigationForkGuidance? {
+        if trailGuidance.snapshot?.routeState == .wrongFork {
+            return RideNavigationForkGuidance(
+                instructionText: "WRONG FORK",
+                distanceText: "Return to the highlighted track",
+                systemImage: "arrow.uturn.backward",
+                emphasis: .warning
+            )
+        }
+        guard let decision = trailGuidance.snapshot?.decision else { return nil }
+        let instruction: String
+        let systemImage: String
+        switch decision.direction {
+        case .left:
+            instruction = "KEEP LEFT"
+            systemImage = "arrow.turn.up.left"
+        case .right:
+            instruction = "KEEP RIGHT"
+            systemImage = "arrow.turn.up.right"
+        case .straight:
+            instruction = "CONTINUE STRAIGHT"
+            systemImage = "arrow.up"
+        }
+        return RideNavigationForkGuidance(
+            instructionText: instruction,
+            distanceText: mapper.distance(
+                meters: decision.distanceMeters,
+                measurementSystem: measurementSystem
+            ),
+            systemImage: systemImage
+        )
+    }
+
     func renderMiniViewState() {
         let scene = frozenMiniMapScene ?? makeMiniMapScene()
         let statusText: String?
@@ -93,6 +136,10 @@ extension RideNavigationViewModel {
             statusText = miniCompletionTitle
         } else if isRerouting {
             statusText = "REROUTING"
+        } else if trailGuidance.arrivalPrompt != nil {
+            statusText = "END REACHED · TAP"
+        } else if trailGuidance.snapshot?.routeState == .wrongFork {
+            statusText = "WRONG FORK"
         } else if activity == .following, didAnnounceOffRoute {
             statusText = "OFF TRAIL"
         } else if activity == .paused {
@@ -107,6 +154,8 @@ extension RideNavigationViewModel {
             scaleRange: MiniMapScale.minimumValue ... MiniMapScale.maximumValue,
             isLandscape: appSettings.rideNavigation.miniMapLayoutOrientation == .landscape,
             statusText: statusText,
+            forkGuidance: presentedForkGuidance,
+            isArrivalPending: trailGuidance.arrivalPrompt != nil,
             accessibilityLabel: statusText.map { "Mini navigation map, \($0)" }
                 ?? "Mini navigation map"
         )
@@ -135,7 +184,8 @@ extension RideNavigationViewModel {
             userCoordinate: scene.userCoordinate,
             userHeadingDegrees: scene.userHeadingDegrees,
             polylines: polylines,
-            markers: []
+            markers: [],
+            directionalIndicators: scene.directionalIndicators
         )
         return scene
     }
@@ -143,7 +193,9 @@ extension RideNavigationViewModel {
     func makeMapScene() -> NavigationMapScene {
         var polylines: [NavigationMapPolyline] = []
         var markers: [NavigationMapMarker] = []
+        var directionalIndicators: [NavigationMapDirectionalIndicator] = []
         appendSelectedRoute(to: &polylines, markers: &markers)
+        appendDirectionalIndicators(to: &directionalIndicators)
         appendRoadRoutes(to: &polylines, markers: &markers)
         appendRejoinGuide(to: &polylines)
         appendRecordedRoutes(to: &polylines)
@@ -154,37 +206,9 @@ extension RideNavigationViewModel {
             userCoordinate: locationSnapshot.coordinate.map(mapMapper.coordinate),
             userHeadingDegrees: locationSnapshot.courseDegrees,
             polylines: polylines,
-            markers: markers
+            markers: markers,
+            directionalIndicators: directionalIndicators
         )
-    }
-
-    func appendSelectedRoute(
-        to polylines: inout [NavigationMapPolyline],
-        markers: inout [NavigationMapMarker]
-    ) {
-        if let route = orientedRoute {
-            let routeRole: NavigationMapPolylineRole = trailExitPreview != nil
-                || roadNavigationPurpose == .trailExit ? .completed : .planned
-            for (index, segment) in route.segments.enumerated() {
-                polylines.append(
-                    NavigationMapPolyline(
-                        id: "planned-\(index)",
-                        points: mapMapper.coordinates(segment.points.map(\.coordinate)),
-                        role: routeRole
-                    )
-                )
-            }
-            if let start = route.points.first?.coordinate {
-                markers.append(
-                    .init(id: "start", coordinate: mapMapper.coordinate(start), title: "Start", role: .start)
-                )
-            }
-            if let finish = route.points.last?.coordinate {
-                markers.append(
-                    .init(id: "finish", coordinate: mapMapper.coordinate(finish), title: "Finish", role: .finish)
-                )
-            }
-        }
     }
 
     func appendRoadRoutes(
@@ -193,7 +217,12 @@ extension RideNavigationViewModel {
     ) {
         if let roadRoute {
             polylines.append(
-                .init(id: "road-route", points: mapMapper.coordinates(roadRoute.points), role: .approach)
+                .init(
+                    id: "road-route",
+                    points: mapMapper.coordinates(roadRoute.points),
+                    role: .approach,
+                    revision: state.roadRouteRevision
+                )
             )
             if let selectedDestination {
                 markers.append(
@@ -211,7 +240,8 @@ extension RideNavigationViewModel {
                 .init(
                     id: "trail-exit-preview",
                     points: mapMapper.coordinates(trailExitPreview.route.points),
-                    role: .approach
+                    role: .approach,
+                    revision: state.trailExitPreviewRevision
                 )
             )
             markers.append(
@@ -248,7 +278,8 @@ extension RideNavigationViewModel {
                 .init(
                     id: "recorded-\(index)",
                     points: mapMapper.coordinates(segment.points.map(\.coordinate)),
-                    role: .recorded
+                    role: .recorded,
+                    revision: segment.points.count
                 )
             )
         }
@@ -258,15 +289,11 @@ extension RideNavigationViewModel {
                 .init(
                     id: "breadcrumb-\(index)",
                     points: mapMapper.coordinates(segment.points.map(\.coordinate)),
-                    role: .completed
+                    role: .completed,
+                    revision: segment.points.count
                 )
             )
         }
-    }
-
-    var orientedRoute: RideRoute? {
-        guard let selectedRoute else { return nil }
-        return selectedDirection == .forward ? selectedRoute : selectedRoute.reversed
     }
 
     var roadRouteOptions: [RideNavigationRoadRouteOption] {
@@ -325,10 +352,14 @@ extension RideNavigationViewModel {
         static let approachDistanceMeters = 100.0
         static let roadRerouteDistanceMeters = 75.0
         static let enduroLookAheadMeters = 35.0
+        static let voiceDecisionDistanceMeters = 80.0
         static let minimumRerouteIntervalSeconds: TimeInterval = 15
         static let minimumSearchCharacters = 2
         static let searchDebounceMilliseconds = 300
         static let maximumSearchResults = 8
+        static let maximumPreviewIndicators = 200
+        static let previewMinimumIndicatorSpacingMeters = 40.0
+        static let indicatorBearingLookAheadMeters = 5.0
         static let halfCircleDegrees = 180.0
         static let fullCircleDegrees = 360.0
         static let roadStepAdvanceDistanceMeters = 30.0
