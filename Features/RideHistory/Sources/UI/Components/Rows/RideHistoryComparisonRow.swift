@@ -1,3 +1,4 @@
+import DesignSystem
 import SwiftUI
 
 struct RideHistoryComparisonRow: View {
@@ -36,7 +37,7 @@ struct RideHistoryComparisonRow: View {
                     .font(.body)
                 Text(comparison.detail)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DesignColor.secondaryText)
             }
         }
     }
@@ -58,9 +59,9 @@ struct RideHistoryComparisonRow: View {
 
     private var emphasisColor: Color {
         switch comparison.emphasis {
-        case .neutral: .secondary
-        case .positive: .green
-        case .negative: .orange
+        case .neutral: DesignColor.secondaryText
+        case .positive: DesignColor.positive
+        case .negative: DesignColor.warning
         }
     }
 

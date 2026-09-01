@@ -34,6 +34,15 @@ import SwiftUI
     )
 }
 
+#Preview("Ride detail accessibility") {
+    NavigationStack {
+        RideHistoryDetailContent(state: RideHistoryPreviewData.detailState)
+            .navigationTitle("Ride")
+            .navigationBarTitleDisplayMode(.inline)
+    }
+    .environment(\.dynamicTypeSize, .accessibility3)
+}
+
 private struct RideHistoryListPreview: View {
     let isEditing: Bool
 

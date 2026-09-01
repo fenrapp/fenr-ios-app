@@ -10,10 +10,12 @@ enum RideHistoryTestFactory {
         trips: [RideTrip],
         measurementSystem: MeasurementSystem = .metric
     ) -> Fixture {
-        let repository = RideHistoryTestRepository(trips: trips)
+        let operation = ControllableRideHistoryOperation()
+        let repository = RideHistoryTestRepository(trips: trips, operation: operation)
         let session = RideHistoryTestSession(
             repository: repository,
-            snapshot: snapshot(measurementSystem: measurementSystem)
+            snapshot: snapshot(measurementSystem: measurementSystem),
+            operation: operation
         )
         let viewModel = RideHistoryViewModel(
             useCases: .init(
@@ -21,9 +23,17 @@ enum RideHistoryTestFactory {
                 loadDetail: .init(repository: repository)
             ),
             session: session,
-            mapper: RideHistoryMapper(locale: Locale(identifier: "en_US"))
+            mapper: RideHistoryMapper(
+                locale: Locale(identifier: "en_US"),
+                measurementMapperFactory: RideHistoryMeasurementMapperFactory()
+            )
         )
-        return Fixture(viewModel: viewModel, repository: repository, session: session)
+        return Fixture(
+            viewModel: viewModel,
+            repository: repository,
+            session: session,
+            operation: operation
+        )
     }
 
     static func snapshot(
@@ -42,5 +52,6 @@ enum RideHistoryTestFactory {
         let viewModel: RideHistoryViewModel
         let repository: RideHistoryTestRepository
         let session: RideHistoryTestSession
+        let operation: ControllableRideHistoryOperation
     }
 }

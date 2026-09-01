@@ -5,6 +5,7 @@ import SwiftUI
 struct RideHistoryEnergyChart: View {
     let state: RideHistoryDetailViewState
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var selection = ChartSelection.battery
 
     var body: some View {
@@ -19,7 +20,7 @@ struct RideHistoryEnergyChart: View {
             }
 
             chart
-                .frame(height: Constants.chartHeight)
+                .frame(height: chartHeight)
         }
     }
 
@@ -99,6 +100,12 @@ struct RideHistoryEnergyChart: View {
         .init(get: { effectiveSelection }, set: { selection = $0 })
     }
 
+    private var chartHeight: CGFloat {
+        dynamicTypeSize.isAccessibilitySize
+            ? Constants.accessibilityChartHeight
+            : Constants.regularChartHeight
+    }
+
     private enum ChartSelection: String, Identifiable {
         case battery
         case efficiency
@@ -113,7 +120,8 @@ struct RideHistoryEnergyChart: View {
     }
 
     private enum Constants {
-        static let chartHeight: CGFloat = 200
+        static let regularChartHeight: CGFloat = 200
+        static let accessibilityChartHeight: CGFloat = 280
         static let lineWidth: CGFloat = 2.5
         static let areaOpacity = 0.18
         static let barRadius: CGFloat = 3

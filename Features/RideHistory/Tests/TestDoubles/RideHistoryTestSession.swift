@@ -6,12 +6,19 @@ import TestSupport
 actor RideHistoryTestSession: RideSessionService {
     private let hub = TestEventHub<RideSessionSnapshot>(bufferingPolicy: .unbounded)
     private let repository: any RideTripRepository
+    private let operation: ControllableRideHistoryOperation
     private var snapshot: RideSessionSnapshot
     private var deleteSucceeds = true
+    private var deletionResults: [UUID: Bool] = [:]
 
-    init(repository: any RideTripRepository, snapshot: RideSessionSnapshot) {
+    init(
+        repository: any RideTripRepository,
+        snapshot: RideSessionSnapshot,
+        operation: ControllableRideHistoryOperation
+    ) {
         self.repository = repository
         self.snapshot = snapshot
+        self.operation = operation
     }
 
     func observe() async -> AsyncStream<RideSessionSnapshot> {
@@ -27,7 +34,8 @@ actor RideHistoryTestSession: RideSessionService {
     func resetCurrentTrip() {}
 
     func deleteCompletedTrip(id: UUID, vin: String) async -> Bool {
-        guard deleteSucceeds,
+        await operation.perform(.deletion(id))
+        guard deletionResults[id] ?? deleteSucceeds,
               await repository.deleteCompletedTrip(id: id, vin: vin) else { return false }
         snapshot = RideSessionSnapshot(
             vehicleIdentity: snapshot.vehicleIdentity,
@@ -45,6 +53,10 @@ actor RideHistoryTestSession: RideSessionService {
 
     func setDeleteSucceeds(_ succeeds: Bool) {
         deleteSucceeds = succeeds
+    }
+
+    func setDeletionResults(_ results: [UUID: Bool]) {
+        deletionResults = results
     }
 
     func waitForSubscriber() async {

@@ -20,8 +20,11 @@ public final class RideHistoryViewModel: ObservableObject {
     private var loadedHistoryKey: HistoryKey?
     private var observationTask: Task<Void, Never>?
     private var historyLoadTask: Task<Void, Never>?
+    private var historyLoadID: UUID?
     private var detailLoadTask: Task<Void, Never>?
+    private var detailLoadID: UUID?
     private var deleteTask: Task<Void, Never>?
+    private var deleteID: UUID?
     private var deletingRideIDs: Set<UUID> = []
     private var errorMessage: String?
 
@@ -58,10 +61,12 @@ public final class RideHistoryViewModel: ObservableObject {
         observationTask = nil
         historyLoadTask?.cancel()
         historyLoadTask = nil
+        historyLoadID = nil
         requestedHistoryKey = nil
     }
 
     public func refresh() {
+        guard deleteTask == nil else { return }
         loadedHistoryKey = nil
         loadHistoryIfNeeded(force: true)
     }
@@ -72,14 +77,18 @@ public final class RideHistoryViewModel: ObservableObject {
             return
         }
         detailLoadTask?.cancel()
+        let operationID = UUID()
+        detailLoadID = operationID
         detailTrip = nil
         detailViewState = .init(status: .loading, rideID: id)
         let loadDetail = useCases.loadDetail
         detailLoadTask = Task { [weak self] in
             let trip = await loadDetail.execute(id: id, vin: vin)
             guard !Task.isCancelled, let self, self.activeVIN == vin,
-                  self.detailViewState.rideID == id else { return }
+                  self.detailViewState.rideID == id,
+                  self.detailLoadID == operationID else { return }
             self.detailLoadTask = nil
+            self.detailLoadID = nil
             guard let trip else {
                 self.detailViewState = .init(status: .unavailable, rideID: id)
                 return
@@ -93,6 +102,7 @@ public final class RideHistoryViewModel: ObservableObject {
         guard detailViewState.rideID == id else { return }
         detailLoadTask?.cancel()
         detailLoadTask = nil
+        detailLoadID = nil
         detailTrip = nil
         detailViewState = .init()
     }
@@ -110,6 +120,8 @@ public final class RideHistoryViewModel: ObservableObject {
         errorMessage = nil
         renderList()
         let session = session
+        let operationID = UUID()
+        deleteID = operationID
         deleteTask = Task { [weak self] in
             var deletedIDs: Set<UUID> = []
             for id in orderedIDs {
@@ -118,8 +130,10 @@ public final class RideHistoryViewModel: ObservableObject {
                     deletedIDs.insert(id)
                 }
             }
-            guard !Task.isCancelled, let self, self.activeVIN == vin else { return }
+            guard !Task.isCancelled, let self, self.activeVIN == vin,
+                  self.deleteID == operationID else { return }
             self.deleteTask = nil
+            self.deleteID = nil
             self.deletingRideIDs = []
             self.trips.removeAll { deletedIDs.contains($0.id) }
             if deletedIDs.count != orderedIDs.count {
@@ -129,7 +143,9 @@ public final class RideHistoryViewModel: ObservableObject {
             }
             self.loadedHistoryKey = nil
             self.renderList()
-            self.loadHistoryIfNeeded(force: true)
+            if self.requestedHistoryKey != nil {
+                self.loadHistoryIfNeeded(force: true)
+            }
         }
     }
 
@@ -160,6 +176,9 @@ private extension RideHistoryViewModel {
 
         let key = HistoryKey(vin: activeVIN, revision: snapshot.historyRevision)
         if requestedHistoryKey != key {
+            historyLoadTask?.cancel()
+            historyLoadTask = nil
+            historyLoadID = nil
             requestedHistoryKey = key
             loadedHistoryKey = nil
         }
@@ -172,16 +191,21 @@ private extension RideHistoryViewModel {
             return
         }
         guard force || loadedHistoryKey != key else { return }
-        guard force || deleteTask == nil else { return }
+        guard deleteTask == nil else { return }
         historyLoadTask?.cancel()
+        let operationID = UUID()
+        historyLoadID = operationID
         if trips.isEmpty {
             viewState = .init(status: .loading, errorMessage: errorMessage)
         }
         let loadHistory = useCases.loadHistory
         historyLoadTask = Task { [weak self] in
             let loadedTrips = await loadHistory.execute(vin: key.vin)
-            guard !Task.isCancelled, let self, self.activeVIN == key.vin else { return }
+            guard !Task.isCancelled, let self, self.activeVIN == key.vin,
+                  self.requestedHistoryKey == key,
+                  self.historyLoadID == operationID else { return }
             self.historyLoadTask = nil
+            self.historyLoadID = nil
             self.trips = loadedTrips.sorted { $0.startedAt > $1.startedAt }
             self.loadedHistoryKey = self.requestedHistoryKey ?? key
             self.renderList()
@@ -214,10 +238,13 @@ private extension RideHistoryViewModel {
     func resetHistory(for status: RideHistoryViewState.Status) {
         historyLoadTask?.cancel()
         historyLoadTask = nil
+        historyLoadID = nil
         detailLoadTask?.cancel()
         detailLoadTask = nil
+        detailLoadID = nil
         deleteTask?.cancel()
         deleteTask = nil
+        deleteID = nil
         trips = []
         detailTrip = nil
         deletingRideIDs = []
