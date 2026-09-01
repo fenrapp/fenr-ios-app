@@ -13,12 +13,13 @@ extension FileBLETraceLogRepository {
             try Self.recoverPartialFiles(
                 in: directory,
                 fileManager: fileManager,
-                lineEncoder: lineEncoder,
+                codec: recordCodec,
                 now: now()
             )
             completedSessions = try Self.loadStoredSessions(
                 in: directory,
-                fileManager: fileManager
+                fileManager: fileManager,
+                codec: recordCodec
             )
             completedSessions = try Self.prune(
                 completedSessions,

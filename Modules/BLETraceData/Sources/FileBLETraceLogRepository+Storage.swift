@@ -40,15 +40,6 @@ extension FileBLETraceLogRepository {
             + "\(context.id.uuidString.lowercased()).partial"
     }
 
-    static func timestamp(_ date: Date) -> String {
-        Date.ISO8601FormatStyle(includingFractionalSeconds: true, timeZone: .gmt).format(date)
-    }
-
-    static func elapsedMilliseconds(_ uptime: UInt64, since start: UInt64) -> Int64 {
-        guard uptime >= start else { return 0 }
-        return Int64((uptime - start) / 1_000_000)
-    }
-
     static func fileSize(_ url: URL, fileManager: FileManager) -> Int64 {
         let attributes = try? fileManager.attributesOfItem(atPath: url.path)
         return (attributes?[.size] as? NSNumber)?.int64Value ?? 0
@@ -83,25 +74,25 @@ extension FileBLETraceLogRepository {
     static func recoverPartialFiles(
         in directory: URL,
         fileManager: FileManager,
-        lineEncoder: BLETraceJSONLineEncoder,
+        codec: BLETraceRecordCodec,
         now: Date
     ) throws {
         let urls = try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
         for url in urls where url.pathExtension == "partial" {
             guard let firstLine = try? firstJSONLine(at: url),
-                  let header = validateHeader(firstLine) else { continue }
+                  let header = codec.decodeHeaderBoundary(firstLine) else { continue }
             do {
                 let finalURL = url.deletingPathExtension().appendingPathExtension("jsonl")
                 guard !fileManager.fileExists(atPath: finalURL.path) else { continue }
                 let lastLine = try lastJSONLine(at: url)
                 let hasValidFooter = lastLine.flatMap {
-                    validateSessionBoundary(headerData: firstLine, footerData: $0)
+                    codec.decodeSessionBoundary(headerData: firstLine, footerData: $0)
                 } != nil
                 if !hasValidFooter {
                     let fileStatistics = try streamStatistics(at: url)
                     let eventCount = max(0, fileStatistics.recordCount - 1)
                     let endedAt = max(now, header.startedAt)
-                    let footerInput = FooterInput(
+                    let footerInput = BLETraceRecordCodec.FooterInput(
                         sessionID: header.sessionID,
                         endedAt: endedAt,
                         durationMilliseconds: max(
@@ -116,7 +107,7 @@ extension FileBLETraceLogRepository {
                     let handle = try FileHandle(forWritingTo: url)
                     do {
                         _ = try handle.seekToEnd()
-                        try handle.write(contentsOf: encodeFooter(footerInput, lineEncoder: lineEncoder))
+                        try handle.write(contentsOf: codec.encodeFooter(footerInput))
                         try handle.synchronize()
                         try handle.close()
                     } catch {
@@ -133,13 +124,17 @@ extension FileBLETraceLogRepository {
         }
     }
 
-    static func loadStoredSessions(in directory: URL, fileManager: FileManager) throws -> [StoredSession] {
+    static func loadStoredSessions(
+        in directory: URL,
+        fileManager: FileManager,
+        codec: BLETraceRecordCodec
+    ) throws -> [StoredSession] {
         let urls = try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "jsonl" }
         return urls.compactMap { url in
             guard let first = try? firstJSONLine(at: url),
                   let last = try? lastJSONLine(at: url),
-                  let boundary = validateSessionBoundary(headerData: first, footerData: last)
+                  let boundary = codec.decodeSessionBoundary(headerData: first, footerData: last)
             else { return nil }
             guard (try? configureLogFile(url, fileManager: fileManager)) != nil else { return nil }
             return StoredSession(

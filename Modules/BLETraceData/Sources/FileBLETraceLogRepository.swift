@@ -7,7 +7,7 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
     private let environment: BLETraceEnvironment
     let configuration: BLETraceFileStoreConfiguration
     let fileManager: FileManager
-    let lineEncoder: BLETraceJSONLineEncoder
+    let recordCodec: BLETraceRecordCodec
     let writerTaskStarter: any BLETraceWriterTaskStarter
     private let sessionHub: AsyncEventHub<[BLETraceSessionSummary]>
     let now: @Sendable () -> Date
@@ -43,7 +43,7 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
             environment: environment,
             configuration: configuration,
             fileManager: dependencies.fileManager,
-            lineEncoder: dependencies.lineEncoder,
+            recordCodec: BLETraceRecordCodec(lineEncoder: dependencies.lineEncoder),
             sessionHub: dependencies.sessionHub,
             now: dependencies.now,
             uptimeNanoseconds: dependencies.uptimeNanoseconds,
@@ -57,7 +57,7 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
         environment: BLETraceEnvironment,
         configuration: BLETraceFileStoreConfiguration,
         fileManager: FileManager,
-        lineEncoder: BLETraceJSONLineEncoder,
+        recordCodec: BLETraceRecordCodec,
         sessionHub: AsyncEventHub<[BLETraceSessionSummary]>,
         now: @escaping @Sendable () -> Date,
         uptimeNanoseconds: @escaping @Sendable () -> UInt64,
@@ -68,7 +68,7 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
         self.environment = environment
         self.configuration = configuration
         self.fileManager = fileManager
-        self.lineEncoder = lineEncoder
+        self.recordCodec = recordCodec
         self.sessionHub = sessionHub
         self.now = now
         self.uptimeNanoseconds = uptimeNanoseconds
@@ -105,19 +105,10 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
                 bytesWritten: 0,
                 isTruncated: false
             )
-            let header = HeaderRecord(
-                recordType: "header",
-                schemaVersion: 1,
-                sessionID: context.id,
-                startedAt: Self.timestamp(context.startedAt),
-                startReason: context.reason.rawValue,
-                appVersion: environment.appVersion,
-                appBuild: environment.appBuild,
-                operatingSystem: environment.operatingSystem,
-                deviceModel: environment.deviceModel,
-                privacyPolicy: "vin_peripheral_and_authentication_redacted"
+            enqueue(
+                try recordCodec.encodeHeader(context: context, environment: environment),
+                sessionID: context.id
             )
-            enqueue(try lineEncoder.encode(header), sessionID: context.id)
             await publishSessions()
         } catch {
             closeActiveSessionAfterFailure()
@@ -126,32 +117,13 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
 
     public func record(_ event: BLETraceEvent) async {
         guard var session = activeSession, !session.isTruncated else { return }
-        let record = EventRecord(
-            recordType: "event",
-            schemaVersion: 1,
-            sessionID: session.context.id,
-            sequence: session.nextSequence,
-            timestamp: Self.timestamp(event.timestamp),
-            elapsedMilliseconds: Self.elapsedMilliseconds(
-                event.uptimeNanoseconds,
-                since: session.context.startUptimeNanoseconds
-            ),
-            category: event.category,
-            operation: event.operation.rawValue,
-            direction: event.direction.rawValue,
-            serviceUUID: event.serviceUUID,
-            characteristicUUID: event.characteristicUUID,
-            characteristicProperties: event.characteristicProperties,
-            byteCount: event.byteCount,
-            payloadHex: event.payloadRedacted ? nil : event.payloadHex,
-            payloadRedacted: event.payloadRedacted,
-            decodeStatus: event.decodeStatus?.rawValue,
-            readPending: event.readPending,
-            detail: event.detail,
-            error: event.error
-        )
         do {
-            let line = try lineEncoder.encode(record)
+            let line = try recordCodec.encodeEvent(
+                event,
+                sessionID: session.context.id,
+                sequence: session.nextSequence,
+                startUptimeNanoseconds: session.context.startUptimeNanoseconds
+            )
             let completedBytes = completedSessions.reduce(Int64(0)) { $0 + $1.summary.fileSizeBytes }
             let projectedBytes = completedBytes + session.bytesWritten + pendingByteCount + Int64(line.count)
                 + configuration.terminalRecordReserveBytes
@@ -238,31 +210,13 @@ extension FileBLETraceLogRepository {
         guard var session = activeSession else { return }
         session.isTruncated = true
         activeSession = session
-        let marker = EventRecord(
-            recordType: "event",
-            schemaVersion: 1,
+        if let line = try? recordCodec.encodeStorageLimitMarker(
             sessionID: session.context.id,
             sequence: session.nextSequence,
-            timestamp: Self.timestamp(now()),
-            elapsedMilliseconds: Self.elapsedMilliseconds(
-                uptimeNanoseconds(),
-                since: session.context.startUptimeNanoseconds
-            ),
-            category: "storage",
-            operation: BLETraceOperation.captureTruncated.rawValue,
-            direction: BLETraceDirection.internalEvent.rawValue,
-            serviceUUID: nil,
-            characteristicUUID: nil,
-            characteristicProperties: nil,
-            byteCount: nil,
-            payloadHex: nil,
-            payloadRedacted: false,
-            decodeStatus: nil,
-            readPending: nil,
-            detail: "Trace stopped after reaching the configured storage limit",
-            error: nil
-        )
-        if let line = try? lineEncoder.encode(marker) {
+            timestamp: now(),
+            uptimeNanoseconds: uptimeNanoseconds(),
+            startUptimeNanoseconds: session.context.startUptimeNanoseconds
+        ) {
             enqueue(line, sessionID: session.context.id)
             session.nextSequence += 1
             session.eventCount += 1
@@ -288,7 +242,7 @@ extension FileBLETraceLogRepository {
             0,
             Int64(endedAt.timeIntervalSince(session.context.startedAt) * 1_000)
         )
-        let footerInput = FooterInput(
+        let footerInput = BLETraceRecordCodec.FooterInput(
             sessionID: session.context.id,
             endedAt: endedAt,
             durationMilliseconds: durationMilliseconds,
@@ -299,7 +253,7 @@ extension FileBLETraceLogRepository {
         )
         let finalURL = session.url.deletingPathExtension().appendingPathExtension("jsonl")
         do {
-            let data = try Self.encodeFooter(footerInput, lineEncoder: lineEncoder)
+            let data = try recordCodec.encodeFooter(footerInput)
             try session.fileHandle.write(contentsOf: data)
             session.bytesWritten += Int64(data.count)
             try session.fileHandle.synchronize()
@@ -312,7 +266,8 @@ extension FileBLETraceLogRepository {
             try Self.configureLogFile(finalURL, fileManager: fileManager)
             completedSessions = try Self.loadStoredSessions(
                 in: directory,
-                fileManager: fileManager
+                fileManager: fileManager,
+                codec: recordCodec
             )
             completedSessions = try Self.prune(
                 completedSessions,
@@ -366,7 +321,8 @@ extension FileBLETraceLogRepository {
     func reconcileCompletedSessionsFromDisk() {
         completedSessions = (try? Self.loadStoredSessions(
             in: directory,
-            fileManager: fileManager
+            fileManager: fileManager,
+            codec: recordCodec
         )) ?? []
     }
 
