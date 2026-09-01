@@ -12,11 +12,11 @@ extension RideNavigationViewModel {
         if activity == .following,
            trailExitPreview == nil,
            roadNavigationPurpose != .trailExit,
-           let snapshot = trailGuidance.snapshot {
+           let guidance = trailGuidance.snapshot.guidance {
             appendCachedRoute(role: .trailFuture, to: &polylines)
             trailMap.appendCompletedPolylines(to: &polylines)
             appendGuidanceSlices(
-                snapshot.activeCorridorSlices,
+                guidance.activeCorridorSlices,
                 idPrefix: "trail-active",
                 role: .trailActive,
                 to: &polylines
@@ -65,8 +65,8 @@ extension RideNavigationViewModel {
     func appendDirectionalIndicators(
         to indicators: inout [NavigationMapDirectionalIndicator]
     ) {
-        if activity == .following, let snapshot = trailGuidance.snapshot {
-            indicators = snapshot.directionalIndicators.map {
+        if activity == .following, let guidance = trailGuidance.snapshot.guidance {
+            indicators = guidance.directionalIndicators.map {
                 NavigationMapDirectionalIndicator(
                     id: $0.id,
                     coordinate: mapMapper.coordinate($0.coordinate),
@@ -75,7 +75,7 @@ extension RideNavigationViewModel {
             }
             return
         }
-        guard activity == .preview, let plan = trailGuidance.plan else { return }
+        guard activity == .preview, let plan = trailGuidance.snapshot.plan else { return }
         let spacing = max(
             Constants.previewMinimumIndicatorSpacingMeters,
             plan.totalDistanceMeters / Double(Constants.maximumPreviewIndicators)

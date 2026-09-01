@@ -3,6 +3,17 @@ import RideNavigationDomain
 
 @MainActor
 public final class RideNavigationTrailGuidanceController {
+    struct Snapshot: Sendable {
+        let routeID: UUID?
+        let direction: RideRouteDirection?
+        let plan: RideRouteGuidancePlan?
+        let guidance: RideRouteGuidanceSnapshot?
+        let entryPrompt: RideNavigationTrailEntryPrompt?
+        let arrivalPrompt: RideNavigationArrivalPrompt?
+        let isPreparing: Bool
+        let hasActiveSession: Bool
+    }
+
     enum RouteStateAction {
         case none
         case announceOffRoute
@@ -11,17 +22,17 @@ public final class RideNavigationTrailGuidanceController {
     }
 
     private let planner: any RideRouteGuidancePlanning
-    let configuration: RideRouteGuidanceConfiguration
+    private let configuration: RideRouteGuidanceConfiguration
 
-    private(set) var routeID: UUID?
-    private(set) var direction: RideRouteDirection?
-    private(set) var plan: RideRouteGuidancePlan?
-    private(set) var session: RideRouteGuidanceSession?
-    private(set) var snapshot: RideRouteGuidanceSnapshot?
-    private(set) var entryPrompt: RideNavigationTrailEntryPrompt?
-    private(set) var arrivalPrompt: RideNavigationArrivalPrompt?
-    private(set) var isPreparing = false
-    private(set) var startAfterPreparation = false
+    private var routeID: UUID?
+    private var direction: RideRouteDirection?
+    private var plan: RideRouteGuidancePlan?
+    private var session: RideRouteGuidanceSession?
+    private var guidance: RideRouteGuidanceSnapshot?
+    private var entryPrompt: RideNavigationTrailEntryPrompt?
+    private var arrivalPrompt: RideNavigationArrivalPrompt?
+    private var isPreparing = false
+    private var startAfterPreparation = false
     private var didSuppressArrival = false
     private var announcedDecisionID: String?
     private var didAnnounceOffRoute = false
@@ -33,6 +44,19 @@ public final class RideNavigationTrailGuidanceController {
     ) {
         self.planner = planner
         self.configuration = configuration
+    }
+
+    var snapshot: Snapshot {
+        Snapshot(
+            routeID: routeID,
+            direction: direction,
+            plan: plan,
+            guidance: guidance,
+            entryPrompt: entryPrompt,
+            arrivalPrompt: arrivalPrompt,
+            isPreparing: isPreparing,
+            hasActiveSession: session != nil
+        )
     }
 
     func makePlan(
@@ -55,7 +79,7 @@ public final class RideNavigationTrailGuidanceController {
         self.direction = direction
         plan = nil
         session = nil
-        snapshot = nil
+        guidance = nil
         isPreparing = true
         self.startAfterPreparation = startAfterPreparation
     }
@@ -84,7 +108,7 @@ public final class RideNavigationTrailGuidanceController {
             startingAt: projection,
             configuration: configuration
         )
-        snapshot = nil
+        guidance = nil
         entryPrompt = nil
         arrivalPrompt = nil
         didSuppressArrival = false
@@ -96,7 +120,7 @@ public final class RideNavigationTrailGuidanceController {
     func update(with sample: RideRouteGuidanceSample) -> RideRouteGuidanceSnapshot? {
         guard var session, let snapshot = session.update(with: sample) else { return nil }
         self.session = session
-        self.snapshot = snapshot
+        guidance = snapshot
         return snapshot
     }
 
@@ -162,7 +186,7 @@ public final class RideNavigationTrailGuidanceController {
         direction = nil
         plan = nil
         session = nil
-        snapshot = nil
+        guidance = nil
         entryPrompt = nil
         arrivalPrompt = nil
         didSuppressArrival = false
