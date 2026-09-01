@@ -33,6 +33,8 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     var motionCalibrationTask: Task<Void, Never>?
     var batteryHealthTask: Task<Void, Never>?
     var batteryHealthStartTask: Task<Void, Never>?
+    var batteryHealthStartGeneration: Int?
+    var batteryHealthMonitoringGeneration = 0
     var batteryHealthStopTask: Task<Void, Never>?
     var batteryHealthConsumers: Set<UUID> = []
     var powerModeRefreshTask: Task<Void, Never>?
@@ -124,6 +126,8 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         hasLoadedMotionCalibration = false
         motionEstimator.reset()
         motion = .init()
+        batteryHealthMonitoringGeneration &+= 1
+        batteryHealthStartTask?.cancel()
         batteryHealthConsumers.removeAll()
         if let batteryHealthStartTask {
             await batteryHealthStartTask.value
@@ -135,6 +139,7 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         }
         batteryHealthTask?.cancel()
         batteryHealthTask = nil
+        batteryHealthStartGeneration = nil
         batteryHealthMonitoringState = .inactive
         batteryHealth = .init()
         resetPowerModeRefresh()
@@ -163,9 +168,11 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     }
 
     public func setBatteryHealthMonitoringRequired(_ required: Bool, consumerID: UUID) async {
+        guard !isStopping else { return }
         if required {
             batteryHealthConsumers.insert(consumerID)
-            if batteryHealthMonitoringState == .inactive || isMonitoringFailed {
+            if isReceivingTelemetry,
+               (batteryHealthMonitoringState == .inactive || isMonitoringFailed) {
                 beginBatteryHealthMonitoring()
             }
         } else {
@@ -214,7 +221,7 @@ extension LiveVehicleSessionService {
         )
     }
 
-    private var isMonitoringFailed: Bool {
+    var isMonitoringFailed: Bool {
         if case .failed = batteryHealthMonitoringState { true } else { false }
     }
 

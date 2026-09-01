@@ -2,7 +2,16 @@ import BikeDomain
 
 extension LiveVehicleSessionService {
     func beginBatteryHealthMonitoring() {
-        guard batteryHealthStartTask == nil, batteryHealthStopTask == nil else { return }
+        guard !isStopping,
+              isReceivingTelemetry,
+              !batteryHealthConsumers.isEmpty,
+              batteryHealthStartTask == nil,
+              batteryHealthStopTask == nil else {
+            return
+        }
+        batteryHealthMonitoringGeneration &+= 1
+        let generation = batteryHealthMonitoringGeneration
+        batteryHealthStartGeneration = generation
         batteryHealthMonitoringState = .starting
         publish()
         let start = useCases.startBatteryHealthMonitoring
@@ -14,26 +23,65 @@ extension LiveVehicleSessionService {
             } catch {
                 result = .failure(error)
             }
-            await self?.finishBatteryHealthStart(result)
+            await self?.finishBatteryHealthStart(
+                result,
+                generation: generation,
+                wasCancelled: Task.isCancelled
+            )
         }
     }
 
-    func finishBatteryHealthStart(_ result: Result<Void, Error>) async {
-        batteryHealthStartTask = nil
-        switch result {
-        case .success:
-            guard !batteryHealthConsumers.isEmpty else {
-                scheduleBatteryHealthStop()
-                return
+    func finishBatteryHealthStart(
+        _ result: Result<Void, Error>,
+        generation: Int,
+        wasCancelled: Bool
+    ) async {
+        guard batteryHealthStartGeneration == generation else {
+            if case .success = result {
+                await useCases.stopBatteryHealthMonitoring.execute()
             }
+            return
+        }
+        let isCurrentGeneration = generation == batteryHealthMonitoringGeneration
+        let canActivate = isCurrentGeneration
+            && !wasCancelled
+            && !isStopping
+            && isReceivingTelemetry
+            && !batteryHealthConsumers.isEmpty
+
+        if case .success = result, canActivate {
+            batteryHealthStartTask = nil
+            batteryHealthStartGeneration = nil
             batteryHealthMonitoringState = .active
             observeBatteryHealth()
-        case .failure(let error):
+            publish()
+            return
+        }
+
+        if case .success = result {
+            await useCases.stopBatteryHealthMonitoring.execute()
+        }
+        batteryHealthStartTask = nil
+        batteryHealthStartGeneration = nil
+
+        if isCurrentGeneration, case .failure(let error) = result,
+           isReceivingTelemetry, !batteryHealthConsumers.isEmpty, !isStopping {
+            batteryHealthMonitoringState = .failed(String(describing: error))
+        } else {
             batteryHealthMonitoringState = batteryHealthConsumers.isEmpty
                 ? .inactive
-                : .failed(String(describing: error))
+                : batteryHealthMonitoringState
+        }
+        if !isReceivingTelemetry || wasCancelled || !isCurrentGeneration {
+            batteryHealthMonitoringState = .inactive
         }
         publish()
+        if !isStopping,
+           isReceivingTelemetry,
+           !batteryHealthConsumers.isEmpty,
+           !isCurrentGeneration {
+            beginBatteryHealthMonitoring()
+        }
     }
 
     func scheduleBatteryHealthStop() {
@@ -52,9 +100,26 @@ extension LiveVehicleSessionService {
 
     private func finishBatteryHealthStop() {
         batteryHealthStopTask = nil
-        if !batteryHealthConsumers.isEmpty {
+        if !isStopping, isReceivingTelemetry, !batteryHealthConsumers.isEmpty {
             beginBatteryHealthMonitoring()
         }
+    }
+
+    func invalidateBatteryHealthMonitoringForConnectionLoss() {
+        batteryHealthMonitoringGeneration &+= 1
+        batteryHealthStartTask?.cancel()
+        batteryHealthTask?.cancel()
+        batteryHealthTask = nil
+        batteryHealthMonitoringState = .inactive
+        batteryHealth = .init()
+    }
+
+    func resumeBatteryHealthMonitoringIfNeeded() {
+        guard !batteryHealthConsumers.isEmpty,
+              (batteryHealthMonitoringState == .inactive || isMonitoringFailed) else {
+            return
+        }
+        beginBatteryHealthMonitoring()
     }
 
     private func observeBatteryHealth() {

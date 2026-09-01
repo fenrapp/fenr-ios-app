@@ -86,6 +86,11 @@ struct LiveVehicleSessionServiceTests {
     @Test("Three BMS consumers share one start and the last release performs one stop")
     func referenceCountsBatteryHealthConsumers() async {
         let fixture = makeFixture()
+        await fixture.service.start()
+        #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
         let consumers = [UUID(), UUID(), UUID()]
         for id in consumers {
             await fixture.service.setBatteryHealthMonitoringRequired(true, consumerID: id)
@@ -102,6 +107,11 @@ struct LiveVehicleSessionServiceTests {
     @Test("A release during a pending BMS start stops it after startup finishes")
     func releaseDuringPendingStart() async {
         let fixture = makeFixture()
+        await fixture.service.start()
+        #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
         let consumer = UUID()
         await fixture.repository.delayNextStart()
         let request = Task {
@@ -119,6 +129,11 @@ struct LiveVehicleSessionServiceTests {
     @Test("A failed BMS start can be retried")
     func retriesAfterFailure() async {
         let fixture = makeFixture()
+        await fixture.service.start()
+        #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
         let consumer = UUID()
         await fixture.repository.failNextStart()
         await fixture.service.setBatteryHealthMonitoringRequired(true, consumerID: consumer)
@@ -131,6 +146,96 @@ struct LiveVehicleSessionServiceTests {
         await fixture.service.setBatteryHealthMonitoringRequired(true, consumerID: consumer)
         #expect(await waitUntil { await fixture.repository.monitoringCounts().0 == 2 })
         #expect(await waitUntil { await fixture.latestSnapshot().batteryHealthMonitoringState == .active })
+    }
+
+    @Test("Rearms BMS monitoring once after reconnect while consumers remain")
+    func rearmsBatteryHealthMonitoringAfterReconnect() async {
+        let fixture = makeFixture()
+        await fixture.service.start()
+        #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
+        let consumers = [UUID(), UUID()]
+        for consumer in consumers {
+            await fixture.service.setBatteryHealthMonitoringRequired(true, consumerID: consumer)
+        }
+        #expect(await fixture.repository.monitoringCounts() == (0, 0))
+
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
+        #expect(await waitUntil { await fixture.repository.monitoringCounts() == (1, 0) })
+
+        await fixture.repository.sendConnection(.init(state: .reconnecting(
+            vin: "FENRTEST000000001",
+            attempt: 1,
+            maximumAttempts: 5
+        )))
+        await fixture.repository.sendConnection(.init(state: .reconnecting(
+            vin: "FENRTEST000000001",
+            attempt: 2,
+            maximumAttempts: 5
+        )))
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
+
+        #expect(await waitUntil { await fixture.repository.monitoringCounts() == (2, 0) })
+        #expect(await fixture.latestSnapshot().batteryHealthMonitoringState == .active)
+        await fixture.service.stop()
+    }
+
+    @Test("Does not rearm BMS monitoring after consumers are released")
+    func doesNotRearmBatteryHealthMonitoringWithoutConsumers() async {
+        let fixture = makeFixture()
+        await fixture.service.start()
+        #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
+        let consumer = UUID()
+        await fixture.service.setBatteryHealthMonitoringRequired(true, consumerID: consumer)
+        #expect(await waitUntil { await fixture.repository.monitoringCounts() == (1, 0) })
+        await fixture.service.setBatteryHealthMonitoringRequired(false, consumerID: consumer)
+        #expect(await waitUntil { await fixture.repository.monitoringCounts() == (1, 1) })
+
+        await fixture.repository.sendConnection(.init(state: .reconnecting(
+            vin: "FENRTEST000000001",
+            attempt: 1,
+            maximumAttempts: 5
+        )))
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
+
+        #expect(await fixture.repository.monitoringCounts() == (1, 1))
+        await fixture.service.stop()
+    }
+
+    @Test("Balances a stale successful BMS start before rearming")
+    func balancesStaleBatteryHealthStartAcrossReconnect() async {
+        let fixture = makeFixture()
+        await fixture.service.start()
+        #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
+        await fixture.repository.delayNextStart()
+        let consumer = UUID()
+        await fixture.service.setBatteryHealthMonitoringRequired(true, consumerID: consumer)
+        #expect(await waitUntil { await fixture.repository.hasPendingStart() })
+
+        await fixture.repository.sendConnection(.init(state: .reconnecting(
+            vin: "FENRTEST000000001",
+            attempt: 1,
+            maximumAttempts: 5
+        )))
+        await fixture.repository.sendConnection(.init(
+            state: .receivingTelemetry(peripheralName: "TEST")
+        ))
+        await fixture.repository.resumeStart()
+
+        #expect(await waitUntil { await fixture.repository.monitoringCounts() == (2, 1) })
+        #expect(await fixture.latestSnapshot().batteryHealthMonitoringState == .active)
+        await fixture.service.stop()
     }
 
     @Test("Expires a GPS sample without waiting for another source event")
