@@ -281,6 +281,20 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "6166FC7623544981EC8B618C"
+               BuildableName = "FENRShareExtensionTests.xctest"
+               BlueprintName = "FENRShareExtensionTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "219B2EEDB6F7F684341D70C5"
                BuildableName = "FENRTests.xctest"
                BlueprintName = "FENRTests"
@@ -878,6 +892,17 @@
                BlueprintIdentifier = "79CCE32E9EF6E96F5FB83B8E"
                BuildableName = "RideHistoryTests.xctest"
                BlueprintName = "RideHistoryTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "6166FC7623544981EC8B618C"
+               BuildableName = "FENRShareExtensionTests.xctest"
+               BlueprintName = "FENRShareExtensionTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </TestableReference>

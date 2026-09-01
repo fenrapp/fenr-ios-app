@@ -130,6 +130,7 @@
 		0E2FAA5B14B3CD9C96AC6EAD /* FakeBikeBLEPowerModeConfigurationTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = E59CA82F1B46DF62E3EFBC9F /* FakeBikeBLEPowerModeConfigurationTransport.swift */; };
 		0E9F489CA7387B836BFD5F50 /* RideHistoryComponentPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1DC6903E5813A13C1573A1 /* RideHistoryComponentPreviews.swift */; };
 		0EA881E8F6B3FAE855FE9F34 /* BatteryHealth.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 64D59938EBF7C84CFB5B7EB9 /* BatteryHealth.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		0EB0DA7004AF4D8AD72ACA88 /* MapLinkShareProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E955235F4495A088A6819C03 /* MapLinkShareProcessor.swift */; };
 		0EBD00C0D5BE89528FDDF47A /* FakeCoreBluetoothAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C59F24421989EF629246F438 /* FakeCoreBluetoothAdapter.swift */; };
 		0F6DB5ED42F9B4C45DAE1CBB /* DashboardProgressBarMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E53064B1AFADB85E19B44FE6 /* DashboardProgressBarMapper.swift */; };
 		0FA52ECBAF4C3DBE61B60019 /* BikeDomain.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 66791CC3437C3C3CF15B7DC3 /* BikeDomain.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -360,6 +361,7 @@
 		2AEA11016BA98282664BF4C7 /* RideSessionDependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5388764DDE845F71F4A84EF6 /* RideSessionDependencyContainer.swift */; };
 		2AEA3D56B5426897EBD40F37 /* FakeBikePinDeriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A992F33EFA77B95DAF4D82CF /* FakeBikePinDeriver.swift */; };
 		2B0B6D5CDDC0B70399C582AA /* BikeDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66791CC3437C3C3CF15B7DC3 /* BikeDomain.framework */; };
+		2B27F6C3ABA21F549E0F454E /* MapLinkShareProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E955235F4495A088A6819C03 /* MapLinkShareProcessor.swift */; };
 		2B6AE3C0C3EA188033134B6E /* BatteryDatasetCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 784C78B9906302C2372D1B08 /* BatteryDatasetCapture.swift */; };
 		2B94B57EC9E80452B66090A6 /* BikeBatteryHealthToViewStateMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DD47410B4B29AF8A4A39FD6 /* BikeBatteryHealthToViewStateMapper.swift */; };
 		2B9D00453FA9D7393E4EAFFB /* BikeEmulatorBatteryPayloadFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B3FF71862AABF5EEE120CB3 /* BikeEmulatorBatteryPayloadFactory.swift */; };
@@ -591,6 +593,7 @@
 		499B393E9F9BCF6085E32AEA /* AppRideNavigationFeatureFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CF264057AE0DB866BD167EC /* AppRideNavigationFeatureFactory.swift */; };
 		49F7F3B6D3D0BA5DDAE52B76 /* BikeOnboardingViewState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CBA24100002C96AB471F5A5 /* BikeOnboardingViewState.swift */; };
 		49FA536D3019F03A25CDA349 /* ChargeControlSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4EBBC373D828AD0A0F35A0B /* ChargeControlSession.swift */; };
+		4A4DD5178AC339BC73C6B8DB /* MapLinkShareTestDoubles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A9653159580117FAD33CFA /* MapLinkShareTestDoubles.swift */; };
 		4A729DA112D871AC3629E65B /* BLETraceData.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 51978684FF3E3A6A3AB05585 /* BLETraceData.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		4A91969E92B8297A6295C5A8 /* DashboardIndicatorViewData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78E7363C5FD5BDCE2A59E1A8 /* DashboardIndicatorViewData.swift */; };
 		4ABED0B530B8261FAD7666EE /* StarkBatteryStatusDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21196F6C6EDDEFB8A0571970 /* StarkBatteryStatusDecoder.swift */; };
@@ -990,6 +993,7 @@
 		7F8D33100D874DFB3E357F9B /* RideNavigationMapControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 497317C747C48E7FA477A7ED /* RideNavigationMapControls.swift */; };
 		7F9A395C26CBBDFA64F6BABA /* WatchDebugProfileRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74F879F634FDC279B4104F8E /* WatchDebugProfileRepository.swift */; };
 		7FBE1E5C91746B87C9E43657 /* DesignSystem.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1A1B178C8151F119B97D8663 /* DesignSystem.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		7FBEC84E9ABDD1D15C4DC359 /* MapLinkShareProcessorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 523DBAB8E70597B08F9938C2 /* MapLinkShareProcessorTests.swift */; };
 		7FCDEE2F763BF972954C9A78 /* StarkPayloadDecoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB43F8D95F3EA88807C7C89C /* StarkPayloadDecoding.swift */; };
 		800C8F1FFDA6F774B57A3EAB /* RideSessionData.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C282726D91FD0A692C39EC86 /* RideSessionData.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		803E1B378744744D689D9EE7 /* RideDashboardViewState.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE2EF6D794D003B97E93475C /* RideDashboardViewState.swift */; };
@@ -1706,6 +1710,7 @@
 		DCEAE110FC74CF8877B882D0 /* BikeDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66791CC3437C3C3CF15B7DC3 /* BikeDomain.framework */; };
 		DCF74EA089C266D5EA24C1A3 /* RideTripStore+History.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD3897A12C1CD5BDDC288A28 /* RideTripStore+History.swift */; };
 		DCFB33313081D9A1CC0CBB01 /* DesignSpace.swift in Sources */ = {isa = PBXBuildFile; fileRef = B05A29B88600CB70917B401D /* DesignSpace.swift */; };
+		DD346887E672844A18F95D6E /* MapLinkShareProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E955235F4495A088A6819C03 /* MapLinkShareProcessor.swift */; };
 		DD59740B9EF9DE69132F8749 /* DashboardTripMetricRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B900483AA004D7904A9CF5A5 /* DashboardTripMetricRow.swift */; };
 		DDD1F2DD85FCD226C82FB50E /* TripStatisticsCardUseCases.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CB883FDF07803B3D6CE67F /* TripStatisticsCardUseCases.swift */; };
 		DDE04E8C842C109B6D9A10B5 /* AsyncSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 307B01E584E7F27278D08FF8 /* AsyncSupport.framework */; };
@@ -3843,6 +3848,13 @@
 			remoteGlobalIDString = 482E8A55F994349B9FC1E07B;
 			remoteInfo = TestSupport;
 		};
+		BEF26C084780EB359AF95651 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C3FE2E9C50E804B115402B21 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 934A1324751A2F36EBE86E5A;
+			remoteInfo = FENRShareExtension;
+		};
 		BF553A266F6ED03BC233E663 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = C3FE2E9C50E804B115402B21 /* Project object */;
@@ -5237,6 +5249,7 @@
 		0A5902EFA1271B74621B4D39 /* PowerModeAdjustmentViewState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerModeAdjustmentViewState.swift; sourceTree = "<group>"; };
 		0A5A21528A6AE502CEC15221 /* DashboardCardSettingsViewStateMapperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardCardSettingsViewStateMapperTests.swift; sourceTree = "<group>"; };
 		0A6EDEC819F6F55469F1336B /* StarkBatteryElectricalDecoderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkBatteryElectricalDecoderTests.swift; sourceTree = "<group>"; };
+		0B5FD0DAE2BD500519247055 /* FENRShareExtensionTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FENRShareExtensionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0B737A8BB147EEAC276E1F4E /* ChargeControlUseCases.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargeControlUseCases.swift; sourceTree = "<group>"; };
 		0BC38CA614CB8F6BCAFAAD5B /* ControllableRoadRouteCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControllableRoadRouteCalculator.swift; sourceTree = "<group>"; };
 		0BD20E26E41CF1CC389995F0 /* RideDashboardMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideDashboardMapper.swift; sourceTree = "<group>"; };
@@ -5595,6 +5608,7 @@
 		51978684FF3E3A6A3AB05585 /* BLETraceData.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = BLETraceData.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		51B60BE6308757F160AF1D95 /* StubRideTripRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubRideTripRepository.swift; sourceTree = "<group>"; };
 		5225A3399D0E5B612E61A6C9 /* DashboardRangeLiveCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardRangeLiveCard.swift; sourceTree = "<group>"; };
+		523DBAB8E70597B08F9938C2 /* MapLinkShareProcessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapLinkShareProcessorTests.swift; sourceTree = "<group>"; };
 		5263742A79C54CCD78817562 /* BikeConnectionSessionPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeConnectionSessionPolicy.swift; sourceTree = "<group>"; };
 		5293B540E4487B649CABBF1D /* EnvironmentDomainTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = EnvironmentDomainTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		52956057CBD829CB7A8B1F9B /* StarkVINPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkVINPayload.swift; sourceTree = "<group>"; };
@@ -5825,6 +5839,7 @@
 		835872581E403465187A4596 /* RideNavigationViewModel+Planning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "RideNavigationViewModel+Planning.swift"; sourceTree = "<group>"; };
 		8374B70D533207202DFC4877 /* BikeBLEReconnectPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeBLEReconnectPolicy.swift; sourceTree = "<group>"; };
 		83A2438B9B6F79DA5BD6354E /* FileBLETraceLogRepositoryPrivacyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileBLETraceLogRepositoryPrivacyTests.swift; sourceTree = "<group>"; };
+		83A9653159580117FAD33CFA /* MapLinkShareTestDoubles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapLinkShareTestDoubles.swift; sourceTree = "<group>"; };
 		83B5FA015721064AB512812C /* BikeRepositoryStateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeRepositoryStateStore.swift; sourceTree = "<group>"; };
 		843870925F287AB7E6A18417 /* EfficiencyCardMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EfficiencyCardMapper.swift; sourceTree = "<group>"; };
 		84827BEDD8F6DAB872A57401 /* ChargingDashboardTestDoubles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingDashboardTestDoubles.swift; sourceTree = "<group>"; };
@@ -6355,6 +6370,7 @@
 		E867FC1B37F71DDCC3EE4370 /* StarkPairingIdentityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkPairingIdentityTests.swift; sourceTree = "<group>"; };
 		E879C8F36A84C858C13B8D23 /* RideNavigationGuidance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideNavigationGuidance.swift; sourceTree = "<group>"; };
 		E8DD4BBF133B627E8413C970 /* StarkInverterTemperaturesDecoderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkInverterTemperaturesDecoderTests.swift; sourceTree = "<group>"; };
+		E955235F4495A088A6819C03 /* MapLinkShareProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapLinkShareProcessor.swift; sourceTree = "<group>"; };
 		E95FA264831E95448244315F /* BikeSDKPayloadFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeSDKPayloadFixtures.swift; sourceTree = "<group>"; };
 		E99FC7FDC6AB5EE41E5446AF /* StarkPowerModeConfigurationCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkPowerModeConfigurationCommandTests.swift; sourceTree = "<group>"; };
 		E9FCFC7B27C25F4FE7EF2117 /* BikeOdometer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeOdometer.swift; sourceTree = "<group>"; };
@@ -7486,6 +7502,7 @@
 		0AC65E5C9737F86B5CA9B785 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				E955235F4495A088A6819C03 /* MapLinkShareProcessor.swift */,
 				355E75D16F4454C695DB1E9D /* MapLinkShareViewController.swift */,
 			);
 			path = Sources;
@@ -7551,6 +7568,14 @@
 				D2648FFF4AB7945B9836DC7A /* UserDefaultsIncomingMapLinkStore.swift */,
 			);
 			path = Persistence;
+			sourceTree = "<group>";
+		};
+		0E9B3A1807E158FDB14B6D91 /* TestDoubles */ = {
+			isa = PBXGroup;
+			children = (
+				83A9653159580117FAD33CFA /* MapLinkShareTestDoubles.swift */,
+			);
+			path = TestDoubles;
 			sourceTree = "<group>";
 		};
 		0EB1A7324F5328D60EDF063F /* BikeSDK */ = {
@@ -8288,6 +8313,7 @@
 			isa = PBXGroup;
 			children = (
 				0AC65E5C9737F86B5CA9B785 /* Sources */,
+				9BBDC112CD45CCC7D1196B13 /* Tests */,
 			);
 			path = ShareExtension;
 			sourceTree = "<group>";
@@ -10536,6 +10562,15 @@
 			path = Components;
 			sourceTree = "<group>";
 		};
+		9BBDC112CD45CCC7D1196B13 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				523DBAB8E70597B08F9938C2 /* MapLinkShareProcessorTests.swift */,
+				0E9B3A1807E158FDB14B6D91 /* TestDoubles */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
 		9BC51451EDA5155673848915 /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -12110,6 +12145,7 @@
 				569BEE9735761E929F42D40A /* FENRDebugShareExtension.appex */,
 				B83718C0D335BF42C0AA7ADD /* FENRDebugTests.xctest */,
 				4A1D89F026EB6F81887ACF49 /* FENRShareExtension.appex */,
+				0B5FD0DAE2BD500519247055 /* FENRShareExtensionTests.xctest */,
 				F428F3E87580ED67413A998A /* FENRTests.xctest */,
 				D418F41831B150B0CA9C1AC8 /* FENRWatch.app */,
 				2C4DD2DF517E2FD8EB666A17 /* FENRWatchDebug.app */,
@@ -13177,6 +13213,24 @@
 			productName = WatchDashboard;
 			productReference = 9CBA77B0A1E31429F440253D /* WatchDashboard.framework */;
 			productType = "com.apple.product-type.framework";
+		};
+		6166FC7623544981EC8B618C /* FENRShareExtensionTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2389E79100681D91443F24A4 /* Build configuration list for PBXNativeTarget "FENRShareExtensionTests" */;
+			buildPhases = (
+				D57E02BC1E52AC2BB34F067C /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A61DD46CFAB1AABD862D4874 /* PBXTargetDependency */,
+			);
+			name = FENRShareExtensionTests;
+			packageProductDependencies = (
+			);
+			productName = FENRShareExtensionTests;
+			productReference = 0B5FD0DAE2BD500519247055 /* FENRShareExtensionTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		6266C8D5B430E2D29FFE64AF /* BatteryHealth */ = {
 			isa = PBXNativeTarget;
@@ -14549,6 +14603,10 @@
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
+					6166FC7623544981EC8B618C = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
 					6266C8D5B430E2D29FFE64AF = {
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
@@ -14856,6 +14914,7 @@
 				BF81C21AA8B4D4EA10C2CEE9 /* PowerModeSettingsTests */,
 				79CCE32E9EF6E96F5FB83B8E /* RideHistoryTests */,
 				28F27724F8C61BA761C6C1E7 /* TestSupportTests */,
+				6166FC7623544981EC8B618C /* FENRShareExtensionTests */,
 				219B2EEDB6F7F684341D70C5 /* FENRTests */,
 				A55FCD9248F9890B0383E0B1 /* FENRDebugTests */,
 			);
@@ -16067,6 +16126,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0EB0DA7004AF4D8AD72ACA88 /* MapLinkShareProcessor.swift in Sources */,
 				922C35C911F8142A0208A97F /* MapLinkShareViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -16655,6 +16715,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D57E02BC1E52AC2BB34F067C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2B27F6C3ABA21F549E0F454E /* MapLinkShareProcessor.swift in Sources */,
+				7FBEC84E9ABDD1D15C4DC359 /* MapLinkShareProcessorTests.swift in Sources */,
+				4A4DD5178AC339BC73C6B8DB /* MapLinkShareTestDoubles.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D5DAB975806CFA64E2F7CB62 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -16787,6 +16857,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DD346887E672844A18F95D6E /* MapLinkShareProcessor.swift in Sources */,
 				904318BE84177FC24DFAD004 /* MapLinkShareViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -17968,6 +18039,11 @@
 			target = DC9D253BF8E310D05E8E36EA /* RuntimeConfiguration */;
 			targetProxy = 96BA7395F5393DD653E516A1 /* PBXContainerItemProxy */;
 		};
+		A61DD46CFAB1AABD862D4874 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 934A1324751A2F36EBE86E5A /* FENRShareExtension */;
+			targetProxy = BEF26C084780EB359AF95651 /* PBXContainerItemProxy */;
+		};
 		A648B43DAA6E7A12DCBCAF9A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 4F2D7E6BB02AC699D5B05D63 /* MeasurementPresentation */;
@@ -18666,6 +18742,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = in.fenr.app.share;
+				PRODUCT_MODULE_NAME = FENRShareExtension;
 				PRODUCT_NAME = "Open in FENR";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -18847,9 +18924,25 @@
 					"@executable_path/../../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.fenr.app.debug.share;
+				PRODUCT_MODULE_NAME = FENRDebugShareExtension;
 				PRODUCT_NAME = "Open in FENR Debug";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		137BAEF5378A6520A006EAC9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.fenr.shareextension.tests;
+				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -19586,6 +19679,21 @@
 			};
 			name = Release;
 		};
+		591D78F5F04BD09E92D24BBB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.fenr.shareextension.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		598B219744D8B9E526971A36 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -20181,6 +20289,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = in.fenr.app.share;
+				PRODUCT_MODULE_NAME = FENRShareExtension;
 				PRODUCT_NAME = "Open in FENR";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -20618,6 +20727,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.fenr.app.debug.share;
+				PRODUCT_MODULE_NAME = FENRDebugShareExtension;
 				PRODUCT_NAME = "Open in FENR Debug";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -22116,6 +22226,15 @@
 			buildConfigurations = (
 				3437327E8355D41DD489016D /* Debug */,
 				CFD670C72E1B5D068754F482 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		2389E79100681D91443F24A4 /* Build configuration list for PBXNativeTarget "FENRShareExtensionTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				137BAEF5378A6520A006EAC9 /* Debug */,
+				591D78F5F04BD09E92D24BBB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

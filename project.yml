@@ -734,6 +734,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: in.fenr.app.share
         PRODUCT_NAME: Open in FENR
+        PRODUCT_MODULE_NAME: FENRShareExtension
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: ShareExtension/Info.plist
         CODE_SIGN_ENTITLEMENTS: ShareExtension/FENRShare.entitlements
@@ -751,6 +752,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug.share
         PRODUCT_NAME: Open in FENR Debug
+        PRODUCT_MODULE_NAME: FENRDebugShareExtension
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: ShareExtension/Info.plist
         CODE_SIGN_ENTITLEMENTS: ShareExtension/FENRDebugShare.entitlements
@@ -1285,6 +1287,17 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.testsupport.tests
+  FENRShareExtensionTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: ShareExtension/Tests
+      - path: ShareExtension/Sources/MapLinkShareProcessor.swift
+    dependencies:
+      - target: FENRShareExtension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.shareextension.tests
   FENRTests:
     type: bundle.unit-test
     platform: iOS
@@ -1410,6 +1423,7 @@ schemes:
         BikeLockSettingsTests: [test]
         PowerModeSettingsTests: [test]
         RideHistoryTests: [test]
+        FENRShareExtensionTests: [test]
         TestSupportTests: [test]
         FENRTests: [test]
         FENRDebugTests: [test]
@@ -1447,6 +1461,7 @@ schemes:
         - BikeLockSettingsTests
         - PowerModeSettingsTests
         - RideHistoryTests
+        - FENRShareExtensionTests
         - TestSupportTests
         - FENRTests
         - FENRDebugTests
