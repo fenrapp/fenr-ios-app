@@ -1,3 +1,4 @@
+import BikeDomain
 import Foundation
 import RideSession
 import RideSessionDomain
@@ -17,37 +18,15 @@ func makeLiveRideSessionServiceFixture(
     let deviceSpeedRepository = SessionDeviceSpeedRepository()
     let profileRepository = SessionProfileRepository()
     let batteryHealthRepository = SessionBatteryHealthRepository()
-    let liveVehicleService = LiveVehicleSessionService(
-        useCases: .init(
-            observeTelemetry: .init(repository: bikeRepository),
-            observeConnection: .init(repository: bikeRepository),
-            observeSettings: .init(repository: settingsRepository),
-            observeDeviceSpeed: .init(repository: deviceSpeedRepository),
-            observeIMU: .init(repository: SessionIMURepository()),
-            startIMUMonitoring: .init(repository: SessionIMURepository()),
-            stopIMUMonitoring: .init(repository: SessionIMURepository()),
-            loadMotionCalibration: .init(repository: SessionMotionCalibrationRepository()),
-            saveMotionCalibration: .init(repository: SessionMotionCalibrationRepository()),
-            observeBikeProfile: .init(repository: profileRepository),
-            observeBatteryHealth: .init(repository: batteryHealthRepository),
-            startBatteryHealthMonitoring: .init(repository: batteryHealthRepository),
-            stopBatteryHealthMonitoring: .init(repository: batteryHealthRepository),
-            readBikeStatusSnapshot: .init(repository: bikeRepository)
-        ),
-        powerModeRefreshCoordinator: makeVehiclePowerModeRefreshCoordinator(),
-        speedResolver: .init(
-            now: { date },
-            maximumAccuracyMetersPerSecond: 5,
-            maximumSampleAge: 5
-        ),
-        motionEstimator: .init(
-            profile: nil,
-            now: { date },
-            maximumSampleAge: 5,
-            minimumGPSCourseSpeedKilometersPerHour: 5,
-            maximumGPSCourseAccuracyDegrees: 35
-        ),
-        sleep: { duration in try await Task.sleep(for: duration) }
+    let liveVehicleService = makeRideSessionVehicleService(
+        date: date,
+        repositories: RideSessionVehicleServiceRepositories(
+            bike: bikeRepository,
+            settings: settingsRepository,
+            deviceSpeed: deviceSpeedRepository,
+            profile: profileRepository,
+            batteryHealth: batteryHealthRepository
+        )
     )
     let vehicleService = rideVehicleSession ?? liveVehicleService
     let service = LiveRideSessionService(
@@ -70,6 +49,60 @@ func makeLiveRideSessionServiceFixture(
         tripRepository: tripRepository,
         sleepController: sleepController,
         date: date
+    )
+}
+
+private struct RideSessionVehicleServiceRepositories {
+    let bike: SessionBikeRepository
+    let settings: SessionSettingsRepository
+    let deviceSpeed: SessionDeviceSpeedRepository
+    let profile: SessionProfileRepository
+    let batteryHealth: SessionBatteryHealthRepository
+}
+
+private func makeRideSessionVehicleService(
+    date: Date,
+    repositories: RideSessionVehicleServiceRepositories
+) -> LiveVehicleSessionService {
+    let observeBatteryHealth = ObserveBikeBatteryHealthUseCase(repository: repositories.batteryHealth)
+    let startBatteryHealthMonitoring = StartBatteryHealthMonitoringUseCase(
+        repository: repositories.batteryHealth
+    )
+    let stopBatteryHealthMonitoring = StopBatteryHealthMonitoringUseCase(
+        repository: repositories.batteryHealth
+    )
+    return LiveVehicleSessionService(
+        useCases: .init(
+            observeTelemetry: .init(repository: repositories.bike),
+            observeConnection: .init(repository: repositories.bike),
+            observeSettings: .init(repository: repositories.settings),
+            observeDeviceSpeed: .init(repository: repositories.deviceSpeed),
+            observeIMU: .init(repository: SessionIMURepository()),
+            startIMUMonitoring: .init(repository: SessionIMURepository()),
+            stopIMUMonitoring: .init(repository: SessionIMURepository()),
+            loadMotionCalibration: .init(repository: SessionMotionCalibrationRepository()),
+            saveMotionCalibration: .init(repository: SessionMotionCalibrationRepository()),
+            observeBikeProfile: .init(repository: repositories.profile),
+            observeBatteryHealth: observeBatteryHealth,
+            startBatteryHealthMonitoring: startBatteryHealthMonitoring,
+            stopBatteryHealthMonitoring: stopBatteryHealthMonitoring,
+            readBikeStatusSnapshot: .init(repository: repositories.bike)
+        ),
+        powerModeRefreshCoordinator: makeVehiclePowerModeRefreshCoordinator(),
+        batteryHealthMonitoringCoordinator: .init(
+            observeBatteryHealth: observeBatteryHealth,
+            startBatteryHealthMonitoring: startBatteryHealthMonitoring,
+            stopBatteryHealthMonitoring: stopBatteryHealthMonitoring
+        ),
+        speedResolver: .init(now: { date }, maximumAccuracyMetersPerSecond: 5, maximumSampleAge: 5),
+        motionEstimator: .init(
+            profile: nil,
+            now: { date },
+            maximumSampleAge: 5,
+            minimumGPSCourseSpeedKilometersPerHour: 5,
+            maximumGPSCourseAccuracyDegrees: 35
+        ),
+        sleep: { duration in try await Task.sleep(for: duration) }
     )
 }
 

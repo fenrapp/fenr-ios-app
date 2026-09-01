@@ -3,6 +3,17 @@ import EnvironmentDomain
 import SettingsDomain
 
 extension LiveVehicleSessionService {
+    func observeBatteryHealthCoordinator() {
+        guard batteryHealthBridgeTask == nil else { return }
+        let coordinator = batteryHealthMonitoringCoordinator
+        batteryHealthBridgeTask = Task { [weak self] in
+            let stream = await coordinator.observe()
+            for await snapshot in stream where !Task.isCancelled {
+                await self?.receive(snapshot)
+            }
+        }
+    }
+
     func observeSources() {
         observeTelemetry()
         observeIMU()
@@ -84,13 +95,23 @@ extension LiveVehicleSessionService {
         } else {
             await powerModeRefreshCoordinator.reset()
         }
+        let batteryHealthSnapshot = await batteryHealthMonitoringCoordinator
+            .prepareReadinessChange(isSessionReady: isReceivingTelemetry)
+        if applyBatteryHealthSnapshot(batteryHealthSnapshot) {
+            publish()
+        }
+        await batteryHealthMonitoringCoordinator.resumePendingWork()
         if wasReceivingTelemetry, !isReceivingTelemetry {
             minimumCanonicalTelemetryRevision = telemetryRevision + 1
-            invalidateBatteryHealthMonitoringForConnectionLoss()
-        } else if !wasReceivingTelemetry, isReceivingTelemetry {
-            resumeBatteryHealthMonitoringIfNeeded()
         }
         await updateIMUMonitoring()
+        publish()
+    }
+
+    private func receive(
+        _ snapshot: VehicleBatteryHealthMonitoringCoordinator.Snapshot
+    ) {
+        guard applyBatteryHealthSnapshot(snapshot) else { return }
         publish()
     }
 

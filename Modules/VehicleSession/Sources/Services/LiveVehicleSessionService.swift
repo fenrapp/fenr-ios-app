@@ -6,6 +6,7 @@ import SettingsDomain
 public actor LiveVehicleSessionService: VehicleSessionService {
     let useCases: VehicleSessionUseCases
     let powerModeRefreshCoordinator: VehiclePowerModeRefreshCoordinator
+    let batteryHealthMonitoringCoordinator: VehicleBatteryHealthMonitoringCoordinator
     let speedResolver: VehicleSpeedResolver
     let sleep: @Sendable (Duration) async throws -> Void
     var motionEstimator: VehicleMotionEstimator
@@ -20,8 +21,7 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     var motionCalibration: VehicleMotionCalibration?
     var hasLoadedMotionCalibration = false
     var motion = VehicleMotionSnapshot()
-    var batteryHealth = BikeBatteryHealth()
-    var batteryHealthMonitoringState = VehicleBatteryHealthMonitoringState.inactive
+    var batteryHealthSnapshot = VehicleBatteryHealthMonitoringCoordinator.Snapshot()
     var hasReceivedSettings = false
     var hasReceivedProfile = false
     var observationTasks: [Task<Void, Never>] = []
@@ -34,12 +34,7 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     var imuMonitoringGeneration = 0
     var isIMUMonitoring = false
     var motionCalibrationTask: Task<Void, Never>?
-    var batteryHealthTask: Task<Void, Never>?
-    var batteryHealthStartTask: Task<Void, Never>?
-    var batteryHealthStartGeneration: Int?
-    var batteryHealthMonitoringGeneration = 0
-    var batteryHealthStopTask: Task<Void, Never>?
-    var batteryHealthConsumers: Set<UUID> = []
+    var batteryHealthBridgeTask: Task<Void, Never>?
     var observers: [UUID: AsyncStream<VehicleSessionSnapshot>.Continuation] = [:]
     var isStopping = false
     var shouldStartAfterStopping = false
@@ -47,12 +42,14 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     public init(
         useCases: VehicleSessionUseCases,
         powerModeRefreshCoordinator: VehiclePowerModeRefreshCoordinator,
+        batteryHealthMonitoringCoordinator: VehicleBatteryHealthMonitoringCoordinator,
         speedResolver: VehicleSpeedResolver,
         motionEstimator: VehicleMotionEstimator,
         sleep: @escaping @Sendable (Duration) async throws -> Void
     ) {
         self.useCases = useCases
         self.powerModeRefreshCoordinator = powerModeRefreshCoordinator
+        self.batteryHealthMonitoringCoordinator = batteryHealthMonitoringCoordinator
         self.speedResolver = speedResolver
         self.motionEstimator = motionEstimator
         self.sleep = sleep
@@ -61,15 +58,15 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     deinit {
         let powerModeRefreshCoordinator = powerModeRefreshCoordinator
         Task { await powerModeRefreshCoordinator.reset() }
+        let batteryHealthMonitoringCoordinator = batteryHealthMonitoringCoordinator
+        Task { await batteryHealthMonitoringCoordinator.stop() }
         observationTasks.forEach { $0.cancel() }
         deviceSpeedTask?.cancel()
         deviceSpeedExpiryTask?.cancel()
         imuExpiryTask?.cancel()
         imuMonitoringStartTask?.cancel()
         motionCalibrationTask?.cancel()
-        batteryHealthTask?.cancel()
-        batteryHealthStartTask?.cancel()
-        batteryHealthStopTask?.cancel()
+        batteryHealthBridgeTask?.cancel()
     }
 
     public func observe() -> AsyncStream<VehicleSessionSnapshot> {
@@ -89,6 +86,7 @@ public actor LiveVehicleSessionService: VehicleSessionService {
             return
         }
         guard observationTasks.isEmpty else { return }
+        observeBatteryHealthCoordinator()
         observeSources()
     }
 
@@ -126,28 +124,20 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         hasLoadedMotionCalibration = false
         motionEstimator.reset()
         motion = .init()
-        batteryHealthMonitoringGeneration &+= 1
-        batteryHealthStartTask?.cancel()
-        batteryHealthConsumers.removeAll()
-        if let batteryHealthStartTask {
-            await batteryHealthStartTask.value
-        } else if batteryHealthMonitoringState == .active {
-            scheduleBatteryHealthStop()
+        let stoppedBatteryHealthSnapshot = await batteryHealthMonitoringCoordinator.stop()
+        batteryHealthBridgeTask?.cancel()
+        if let batteryHealthBridgeTask {
+            await batteryHealthBridgeTask.value
         }
-        if let batteryHealthStopTask {
-            await batteryHealthStopTask.value
-        }
-        batteryHealthTask?.cancel()
-        batteryHealthTask = nil
-        batteryHealthStartGeneration = nil
-        batteryHealthMonitoringState = .inactive
-        batteryHealth = .init()
+        batteryHealthBridgeTask = nil
+        applyBatteryHealthSnapshot(stoppedBatteryHealthSnapshot)
         minimumCanonicalTelemetryRevision = telemetryRevision + 1
         await powerModeRefreshCoordinator.reset()
         publish()
         isStopping = false
         if shouldStartAfterStopping {
             shouldStartAfterStopping = false
+            observeBatteryHealthCoordinator()
             observeSources()
         }
     }
@@ -170,22 +160,15 @@ public actor LiveVehicleSessionService: VehicleSessionService {
 
     public func setBatteryHealthMonitoringRequired(_ required: Bool, consumerID: UUID) async {
         guard !isStopping else { return }
-        if required {
-            batteryHealthConsumers.insert(consumerID)
-            if isReceivingTelemetry, shouldBeginBatteryHealthMonitoring {
-                beginBatteryHealthMonitoring()
-            }
-        } else {
-            batteryHealthConsumers.remove(consumerID)
-            guard batteryHealthConsumers.isEmpty else { return }
-            if batteryHealthMonitoringState == .active {
-                scheduleBatteryHealthStop()
-            } else if isMonitoringFailed {
-                batteryHealthMonitoringState = .inactive
-                batteryHealth = .init()
-                publish()
-            }
+        let preparedSnapshot = await batteryHealthMonitoringCoordinator.prepareLeaseChange(
+            required: required,
+            consumerID: consumerID,
+            isSessionReady: isReceivingTelemetry
+        )
+        if applyBatteryHealthSnapshot(preparedSnapshot) {
+            publish()
         }
+        await batteryHealthMonitoringCoordinator.resumePendingWork()
     }
 
     public func setLocationMonitoringRequired(_ required: Bool, consumerID: UUID) async {
@@ -213,8 +196,8 @@ extension LiveVehicleSessionService {
             ),
             speedSource: settings.speedSource,
             isGPSAvailable: speedResolver.hasValidDeviceSpeed(deviceSpeedSample),
-            batteryHealth: batteryHealth,
-            batteryHealthMonitoringState: batteryHealthMonitoringState,
+            batteryHealth: batteryHealthSnapshot.health,
+            batteryHealthMonitoringState: batteryHealthSnapshot.state,
             motion: motion,
             hasReceivedSettings: hasReceivedSettings,
             hasReceivedProfile: hasReceivedProfile,
@@ -224,17 +207,18 @@ extension LiveVehicleSessionService {
         )
     }
 
-    var isMonitoringFailed: Bool {
-        if case .failed = batteryHealthMonitoringState { true } else { false }
-    }
-
-    var shouldBeginBatteryHealthMonitoring: Bool {
-        batteryHealthMonitoringState == .inactive || isMonitoringFailed
-    }
-
     func publish() {
         let snapshot = snapshot
         observers.values.forEach { $0.yield(snapshot) }
+    }
+
+    @discardableResult
+    func applyBatteryHealthSnapshot(
+        _ snapshot: VehicleBatteryHealthMonitoringCoordinator.Snapshot
+    ) -> Bool {
+        guard snapshot.revision > batteryHealthSnapshot.revision else { return false }
+        batteryHealthSnapshot = snapshot
+        return true
     }
 
     func removeObserver(_ id: UUID) {

@@ -16,6 +16,13 @@ enum VehicleSessionDependencyContainer {
         let refreshTractionControlConfiguration = RefreshBikeTractionControlConfigurationUseCase(
             repository: repository
         )
+        let observeBatteryHealth = ObserveBikeBatteryHealthUseCase(repository: repository)
+        let startBatteryHealthMonitoring = StartBatteryHealthMonitoringUseCase(
+            repository: repository
+        )
+        let stopBatteryHealthMonitoring = StopBatteryHealthMonitoringUseCase(
+            repository: repository
+        )
         return LiveVehicleSessionService(
             useCases: .init(
                 observeTelemetry: .init(repository: repository),
@@ -28,9 +35,9 @@ enum VehicleSessionDependencyContainer {
                 loadMotionCalibration: .init(repository: dependencies.motionCalibrationRepository),
                 saveMotionCalibration: .init(repository: dependencies.motionCalibrationRepository),
                 observeBikeProfile: .init(repository: dependencies.profileRepository),
-                observeBatteryHealth: .init(repository: repository),
-                startBatteryHealthMonitoring: .init(repository: repository),
-                stopBatteryHealthMonitoring: .init(repository: repository),
+                observeBatteryHealth: observeBatteryHealth,
+                startBatteryHealthMonitoring: startBatteryHealthMonitoring,
+                stopBatteryHealthMonitoring: stopBatteryHealthMonitoring,
                 readBikeStatusSnapshot: .init(repository: repository),
                 refreshPowerModeConfiguration: refreshPowerModeConfiguration,
                 refreshTractionControlConfiguration: refreshTractionControlConfiguration
@@ -38,6 +45,11 @@ enum VehicleSessionDependencyContainer {
             powerModeRefreshCoordinator: .init(
                 refreshPowerModeConfiguration: refreshPowerModeConfiguration,
                 refreshTractionControlConfiguration: refreshTractionControlConfiguration
+            ),
+            batteryHealthMonitoringCoordinator: .init(
+                observeBatteryHealth: observeBatteryHealth,
+                startBatteryHealthMonitoring: startBatteryHealthMonitoring,
+                stopBatteryHealthMonitoring: stopBatteryHealthMonitoring
             ),
             speedResolver: .init(
                 now: Date.init,
