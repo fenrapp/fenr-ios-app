@@ -51,6 +51,11 @@ public final class TripStatisticsCardViewModel: ObservableObject {
         statistics = .init()
     }
 
+    func pause() {
+        isVisible = false
+        pauseObservation()
+    }
+
     private func pauseObservation() {
         loadTask?.cancel()
         loadTask = nil
@@ -109,6 +114,7 @@ private extension TripStatisticsCardViewModel {
     }
 
     func receive(_ snapshot: RideSessionSnapshot) {
+        guard snapshot.isCanonicalTelemetryAvailable else { return }
         measurementSystem = snapshot.measurementSystem
         let vin = snapshot.vehicleIdentity.confirmedVIN
         if vin != activeVIN {

@@ -135,6 +135,26 @@ struct BikeLockSettingsViewModelTests {
         #expect(!fixture.viewModel.viewState.isAvailable)
     }
 
+    @Test("Recovery closes sensitive UI and rejects actions")
+    func recoveryInvalidatesSensitiveContext() async {
+        let fixture = BikeLockSettingsViewModelFixture(mode: .pinAndFaceID, pin: "123456")
+        await fixture.authenticator.block()
+        await fixture.start()
+        fixture.viewModel.changeProtection()
+        #expect(await waitUntil { await fixture.authenticator.callCount() == 1 })
+
+        await fixture.sendSnapshot(
+            vin: fixture.vin,
+            isCanonicalTelemetryAvailable: false
+        )
+
+        #expect(await waitUntil { !fixture.viewModel.viewState.isAvailable })
+        #expect(fixture.viewModel.viewState.destination == nil)
+        fixture.viewModel.changeProtection()
+        #expect(await fixture.authenticator.callCount() == 1)
+        await fixture.authenticator.release()
+    }
+
     @Test("Cancellation releases the current operation")
     func cancellationErrorReleasesOperation() async {
         let fixture = BikeLockSettingsViewModelFixture(

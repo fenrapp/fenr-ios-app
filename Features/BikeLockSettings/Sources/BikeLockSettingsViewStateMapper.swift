@@ -10,12 +10,14 @@ public struct BikeLockSettingsViewStateMapper: Sendable {
         capability: BikeLockCapabilityState,
         isWorking: Bool = false,
         errorMessage: String? = nil,
-        destination: BikeLockSettingsDestination? = nil
+        destination: BikeLockSettingsDestination? = nil,
+        isCanonicalTelemetryAvailable: Bool = false
     ) -> BikeLockSettingsViewState {
         let currentMode = settings.bikeLockSettings(forVIN: vehicleIdentifier).securityMode
         let isAvailable = vehicleIdentifier != nil
             && capability.isAvailable
             && capability.vehicleIdentifier == vehicleIdentifier
+            && isCanonicalTelemetryAvailable
         return .init(
             isAvailable: isAvailable,
             currentModeTitle: title(for: currentMode),

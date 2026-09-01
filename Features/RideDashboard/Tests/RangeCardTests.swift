@@ -60,7 +60,8 @@ struct RangeCardTests {
         let session = TestRideSessionService(snapshot: .init(
             vehicleIdentity: .vin(CurrentTripTestIdentity.vin),
             batteryStateOfChargePercent: 60,
-            batteryCapacityWattHours: 7_200
+            batteryCapacityWattHours: 7_200,
+            isCanonicalTelemetryAvailable: true
         ))
         let viewModel = RangeCardViewModel(
             useCases: .init(loadHistory: .init(repository: repository)),
@@ -79,7 +80,8 @@ struct RangeCardTests {
             vehicleIdentity: .vin(CurrentTripTestIdentity.vin),
             historyRevision: 1,
             batteryStateOfChargePercent: 50,
-            batteryCapacityWattHours: 7_200
+            batteryCapacityWattHours: 7_200,
+            isCanonicalTelemetryAvailable: true
         ))
         #expect(await waitUntil { await repository.loadCount() == 2 })
         #expect(viewModel.viewState == DashboardRangeViewData())

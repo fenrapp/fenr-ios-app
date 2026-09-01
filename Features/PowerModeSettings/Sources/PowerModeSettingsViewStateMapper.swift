@@ -58,8 +58,11 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
             adjustments: adjustments(
                 configuration: configuration,
                 powerMaximum: powerMaximum,
-                isBaseControlReady: input.isBaseControlReady && !input.isApplyingControl,
+                isBaseControlReady: input.isCanonicalTelemetryAvailable
+                    && input.isBaseControlReady
+                    && !input.isApplyingControl,
                 isTractionControlReady: input.isTractionControlReady
+                    && input.isCanonicalTelemetryAvailable
                     && isTractionConfigurationSupported
                     && !input.isApplyingControl
             )

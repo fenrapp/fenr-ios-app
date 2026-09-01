@@ -68,7 +68,8 @@ struct EfficiencyCardTests {
     func loadsTrendLazily() async {
         let tripRepository = CurrentTripCardTripRepository(completedTrips: [eligibleTrip()])
         let session = TestRideSessionService(snapshot: .init(
-            vehicleIdentity: .vin(CurrentTripTestIdentity.vin)
+            vehicleIdentity: .vin(CurrentTripTestIdentity.vin),
+            isCanonicalTelemetryAvailable: true
         ))
         let viewModel = EfficiencyCardViewModel(
             useCases: .init(
@@ -96,7 +97,8 @@ struct EfficiencyCardTests {
     func reloadsTrendRevisionWhenVisible() async {
         let tripRepository = CurrentTripCardTripRepository(completedTrips: [eligibleTrip()])
         let session = TestRideSessionService(snapshot: .init(
-            vehicleIdentity: .vin(CurrentTripTestIdentity.vin)
+            vehicleIdentity: .vin(CurrentTripTestIdentity.vin),
+            isCanonicalTelemetryAvailable: true
         ))
         let viewModel = EfficiencyCardViewModel(
             useCases: .init(loadTrend: .init(repository: tripRepository)),
@@ -110,7 +112,8 @@ struct EfficiencyCardTests {
         await tripRepository.replaceCompletedTrips(with: [eligibleTrip(), eligibleTrip()])
         await session.send(.init(
             vehicleIdentity: .vin(CurrentTripTestIdentity.vin),
-            historyRevision: 1
+            historyRevision: 1,
+            isCanonicalTelemetryAvailable: true
         ))
         await Task.yield()
         #expect(await tripRepository.loadCount() == 1)

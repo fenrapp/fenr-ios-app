@@ -13,7 +13,11 @@ struct CurrentTripCardViewModelTests {
     func publishesOnlyWhileVisible() async {
         let fixture = makeFixture()
         let trip = makeTrip(maximumSpeed: 42)
-        await fixture.session.send(.init(trip: trip, vehicleIdentity: trip.vehicleIdentity))
+        await fixture.session.send(.init(
+            trip: trip,
+            vehicleIdentity: trip.vehicleIdentity,
+            isCanonicalTelemetryAvailable: true
+        ))
 
         #expect(!fixture.viewModel.viewState.isActive)
 
@@ -26,7 +30,8 @@ struct CurrentTripCardViewModelTests {
         fixture.viewModel.setIsVisible(false)
         await fixture.session.send(.init(
             trip: makeTrip(maximumSpeed: 67),
-            vehicleIdentity: trip.vehicleIdentity
+            vehicleIdentity: trip.vehicleIdentity,
+            isCanonicalTelemetryAvailable: true
         ))
         await Task.yield()
         #expect(fixture.viewModel.viewState.maximumSpeed.valueText == "42")
@@ -38,6 +43,14 @@ struct CurrentTripCardViewModelTests {
     @Test("Forwards reset and pause commands to the shared session")
     func forwardsCommands() async {
         let fixture = makeFixture()
+        fixture.viewModel.setIsVisible(true)
+        let trip = makeTrip(maximumSpeed: 1)
+        await fixture.session.send(.init(
+            trip: trip,
+            vehicleIdentity: trip.vehicleIdentity,
+            isCanonicalTelemetryAvailable: true
+        ))
+        #expect(await waitUntil { fixture.viewModel.viewState.isActive })
 
         fixture.viewModel.togglePauseCurrentTrip()
         fixture.viewModel.resetCurrentTrip()
@@ -53,6 +66,14 @@ struct CurrentTripCardViewModelTests {
     func serializesCommands() async {
         let session = TestRideSessionService(pauseCommandDelay: .milliseconds(20))
         let fixture = makeFixture(session: session)
+        fixture.viewModel.setIsVisible(true)
+        let trip = makeTrip(maximumSpeed: 1)
+        await fixture.session.send(.init(
+            trip: trip,
+            vehicleIdentity: trip.vehicleIdentity,
+            isCanonicalTelemetryAvailable: true
+        ))
+        #expect(await waitUntil { fixture.viewModel.viewState.isActive })
 
         fixture.viewModel.togglePauseCurrentTrip()
         fixture.viewModel.resetCurrentTrip()
@@ -73,12 +94,34 @@ struct CurrentTripCardViewModelTests {
             vehicleIdentity: trip.vehicleIdentity,
             resolvedSpeedKilometersPerHour: 67,
             speedSource: .gps,
-            isGPSAvailable: true
+            isGPSAvailable: true,
+            isCanonicalTelemetryAvailable: true
         ))
 
         #expect(await waitUntil {
             fixture.viewModel.viewState.speedSourceIndicator?.text == "GPS"
         })
+    }
+
+    @Test("Paused presentation rejects trip commands")
+    func pausedPresentationRejectsCommands() async {
+        let fixture = makeFixture()
+        fixture.viewModel.setIsVisible(true)
+        let trip = makeTrip(maximumSpeed: 1)
+        await fixture.session.send(.init(
+            trip: trip,
+            vehicleIdentity: trip.vehicleIdentity,
+            isCanonicalTelemetryAvailable: true
+        ))
+        #expect(await waitUntil { fixture.viewModel.viewState.isActive })
+
+        fixture.viewModel.setIsVisible(false)
+        fixture.viewModel.togglePauseCurrentTrip()
+        fixture.viewModel.resetCurrentTrip()
+
+        await Task.yield()
+        #expect(await fixture.session.pauseCommands() == 0)
+        #expect(await fixture.session.resetCommands() == 0)
     }
 
     private func makeFixture(

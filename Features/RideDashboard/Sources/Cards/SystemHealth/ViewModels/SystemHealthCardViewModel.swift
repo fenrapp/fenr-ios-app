@@ -1,3 +1,4 @@
+import BikeDomain
 import Combine
 import Foundation
 import VehicleSession
@@ -15,7 +16,9 @@ public final class SystemHealthCardViewModel: ObservableObject {
     private var renderTask: Task<Void, Never>?
     private var isVisible = false
     private var isRequestingBatteryHealth = false
-    private var hasCachedHealthData = false
+    private var cachedVehicleIdentity: String?
+    private var cachedBatteryHealth = BikeBatteryHealth()
+    private var cachedInverterTemperatures: [Double?] = []
 
     public init(
         vehicleSession: any VehicleSessionService,
@@ -73,7 +76,13 @@ private extension SystemHealthCardViewModel {
     }
 
     func receive(_ snapshot: VehicleSessionSnapshot) {
-        self.snapshot = snapshot
+        if let vin = snapshot.profile?.vin, vin != cachedVehicleIdentity {
+            cachedVehicleIdentity = vin
+            cachedBatteryHealth = .init()
+            cachedInverterTemperatures = []
+        }
+        mergeConfirmedDatasets(from: snapshot)
+        self.snapshot = presentationSnapshot(from: snapshot)
         scheduleRender()
     }
 
@@ -89,19 +98,59 @@ private extension SystemHealthCardViewModel {
 
     func render() {
         guard isVisible else { return }
-        if hasCachedHealthData, shouldKeepCachedState(for: snapshot) { return }
         let next = mapper.map(snapshot)
-        if !snapshot.batteryHealth.cellVoltages.isEmpty || snapshot.batteryHealth.isBMSFaultActive {
-            hasCachedHealthData = true
-        }
         guard next != viewState else { return }
         viewState = next
     }
 
-    func shouldKeepCachedState(for snapshot: VehicleSessionSnapshot) -> Bool {
-        if case .failed = snapshot.batteryHealthMonitoringState { return false }
-        return snapshot.batteryHealth.cellVoltages.isEmpty
-            && !snapshot.batteryHealth.isBMSFaultActive
+    func mergeConfirmedDatasets(from snapshot: VehicleSessionSnapshot) {
+        let health = snapshot.batteryHealth
+        if health.stateOfCharge != .unknown {
+            cachedBatteryHealth.stateOfCharge = health.stateOfCharge
+        }
+        if health.stateOfHealth != .unknown {
+            cachedBatteryHealth.stateOfHealth = health.stateOfHealth
+        }
+        if health.dcBusVoltage != .unknown {
+            cachedBatteryHealth.dcBusVoltage = health.dcBusVoltage
+        }
+        if !health.cellVoltages.isEmpty {
+            cachedBatteryHealth.cellVoltages = health.cellVoltages
+            cachedBatteryHealth.balancingCellIndexes = health.balancingCellIndexes
+        }
+        if !health.temperatures.isEmpty {
+            cachedBatteryHealth.temperatures = health.temperatures
+        }
+        if health.lastUpdated != nil {
+            cachedBatteryHealth.chargeState = health.chargeState
+            cachedBatteryHealth.chargingStatus = health.chargingStatus
+            cachedBatteryHealth.positiveBMSFaultBits = health.positiveBMSFaultBits
+            cachedBatteryHealth.negativeBMSFaultBits = health.negativeBMSFaultBits
+            cachedBatteryHealth.isVehicleFaultActive = health.isVehicleFaultActive
+            cachedBatteryHealth.lastUpdated = health.lastUpdated
+        }
+        if !snapshot.telemetry.inverterTemperaturesCelsius.isEmpty {
+            cachedInverterTemperatures = snapshot.telemetry.inverterTemperaturesCelsius
+        }
+    }
+
+    func presentationSnapshot(from snapshot: VehicleSessionSnapshot) -> VehicleSessionSnapshot {
+        var telemetry = snapshot.telemetry
+        telemetry.inverterTemperaturesCelsius = cachedInverterTemperatures
+        return .init(
+            telemetry: telemetry,
+            connection: snapshot.connection,
+            settings: snapshot.settings,
+            profile: snapshot.profile,
+            resolvedSpeedKilometersPerHour: snapshot.resolvedSpeedKilometersPerHour,
+            speedSource: snapshot.speedSource,
+            isGPSAvailable: snapshot.isGPSAvailable,
+            batteryHealth: cachedBatteryHealth,
+            batteryHealthMonitoringState: snapshot.batteryHealthMonitoringState,
+            motion: snapshot.motion,
+            hasReceivedSettings: snapshot.hasReceivedSettings,
+            hasReceivedProfile: snapshot.hasReceivedProfile
+        )
     }
 
     func setMonitoringRequired(_ required: Bool) {

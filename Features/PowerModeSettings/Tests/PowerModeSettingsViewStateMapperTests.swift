@@ -83,7 +83,8 @@ struct PowerModeSettingsViewStateMapperTests {
             refreshError: nil,
             nameError: nil,
             isBaseControlReady: true,
-            isTractionControlReady: true
+            isTractionControlReady: true,
+            isCanonicalTelemetryAvailable: true
         ))
 
         #expect(state.adjustments.map(\.isEnabled) == [true, true, true, true])
@@ -149,7 +150,8 @@ struct PowerModeSettingsViewStateMapperTests {
                 refreshError: nil,
                 nameError: nil,
                 isBaseControlReady: true,
-                isTractionControlReady: true
+                isTractionControlReady: true,
+                isCanonicalTelemetryAvailable: true
             ))
 
             #expect(state.adjustments.map(\.isEnabled) == [true, true, false, false])
@@ -216,7 +218,8 @@ struct PowerModeSettingsViewStateMapperTests {
             nameError: nil,
             isPreparingControl: isPreparingControl,
             isApplyingControl: isApplyingControl,
-            controlError: controlError
+            controlError: controlError,
+            isCanonicalTelemetryAvailable: true
         )
     }
 

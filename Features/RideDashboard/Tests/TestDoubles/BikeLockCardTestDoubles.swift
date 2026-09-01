@@ -88,6 +88,36 @@ actor BikeLockCardAuthenticator: BikeLockAuthenticating {
     func authenticate(reason _: String) -> Bool { result }
 }
 
+actor SuspendedBikeLockCardAuthenticator: BikeLockAuthenticating {
+    private var continuation: CheckedContinuation<Bool, any Error>?
+    private var cancellationCount = 0
+
+    func authenticate(reason _: String) async throws -> Bool {
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                self.continuation = continuation
+            }
+        } onCancel: {
+            Task { await self.cancel() }
+        }
+    }
+
+    func hasPendingAuthentication() -> Bool {
+        continuation != nil
+    }
+
+    func recordedCancellationCount() -> Int {
+        cancellationCount
+    }
+
+    private func cancel() {
+        guard let continuation else { return }
+        self.continuation = nil
+        cancellationCount += 1
+        continuation.resume(throwing: CancellationError())
+    }
+}
+
 @MainActor
 final class BikeLockCardCapabilityStore: BikeLockCapabilityStateStoring {
     private(set) var currentState = BikeLockCapabilityState()

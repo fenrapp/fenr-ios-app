@@ -7,7 +7,16 @@ actor RideDynamicsTestRideSession: RideSessionService {
     private let hub = TestEventHub<RideSessionSnapshot>(bufferingPolicy: .unbounded)
 
     func observe() async -> AsyncStream<RideSessionSnapshot> {
-        await hub.stream()
+        await hub.stream(replay: .init(
+            vehicleIdentity: .vin("FENRTEST000000001"),
+            motion: .init(
+                rollDegrees: 0,
+                pitchDegrees: 0,
+                availability: .available,
+                observedAt: .init(timeIntervalSinceReferenceDate: 1)
+            ),
+            isCanonicalTelemetryAvailable: true
+        ))
     }
 
     func start() {}
@@ -17,6 +26,14 @@ actor RideDynamicsTestRideSession: RideSessionService {
     func flush() {}
     func togglePauseCurrentTrip() {}
     func resetCurrentTrip() {}
+
+    func send(_ snapshot: RideSessionSnapshot) async {
+        await hub.send(snapshot)
+    }
+
+    func waitForSubscriber() async -> Bool {
+        await hub.waitForSubscriber()
+    }
 }
 
 actor RideDynamicsTestVehicleSession: VehicleSessionService {
@@ -29,7 +46,12 @@ actor RideDynamicsTestVehicleSession: VehicleSessionService {
     private var shouldBlockNextCalibration = false
 
     func observe() -> AsyncStream<VehicleSessionSnapshot> {
-        AsyncStream { $0.finish() }
+        AsyncStream { continuation in
+            continuation.yield(.init(
+                telemetry: .init(lastUpdated: .init(timeIntervalSinceReferenceDate: 1)),
+                connection: .init(state: .receivingTelemetry(peripheralName: "TEST"))
+            ))
+        }
     }
 
     func start() {}

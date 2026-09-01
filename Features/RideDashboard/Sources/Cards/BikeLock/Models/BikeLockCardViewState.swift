@@ -7,6 +7,7 @@ public struct BikeLockCardViewState: Equatable, Sendable {
     public let isAvailable: Bool
     public let isLocked: Bool
     public let isWorking: Bool
+    public let isActionEnabled: Bool
     public let isConfigured: Bool
     public let title: String
     public let statusText: String
@@ -19,6 +20,7 @@ public struct BikeLockCardViewState: Equatable, Sendable {
         isAvailable: Bool = false,
         isLocked: Bool = false,
         isWorking: Bool = false,
+        isActionEnabled: Bool = false,
         isConfigured: Bool = false,
         title: String = "Bike Lock",
         statusText: String = "Checking compatibility",
@@ -30,6 +32,7 @@ public struct BikeLockCardViewState: Equatable, Sendable {
         self.isAvailable = isAvailable
         self.isLocked = isLocked
         self.isWorking = isWorking
+        self.isActionEnabled = isActionEnabled
         self.isConfigured = isConfigured
         self.title = title
         self.statusText = statusText

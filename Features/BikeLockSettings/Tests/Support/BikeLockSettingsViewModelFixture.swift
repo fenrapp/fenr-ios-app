@@ -52,12 +52,17 @@ struct BikeLockSettingsViewModelFixture {
         _ = await waitUntil { viewModel.viewState.isAvailable }
     }
 
-    func sendSnapshot(vin: String?, settings: AppSettings? = nil) async {
+    func sendSnapshot(
+        vin: String?,
+        settings: AppSettings? = nil,
+        isCanonicalTelemetryAvailable: Bool = true
+    ) async {
         await session.send(.init(
             settings: settings ?? self.settings,
             profile: vin.map { .init(vin: $0) },
             hasReceivedSettings: true,
-            hasReceivedProfile: true
+            hasReceivedProfile: true,
+            isCanonicalTelemetryAvailable: isCanonicalTelemetryAvailable
         ))
     }
 }

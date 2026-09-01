@@ -17,7 +17,7 @@ enum BikeLockCardViewModelTestFactory {
     static func make(
         isLocked: Bool = false,
         settings: AppSettings = .init(),
-        authenticator: BikeLockCardAuthenticator = .init(),
+        authenticator: any BikeLockAuthenticating = BikeLockCardAuthenticator(),
         allowsExperimentalControl: Bool = true
     ) -> BikeLockCardViewModelTestFixture {
         let repository = BikeLockCardRepository(isLocked: isLocked)

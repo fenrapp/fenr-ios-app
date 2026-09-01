@@ -60,6 +60,7 @@ private extension PowerModeSettingsViewModel {
             && preparedBaseMapIndex != selectedMapIndex
             && attemptedPreparationMapIndex != selectedMapIndex
             && isAuthenticated(connection.state)
+            && isCanonicalTelemetryAvailable
             && telemetry.powerModeConfigurations[selectedMapIndex]?.hasBaseConfiguration == true
     }
 
@@ -69,7 +70,8 @@ private extension PowerModeSettingsViewModel {
         shouldPrepareTraction: Bool
     ) async {
         guard generation == controlGeneration,
-              mapIndex == selectedMapIndex
+              mapIndex == selectedMapIndex,
+              isCanonicalTelemetryAvailable
         else {
             return
         }
@@ -124,7 +126,8 @@ private extension PowerModeSettingsViewModel {
         error: String?
     ) {
         guard generation == controlGeneration,
-              mapIndex == selectedMapIndex
+              mapIndex == selectedMapIndex,
+              isCanonicalTelemetryAvailable
         else {
             return
         }

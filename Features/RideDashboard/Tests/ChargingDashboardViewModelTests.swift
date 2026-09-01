@@ -22,9 +22,10 @@ struct ChargingDashboardViewModelTests {
         #expect(await waitUntil { fixture.chargeControl.state.isEnabled })
 
         await fixture.vehicleSession.send(.init())
-        #expect(await waitUntil { await fixture.vehicleSession.requirements() == [true, false] })
-        #expect(!fixture.chargeControl.state.isVisible)
+        #expect(await fixture.vehicleSession.requirements() == [true])
+        #expect(await waitUntil { !fixture.chargeControl.state.isVisible })
         fixture.viewModel.stop()
+        #expect(await waitUntil { await fixture.vehicleSession.requirements() == [true, false] })
     }
 
     @Test("Repeated charging snapshots do not duplicate monitoring requests")
@@ -56,6 +57,21 @@ struct ChargingDashboardViewModelTests {
         #expect(await waitUntil {
             await vehicleSession.requirements() == [true, false]
         })
+    }
+
+    @Test("Suspending preserves charging metrics while disabling controls")
+    func suspensionPreservesPresentationAndDisablesControls() async {
+        let fixture = makeFixture()
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(chargingSnapshot(health: chargingHealth()))
+        #expect(await waitUntil { fixture.chargeControl.state.isEnabled })
+        let maximumPower = fixture.viewModel.viewState.maximumPower
+
+        fixture.viewModel.suspend()
+
+        #expect(!fixture.viewModel.viewState.control.isEnabled)
+        #expect(fixture.viewModel.viewState.maximumPower == maximumPower)
+        #expect(await waitUntil { await fixture.vehicleSession.requirements() == [true, false] })
     }
 
     private func makeFixture(
@@ -94,7 +110,11 @@ struct ChargingDashboardViewModelTests {
 
     private func chargingSnapshot(health: BikeBatteryHealth) -> VehicleSessionSnapshot {
         .init(
-            telemetry: .init(statusFlags: .init(isChargerConnected: true)),
+            telemetry: .init(
+                statusFlags: .init(isChargerConnected: true),
+                lastUpdated: .init(timeIntervalSinceReferenceDate: 1)
+            ),
+            connection: .init(state: .receivingTelemetry(peripheralName: "TEST")),
             batteryHealth: health,
             batteryHealthMonitoringState: .active
         )

@@ -11,7 +11,10 @@ public final class RangeCardViewModel: ObservableObject {
     private let useCases: RangeCardUseCases
     private let mapper: RangeCardMapper
     private let session: any RideSessionService
-    private var snapshot = RideSessionSnapshot(vehicleIdentity: .temporary(UUID()))
+    private var snapshot = RideSessionSnapshot(
+        vehicleIdentity: .temporary(UUID()),
+        isCanonicalTelemetryAvailable: false
+    )
     private var historicalTrips: [RideTrip] = []
     private var loadedKey: DashboardRideHistoryKey?
     private var isStarted = false
@@ -59,7 +62,15 @@ public final class RangeCardViewModel: ObservableObject {
         summary = nil
     }
 
+    func pause() {
+        isStarted = false
+        isVisible = false
+        stopPublishing()
+    }
+
 #if DEBUG
+    var isObservingForTesting: Bool { sessionTask != nil }
+
     func setPreviewState(_ viewState: DashboardRangeViewData) {
         isStarted = true
         self.viewState = viewState
@@ -81,6 +92,7 @@ private extension RangeCardViewModel {
     }
 
     func receive(_ snapshot: RideSessionSnapshot) {
+        guard snapshot.isCanonicalTelemetryAvailable else { return }
         let previousVIN = self.snapshot.vehicleIdentity.confirmedVIN
         self.snapshot = snapshot
         if previousVIN != snapshot.vehicleIdentity.confirmedVIN {
