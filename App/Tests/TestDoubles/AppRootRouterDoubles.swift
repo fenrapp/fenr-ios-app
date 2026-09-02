@@ -1,23 +1,6 @@
-import BikeDomain
-import BikeOnboarding
 import Foundation
 import RideNavigationDomain
 import UIKit
-
-actor AppRootRouterBikeRepository: BikeRepository, BikeDiscoveryRepository {
-    func start() async {}
-    func stop() async {}
-    func connect(vin _: String) async throws {}
-    func disconnect() async throws {}
-    func retrySecurityHandshake() async throws {}
-    func readTelemetrySnapshot() async throws {}
-    func observeTelemetry() async -> AsyncStream<BikeTelemetry> { .init { _ in } }
-    func observeConnection() async -> AsyncStream<BikeConnection> { .init { _ in } }
-    func observeDebugEvents() async -> AsyncStream<BikeDebugEvent> { .init { _ in } }
-    func startBikeDiscovery() async {}
-    func stopBikeDiscovery() async {}
-    func observeDiscoveredBikes() async -> AsyncStream<[DiscoveredBike]> { .init { _ in } }
-}
 
 actor AppRootRouterIncomingMapLinkStore: IncomingMapLinkStoring {
     enum Failure: Error {
@@ -100,7 +83,6 @@ struct AppRootRouterFixture {
         consumeFailures: Int = 0,
         blocksNextConsume: Bool = false
     ) {
-        let repository = AppRootRouterBikeRepository()
         let profileRepository = SetupProfileRepository()
         let setupFlow = BikeSetupFlowController(
             useCases: .init(
@@ -108,12 +90,6 @@ struct AppRootRouterFixture {
                 clear: .init(repository: profileRepository)
             ),
             forceOnboarding: true
-        )
-        let onboardingViewModel = BikeOnboardingDependencyContainer().makeViewModel(
-            repository: repository,
-            profileRepository: profileRepository,
-            initialVIN: nil,
-            onCompleted: { vin in setupFlow.complete(vin: vin) }
         )
         let store = AppRootRouterIncomingMapLinkStore(
             links: links,
@@ -128,7 +104,6 @@ struct AppRootRouterFixture {
         self.animator = animator
         router = AppRootRouter(
             setupFlow: setupFlow,
-            onboardingViewModel: onboardingViewModel,
             incomingMapLinkStore: store,
             interfaceOrientationController: orientationController,
             animator: animator

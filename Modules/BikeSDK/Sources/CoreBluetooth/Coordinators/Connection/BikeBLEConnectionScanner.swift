@@ -82,15 +82,22 @@ final class BikeBLEConnectionScanner {
     }
 
     func scanForDiscovery() async {
-        guard adapter.state == .poweredOn else {
-            await emitBluetoothAvailability()
+        switch adapter.state {
+        case .poweredOn:
+            await eventEmitter.send(.debug(.init(
+                title: "BLE",
+                detail: "discovery scan started"
+            )))
+            adapter.scanForBike()
+        case .unknown, .resetting:
+            // CoreBluetooth reports a transient state immediately after the manager is created.
+            // The coordinator keeps the discovery intent and retries from centralDidUpdateState.
             return
+        case .poweredOff, .unauthorized, .unsupported:
+            await emitBluetoothAvailability()
+        @unknown default:
+            await emitBluetoothAvailability()
         }
-        await eventEmitter.send(.debug(.init(
-            title: "BLE",
-            detail: "discovery scan started"
-        )))
-        adapter.scanForBike()
     }
 
     func restore(peripherals: [CBPeripheral]) async {
@@ -142,8 +149,10 @@ final class BikeBLEConnectionScanner {
             await eventEmitter.send(.connection(.bluetoothPoweredOff))
         case .unauthorized:
             await eventEmitter.send(.connection(.bluetoothUnauthorized))
-        case .unsupported, .resetting, .unknown:
+        case .unsupported:
             await eventEmitter.send(.connection(.bluetoothUnavailable))
+        case .resetting, .unknown:
+            return
         @unknown default:
             await eventEmitter.send(.connection(.bluetoothUnavailable))
         }

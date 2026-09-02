@@ -153,7 +153,6 @@ struct AppDependencyContainer {
         }
         let router = makeRootRouter(
             setupFlow: setupFlow,
-            onboardingViewModel: onboardingViewModel,
             opensRideNavigationOnLaunch: opensRideNavigationOnLaunch
         )
         let sessionController = makeSessionController()
@@ -244,6 +243,7 @@ struct AppDependencyContainer {
     func makeOnboardingViewModel(onCompleted: @escaping @MainActor (String) -> Void) -> BikeOnboardingViewModel {
         onboardingContainer.makeViewModel(
             repository: session.repository,
+            pinDeriver: session.pinDeriver,
             profileRepository: profileRepository,
             initialVIN: initialOnboardingVIN,
             onCompleted: onCompleted
@@ -315,12 +315,10 @@ struct AppDependencyContainer {
 private extension AppDependencyContainer {
     func makeRootRouter(
         setupFlow: BikeSetupFlowController,
-        onboardingViewModel: BikeOnboardingViewModel,
         opensRideNavigationOnLaunch: Bool
     ) -> AppRootRouter {
         AppRootRouter(
             setupFlow: setupFlow,
-            onboardingViewModel: onboardingViewModel,
             incomingMapLinkStore: incomingMapLinkStore,
             interfaceOrientationController: InterfaceOrientationController.shared,
             animator: SwiftUIAppRootAnimator(),

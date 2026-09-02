@@ -1,5 +1,6 @@
 import BikeDomain
-import BikeOnboarding
+@testable import BikeOnboarding
+import RuntimeConfiguration
 import Testing
 import TestSupport
 
@@ -8,370 +9,242 @@ import TestSupport
 struct BikeOnboardingViewModelTests {
     @Test("Normalizes an injected onboarding VIN")
     func normalizesInitialVIN() {
-        let viewModel = BikeOnboardingViewModel(
-            useCases: .init(
-                start: .init(repository: OnboardingRepository()),
-                connect: .init(repository: OnboardingRepository()),
-                observeConnection: .init(repository: OnboardingRepository()),
-                startDiscovery: .init(repository: OnboardingRepository()),
-                stopDiscovery: .init(repository: OnboardingRepository()),
-                observeDiscoveredBikes: .init(repository: OnboardingRepository()),
-                saveProfile: .init(repository: OnboardingProfileRepository())
-            ),
-            initialVIN: "fenrtest000000001"
+        let fixture = BikeOnboardingViewModelFixture(initialVIN: "fenrtest000000001")
+
+        #expect(fixture.viewModel.viewState.vin == "FENRTEST000000001")
+    }
+
+    @Test("Skips the Bluetooth explainer when access is already allowed")
+    func allowedBluetoothStartsDiscovery() async {
+        let fixture = BikeOnboardingViewModelFixture()
+
+        fixture.viewModel.getStarted()
+
+        #expect(fixture.viewModel.viewState.step == .discovery)
+        #expect(await waitUntil { await fixture.repository.startCount() == 1 })
+        #expect(await waitUntil { await fixture.repository.discoveryStartCount() == 1 })
+    }
+
+    @Test("Requests Bluetooth only after the explainer action")
+    func requestsBluetoothContextually() async {
+        let fixture = BikeOnboardingViewModelFixture(authorization: .notDetermined)
+        fixture.viewModel.startObserving()
+        #expect(await waitUntil { await fixture.repository.isObservingConnection() })
+
+        fixture.viewModel.getStarted()
+        #expect(fixture.viewModel.viewState.step == .bluetooth)
+        #expect(await fixture.repository.startCount() == 0)
+
+        fixture.viewModel.continueBluetooth()
+        #expect(await waitUntil { await fixture.repository.startCount() == 1 })
+        fixture.authorization.authorization = .allowed
+        await fixture.repository.sendConnection(.init(state: .idle))
+
+        #expect(await waitUntil { fixture.viewModel.viewState.step == .discovery })
+        #expect(!fixture.viewModel.viewState.isRequestingBluetoothAccess)
+    }
+
+    @Test("Keeps denied Bluetooth access on a recoverable settings screen")
+    func deniedBluetoothShowsSettings() {
+        let fixture = BikeOnboardingViewModelFixture(authorization: .denied)
+
+        fixture.viewModel.getStarted()
+
+        #expect(fixture.viewModel.viewState.step == .bluetooth)
+        #expect(fixture.viewModel.viewState.bluetoothState == .denied)
+    }
+
+    @Test("Automatically selects one bike only after discovery stabilizes")
+    func selectsSingleBikeAfterStabilization() async {
+        let fixture = BikeOnboardingViewModelFixture()
+        fixture.viewModel.getStarted()
+        #expect(await waitUntil { await fixture.repository.isObservingDiscovery() })
+
+        await fixture.repository.sendDiscoveredBikes([
+            .init(vin: "FENRTEST000000001", rssi: -45)
+        ])
+        #expect(await waitUntil {
+            await fixture.timing.pendingSleepCount(
+                for: FENRRuntimeConstants.Onboarding.discoveryStabilizationDelay
+            ) == 1
+        })
+        #expect(fixture.viewModel.viewState.step == .discovery)
+
+        await fixture.timing.resumeFirstSleep(
+            for: FENRRuntimeConstants.Onboarding.discoveryStabilizationDelay
         )
 
-        #expect(viewModel.viewState.vin == "FENRTEST000000001")
+        #expect(await waitUntil { fixture.viewModel.viewState.step == .pairing })
+        #expect(fixture.viewModel.viewState.vin == "FENRTEST000000001")
+        #expect(fixture.viewModel.viewState.pairingPIN == "654321")
     }
 
-    @Test("Does not save a profile before telemetry is received")
-    func doesNotSaveBeforeTelemetry() async {
-        let repository = OnboardingRepository()
-        let profileRepository = OnboardingProfileRepository()
-        let viewModel = makeViewModel(repository: repository, profileRepository: profileRepository)
+    @Test("Shows every nearby bike with model and signal when discovery is ambiguous")
+    func mapsMultipleBikesForSelection() async {
+        let fixture = BikeOnboardingViewModelFixture()
+        fixture.viewModel.getStarted()
+        #expect(await waitUntil { await fixture.repository.isObservingDiscovery() })
 
-        viewModel.startObserving()
-        #expect(await waitUntil { await repository.isObservingConnection() })
-        viewModel.vinChanged("FENRTEST000000001")
-        await advanceToConnection(viewModel, repository: repository)
-        #expect(await waitUntil { await repository.connectedVIN() != nil })
+        await fixture.repository.sendDiscoveredBikes([
+            .init(vin: "UDUMXTEST00000001", rssi: -58),
+            .init(vin: "UDUEXTEST00000002", rssi: -43),
+            .init(vin: "UDUSMTEST00000003", rssi: -75)
+        ])
 
-        #expect(await profileRepository.loadProfile() == nil)
+        #expect(await waitUntil { fixture.viewModel.viewState.discoveredBikes.count == 3 })
+        #expect(fixture.viewModel.viewState.discoveredBikes.map(\.modelTitle) == [
+            "VARG EX", "VARG MX", "VARG SM"
+        ])
+        #expect(fixture.viewModel.viewState.discoveredBikes.first?.rssiText == "-43 dBm")
+        #expect(fixture.viewModel.viewState.discoveredBikes.first?.formattedVIN == "UDUE XTES T000 00002")
+        #expect(fixture.viewModel.viewState.step == .discovery)
+        #expect(await fixture.timing.pendingSleepCount(
+            for: FENRRuntimeConstants.Onboarding.discoveryStabilizationDelay
+        ) == 0)
     }
 
-    @Test("Saves the profile only after receiving telemetry")
-    func savesAfterReceivingTelemetry() async {
-        let repository = OnboardingRepository()
-        let profileRepository = OnboardingProfileRepository()
-        let viewModel = makeViewModel(repository: repository, profileRepository: profileRepository)
-        viewModel.startObserving()
-        #expect(await waitUntil { await repository.isObservingConnection() })
-        viewModel.vinChanged("FENRTEST000000001")
-        await advanceToConnection(viewModel, repository: repository)
+    @Test("Copy and Pair writes the PIN before starting a connection")
+    func copiesPINBeforeConnection() async {
+        let fixture = BikeOnboardingViewModelFixture()
+        await advanceToPairing(fixture)
 
-        await repository.sendConnection(.init(state: .receivingTelemetry(peripheralName: "FENRTEST000000001")))
-        #expect(await waitUntil { await profileRepository.loadProfile() != nil })
+        fixture.viewModel.copyAndPair()
 
-        #expect(await profileRepository.loadProfile() == .init(vin: "FENRTEST000000001"))
-        viewModel.stopObserving()
+        #expect(fixture.clipboard.copiedStrings == ["654321"])
+        #expect(fixture.viewModel.viewState.didCopyPIN)
+        #expect(fixture.viewModel.viewState.step == .connecting)
+        #expect(await waitUntil { await fixture.repository.connectedVIN() == "FENRTEST000000001" })
     }
 
-    @Test("Completes setup after saving a matching telemetry connection")
-    func completesAfterMatchingTelemetry() async {
-        let repository = OnboardingRepository()
-        let profileRepository = OnboardingProfileRepository()
-        let completionRecorder = OnboardingCompletionRecorder()
-        let viewModel = BikeOnboardingViewModel(
-            useCases: .init(
-                start: .init(repository: repository),
-                connect: .init(repository: repository),
-                observeConnection: .init(repository: repository),
-                startDiscovery: .init(repository: repository),
-                stopDiscovery: .init(repository: repository),
-                observeDiscoveredBikes: .init(repository: repository),
-                saveProfile: .init(repository: profileRepository)
-            ),
-            bluetoothAuthorization: { .notDetermined },
-            onCompleted: { vin in
-                Task { await completionRecorder.record(vin) }
-            }
-        )
-        viewModel.startObserving()
-        #expect(await waitUntil { await repository.isObservingConnection() })
-        viewModel.vinChanged("FENRTEST000000001")
-        await advanceToConnection(viewModel, repository: repository)
+    @Test("Canceling a connection disconnects before returning to discovery")
+    func cancellationDisconnects() async {
+        let fixture = BikeOnboardingViewModelFixture()
+        await advanceToPairing(fixture)
+        fixture.viewModel.copyAndPair()
+        #expect(await waitUntil { await fixture.repository.connectedVIN() != nil })
 
-        await repository.sendConnection(.init(state: .receivingTelemetry(peripheralName: "FENRTEST000000001")))
-        #expect(await waitUntil { await completionRecorder.value() != nil })
+        fixture.viewModel.cancelConnection()
 
-        #expect(await completionRecorder.value() == "FENRTEST000000001")
-        viewModel.stopObserving()
+        #expect(await waitUntil { await fixture.repository.disconnectCount() == 1 })
+        #expect(await waitUntil { fixture.viewModel.viewState.step == .discovery })
+        #expect(await fixture.repository.connectedVIN() == nil)
     }
 
-    @Test("Selects a single discovered bike automatically")
-    func selectsSingleDiscoveredBike() async {
-        let repository = OnboardingRepository()
-        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
-
-        viewModel.startDiscovery()
-        #expect(await waitUntil { await repository.isObservingDiscovery() })
-        await repository.sendDiscoveredBikes([.init(vin: "FENRTEST000000001", rssi: -45)])
-        #expect(await waitUntil { viewModel.viewState.vin == "FENRTEST000000001" })
-
-        #expect(viewModel.viewState.discoveredBikes.count == 1)
-        #expect(!viewModel.viewState.isDiscoveringBikes)
-    }
-
-    @Test("Starts discovery when entering identification")
-    func startsDiscoveryWhenEnteringIdentification() async {
-        let repository = OnboardingRepository()
-        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
-
-        viewModel.startObserving()
-        #expect(await waitUntil { await repository.isObservingConnection() })
-        viewModel.next()
-        viewModel.next()
-        await repository.sendConnection(.init(state: .idle))
-        #expect(await waitUntil { await repository.isObservingDiscovery() })
-
-        #expect(viewModel.viewState.step == .identify)
-        #expect(viewModel.viewState.isDiscoveringBikes)
-    }
-
-    @Test("Does not start Bluetooth before preparation continue")
-    func doesNotStartBluetoothBeforePreparationContinue() async {
-        let repository = OnboardingRepository()
-        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
-
-        viewModel.startObserving()
-        viewModel.next()
-
-        #expect(viewModel.viewState.step == .preparation)
-        #expect(await repository.startCount() == 0)
-    }
-
-    @Test("Requests Bluetooth access from preparation before identifying")
-    func requestsBluetoothAccessBeforeIdentifying() async {
-        let repository = OnboardingRepository()
-        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
-
-        viewModel.startObserving()
-        viewModel.next()
-        viewModel.next()
-
-        #expect(await waitUntil { await repository.startCount() == 1 })
-        #expect(viewModel.viewState.step == .preparation)
-        #expect(viewModel.viewState.isRequestingBluetoothAccess)
-
-        await repository.sendConnection(.init(state: .idle))
-        #expect(await waitUntil { viewModel.viewState.step == .identify })
-        #expect(!viewModel.viewState.isRequestingBluetoothAccess)
-    }
-
-    @Test("Shows settings immediately when Bluetooth permission is already denied")
-    func showsSettingsImmediatelyWhenBluetoothPermissionIsDenied() async {
-        let repository = OnboardingRepository()
-        let viewModel = makeViewModel(
-            repository: repository,
-            profileRepository: OnboardingProfileRepository(),
-            bluetoothAuthorization: { .denied }
+    @Test("Ignores telemetry from a different bike")
+    func ignoresMismatchedTelemetry() async {
+        let fixture = BikeOnboardingViewModelFixture()
+        fixture.viewModel.startObserving()
+        #expect(await waitUntil { await fixture.repository.isObservingConnection() })
+        await advanceToPairing(fixture)
+        fixture.viewModel.copyAndPair()
+        await fixture.repository.sendConnection(
+            .init(state: .receivingTelemetry(peripheralName: "FENRTEST000000002"))
         )
 
-        viewModel.startObserving()
-        viewModel.next()
-
-        #expect(viewModel.viewState.step == .preparation)
-        #expect(!viewModel.viewState.isRequestingBluetoothAccess)
-        #expect(viewModel.viewState.showsBluetoothSettingsButton)
-        #expect(viewModel.viewState.errorMessage?.contains("Settings") == true)
-
-        viewModel.next()
-
-        #expect(await repository.startCount() == 0)
-        #expect(!viewModel.viewState.isRequestingBluetoothAccess)
-        #expect(viewModel.viewState.showsBluetoothSettingsButton)
+        #expect(fixture.viewModel.viewState.step == .connecting)
+        #expect(await fixture.profileRepository.loadProfile() == nil)
     }
 
-    @Test("Requires a valid VIN before connection")
-    func requiresValidVINBeforeConnection() async {
-        let repository = OnboardingRepository()
-        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
+    @Test("Serializes discovery restart behind a pending stop")
+    func serializesDiscoveryRestart() async {
+        let fixture = BikeOnboardingViewModelFixture()
+        fixture.viewModel.getStarted()
+        #expect(await waitUntil { await fixture.repository.discoveryStartCount() == 1 })
+        await fixture.repository.suspendDiscoveryStop()
 
-        viewModel.startObserving()
-        #expect(await waitUntil { await repository.isObservingConnection() })
-        viewModel.next()
-        viewModel.next()
-        await repository.sendConnection(.init(state: .idle))
-        #expect(await waitUntil { viewModel.viewState.step == .identify })
-
-        #expect(!viewModel.viewState.canContinue)
-        viewModel.vinChanged("FENRTEST000000001")
-        #expect(viewModel.viewState.canContinue)
-    }
-
-    @Test("Maps connection states to onboarding phases")
-    func mapsConnectionStatesToOnboardingPhases() async {
-        let repository = OnboardingRepository()
-        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
-
-        viewModel.startObserving()
-        #expect(await waitUntil { await repository.isObservingConnection() })
-        viewModel.vinChanged("FENRTEST000000001")
-        await advanceToConnection(viewModel, repository: repository)
-        #expect(viewModel.viewState.connectionPhase == .scanning)
-
-        await repository.sendConnection(.init(
-            state: .connecting(vin: "FENRTEST000000001", peripheralName: "FENRTEST000000001")
-        ))
-        #expect(await waitUntil { viewModel.viewState.connectionPhase == .connecting })
-        await repository.sendConnection(.init(state: .discovering(peripheralName: "FENRTEST000000001")))
-        #expect(await waitUntil { viewModel.viewState.connectionPhase == .discovering })
-        await repository.sendConnection(.init(state: .authenticating(peripheralName: "FENRTEST000000001")))
-        #expect(await waitUntil { viewModel.viewState.connectionPhase == .authenticating })
-        await repository.sendConnection(.init(state: .subscribed(peripheralName: "FENRTEST000000001")))
-        #expect(await waitUntil { viewModel.viewState.connectionPhase == .subscribing })
-    }
-
-    @Test("Blocks onboarding when Bluetooth permission is denied")
-    func blocksWhenBluetoothPermissionIsDenied() async {
-        let repository = OnboardingRepository()
-        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
-
-        viewModel.startObserving()
-        #expect(await waitUntil { await repository.isObservingConnection() })
-        viewModel.next()
-        viewModel.next()
-        await repository.sendConnection(.init(state: .bluetoothUnauthorized))
-
-        #expect(await waitUntil { !viewModel.viewState.isRequestingBluetoothAccess })
-        #expect(viewModel.viewState.step == .preparation)
-        #expect(viewModel.viewState.errorMessage?.contains("Settings") == true)
-        #expect(viewModel.viewState.showsBluetoothSettingsButton)
-    }
-
-    @Test("Does not show app settings for Bluetooth powered off")
-    func doesNotShowSettingsWhenBluetoothIsPoweredOff() async {
-        let repository = OnboardingRepository()
-        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
-
-        viewModel.startObserving()
-        #expect(await waitUntil { await repository.isObservingConnection() })
-        viewModel.next()
-        viewModel.next()
-        await repository.sendConnection(.init(state: .bluetoothPoweredOff))
-
-        #expect(await waitUntil { !viewModel.viewState.isRequestingBluetoothAccess })
-        #expect(viewModel.viewState.step == .preparation)
-        #expect(!viewModel.viewState.showsBluetoothSettingsButton)
-    }
-
-    @Test("Does not request Bluetooth again after permission is denied")
-    func doesNotRequestBluetoothAgainAfterPermissionDenied() async {
-        let repository = OnboardingRepository()
-        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
-
-        viewModel.startObserving()
-        #expect(await waitUntil { await repository.isObservingConnection() })
-        viewModel.next()
-        viewModel.next()
-        #expect(await waitUntil { await repository.startCount() == 1 })
-        await repository.sendConnection(.init(state: .bluetoothUnauthorized))
-        #expect(await waitUntil { viewModel.viewState.showsBluetoothSettingsButton })
-
-        viewModel.next()
-
-        #expect(await repository.startCount() == 1)
-        #expect(viewModel.viewState.step == .preparation)
-        #expect(viewModel.viewState.errorMessage?.contains("Settings") == true)
-        #expect(viewModel.viewState.showsBluetoothSettingsButton)
-    }
-
-    @Test("Keeps multiple discovered bikes available for selection")
-    func keepsMultipleDiscoveredBikes() async {
-        let repository = OnboardingRepository()
-        let viewModel = makeViewModel(repository: repository, profileRepository: OnboardingProfileRepository())
-        let first = DiscoveredBike(vin: "FENRTEST000000001", rssi: -55)
-        let second = DiscoveredBike(vin: "FENRTEST000000003", rssi: -45)
-
-        viewModel.startDiscovery()
-        #expect(await waitUntil { await repository.isObservingDiscovery() })
-        await repository.sendDiscoveredBikes([first, second])
-        #expect(await waitUntil { viewModel.viewState.discoveredBikes.count == 2 })
-        #expect(viewModel.viewState.discoveredBikes.first?.vin == second.vin)
-        #expect(viewModel.viewState.discoveredBikes.first?.signalText == "Strong signal")
-        viewModel.selectDiscoveredBike(
-            .init(vin: second.vin, signalText: "Strong signal", isSelected: false)
+        await fixture.repository.sendDiscoveredBikes([
+            .init(vin: "FENRTEST000000001", rssi: -45)
+        ])
+        #expect(await waitUntil {
+            await fixture.timing.pendingSleepCount(
+                for: FENRRuntimeConstants.Onboarding.discoveryStabilizationDelay
+            ) == 1
+        })
+        await fixture.timing.resumeFirstSleep(
+            for: FENRRuntimeConstants.Onboarding.discoveryStabilizationDelay
         )
+        #expect(await waitUntil { fixture.viewModel.viewState.step == .pairing })
+        #expect(await waitUntil { await fixture.repository.discoveryStopCount() == 1 })
+        fixture.viewModel.back()
+        #expect(await fixture.repository.discoveryStartCount() == 1)
 
-        #expect(viewModel.viewState.vin == second.vin)
-        #expect(viewModel.viewState.discoveredBikes.first?.isSelected == true)
-        #expect(!viewModel.viewState.isDiscoveringBikes)
+        await fixture.repository.resumeDiscoveryStop()
+        #expect(await waitUntil { await fixture.repository.discoveryStartCount() == 2 })
     }
 
-    @Test("Accepts only valid VIN scanner output")
-    func validatesScannedVIN() {
-        let viewModel = makeViewModel(
-            repository: OnboardingRepository(),
-            profileRepository: OnboardingProfileRepository()
+    @Test("Leaving discovery stops scanning and tears down any partial connection")
+    func stoppingObservationCleansUpBLEWork() async {
+        let fixture = BikeOnboardingViewModelFixture()
+        fixture.viewModel.getStarted()
+        #expect(await waitUntil { await fixture.repository.discoveryStartCount() == 1 })
+        #expect(await waitUntil {
+            await fixture.timing.pendingSleepCount(
+                for: FENRRuntimeConstants.Onboarding.discoveryNoResultsTimeout
+            ) == 1
+        })
+
+        fixture.viewModel.stopObserving()
+
+        #expect(await waitUntil { await fixture.repository.discoveryStopCount() == 1 })
+        #expect(await waitUntil { await fixture.repository.disconnectCount() == 1 })
+        #expect(await fixture.timing.pendingSleepCount(
+            for: FENRRuntimeConstants.Onboarding.discoveryNoResultsTimeout
+        ) == 0)
+    }
+
+    @Test("Exposes pairing reset and Bluetooth failures as specific recovery states")
+    func mapsRecoverableConnectionFailures() async {
+        let fixture = BikeOnboardingViewModelFixture()
+        fixture.viewModel.startObserving()
+        #expect(await waitUntil { await fixture.repository.isObservingConnection() })
+        await advanceToPairing(fixture)
+        fixture.viewModel.copyAndPair()
+
+        await fixture.repository.sendConnection(
+            .init(state: .pairingResetRequired(message: "Remove the previous pairing and try again."))
         )
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.connectionState == .pairingResetRequired
+        })
 
-        #expect(!viewModel.scannedVIN("not-a-vin"))
-        #expect(viewModel.viewState.vin.isEmpty)
-        #expect(viewModel.scannedVIN(" fenrtest000000001 "))
-        #expect(viewModel.viewState.vin == "FENRTEST000000001")
+        await fixture.repository.sendConnection(.init(state: .failed(message: "Bike connection timed out")))
+        #expect(await waitUntil { fixture.viewModel.viewState.connectionState == .timedOut })
+
+        await fixture.repository.sendConnection(.init(state: .failed(message: "Security authentication failed")))
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.connectionState == .authenticationFailed
+        })
+
+        await fixture.repository.sendConnection(.init(state: .disconnected(reason: "Private transport detail")))
+        #expect(await waitUntil { fixture.viewModel.viewState.connectionState == .disconnected })
+
+        await fixture.repository.sendConnection(.init(state: .bluetoothUnauthorized))
+        #expect(await waitUntil { fixture.viewModel.viewState.step == .bluetooth })
+        #expect(fixture.viewModel.viewState.bluetoothState == .denied)
+
+        await fixture.repository.sendConnection(.init(state: .bluetoothPoweredOff))
+        #expect(await waitUntil { fixture.viewModel.viewState.bluetoothState == .poweredOff })
+        #expect(fixture.viewModel.viewState.step == .bluetooth)
+
+        await fixture.repository.sendConnection(.init(state: .bluetoothUnavailable))
+        #expect(await waitUntil { fixture.viewModel.viewState.bluetoothState == .unavailable })
+        #expect(fixture.viewModel.viewState.step == .bluetooth)
     }
 
-}
-
-@MainActor
-@Suite("Bike onboarding task lifecycle")
-struct BikeOnboardingTaskLifecycleTests {
-    @Test("Waits for discovery shutdown before restarting")
-    func serializesDiscoveryRestart() async throws {
-        let repository = OnboardingRepository()
-        let viewModel = makeViewModel(repository: repository)
-        viewModel.startDiscovery()
-        #expect(await waitUntil { await repository.discoveryStartCount() == 1 })
-        await repository.suspendDiscoveryStop()
-
-        viewModel.selectDiscoveredBike(
-            .init(vin: "FENRTEST000000001", signalText: "Strong signal", isSelected: false)
+    private func advanceToPairing(_ fixture: BikeOnboardingViewModelFixture) async {
+        fixture.viewModel.getStarted()
+        #expect(await waitUntil { await fixture.repository.isObservingDiscovery() })
+        await fixture.repository.sendDiscoveredBikes([
+            .init(vin: "FENRTEST000000001", rssi: -45)
+        ])
+        #expect(await waitUntil {
+            await fixture.timing.pendingSleepCount(
+                for: FENRRuntimeConstants.Onboarding.discoveryStabilizationDelay
+            ) == 1
+        })
+        await fixture.timing.resumeFirstSleep(
+            for: FENRRuntimeConstants.Onboarding.discoveryStabilizationDelay
         )
-        #expect(await waitUntil { await repository.discoveryStopCount() == 1 })
-        viewModel.startDiscovery()
-        try await Task.sleep(for: .milliseconds(50))
-        #expect(await repository.discoveryStartCount() == 1)
-
-        await repository.resumeDiscoveryStop()
-        #expect(await waitUntil { await repository.discoveryStartCount() == 2 })
-    }
-
-    private func makeViewModel(repository: OnboardingRepository) -> BikeOnboardingViewModel {
-        BikeOnboardingViewModel(
-            useCases: .init(
-                start: .init(repository: repository),
-                connect: .init(repository: repository),
-                observeConnection: .init(repository: repository),
-                startDiscovery: .init(repository: repository),
-                stopDiscovery: .init(repository: repository),
-                observeDiscoveredBikes: .init(repository: repository),
-                saveProfile: .init(repository: OnboardingProfileRepository())
-            ),
-            bluetoothAuthorization: { .notDetermined }
-        )
-    }
-}
-
-private extension BikeOnboardingViewModelTests {
-    func makeViewModel(
-        repository: OnboardingRepository,
-        profileRepository: OnboardingProfileRepository,
-        bluetoothAuthorization: @escaping @MainActor @Sendable () -> BikeOnboardingBluetoothAuthorization = {
-            .notDetermined
-        }
-    ) -> BikeOnboardingViewModel {
-        BikeOnboardingViewModel(
-            useCases: .init(
-                start: .init(repository: repository),
-                connect: .init(repository: repository),
-                observeConnection: .init(repository: repository),
-                startDiscovery: .init(repository: repository),
-                stopDiscovery: .init(repository: repository),
-                observeDiscoveredBikes: .init(repository: repository),
-                saveProfile: .init(repository: profileRepository)
-            ),
-            bluetoothAuthorization: bluetoothAuthorization
-        )
-    }
-
-    func advanceToConnection(
-        _ viewModel: BikeOnboardingViewModel,
-        repository: OnboardingRepository
-    ) async {
-        viewModel.next()
-        viewModel.next()
-        await repository.sendConnection(.init(state: .idle))
-        #expect(await waitUntil { viewModel.viewState.step == .identify })
-        viewModel.next()
+        #expect(await waitUntil { fixture.viewModel.viewState.step == .pairing })
     }
 }

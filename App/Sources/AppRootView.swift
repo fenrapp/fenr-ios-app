@@ -53,84 +53,7 @@ struct AppRootView: View {
 
     var body: some View {
         ZStack {
-            NavigationStack(path: $router.path) {
-                Group {
-                    if !setupFlow.isLoaded {
-                        ProgressView()
-                    } else if setupFlow.isCompleted {
-                        RideDashboardScene(
-                            factory: rideDashboardFactory,
-                            onSettings: {
-                                router.navigate(to: .settings, reduceMotion: reduceMotion)
-                            },
-                            onNavigation: { router.showRideNavigation(reduceMotion: reduceMotion) },
-                            isNavigationActive: router.rideNavigationPresentation == .mini,
-                            isPresentationActive: router.isDashboardPresentationActive,
-                            onDiagnostics: {
-                                router.navigate(to: .diagnostics, reduceMotion: reduceMotion)
-                            }
-                        )
-                    } else {
-                        BikeOnboardingView(
-                            viewModel: onboardingViewModel,
-                            managesObservation: false,
-                            onNavigateToStep: router.navigateToOnboardingStep
-                        )
-                    }
-                }
-                .navigationDestination(for: AppRootRouter.Route.self) { route in
-                    switch route {
-                    case .onboarding(let step):
-                        BikeOnboardingView(
-                            viewModel: onboardingViewModel,
-                            visibleStep: step,
-                            managesObservation: false,
-                            onNavigateToStep: router.navigateToOnboardingStep
-                        )
-                    case .batteryHealth:
-                        BatteryHealthView(viewModel: batteryHealthViewModel)
-                    case .diagnostics:
-                        BikeDiagnosticsView(
-                            viewModel: diagnosticsViewModel,
-                            onBatteryHealth: {
-                                router.navigate(to: .batteryHealth, reduceMotion: reduceMotion)
-                            },
-                            onChangeBike: changeBike
-                        )
-                    case .settings:
-                        AppSettingsView(
-                            viewModel: appSettingsViewModel,
-                            onOpenTelemetry: {
-                                router.navigate(to: .diagnostics, reduceMotion: reduceMotion)
-                            },
-                            onOpenDashboardCards: {
-                                router.navigate(to: .dashboardCards, reduceMotion: reduceMotion)
-                            },
-                            onOpenPowerModes: {
-                                router.navigate(to: .powerModes, reduceMotion: reduceMotion)
-                            },
-                            onOpenRideHistory: {
-                                router.navigate(to: .rideHistory, reduceMotion: reduceMotion)
-                            },
-                            bikeLockModeTitle: bikeLockSettingsViewModel.viewState.isAvailable
-                                ? bikeLockSettingsViewModel.viewState.currentModeTitle
-                                : nil,
-                            onOpenBikeLock: {
-                                router.navigate(to: .bikeLockSettings, reduceMotion: reduceMotion)
-                            },
-                            accessory: settingsAccessory
-                        )
-                    case .bikeLockSettings:
-                        BikeLockSettingsView(viewModel: bikeLockSettingsViewModel)
-                    case .dashboardCards:
-                        DashboardCardSettingsView(viewModel: dashboardCardSettingsViewModel)
-                    case .powerModes:
-                        PowerModeSettingsView(viewModel: powerModeSettingsViewModel)
-                    case .rideHistory:
-                        RideHistoryView(viewModel: rideHistoryViewModel)
-                    }
-                }
-            }
+            rootContent
 
             if router.rideNavigationPresentation != .hidden {
                 RideNavigationScene(
@@ -165,9 +88,6 @@ struct AppRootView: View {
         .onChange(of: router.path) {
             router.pathDidChange()
         }
-        .onChange(of: onboardingViewModel.viewState.step) {
-            router.onboardingStepDidChange()
-        }
         .onChange(of: scenePhase) {
             lifecycleController.setCanShowLiveActivity(scenePhase != .active)
             if scenePhase != .active {
@@ -182,7 +102,6 @@ struct AppRootView: View {
             lifecycleController.terminate()
         }
         .onDisappear {
-            router.rootPresentationDidStop()
             bikeLockSettingsViewModel.stop()
             lifecycleController.stop()
         }
@@ -190,6 +109,82 @@ struct AppRootView: View {
 }
 
 private extension AppRootView {
+    @ViewBuilder var rootContent: some View {
+        if !setupFlow.isLoaded {
+            ProgressView()
+        } else if setupFlow.isCompleted {
+            appNavigationStack
+        } else {
+            BikeOnboardingView(viewModel: onboardingViewModel)
+        }
+    }
+
+    var appNavigationStack: some View {
+        NavigationStack(path: $router.path) {
+            RideDashboardScene(
+                factory: rideDashboardFactory,
+                onSettings: {
+                    router.navigate(to: .settings, reduceMotion: reduceMotion)
+                },
+                onNavigation: { router.showRideNavigation(reduceMotion: reduceMotion) },
+                isNavigationActive: router.rideNavigationPresentation == .mini,
+                isPresentationActive: router.isDashboardPresentationActive,
+                onDiagnostics: {
+                    router.navigate(to: .diagnostics, reduceMotion: reduceMotion)
+                }
+            )
+            .navigationDestination(for: AppRootRouter.Route.self) { route in
+                appDestination(route)
+            }
+        }
+    }
+
+    @ViewBuilder func appDestination(_ route: AppRootRouter.Route) -> some View {
+        switch route {
+        case .batteryHealth:
+            BatteryHealthView(viewModel: batteryHealthViewModel)
+        case .diagnostics:
+            BikeDiagnosticsView(
+                viewModel: diagnosticsViewModel,
+                onBatteryHealth: {
+                    router.navigate(to: .batteryHealth, reduceMotion: reduceMotion)
+                },
+                onChangeBike: changeBike
+            )
+        case .settings:
+            AppSettingsView(
+                viewModel: appSettingsViewModel,
+                onOpenTelemetry: {
+                    router.navigate(to: .diagnostics, reduceMotion: reduceMotion)
+                },
+                onOpenDashboardCards: {
+                    router.navigate(to: .dashboardCards, reduceMotion: reduceMotion)
+                },
+                onOpenPowerModes: {
+                    router.navigate(to: .powerModes, reduceMotion: reduceMotion)
+                },
+                onOpenRideHistory: {
+                    router.navigate(to: .rideHistory, reduceMotion: reduceMotion)
+                },
+                bikeLockModeTitle: bikeLockSettingsViewModel.viewState.isAvailable
+                    ? bikeLockSettingsViewModel.viewState.currentModeTitle
+                    : nil,
+                onOpenBikeLock: {
+                    router.navigate(to: .bikeLockSettings, reduceMotion: reduceMotion)
+                },
+                accessory: settingsAccessory
+            )
+        case .bikeLockSettings:
+            BikeLockSettingsView(viewModel: bikeLockSettingsViewModel)
+        case .dashboardCards:
+            DashboardCardSettingsView(viewModel: dashboardCardSettingsViewModel)
+        case .powerModes:
+            PowerModeSettingsView(viewModel: powerModeSettingsViewModel)
+        case .rideHistory:
+            RideHistoryView(viewModel: rideHistoryViewModel)
+        }
+    }
+
     func changeBike() {
         lifecycleController.changeBike {
             router.changeBikeDidComplete()

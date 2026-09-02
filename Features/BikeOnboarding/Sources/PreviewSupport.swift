@@ -5,18 +5,64 @@ import BikeDomain
 enum BikeOnboardingPreviewFactory {
     static func makeViewModel(state: BikeOnboardingViewState) -> BikeOnboardingViewModel {
         let repository = BikeOnboardingPreviewRepository()
+        let mapper = BikeOnboardingPresentationMapper()
+        let timing = BikeOnboardingTiming.live
+        let repositoryStarter = BikeOnboardingRepositoryStarter(
+            startRepository: .init(repository: repository)
+        )
+        let discoveryCoordinator = BikeOnboardingDiscoveryCoordinator(
+            repositoryStarter: repositoryStarter,
+            startDiscovery: .init(repository: repository),
+            stopDiscovery: .init(repository: repository),
+            observeDiscoveredBikes: .init(repository: repository),
+            mapper: mapper,
+            timing: timing
+        )
+        let connectionCoordinator = BikeOnboardingConnectionCoordinator(
+            repositoryStarter: repositoryStarter,
+            connectToBike: .init(repository: repository),
+            disconnectBike: .init(repository: repository),
+            observeConnection: .init(repository: repository),
+            mapper: mapper
+        )
+        let bluetoothAccessCoordinator = BikeOnboardingBluetoothAccessCoordinator(
+            repositoryStarter: repositoryStarter,
+            timing: timing,
+            authorizationProvider: { .allowed }
+        )
+        let completionCoordinator = BikeOnboardingCompletionCoordinator(
+            saveProfile: .init(repository: repository),
+            timing: timing
+        )
+        let pairingCoordinator = BikeOnboardingPairingCoordinator(
+            derivePin: .init(pinDeriver: BikeOnboardingPreviewPinDeriver()),
+            clipboard: BikeOnboardingPreviewClipboard()
+        )
         return BikeOnboardingViewModel(
-            useCases: .init(
-                start: .init(repository: repository),
-                connect: .init(repository: repository),
-                observeConnection: .init(repository: repository),
-                startDiscovery: .init(repository: repository),
-                stopDiscovery: .init(repository: repository),
-                observeDiscoveredBikes: .init(repository: repository),
-                saveProfile: .init(repository: repository)
-            )
+            discoveryCoordinator: discoveryCoordinator,
+            connectionCoordinator: connectionCoordinator,
+            bluetoothAccessCoordinator: bluetoothAccessCoordinator,
+            completionCoordinator: completionCoordinator,
+            pairingCoordinator: pairingCoordinator,
+            eventCoordinator: BikeOnboardingEventCoordinator(
+                discoveryCoordinator: discoveryCoordinator,
+                connectionCoordinator: connectionCoordinator,
+                bluetoothAccessCoordinator: bluetoothAccessCoordinator,
+                completionCoordinator: completionCoordinator
+            ),
+            eventReducer: BikeOnboardingEventReducer(pairingCoordinator: pairingCoordinator),
+            initialVIN: nil
         ).configuredForPreview(state)
     }
+}
+
+@MainActor
+private struct BikeOnboardingPreviewClipboard: BikeOnboardingClipboardWriting {
+    func copy(_: String) {}
+}
+
+private struct BikeOnboardingPreviewPinDeriver: BikePinDeriving {
+    func derivePin(vin _: String) -> String { "123456" }
 }
 
 private actor BikeOnboardingPreviewRepository: BikeRepository, BikeDiscoveryRepository, BikeProfileRepository {
