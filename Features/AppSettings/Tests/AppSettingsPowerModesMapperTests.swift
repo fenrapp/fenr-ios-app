@@ -4,7 +4,7 @@ import EnvironmentDomain
 import SettingsDomain
 import Testing
 
-@Suite("Power modes settings navigation")
+@Suite("Settings navigation summaries")
 struct AppSettingsPowerModesMapperTests {
     private let vin = "FENRTEST000000001"
 
@@ -31,5 +31,34 @@ struct AppSettingsPowerModesMapperTests {
         )
 
         #expect(state.powerModes.detail == "5 maps configured")
+    }
+
+    @Test("Summarizes ride display selections")
+    func rideDisplaySummary() {
+        let settings = AppSettings(
+            speedSource: .hybrid,
+            dashboardProgressBarMode: .speed
+        )
+
+        let state = AppSettingsViewStateMapper().map(
+            settings: settings,
+            locationAuthorizationStatus: .notDetermined
+        )
+
+        #expect(state.rideDisplay.detail == "Speed · GPS+")
+    }
+
+    @Test("Summarizes visible dashboard sections")
+    func dashboardCardsSummary() {
+        var configuration = DashboardCardConfiguration()
+        configuration.setSectionVisibility(false, id: .efficiency)
+        let settings = AppSettings(dashboardCardConfiguration: configuration)
+
+        let state = AppSettingsViewStateMapper().map(
+            settings: settings,
+            locationAuthorizationStatus: .notDetermined
+        )
+
+        #expect(state.dashboardCards.detail == "6 visible")
     }
 }

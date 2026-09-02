@@ -15,6 +15,7 @@ public final class AppSettingsViewModel: ObservableObject {
     private var connection = BikeConnection()
     private var isVerifyingPowerTier = false
     private var powerTierVerificationMessage: String?
+    private var powerTierVerificationMessageIsError = false
     private var observationTask: Task<Void, Never>?
     private var settingsSaveTask: Task<Void, Never>?
     private var locationAuthorizationTask: Task<Void, Never>?
@@ -22,6 +23,7 @@ public final class AppSettingsViewModel: ObservableObject {
     private var profileSaveTask: Task<Void, Never>?
     private var connectionTask: Task<Void, Never>?
     private var powerTierTask: Task<Void, Never>?
+    private var activePresentationCount = 0
 
     public init(useCases: AppSettingsUseCases, mapper: AppSettingsViewStateMapper) {
         self.useCases = useCases
@@ -40,7 +42,8 @@ public final class AppSettingsViewModel: ObservableObject {
     }
 
     public func start() {
-        guard observationTask == nil else { return }
+        activePresentationCount += 1
+        guard activePresentationCount == 1 else { return }
         let observeSettings = useCases.settings.observe
         observationTask = Task { [weak self] in
             let stream = await observeSettings.execute()
@@ -61,6 +64,9 @@ public final class AppSettingsViewModel: ObservableObject {
     }
 
     public func stop() {
+        guard activePresentationCount > 0 else { return }
+        activePresentationCount -= 1
+        guard activePresentationCount == 0 else { return }
         observationTask?.cancel()
         observationTask = nil
         locationAuthorizationTask?.cancel()
@@ -147,6 +153,7 @@ public final class AppSettingsViewModel: ObservableObject {
         profile.declaredPowerTier = tier
         self.profile = profile
         powerTierVerificationMessage = nil
+        powerTierVerificationMessageIsError = false
         render()
         guard let save = useCases.profile?.save else { return }
         let previousSaveTask = profileSaveTask
@@ -162,6 +169,7 @@ public final class AppSettingsViewModel: ObservableObject {
               !isVerifyingPowerTier else { return }
         isVerifyingPowerTier = true
         powerTierVerificationMessage = nil
+        powerTierVerificationMessageIsError = false
         render()
         powerTierTask?.cancel()
         powerTierTask = Task { [weak self] in
@@ -171,6 +179,7 @@ public final class AppSettingsViewModel: ObservableObject {
                 guard let self else { return }
                 self.isVerifyingPowerTier = false
                 self.powerTierVerificationMessage = "Bike verification completed"
+                self.powerTierVerificationMessageIsError = false
                 self.render()
             } catch is CancellationError {
                 return
@@ -178,6 +187,7 @@ public final class AppSettingsViewModel: ObservableObject {
                 guard !Task.isCancelled, let self else { return }
                 self.isVerifyingPowerTier = false
                 self.powerTierVerificationMessage = "Verification failed: \(error.localizedDescription)"
+                self.powerTierVerificationMessageIsError = true
                 self.render()
             }
         }
@@ -234,7 +244,8 @@ public final class AppSettingsViewModel: ObservableObject {
             profile: profile,
             connection: connection,
             isVerifying: isVerifyingPowerTier,
-            verificationMessage: powerTierVerificationMessage
+            verificationMessage: powerTierVerificationMessage,
+            verificationMessageIsError: powerTierVerificationMessageIsError
         )
         guard nextViewState != viewState else { return }
         viewState = nextViewState

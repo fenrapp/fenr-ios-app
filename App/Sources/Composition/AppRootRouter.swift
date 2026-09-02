@@ -35,8 +35,10 @@ final class AppRootRouter: ObservableObject {
         case batteryHealth
         case diagnostics
         case settings
+        case rideDisplaySettings
         case dashboardCards
         case powerModes
+        case bikeModelSettings
         case rideHistory
         case bikeLockSettings
     }

@@ -7,7 +7,9 @@ public struct AppSettingsViewState: Equatable, Sendable {
     public let measurementSystem: AppSettingsSelectionViewState
     public let batteryCapacity: AppSettingsSelectionViewState
     public let powerTier: PowerTierSettingsViewState
-    public let powerModes: PowerModeNavigationViewState
+    public let rideDisplay: SettingsNavigationSummaryViewData
+    public let dashboardCards: SettingsNavigationSummaryViewData
+    public let powerModes: SettingsNavigationSummaryViewData
 
     public init(
         speedSource: SpeedSourceSettingsViewState,
@@ -30,7 +32,9 @@ public struct AppSettingsViewState: Equatable, Sendable {
             selection: .init(selectedID: "standard", options: []),
             status: "Standard baseline"
         ),
-        powerModes: PowerModeNavigationViewState = .init()
+        rideDisplay: SettingsNavigationSummaryViewData = .init(detail: "Energy · Bike"),
+        dashboardCards: SettingsNavigationSummaryViewData = .init(detail: "Order and visibility"),
+        powerModes: SettingsNavigationSummaryViewData = .init(detail: "5 maps configured")
     ) {
         self.speedSource = speedSource
         self.dashboardProgressBarMode = dashboardProgressBarMode
@@ -40,6 +44,8 @@ public struct AppSettingsViewState: Equatable, Sendable {
         self.measurementSystem = measurementSystem
         self.batteryCapacity = batteryCapacity
         self.powerTier = powerTier
+        self.rideDisplay = rideDisplay
+        self.dashboardCards = dashboardCards
         self.powerModes = powerModes
     }
 }

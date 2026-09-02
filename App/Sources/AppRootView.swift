@@ -157,11 +157,17 @@ private extension AppRootView {
                 onOpenTelemetry: {
                     router.navigate(to: .diagnostics, reduceMotion: reduceMotion)
                 },
+                onOpenRideDisplay: {
+                    router.navigate(to: .rideDisplaySettings, reduceMotion: reduceMotion)
+                },
                 onOpenDashboardCards: {
                     router.navigate(to: .dashboardCards, reduceMotion: reduceMotion)
                 },
                 onOpenPowerModes: {
                     router.navigate(to: .powerModes, reduceMotion: reduceMotion)
+                },
+                onOpenBikeModel: {
+                    router.navigate(to: .bikeModelSettings, reduceMotion: reduceMotion)
                 },
                 onOpenRideHistory: {
                     router.navigate(to: .rideHistory, reduceMotion: reduceMotion)
@@ -174,12 +180,16 @@ private extension AppRootView {
                 },
                 accessory: settingsAccessory
             )
+        case .rideDisplaySettings:
+            RideDisplaySettingsView(viewModel: appSettingsViewModel)
         case .bikeLockSettings:
             BikeLockSettingsView(viewModel: bikeLockSettingsViewModel)
         case .dashboardCards:
             DashboardCardSettingsView(viewModel: dashboardCardSettingsViewModel)
         case .powerModes:
             PowerModeSettingsView(viewModel: powerModeSettingsViewModel)
+        case .bikeModelSettings:
+            BikeModelSettingsView(viewModel: appSettingsViewModel)
         case .rideHistory:
             RideHistoryView(viewModel: rideHistoryViewModel)
         }

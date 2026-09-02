@@ -15,6 +15,7 @@ struct PowerTierSettingsMapperTests {
         let state = map(profile: .init(vin: syntheticVIN, declaredPowerTier: .alpha))
 
         #expect(state.powerTier.status == "Pending bike verification")
+        #expect(state.powerTier.navigationDetail == "Alpha · Unverified")
         #expect(state.powerTier.evidence == nil)
     }
 
@@ -27,6 +28,7 @@ struct PowerTierSettingsMapperTests {
         ))
 
         #expect(state.powerTier.status.contains("Tier mismatch"))
+        #expect(state.powerTier.navigationDetail == "Model mismatch")
         #expect(state.powerTier.evidence?.contains("Power above 60 HP") == true)
     }
 
@@ -56,6 +58,21 @@ struct PowerTierSettingsMapperTests {
 
         #expect(state.powerTier.status == "Tier mismatch: bike reports Alpha evidence")
         #expect(state.powerTier.verificationMessage == "Bike verification completed")
+        #expect(!state.powerTier.verificationMessageIsError)
+    }
+
+    @Test("Verification failure is surfaced as an error")
+    func verificationFailureIsError() {
+        let state = mapper.map(
+            settings: AppSettings(),
+            locationAuthorizationStatus: .notDetermined,
+            profile: .init(vin: syntheticVIN),
+            verificationMessage: "Verification failed",
+            verificationMessageIsError: true
+        )
+
+        #expect(state.powerTier.verificationMessage == "Verification failed")
+        #expect(state.powerTier.verificationMessageIsError)
     }
 
     private func map(

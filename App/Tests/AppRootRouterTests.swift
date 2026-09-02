@@ -53,6 +53,22 @@ struct AppRootRouterTests {
         #expect(fixture.router.rideNavigationPresentation == .fullScreen)
     }
 
+    @Test("Routes settings details directly")
+    func routesSettingsDetailsDirectly() {
+        let fixture = AppRootRouterFixture()
+        fixture.setupFlow.complete(vin: "FENRTEST000000001")
+
+        fixture.router.navigate(to: .settings, reduceMotion: true)
+        fixture.router.navigate(to: .rideDisplaySettings, reduceMotion: true)
+        fixture.router.navigate(to: .bikeModelSettings, reduceMotion: true)
+
+        #expect(fixture.router.path == [
+            .settings,
+            .rideDisplaySettings,
+            .bikeModelSettings
+        ])
+    }
+
     @Test("Dashboard presentation is active only at the root outside fullscreen navigation")
     func dashboardPresentationActivityFollowsRootVisibility() {
         let fixture = AppRootRouterFixture()

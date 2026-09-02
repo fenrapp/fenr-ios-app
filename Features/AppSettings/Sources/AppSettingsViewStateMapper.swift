@@ -11,9 +11,10 @@ public struct AppSettingsViewStateMapper: Sendable {
         profile: BikeProfile? = nil,
         connection: BikeConnection = .init(),
         isVerifying: Bool = false,
-        verificationMessage: String? = nil
+        verificationMessage: String? = nil,
+        verificationMessageIsError: Bool = false
     ) -> AppSettingsViewState {
-        .init(
+        return .init(
             speedSource: .init(
                 selection: .init(
                     selectedID: settings.speedSource.rawValue,
@@ -64,8 +65,11 @@ public struct AppSettingsViewStateMapper: Sendable {
                 profile: profile,
                 connection: connection,
                 isVerifying: isVerifying,
-                verificationMessage: verificationMessage
+                verificationMessage: verificationMessage,
+                verificationMessageIsError: verificationMessageIsError
             ),
+            rideDisplay: .init(detail: rideDisplayDetail(settings: settings)),
+            dashboardCards: .init(detail: dashboardCardsDetail(settings.dashboardCardConfiguration)),
             powerModes: powerModes(settings: settings, profile: profile)
         )
     }
@@ -73,7 +77,7 @@ public struct AppSettingsViewStateMapper: Sendable {
     private func powerModes(
         settings: AppSettings,
         profile: BikeProfile?
-    ) -> PowerModeNavigationViewState {
+    ) -> SettingsNavigationSummaryViewData {
         let count = settings.powerModeNames(forVIN: profile?.vin).count
         let detail = switch count {
         case 0: "5 maps configured"
@@ -83,11 +87,23 @@ public struct AppSettingsViewStateMapper: Sendable {
         return .init(detail: detail)
     }
 
+    private func rideDisplayDetail(settings: AppSettings) -> String {
+        let progress = dashboardProgressBarModeTitle(settings.dashboardProgressBarMode)
+        let speed = speedSourceTitle(settings.speedSource)
+        return "\(progress) · \(speed)"
+    }
+
+    private func dashboardCardsDetail(_ configuration: DashboardCardConfiguration) -> String {
+        let visibleCount = configuration.sections.filter(\.isVisible).count
+        return "\(visibleCount) visible"
+    }
+
     private func powerTier(
         profile: BikeProfile?,
         connection: BikeConnection,
         isVerifying: Bool,
-        verificationMessage: String?
+        verificationMessage: String?,
+        verificationMessageIsError: Bool
     ) -> PowerTierSettingsViewState {
         let declared = profile?.declaredPowerTier ?? .standard
         let evidence = profile?.alphaEvidence ?? []
@@ -108,12 +124,26 @@ public struct AppSettingsViewStateMapper: Sendable {
                     .init(id: $0.rawValue, title: $0 == .standard ? "Standard" : "Alpha")
                 }
             ),
+            navigationDetail: powerTierNavigationDetail(
+                declared: declared,
+                hasEvidence: !evidence.isEmpty
+            ),
             status: status,
             evidence: evidenceDescription(profile: profile),
             verificationMessage: verificationMessage,
+            verificationMessageIsError: verificationMessageIsError,
             isVerifyEnabled: isAuthenticated(connection.state) && !isVerifying,
             isVerifying: isVerifying
         )
+    }
+
+    private func powerTierNavigationDetail(
+        declared: BikeDeclaredPowerTier,
+        hasEvidence: Bool
+    ) -> String {
+        if hasEvidence, declared == .standard { return "Model mismatch" }
+        if hasEvidence { return "Alpha detected" }
+        return declared == .alpha ? "Alpha · Unverified" : "Standard"
     }
 
     private func evidenceDescription(profile: BikeProfile?) -> String? {
