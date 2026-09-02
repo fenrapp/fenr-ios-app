@@ -17,15 +17,15 @@ struct RideNavigationHomeActions: View {
     private var actions: some View {
         Group {
             RideNavigationQuickAction(
-                title: "Import GPX",
-                subtitle: "Open a trail",
+                title: String(localized: .rideNavigationImportGPX),
+                subtitle: String(localized: .rideNavigationOpenTrail),
                 systemImage: "square.and.arrow.down",
                 color: DesignColor.accent,
                 action: onImport
             )
             RideNavigationQuickAction(
-                title: "Record Ride",
-                subtitle: "Track as you go",
+                title: String(localized: .rideNavigationRecordRide),
+                subtitle: String(localized: .rideNavigationTrackAsYouGo),
                 systemImage: "record.circle",
                 color: DesignColor.critical,
                 action: onRecord

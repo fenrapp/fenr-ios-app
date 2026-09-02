@@ -14,7 +14,7 @@ struct OnboardingPairingCodeView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.contentSpacing) {
             HStack {
-                Text("PAIRING CODE")
+                Text(.bikeOnboardingPairingCodeLabel)
                     .font(.caption.weight(.bold))
                     .tracking(Constants.labelTracking)
                     .foregroundStyle(.secondary)
@@ -45,7 +45,7 @@ struct OnboardingPairingCodeView: View {
         .opacity(surfaceVisible ? 1 : .zero)
         .scaleEffect(surfaceVisible ? 1 : Constants.surfaceStartScale)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Pairing code \(accessiblePIN)")
+        .accessibilityLabel(BikeOnboardingL10n.text(.bikeOnboardingAccessibilityPairingCode(accessiblePIN)))
         .task(id: reduceMotion) { await reveal() }
     }
 

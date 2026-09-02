@@ -8,21 +8,30 @@ public struct DashboardTripStatisticsViewData: Equatable, Sendable {
     public let accessibilityLabel: String
 
     public init(
-        statusText: String = "NO SAVED TRIPS",
-        totalDistance: Metric = .init(label: "TOTAL DISTANCE", valueText: "0", unit: "km"),
-        totalDuration: Metric = .init(label: "RIDE TIME", valueText: "00:00"),
-        averageSpeed: Metric = .init(label: "AVERAGE", valueText: "0", unit: "km/h"),
-        maximumSpeed: Metric = .init(label: "MAX SPEED", valueText: "0", unit: "km/h"),
+        statusText: String? = nil,
+        totalDistance: Metric? = nil,
+        totalDuration: Metric? = nil,
+        averageSpeed: Metric? = nil,
+        maximumSpeed: Metric? = nil,
         isLoading: Bool = false,
-        accessibilityLabel: String = "Ride statistics, no saved trips"
+        accessibilityLabel: String? = nil
     ) {
-        self.statusText = statusText
-        self.totalDistance = totalDistance
-        self.totalDuration = totalDuration
-        self.averageSpeed = averageSpeed
-        self.maximumSpeed = maximumSpeed
+        self.statusText = statusText ?? rideDashboardLocalized(.rideDashboardTripStatisticsStatusNone)
+        self.totalDistance = totalDistance ?? .init(
+            label: rideDashboardLocalized(.rideDashboardMetricTotalDistance), valueText: "0", unit: "km"
+        )
+        self.totalDuration = totalDuration ?? .init(
+            label: rideDashboardLocalized(.rideDashboardMetricRideTime), valueText: "00:00"
+        )
+        self.averageSpeed = averageSpeed ?? .init(
+            label: rideDashboardLocalized(.rideDashboardMetricAverage), valueText: "0", unit: "km/h"
+        )
+        self.maximumSpeed = maximumSpeed ?? .init(
+            label: rideDashboardLocalized(.rideDashboardMetricMaximumSpeed), valueText: "0", unit: "km/h"
+        )
         self.isLoading = isLoading
         self.accessibilityLabel = accessibilityLabel
+            ?? rideDashboardLocalized(.rideDashboardTripStatisticsAccessibilityNone)
     }
 
     public struct Metric: Equatable, Sendable {

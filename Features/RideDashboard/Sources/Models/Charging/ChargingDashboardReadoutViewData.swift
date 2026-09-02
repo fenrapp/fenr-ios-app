@@ -8,17 +8,18 @@ public struct ChargingDashboardReadoutViewData: Equatable, Sendable {
     public let showsProgress: Bool
 
     public init(
-        title: String = "CHARGING",
+        title: String? = nil,
         subtitle: String? = nil,
-        accessibilityLabel: String = "Charging unavailable",
+        accessibilityLabel: String? = nil,
         systemImage: String = "bolt.fill",
         emphasis: Emphasis = .charging,
         allowsControl: Bool = true,
         showsProgress: Bool = true
     ) {
-        self.title = title
+        self.title = title ?? rideDashboardLocalized(.rideDashboardChargingTitle)
         self.subtitle = subtitle
         self.accessibilityLabel = accessibilityLabel
+            ?? rideDashboardLocalized(.rideDashboardChargingUnavailableAccessibility)
         self.systemImage = systemImage
         self.emphasis = emphasis
         self.allowsControl = allowsControl

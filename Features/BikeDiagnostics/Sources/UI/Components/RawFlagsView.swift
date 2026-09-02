@@ -5,7 +5,7 @@ struct RawFlagsView: View {
     let flags: [BikeDiagnosticsMetricViewData]
 
     var body: some View {
-        SurfacePanel(title: "Raw Flags") {
+        SurfacePanel(title: BikeDiagnosticsL10n.text(.bikeDiagnosticsSectionRawFlags)) {
             VStack(alignment: .leading, spacing: Constants.contentSpacing) {
                 ForEach(flags) { flag in
                     HStack(alignment: .firstTextBaseline, spacing: Constants.rowSpacing) {

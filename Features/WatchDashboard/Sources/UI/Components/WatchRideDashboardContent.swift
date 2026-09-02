@@ -11,15 +11,15 @@ struct WatchRideDashboardContent: View {
                 WatchBatteryRing(percentage: state.batteryPercent, tint: .green)
                     .frame(width: batteryRingDiameter, height: batteryRingDiameter)
                 VStack(spacing: DesignSpace.extraExtraSmall) {
-                    Text("GEAR")
+                    Text(.watchDashboardGear)
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(.secondary)
-                    Text(state.gear)
+                    Text(verbatim: state.gear)
                         .font(.system(size: Constants.gearFontSize, weight: .medium, design: .rounded))
                         .foregroundStyle(.green)
                 }
                 .frame(maxWidth: .infinity)
-                WatchDashboardMetric(title: "ODOMETER", value: state.odometer ?? "--")
+                WatchDashboardMetric(title: .watchDashboardOdometer, value: state.odometer ?? "--")
                 WatchChangeBikeButton(action: onChangeBike)
             }
         }

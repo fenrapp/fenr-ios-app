@@ -20,7 +20,7 @@ struct OnboardingSuccessView: View {
                     Spacer(minLength: Constants.minimumSpacer)
                     if requiresExplicitContinue {
                         OnboardingPrimaryButton(
-                            title: "Continue to Dashboard",
+                            title: BikeOnboardingL10n.text(.bikeOnboardingActionContinueToDashboard),
                             systemImage: "arrow.right",
                             action: onContinue
                         )
@@ -74,15 +74,15 @@ struct OnboardingSuccessView: View {
 
     private var successMessage: some View {
         VStack(spacing: Constants.messageSpacing) {
-            Text("Your bike is ready.")
+            Text(.bikeOnboardingSuccessTitle)
                 .font(.largeTitle.bold())
-            Text("Live telemetry is flowing into FENR.")
+            Text(.bikeOnboardingSuccessDetail)
                 .font(.body)
                 .foregroundStyle(.secondary)
         }
         .multilineTextAlignment(.center)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Your bike is ready. Live telemetry is flowing into FENR.")
+        .accessibilityLabel(.bikeOnboardingSuccessAccessibility)
         .accessibilityAddTraits(.isHeader)
         .accessibilityFocused($messageIsFocused)
     }

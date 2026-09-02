@@ -278,6 +278,6 @@ private extension BikeLiveActivityController {
     private var activityVIN: String {
         let preferredVIN = snapshot.profile?.vin ?? snapshot.telemetry.vin
         let vin = preferredVIN.trimmingCharacters(in: .whitespacesAndNewlines)
-        return vin.isEmpty ? "Stark Varg" : vin
+        return vin.isEmpty ? String(localized: .appDefaultBikeName) : vin
     }
 }

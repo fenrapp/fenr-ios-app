@@ -15,53 +15,61 @@ public struct WatchOnboardingView: View {
                 Image(systemName: "antenna.radiowaves.left.and.right")
                     .font(.title)
                     .foregroundStyle(.tint)
-                Text("Find Your Bike")
+                Text(.watchOnboardingFindYourBike)
                     .font(.headline)
-                Text(state.detail)
+                Text(verbatim: state.detail)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
 
             if state.discoveredBikes.count > 1 {
-                Section("Nearby Bikes") {
+                Section {
                     ForEach(state.discoveredBikes) { bike in
                         Button {
                             viewModel.select(bike)
                         } label: {
                             VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
-                                Text(bike.vin).font(.caption.monospaced())
-                                Text(bike.signalText).font(.caption2)
+                                Text(verbatim: bike.vin).font(.caption.monospaced())
+                                Text(verbatim: bike.signalText).font(.caption2)
                             }
                         }
                     }
+                } header: {
+                    Text(.watchOnboardingNearbyBikes)
                 }
             }
 
             if state.discoveredBikes.isEmpty, !state.isConnecting {
                 Section {
-                    Button("Scan Again", action: viewModel.scan)
+                    Button(action: viewModel.scan) {
+                        Text(.watchOnboardingScanAgain)
+                    }
                 }
             }
 
             if let errorMessage = state.errorMessage {
                 Section {
-                    Text(errorMessage).foregroundStyle(.red)
-                    Button("Try Again", action: viewModel.scan)
+                    Text(verbatim: errorMessage).foregroundStyle(.red)
+                    Button(action: viewModel.scan) {
+                        Text(.watchOnboardingTryAgain)
+                    }
                 }
             }
 
             if !state.debugEvents.isEmpty {
-                Section("Debug") {
+                Section {
                     ForEach(state.debugEvents) { event in
                         VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
-                            Text(event.title)
+                            Text(verbatim: event.title)
                                 .font(.caption2.weight(.semibold))
-                            Text(event.detail)
+                            Text(verbatim: event.detail)
                                 .font(.caption2.monospaced())
                                 .foregroundStyle(.secondary)
                                 .lineLimit(4)
                         }
                     }
+                } header: {
+                    Text(.watchOnboardingDebug)
                 }
             }
         }

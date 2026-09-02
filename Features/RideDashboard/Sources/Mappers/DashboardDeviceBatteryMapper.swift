@@ -25,12 +25,15 @@ public struct DashboardDeviceBatteryMapper: Sendable {
         } else {
             emphasis = .normal
         }
-        let chargingText = snapshot.isCharging ? ", charging" : ""
         return .init(
             percentageText: "\(percent)%",
             systemImage: batterySymbol(percent: percent),
             emphasis: emphasis,
-            accessibilityLabel: "iPhone battery \(percent) percent\(chargingText)",
+            accessibilityLabel: rideDashboardLocalized(
+                snapshot.isCharging
+                    ? .rideDashboardDeviceBatteryChargingAccessibility(percent)
+                    : .rideDashboardDeviceBatteryAccessibility(percent)
+            ),
             isVisible: presentation.isVisible,
             showsIcon: presentation.showsIcon,
             showsPercentage: presentation.showsPercentage,
@@ -47,21 +50,21 @@ public struct DashboardDeviceBatteryMapper: Sendable {
                 isVisible: true,
                 showsIcon: true,
                 showsPercentage: true,
-                accessibilityHint: "Switches to percentage-only display"
+                accessibilityHint: rideDashboardLocalized(.rideDashboardDeviceBatteryDisplayPercentageHint)
             )
         case .textOnly:
             .init(
                 isVisible: true,
                 showsIcon: false,
                 showsPercentage: true,
-                accessibilityHint: "Switches to icon-only display"
+                accessibilityHint: rideDashboardLocalized(.rideDashboardDeviceBatteryDisplayIconHint)
             )
         case .iconOnly:
             .init(
                 isVisible: true,
                 showsIcon: true,
                 showsPercentage: false,
-                accessibilityHint: "Switches to icon and percentage display"
+                accessibilityHint: rideDashboardLocalized(.rideDashboardDeviceBatteryDisplayBothHint)
             )
         case .hidden:
             .init(

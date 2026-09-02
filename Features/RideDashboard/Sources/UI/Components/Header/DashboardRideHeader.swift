@@ -38,7 +38,7 @@ struct DashboardRideHeader: View {
         TimelineView(.periodic(from: currentMinute, by: Constants.minuteInterval)) { context in
             let time = context.date.formatted(date: .omitted, time: .shortened)
             Text(time)
-                .accessibilityLabel("Time")
+                .accessibilityLabel(.rideDashboardHeaderTimeAccessibility)
                 .accessibilityValue(time)
         }
     }

@@ -26,7 +26,9 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
             return PowerModeMapViewData(
                 id: mapIndex,
                 title: name ?? String(mapNumber),
-                accessibilityLabel: name.map { "Map \(mapNumber), \($0)" } ?? "Map \(mapNumber)",
+                accessibilityLabel: name.map {
+                    String(localized: .powerModeSettingsNamedMapAccessibility(mapNumber, $0))
+                } ?? String(localized: .powerModeSettingsMapAccessibility(mapNumber)),
                 isSelected: mapIndex == selectedMapIndex
             )
         }
@@ -78,9 +80,9 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
         [
             adjustment(.init(
                 id: .power,
-                title: "Power",
+                title: String(localized: .powerModeSettingsPowerAdjustment),
                 value: configuration?.horsepower.map(Double.init),
-                unit: "HP",
+                unit: String(localized: .powerModeSettingsHorsepowerUnit),
                 minimum: 10,
                 maximum: powerMaximum,
                 step: 1,
@@ -88,9 +90,9 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
             )),
             adjustment(.init(
                 id: .regeneration,
-                title: "Regenerative braking",
+                title: String(localized: .powerModeSettingsRegenerationAdjustment),
                 value: configuration?.regenerativeBrakingPercent,
-                unit: "%",
+                unit: String(localized: .powerModeSettingsPercentUnit),
                 minimum: -100,
                 maximum: 100,
                 step: 1,
@@ -98,9 +100,9 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
             )),
             adjustment(.init(
                 id: .powerTraction,
-                title: "Traction control",
+                title: String(localized: .powerModeSettingsTractionAdjustment),
                 value: configuration?.powerTractionPercent,
-                unit: "%",
+                unit: String(localized: .powerModeSettingsPercentUnit),
                 minimum: 0,
                 maximum: 100,
                 step: 1,
@@ -108,9 +110,9 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
             )),
             adjustment(.init(
                 id: .brakingTraction,
-                title: "Regen traction control",
+                title: String(localized: .powerModeSettingsRegenTractionAdjustment),
                 value: configuration?.brakingTractionPercent,
-                unit: "%",
+                unit: String(localized: .powerModeSettingsPercentUnit),
                 minimum: 0,
                 maximum: 100,
                 step: 1,
@@ -146,7 +148,7 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
     }
 
     private func formatted(_ value: Double?) -> String {
-        guard let value else { return "Unavailable" }
+        guard let value else { return String(localized: .powerModeSettingsUnavailable) }
         return value.formatted(
             .number
                 .locale(locale)
@@ -167,12 +169,12 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
         declaredTier: BikeDeclaredPowerTier?
     ) -> String {
         if case .alpha = detectedTier {
-            return "Alpha capability detected · 80 HP"
+            return String(localized: .powerModeSettingsAlphaCapabilityDetected)
         }
         if declaredTier == .alpha {
-            return "Alpha expected · verification pending"
+            return String(localized: .powerModeSettingsAlphaVerificationPending)
         }
-        return "Standard baseline · 60 HP"
+        return String(localized: .powerModeSettingsStandardBaseline)
     }
 
     private func status(
@@ -181,7 +183,7 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
         input: PowerModeSettingsMappingInput
     ) -> (text: String, isError: Bool) {
         if input.isRefreshing {
-            return ("Reading power modes", false)
+            return (String(localized: .powerModeSettingsReadingStatus), false)
         }
         if let refreshError = input.refreshError {
             return (refreshError, true)
@@ -190,37 +192,39 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
             return (controlError, true)
         }
         if input.isApplyingControl {
-            return ("Applying and verifying map", false)
+            return (String(localized: .powerModeSettingsApplyingStatus), false)
         }
         if input.isPreparingControl {
-            return ("Verifying map write safety", false)
+            return (String(localized: .powerModeSettingsVerifyingSafetyStatus), false)
         }
         guard configuration?.hasBaseConfiguration == true else {
-            return ("Waiting for confirmed map data", false)
+            return (String(localized: .powerModeSettingsWaitingForMapDataStatus), false)
         }
         if let controlMessage = input.controlMessage {
             return (controlMessage, false)
         }
         if input.isBaseControlReady {
             let text = isTractionControlReady
-                ? "All map controls ready"
-                : "Power and regeneration controls ready"
+                ? String(localized: .powerModeSettingsAllControlsReady)
+                : String(localized: .powerModeSettingsBaseControlsReady)
             return (text, false)
         }
-        return ("Bike write verification required", false)
+        return (String(localized: .powerModeSettingsWriteVerificationRequired), false)
     }
 
     private func connectionText(_ state: ConnectionState) -> String {
         switch state {
-        case .receivingTelemetry: "Bike connected"
-        case .authenticated, .subscribed: "Bike authenticated"
-        case .scanning, .connecting, .discovering, .authenticating, .reconnecting: "Connecting to bike"
-        case .bluetoothPoweredOff: "Bluetooth is off"
-        case .bluetoothUnauthorized: "Bluetooth access is required"
-        case .bluetoothUnavailable: "Bluetooth is unavailable"
-        case .pairingResetRequired(let message), .failed(let message): message
-        case .disconnected(let reason): reason ?? "Bike disconnected"
-        case .idle: "Bike unavailable"
+        case .receivingTelemetry: String(localized: .powerModeSettingsBikeConnected)
+        case .authenticated, .subscribed: String(localized: .powerModeSettingsBikeAuthenticated)
+        case .scanning, .connecting, .discovering, .authenticating, .reconnecting:
+            String(localized: .powerModeSettingsConnectingToBike)
+        case .bluetoothPoweredOff: String(localized: .powerModeSettingsBluetoothOff)
+        case .bluetoothUnauthorized: String(localized: .powerModeSettingsBluetoothAccessRequired)
+        case .bluetoothUnavailable: String(localized: .powerModeSettingsBluetoothUnavailable)
+        case .pairingResetRequired: String(localized: .powerModeSettingsPairingResetRequired)
+        case .failed: String(localized: .powerModeSettingsConnectionFailed)
+        case .disconnected: String(localized: .powerModeSettingsBikeDisconnected)
+        case .idle: String(localized: .powerModeSettingsBikeUnavailable)
         }
     }
 

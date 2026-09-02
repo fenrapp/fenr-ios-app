@@ -8,14 +8,14 @@ struct OnboardingPairingView: View {
 
     var body: some View {
         OnboardingStepLayout(
-            eyebrow: "PAIRING",
-            title: "Pair your bike.",
-            detail: "When iOS asks for a six-digit code, paste this one. FENR copies it before pairing starts."
+            eyebrow: BikeOnboardingL10n.text(.bikeOnboardingPairingEyebrow),
+            title: BikeOnboardingL10n.text(.bikeOnboardingPairingTitle),
+            detail: BikeOnboardingL10n.text(.bikeOnboardingPairingDetail)
         ) {
             VStack(spacing: Constants.spacing) {
                 bikeIdentity
                 OnboardingPairingCodeView(pin: viewState.pairingPIN)
-                Text("Generated on this iPhone and copied only when you tap Copy & Pair.")
+                Text(.bikeOnboardingPairingPrivacyDetail)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -23,9 +23,9 @@ struct OnboardingPairingView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         } footer: {
             OnboardingPrimaryButton(
-                title: "Copy & Pair",
+                title: BikeOnboardingL10n.text(.bikeOnboardingActionCopyAndPair),
                 systemImage: "doc.on.doc",
-                accessibilityLabel: "Copy pairing code and start pairing",
+                accessibilityLabel: BikeOnboardingL10n.text(.bikeOnboardingAccessibilityCopyAndPair),
                 action: onCopyAndPair
             )
         }
@@ -63,7 +63,10 @@ struct OnboardingPairingView: View {
     }
 
     private var identityAccessibilityLabel: String {
-        "\(viewState.selectedBikeTitle). VIN \(viewState.accessibilityVIN)."
+        BikeOnboardingL10n.text(.bikeOnboardingAccessibilityBikeIdentity(
+            viewState.selectedBikeTitle,
+            viewState.accessibilityVIN
+        ))
     }
 }
 

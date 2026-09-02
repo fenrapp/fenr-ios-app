@@ -1,11 +1,12 @@
 import DesignSystem
+import Foundation
 import SwiftUI
 
 struct DashboardCardRowLabel: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    let title: String
-    let detail: String?
+    let title: LocalizedStringResource
+    let detail: LocalizedStringResource?
     let thumbnail: DashboardCardThumbnailViewData
 
     var body: some View {

@@ -1,10 +1,20 @@
 public struct DashboardRideDynamicsViewData: Equatable, Sendable {
-    public enum Status: String, Equatable, Sendable {
-        case unavailable = "UNAVAILABLE"
-        case calibrating = "CALIBRATING"
-        case zeroing = "HOLD STILL"
-        case live = "IMU BETA"
-        case signalLost = "SIGNAL LOST"
+    public enum Status: Equatable, Sendable {
+        case unavailable
+        case calibrating
+        case zeroing
+        case live
+        case signalLost
+
+        var text: String {
+            switch self {
+            case .unavailable: rideDashboardLocalized(.rideDashboardDynamicsStatusUnavailable)
+            case .calibrating: rideDashboardLocalized(.rideDashboardDynamicsStatusCalibrating)
+            case .zeroing: rideDashboardLocalized(.rideDashboardDynamicsStatusZeroing)
+            case .live: rideDashboardLocalized(.rideDashboardDynamicsStatusLive)
+            case .signalLost: rideDashboardLocalized(.rideDashboardDynamicsStatusSignalLost)
+            }
+        }
     }
 
     public let status: Status
@@ -32,19 +42,19 @@ public struct DashboardRideDynamicsViewData: Equatable, Sendable {
         status: Status = .unavailable,
         leanDegrees: Double = .zero,
         leanText: String = "—",
-        leanDirectionText: String = "LEVEL",
+        leanDirectionText: String? = nil,
         maximumLeftLeanText: String = "—",
         maximumRightLeanText: String = "—",
         pitchDegrees: Double = .zero,
         pitchText: String = "—",
-        pitchDirectionText: String = "LEVEL",
+        pitchDirectionText: String? = nil,
         maximumUphillPitchText: String = "—",
         maximumDownhillPitchText: String = "—",
         headingDegrees: Double = .zero,
         isHeadingAvailable: Bool = false,
         headingText: String = "—",
         cardinalDirectionText: String = "—",
-        headingSourceText: String = "NO COURSE",
+        headingSourceText: String? = nil,
         altitudeText: String? = nil,
         latitudeText: String? = nil,
         longitudeText: String? = nil,
@@ -54,11 +64,13 @@ public struct DashboardRideDynamicsViewData: Equatable, Sendable {
         self.leanDegrees = leanDegrees
         self.leanText = leanText
         self.leanDirectionText = leanDirectionText
+            ?? rideDashboardLocalized(.rideDashboardDynamicsDirectionLevel)
         self.maximumLeftLeanText = maximumLeftLeanText
         self.maximumRightLeanText = maximumRightLeanText
         self.pitchDegrees = pitchDegrees
         self.pitchText = pitchText
         self.pitchDirectionText = pitchDirectionText
+            ?? rideDashboardLocalized(.rideDashboardDynamicsDirectionLevel)
         self.maximumUphillPitchText = maximumUphillPitchText
         self.maximumDownhillPitchText = maximumDownhillPitchText
         self.headingDegrees = headingDegrees
@@ -66,6 +78,7 @@ public struct DashboardRideDynamicsViewData: Equatable, Sendable {
         self.headingText = headingText
         self.cardinalDirectionText = cardinalDirectionText
         self.headingSourceText = headingSourceText
+            ?? rideDashboardLocalized(.rideDashboardDynamicsCourseUnavailable)
         self.altitudeText = altitudeText
         self.latitudeText = latitudeText
         self.longitudeText = longitudeText

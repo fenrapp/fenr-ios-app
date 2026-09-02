@@ -7,7 +7,7 @@ struct RideHistoryDetailView: View {
 
     var body: some View {
         RideHistoryDetailContent(state: viewModel.detailViewState)
-        .navigationTitle("Ride")
+        .navigationTitle(.rideHistoryRideTitle)
         .navigationBarTitleDisplayMode(.inline)
         .task(id: rideID) { viewModel.loadDetail(id: rideID) }
         .onDisappear { viewModel.clearDetail(id: rideID) }

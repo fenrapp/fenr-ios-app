@@ -33,7 +33,7 @@ struct DashboardSpeedSourceChip: View {
             Capsule()
                 .stroke(tint.opacity(Constants.outlineOpacity))
         }
-        .accessibilityLabel("\(state.text) speed source")
+        .accessibilityLabel(rideDashboardLocalized(.rideDashboardSpeedSourceAccessibility(state.text)))
     }
 
     private enum Constants {

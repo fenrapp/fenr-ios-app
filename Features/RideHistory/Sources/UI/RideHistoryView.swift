@@ -22,7 +22,7 @@ public struct RideHistoryView: View {
             refresh: viewModel.refresh,
             deleteRide: viewModel.deleteRide(id:)
         )
-            .navigationTitle("Ride History")
+            .navigationTitle(.rideHistoryTitle)
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 RideHistoryEditingToolbar(
@@ -43,22 +43,22 @@ public struct RideHistoryView: View {
                 if mode != .active { selectionState.clearSelection() }
             }
             .alert(
-                "Delete \(selectionState.pendingDeletionIDs.count) rides?",
+                .rideHistoryDeleteConfirmation(rideCount: selectionState.pendingDeletionIDs.count),
                 isPresented: bulkDeletionConfirmationBinding
             ) {
-                Button("Delete Rides", role: .destructive) {
+                Button(.rideHistoryDeleteRides, role: .destructive) {
                     performDeletion(selectionState.pendingDeletionIDs)
                 }
-                Button("Cancel", role: .cancel) {
+                Button(.rideHistoryCancel, role: .cancel) {
                     selectionState.cancelPendingDeletion()
                 }
             } message: {
-                Text("The selected rides and their saved energy data will be permanently deleted.")
+                Text(.rideHistoryDeleteConfirmationMessage)
             }
-            .alert("Unable to Delete", isPresented: errorBinding) {
-                Button("OK") { viewModel.dismissError() }
+            .alert(.rideHistoryUnableToDelete, isPresented: errorBinding) {
+                Button(.rideHistoryOK) { viewModel.dismissError() }
             } message: {
-                Text(viewModel.viewState.errorMessage ?? "Please try again.")
+                Text(viewModel.viewState.errorMessage ?? String(localized: .rideHistoryPleaseTryAgain))
             }
     }
 

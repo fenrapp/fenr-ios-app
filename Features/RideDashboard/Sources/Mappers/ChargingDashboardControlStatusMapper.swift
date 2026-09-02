@@ -7,7 +7,7 @@ public struct ChargingDashboardControlStatusMapper: Sendable {
         switch state.phase {
         case .updating: updatingStatus(for: state)
         case .failed: .init(
-            text: "UPDATE FAILED",
+            text: rideDashboardLocalized(.rideDashboardChargingStatusUpdateFailed),
             systemImage: "exclamationmark.triangle.fill",
             emphasis: .failure,
             showsActivityIndicator: false
@@ -22,19 +22,19 @@ public struct ChargingDashboardControlStatusMapper: Sendable {
 
         return switch (isPowerPending, isTargetPending) {
         case (true, false): .init(
-            text: "UPDATING CHARGING POWER",
+            text: rideDashboardLocalized(.rideDashboardChargingStatusUpdatingPower),
             systemImage: "bolt.fill",
             emphasis: .power,
             showsActivityIndicator: true
         )
         case (false, true): .init(
-            text: "UPDATING CHARGE LIMIT",
+            text: rideDashboardLocalized(.rideDashboardChargingStatusUpdatingLimit),
             systemImage: "battery.100percent",
             emphasis: .target,
             showsActivityIndicator: true
         )
         case (true, true), (false, false): .init(
-            text: "UPDATING CHARGE SETTINGS",
+            text: rideDashboardLocalized(.rideDashboardChargingStatusUpdatingSettings),
             systemImage: "slider.horizontal.3",
             emphasis: .general,
             showsActivityIndicator: true

@@ -138,8 +138,8 @@ public final class RideHistoryViewModel: ObservableObject {
             self.trips.removeAll { deletedIDs.contains($0.id) }
             if deletedIDs.count != orderedIDs.count {
                 self.errorMessage = orderedIDs.count == 1
-                    ? "The ride could not be deleted. Please try again."
-                    : "Some rides could not be deleted. Please try again."
+                    ? String(localized: .rideHistoryDeleteSingleError)
+                    : String(localized: .rideHistoryDeleteMultipleError)
             }
             self.loadedHistoryKey = nil
             self.renderList()

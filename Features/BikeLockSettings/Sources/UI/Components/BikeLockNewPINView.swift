@@ -2,7 +2,7 @@ import DesignSystem
 import SwiftUI
 
 struct BikeLockNewPINView: View {
-    let title: String
+    let title: LocalizedStringResource
     let errorMessage: String?
     let onComplete: (String, String) -> Void
     @State private var pin = ""
@@ -13,7 +13,11 @@ struct BikeLockNewPINView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Constants.spacing) {
-                Text(isConfirming ? "Enter the PIN again" : "Choose a 6-digit PIN")
+                Text(
+                    isConfirming
+                        ? .bikeLockSettingsEnterPINAgain
+                        : .bikeLockSettingsChoosePIN
+                )
                     .font(.headline)
                 NumericPINPad(
                     pin: isConfirming ? $confirmation : $pin,
@@ -22,14 +26,16 @@ struct BikeLockNewPINView: View {
                 if let errorMessage {
                     Text(errorMessage)
                         .foregroundStyle(DesignColor.critical)
-                        .accessibilityLabel("Error: \(errorMessage)")
+                        .accessibilityLabel(
+                            Text(.bikeLockSettingsErrorAccessibility(errorMessage))
+                        )
                         .accessibilityFocused($isErrorFocused)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding()
         }
-        .navigationTitle(title)
+        .navigationTitle(Text(title))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { focusErrorIfNeeded(errorMessage) }
         .onChange(of: errorMessage) { _, newValue in focusErrorIfNeeded(newValue) }

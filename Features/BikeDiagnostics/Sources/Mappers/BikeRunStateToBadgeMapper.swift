@@ -1,24 +1,25 @@
 import BikeDomain
+import Foundation
 
 public struct BikeRunStateToBadgeMapper: Sendable {
     public init() {}
 
-    public func map(_ runState: BikeRunState) -> String {
+    public func map(_ runState: BikeRunState) -> BikeDiagnosticsBadgeViewData {
         switch runState {
         case .unknown:
-            "Unknown"
+            .init(kind: .unknown, title: BikeDiagnosticsL10n.text(.bikeDiagnosticsStateUnknown))
         case .off:
-            "Off"
+            .init(kind: .off, title: BikeDiagnosticsL10n.text(.bikeDiagnosticsStateOff))
         case .neutral:
-            "Neutral"
+            .init(kind: .neutral, title: BikeDiagnosticsL10n.text(.bikeDiagnosticsStateNeutral))
         case .on:
-            "On"
+            .init(kind: .on, title: BikeDiagnosticsL10n.text(.bikeDiagnosticsStateOn))
         case .charging:
-            "Charging"
+            .init(kind: .charging, title: BikeDiagnosticsL10n.text(.bikeDiagnosticsStateCharging))
         case .crawlForward:
-            "Crawl FWD"
+            .init(kind: .crawlForward, title: BikeDiagnosticsL10n.text(.bikeDiagnosticsStateCrawlForward))
         case .crawlReverse:
-            "Crawl REV"
+            .init(kind: .crawlReverse, title: BikeDiagnosticsL10n.text(.bikeDiagnosticsStateCrawlReverse))
         }
     }
 }

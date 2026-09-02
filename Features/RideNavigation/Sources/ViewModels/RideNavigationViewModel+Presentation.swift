@@ -101,8 +101,8 @@ extension RideNavigationViewModel {
         let guidance = trailGuidance.snapshot.guidance
         if guidance?.routeState == .wrongFork {
             return RideNavigationForkGuidance(
-                instructionText: "WRONG FORK",
-                distanceText: "Return to the highlighted track",
+                instructionText: String(localized: .rideNavigationWrongFork),
+                distanceText: String(localized: .rideNavigationReturnToTrack),
                 systemImage: "arrow.uturn.backward",
                 emphasis: .warning
             )
@@ -112,13 +112,13 @@ extension RideNavigationViewModel {
         let systemImage: String
         switch decision.direction {
         case .left:
-            instruction = "KEEP LEFT"
+            instruction = String(localized: .rideNavigationKeepLeftUppercase)
             systemImage = "arrow.turn.up.left"
         case .right:
-            instruction = "KEEP RIGHT"
+            instruction = String(localized: .rideNavigationKeepRightUppercase)
             systemImage = "arrow.turn.up.right"
         case .straight:
-            instruction = "CONTINUE STRAIGHT"
+            instruction = String(localized: .rideNavigationContinueStraightUppercase)
             systemImage = "arrow.up"
         }
         return RideNavigationForkGuidance(
@@ -138,15 +138,15 @@ extension RideNavigationViewModel {
         if let miniCompletionTitle {
             statusText = miniCompletionTitle
         } else if isRerouting {
-            statusText = "REROUTING"
+            statusText = String(localized: .rideNavigationRerouting)
         } else if guidanceSnapshot.arrivalPrompt != nil {
-            statusText = "END REACHED · TAP"
+            statusText = String(localized: .rideNavigationEndReachedTap)
         } else if guidanceSnapshot.guidance?.routeState == .wrongFork {
-            statusText = "WRONG FORK"
+            statusText = String(localized: .rideNavigationWrongFork)
         } else if activity == .following, didAnnounceOffRoute {
-            statusText = "OFF TRAIL"
+            statusText = String(localized: .rideNavigationOffTrail)
         } else if activity == .paused {
-            statusText = "RECORDING PAUSED"
+            statusText = String(localized: .rideNavigationRecordingPaused)
         } else {
             statusText = nil
         }
@@ -159,8 +159,9 @@ extension RideNavigationViewModel {
             statusText: statusText,
             forkGuidance: presentedForkGuidance,
             isArrivalPending: guidanceSnapshot.arrivalPrompt != nil,
-            accessibilityLabel: statusText.map { "Mini navigation map, \($0)" }
-                ?? "Mini navigation map"
+            accessibilityLabel: statusText.map {
+                String(localized: .rideNavigationMiniMapStatusAccessibility($0))
+            } ?? String(localized: .rideNavigationMiniMapAccessibility)
         )
     }
 
@@ -254,7 +255,7 @@ extension RideNavigationViewModel {
 
     var roadRouteForExport: RideRoute? {
         roadRoute?.exportRoute(
-            name: selectedDestination?.name ?? roadRoute?.name ?? "Route",
+            name: selectedDestination?.name ?? roadRoute?.name ?? String(localized: .rideNavigationRouteName),
             createdAt: now()
         )
     }
@@ -264,7 +265,9 @@ extension RideNavigationViewModel {
     }
 
     var resolvedModeText: String {
-        guard let displayIndex = vehicleSnapshot.telemetry.mode.displayIndex else { return "MODE --" }
+        guard let displayIndex = vehicleSnapshot.telemetry.mode.displayIndex else {
+            return String(localized: .rideNavigationModeUnavailable)
+        }
         let mapIndex = displayIndex - 1
         let name: String?
         if let vin = vehicleSnapshot.profile?.vin {
@@ -272,7 +275,7 @@ extension RideNavigationViewModel {
         } else {
             name = nil
         }
-        return name ?? "MODE \(displayIndex)"
+        return name ?? String(localized: .rideNavigationModeNumber(displayIndex))
     }
 
     enum Constants {

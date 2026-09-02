@@ -31,7 +31,7 @@ struct DashboardRideChrome<Content: View>: View {
             }
             .overlay(alignment: .bottomTrailing) {
                 Button(action: onSettings) {
-                    Label("Settings", systemImage: "gearshape.fill")
+                    Label(.rideDashboardHeaderSettings, systemImage: "gearshape.fill")
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)

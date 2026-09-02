@@ -8,17 +8,30 @@ struct WatchChargingDashboardContent: View {
     var body: some View {
         WatchDashboardContentLayout { batteryRingDiameter in
             VStack(spacing: DesignSpace.small) {
-                Text(state.chargeETA.map { "ETA: \($0)" } ?? "CHARGING")
+                Text(
+                    state.chargeETA.map {
+                        .watchDashboardChargingETA(eta: $0)
+                    } ?? .watchDashboardCharging
+                )
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.tint)
                 WatchBatteryRing(percentage: state.batteryPercent, tint: .cyan)
                     .frame(width: batteryRingDiameter, height: batteryRingDiameter)
                 HStack(spacing: DesignSpace.extraSmall) {
-                    WatchDashboardMetric(title: "POWER", value: state.chargingPower ?? "--")
+                    WatchDashboardMetric(
+                        title: .watchDashboardPower,
+                        value: state.chargingPower ?? "--"
+                    )
                     Divider()
-                    WatchDashboardMetric(title: "CURRENT", value: state.chargingCurrent ?? "--")
+                    WatchDashboardMetric(
+                        title: .watchDashboardCurrent,
+                        value: state.chargingCurrent ?? "--"
+                    )
                 }
-                WatchDashboardMetric(title: "PACK TEMP", value: state.batteryTemperature ?? "--")
+                WatchDashboardMetric(
+                    title: .watchDashboardPackTemperature,
+                    value: state.batteryTemperature ?? "--"
+                )
                 WatchChangeBikeButton(action: onChangeBike)
             }
         }

@@ -30,8 +30,11 @@ public struct NumericPINPad: View {
                 }
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("PIN entry progress")
-            .accessibilityValue("\(enteredDigitCount) of \(digitCount) digits entered")
+            .accessibilityLabel(Text(.designSystemPINEntryProgress))
+            .accessibilityValue(Text(.designSystemPINEntryValue(
+                enteredDigits: enteredDigitCount,
+                requiredDigits: digitCount
+            )))
 
             LazyVGrid(columns: columns, spacing: Constants.keySpacing) {
                 ForEach(1 ... 9, id: \.self) { digit in
@@ -40,10 +43,10 @@ public struct NumericPINPad: View {
                 Color.clear.accessibilityHidden(true)
                 key("0") { append("0") }
                 key(
-                    "Delete",
+                    String(localized: .designSystemDelete),
                     systemImage: "delete.left",
                     isDisabled: pin.isEmpty,
-                    accessibilityHint: "Deletes the last entered digit",
+                    accessibilityHint: String(localized: .designSystemDeleteLastDigitHint),
                     action: deleteLastDigit
                 )
             }
@@ -79,15 +82,15 @@ public struct NumericPINPad: View {
     ) -> some View {
         Button(action: action) {
             Group {
-                if let systemImage { Image(systemName: systemImage) } else { Text(title) }
+                if let systemImage { Image(systemName: systemImage) } else { Text(verbatim: title) }
             }
             .font(.title2.weight(.medium))
             .frame(maxWidth: .infinity, minHeight: Constants.minimumTouchTargetSize)
         }
         .buttonStyle(.bordered)
         .disabled(isDisabled)
-        .accessibilityLabel(title)
-        .accessibilityHint(Text(accessibilityHint ?? ""))
+        .accessibilityLabel(Text(verbatim: title))
+        .accessibilityHint(Text(verbatim: accessibilityHint ?? ""))
     }
 
     private enum Constants {

@@ -109,26 +109,22 @@ struct BikeDiagnosticsTests {
             lastUpdated: Date(timeIntervalSince1970: 0)
         ))
         #expect(await waitUntil {
-            viewModel.viewState.metrics.contains(
-                .init(id: "battery", title: "Battery", value: formattedPercent(91))
-            )
+            viewModel.viewState.metrics.contains {
+                $0.id == "battery" && $0.value == formattedPercent(91)
+            }
         })
 
-        #expect(viewModel.viewState.metrics.contains(
-            .init(id: "battery", title: "Battery", value: formattedPercent(91))
-        ))
-        #expect(viewModel.viewState.metrics.contains(
-            .init(id: "soh", title: "SOH", value: formattedPercent(99))
-        ))
-        #expect(viewModel.viewState.metrics.contains(.init(id: "mode", title: "Mode", value: "3")))
-        #expect(viewModel.viewState.metrics.contains(.init(id: "speed", title: "Speed", value: "42,1 km/h")))
-        #expect(viewModel.viewState.metrics.contains(.init(id: "rpm", title: "Motor RPM", value: "3180")))
+        #expect(viewModel.viewState.metrics.contains { $0.id == "battery" && $0.value == formattedPercent(91) })
+        #expect(viewModel.viewState.metrics.contains { $0.id == "soh" && $0.value == formattedPercent(99) })
+        #expect(viewModel.viewState.metrics.contains { $0.id == "mode" && $0.value == "3" })
+        #expect(viewModel.viewState.metrics.contains { $0.id == "speed" && $0.value == "42,1 km/h" })
+        #expect(viewModel.viewState.metrics.contains { $0.id == "rpm" && $0.value == "3180" })
         #expect(viewModel.viewState.metrics.contains {
-            $0.id == "updated" && $0.title == "Updated" && $0.value != "--"
+            $0.id == "updated" && $0.value != "--"
         })
-        #expect(viewModel.viewState.badges.contains("On"))
-        #expect(viewModel.viewState.badges.contains("Charger"))
-        #expect(viewModel.viewState.badges.contains("Fault"))
+        #expect(viewModel.viewState.badges.contains { $0.kind == .on })
+        #expect(viewModel.viewState.badges.contains { $0.kind == .charger })
+        #expect(viewModel.viewState.badges.contains { $0.kind == .fault })
         #expect(viewModel.viewState.rawFlags.contains(.init(id: "misc", title: "miscBits", value: "0x000C")))
     }
 
@@ -147,7 +143,7 @@ struct BikeDiagnosticsTests {
             !viewModel.viewState.metrics.isEmpty
         })
 
-        #expect(viewModel.viewState.metrics.contains(.init(id: "battery", title: "Battery", value: "--")))
+        #expect(viewModel.viewState.metrics.contains { $0.id == "battery" && $0.value == "--" })
         #expect(viewModel.viewState.rawFlags.contains(.init(id: "info", title: "infoBits", value: "0x0000")))
     }
 
@@ -259,17 +255,21 @@ struct BikeDiagnosticsTests {
         let mapper = ConnectionStateToDisplayMapper()
         let connectionMapper = BikeConnectionToConnectionPanelMapper(stateMapper: mapper)
 
-        #expect(mapper.title(for: .authenticating(peripheralName: "VIN")) == "Authenticating")
-        #expect(mapper.title(for: .authenticated(peripheralName: "VIN")) == "Authenticated")
-        #expect(mapper.title(for: .subscribed(peripheralName: "VIN")) == "Waiting for data")
-        #expect(mapper.title(for: .receivingTelemetry(peripheralName: "VIN")) == "Receiving telemetry")
+        #expect(mapper.emphasis(for: .authenticating(peripheralName: "VIN")) == .progress)
+        #expect(mapper.emphasis(for: .authenticated(peripheralName: "VIN")) == .progress)
+        #expect(mapper.emphasis(for: .subscribed(peripheralName: "VIN")) == .progress)
+        #expect(mapper.emphasis(for: .receivingTelemetry(peripheralName: "VIN")) == .success)
         #expect(mapper.isActive(.receivingTelemetry(peripheralName: "VIN")))
         #expect(!connectionMapper.isVINEditingEnabled(.init(state: .receivingTelemetry(peripheralName: "VIN"))))
         #expect(connectionMapper.isVINEditingEnabled(.init(state: .disconnected(reason: nil))))
 
+        let missingPeripheralDetail = mapper.detail(for: .receivingTelemetry(peripheralName: nil))
+        #expect(!missingPeripheralDetail.hasSuffix(" "))
+        #expect(missingPeripheralDetail.hasSuffix("bike"))
+
         let pairingReset = ConnectionState.pairingResetRequired(message: "Forget and re-pair")
-        #expect(mapper.title(for: pairingReset) == "Pairing reset required")
-        #expect(mapper.detail(for: pairingReset) == "Forget and re-pair")
+        #expect(mapper.emphasis(for: pairingReset) == .warning)
+        #expect(mapper.detail(for: pairingReset) != "Forget and re-pair")
         #expect(!mapper.isActive(pairingReset))
         #expect(!connectionMapper.isPairRetryEnabled(.init(state: pairingReset)))
     }

@@ -53,7 +53,9 @@ public struct DashboardProgressBarMapper: Sendable {
                     configuredRegenerationProgress
                 ),
                 consumptionProgress: .zero,
-                accessibilityLabel: "Regenerating \(powerText) \(power.unit)"
+                accessibilityLabel: rideDashboardLocalized(
+                    .rideDashboardAccessibilityRegenerating(powerText, power.unit)
+                )
             )
         }
 
@@ -68,7 +70,7 @@ public struct DashboardProgressBarMapper: Sendable {
         return .energy(
             regenerationProgress: .zero,
             consumptionProgress: consumptionProgress,
-            accessibilityLabel: "Consuming \(powerText) \(power.unit)"
+            accessibilityLabel: rideDashboardLocalized(.rideDashboardAccessibilityConsuming(powerText, power.unit))
         )
     }
 

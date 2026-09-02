@@ -1,4 +1,5 @@
 import BikeDomain
+import Foundation
 
 extension PowerModeSettingsViewModel {
     func prepareControlIfPossible() {
@@ -33,7 +34,7 @@ extension PowerModeSettingsViewModel {
                     mapIndex: mapIndex,
                     generation: generation,
                     tractionReady: false,
-                    error: "Map controls unavailable: \(error.localizedDescription)"
+                    error: String(localized: .powerModeSettingsBaseControlsUnavailableError)
                 )
             }
         }
@@ -114,7 +115,7 @@ private extension PowerModeSettingsViewModel {
                 mapIndex: mapIndex,
                 generation: generation,
                 tractionReady: false,
-                error: "TC controls unavailable: \(error.localizedDescription)"
+                error: String(localized: .powerModeSettingsTractionControlsUnavailableError)
             )
         }
     }
@@ -138,8 +139,8 @@ private extension PowerModeSettingsViewModel {
             preparedTractionMapIndex = tractionReady ? mapIndex : nil
             if error == nil {
                 controlMessage = tractionReady
-                    ? "All map controls ready"
-                    : "Power and regeneration controls ready"
+                    ? String(localized: .powerModeSettingsAllControlsReady)
+                    : String(localized: .powerModeSettingsBaseControlsReady)
             }
         }
         render()

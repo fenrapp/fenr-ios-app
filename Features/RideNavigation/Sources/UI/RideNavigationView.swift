@@ -8,7 +8,7 @@ public struct RideNavigationView: View {
     private let onMinimize: () -> Void
     @State private var showsImporter = false
     @State private var exportDocument: GPXFileDocument?
-    @State private var exportFilename = "Ride.gpx"
+    @State private var exportFilename = String(localized: .rideNavigationDefaultExportFilename)
     @State private var shareRequest: GPXExportRequest?
     @State private var routeName = ""
     @State private var focusInteractionGeneration = 0
@@ -119,7 +119,8 @@ public struct RideNavigationView: View {
         }
         .onChange(of: viewModel.viewState.screen) {
             if viewModel.viewState.screen == .summary {
-                routeName = viewModel.viewState.completedRouteName ?? "Recorded ride"
+                routeName = viewModel.viewState.completedRouteName
+                    ?? String(localized: .rideNavigationRecordedRidePlaceholder)
             }
         }
         .onChange(of: activeMapSelector) {

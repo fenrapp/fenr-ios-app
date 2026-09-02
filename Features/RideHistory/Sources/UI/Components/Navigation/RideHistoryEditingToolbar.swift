@@ -14,7 +14,7 @@ struct RideHistoryEditingToolbar: ToolbarContent {
         if isVisible {
             if isEditing {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button(allRidesSelected ? "Deselect All" : "Select All") {
+                    Button(allRidesSelected ? .rideHistoryDeselectAll : .rideHistorySelectAll) {
                         selectedRideIDs = allRidesSelected ? [] : availableRideIDs
                     }
                     .disabled(isDeleting)
@@ -73,7 +73,7 @@ struct RideHistoryEditingToolbar: ToolbarContent {
         }
         .tint(DesignColor.critical)
         .disabled(selectedRideIDs.isEmpty || isDeleting)
-        .accessibilityLabel("Delete selected rides")
+        .accessibilityLabel(.rideHistoryDeleteSelectedRides)
     }
 
     private var allRidesSelected: Bool {
@@ -82,7 +82,7 @@ struct RideHistoryEditingToolbar: ToolbarContent {
 
     private var selectionText: String {
         let count = selectedRideIDs.count
-        return count == 1 ? "1 Selected" : "\(count) Selected"
+        return String(localized: .rideHistorySelectedCount(selectionCount: count))
     }
 
     private enum Constants {

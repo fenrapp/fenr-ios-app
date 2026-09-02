@@ -8,17 +8,37 @@ enum DashboardGearMapper {
     ) -> DashboardGearViewData {
         switch runState {
         case .unknown:
-            .init(display: .text("--"), isActive: false, accessibilityLabel: "Gear unavailable")
+            .init(
+                display: .text("--"),
+                isActive: false,
+                accessibilityLabel: rideDashboardLocalized(.rideDashboardGearUnavailableAccessibility)
+            )
         case .off:
-            .init(display: .text("OFF"), isActive: false, accessibilityLabel: "Gear off")
+            .init(
+                display: .text(rideDashboardLocalized(.rideDashboardGearDisplayOff)),
+                isActive: false,
+                accessibilityLabel: rideDashboardLocalized(.rideDashboardGearOffAccessibility)
+            )
         case .neutral, .charging:
-            .init(display: .text("N"), isActive: true, accessibilityLabel: "Gear neutral")
+            .init(
+                display: .text(rideDashboardLocalized(.rideDashboardGearDisplayNeutral)),
+                isActive: true,
+                accessibilityLabel: rideDashboardLocalized(.rideDashboardGearNeutralAccessibility)
+            )
         case .on:
             powerMode(modeIndex: modeIndex, modeName: modeName)
         case .crawlForward:
-            .init(display: .crawlForward, isActive: true, accessibilityLabel: "Crawl forward")
+            .init(
+                display: .crawlForward,
+                isActive: true,
+                accessibilityLabel: rideDashboardLocalized(.rideDashboardGearCrawlForwardAccessibility)
+            )
         case .crawlReverse:
-            .init(display: .crawlReverse, isActive: true, accessibilityLabel: "Crawl reverse")
+            .init(
+                display: .crawlReverse,
+                isActive: true,
+                accessibilityLabel: rideDashboardLocalized(.rideDashboardGearCrawlReverseAccessibility)
+            )
         }
     }
 
@@ -27,7 +47,9 @@ enum DashboardGearMapper {
         return .init(
             display: .text(display),
             isActive: true,
-            accessibilityLabel: display == "--" ? "Power mode unavailable" : "Power mode \(display)"
+            accessibilityLabel: display == "--"
+                ? rideDashboardLocalized(.rideDashboardPowerModeUnavailableAccessibility)
+                : rideDashboardLocalized(.rideDashboardAccessibilityPowerMode(display))
         )
     }
 }

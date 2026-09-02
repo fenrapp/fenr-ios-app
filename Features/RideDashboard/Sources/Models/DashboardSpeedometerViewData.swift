@@ -10,12 +10,13 @@ public struct DashboardSpeedometerViewData: Equatable, Sendable {
         unit: String = "km/h",
         progress: Double = .zero,
         sourceIndicator: DashboardSpeedSourceIndicatorViewData? = nil,
-        accessibilityLabel: String = "Speed 0 km/h"
+        accessibilityLabel: String? = nil
     ) {
         self.valueText = valueText
         self.unit = unit
         self.progress = progress
         self.sourceIndicator = sourceIndicator
         self.accessibilityLabel = accessibilityLabel
+            ?? rideDashboardLocalized(.rideDashboardSpeedDefaultAccessibility)
     }
 }

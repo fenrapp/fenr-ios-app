@@ -47,7 +47,7 @@ final class RideNavigationViewModelState {
     var isFindingTrailExit = false
     var didAnnounceOffRoute = false
     var lastRoadRerouteAt: Date?
-    var summaryTitle = "Ride complete"
+    var summaryTitle = String(localized: .rideNavigationSummaryRideComplete)
     var summaryDetail = ""
     var appSettings = AppSettings()
     var screen = RideNavigationViewState.Screen.home

@@ -11,7 +11,7 @@ struct DashboardSystemHealthPager: View {
             pages: pages,
             selection: $selection,
             reduceMotion: reduceMotion,
-            accessibilityLabel: "System health pages",
+            accessibilityLabel: rideDashboardLocalized(.rideDashboardSystemHealthPagesAccessibility),
             accessibilityValue: \.accessibilityLabel,
             indicatorVerticalOffset: Constants.indicatorVerticalOffset
         ) { page in

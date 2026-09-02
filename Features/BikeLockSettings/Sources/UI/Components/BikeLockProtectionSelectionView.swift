@@ -13,7 +13,9 @@ struct BikeLockProtectionSelectionView: View {
             if let errorMessage {
                 Text(errorMessage)
                     .foregroundStyle(DesignColor.critical)
-                    .accessibilityLabel("Error: \(errorMessage)")
+                    .accessibilityLabel(
+                        Text(.bikeLockSettingsErrorAccessibility(errorMessage))
+                    )
                     .accessibilityFocused($isErrorFocused)
             }
 
@@ -21,7 +23,7 @@ struct BikeLockProtectionSelectionView: View {
                 if option.requiresPINSetup {
                     NavigationLink {
                         BikeLockNewPINView(
-                            title: "Create PIN",
+                            title: .bikeLockSettingsCreatePINTitle,
                             errorMessage: errorMessage
                         ) { pin, confirmation in
                             onSaveNewPIN(option.id, pin, confirmation)
@@ -35,7 +37,7 @@ struct BikeLockProtectionSelectionView: View {
                 }
             }
         }
-        .navigationTitle("Unlock Protection")
+        .navigationTitle(Text(.bikeLockSettingsUnlockProtectionTitle))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { focusErrorIfNeeded(errorMessage) }
         .onChange(of: errorMessage) { _, newValue in focusErrorIfNeeded(newValue) }

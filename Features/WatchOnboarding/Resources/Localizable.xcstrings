@@ -1,0 +1,96 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "watchOnboardingAllowBluetooth" : {
+      "comment" : "Error shown when Bluetooth permission is denied.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Allow Bluetooth access to continue." } } }
+    },
+    "watchOnboardingAuthenticating" : {
+      "comment" : "Status while authenticating with the bike.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Authenticating" } } }
+    },
+    "watchOnboardingConnecting" : {
+      "comment" : "Generic connection status.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting" } } }
+    },
+    "watchOnboardingConnectingToBike" : {
+      "comment" : "Status while connecting to the selected bike. The value is a VIN.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting to %1$(vin)@" } } }
+    },
+    "watchOnboardingDebug" : {
+      "comment" : "Debug event section title.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Debug" } } }
+    },
+    "watchOnboardingDiscoveringBike" : {
+      "comment" : "Status while discovering bike services.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Discovering bike" } } }
+    },
+    "watchOnboardingFindYourBike" : {
+      "comment" : "Onboarding screen heading.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Find Your Bike" } } }
+    },
+    "watchOnboardingNearbyBikes" : {
+      "comment" : "Nearby bike list section title.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Nearby Bikes" } } }
+    },
+    "watchOnboardingPairAgain" : {
+      "comment" : "Status when the bike must be paired again.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Forget and re-pair the bike on iPhone" } } }
+    },
+    "watchOnboardingReceivingData" : {
+      "comment" : "Status after telemetry begins arriving.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Receiving data" } } }
+    },
+    "watchOnboardingReconnecting" : {
+      "comment" : "Status during reconnection.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Reconnecting" } } }
+    },
+    "watchOnboardingScanAgain" : {
+      "comment" : "Button that restarts bike discovery.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Scan Again" } } }
+    },
+    "watchOnboardingSearching" : {
+      "comment" : "Status while searching for nearby bikes.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Searching for nearby bikes" } } }
+    },
+    "watchOnboardingSignal" : {
+      "comment" : "Bluetooth signal strength for a discovered bike.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Signal %1$(rssi)lld dBm" } } }
+    },
+    "watchOnboardingStartingTelemetry" : {
+      "comment" : "Status while starting the telemetry subscription.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Starting telemetry" } } }
+    },
+    "watchOnboardingTryAgain" : {
+      "comment" : "Button that retries bike discovery after an error.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Try Again" } } }
+    },
+    "watchOnboardingTurnOnBluetooth" : {
+      "comment" : "Error shown when Bluetooth is powered off.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Turn on Bluetooth to continue." } } }
+    },
+    "watchOnboardingUnableToConnect" : {
+      "comment" : "Error shown after a connection attempt fails.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unable to connect. Try again." } } }
+    }
+  },
+  "version" : "1.0"
+}

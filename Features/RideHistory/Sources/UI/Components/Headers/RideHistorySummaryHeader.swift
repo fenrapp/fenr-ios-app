@@ -13,16 +13,16 @@ struct RideHistorySummaryHeader: View {
 
             if dynamicTypeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: Constants.iconSpacing) {
-                    summaryValue(summary.distanceText, label: "Distance")
+                    summaryValue(summary.distanceText, label: .rideHistoryMetricDistance)
                     Divider()
-                    summaryValue(summary.durationText, label: "Ride time")
+                    summaryValue(summary.durationText, label: .rideHistoryMetricRideTime)
                 }
             } else {
                 HStack(spacing: .zero) {
-                    summaryValue(summary.distanceText, label: "Distance")
+                    summaryValue(summary.distanceText, label: .rideHistoryMetricDistance)
                     Divider()
                         .padding(.horizontal, Constants.dividerPadding)
-                    summaryValue(summary.durationText, label: "Ride time")
+                    summaryValue(summary.durationText, label: .rideHistoryMetricRideTime)
                 }
             }
         }
@@ -56,14 +56,14 @@ struct RideHistorySummaryHeader: View {
         VStack(alignment: .leading, spacing: Constants.textSpacing) {
             Text(summary.rideCountText)
                 .font(.title2.weight(.bold))
-            Text("Saved ride history")
+            Text(.rideHistorySavedRideHistory)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
         .fixedSize(horizontal: false, vertical: true)
     }
 
-    private func summaryValue(_ value: String, label: String) -> some View {
+    private func summaryValue(_ value: String, label: LocalizedStringResource) -> some View {
         VStack(alignment: .leading, spacing: Constants.textSpacing) {
             Text(value)
                 .font(.system(.headline, design: .rounded).weight(.semibold))

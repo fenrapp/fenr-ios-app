@@ -80,24 +80,24 @@ struct RideNavigationActivityDashboard: View {
 
     @ViewBuilder
     private var standardMetrics: some View {
-        RideNavigationMetric(value: state.speedText, unit: state.speedUnit, label: "Speed")
+        RideNavigationMetric(value: state.speedText, unit: state.speedUnit, label: .rideNavigationMetricSpeed)
         metricDivider
-        RideNavigationMetric(value: state.modeText, unit: "", label: "Power")
+        RideNavigationMetric(value: state.modeText, unit: "", label: .rideNavigationMetricPower)
         metricDivider
-        RideNavigationMetric(value: state.batteryText, unit: "", label: "Bike")
+        RideNavigationMetric(value: state.batteryText, unit: "", label: .rideNavigationMetricBike)
         metricDivider
-        RideNavigationMetric(value: state.elapsedText, unit: "", label: "Time")
+        RideNavigationMetric(value: state.elapsedText, unit: "", label: .rideNavigationMetricTime)
     }
 
     private var focusMetrics: some View {
         Grid(horizontalSpacing: DesignSpace.medium, verticalSpacing: DesignSpace.small) {
             GridRow {
-                RideNavigationMetric(value: state.speedText, unit: state.speedUnit, label: "Speed")
-                RideNavigationMetric(value: state.modeText, unit: "", label: "Power")
+                RideNavigationMetric(value: state.speedText, unit: state.speedUnit, label: .rideNavigationMetricSpeed)
+                RideNavigationMetric(value: state.modeText, unit: "", label: .rideNavigationMetricPower)
             }
             GridRow {
-                RideNavigationMetric(value: state.batteryText, unit: "", label: "Bike")
-                RideNavigationMetric(value: state.elapsedText, unit: "", label: "Time")
+                RideNavigationMetric(value: state.batteryText, unit: "", label: .rideNavigationMetricBike)
+                RideNavigationMetric(value: state.elapsedText, unit: "", label: .rideNavigationMetricTime)
             }
         }
         .frame(maxWidth: Constants.focusMetricsWidth)
@@ -112,7 +112,7 @@ struct RideNavigationActivityDashboard: View {
         switch state.activity {
         case .preview:
             if state.canReverseRoute {
-                actionButton("Reverse", systemImage: "arrow.left.arrow.right", action: onReverse)
+                actionButton(.rideNavigationReverse, systemImage: "arrow.left.arrow.right", action: onReverse)
                     .rideNavigationSecondaryButton()
             }
             actionButton(
@@ -129,7 +129,7 @@ struct RideNavigationActivityDashboard: View {
         case .recording, .paused:
             minimizeButton
             actionButton(
-                state.activity == .paused ? "Resume" : "Pause",
+                state.activity == .paused ? .rideNavigationResume : .rideNavigationPause,
                 systemImage: state.activity == .paused ? "play.fill" : "pause.fill",
                 action: onTogglePause
             )
@@ -139,7 +139,7 @@ struct RideNavigationActivityDashboard: View {
             minimizeButton
             if state.canFindTrailExit {
                 actionButton(
-                    state.isFindingTrailExit ? "Finding Exit..." : "Get Me Out",
+                    state.isFindingTrailExit ? .rideNavigationFindingExit : .rideNavigationGetMeOut,
                     systemImage: "figure.hiking",
                     action: onRequestTrailExit
                 )
@@ -148,7 +148,7 @@ struct RideNavigationActivityDashboard: View {
             }
             if state.canResumeGPX {
                 actionButton(
-                    "Resume GPX",
+                    .rideNavigationResumeGPX,
                     systemImage: "point.topleft.down.to.point.bottomright.curvepath",
                     action: onResumeGPX
                 )
@@ -158,10 +158,10 @@ struct RideNavigationActivityDashboard: View {
         }
     }
 
-    private var previewActionTitle: String {
-        if state.isPreparingTrail || state.routePersistence.isSaving { return "Preparing..." }
-        if case .failed = state.routePersistence { return "Retry Save" }
-        return "Start"
+    private var previewActionTitle: LocalizedStringResource {
+        if state.isPreparingTrail || state.routePersistence.isSaving { return .rideNavigationPreparing }
+        if case .failed = state.routePersistence { return .rideNavigationRetrySave }
+        return .rideNavigationStart
     }
 
     private var previewActionSystemImage: String {
@@ -171,25 +171,25 @@ struct RideNavigationActivityDashboard: View {
     }
 
     private var finishButton: some View {
-        actionButton("Finish", systemImage: "stop.fill", action: onRequestFinish)
+        actionButton(.rideNavigationFinish, systemImage: "stop.fill", action: onRequestFinish)
             .tint(isFocus ? Color.white.opacity(Constants.focusActionOpacity) : DesignColor.critical)
             .rideNavigationPrimaryButton()
     }
 
     private var minimizeButton: some View {
         actionButton(
-            "Mini",
+            .rideNavigationMini,
             systemImage: "arrow.down.right.and.arrow.up.left",
             action: onMinimize
         )
         .rideNavigationSecondaryButton()
         .disabled(!state.canMinimize)
-        .accessibilityLabel("Minimize navigation")
+        .accessibilityLabel(.rideNavigationMinimizeAccessibility)
         .accessibilityIdentifier("rideNavigation.minimize")
     }
 
     private func actionButton(
-        _ title: String,
+        _ title: LocalizedStringResource,
         systemImage: String,
         action: @escaping () -> Void
     ) -> some View {

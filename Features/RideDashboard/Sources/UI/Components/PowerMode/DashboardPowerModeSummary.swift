@@ -44,13 +44,13 @@ struct DashboardPowerModeSummary: View {
             metric(
                 value: state.horsepower,
                 unit: "HP",
-                accessibilityLabel: "Power"
+                accessibilityLabel: rideDashboardLocalized(.rideDashboardPowerModePowerAccessibility)
             )
             separator
             metric(
                 value: state.regenerativeBraking,
                 unit: "%",
-                accessibilityLabel: "Regenerative braking"
+                accessibilityLabel: rideDashboardLocalized(.rideDashboardPowerModeRegenAccessibility)
             )
 
             if state.showsTractionControl {
@@ -85,7 +85,7 @@ struct DashboardPowerModeSummary: View {
         metric(
             value: state.horsepower,
             unit: "HP",
-            accessibilityLabel: "Power"
+            accessibilityLabel: rideDashboardLocalized(.rideDashboardPowerModePowerAccessibility)
         )
     }
 
@@ -93,7 +93,7 @@ struct DashboardPowerModeSummary: View {
         metric(
             value: state.regenerativeBraking,
             unit: "%",
-            accessibilityLabel: "Regenerative braking"
+            accessibilityLabel: rideDashboardLocalized(.rideDashboardPowerModeRegenAccessibility)
         )
     }
 
@@ -115,7 +115,7 @@ struct DashboardPowerModeSummary: View {
         .fixedSize(horizontal: true, vertical: false)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
-        .accessibilityValue("\(value) \(unit)")
+        .accessibilityValue(Text(verbatim: "\(value) \(unit)"))
     }
 
     private var tractionControlMetric: some View {
@@ -124,15 +124,17 @@ struct DashboardPowerModeSummary: View {
                 .font(.system(size: Constants.valueFontSize, weight: .semibold, design: .rounded))
                 .foregroundStyle(DesignColor.primaryText)
                 .monospacedDigit()
-            Text("%")
+            Text(verbatim: "%")
                 .font(.system(size: Constants.unitFontSize, weight: .medium))
                 .foregroundStyle(DesignColor.secondaryText)
         }
         .lineLimit(1)
         .fixedSize(horizontal: true, vertical: false)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Power traction control")
-        .accessibilityValue("\(state.powerTraction) percent")
+        .accessibilityLabel(.rideDashboardPowerModeTractionAccessibility)
+        .accessibilityValue(rideDashboardLocalized(
+            .rideDashboardPowerModeTractionValueAccessibility(state.powerTraction)
+        ))
     }
 
     private var separator: some View {

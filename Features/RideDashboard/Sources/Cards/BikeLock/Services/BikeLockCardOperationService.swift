@@ -5,7 +5,7 @@ public struct BikeLockCardOperationService: Sendable {
     enum AuthenticationResult: Sendable {
         case unlocked(BikeLockControlSnapshot)
         case requiresPIN
-        case writeFailed(String)
+        case writeFailed
     }
 
     private let prepareControl: PrepareBikeLockControlUseCase
@@ -62,7 +62,9 @@ public struct BikeLockCardOperationService: Sendable {
     func authenticateAndUnlock(
         authorizeWrite: @MainActor @Sendable () throws -> Void
     ) async throws -> AuthenticationResult {
-        guard try await authenticator.authenticate(reason: "Unlock your motorcycle") else {
+        guard try await authenticator.authenticate(
+            reason: rideDashboardLocalized(.rideDashboardBikeLockAuthenticationReason)
+        ) else {
             return .requiresPIN
         }
         do {
@@ -72,7 +74,7 @@ public struct BikeLockCardOperationService: Sendable {
         } catch is CancellationError {
             throw CancellationError()
         } catch {
-            return .writeFailed(error.localizedDescription)
+            return .writeFailed
         }
     }
 

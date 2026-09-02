@@ -14,7 +14,9 @@ struct RideNavigationMapOrientationMenu: View {
         }
         .buttonStyle(.plain)
         .rideNavigationGlassControl()
-        .accessibilityLabel("Map orientation, \(isHeadingUp ? "Heading Up" : "North Up")")
+        .accessibilityLabel(String(localized: .rideNavigationMapOrientationAccessibility(
+            String(localized: isHeadingUp ? .rideNavigationHeadingUp : .rideNavigationNorthUp)
+        )))
     }
 }
 
@@ -24,7 +26,7 @@ struct RideNavigationMapOrientationPicker: View {
     let onSelect: (Bool) -> Void
 
     private func orientationButton(
-        title: String,
+        title: LocalizedStringResource,
         systemImage: String,
         isSelected: Bool,
         value: Bool
@@ -55,16 +57,16 @@ struct RideNavigationMapOrientationPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.rowSpacing) {
-            Text("Map Orientation")
+            Text(.rideNavigationMapOrientation)
                 .font(.headline)
             orientationButton(
-                title: "Heading Up",
+                title: .rideNavigationHeadingUp,
                 systemImage: "location.north.fill",
                 isSelected: isHeadingUp,
                 value: true
             )
             orientationButton(
-                title: "North Up",
+                title: .rideNavigationNorthUp,
                 systemImage: "location.north.circle",
                 isSelected: !isHeadingUp,
                 value: false

@@ -27,13 +27,13 @@ struct DashboardBatteryPanel: View {
                     estimatedRangeIndicator(estimatedRange)
                 }
                 .buttonStyle(.plain)
-                .accessibilityHint("Shows how the estimate is calculated")
+                .accessibilityHint(.rideDashboardBatteryRangeHint)
             } else {
                 percentageIndicator
             }
         }
-        .alert("Estimated range", isPresented: $showsRangeExplanation) {
-            Button("OK", role: .cancel) {}
+        .alert(rideDashboardLocalized(.rideDashboardBatteryRangeAlertTitle), isPresented: $showsRangeExplanation) {
+            Button(.rideDashboardCommonOk, role: .cancel) {}
         } message: {
             Text(Constants.rangeExplanation)
         }
@@ -128,8 +128,6 @@ struct DashboardBatteryPanel: View {
         static let rangeValueSpacing: CGFloat = 2
         static let contentHorizontalPadding: CGFloat = 10
         static let minimumTextScale: CGFloat = 0.72
-        static let rangeExplanation = "Calculated from the remaining battery energy, recent consumption, "
-            + "and eligible saved trips for this bike. Riding style, terrain, temperature, and conditions "
-            + "can change the actual range."
+        static let rangeExplanation = rideDashboardLocalized(.rideDashboardBatteryRangeExplanation)
     }
 }

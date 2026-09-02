@@ -84,6 +84,20 @@ nesting:
 reporter: xcode
 
 custom_rules:
+  unlocalized_user_facing_literal:
+    included: '.*(?:Sources|DebugSources)/.*\.swift'
+    excluded: ".*/(?:Tests|Previews)/.*"
+    name: "Unlocalized User-Facing Literal"
+    regex: '(?m)(?:Text|Button|Label|Section|Picker|Toggle|Menu|TextField|SecureField|navigationTitle|navigationSubtitle|accessibilityLabel|accessibilityHint|accessibilityValue|alert|confirmationDialog|chartXAxisLabel|chartYAxisLabel)\(\s*"'
+    message: "Use a generated LocalizedStringResource symbol for user-facing copy, or Text(verbatim:) for dynamic/technical content."
+    severity: error
+  raw_localization_key:
+    included: '.*(?:Sources|DebugSources)/.*\.swift'
+    excluded: ".*/Tests/.*"
+    name: "Raw Localization Key"
+    regex: 'String\(localized:\s*"'
+    message: "Use a generated String Catalog symbol instead of a raw localization key."
+    severity: error
   production_file_length:
     included: ".*\\.swift"
     excluded: ".*/Tests/.*"

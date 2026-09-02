@@ -47,7 +47,7 @@ struct DashboardTripMetricRow<Accessory: View>: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(label)
-        .accessibilityValue("\(valueText) \(unit)")
+        .accessibilityValue(Text(verbatim: "\(valueText) \(unit)"))
     }
 }
 

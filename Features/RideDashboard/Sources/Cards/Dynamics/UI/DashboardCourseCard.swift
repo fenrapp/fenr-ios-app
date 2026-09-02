@@ -9,7 +9,7 @@ struct DashboardCourseCard: View {
         DashboardSquareCardSurface {
             VStack(spacing: Constants.spacing) {
                 HStack(spacing: DesignSpace.extraSmall) {
-                    Text("COURSE")
+                    Text(.rideDashboardDynamicsCourseTitle)
                         .font(.caption2.weight(.bold))
                         .foregroundStyle(DesignColor.informational)
                     Spacer()
@@ -61,16 +61,20 @@ struct DashboardCourseCard: View {
 
     private var accessibilityText: String {
         var components = [
-            "Course \(state.cardinalDirectionText)",
-            state.headingText,
-            "source \(state.headingSourceText)"
+            rideDashboardLocalized(.rideDashboardDynamicsCourseAccessibility(
+                state.cardinalDirectionText,
+                state.headingText,
+                state.headingSourceText
+            ))
         ]
         if let altitude = state.altitudeText {
-            components.append("altitude \(altitude)")
+            components.append(rideDashboardLocalized(.rideDashboardDynamicsAltitudeAccessibility(altitude)))
         }
         if let latitude = state.latitudeText,
            let longitude = state.longitudeText {
-            components.append("coordinates \(latitude), \(longitude)")
+            components.append(rideDashboardLocalized(
+                .rideDashboardDynamicsCoordinatesAccessibility(latitude, longitude)
+            ))
         }
         return components.joined(separator: ", ")
     }

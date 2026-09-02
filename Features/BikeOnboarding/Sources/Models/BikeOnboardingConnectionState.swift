@@ -16,40 +16,41 @@ public enum BikeOnboardingConnectionState: Equatable, Sendable {
 
     public var title: String {
         switch self {
-        case .inProgress(.finding): "Finding your bike."
-        case .inProgress(.securing): "Securing the connection."
-        case .inProgress(.live): "Waiting for telemetry."
-        case .timedOut: "We couldn't reach your bike."
-        case .authenticationFailed: "Pairing wasn't accepted."
-        case .pairingResetRequired: "Reset the saved pairing."
-        case .disconnected: "Connection was interrupted."
+        case .inProgress(.finding): BikeOnboardingL10n.text(.bikeOnboardingConnectionFindingTitle)
+        case .inProgress(.securing): BikeOnboardingL10n.text(.bikeOnboardingConnectionSecuringTitle)
+        case .inProgress(.live): BikeOnboardingL10n.text(.bikeOnboardingConnectionLiveTitle)
+        case .timedOut: BikeOnboardingL10n.text(.bikeOnboardingConnectionTimedOutTitle)
+        case .authenticationFailed: BikeOnboardingL10n.text(.bikeOnboardingConnectionAuthenticationFailedTitle)
+        case .pairingResetRequired: BikeOnboardingL10n.text(.bikeOnboardingConnectionPairingResetTitle)
+        case .disconnected: BikeOnboardingL10n.text(.bikeOnboardingConnectionDisconnectedTitle)
         }
     }
 
     public var detail: String {
         switch self {
         case .inProgress(.finding):
-            "Keep your bike on and nearby."
+            BikeOnboardingL10n.text(.bikeOnboardingConnectionFindingDetail)
         case .inProgress(.securing):
-            "Confirm the iOS pairing request if it appears. Your code is already copied."
+            BikeOnboardingL10n.text(.bikeOnboardingConnectionSecuringDetail)
         case .inProgress(.live):
-            "FENR will finish setup after the first live update."
+            BikeOnboardingL10n.text(.bikeOnboardingConnectionLiveDetail)
         case .timedOut, .disconnected:
-            "Keep the bike on and nearby, then try again."
+            BikeOnboardingL10n.text(.bikeOnboardingConnectionRetryDetail)
         case .authenticationFailed:
-            "Confirm the six-digit code in the iOS prompt, then try again."
+            BikeOnboardingL10n.text(.bikeOnboardingConnectionAuthenticationFailedDetail)
         case .pairingResetRequired:
-            "In Settings > Bluetooth, forget this bike. Then return to FENR and pair again."
+            BikeOnboardingL10n.text(.bikeOnboardingConnectionPairingResetDetail)
         }
     }
 
     public var primaryActionTitle: String? {
         switch self {
         case .inProgress: nil
-        case .timedOut: "Try Again"
-        case .authenticationFailed: "Pair Again"
-        case .pairingResetRequired: "Try Pairing Again"
-        case .disconnected: "Reconnect"
+        case .timedOut: BikeOnboardingL10n.text(.bikeOnboardingActionTryAgain)
+        case .authenticationFailed: BikeOnboardingL10n.text(.bikeOnboardingActionPairAgain)
+        case .pairingResetRequired: BikeOnboardingL10n.text(.bikeOnboardingActionTryPairingAgain)
+        case .disconnected: BikeOnboardingL10n.text(.bikeOnboardingActionReconnect)
         }
     }
 }
+import Foundation

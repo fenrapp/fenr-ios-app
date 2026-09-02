@@ -49,7 +49,7 @@ public struct AppSettingsView: View {
 
             accessory()
         }
-        .navigationTitle("Settings")
+        .navigationTitle(Text(.appSettingsTitle))
         .navigationBarTitleDisplayMode(.inline)
         .task { viewModel.start() }
         .onDisappear { viewModel.stop() }
@@ -71,11 +71,11 @@ public struct AppSettingsView: View {
 
     #if os(iOS)
     private var dashboardSection: some View {
-        Section("Dashboard") {
+        Section {
             SettingsNavigationRow(
                 icon: "speedometer",
                 iconTint: .blue,
-                title: "Ride Display",
+                title: .appSettingsRideDisplayTitle,
                 detail: viewModel.viewState.rideDisplay.detail,
                 accessibilityIdentifier: "settings.rideDisplay",
                 action: onOpenRideDisplay
@@ -83,20 +83,22 @@ public struct AppSettingsView: View {
             SettingsNavigationRow(
                 icon: "rectangle.stack.fill",
                 iconTint: .indigo,
-                title: "Dashboard Cards",
+                title: .appSettingsDashboardCardsTitle,
                 detail: viewModel.viewState.dashboardCards.detail,
                 accessibilityIdentifier: "settings.dashboardCards",
                 action: onOpenDashboardCards
             )
+        } header: {
+            Text(.appSettingsDashboardSection)
         }
     }
 
     private var bikeSection: some View {
-        Section("Bike") {
+        Section {
             SettingsNavigationRow(
                 icon: "slider.horizontal.3",
                 iconTint: .orange,
-                title: "Power Modes",
+                title: .appSettingsPowerModesTitle,
                 detail: viewModel.viewState.powerModes.detail,
                 accessibilityIdentifier: "settings.powerModes",
                 action: onOpenPowerModes
@@ -104,7 +106,7 @@ public struct AppSettingsView: View {
             SettingsNavigationRow(
                 icon: "motorcycle",
                 iconTint: .purple,
-                title: "Bike Model",
+                title: .appSettingsBikeModelTitle,
                 detail: viewModel.viewState.powerTier.navigationDetail,
                 accessibilityIdentifier: "settings.bikeModel",
                 action: onOpenBikeModel
@@ -112,76 +114,86 @@ public struct AppSettingsView: View {
             SettingsNavigationRow(
                 icon: "lock.fill",
                 iconTint: .green,
-                title: "Bike Lock",
-                detail: bikeLockModeTitle ?? "Unavailable",
+                title: .appSettingsBikeLockTitle,
+                verbatimDetail: bikeLockModeTitle ?? String(localized: .appSettingsUnavailable),
                 accessibilityIdentifier: "settings.bikeLock",
                 action: onOpenBikeLock
             )
             SettingsPickerRow(
                 icon: "battery.75percent",
                 iconTint: .teal,
-                title: "Battery Pack",
+                title: .appSettingsBatteryPackTitle,
                 selection: batteryCapacityBinding,
                 options: viewModel.viewState.batteryCapacity.options
             )
+        } header: {
+            Text(.appSettingsBikeSection)
         }
     }
 
     private var appSection: some View {
-        Section("App") {
+        Section {
             SettingsPickerRow(
                 icon: "ruler",
                 iconTint: .gray,
-                title: "Measurement Units",
+                title: .appSettingsMeasurementUnitsTitle,
                 selection: measurementSystemBinding,
                 options: viewModel.viewState.measurementSystem.options
             )
+        } header: {
+            Text(.appSettingsAppSection)
         }
     }
 
     private var dataSection: some View {
-        Section("Data & Diagnostics") {
+        Section {
             SettingsNavigationRow(
                 icon: "clock.arrow.circlepath",
                 iconTint: .cyan,
-                title: "Ride History",
-                detail: "Saved rides",
+                title: .appSettingsRideHistoryTitle,
+                detail: .appSettingsRideHistoryDetail,
                 accessibilityIdentifier: "settings.rideHistory",
                 action: onOpenRideHistory
             )
             SettingsNavigationRow(
                 icon: "waveform.path.ecg",
                 iconTint: .red,
-                title: "Diagnostics",
-                detail: "Telemetry and health",
+                title: .appSettingsDiagnosticsTitle,
+                detail: .appSettingsDiagnosticsDetail,
                 accessibilityIdentifier: "settings.diagnostics",
                 action: onOpenTelemetry
             )
+        } header: {
+            Text(.appSettingsDataDiagnosticsSection)
         }
     }
     #else
     private var watchSettings: some View {
         Group {
-            Section("Units") {
-                Picker("Measurement system", selection: measurementSystemBinding) {
+            Section {
+                Picker(.appSettingsMeasurementSystemPickerTitle, selection: measurementSystemBinding) {
                     ForEach(viewModel.viewState.measurementSystem.options) { option in
                         Text(option.title).tag(option.id)
                     }
                 }
                 .pickerStyle(.navigationLink)
+            } header: {
+                Text(.appSettingsUnitsSection)
             }
 
-            Section("Battery") {
-                Picker("Pack capacity", selection: batteryCapacityBinding) {
+            Section {
+                Picker(.appSettingsPackCapacityPickerTitle, selection: batteryCapacityBinding) {
                     ForEach(viewModel.viewState.batteryCapacity.options) { option in
                         Text(option.title).tag(option.id)
                     }
                 }
                 .pickerStyle(.navigationLink)
 
-                Text("Used to estimate the remaining charging time.")
+                Text(.appSettingsPackCapacityFooter)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+            } header: {
+                Text(.appSettingsBatterySection)
             }
         }
     }

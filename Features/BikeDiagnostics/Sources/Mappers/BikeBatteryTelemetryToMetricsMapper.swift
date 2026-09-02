@@ -16,55 +16,60 @@ public struct BikeBatteryTelemetryToMetricsMapper {
     }
 
     public func map(_ telemetry: BikeBatteryTelemetry) -> [BikeDiagnosticsMetricViewData] {
+        primaryMetrics(telemetry)
+            + bmsMetrics(telemetry.positiveBMS, polarity: .positive)
+            + bmsMetrics(telemetry.negativeBMS, polarity: .negative)
+            + updateMetrics(telemetry)
+    }
+
+    private func primaryMetrics(_ telemetry: BikeBatteryTelemetry) -> [BikeDiagnosticsMetricViewData] {
         [
-            metric("batterySoc", "SOC", percent(telemetry.stateOfCharge.percent)),
-            metric("batterySoh", "SOH", percent(telemetry.stateOfHealth.percent)),
+            metric(
+                "batterySoc",
+                BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricSoc),
+                percent(telemetry.stateOfCharge.percent)
+            ),
+            metric(
+                "batterySoh",
+                BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricSoh),
+                percent(telemetry.stateOfHealth.percent)
+            ),
             metric(
                 "batteryDcBus",
-                "Battery DC bus",
+                BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricBatteryDcBus),
                 voltage(telemetry.dcBusVolts, raw: telemetry.dcBusRaw)
             ),
             metric(
                 "batteryCurrent",
-                "Battery current candidate",
+                BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricBatteryCurrentCandidate),
                 current(telemetry.currentCandidateAmperes, raw: telemetry.currentRaw)
+            )
+        ]
+    }
+
+    private func bmsMetrics(
+        _ telemetry: BikeBMSSignalsTelemetry?,
+        polarity: BMSPolarity
+    ) -> [BikeDiagnosticsMetricViewData] {
+        [
+            bmsVoltageCandidateMetric(polarity.voltageID, polarity.voltageTitle, telemetry),
+            bmsMetric(polarity.temperatureID, polarity.temperatureTitle, telemetry, kind: .temperature),
+            bmsMetric(polarity.humidityID, polarity.humidityTitle, telemetry, kind: .humidity)
+        ]
+    }
+
+    private func updateMetrics(_ telemetry: BikeBatteryTelemetry) -> [BikeDiagnosticsMetricViewData] {
+        [
+            metric(
+                "batteryStateUpdated",
+                BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricBatteryStateUpdated),
+                date(telemetry.stateUpdatedAt)
             ),
-            bmsVoltageCandidateMetric(
-                "positiveVoltageCandidate",
-                "Positive BMS voltage candidate",
-                telemetry.positiveBMS
-            ),
-            bmsMetric(
-                "positiveTemp",
-                "Positive BMS temperature candidate",
-                telemetry.positiveBMS,
-                kind: .temperature
-            ),
-            bmsMetric(
-                "positiveHumidity",
-                "Positive BMS humidity candidate",
-                telemetry.positiveBMS,
-                kind: .humidity
-            ),
-            bmsVoltageCandidateMetric(
-                "negativeVoltageCandidate",
-                "Negative BMS voltage candidate",
-                telemetry.negativeBMS
-            ),
-            bmsMetric(
-                "negativeTemp",
-                "Negative BMS temperature candidate",
-                telemetry.negativeBMS,
-                kind: .temperature
-            ),
-            bmsMetric(
-                "negativeHumidity",
-                "Negative BMS humidity candidate",
-                telemetry.negativeBMS,
-                kind: .humidity
-            ),
-            metric("batteryStateUpdated", "Battery state updated", date(telemetry.stateUpdatedAt)),
-            metric("batterySignalsUpdated", "Battery signals updated", date(telemetry.signalsUpdatedAt))
+            metric(
+                "batterySignalsUpdated",
+                BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricBatterySignalsUpdated),
+                date(telemetry.signalsUpdatedAt)
+            )
         ]
     }
 
@@ -128,6 +133,36 @@ public struct BikeBatteryTelemetryToMetricsMapper {
                 .init(value: telemetry.temperatureCelsius, raw: telemetry.temperatureRaw, unit: "C")
             case .humidity:
                 .init(value: telemetry.humidityPercent, raw: telemetry.humidityRaw, unit: "%")
+            }
+        }
+    }
+
+    private enum BMSPolarity {
+        case positive
+        case negative
+
+        var voltageID: String { self == .positive ? "positiveVoltageCandidate" : "negativeVoltageCandidate" }
+        var temperatureID: String { self == .positive ? "positiveTemp" : "negativeTemp" }
+        var humidityID: String { self == .positive ? "positiveHumidity" : "negativeHumidity" }
+
+        var voltageTitle: String {
+            switch self {
+            case .positive: BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricPositiveBmsVoltage)
+            case .negative: BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricNegativeBmsVoltage)
+            }
+        }
+
+        var temperatureTitle: String {
+            switch self {
+            case .positive: BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricPositiveBmsTemperature)
+            case .negative: BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricNegativeBmsTemperature)
+            }
+        }
+
+        var humidityTitle: String {
+            switch self {
+            case .positive: BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricPositiveBmsHumidity)
+            case .negative: BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricNegativeBmsHumidity)
             }
         }
     }

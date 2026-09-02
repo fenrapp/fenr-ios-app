@@ -1,7 +1,9 @@
-public struct SettingsNavigationSummaryViewData: Equatable, Sendable {
-    public let detail: String
+import Foundation
 
-    public init(detail: String) {
+public struct SettingsNavigationSummaryViewData: Equatable, Sendable {
+    public let detail: LocalizedStringResource
+
+    public init(detail: LocalizedStringResource) {
         self.detail = detail
     }
 }

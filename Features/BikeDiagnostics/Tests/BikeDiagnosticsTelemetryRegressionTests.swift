@@ -17,21 +17,17 @@ struct BikeDiagnosticsTelemetryRegressionTests {
 
         await repository.sendTelemetry(telemetry(soc: 76, isOn: true))
         #expect(await waitUntil {
-            viewModel.viewState.badges.contains("On")
+            viewModel.viewState.badges.contains { $0.kind == .on }
         })
         await repository.sendTelemetry(telemetry(soc: 75, isOn: false))
         #expect(await waitUntil {
-            viewModel.viewState.badges.contains("Off")
+            viewModel.viewState.badges.contains { $0.kind == .off }
         })
 
-        #expect(viewModel.viewState.metrics.contains(
-            BikeDiagnosticsMetricViewData(
-                id: "battery",
-                title: "Battery",
-                value: formattedPercent(75)
-            )
-        ))
-        #expect(viewModel.viewState.badges == ["Off"])
+        #expect(viewModel.viewState.metrics.contains {
+            $0.id == "battery" && $0.value == formattedPercent(75)
+        })
+        #expect(viewModel.viewState.badges.map(\.kind) == [.off])
     }
 
     @Test("Repeated characteristic events share one timeline row and remain exportable")

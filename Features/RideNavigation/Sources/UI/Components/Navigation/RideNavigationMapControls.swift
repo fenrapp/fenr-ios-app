@@ -30,17 +30,19 @@ struct RideNavigationMapControls: View {
                 )
                 controlButton(
                     systemImage: state.isVoiceMuted ? "speaker.slash.fill" : "speaker.wave.2.fill",
-                    accessibilityLabel: state.isVoiceMuted ? "Enable voice guidance" : "Mute voice guidance",
+                    accessibilityLabel: state.isVoiceMuted
+                        ? .rideNavigationEnableVoiceGuidance
+                        : .rideNavigationMuteVoiceGuidance,
                     action: onToggleVoice
                 )
                 controlButton(
                     systemImage: "arrow.up.left.and.arrow.down.right",
-                    accessibilityLabel: "Show route overview",
+                    accessibilityLabel: .rideNavigationShowRouteOverview,
                     action: onOverview
                 )
                 controlButton(
                     systemImage: "location.fill",
-                    accessibilityLabel: "Recenter map",
+                    accessibilityLabel: .rideNavigationRecenterMap,
                     action: onRecenter
                 )
             }
@@ -49,7 +51,7 @@ struct RideNavigationMapControls: View {
 
     private func controlButton(
         systemImage: String,
-        accessibilityLabel: String,
+        accessibilityLabel: LocalizedStringResource,
         action: @escaping () -> Void
     ) -> some View {
         Button(

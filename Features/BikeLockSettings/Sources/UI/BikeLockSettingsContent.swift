@@ -15,7 +15,13 @@ struct BikeLockSettingsContent: View {
             }
 
             if let error = viewState.errorMessage {
-                Section { Text(error).foregroundStyle(DesignColor.critical) }
+                Section {
+                    Text(error)
+                        .foregroundStyle(DesignColor.critical)
+                        .accessibilityLabel(
+                            Text(.bikeLockSettingsErrorAccessibility(error))
+                        )
+                }
             }
         }
         .disabled(viewState.isWorking)
@@ -29,11 +35,14 @@ struct BikeLockSettingsContent: View {
 
     @ViewBuilder
     private var availableContent: some View {
-        Section("Unlock protection") {
-            LabeledContent("Current mode", value: viewState.currentModeTitle)
-            Button("Change protection", action: onChangeProtection)
+        Section(.bikeLockSettingsUnlockProtectionSection) {
+            LabeledContent(
+                String(localized: .bikeLockSettingsCurrentMode),
+                value: viewState.currentModeTitle
+            )
+            Button(.bikeLockSettingsChangeProtection, action: onChangeProtection)
             if viewState.canChangePIN {
-                Button("Change PIN", action: onChangePIN)
+                Button(.bikeLockSettingsChangePIN, action: onChangePIN)
             }
         }
 
@@ -44,9 +53,9 @@ struct BikeLockSettingsContent: View {
     private var unavailableContent: some View {
         Section {
             ContentUnavailableView(
-                "Bike Lock Unavailable",
+                .bikeLockSettingsUnavailableTitle,
                 systemImage: "lock.slash",
-                description: Text("Connect a compatible motorcycle to configure unlock protection.")
+                description: Text(.bikeLockSettingsUnavailableDescription)
             )
         }
 
@@ -55,7 +64,7 @@ struct BikeLockSettingsContent: View {
 
     private var explanationSection: some View {
         Section {
-            Text("These settings protect unlocking in FENR. They do not lock or unlock the motorcycle.")
+            Text(.bikeLockSettingsExplanation)
                 .foregroundStyle(DesignColor.secondaryText)
         }
     }

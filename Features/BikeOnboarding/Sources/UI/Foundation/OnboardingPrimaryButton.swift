@@ -51,7 +51,7 @@ struct OnboardingPrimaryButton: View {
             y: Constants.shadowOffset
         )
         .accessibilityLabel(accessibilityLabel ?? title)
-        .accessibilityValue(isBusy ? "In progress" : "")
+        .accessibilityValue(isBusy ? BikeOnboardingL10n.text(.bikeOnboardingAccessibilityInProgress) : "")
     }
 
     private var backgroundColor: Color {

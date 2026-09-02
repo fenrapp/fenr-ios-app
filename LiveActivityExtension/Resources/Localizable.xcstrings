@@ -1,0 +1,60 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "liveActivityAccessibilityBattery" : {
+      "comment" : "VoiceOver description of the motorcycle battery value.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery %1$(batteryValue)@" } } }
+    },
+    "liveActivityAccessibilityMetric" : {
+      "comment" : "VoiceOver description combining a metric title and its value.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$(metricTitle)@: %2$(metricValue)@" } } }
+    },
+    "liveActivityAccessibilityMode" : {
+      "comment" : "VoiceOver description of the active power mode.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Mode %1$(modeValue)@" } } }
+    },
+    "liveActivityAccessibilityStatus" : {
+      "comment" : "VoiceOver description of the current Live Activity status.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Status %1$(statusValue)@" } } }
+    },
+    "liveActivityCurrent" : { "comment" : "Current metric title.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Current" } } } },
+    "liveActivityMode" : { "comment" : "Power mode metric title.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Mode" } } } },
+    "liveActivityPower" : { "comment" : "Charging power metric title.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Power" } } } },
+    "liveActivityReady" : { "comment" : "Status shown when charging has completed.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Ready" } } } },
+    "liveActivityRemaining" : {
+      "comment" : "Charging time remaining. The argument is an already formatted duration.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$(duration)@ remaining" } } }
+    },
+    "liveActivitySpeed" : { "comment" : "Speed metric title.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Speed" } } } },
+    "liveActivityState" : { "comment" : "Motorcycle state metric title.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "State" } } } },
+    "liveActivityTarget" : {
+      "comment" : "Charging target percentage.",
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Target %1$(percent)lld%%" } } }
+    },
+    "liveActivityTemperature" : { "comment" : "Battery temperature metric title.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Temp" } } } },
+    "liveActivityPhaseBalancing" : { "comment" : "Live Activity charging phase.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Balancing" } } } },
+    "liveActivityPhaseChargeComplete" : { "comment" : "Live Activity charging phase.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charge complete" } } } },
+    "liveActivityPhaseCharging" : { "comment" : "Live Activity charging phase.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charging" } } } },
+    "liveActivityPhaseConnectionLost" : { "comment" : "Live Activity connection state.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connection lost" } } } },
+    "liveActivityPhaseCrawl" : { "comment" : "Live Activity motorcycle phase.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Crawl" } } } },
+    "liveActivityPhaseFault" : { "comment" : "Live Activity fault phase.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Fault active" } } } },
+    "liveActivityPhaseNeutral" : { "comment" : "Live Activity motorcycle phase.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Neutral" } } } },
+    "liveActivityPhaseReconnecting" : { "comment" : "Live Activity connection state.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Reconnecting" } } } },
+    "liveActivityPhaseRiding" : { "comment" : "Live Activity motorcycle phase.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Riding" } } } },
+    "liveActivityPhaseWaitingForUpdate" : { "comment" : "Live Activity stale-data state.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Waiting for update" } } } },
+    "liveActivityRunStateCharging" : { "comment" : "Motorcycle run state.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charging" } } } },
+    "liveActivityRunStateCrawl" : { "comment" : "Motorcycle crawl-forward state.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Crawl" } } } },
+    "liveActivityRunStateNeutral" : { "comment" : "Motorcycle neutral state.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Neutral" } } } },
+    "liveActivityRunStateOff" : { "comment" : "Motorcycle powered-off state.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Off" } } } },
+    "liveActivityRunStateReverse" : { "comment" : "Motorcycle crawl-reverse state.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Reverse" } } } },
+    "liveActivityRunStateRide" : { "comment" : "Motorcycle ride state.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Ride" } } } },
+    "liveActivityRunStateUnknown" : { "comment" : "Unknown motorcycle run state.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unknown" } } } }
+  },
+  "version" : "1.0"
+}

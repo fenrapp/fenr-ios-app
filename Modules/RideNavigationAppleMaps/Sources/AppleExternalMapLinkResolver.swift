@@ -29,8 +29,8 @@ public struct AppleExternalMapLinkResolver: ExternalMapLinkResolving {
                 throw ExternalMapLinkResolutionError.destinationUnavailable
             }
             return NavigationPlace(
-                name: item.name ?? "Shared destination",
-                detail: item.placemark.title ?? "Apple Maps",
+                name: item.name ?? String(localized: .rideNavigationAppleMapsSharedDestination),
+                detail: item.placemark.title ?? String(localized: .rideNavigationAppleMapsProvider),
                 coordinate: coordinate
             )
         }
@@ -44,7 +44,11 @@ public struct AppleExternalMapLinkResolver: ExternalMapLinkResolving {
             throw ExternalMapLinkResolutionError.destinationUnavailable
         }
         if let coordinate = Self.coordinate(from: candidate) {
-            return NavigationPlace(name: "Shared destination", detail: host, coordinate: coordinate)
+            return NavigationPlace(
+                name: String(localized: .rideNavigationAppleMapsSharedDestination),
+                detail: host,
+                coordinate: coordinate
+            )
         }
         guard let place = try await placeSearch.search(candidate, near: nil).first else {
             throw ExternalMapLinkResolutionError.destinationUnavailable

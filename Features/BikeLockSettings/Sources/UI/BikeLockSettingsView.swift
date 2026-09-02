@@ -13,7 +13,7 @@ public struct BikeLockSettingsView: View {
             onChangeProtection: viewModel.changeProtection,
             onChangePIN: viewModel.changePIN
         )
-        .navigationTitle("Bike Lock")
+        .navigationTitle(Text(.bikeLockSettingsTitle))
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(
             isPresented: Binding(
@@ -30,7 +30,7 @@ public struct BikeLockSettingsView: View {
         switch viewModel.viewState.destination {
         case .verifyCurrentPIN:
             BikeLockPINInputView(
-                title: "Enter Current PIN",
+                title: .bikeLockSettingsEnterCurrentPINTitle,
                 errorMessage: viewModel.viewState.errorMessage
             ) { pin in
                 viewModel.submitCurrentPIN(pin)
@@ -46,7 +46,7 @@ public struct BikeLockSettingsView: View {
             )
         case .changePIN:
             BikeLockNewPINView(
-                title: "Change PIN",
+                title: .bikeLockSettingsChangePIN,
                 errorMessage: viewModel.viewState.errorMessage
             ) { pin, confirmation in
                 viewModel.saveNewPIN(pin, confirmation: confirmation)

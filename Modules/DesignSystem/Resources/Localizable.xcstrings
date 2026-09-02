@@ -1,0 +1,10 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "designSystemDelete" : { "comment" : "Title of the PIN pad delete key.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete" } } } },
+    "designSystemDeleteLastDigitHint" : { "comment" : "VoiceOver hint for the PIN pad delete key.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Deletes the last entered digit" } } } },
+    "designSystemPINEntryProgress" : { "comment" : "VoiceOver label for PIN entry progress.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "PIN entry progress" } } } },
+    "designSystemPINEntryValue" : { "comment" : "VoiceOver value describing entered and required PIN digits.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$(enteredDigits)lld of %2$(requiredDigits)lld digits entered" } } } }
+  },
+  "version" : "1.0"
+}

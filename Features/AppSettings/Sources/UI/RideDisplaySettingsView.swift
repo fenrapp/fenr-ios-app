@@ -24,7 +24,7 @@ public struct RideDisplaySettingsView: View {
                 onRequestLocationAccess: viewModel.requestLocationAccess
             )
         }
-        .navigationTitle("Ride Display")
+        .navigationTitle(Text(.appSettingsRideDisplayTitle))
         .navigationBarTitleDisplayMode(.inline)
         .task { viewModel.start() }
         .onDisappear { viewModel.stop() }

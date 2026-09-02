@@ -73,12 +73,12 @@ struct OnboardingHeroView: View {
     }
 
     private var brand: some View {
-        Text("FENR")
+        Text(.bikeOnboardingBrandName)
             .font(.system(size: Constants.brandSize, weight: .bold))
             .tracking(Constants.brandTracking)
             .frame(maxWidth: .infinity, alignment: .leading)
             .opacity(presentationPhase.includes(.photo) || reduceMotion ? 1 : 0)
-            .accessibilityLabel("FENR")
+            .accessibilityLabel(.bikeOnboardingBrandName)
     }
 
     private var heroCopy: some View {
@@ -90,11 +90,11 @@ struct OnboardingHeroView: View {
             }
             .frame(maxWidth: .infinity)
             .accessibilityRepresentation {
-                Text("Connected Riding")
+                Text(.bikeOnboardingHeroAccessibilityTitle)
                     .accessibilityAddTraits(.isHeader)
             }
 
-            Text("Live telemetry, battery health and bike controls. All in one place.")
+            Text(.bikeOnboardingHeroDetail)
                 .font(detailFont)
                 .foregroundStyle(.white.opacity(Constants.detailOpacity))
                 .multilineTextAlignment(.center)
@@ -114,8 +114,16 @@ struct OnboardingHeroView: View {
 
     private func titleBlock(font: Font) -> some View {
         VStack(spacing: Constants.titleSpacing) {
-            revealedTitleLine("CONNECTED", font: font, isPresented: presentationPhase.includes(.connected))
-            revealedTitleLine("RIDING", font: font, isPresented: presentationPhase.includes(.riding))
+            revealedTitleLine(
+                BikeOnboardingL10n.text(.bikeOnboardingHeroTitleConnected),
+                font: font,
+                isPresented: presentationPhase.includes(.connected)
+            )
+            revealedTitleLine(
+                BikeOnboardingL10n.text(.bikeOnboardingHeroTitleRiding),
+                font: font,
+                isPresented: presentationPhase.includes(.riding)
+            )
         }
     }
 
@@ -164,14 +172,14 @@ struct OnboardingHeroView: View {
 
     private var continueButton: some View {
         OnboardingPrimaryButton(
-            title: "Get Started",
+            title: BikeOnboardingL10n.text(.bikeOnboardingActionGetStarted),
             systemImage: "arrow.right",
             action: onContinue
         )
         .environment(\.colorScheme, .dark)
         .scaleEffect(presentationPhase.includes(.complete) || reduceMotion ? 1 : Constants.buttonInitialScale)
         .opacity(presentationPhase.includes(.complete) || reduceMotion ? 1 : 0)
-        .accessibilityHint("Starts bike setup")
+        .accessibilityHint(.bikeOnboardingAccessibilityGetStartedHint)
     }
 }
 

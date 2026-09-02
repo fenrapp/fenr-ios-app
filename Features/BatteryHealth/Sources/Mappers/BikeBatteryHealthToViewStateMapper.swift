@@ -25,17 +25,41 @@ public struct BikeBatteryHealthToViewStateMapper {
         let analysis = analyzer.analyze(health)
         return BatteryHealthViewState(
             summary: [
-                metric("soc", "SOC", formatter.percent(health.stateOfCharge.percent)),
-                metric("soh", "SOH", formatter.percent(health.stateOfHealth.percent)),
-                metric("dcBus", "DC bus", formatter.voltage(health.dcBusVoltage.volts)),
-                metric("charge", "Charge", formatter.chargeState(health.chargeState)),
-                metric("updated", "Updated", formatter.date(health.lastUpdated))
+                metric(
+                    "soc",
+                    String(localized: .batteryHealthMetricSoc),
+                    formatter.percent(health.stateOfCharge.percent)
+                ),
+                metric(
+                    "soh",
+                    String(localized: .batteryHealthMetricSoh),
+                    formatter.percent(health.stateOfHealth.percent)
+                ),
+                metric(
+                    "dcBus",
+                    String(localized: .batteryHealthMetricDcBus),
+                    formatter.voltage(health.dcBusVoltage.volts)
+                ),
+                metric(
+                    "charge",
+                    String(localized: .batteryHealthMetricCharge),
+                    formatter.chargeState(health.chargeState)
+                ),
+                metric("updated", String(localized: .batteryHealthMetricUpdated), formatter.date(health.lastUpdated))
             ],
             charging: chargingMetrics(for: health),
             packStatus: [
-                metric("fault", "BMS fault", health.isBMSFaultActive ? "Active" : "Clear"),
-                metric("captured", "Captured datasets", "\(captures.count)/\(BatteryDataset.allCases.count)"),
-                metric("cellDelta", "Cell delta", cellDelta(for: analysis))
+                metric(
+                    "fault",
+                    String(localized: .batteryHealthMetricBmsFault),
+                    String(localized: health.isBMSFaultActive ? .batteryHealthStatusActive : .batteryHealthStatusClear)
+                ),
+                metric(
+                    "captured",
+                    String(localized: .batteryHealthMetricCapturedDatasets),
+                    "\(captures.count)/\(BatteryDataset.allCases.count)"
+                ),
+                metric("cellDelta", String(localized: .batteryHealthMetricCellDelta), cellDelta(for: analysis))
             ],
             cells: cellViewData(for: analysis),
             temperatures: temperatureViewData(for: health),
@@ -64,11 +88,67 @@ public struct BikeBatteryHealthToViewStateMapper {
                 maximum: state.maximumTargetPercent,
                 step: state.targetStepPercent
             ),
-            chargerText: "\(state.chargerType) charger",
-            statusText: state.status,
-            statusIsError: state.error != nil,
-            errorText: state.error
+            chargerText: chargerText(for: state.chargerType),
+            statusText: statusText(for: state.status),
+            statusIsError: state.failure != nil,
+            errorText: state.failure.map(failureText)
         )
+    }
+
+    private func chargerText(for type: BikeChargerType?) -> String {
+        switch type {
+        case .standard?: String(localized: .batteryHealthChargerStandard)
+        case .fast?: String(localized: .batteryHealthChargerFast)
+        case .backpack?: String(localized: .batteryHealthChargerBackpack)
+        case .unknown(let rawValue)?: String(localized: .batteryHealthChargerUnknownValue(rawValue))
+        case nil: String(localized: .batteryHealthChargerUnknown)
+        }
+    }
+
+    private func statusText(for status: ChargeControlStatus) -> String {
+        switch status {
+        case .unavailable: String(localized: .batteryHealthChargeControlStatusUnavailable)
+        case .preparing: String(localized: .batteryHealthChargeControlStatusPreparing)
+        case .ready: String(localized: .batteryHealthChargeControlStatusReady)
+        case .updating: String(localized: .batteryHealthChargeControlStatusUpdating)
+        case .unsupportedFirmware: String(localized: .batteryHealthChargeControlStatusUnsupportedFirmware)
+        case .noOpGuardFailed: String(localized: .batteryHealthChargeControlStatusNoOpGuardFailed)
+        case .writing(let value): writingText(value)
+        case .confirming(let value): confirmingText(value)
+        case .confirmed(let value): confirmedText(value)
+        case .updateFailed: String(localized: .batteryHealthChargeControlStatusUpdateFailed)
+        }
+    }
+
+    private func writingText(_ value: ChargeControlSettingValue) -> String {
+        switch value {
+        case .powerWatts(let watts): String(localized: .batteryHealthChargeControlStatusWritingPower(watts))
+        case .targetPercent(let percent): String(localized: .batteryHealthChargeControlStatusWritingTarget(percent))
+        }
+    }
+
+    private func confirmingText(_ value: ChargeControlSettingValue) -> String {
+        switch value {
+        case .powerWatts(let watts): String(localized: .batteryHealthChargeControlStatusConfirmingPower(watts))
+        case .targetPercent(let percent): String(localized: .batteryHealthChargeControlStatusConfirmingTarget(percent))
+        }
+    }
+
+    private func confirmedText(_ value: ChargeControlSettingValue) -> String {
+        switch value {
+        case .powerWatts(let watts): String(localized: .batteryHealthChargeControlStatusConfirmedPower(watts))
+        case .targetPercent(let percent): String(localized: .batteryHealthChargeControlStatusConfirmedTarget(percent))
+        }
+    }
+
+    private func failureText(_ failure: ChargeControlFailure) -> String {
+        switch failure {
+        case .incompatibleFirmware: String(localized: .batteryHealthChargeControlErrorIncompatibleFirmware)
+        case .noOpValidationFailed: String(localized: .batteryHealthChargeControlErrorNoOpValidation)
+        case .preparationFailed: String(localized: .batteryHealthChargeControlErrorPreparation)
+        case .writeFailed: String(localized: .batteryHealthChargeControlErrorWrite)
+        case .confirmationTimedOut: String(localized: .batteryHealthChargeControlErrorConfirmation)
+        }
     }
 
     private func metric(_ id: String, _ title: String, _ value: String) -> BatteryHealthMetricViewData {
@@ -85,7 +165,7 @@ public struct BikeBatteryHealthToViewStateMapper {
             status = .init(text: BatteryHealthText.validated, emphasis: .positive)
         } else if let capture {
             status = .init(
-                text: "\(BatteryHealthText.captured) \(capture.byteCount) B",
+                text: String(localized: .batteryHealthDatasetCapturedBytes(capture.byteCount)),
                 emphasis: .warning
             )
         } else {
@@ -133,15 +213,46 @@ public struct BikeBatteryHealthToViewStateMapper {
 
         let outputPower = health.dcBusVoltage.volts.map { $0 * charging.reportedCurrentAmperes }
         var metrics = [
-            metric("chargeCurrent", "Charge current", formatter.current(amperes: charging.reportedCurrentAmperes)),
-            metric("chargeRequest", "Current target", formatter.current(amperes: charging.requestedCurrentAmperes)),
-            metric("chargePowerLimit", "Power limit", formatter.power(watts: charging.maximumPowerWatts)),
-            metric("chargeCurrentLimit", "Current limit", formatter.current(amperes: charging.maximumCurrentAmperes)),
-            metric("chargeCellTarget", "Cell target", formatter.cellVoltage(charging.targetCellVoltageVolts)),
-            metric("chargeSocLimit", "SOC limit", formatter.percent(charging.maximumStateOfChargePercent))
+            metric(
+                "chargeCurrent",
+                String(localized: .batteryHealthMetricChargeCurrent),
+                formatter.current(amperes: charging.reportedCurrentAmperes)
+            ),
+            metric(
+                "chargeRequest",
+                String(localized: .batteryHealthMetricCurrentTarget),
+                formatter.current(amperes: charging.requestedCurrentAmperes)
+            ),
+            metric(
+                "chargePowerLimit",
+                String(localized: .batteryHealthMetricPowerLimit),
+                formatter.power(watts: charging.maximumPowerWatts)
+            ),
+            metric(
+                "chargeCurrentLimit",
+                String(localized: .batteryHealthMetricCurrentLimit),
+                formatter.current(amperes: charging.maximumCurrentAmperes)
+            ),
+            metric(
+                "chargeCellTarget",
+                String(localized: .batteryHealthMetricCellTarget),
+                formatter.cellVoltage(charging.targetCellVoltageVolts)
+            ),
+            metric(
+                "chargeSocLimit",
+                String(localized: .batteryHealthMetricSocLimit),
+                formatter.percent(charging.maximumStateOfChargePercent)
+            )
         ]
         if let outputPower {
-            metrics.insert(metric("chargePower", "Output power", formatter.power(watts: outputPower)), at: 0)
+            metrics.insert(
+                metric(
+                    "chargePower",
+                    String(localized: .batteryHealthMetricOutputPower),
+                    formatter.power(watts: outputPower)
+                ),
+                at: 0
+            )
         }
         return metrics
     }

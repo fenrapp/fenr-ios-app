@@ -17,9 +17,9 @@ public struct DashboardCardSettingsView: View {
                     .moveDisabled(true)
                 }
             } header: {
-                Text("Always Visible")
+                Text(.dashboardCardSettingsAlwaysVisibleHeader)
             } footer: {
-                Text("Speedometer always opens first. Charging appears automatically when the bike is charging.")
+                Text(.dashboardCardSettingsAlwaysVisibleFooter)
             }
 
             Section {
@@ -36,12 +36,12 @@ public struct DashboardCardSettingsView: View {
                     .moveDisabled(false)
                 }
             } header: {
-                Text("Riding Cards")
+                Text(.dashboardCardSettingsRidingCardsHeader)
             } footer: {
-                Text("Drag while editing to change the vertical swipe order. Hidden sections keep their page settings.")
+                Text(.dashboardCardSettingsRidingCardsFooter)
             }
         }
-        .navigationTitle("Dashboard Cards")
+        .navigationTitle(Text(.dashboardCardSettingsTitle))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -98,7 +98,7 @@ public struct DashboardCardSettingsView: View {
     private var fixedRowLock: some View {
         Image(systemName: "lock.fill")
             .foregroundStyle(.secondary)
-            .accessibilityLabel("Locked")
+            .accessibilityLabel(.dashboardCardSettingsLockedLabel)
     }
 
     @ViewBuilder

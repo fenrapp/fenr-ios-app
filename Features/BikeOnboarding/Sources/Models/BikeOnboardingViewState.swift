@@ -18,7 +18,7 @@ public struct BikeOnboardingViewState: Equatable, Sendable {
         step: BikeOnboardingStep = .welcome,
         vin: String = "",
         pairingPIN: String = "",
-        selectedBikeTitle: String = "Stark bike",
+        selectedBikeTitle: String? = nil,
         connectionState: BikeOnboardingConnectionState = .inProgress(.finding),
         discoveredBikes: [BikeDiscoveryViewData] = [],
         bluetoothState: BikeOnboardingBluetoothState = .preparation,
@@ -31,6 +31,7 @@ public struct BikeOnboardingViewState: Equatable, Sendable {
         self.vin = vin
         self.pairingPIN = pairingPIN
         self.selectedBikeTitle = selectedBikeTitle
+            ?? BikeOnboardingL10n.text(.bikeOnboardingBikeFallback)
         self.connectionState = connectionState
         self.discoveredBikes = discoveredBikes
         self.bluetoothState = bluetoothState

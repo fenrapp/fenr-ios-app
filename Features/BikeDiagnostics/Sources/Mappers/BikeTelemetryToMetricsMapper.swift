@@ -20,12 +20,36 @@ public struct BikeTelemetryToMetricsMapper {
 
     public func map(_ telemetry: BikeTelemetry) -> [BikeDiagnosticsMetricViewData] {
         [
-            .init(id: "battery", title: "Battery", value: percentText(telemetry.batteryLevel.percent)),
-            .init(id: "soh", title: "SOH", value: percentText(telemetry.healthLevel.percent)),
-            .init(id: "mode", title: "Mode", value: modeText(telemetry.mode)),
-            .init(id: "speed", title: "Speed", value: speedText(telemetry.speed)),
-            .init(id: "rpm", title: "Motor RPM", value: rpmText(telemetry.motorRPM)),
-            .init(id: "updated", title: "Updated", value: updatedText(telemetry.lastUpdated))
+            .init(
+                id: "battery",
+                title: BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricBattery),
+                value: percentText(telemetry.batteryLevel.percent)
+            ),
+            .init(
+                id: "soh",
+                title: BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricSoh),
+                value: percentText(telemetry.healthLevel.percent)
+            ),
+            .init(
+                id: "mode",
+                title: BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricMode),
+                value: modeText(telemetry.mode)
+            ),
+            .init(
+                id: "speed",
+                title: BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricSpeed),
+                value: speedText(telemetry.speed)
+            ),
+            .init(
+                id: "rpm",
+                title: BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricMotorRpm),
+                value: rpmText(telemetry.motorRPM)
+            ),
+            .init(
+                id: "updated",
+                title: BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricUpdated),
+                value: updatedText(telemetry.lastUpdated)
+            )
         ]
     }
 

@@ -7,15 +7,18 @@ struct DashboardSystemHealthThermalCard: View {
     var body: some View {
         DashboardAdaptiveCardSurface {
             VStack(spacing: Constants.spacing) {
-                DashboardSystemHealthHeader(title: "THERMAL", state: state)
+                DashboardSystemHealthHeader(
+                    title: rideDashboardLocalized(.rideDashboardSystemHealthThermalTitle),
+                    state: state
+                )
                 thermalSection(
-                    title: "BATTERY",
+                    title: rideDashboardLocalized(.rideDashboardSystemHealthBattery),
                     systemImage: "battery.100percent",
                     range: state.batteryThermalRange,
                     usesBatteryThresholds: true
                 )
                 thermalSection(
-                    title: "INVERTER",
+                    title: rideDashboardLocalized(.rideDashboardSystemHealthInverter),
                     systemImage: "bolt.horizontal.fill",
                     range: state.inverterThermalRange,
                     usesBatteryThresholds: false
@@ -40,12 +43,24 @@ struct DashboardSystemHealthThermalCard: View {
             if let range {
                 DashboardThermalRangeGauge(range: range, usesBatteryThresholds: usesBatteryThresholds)
                 HStack(spacing: DesignSpace.extraSmall) {
-                    thermalMetric("MIN", range.minimumText, alignment: .leading)
-                    thermalMetric("AVG", range.averageText, alignment: .center)
-                    thermalMetric("MAX", range.maximumText, alignment: .trailing)
+                    thermalMetric(
+                        rideDashboardLocalized(.rideDashboardSystemHealthThermalMinimum),
+                        range.minimumText,
+                        alignment: .leading
+                    )
+                    thermalMetric(
+                        rideDashboardLocalized(.rideDashboardSystemHealthThermalAverage),
+                        range.averageText,
+                        alignment: .center
+                    )
+                    thermalMetric(
+                        rideDashboardLocalized(.rideDashboardSystemHealthThermalMaximum),
+                        range.maximumText,
+                        alignment: .trailing
+                    )
                 }
             } else {
-                Text("NO DATA")
+                Text(.rideDashboardSystemHealthThermalNoData)
                     .font(.headline.weight(.medium))
                     .foregroundStyle(DesignColor.secondaryText)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -75,8 +90,10 @@ struct DashboardSystemHealthThermalCard: View {
     }
 
     private var accessibilityText: String {
-        "Thermal, battery maximum \(state.batteryTemperatureText), "
-            + "inverter maximum \(state.inverterTemperatureText)"
+        rideDashboardLocalized(.rideDashboardSystemHealthThermalAccessibility(
+            state.batteryTemperatureText,
+            state.inverterTemperatureText
+        ))
     }
 
     private enum Constants {

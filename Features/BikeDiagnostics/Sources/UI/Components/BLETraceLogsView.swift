@@ -11,7 +11,7 @@ struct BLETraceLogsView: View {
     @State private var deleteRequest: DeleteRequest?
 
     var body: some View {
-        SurfacePanel(title: "BLE Capture Logs") {
+        SurfacePanel(title: BikeDiagnosticsL10n.text(.bikeDiagnosticsSectionBleLogs)) {
             if let error {
                 Text(error)
                     .font(.caption)
@@ -19,7 +19,7 @@ struct BLETraceLogsView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             if sessions.isEmpty {
-                Text("No BLE capture logs yet")
+                Text(.bikeDiagnosticsNoBleLogs)
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -35,7 +35,7 @@ struct BLETraceLogsView: View {
                 Button(role: .destructive) {
                     deleteRequest = .all
                 } label: {
-                    Label("Delete All Logs", systemImage: "trash")
+                    Label(.bikeDiagnosticsDeleteAllLogs, systemImage: "trash")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
@@ -45,16 +45,16 @@ struct BLETraceLogsView: View {
             switch request {
             case .session(let id):
                 Alert(
-                    title: Text("Delete BLE Log?"),
-                    message: Text("This capture cannot be recovered."),
-                    primaryButton: .destructive(Text("Delete")) { onDelete(id) },
+                    title: Text(.bikeDiagnosticsDeleteLogTitle),
+                    message: Text(.bikeDiagnosticsDeleteLogMessage),
+                    primaryButton: .destructive(Text(.bikeDiagnosticsDelete)) { onDelete(id) },
                     secondaryButton: .cancel()
                 )
             case .all:
                 Alert(
-                    title: Text("Delete All BLE Logs?"),
-                    message: Text("Active recording is kept. Completed captures cannot be recovered."),
-                    primaryButton: .destructive(Text("Delete All"), action: onDeleteAll),
+                    title: Text(.bikeDiagnosticsDeleteAllLogsTitle),
+                    message: Text(.bikeDiagnosticsDeleteAllLogsMessage),
+                    primaryButton: .destructive(Text(.bikeDiagnosticsDeleteAll), action: onDeleteAll),
                     secondaryButton: .cancel()
                 )
             }
@@ -67,7 +67,7 @@ struct BLETraceLogsView: View {
                 VStack(alignment: .leading, spacing: Constants.textSpacing) {
                     Text(session.date)
                         .font(.caption.weight(.semibold))
-                    Text("\(session.status) | \(session.duration) | \(session.size)")
+                    Text(verbatim: "\(session.status) | \(session.duration) | \(session.size)")
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(.secondary)
                 }
@@ -75,21 +75,21 @@ struct BLETraceLogsView: View {
                 if session.isActive {
                     Image(systemName: "record.circle.fill")
                         .foregroundStyle(.red)
-                        .accessibilityLabel("Recording")
+                        .accessibilityLabel(.bikeDiagnosticsBleStatusRecording)
                 }
             }
             HStack(spacing: Constants.buttonSpacing) {
                 Button {
                     onExport(session.id)
                 } label: {
-                    Label("Export", systemImage: "square.and.arrow.up")
+                    Label(.bikeDiagnosticsExport, systemImage: "square.and.arrow.up")
                 }
                 .buttonStyle(.borderedProminent)
 
                 Button(role: .destructive) {
                     deleteRequest = .session(session.id)
                 } label: {
-                    Label("Delete", systemImage: "trash")
+                    Label(.bikeDiagnosticsDelete, systemImage: "trash")
                 }
                 .buttonStyle(.bordered)
                 .disabled(!session.canDelete)

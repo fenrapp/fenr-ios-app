@@ -82,7 +82,7 @@ public struct DashboardSystemHealthViewData: Equatable, Sendable {
 
     public init(
         status: Status = .scanning,
-        statusText: String = "SCANNING",
+        statusText: String? = nil,
         statusDetail: String = "",
         stateOfHealthText: String = "—",
         stateOfHealthProgress: Double = .zero,
@@ -100,7 +100,7 @@ public struct DashboardSystemHealthViewData: Equatable, Sendable {
         inverterThermalRange: ThermalRange? = nil
     ) {
         self.status = status
-        self.statusText = statusText
+        self.statusText = statusText ?? rideDashboardLocalized(.rideDashboardSystemHealthStatusScanning)
         self.statusDetail = statusDetail
         self.stateOfHealthText = stateOfHealthText
         self.stateOfHealthProgress = stateOfHealthProgress

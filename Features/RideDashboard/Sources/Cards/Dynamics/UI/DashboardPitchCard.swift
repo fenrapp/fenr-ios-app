@@ -7,7 +7,7 @@ struct DashboardPitchCard: View {
 
     var body: some View {
         DashboardDynamicsInstrumentCard(
-            title: "PITCH",
+            title: rideDashboardLocalized(.rideDashboardDynamicsPitchTitle),
             status: state.status,
             angleDegrees: state.pitchDegrees,
             maximumAngleDegrees: Constants.maximumPitchDegrees,
@@ -15,8 +15,15 @@ struct DashboardPitchCard: View {
             angleText: state.pitchText,
             directionText: state.pitchDirectionText,
             maximums: [
-                .init(label: "MAX UP", value: state.maximumUphillPitchText),
-                .init(label: "MAX DOWN", value: state.maximumDownhillPitchText, trailing: true)
+                .init(
+                    label: rideDashboardLocalized(.rideDashboardDynamicsPitchMaximumUp),
+                    value: state.maximumUphillPitchText
+                ),
+                .init(
+                    label: rideDashboardLocalized(.rideDashboardDynamicsPitchMaximumDown),
+                    value: state.maximumDownhillPitchText,
+                    trailing: true
+                )
             ],
             canCalibrate: state.canCalibrate,
             reduceMotion: reduceMotion,

@@ -59,13 +59,13 @@ struct RideNavigationRoutePreferencesView: View {
     @ViewBuilder
     private var preferenceControls: some View {
             preferenceButton(
-                title: "Avoid Tolls",
+                title: .rideNavigationAvoidTolls,
                 systemImage: "creditcard.fill",
                 isSelected: avoidsTolls,
                 action: { onAvoidTolls(!avoidsTolls) }
             )
             preferenceButton(
-                title: "Avoid Highways",
+                title: .rideNavigationAvoidHighways,
                 systemImage: "road.lanes",
                 isSelected: avoidsHighways,
                 action: { onAvoidHighways(!avoidsHighways) }
@@ -74,12 +74,12 @@ struct RideNavigationRoutePreferencesView: View {
                 ProgressView()
                     .controlSize(.small)
                     .padding(.horizontal, DesignSpace.extraSmall)
-                    .accessibilityLabel("Updating routes")
+                    .accessibilityLabel(.rideNavigationUpdatingRoutes)
             }
     }
 
     private func preferenceButton(
-        title: String,
+        title: LocalizedStringResource,
         systemImage: String,
         isSelected: Bool,
         action: @escaping () -> Void
@@ -106,7 +106,7 @@ struct RideNavigationRoutePreferencesView: View {
             vertical: dynamicTypeSize.isAccessibilitySize
         )
         .rideNavigationGlassChip()
-        .accessibilityValue(isSelected ? "On" : "Off")
+        .accessibilityValue(String(localized: isSelected ? .rideNavigationOn : .rideNavigationOff))
     }
 
     private enum Constants {

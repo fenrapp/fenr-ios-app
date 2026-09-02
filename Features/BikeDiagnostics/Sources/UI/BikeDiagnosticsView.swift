@@ -61,11 +61,11 @@ public struct BikeDiagnosticsView: View {
             .background(DesignColor.groupedSurface)
             .dynamicTypeSize(.medium ... .large)
         }
-        .navigationTitle("FENR")
+        .navigationTitle(.bikeDiagnosticsNavigationTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Change Bike", role: .destructive, action: onChangeBike)
+                Button(.bikeDiagnosticsChangeBike, role: .destructive, action: onChangeBike)
             }
         }
         .sheet(item: exportBinding) { export in
@@ -81,11 +81,11 @@ public struct BikeDiagnosticsView: View {
         BadgeRowView(badges: viewModel.viewState.badges)
         MetricsGridView(metrics: viewModel.viewState.metrics)
         MetricsGridView(
-            title: "Power Telemetry",
+            title: BikeDiagnosticsL10n.text(.bikeDiagnosticsSectionPowerTelemetry),
             metrics: viewModel.viewState.powerMetrics
         )
         MetricsGridView(
-            title: "Battery Telemetry",
+            title: BikeDiagnosticsL10n.text(.bikeDiagnosticsSectionBatteryTelemetry),
             metrics: viewModel.viewState.batteryMetrics
         )
     }

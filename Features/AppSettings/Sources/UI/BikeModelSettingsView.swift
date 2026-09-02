@@ -16,7 +16,7 @@ public struct BikeModelSettingsView: View {
                 onVerify: viewModel.verifyPowerTierWithBike
             )
         }
-        .navigationTitle("Bike Model")
+        .navigationTitle(Text(.appSettingsBikeModelTitle))
         .navigationBarTitleDisplayMode(.inline)
         .task { viewModel.start() }
         .onDisappear { viewModel.stop() }

@@ -16,7 +16,7 @@ struct BikeLockPINEntryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", action: cancel)
+                    Button(.rideDashboardCommonCancel, action: cancel)
                 }
             }
         }

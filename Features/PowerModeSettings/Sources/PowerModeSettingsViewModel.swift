@@ -89,14 +89,14 @@ public final class PowerModeSettingsViewModel: ObservableObject {
 
     public func saveName(_ candidate: String) {
         guard let vin = profile?.vin else {
-            nameError = "A bike profile is required to save map names."
+            nameError = String(localized: .powerModeSettingsProfileRequiredError)
             render()
             return
         }
         do {
             let name = try PowerModeName(candidate)
             guard !isDuplicate(name, vin: vin) else {
-                nameError = "Use a unique name for each map."
+                nameError = String(localized: .powerModeSettingsDuplicateNameError)
                 render()
                 return
             }
@@ -105,7 +105,7 @@ public final class PowerModeSettingsViewModel: ObservableObject {
             render()
             save(settings)
         } catch {
-            nameError = error.localizedDescription
+            nameError = String(localized: .powerModeSettingsInvalidNameError)
             render()
         }
     }
@@ -149,7 +149,7 @@ public final class PowerModeSettingsViewModel: ObservableObject {
                 guard !Task.isCancelled else { return }
                 self?.finishRefresh(
                     generation: generation,
-                    error: "Unable to read power modes: \(error.localizedDescription)"
+                    error: String(localized: .powerModeSettingsReadError)
                 )
             }
         }

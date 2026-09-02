@@ -5,7 +5,7 @@ struct ConnectionPanelView: View {
     let model: ConnectionPanelViewData
 
     var body: some View {
-        SurfacePanel(title: "Connection") {
+        SurfacePanel(title: BikeDiagnosticsL10n.text(.bikeDiagnosticsSectionConnection)) {
             VStack(alignment: .leading, spacing: Constants.contentSpacing) {
                 HStack(alignment: .center, spacing: Constants.statusSpacing) {
                     Circle()
@@ -39,14 +39,14 @@ struct ConnectionPanelView: View {
     }
 
     private var statusColor: Color {
-        switch model.status.lowercased() {
-        case "receiving telemetry", "connected":
+        switch model.emphasis {
+        case .success:
             return DesignColor.positive
-        case "scanning", "connecting", "discovering", "waiting for data":
+        case .progress, .warning:
             return DesignColor.warning
-        case "failed", "error", "unauthorized":
+        case .critical:
             return DesignColor.critical
-        default:
+        case .neutral:
             return .secondary
         }
     }

@@ -8,14 +8,16 @@ struct DashboardBatteryTripCard: View {
     var body: some View {
         DashboardAdaptiveCardSurface {
             VStack(alignment: .leading, spacing: Constants.spacing) {
-                DashboardTripCardHeader(title: "BATTERY · TRIP")
+                DashboardTripCardHeader(title: rideDashboardLocalized(.rideDashboardRangeBatteryTripTitle))
                 hero
                 batteryChart
                 peakSummary
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Trip battery, \(state.batteryText), \(state.remainingEnergyText) remaining")
+        .accessibilityLabel(rideDashboardLocalized(
+            .rideDashboardRangeTripAccessibility(state.batteryText, state.remainingEnergyText)
+        ))
     }
 
     private var hero: some View {
@@ -25,7 +27,7 @@ struct DashboardBatteryTripCard: View {
                 .monospacedDigit()
             Spacer(minLength: DesignSpace.medium)
             VStack(alignment: .trailing, spacing: DesignSpace.extraExtraSmall) {
-                Text("ENERGY LEFT")
+                Text(.rideDashboardRangeEnergyLeft)
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(DesignColor.secondaryText)
                 Text(state.remainingEnergyText)
@@ -39,13 +41,13 @@ struct DashboardBatteryTripCard: View {
         Chart {
             ForEach(state.batteryPoints) { point in
                 AreaMark(
-                    x: .value("Distance", point.distance),
-                    y: .value("Battery", point.percentage)
+                    x: .value(rideDashboardLocalized(.rideDashboardChartDistance), point.distance),
+                    y: .value(rideDashboardLocalized(.rideDashboardChartBattery), point.percentage)
                 )
                 .foregroundStyle(DesignColor.positive.opacity(0.16))
                 LineMark(
-                    x: .value("Distance", point.distance),
-                    y: .value("Battery", point.percentage)
+                    x: .value(rideDashboardLocalized(.rideDashboardChartDistance), point.distance),
+                    y: .value(rideDashboardLocalized(.rideDashboardChartBattery), point.percentage)
                 )
                 .foregroundStyle(DesignColor.positive)
                 .lineStyle(.init(lineWidth: 2.25, lineCap: .round, lineJoin: .round))
@@ -57,18 +59,26 @@ struct DashboardBatteryTripCard: View {
         .frame(maxWidth: .infinity, minHeight: Constants.chartHeight)
         .overlay {
             if state.batteryPoints.isEmpty {
-                Text("WAITING FOR TRIP DATA")
+                Text(.rideDashboardRangeWaitingTrip)
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(DesignColor.secondaryText)
             }
         }
-        .accessibilityLabel("Battery use over the current trip")
+        .accessibilityLabel(.rideDashboardRangeTripChartAccessibility)
     }
 
     private var peakSummary: some View {
         HStack(spacing: DesignSpace.large) {
-            peak(title: "PEAK USE", value: state.peakDischargeText, color: DesignColor.informational)
-            peak(title: "PEAK REGEN", value: state.peakRegenerationText, color: DesignColor.positive)
+            peak(
+                title: rideDashboardLocalized(.rideDashboardRangePeakUse),
+                value: state.peakDischargeText,
+                color: DesignColor.informational
+            )
+            peak(
+                title: rideDashboardLocalized(.rideDashboardRangePeakRegen),
+                value: state.peakRegenerationText,
+                color: DesignColor.positive
+            )
         }
     }
 

@@ -1,0 +1,33 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "rideNavigationAppleMapsDestination" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Destination" } } }
+    },
+    "rideNavigationAppleMapsFocusMapAccessibility" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus navigation map"
+          }
+        }
+      }
+    },
+    "rideNavigationAppleMapsProvider" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Apple Maps" } } }
+    },
+    "rideNavigationAppleMapsRoadAccessiblePlace" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Road-accessible place" } } }
+    },
+    "rideNavigationAppleMapsSharedDestination" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Shared destination" } } }
+    }
+  },
+  "version" : "1.0"
+}

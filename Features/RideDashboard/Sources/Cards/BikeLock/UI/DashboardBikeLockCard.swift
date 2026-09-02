@@ -57,7 +57,7 @@ struct DashboardBikeLockCard: View {
         }
         .sheet(isPresented: pinBinding) {
             BikeLockPINEntryView(
-                title: "Enter Unlock PIN",
+                title: rideDashboardLocalized(.rideDashboardBikeLockPinEntryTitle),
                 submit: submitPIN,
                 cancel: dismissSheet
             )
@@ -120,16 +120,16 @@ struct DashboardBikeLockCard: View {
 
     private var statusDetail: String {
         guard viewState.isAvailable else {
-            return "Requires a compatible VCU connection."
+            return rideDashboardLocalized(.rideDashboardBikeLockDetailConnectionRequired)
         }
         guard viewState.isConfigured else {
             return viewState.isLocked
-                ? "Unlock protection is not set up on this device."
-                : "Choose your unlock protection."
+                ? rideDashboardLocalized(.rideDashboardBikeLockDetailNotConfigured)
+                : rideDashboardLocalized(.rideDashboardBikeLockDetailChooseProtection)
         }
         return viewState.isLocked
-            ? "Unlock protection is active."
-            : "Ready to secure the motorcycle."
+            ? rideDashboardLocalized(.rideDashboardBikeLockDetailProtectionActive)
+            : rideDashboardLocalized(.rideDashboardBikeLockDetailReady)
     }
 
     private var setupBinding: Binding<Bool> {

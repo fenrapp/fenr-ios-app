@@ -7,7 +7,6 @@ import VehicleSession
 public final class BikeLockCardViewModel: ObservableObject {
     @Published public private(set) var viewState = BikeLockCardViewState()
     public let securityOptions: [BikeLockSecurityOptionViewData]
-
     private let operationService: BikeLockCardOperationService
     private let vehicleSession: any VehicleSessionService
     private let capabilityStore: any BikeLockCapabilityStateStoring
@@ -41,13 +40,11 @@ public final class BikeLockCardViewModel: ObservableObject {
         securityOptions = securityOptionProvider.options
         self.allowsExperimentalControl = allowsExperimentalControl
     }
-
     deinit {
         observationTask?.cancel()
         operationTask?.cancel()
     }
 }
-
 public extension BikeLockCardViewModel {
     func start() {
         guard allowsExperimentalControl else { return }
@@ -94,23 +91,20 @@ public extension BikeLockCardViewModel {
             }
         }
     }
-
     func stop() {
         observationTask?.cancel()
         observationTask = nil
         invalidateVehicle(clearsCapability: false)
     }
-
     func suspend() {
         observationTask?.cancel()
         observationTask = nil
         suspendControlPreparation()
     }
-
     func performPrimaryAction() {
         guard viewState.isActionEnabled else { return }
         guard isVehicleStationary else {
-            render(error: "Stop the motorcycle and disengage the gear before using Bike Lock.")
+            render(error: rideDashboardLocalized(.rideDashboardBikeLockErrorStopBike))
             return
         }
         if !isLocked {
@@ -132,13 +126,12 @@ public extension BikeLockCardViewModel {
             authenticateAndUnlock()
         }
     }
-
     func configure(securityOptionID: String, pin: String) {
         guard isReceivingTelemetry, isVehicleStationary else { return }
         guard let mode = BikeLockSecurityMode(rawValue: securityOptionID), mode.isConfigured,
               let vehicleIdentifier else { return }
         guard !mode.requiresPIN || Self.isValidPIN(pin) else {
-            render(error: "Enter a 6-digit PIN", sheetUpdate: .present(.setup))
+            render(error: rideDashboardLocalized(.rideDashboardBikeLockErrorEnterPIN), sheetUpdate: .present(.setup))
             return
         }
         let normalizedPIN = mode.requiresPIN ? pin : ""
@@ -158,15 +151,17 @@ public extension BikeLockCardViewModel {
                 apply(snapshot)
             } catch {
                 guard !Task.isCancelled else { return }
-                render(error: error.localizedDescription, sheetUpdate: .present(.setup))
+                render(
+                    error: rideDashboardLocalized(.rideDashboardBikeLockErrorOperationFailed),
+                    sheetUpdate: .present(.setup)
+                )
             }
         }
     }
-
     func submitPIN(_ pin: String) {
         guard isReceivingTelemetry, isVehicleStationary else { return }
         guard let vehicleIdentifier, Self.isValidPIN(pin) else {
-            render(error: "Enter a 6-digit PIN", sheetUpdate: .present(.enterPIN))
+            render(error: rideDashboardLocalized(.rideDashboardBikeLockErrorEnterPIN), sheetUpdate: .present(.enterPIN))
             return
         }
         operationTask?.cancel()
@@ -178,23 +173,27 @@ public extension BikeLockCardViewModel {
                     vehicleIdentifier: vehicleIdentifier,
                     authorizeWrite: authorizeBikeLockWrite
                 ) else {
-                    render(error: "Incorrect PIN", sheetUpdate: .present(.enterPIN))
+                    render(
+                        error: rideDashboardLocalized(.rideDashboardBikeLockErrorIncorrectPIN),
+                        sheetUpdate: .present(.enterPIN)
+                    )
                     return
                 }
                 guard !Task.isCancelled else { return }
                 apply(snapshot)
             } catch {
                 guard !Task.isCancelled else { return }
-                render(error: error.localizedDescription, sheetUpdate: .dismiss)
+                render(
+                    error: rideDashboardLocalized(.rideDashboardBikeLockErrorOperationFailed),
+                    sheetUpdate: .dismiss
+                )
             }
         }
     }
-
     func dismissSheet() {
         render(sheetUpdate: .dismiss)
     }
 }
-
 private extension BikeLockCardViewModel {
     private func prepare() {
         guard !hasAttemptedPreparation else { return }
@@ -218,11 +217,10 @@ private extension BikeLockCardViewModel {
                 guard !Task.isCancelled else { return }
                 firmware = nil
                 capabilityStore.update(.init(vehicleIdentifier: vehicleIdentifier))
-                render(error: error.localizedDescription)
+                render(error: rideDashboardLocalized(.rideDashboardBikeLockErrorOperationFailed))
             }
         }
     }
-
     private func authenticateAndUnlock() {
         operationTask?.cancel()
         render(isWorking: true)
@@ -236,19 +234,24 @@ private extension BikeLockCardViewModel {
                 switch result {
                 case .unlocked(let snapshot): apply(snapshot)
                 case .requiresPIN: render(sheetUpdate: .present(.enterPIN))
-                case .writeFailed(let message):
-                    render(error: message, sheetUpdate: .dismiss)
+                case .writeFailed:
+                    render(
+                        error: rideDashboardLocalized(.rideDashboardBikeLockErrorOperationFailed),
+                        sheetUpdate: .dismiss
+                    )
                 }
             } catch {
                 guard !Task.isCancelled else { return }
-                render(error: error.localizedDescription, sheetUpdate: .present(.enterPIN))
+                render(
+                    error: rideDashboardLocalized(.rideDashboardBikeLockErrorOperationFailed),
+                    sheetUpdate: .present(.enterPIN)
+                )
             }
         }
     }
-
     private func changeLockState(to target: Bool) {
         guard isVehicleStationary else {
-            render(error: "Stop the motorcycle and disengage the gear before using Bike Lock.")
+            render(error: rideDashboardLocalized(.rideDashboardBikeLockErrorStopBike))
             return
         }
         operationTask?.cancel()
@@ -264,17 +267,18 @@ private extension BikeLockCardViewModel {
                 apply(snapshot)
             } catch {
                 guard !Task.isCancelled else { return }
-                render(error: error.localizedDescription, sheetUpdate: .dismiss)
+                render(
+                    error: rideDashboardLocalized(.rideDashboardBikeLockErrorOperationFailed),
+                    sheetUpdate: .dismiss
+                )
             }
         }
     }
-
     private func apply(_ snapshot: BikeLockControlSnapshot) {
         firmware = snapshot.vcuFirmware
         isLocked = snapshot.isLocked
         render(sheetUpdate: .dismiss)
     }
-
     private var authorizeBikeLockWrite: @MainActor @Sendable () throws -> Void {
         { [weak self] in
             guard let self else { throw CancellationError() }
@@ -283,7 +287,6 @@ private extension BikeLockCardViewModel {
             }
         }
     }
-
     private func invalidateControlPreparation() {
         guard isReceivingTelemetry || firmware != nil || hasAttemptedPreparation else { return }
         operationTask?.cancel()
@@ -293,7 +296,6 @@ private extension BikeLockCardViewModel {
         firmware = nil
         hasAttemptedPreparation = false
     }
-
     private func suspendControlPreparation() {
         operationTask?.cancel()
         operationTask = nil
@@ -302,7 +304,6 @@ private extension BikeLockCardViewModel {
         hasAttemptedPreparation = false
         render(sheetUpdate: .dismiss)
     }
-
     private func invalidateVehicle(clearsCapability: Bool = true) {
         operationTask?.cancel()
         operationTask = nil
@@ -316,7 +317,6 @@ private extension BikeLockCardViewModel {
         render(sheetUpdate: .dismiss)
     }
 }
-
 extension BikeLockCardViewModel {
     private func render(
         isWorking: Bool = false,

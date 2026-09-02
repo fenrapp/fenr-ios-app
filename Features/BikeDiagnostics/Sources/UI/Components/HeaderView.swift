@@ -40,10 +40,14 @@ struct HeaderView: View {
 
     private var vinField: some View {
         VStack(alignment: .leading, spacing: Constants.labelSpacing) {
-            Text("VIN")
+            Text(.bikeDiagnosticsVinLabel)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
-            TextField("FENRTEST000000002", text: Binding(get: { vin }, set: { value in onVINChange(value) }))
+            TextField(
+                .bikeDiagnosticsVinLabel,
+                text: Binding(get: { vin }, set: { value in onVINChange(value) }),
+                prompt: Text(verbatim: "FENRTEST000000002")
+            )
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled()
                 .keyboardType(.asciiCapable)
@@ -70,7 +74,7 @@ struct HeaderView: View {
 
     private var pinView: some View {
         VStack(alignment: .leading, spacing: Constants.labelSpacing) {
-            Text("PIN")
+            Text(.bikeDiagnosticsPinLabel)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
             Text(pin)
@@ -97,7 +101,7 @@ struct HeaderView: View {
             }
             .buttonStyle(.plain)
             .disabled(!isConnectEnabled)
-            .accessibilityLabel("Connect")
+            .accessibilityLabel(.bikeDiagnosticsConnect)
 
             Button(action: disconnectTapped) {
                 Image(systemName: "xmark.circle")
@@ -108,7 +112,7 @@ struct HeaderView: View {
             }
             .buttonStyle(.plain)
             .disabled(!isDisconnectEnabled)
-            .accessibilityLabel("Disconnect")
+            .accessibilityLabel(.bikeDiagnosticsDisconnect)
 
             Button(action: pairRetryTapped) {
                 Image(systemName: "key.fill")
@@ -119,7 +123,7 @@ struct HeaderView: View {
             }
             .buttonStyle(.plain)
             .disabled(!isPairRetryEnabled)
-            .accessibilityLabel("Retry security")
+            .accessibilityLabel(.bikeDiagnosticsRetrySecurity)
 
             Button(action: onBatteryHealth) {
                 Image(systemName: "battery.100percent")
@@ -133,7 +137,7 @@ struct HeaderView: View {
             }
             .buttonStyle(.plain)
             .disabled(!isBatteryHealthEnabled)
-            .accessibilityLabel("Battery Health")
+            .accessibilityLabel(.bikeDiagnosticsBatteryHealth)
         }
         .labelStyle(.iconOnly)
     }

@@ -1,3 +1,5 @@
+import Foundation
+
 public struct RideNavigationMiniViewState: Equatable, Sendable {
     public struct Position: Equatable, Sendable {
         public static let topTrailing = Position(horizontalFraction: 0.85, verticalFraction: 0.35)
@@ -30,7 +32,7 @@ public struct RideNavigationMiniViewState: Equatable, Sendable {
         statusText: String? = nil,
         forkGuidance: RideNavigationForkGuidance? = nil,
         isArrivalPending: Bool = false,
-        accessibilityLabel: String = "Mini navigation map"
+        accessibilityLabel: String? = nil
     ) {
         self.mapScene = mapScene
         self.position = position
@@ -41,5 +43,6 @@ public struct RideNavigationMiniViewState: Equatable, Sendable {
         self.forkGuidance = forkGuidance
         self.isArrivalPending = isArrivalPending
         self.accessibilityLabel = accessibilityLabel
+            ?? String(localized: .rideNavigationMiniMapAccessibility)
     }
 }

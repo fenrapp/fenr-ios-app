@@ -66,7 +66,7 @@ struct RideNavigationSummaryPanel: View {
         }
         .buttonStyle(.plain)
         .disabled(state.routePersistence.isSaving)
-        .accessibilityLabel("Close ride summary")
+        .accessibilityLabel(.rideNavigationCloseSummary)
     }
 
     private var completionIcon: some View {
@@ -96,13 +96,13 @@ struct RideNavigationSummaryPanel: View {
 
     private var routeNameField: some View {
         VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
-            Text("Route Name")
+            Text(.rideNavigationRouteNameLabel)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
             HStack(spacing: DesignSpace.small) {
                 Image(systemName: "pencil")
                     .foregroundStyle(.secondary)
-                TextField("Recorded ride", text: $routeName)
+                TextField(String(localized: .rideNavigationRecordedRidePlaceholder), text: $routeName)
                     .submitLabel(.done)
                     .disabled(state.routePersistence.isSaving)
             }
@@ -134,27 +134,27 @@ struct RideNavigationSummaryPanel: View {
         if state.routePersistence.isSaving {
             HStack(spacing: DesignSpace.small) {
                 ProgressView()
-                Text("Saving route...")
+                Text(.rideNavigationSavingRoute)
                     .font(.subheadline.weight(.semibold))
             }
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("rideNavigation.routeSaving")
         } else if case .failed = state.routePersistence {
             Button(action: onRetrySave) {
-                Label("Retry Save", systemImage: "arrow.clockwise")
+                Label(.rideNavigationRetrySave, systemImage: "arrow.clockwise")
             }
             .controlSize(.large)
             .rideNavigationPrimaryButton()
 
             Button(role: .destructive, action: onDiscardUnsaved) {
-                Label("Discard Ride", systemImage: "trash")
+                Label(.rideNavigationDiscardRide, systemImage: "trash")
             }
             .controlSize(.large)
             .rideNavigationSecondaryButton()
         } else {
             if state.canSaveCompletedRoute {
                 Button(action: onSave) {
-                    Label("Save", systemImage: "square.and.arrow.down.fill")
+                    Label(.rideNavigationSave, systemImage: "square.and.arrow.down.fill")
                 }
                 .controlSize(.large)
                 .rideNavigationPrimaryButton()
@@ -162,7 +162,7 @@ struct RideNavigationSummaryPanel: View {
         }
 
         Button(action: onExport) {
-                Label("Export GPX", systemImage: "square.and.arrow.up")
+                Label(.rideNavigationExportGPX, systemImage: "square.and.arrow.up")
         }
         .controlSize(.large)
         .rideNavigationSecondaryButton()

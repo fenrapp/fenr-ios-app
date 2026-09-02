@@ -17,7 +17,7 @@ struct DashboardCurrentTripPager: View {
             pages: pages,
             selection: $selection,
             reduceMotion: reduceMotion,
-            accessibilityLabel: "Current trip pages",
+            accessibilityLabel: rideDashboardLocalized(.rideDashboardCurrentTripPagesAccessibility),
             accessibilityValue: \.accessibilityLabel,
             onInteractionChanged: updateDurationFreeze
         ) { page in

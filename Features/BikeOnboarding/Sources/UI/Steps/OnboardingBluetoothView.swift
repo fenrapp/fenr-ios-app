@@ -11,7 +11,7 @@ struct OnboardingBluetoothView: View {
 
     var body: some View {
         OnboardingStepLayout(
-            eyebrow: "BLUETOOTH",
+            eyebrow: BikeOnboardingL10n.text(.bikeOnboardingBluetoothEyebrow),
             title: title,
             detail: detail
         ) {
@@ -36,16 +36,23 @@ struct OnboardingBluetoothView: View {
         } footer: {
             switch viewState.bluetoothState {
             case .denied:
-                OnboardingPrimaryButton(title: "Open Settings", action: onOpenSettings)
+                OnboardingPrimaryButton(
+                    title: BikeOnboardingL10n.text(.bikeOnboardingActionOpenSettings),
+                    action: onOpenSettings
+                )
             case .poweredOff, .unavailable:
-                OnboardingPrimaryButton(title: "Try Again", systemImage: "arrow.clockwise", action: onContinue)
+                OnboardingPrimaryButton(
+                    title: BikeOnboardingL10n.text(.bikeOnboardingActionTryAgain),
+                    systemImage: "arrow.clockwise",
+                    action: onContinue
+                )
             case .preparation, .requestingAccess:
                 OnboardingPrimaryButton(
-                    title: "Continue",
+                    title: BikeOnboardingL10n.text(.bikeOnboardingActionContinue),
                     systemImage: "arrow.right",
                     accessibilityLabel: viewState.isRequestingBluetoothAccess
-                        ? "Requesting Bluetooth access"
-                        : "Continue",
+                        ? BikeOnboardingL10n.text(.bikeOnboardingAccessibilityRequestingBluetooth)
+                        : BikeOnboardingL10n.text(.bikeOnboardingActionContinue),
                     isBusy: viewState.isRequestingBluetoothAccess,
                     action: onContinue
                 )
@@ -63,26 +70,26 @@ struct OnboardingBluetoothView: View {
     private var title: String {
         switch viewState.bluetoothState {
         case .preparation, .requestingAccess:
-            "Get ready to connect."
+            BikeOnboardingL10n.text(.bikeOnboardingBluetoothPreparationTitle)
         case .denied:
-            "Bluetooth access is off."
+            BikeOnboardingL10n.text(.bikeOnboardingBluetoothDeniedTitle)
         case .poweredOff:
-            "Turn on Bluetooth."
+            BikeOnboardingL10n.text(.bikeOnboardingBluetoothPoweredOffTitle)
         case .unavailable:
-            "Bluetooth isn't available."
+            BikeOnboardingL10n.text(.bikeOnboardingBluetoothUnavailableTitle)
         }
     }
 
     private var detail: String {
         switch viewState.bluetoothState {
         case .preparation, .requestingAccess:
-            "Keep your bike on and nearby. FENR will ask for Bluetooth access when you continue."
+            BikeOnboardingL10n.text(.bikeOnboardingBluetoothPreparationDetail)
         case .denied:
-            "Allow FENR to use Bluetooth, then return to connect."
+            BikeOnboardingL10n.text(.bikeOnboardingBluetoothDeniedDetail)
         case .poweredOff:
-            "Turn on Bluetooth in Control Center or Settings, then return to FENR."
+            BikeOnboardingL10n.text(.bikeOnboardingBluetoothPoweredOffDetail)
         case .unavailable:
-            "FENR can't start Bluetooth on this iPhone right now. Restart your iPhone and try again."
+            BikeOnboardingL10n.text(.bikeOnboardingBluetoothUnavailableDetail)
         }
     }
 
@@ -94,18 +101,18 @@ struct OnboardingBluetoothView: View {
         [
             .init(
                 icon: "power",
-                title: "Bike powered on",
-                detail: "Wake the bike and keep it within reach."
+                title: BikeOnboardingL10n.text(.bikeOnboardingBluetoothPreparationBikeTitle),
+                detail: BikeOnboardingL10n.text(.bikeOnboardingBluetoothPreparationBikeDetail)
             ),
             .init(
                 icon: "power.circle",
-                title: "Power off Arkenstone",
-                detail: "Switch off your Arkenstone so FENR can connect directly."
+                title: BikeOnboardingL10n.text(.bikeOnboardingBluetoothPreparationArkenstoneTitle),
+                detail: BikeOnboardingL10n.text(.bikeOnboardingBluetoothPreparationArkenstoneDetail)
             ),
             .init(
                 icon: "iphone",
-                title: "Keep your iPhone nearby",
-                detail: "Stay close while FENR secures the connection."
+                title: BikeOnboardingL10n.text(.bikeOnboardingBluetoothPreparationIphoneTitle),
+                detail: BikeOnboardingL10n.text(.bikeOnboardingBluetoothPreparationIphoneDetail)
             )
         ]
     }
@@ -114,18 +121,36 @@ struct OnboardingBluetoothView: View {
         switch viewState.bluetoothState {
         case .denied:
             [
-                .init(title: "Open FENR Settings", detail: "Use the button below."),
-                .init(title: "Turn Bluetooth on", detail: "Then return to FENR.")
+                .init(
+                    title: BikeOnboardingL10n.text(.bikeOnboardingBluetoothRecoveryOpenSettingsTitle),
+                    detail: BikeOnboardingL10n.text(.bikeOnboardingBluetoothRecoveryOpenSettingsDetail)
+                ),
+                .init(
+                    title: BikeOnboardingL10n.text(.bikeOnboardingBluetoothRecoveryTurnOnTitle),
+                    detail: BikeOnboardingL10n.text(.bikeOnboardingBluetoothRecoveryReturnDetail)
+                )
             ]
         case .poweredOff:
             [
-                .init(title: "Open Control Center", detail: "Swipe down from the top-right."),
-                .init(title: "Turn Bluetooth on", detail: "Then return to FENR.")
+                .init(
+                    title: BikeOnboardingL10n.text(.bikeOnboardingBluetoothRecoveryControlCenterTitle),
+                    detail: BikeOnboardingL10n.text(.bikeOnboardingBluetoothRecoveryControlCenterDetail)
+                ),
+                .init(
+                    title: BikeOnboardingL10n.text(.bikeOnboardingBluetoothRecoveryTurnOnTitle),
+                    detail: BikeOnboardingL10n.text(.bikeOnboardingBluetoothRecoveryReturnDetail)
+                )
             ]
         case .unavailable:
             [
-                .init(title: "Restart your iPhone", detail: "Wait until iOS is ready."),
-                .init(title: "Return to FENR", detail: "Then try connecting again.")
+                .init(
+                    title: BikeOnboardingL10n.text(.bikeOnboardingBluetoothRecoveryRestartTitle),
+                    detail: BikeOnboardingL10n.text(.bikeOnboardingBluetoothRecoveryRestartDetail)
+                ),
+                .init(
+                    title: BikeOnboardingL10n.text(.bikeOnboardingBluetoothRecoveryReturnTitle),
+                    detail: BikeOnboardingL10n.text(.bikeOnboardingBluetoothRecoveryTryAgainDetail)
+                )
             ]
         case .preparation, .requestingAccess:
             []

@@ -41,27 +41,27 @@ private extension RideHistoryMapper {
         let inputs = [
             PercentComparisonInput(
                 id: "distance",
-                label: "Distance",
+                label: String(localized: .rideHistoryMetricDistance),
                 value: validPositive(trip.distanceKilometers),
                 baseline: baseline.compactMap { validPositive($0.distanceKilometers) },
-                increaseText: "farther",
-                decreaseText: "shorter"
+                increaseText: String(localized: .rideHistoryComparisonFarther),
+                decreaseText: String(localized: .rideHistoryComparisonShorter)
             ),
             PercentComparisonInput(
                 id: "duration",
-                label: "Ride Time",
+                label: String(localized: .rideHistoryMetricRideTime),
                 value: validPositive(trip.elapsedSeconds),
                 baseline: baseline.compactMap { validPositive($0.elapsedSeconds) },
-                increaseText: "longer",
-                decreaseText: "shorter"
+                increaseText: String(localized: .rideHistoryComparisonLonger),
+                decreaseText: String(localized: .rideHistoryComparisonShorter)
             ),
             PercentComparisonInput(
                 id: "averageSpeed",
-                label: "Average Speed",
+                label: String(localized: .rideHistoryMetricAverageSpeed),
                 value: validPositive(trip.averageSpeedKilometersPerHour),
                 baseline: baseline.compactMap { validPositive($0.averageSpeedKilometersPerHour) },
-                increaseText: "faster",
-                decreaseText: "slower"
+                increaseText: String(localized: .rideHistoryComparisonFaster),
+                decreaseText: String(localized: .rideHistoryComparisonSlower)
             )
         ]
         return inputs.compactMap(percentComparison)
@@ -98,12 +98,12 @@ private extension RideHistoryMapper {
         let improvement = (baselineAverage - selected) / baselineAverage * 100
         return .init(
             id: "efficiency",
-            label: "Efficiency",
+            label: String(localized: .rideHistoryMetricEfficiency),
             value: signedPercent(improvement),
             detail: comparisonDetail(
                 improvement,
-                positiveText: "more efficient",
-                negativeText: "less efficient"
+                positiveText: String(localized: .rideHistoryComparisonMoreEfficient),
+                negativeText: String(localized: .rideHistoryComparisonLessEfficient)
             ),
             emphasis: comparisonEmphasis(improvement)
         )
@@ -120,12 +120,12 @@ private extension RideHistoryMapper {
         let percentagePoints = (selected - baselineAverage) * 100
         return .init(
             id: "recovery",
-            label: "Regeneration",
+            label: String(localized: .rideHistoryMetricRegeneration),
             value: signedValue(percentagePoints, suffix: " pp"),
             detail: comparisonDetail(
                 percentagePoints,
-                positiveText: "more recovered",
-                negativeText: "less recovered"
+                positiveText: String(localized: .rideHistoryComparisonMoreRecovered),
+                negativeText: String(localized: .rideHistoryComparisonLessRecovered)
             ),
             emphasis: comparisonEmphasis(percentagePoints)
         )
@@ -148,7 +148,9 @@ private extension RideHistoryMapper {
     }
 
     func comparisonDetail(_ value: Double, positiveText: String, negativeText: String) -> String {
-        if abs(value) < Constants.equalComparisonThreshold { return "on your recent average" }
+        if abs(value) < Constants.equalComparisonThreshold {
+            return String(localized: .rideHistoryComparisonRecentAverage)
+        }
         return value > .zero ? positiveText : negativeText
     }
 

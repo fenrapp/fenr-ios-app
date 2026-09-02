@@ -1,3 +1,5 @@
+import Foundation
+
 public struct BatteryHealthChargeControlViewState: Equatable, Sendable {
     public let isVisible: Bool
     public let isEnabled: Bool
@@ -23,8 +25,8 @@ public struct BatteryHealthChargeControlViewState: Equatable, Sendable {
             maximum: 100,
             step: 1
         ),
-        chargerText: String = "Unknown charger",
-        statusText: String = "Unavailable",
+        chargerText: String? = nil,
+        statusText: String? = nil,
         statusIsError: Bool = false,
         errorText: String? = nil
     ) {
@@ -32,8 +34,8 @@ public struct BatteryHealthChargeControlViewState: Equatable, Sendable {
         self.isEnabled = isEnabled
         self.power = power
         self.target = target
-        self.chargerText = chargerText
-        self.statusText = statusText
+        self.chargerText = chargerText ?? String(localized: .batteryHealthChargerUnknown)
+        self.statusText = statusText ?? String(localized: .batteryHealthChargeControlStatusUnavailable)
         self.statusIsError = statusIsError
         self.errorText = errorText
     }

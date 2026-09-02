@@ -1,6 +1,7 @@
 import AppSettings
 import BikeDomain
 import EnvironmentDomain
+import Foundation
 import SettingsDomain
 import Testing
 
@@ -19,7 +20,22 @@ struct AppSettingsPowerModesMapperTests {
             profile: .init(vin: vin)
         )
 
-        #expect(state.powerModes.detail == "5 maps · 1 custom name")
+        #expect(String(localized: state.powerModes.detail) == "5 maps · 1 custom name")
+    }
+
+    @Test("Pluralizes multiple local map names")
+    func mapsSummaryPlural() throws {
+        var settings = AppSettings()
+        try settings.setPowerModeName(try PowerModeName("ECO"), forVIN: vin, mapIndex: 0)
+        try settings.setPowerModeName(try PowerModeName("RACE"), forVIN: vin, mapIndex: 1)
+
+        let state = AppSettingsViewStateMapper().map(
+            settings: settings,
+            locationAuthorizationStatus: .notDetermined,
+            profile: .init(vin: vin)
+        )
+
+        #expect(String(localized: state.powerModes.detail) == "5 maps · 2 custom names")
     }
 
     @Test("Uses the configured-map fallback without local names")
@@ -30,7 +46,7 @@ struct AppSettingsPowerModesMapperTests {
             profile: .init(vin: vin)
         )
 
-        #expect(state.powerModes.detail == "5 maps configured")
+        #expect(String(localized: state.powerModes.detail) == "5 maps configured")
     }
 
     @Test("Summarizes ride display selections")
@@ -45,7 +61,7 @@ struct AppSettingsPowerModesMapperTests {
             locationAuthorizationStatus: .notDetermined
         )
 
-        #expect(state.rideDisplay.detail == "Speed · GPS+")
+        #expect(String(localized: state.rideDisplay.detail) == "Speed · GPS+")
     }
 
     @Test("Summarizes visible dashboard sections")
@@ -59,6 +75,6 @@ struct AppSettingsPowerModesMapperTests {
             locationAuthorizationStatus: .notDetermined
         )
 
-        #expect(state.dashboardCards.detail == "6 visible")
+        #expect(String(localized: state.dashboardCards.detail) == "6 visible")
     }
 }

@@ -36,9 +36,9 @@ struct RideNavigationSavedRoutesPanel: View {
     private var header: some View {
         HStack(spacing: DesignSpace.small) {
             VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
-                Text("Saved Routes")
+                Text(.rideNavigationSavedRoutes)
                     .font(.title3.weight(.bold))
-                Text("Your route library")
+                Text(.rideNavigationRouteLibrary)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -54,7 +54,7 @@ struct RideNavigationSavedRoutesPanel: View {
                 )
                 .padding(.horizontal, routes.count > Constants.singleDigitMaximum ? DesignSpace.extraExtraSmall : .zero)
                 .background(DesignColor.controlSurface, in: Capsule())
-                .accessibilityLabel("\(routes.count) saved routes")
+                .accessibilityLabel(String(localized: .rideNavigationSavedRouteCount(routeCount: routes.count)))
         }
     }
 
@@ -69,13 +69,13 @@ struct RideNavigationSavedRoutesPanel: View {
             .listRowSeparator(.hidden)
             .swipeActions(edge: .leading, allowsFullSwipe: false) {
                 Button { onShareRoute(route.id) } label: {
-                    Label("Share", systemImage: "square.and.arrow.up")
+                    Label(.rideNavigationShare, systemImage: "square.and.arrow.up")
                 }
                 .tint(DesignColor.accent)
             }
             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                 Button(role: .destructive) { onDeleteRoute(route.id) } label: {
-                    Label("Delete", systemImage: "trash")
+                    Label(.rideNavigationDelete, systemImage: "trash")
                 }
             }
         }

@@ -18,10 +18,10 @@ public struct BikeOnboardingPresentationMapper: Sendable {
 
     public func modelTitle(for vin: String) -> String {
         switch BikeVariant(vin: vin) {
-        case .mx: "VARG MX"
-        case .ex: "VARG EX"
-        case .sm: "VARG SM"
-        case .unknown: "Stark bike"
+        case .mx: BikeOnboardingL10n.text(.bikeOnboardingBikeVargMx)
+        case .ex: BikeOnboardingL10n.text(.bikeOnboardingBikeVargEx)
+        case .sm: BikeOnboardingL10n.text(.bikeOnboardingBikeVargSm)
+        case .unknown: BikeOnboardingL10n.text(.bikeOnboardingBikeFallback)
         }
     }
 
@@ -39,9 +39,9 @@ public struct BikeOnboardingPresentationMapper: Sendable {
 
     private func signalText(for rssi: Int) -> String {
         switch rssi {
-        case (-55)...: "Strong signal"
-        case -70 ..< -55: "Good signal"
-        default: "Weak signal"
+        case (-55)...: BikeOnboardingL10n.text(.bikeOnboardingSignalStrong)
+        case -70 ..< -55: BikeOnboardingL10n.text(.bikeOnboardingSignalGood)
+        default: BikeOnboardingL10n.text(.bikeOnboardingSignalWeak)
         }
     }
 

@@ -38,13 +38,13 @@ struct DashboardCurrentTripCard: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel(state.accessibilityLabel)
         .alert(
-            "Reset current trip?",
+            rideDashboardLocalized(.rideDashboardCurrentTripResetConfirmationTitle),
             isPresented: $showsResetConfirmation
         ) {
-            Button("Reset Trip", role: .destructive, action: reset)
-            Button("Cancel", role: .cancel) {}
+            Button(.rideDashboardCurrentTripResetAction, role: .destructive, action: reset)
+            Button(.rideDashboardCommonCancel, role: .cancel) {}
         } message: {
-            Text("The current trip will be saved. A new trip starts immediately if a drive mode is active.")
+            Text(.rideDashboardCurrentTripResetMessage)
         }
         .onChange(of: freezesDurationUpdates) {
             synchronizeDisplayedDurationIfNeeded()
@@ -56,14 +56,16 @@ struct DashboardCurrentTripCard: View {
 
     private var header: some View {
         DashboardTripCardHeader(
-            title: "CURRENT TRIP",
+            title: rideDashboardLocalized(.rideDashboardCurrentTripTitle),
             subtitle: state.statusText
         ) {
             if state.isActive {
                 HStack(spacing: DesignSpace.small) {
                     Button(action: togglePause) {
                         Label(
-                            state.isPaused ? "Resume" : "Pause",
+                            state.isPaused
+                                ? rideDashboardLocalized(.rideDashboardCurrentTripActionResume)
+                                : rideDashboardLocalized(.rideDashboardCurrentTripActionPause),
                             systemImage: state.isPaused ? "play.fill" : "pause.fill"
                         )
                         .labelStyle(.iconOnly)
@@ -72,12 +74,16 @@ struct DashboardCurrentTripCard: View {
                         .background(Circle().fill(DesignColor.controlSurface))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(state.isPaused ? "Resume current trip" : "Pause current trip")
+                    .accessibilityLabel(
+                        state.isPaused
+                            ? .rideDashboardCurrentTripAccessibilityResume
+                            : .rideDashboardCurrentTripAccessibilityPause
+                    )
 
                     Button {
                         showsResetConfirmation = true
                     } label: {
-                        Label("Reset", systemImage: "arrow.counterclockwise")
+                        Label(.rideDashboardCurrentTripActionReset, systemImage: "arrow.counterclockwise")
                             .labelStyle(.iconOnly)
                             .font(.body.weight(.semibold))
                             .frame(
@@ -87,7 +93,7 @@ struct DashboardCurrentTripCard: View {
                             .background(Circle().fill(DesignColor.controlSurface))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Reset current trip")
+                    .accessibilityLabel(.rideDashboardCurrentTripAccessibilityReset)
                 }
             }
         }

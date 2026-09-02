@@ -1,3 +1,5 @@
+import Foundation
+
 public struct RideNavigationViewState: Equatable, Sendable {
     public enum Screen: Equatable, Sendable {
         case home
@@ -68,7 +70,7 @@ public struct RideNavigationViewState: Equatable, Sendable {
         isHeadingUp: Bool = true,
         speedText: String = "--",
         speedUnit: String = "km/h",
-        modeText: String = "MODE --",
+        modeText: String? = nil,
         batteryText: String = "--%",
         elapsedText: String = "00:00",
         distanceText: String = "-- km",
@@ -101,7 +103,7 @@ public struct RideNavigationViewState: Equatable, Sendable {
         routePersistence: RideNavigationRoutePersistenceState = .idle,
         canSaveCompletedRoute: Bool = false,
         completedRouteName: String? = nil,
-        summaryTitle: String = "Ride complete",
+        summaryTitle: String? = nil,
         summaryDetail: String = ""
     ) {
         self.screen = screen
@@ -113,7 +115,7 @@ public struct RideNavigationViewState: Equatable, Sendable {
         self.isHeadingUp = isHeadingUp
         self.speedText = speedText
         self.speedUnit = speedUnit
-        self.modeText = modeText
+        self.modeText = modeText ?? String(localized: .rideNavigationModeUnavailable)
         self.batteryText = batteryText
         self.elapsedText = elapsedText
         self.distanceText = distanceText
@@ -146,7 +148,7 @@ public struct RideNavigationViewState: Equatable, Sendable {
         self.routePersistence = routePersistence
         self.canSaveCompletedRoute = canSaveCompletedRoute
         self.completedRouteName = completedRouteName
-        self.summaryTitle = summaryTitle
+        self.summaryTitle = summaryTitle ?? String(localized: .rideNavigationSummaryRideComplete)
         self.summaryDetail = summaryDetail
     }
 }

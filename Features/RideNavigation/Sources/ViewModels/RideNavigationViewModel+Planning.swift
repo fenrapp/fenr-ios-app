@@ -1,7 +1,6 @@
 import EnvironmentDomain
 import Foundation
 import RideNavigationDomain
-
 @MainActor
 extension RideNavigationViewModel {
     public func updateSearchQuery(_ value: String) {
@@ -27,7 +26,7 @@ extension RideNavigationViewModel {
     public func selectSearchResult(id: UUID) {
         guard let destination = searchResults.first(where: { $0.id == id }),
               let origin = locationSnapshot.coordinate else {
-            errorText = "A current location is required to calculate this route."
+            errorText = String(localized: .rideNavigationCurrentLocationRequired)
             render()
             return
         }
@@ -38,7 +37,7 @@ extension RideNavigationViewModel {
         guard activity == .following,
               selectedRoute != nil,
               let origin = locationSnapshot.coordinate else {
-            errorText = "A current location is required to find a road-accessible exit."
+            errorText = String(localized: .rideNavigationCurrentLocationRequiredForExit)
             render()
             return
         }
@@ -70,7 +69,7 @@ extension RideNavigationViewModel {
                       operations.isCurrent(.trailExit, generation: generation, lifecycle: lifecycle),
                       isStarted else { return }
                 isFindingTrailExit = false
-                errorText = "No road-accessible exit could be found."
+                errorText = String(localized: .rideNavigationNoRoadExitFound)
                 render()
             }
         }
@@ -96,7 +95,7 @@ extension RideNavigationViewModel {
         cameraMode = followCamera
         errorText = nil
         render()
-        announce("Exit navigation started")
+        announce(String(localized: .rideNavigationAnnouncementExitStarted))
     }
     public func resumeGPX() {
         guard activity == .navigating,
@@ -120,7 +119,7 @@ extension RideNavigationViewModel {
         cameraMode = followCamera
         errorText = nil
         render()
-        announce("Enduro navigation resumed")
+        announce(String(localized: .rideNavigationAnnouncementEnduroResumed))
     }
 
     func calculateRoadPreview(
@@ -171,7 +170,7 @@ extension RideNavigationViewModel {
                 guard let self,
                       operations.isCurrent(.route, generation: generation, lifecycle: lifecycle),
                       isStarted else { return }
-                errorText = "Apple Maps could not calculate this route."
+                errorText = String(localized: .rideNavigationRouteCalculationError)
             }
             guard let self,
                   operations.isCurrent(.route, generation: generation, lifecycle: lifecycle),
@@ -219,13 +218,13 @@ extension RideNavigationViewModel {
     func receiveSearchResults(_ places: [NavigationPlace], query: String) {
         guard query == normalizedSearchQuery else { return }
         searchResults = places
-        errorText = searchResults.isEmpty ? "No destinations found." : nil
+        errorText = searchResults.isEmpty ? String(localized: .rideNavigationNoDestinationsFound) : nil
         render(isSearching: false)
     }
 
     func receiveSearchFailure(query: String) {
         guard query == normalizedSearchQuery else { return }
-        errorText = "Search is unavailable. Check your connection."
+        errorText = String(localized: .rideNavigationSearchUnavailable)
         render(isSearching: false)
     }
 
@@ -269,7 +268,7 @@ extension RideNavigationViewModel {
                       operations.isCurrent(.route, generation: generation, lifecycle: lifecycle),
                       isStarted else { return }
                 isCalculatingRoadRoutes = false
-                errorText = "Apple Maps could not update these route preferences."
+                errorText = String(localized: .rideNavigationPreferencesUpdateError)
                 render()
             }
         }
@@ -280,8 +279,10 @@ extension RideNavigationViewModel {
         to start: GeographicCoordinate
     ) {
         let destination = NavigationPlace(
-            name: selectedDirection == .forward ? "Trail start" : "Trail finish",
-            detail: "Road approach to the selected trail entry",
+            name: String(localized: selectedDirection == .forward
+                ? .rideNavigationTrailStart
+                : .rideNavigationTrailFinish),
+            detail: String(localized: .rideNavigationTrailApproachDetail),
             coordinate: start
         )
         roadRoutes = []
@@ -314,23 +315,22 @@ extension RideNavigationViewModel {
                 startClock()
                 errorText = nil
                 render()
-                announce("Road navigation to the trail entry started")
+                announce(String(localized: .rideNavigationAnnouncementTrailApproachStarted))
             } catch is CancellationError {
                 return
             } catch {
                 guard let self,
                       operations.isCurrent(.route, generation: generation, lifecycle: lifecycle),
                       isStarted else { return }
-                errorText = "The approach route could not be calculated."
+                errorText = String(localized: .rideNavigationApproachCalculationError)
                 render()
             }
         }
     }
-
     func previewExternalDestination(_ destination: NavigationPlace) {
         guard let origin = locationSnapshot.coordinate else {
             pendingExternalDestination = destination
-            errorText = "A current location is required to calculate this route."
+            errorText = String(localized: .rideNavigationCurrentLocationRequired)
             render()
             return
         }

@@ -31,7 +31,7 @@ public struct RideHistoryMapper: Sendable {
         let totalDistance = trips.reduce(.zero) { $0 + max($1.distanceKilometers, .zero) }
         let totalDuration = trips.reduce(.zero) { $0 + max($1.elapsedSeconds, .zero) }
         let distance = measurementMapper.distance(kilometers: totalDistance)
-        let rideCountText = trips.count == 1 ? "1 ride" : "\(trips.count) rides"
+        let rideCountText = String(localized: .rideHistoryRideCount(rideCount: trips.count))
         let rows = trips.map {
             row($0, measurementMapper: measurementMapper, measurementSystem: measurementSystem)
         }
@@ -91,16 +91,28 @@ public struct RideHistoryMapper: Sendable {
             subtitle: timeRange(trip),
             distanceText: distanceText(distance),
             overviewMetrics: [
-                metric(id: "duration", label: "Ride Time", value: formatDuration(trip.elapsedSeconds)),
-                metric(id: "averageSpeed", label: "Average Speed", value: speedText(averageSpeed)),
-                metric(id: "maximumSpeed", label: "Maximum Speed", value: speedText(maximumSpeed))
+                metric(
+                    id: "duration",
+                    label: String(localized: .rideHistoryMetricRideTime),
+                    value: formatDuration(trip.elapsedSeconds)
+                ),
+                metric(
+                    id: "averageSpeed",
+                    label: String(localized: .rideHistoryMetricAverageSpeed),
+                    value: speedText(averageSpeed)
+                ),
+                metric(
+                    id: "maximumSpeed",
+                    label: String(localized: .rideHistoryMetricMaximumSpeed),
+                    value: speedText(maximumSpeed)
+                )
             ],
             energyMetrics: energyMetrics(trip, efficiencyScale: efficiencyScale, unit: efficiencyUnit),
             performanceMetrics: performanceMetrics(trip, measurementMapper: measurementMapper),
             dynamicsMetrics: dynamicsMetrics(trip),
             comparisons: comparisons(trip: trip, baseline: baseline, efficiencyScale: efficiencyScale),
             comparisonDetail: baseline.count >= Constants.minimumComparisonSamples
-                ? "Compared with up to 10 previous rides"
+                ? String(localized: .rideHistoryComparisonBaseline)
                 : nil,
             batteryPoints: chartData.battery,
             efficiencyPoints: chartData.efficiency,

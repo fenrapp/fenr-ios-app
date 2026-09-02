@@ -74,7 +74,7 @@ public final class ChargeControlSession: ObservableObject {
         guard let generation = operations.beginPreparation() else { return }
         state.isVisible = true
         state.phase = .preparing
-        state.status = "Preparing"
+        state.status = .preparing
         let prepare = useCases.prepare
         preparationTask = Task { @MainActor [weak self] in
             defer { self?.finishPreparation(generation: generation) }
@@ -120,7 +120,7 @@ public final class ChargeControlSession: ObservableObject {
 
         let generation = operations.beginWrite()
         state.phase = .updating
-        state.status = "Writing \(command.statusValue)"
+        state.status = .writing(command.settingValue)
         do {
             let snapshot = try await execute(command)
             guard operations.belongsToCurrentConnection(generation), canWrite else { return }
@@ -129,7 +129,7 @@ public final class ChargeControlSession: ObservableObject {
             if command.isConfirmed(in: state) {
                 completeConfirmation(command)
             } else {
-                state.status = "Confirming \(command.statusValue)"
+                state.status = .confirming(command.settingValue)
                 scheduleConfirmationTimeout(for: command)
             }
         } catch {
@@ -173,7 +173,7 @@ public final class ChargeControlSession: ObservableObject {
     private func completeConfirmation(_ command: ChargeControlCommand) {
         guard operations.clearPendingConfirmation(command) else { return }
         cancelConfirmation(for: command)
-        markReadyUnlessUpdating(status: "Confirmed \(command.statusValue)")
+        markReadyUnlessUpdating(status: .confirmed(command.settingValue))
         logger.append("5001 confirmed: \(command.statusValue)")
         drainQueuedWriteIfNeeded()
     }
@@ -192,7 +192,7 @@ public final class ChargeControlSession: ObservableObject {
         guard operations.clearPendingConfirmation(command) else { return }
         restoreSelectionUnlessSuperseded(for: command)
         let error = command.mismatchDescription(in: state)
-        markFailed(error)
+        markFailed(.confirmationTimedOut)
         logger.append("mismatch: \(error)")
         drainQueuedWriteIfNeeded()
     }
@@ -254,27 +254,27 @@ public final class ChargeControlSession: ObservableObject {
         state = ChargeControlState()
     }
 
-    private func markReady(status: String = "Ready") {
+    private func markReady(status: ChargeControlStatus = .ready) {
         state.phase = .ready
         state.status = status
-        state.error = nil
+        state.failure = nil
     }
 
-    private func markReadyUnlessUpdating(status: String = "Ready") {
+    private func markReadyUnlessUpdating(status: ChargeControlStatus = .ready) {
         if operations.hasOptimisticSelection {
             state.phase = .updating
-            state.status = "Updating"
-            state.error = nil
+            state.status = .updating
+            state.failure = nil
         } else {
             markReady(status: status)
         }
     }
 
-    private func markFailed(_ error: Error) { markFailed(String(describing: error)) }
+    private func markFailed(_: Error) { markFailed(.writeFailed) }
 
-    private func markFailed(_ error: String) {
+    private func markFailed(_ failure: ChargeControlFailure) {
         state.phase = .failed
-        state.status = "Update failed"
-        state.error = error
+        state.status = .updateFailed
+        state.failure = failure
     }
 }

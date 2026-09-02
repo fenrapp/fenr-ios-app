@@ -68,9 +68,9 @@ public struct BatteryHealthFormatter {
     public func chargeState(_ value: BatteryChargeState) -> String {
         switch value {
         case .unknown: BatteryHealthText.placeholder
-        case .disconnected: "Disconnected"
-        case .connected: "Connected"
-        case .charging: "Charging"
+        case .disconnected: String(localized: .batteryHealthChargeStateDisconnected)
+        case .connected: String(localized: .batteryHealthChargeStateConnected)
+        case .charging: String(localized: .batteryHealthChargeStateCharging)
         }
     }
 

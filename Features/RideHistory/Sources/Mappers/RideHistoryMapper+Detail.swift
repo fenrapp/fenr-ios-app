@@ -8,17 +8,31 @@ extension RideHistoryMapper {
         unit: String
     ) -> [RideHistoryDetailViewState.Metric] {
         var metrics = [
-            metric(id: "used", label: "Energy Used", value: formatEnergy(trip.consumedEnergyWattHours)),
-            metric(id: "recovered", label: "Recovered", value: formatEnergy(trip.recoveredEnergyWattHours)),
-            metric(id: "net", label: "Net Energy", value: formatEnergy(trip.netEnergyWattHours))
+            metric(
+                id: "used",
+                label: String(localized: .rideHistoryMetricEnergyUsed),
+                value: formatEnergy(trip.consumedEnergyWattHours)
+            ),
+            metric(
+                id: "recovered",
+                label: String(localized: .rideHistoryMetricRecovered),
+                value: formatEnergy(trip.recoveredEnergyWattHours)
+            ),
+            metric(
+                id: "net",
+                label: String(localized: .rideHistoryMetricNetEnergy),
+                value: formatEnergy(trip.netEnergyWattHours)
+            )
         ]
         if let efficiency = trip.efficiencyWattHoursPerKilometer, efficiency.isFinite {
             metrics.append(metric(
                 id: "efficiency",
-                label: "Efficiency",
+                label: String(localized: .rideHistoryMetricEfficiency),
                 value: format(efficiency * efficiencyScale, fractionDigits: abs(efficiency) < 10 ? 1 : 0)
                     + " \(unit)",
-                detail: trip.hasSufficientElectricalCoverage ? nil : "Partial electrical coverage"
+                detail: trip.hasSufficientElectricalCoverage
+                    ? nil
+                    : String(localized: .rideHistoryPartialElectricalCoverage)
             ))
         }
         if let batteryMetric = batteryMetric(trip.energyBuckets) {
@@ -26,15 +40,15 @@ extension RideHistoryMapper {
         }
         metrics.append(metric(
             id: "coverage",
-            label: "Power Coverage",
+            label: String(localized: .rideHistoryMetricPowerCoverage),
             value: format(trip.electricalCoverage * 100, fractionDigits: 0) + "%"
         ))
         if let recovery = recoveryShare(trip) {
             metrics.append(metric(
                 id: "recoveryShare",
-                label: "Energy Recovered",
+                label: String(localized: .rideHistoryMetricEnergyRecovered),
                 value: format(recovery * 100, fractionDigits: 0) + "%",
-                detail: "of energy used"
+                detail: String(localized: .rideHistoryOfEnergyUsed)
             ))
         }
         return metrics
@@ -52,15 +66,15 @@ extension RideHistoryMapper {
         let change = last - first
         let detail: String
         if change < .zero {
-            detail = "\(-change) percentage points used"
+            detail = String(localized: .rideHistoryBatteryPointsUsed(-change))
         } else if change > .zero {
-            detail = "\(change) percentage points gained"
+            detail = String(localized: .rideHistoryBatteryPointsGained(change))
         } else {
-            detail = "No recorded change"
+            detail = String(localized: .rideHistoryBatteryNoRecordedChange)
         }
         return metric(
             id: "batteryChange",
-            label: "Battery",
+            label: String(localized: .rideHistoryMetricBattery),
             value: "\(first)% → \(last)%",
             detail: detail
         )
@@ -73,13 +87,13 @@ extension RideHistoryMapper {
         [
             powerMetric(
                 id: "peakUse",
-                label: "Peak Use",
+                label: String(localized: .rideHistoryMetricPeakUse),
                 watts: trip.maximumDischargePowerWatts,
                 measurementMapper: measurementMapper
             ),
             powerMetric(
                 id: "peakRegen",
-                label: "Peak Regen",
+                label: String(localized: .rideHistoryMetricPeakRegen),
                 watts: trip.maximumRegenerationPowerWatts,
                 measurementMapper: measurementMapper
             )
@@ -88,10 +102,10 @@ extension RideHistoryMapper {
 
     func dynamicsMetrics(_ trip: RideTrip) -> [RideHistoryDetailViewState.Metric] {
         let values = [
-            ("leftLean", "Maximum Left Lean", trip.maximumLeftLeanDegrees),
-            ("rightLean", "Maximum Right Lean", trip.maximumRightLeanDegrees),
-            ("uphillPitch", "Maximum Uphill", trip.maximumUphillPitchDegrees),
-            ("downhillPitch", "Maximum Downhill", trip.maximumDownhillPitchDegrees)
+            ("leftLean", String(localized: .rideHistoryMetricMaximumLeftLean), trip.maximumLeftLeanDegrees),
+            ("rightLean", String(localized: .rideHistoryMetricMaximumRightLean), trip.maximumRightLeanDegrees),
+            ("uphillPitch", String(localized: .rideHistoryMetricMaximumUphill), trip.maximumUphillPitchDegrees),
+            ("downhillPitch", String(localized: .rideHistoryMetricMaximumDownhill), trip.maximumDownhillPitchDegrees)
         ]
         guard values.contains(where: { $0.2.isFinite && $0.2 > .zero }) else { return [] }
         return values.compactMap { id, label, value in

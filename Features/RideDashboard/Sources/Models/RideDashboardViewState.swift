@@ -27,7 +27,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
         gear: DashboardGearViewData = .init(),
         powerMode: DashboardPowerModeViewData = .init(),
         centerMode: CenterMode = .riding,
-        connectionDetail: String = "Restoring bike session",
+        connectionDetail: String? = nil,
         hasTelemetry: Bool = false,
         showsConnectionProgress: Bool = true,
         continuityPhase: RideDashboardContinuityPhase = .cold,
@@ -44,7 +44,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
         self.gear = gear
         self.powerMode = powerMode
         self.centerMode = centerMode
-        self.connectionDetail = connectionDetail
+        self.connectionDetail = connectionDetail ?? rideDashboardLocalized(.rideDashboardConnectionRestoring)
         self.hasTelemetry = hasTelemetry
         self.showsConnectionProgress = showsConnectionProgress
         self.continuityPhase = continuityPhase
@@ -55,7 +55,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
     func waitingForStableTelemetry() -> Self {
         .init(
             showsEstimatedRangeBatteryIndicator: showsEstimatedRangeBatteryIndicator,
-            connectionDetail: "Verifying a stable telemetry stream",
+            connectionDetail: rideDashboardLocalized(.rideDashboardConnectionVerifying),
             showsConnectionProgress: true,
             continuityPhase: .cold
         )
@@ -101,12 +101,13 @@ public struct RideDashboardViewState: Equatable, Sendable {
             percentageText: String = "—",
             progress: Double = .zero,
             emphasis: Emphasis = .unavailable,
-            accessibilityLabel: String = "Battery unavailable"
+            accessibilityLabel: String? = nil
         ) {
             self.percentageText = percentageText
             self.progress = progress
             self.emphasis = emphasis
             self.accessibilityLabel = accessibilityLabel
+                ?? rideDashboardLocalized(.rideDashboardBatteryUnavailableAccessibility)
         }
 
         public enum Emphasis: Equatable, Sendable {

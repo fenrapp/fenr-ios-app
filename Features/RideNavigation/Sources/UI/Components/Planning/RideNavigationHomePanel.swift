@@ -28,7 +28,7 @@ struct RideNavigationHomePanel: View {
                     .position(x: safeFrame.midX, y: safeFrame.midY)
 
                 if isSearchFieldFocused, let keyboardFrame {
-                    Button("Done") { isSearchFieldFocused = false }
+                    Button(.rideNavigationDone) { isSearchFieldFocused = false }
                         .buttonStyle(.plain)
                         .frame(
                             width: Constants.keyboardDismissButtonWidth,
@@ -156,10 +156,10 @@ struct RideNavigationHomePanel: View {
     private var header: some View {
         HStack(alignment: .top, spacing: DesignSpace.medium) {
             VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
-                Label("Ride Navigation", systemImage: "location.north.fill")
+                Label(.rideNavigationTitle, systemImage: "location.north.fill")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
-                Text("Plan a ride")
+                Text(.rideNavigationPlanRide)
                     .font(.title.weight(.bold))
             }
             Spacer()
@@ -170,7 +170,7 @@ struct RideNavigationHomePanel: View {
                     .background(DesignColor.controlSurface, in: Circle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Close ride navigation")
+            .accessibilityLabel(.rideNavigationClose)
         }
     }
 
@@ -184,7 +184,7 @@ struct RideNavigationHomePanel: View {
                         .background(DesignColor.controlSurface, in: Circle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Back to ride planning")
+                .accessibilityLabel(.rideNavigationBackToPlanning)
             }
             searchField
         }
@@ -194,7 +194,7 @@ struct RideNavigationHomePanel: View {
         HStack(spacing: DesignSpace.small) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
-            TextField("Search a destination", text: $query)
+            TextField(String(localized: .rideNavigationSearchDestination), text: $query)
                 .focused($isSearchFieldFocused)
                 .textInputAutocapitalization(.words)
                 .autocorrectionDisabled(false)
@@ -210,7 +210,7 @@ struct RideNavigationHomePanel: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Clear search")
+                .accessibilityLabel(.rideNavigationClearSearch)
             }
         }
         .padding(.horizontal, DesignSpace.medium)

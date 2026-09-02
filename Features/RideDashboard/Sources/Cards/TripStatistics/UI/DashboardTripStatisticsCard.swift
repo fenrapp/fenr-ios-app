@@ -10,7 +10,7 @@ struct DashboardTripStatisticsCard: View {
                 ProgressView()
                     .tint(DesignColor.informational)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .accessibilityLabel("Loading ride statistics")
+                    .accessibilityLabel(.rideDashboardTripStatisticsLoading)
             } else {
                 content
             }
@@ -33,7 +33,7 @@ struct DashboardTripStatisticsCard: View {
 
     private var header: some View {
         DashboardTripCardHeader(
-            title: "RIDE STATS",
+            title: rideDashboardLocalized(.rideDashboardTripStatisticsTitle),
             subtitle: state.statusText
         )
     }
@@ -51,7 +51,7 @@ struct DashboardTripStatisticsCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(state.totalDistance.label)
-        .accessibilityValue("\(state.totalDistance.valueText) \(state.totalDistance.unit)")
+        .accessibilityValue(Text(verbatim: "\(state.totalDistance.valueText) \(state.totalDistance.unit)"))
     }
 
     private func metric(

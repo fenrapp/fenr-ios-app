@@ -29,7 +29,8 @@ public struct SystemHealthCardMapper: Sendable {
             status: status,
             statusText: statusText(status),
             statusDetail: statusDetail(status, analysis: analysis),
-            stateOfHealthText: analysis.stateOfHealthPercent.map { "\($0)%" } ?? "N/A",
+            stateOfHealthText: analysis.stateOfHealthPercent.map { "\($0)%" }
+                ?? rideDashboardLocalized(.rideDashboardValueNotAvailable),
             stateOfHealthProgress: progress(analysis.stateOfHealthPercent),
             cellDeltaText: millivolts(analysis.cellDeltaVolts, measurementMapper: measurementMapper),
             dcBusVoltageText: voltage(snapshot.batteryHealth.dcBusVoltage.volts, measurementMapper: measurementMapper),
@@ -67,12 +68,12 @@ private extension SystemHealthCardMapper {
 
     func statusText(_ status: DashboardSystemHealthViewData.Status) -> String {
         switch status {
-        case .scanning: "SCANNING"
-        case .healthy: "OK"
-        case .lowBattery: "LOW BATTERY"
-        case .attention: "CHECK"
-        case .critical: "CRITICAL"
-        case .unavailable: "UNAVAILABLE"
+        case .scanning: rideDashboardLocalized(.rideDashboardSystemHealthStatusScanning)
+        case .healthy: rideDashboardLocalized(.rideDashboardCommonOk)
+        case .lowBattery: rideDashboardLocalized(.rideDashboardSystemHealthStatusLowBatteryShort)
+        case .attention: rideDashboardLocalized(.rideDashboardSystemHealthCellsCheck)
+        case .critical: rideDashboardLocalized(.rideDashboardSystemHealthCellsCritical)
+        case .unavailable: rideDashboardLocalized(.rideDashboardCommonUnavailable).uppercased()
         }
     }
 
@@ -80,26 +81,37 @@ private extension SystemHealthCardMapper {
         _ status: DashboardSystemHealthViewData.Status,
         analysis: BatteryHealthAnalysis
     ) -> String {
-        if analysis.isBMSFaultActive { return "BMS FAULT ACTIVE" }
+        if analysis.isBMSFaultActive { return rideDashboardLocalized(.rideDashboardSystemHealthStatusBmsFault) }
         if analysis.criticalCellCount > .zero {
-            return cellCountText(analysis.criticalCellCount, qualifier: "CRITICAL")
+            return cellCountText(
+                analysis.criticalCellCount,
+                qualifier: rideDashboardLocalized(.rideDashboardSystemHealthCellsCritical)
+            )
         }
-        if status == .lowBattery { return "LOW BATTERY · CHARGE SOON" }
+        if status == .lowBattery { return rideDashboardLocalized(.rideDashboardSystemHealthStatusLowBattery) }
         if analysis.attentionCellCount > .zero {
-            return cellCountText(analysis.attentionCellCount, qualifier: "TO CHECK")
+            return cellCountText(
+                analysis.attentionCellCount,
+                qualifier: rideDashboardLocalized(.rideDashboardSystemHealthCellsToCheck)
+            )
         }
         switch status {
         case .scanning: return ""
-        case .healthy: return analysis.balancingCellCount > .zero ? "CELL BALANCING ACTIVE" : "ALL SYSTEMS NORMAL"
-        case .lowBattery: return "LOW BATTERY · CHARGE SOON"
-        case .attention: return "VALUE OUTSIDE NORMAL RANGE"
-        case .critical: return "SYSTEM LIMIT EXCEEDED"
-        case .unavailable: return "BMS DATA UNAVAILABLE"
+        case .healthy:
+            return rideDashboardLocalized(
+                analysis.balancingCellCount > .zero
+                    ? .rideDashboardSystemHealthStatusBalancing
+                    : .rideDashboardSystemHealthStatusNormal
+            )
+        case .lowBattery: return rideDashboardLocalized(.rideDashboardSystemHealthStatusLowBattery)
+        case .attention: return rideDashboardLocalized(.rideDashboardSystemHealthStatusOutsideRange)
+        case .critical: return rideDashboardLocalized(.rideDashboardSystemHealthStatusLimitExceeded)
+        case .unavailable: return rideDashboardLocalized(.rideDashboardSystemHealthStatusDataUnavailable)
         }
     }
 
     func cellCountText(_ count: Int, qualifier: String) -> String {
-        "\(count) \(count == 1 ? "CELL" : "CELLS") \(qualifier)"
+        rideDashboardLocalized(.rideDashboardSystemHealthCellCountQualifier(count, qualifier))
     }
 
     func progress(_ percent: Int?) -> Double {

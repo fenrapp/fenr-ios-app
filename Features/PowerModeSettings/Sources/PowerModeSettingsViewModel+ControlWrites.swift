@@ -59,7 +59,7 @@ extension PowerModeSettingsViewModel {
                     mapIndex: mapIndex,
                     generation: generation,
                     values: .base(horsepower: horsepower, regeneration: regeneration),
-                    error: "Unable to apply map: \(error.localizedDescription)"
+                    error: String(localized: .powerModeSettingsApplyMapError)
                 )
             }
         }
@@ -108,7 +108,7 @@ extension PowerModeSettingsViewModel {
                     mapIndex: mapIndex,
                     generation: generation,
                     values: .traction(power: powerTraction, braking: brakingTraction),
-                    error: "Unable to apply traction control: \(error.localizedDescription)"
+                    error: String(localized: .powerModeSettingsApplyTractionError)
                 )
             }
         }
@@ -142,7 +142,9 @@ private extension PowerModeSettingsViewModel {
         controlError = error
         if error == nil {
             applyConfirmed(values, mapIndex: mapIndex)
-            controlMessage = "Map \(mapIndex + 1) confirmed by the bike"
+            controlMessage = String(
+                localized: .powerModeSettingsMapConfirmed(mapIndex + 1)
+            )
         } else {
             clearPreparation(for: values)
             attemptedPreparationMapIndex = mapIndex

@@ -1,9 +1,37 @@
+import BikeDomain
+
 public enum ChargeControlPhase: Equatable, Sendable {
     case unavailable
     case preparing
     case ready
     case updating
     case failed
+}
+
+public enum ChargeControlSettingValue: Equatable, Sendable {
+    case powerWatts(Int)
+    case targetPercent(Int)
+}
+
+public enum ChargeControlStatus: Equatable, Sendable {
+    case unavailable
+    case preparing
+    case ready
+    case updating
+    case unsupportedFirmware
+    case noOpGuardFailed
+    case writing(ChargeControlSettingValue)
+    case confirming(ChargeControlSettingValue)
+    case confirmed(ChargeControlSettingValue)
+    case updateFailed
+}
+
+public enum ChargeControlFailure: Equatable, Sendable {
+    case incompatibleFirmware
+    case noOpValidationFailed
+    case preparationFailed
+    case writeFailed
+    case confirmationTimedOut
 }
 
 public struct ChargeControlState: Equatable, Sendable {
@@ -19,9 +47,9 @@ public struct ChargeControlState: Equatable, Sendable {
     public internal(set) var minimumTargetPercent: Double
     public internal(set) var maximumTargetPercent: Double
     public internal(set) var targetStepPercent: Double
-    public internal(set) var chargerType: String
-    public internal(set) var status: String
-    public internal(set) var error: String?
+    public internal(set) var chargerType: BikeChargerType?
+    public internal(set) var status: ChargeControlStatus
+    public internal(set) var failure: ChargeControlFailure?
     public internal(set) var phase: ChargeControlPhase
 
     public var canAcceptInput: Bool {
@@ -41,9 +69,9 @@ public struct ChargeControlState: Equatable, Sendable {
         minimumTargetPercent: Double = 1,
         maximumTargetPercent: Double = 100,
         targetStepPercent: Double = 1,
-        chargerType: String = "Unknown",
-        status: String = "Unavailable",
-        error: String? = nil,
+        chargerType: BikeChargerType? = nil,
+        status: ChargeControlStatus = .unavailable,
+        failure: ChargeControlFailure? = nil,
         phase: ChargeControlPhase = .unavailable
     ) {
         self.isVisible = isVisible
@@ -60,7 +88,7 @@ public struct ChargeControlState: Equatable, Sendable {
         self.targetStepPercent = targetStepPercent
         self.chargerType = chargerType
         self.status = status
-        self.error = error
+        self.failure = failure
         self.phase = phase
     }
 }

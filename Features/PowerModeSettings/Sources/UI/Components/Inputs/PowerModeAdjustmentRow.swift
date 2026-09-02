@@ -72,7 +72,7 @@ struct PowerModeAdjustmentRow: View {
     private var valueText: String {
         guard state.value != nil else { return state.valueText }
         let value = state.isEnabled ? formatted(draftValue) : state.valueText
-        return "\(value) \(state.unit)"
+        return String(localized: .powerModeSettingsMeasurement(value, state.unit))
     }
 
     private func formatted(_ value: Double) -> String {

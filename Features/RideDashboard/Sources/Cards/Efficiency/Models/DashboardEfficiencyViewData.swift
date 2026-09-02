@@ -1,11 +1,20 @@
 import Foundation
 
 public struct DashboardEfficiencyViewData: Equatable, Sendable {
-    public enum Status: String, Equatable, Sendable {
-        case calculated = "CALCULATED"
-        case partial = "PARTIAL"
-        case calculating = "CALCULATING"
-        case netRecovery = "NET RECOVERY"
+    public enum Status: Equatable, Sendable {
+        case calculated
+        case partial
+        case calculating
+        case netRecovery
+
+        var text: String {
+            switch self {
+            case .calculated: rideDashboardLocalized(.rideDashboardEfficiencyStatusCalculated)
+            case .partial: rideDashboardLocalized(.rideDashboardEfficiencyStatusPartial)
+            case .calculating: rideDashboardLocalized(.rideDashboardEfficiencyStatusCalculating)
+            case .netRecovery: rideDashboardLocalized(.rideDashboardEfficiencyStatusNetRecovery)
+            }
+        }
     }
 
     public struct PowerPoint: Equatable, Identifiable, Sendable {

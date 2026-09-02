@@ -59,7 +59,7 @@ struct DashboardCompassDial: View {
                     Text(cardinal.label)
                         .font(.caption2.weight(.bold))
                         .foregroundStyle(
-                            cardinal.label == "N"
+                            cardinal.isNorth
                                 ? DesignColor.critical
                                 : DesignColor.secondaryText
                         )
@@ -181,10 +181,10 @@ struct DashboardCompassDial: View {
         static let northOffsetDegrees = 90.0
         static let animationDuration = 0.24
         static let cardinals = [
-            Cardinal(label: "N", degrees: 0),
-            Cardinal(label: "E", degrees: 90),
-            Cardinal(label: "S", degrees: 180),
-            Cardinal(label: "W", degrees: 270)
+            Cardinal(label: rideDashboardLocalized(.rideDashboardCompassDirectionNorth), degrees: 0, isNorth: true),
+            Cardinal(label: rideDashboardLocalized(.rideDashboardCompassDirectionEast), degrees: 90),
+            Cardinal(label: rideDashboardLocalized(.rideDashboardCompassDirectionSouth), degrees: 180),
+            Cardinal(label: rideDashboardLocalized(.rideDashboardCompassDirectionWest), degrees: 270)
         ]
     }
 }
@@ -234,6 +234,13 @@ private struct DashboardCompassTicks: View {
 private struct Cardinal: Identifiable {
     let label: String
     let degrees: Double
+    let isNorth: Bool
+
+    init(label: String, degrees: Double, isNorth: Bool = false) {
+        self.label = label
+        self.degrees = degrees
+        self.isNorth = isNorth
+    }
 
     var id: String { label }
 }

@@ -43,7 +43,9 @@ struct RideNavigationTopControls: View {
                 label: { RideNavigationMapControlLabel(systemImage: "xmark") }
             )
             .buttonStyle(.plain)
-            .accessibilityLabel(state.activity == .preview ? "Close route" : "End ride")
+            .accessibilityLabel(state.activity == .preview
+                ? String(localized: .rideNavigationCloseRoute)
+                : String(localized: .rideNavigationEndRide))
 
             VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
                 HStack(spacing: DesignSpace.extraSmall) {
@@ -52,7 +54,7 @@ struct RideNavigationTopControls: View {
                         .font(.headline.weight(.semibold))
                         .lineLimit(2)
                 }
-                Text("\(state.distanceText) · \(state.elapsedText)")
+                Text(verbatim: "\(state.distanceText) · \(state.elapsedText)")
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
@@ -75,10 +77,10 @@ struct RideNavigationTopControls: View {
 
     private var activityTitle: String {
         switch state.activity {
-        case .recording, .paused: "Recording Ride"
-        case .navigating: "Navigation"
-        case .following: "Enduro Navigation"
-        case .preview: "Route Preview"
+        case .recording, .paused: String(localized: .rideNavigationRecordingRide)
+        case .navigating: String(localized: .rideNavigationNavigation)
+        case .following: String(localized: .rideNavigationEnduroNavigation)
+        case .preview: String(localized: .rideNavigationRoutePreview)
         }
     }
 

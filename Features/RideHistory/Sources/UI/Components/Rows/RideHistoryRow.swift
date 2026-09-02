@@ -18,7 +18,7 @@ struct RideHistoryRow: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(ride.accessibilityLabel)
-        .accessibilityValue(isDeleting ? "Deleting" : "")
+        .accessibilityValue(isDeleting ? String(localized: .rideHistoryDeleting) : "")
     }
 
     private var compactLayout: some View {

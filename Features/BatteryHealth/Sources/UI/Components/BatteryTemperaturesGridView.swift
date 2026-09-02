@@ -8,7 +8,7 @@ struct BatteryTemperaturesGridView: View {
         LazyVGrid(columns: columns, spacing: Constants.rowSpacing) {
             ForEach(temperatures) { temperature in
                 HStack {
-                    Text("Sensor \(temperature.position)")
+                    Text(String(localized: .batteryHealthSensorPosition(temperature.position)))
                         .foregroundStyle(.secondary)
                     Spacer()
                     Text(temperature.value)

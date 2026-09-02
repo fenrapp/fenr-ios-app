@@ -89,7 +89,7 @@ public struct RideHistoryDetailViewState: Equatable, Sendable {
     public init(
         status: Status = .idle,
         rideID: UUID? = nil,
-        title: String = "Ride details",
+        title: String? = nil,
         subtitle: String = "",
         distanceText: String = "",
         overviewMetrics: [Metric] = [],
@@ -105,7 +105,7 @@ public struct RideHistoryDetailViewState: Equatable, Sendable {
     ) {
         self.status = status
         self.rideID = rideID
-        self.title = title
+        self.title = title ?? String(localized: .rideHistoryRideDetails)
         self.subtitle = subtitle
         self.distanceText = distanceText
         self.overviewMetrics = overviewMetrics

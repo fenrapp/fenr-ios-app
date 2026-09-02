@@ -7,6 +7,37 @@ import TestSupport
 
 @MainActor
 struct WatchDashboardViewModelTests {
+    @Test("default state uses catalog-backed telemetry copy")
+    func defaultStateUsesLocalizedTelemetryCopy() {
+        let state = WatchDashboardViewState()
+
+        #expect(
+            state.mode == .unavailable(
+                detail: String(localized: .watchDashboardConnectionWaitingTelemetry)
+            )
+        )
+    }
+
+    @Test("connection fallbacks use catalog-backed copy")
+    func connectionFallbacksUseLocalizedCopy() {
+        let mapper = makeMapper()
+        let state = mapper.unavailable(connectionState: .bluetoothPoweredOff)
+
+        #expect(
+            state.mode == .unavailable(
+                detail: String(localized: .watchDashboardConnectionBluetoothOff)
+            )
+        )
+        #expect(
+            mapper.unavailable(connectionState: .failed(message: "transport detail")).mode
+                == .unavailable(detail: String(localized: .watchDashboardConnectionFailed))
+        )
+        #expect(
+            mapper.unavailable(connectionState: .disconnected(reason: "transport detail")).mode
+                == .unavailable(detail: String(localized: .watchDashboardConnectionDisconnected))
+        )
+    }
+
     @Test("charging monitoring is started only while charging")
     func chargingMonitoringFollowsRunState() async {
         let repository = WatchDashboardRepository()

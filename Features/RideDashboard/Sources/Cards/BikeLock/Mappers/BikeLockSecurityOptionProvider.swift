@@ -7,20 +7,20 @@ public struct BikeLockSecurityOptionProvider: Sendable {
         options = [
             .init(
                 id: BikeLockSecurityMode.pinAndFaceID.rawValue,
-                title: "PIN + Face ID",
-                detail: "Use Face ID first, with your PIN as a fallback.",
+                title: rideDashboardLocalized(.rideDashboardBikeLockSecurityFaceIDTitle),
+                detail: rideDashboardLocalized(.rideDashboardBikeLockSecurityFaceIDDetail),
                 requiresPIN: true
             ),
             .init(
                 id: BikeLockSecurityMode.pin.rawValue,
-                title: "PIN",
-                detail: "Enter a 6-digit PIN whenever you unlock.",
+                title: rideDashboardLocalized(.rideDashboardBikeLockSecurityPinTitle),
+                detail: rideDashboardLocalized(.rideDashboardBikeLockSecurityPinDetail),
                 requiresPIN: true
             ),
             .init(
                 id: BikeLockSecurityMode.withoutPIN.rawValue,
-                title: "No PIN",
-                detail: "Lock and unlock immediately from the card.",
+                title: rideDashboardLocalized(.rideDashboardBikeLockSecurityNoneTitle),
+                detail: rideDashboardLocalized(.rideDashboardBikeLockSecurityNoneDetail),
                 requiresPIN: false
             )
         ]

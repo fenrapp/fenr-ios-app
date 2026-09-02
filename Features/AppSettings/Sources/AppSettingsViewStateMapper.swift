@@ -1,5 +1,6 @@
 import BikeDomain
 import EnvironmentDomain
+import Foundation
 import SettingsDomain
 
 public struct AppSettingsViewStateMapper: Sendable {
@@ -11,7 +12,7 @@ public struct AppSettingsViewStateMapper: Sendable {
         profile: BikeProfile? = nil,
         connection: BikeConnection = .init(),
         isVerifying: Bool = false,
-        verificationMessage: String? = nil,
+        verificationMessage: LocalizedStringResource? = nil,
         verificationMessageIsError: Bool = false
     ) -> AppSettingsViewState {
         return .init(
@@ -79,49 +80,53 @@ public struct AppSettingsViewStateMapper: Sendable {
         profile: BikeProfile?
     ) -> SettingsNavigationSummaryViewData {
         let count = settings.powerModeNames(forVIN: profile?.vin).count
-        let detail = switch count {
-        case 0: "5 maps configured"
-        case 1: "5 maps · 1 custom name"
-        default: "5 maps · \(count) custom names"
+        let detail: LocalizedStringResource = switch count {
+        case 0: .appSettingsPowerModesConfigured
+        default: .appSettingsPowerModesCustomNames(count)
         }
         return .init(detail: detail)
     }
 
-    private func rideDisplayDetail(settings: AppSettings) -> String {
-        let progress = dashboardProgressBarModeTitle(settings.dashboardProgressBarMode)
-        let speed = speedSourceTitle(settings.speedSource)
-        return "\(progress) · \(speed)"
+    private func rideDisplayDetail(settings: AppSettings) -> LocalizedStringResource {
+        let progress = String(localized: dashboardProgressBarModeTitle(settings.dashboardProgressBarMode))
+        let speed = String(localized: speedSourceTitle(settings.speedSource))
+        return .appSettingsRideDisplaySummary(progress, speed)
     }
 
-    private func dashboardCardsDetail(_ configuration: DashboardCardConfiguration) -> String {
+    private func dashboardCardsDetail(_ configuration: DashboardCardConfiguration) -> LocalizedStringResource {
         let visibleCount = configuration.sections.filter(\.isVisible).count
-        return "\(visibleCount) visible"
+        return .appSettingsDashboardCardsVisibleCount(visibleCount)
     }
 
     private func powerTier(
         profile: BikeProfile?,
         connection: BikeConnection,
         isVerifying: Bool,
-        verificationMessage: String?,
+        verificationMessage: LocalizedStringResource?,
         verificationMessageIsError: Bool
     ) -> PowerTierSettingsViewState {
         let declared = profile?.declaredPowerTier ?? .standard
         let evidence = profile?.alphaEvidence ?? []
-        let status: String
+        let status: LocalizedStringResource
         if !evidence.isEmpty, declared == .standard {
-            status = "Tier mismatch: bike reports Alpha evidence"
+            status = .appSettingsPowerTierMismatchStatus
         } else if !evidence.isEmpty {
-            status = "Alpha detected"
+            status = .appSettingsPowerTierAlphaDetected
         } else if declared == .alpha {
-            status = "Pending bike verification"
+            status = .appSettingsPowerTierPendingVerification
         } else {
-            status = "Standard baseline · 60 HP max"
+            status = .appSettingsPowerTierStandardMaximum
         }
         return .init(
             selection: .init(
                 selectedID: declared.rawValue,
                 options: BikeDeclaredPowerTier.allCases.map {
-                    .init(id: $0.rawValue, title: $0 == .standard ? "Standard" : "Alpha")
+                    .init(
+                        id: $0.rawValue,
+                        title: $0 == .standard
+                            ? .appSettingsPowerTierStandard
+                            : .appSettingsPowerTierAlpha
+                    )
                 }
             ),
             navigationDetail: powerTierNavigationDetail(
@@ -140,21 +145,27 @@ public struct AppSettingsViewStateMapper: Sendable {
     private func powerTierNavigationDetail(
         declared: BikeDeclaredPowerTier,
         hasEvidence: Bool
-    ) -> String {
-        if hasEvidence, declared == .standard { return "Model mismatch" }
-        if hasEvidence { return "Alpha detected" }
-        return declared == .alpha ? "Alpha · Unverified" : "Standard"
+    ) -> LocalizedStringResource {
+        if hasEvidence, declared == .standard { return .appSettingsPowerTierModelMismatch }
+        if hasEvidence { return .appSettingsPowerTierAlphaDetected }
+        return declared == .alpha
+            ? .appSettingsPowerTierAlphaUnverified
+            : .appSettingsPowerTierStandard
     }
 
-    private func evidenceDescription(profile: BikeProfile?) -> String? {
+    private func evidenceDescription(profile: BikeProfile?) -> LocalizedStringResource? {
         guard let profile, !profile.alphaEvidence.isEmpty else { return nil }
         var parts: [String] = []
-        if profile.alphaEvidence.contains(.powerAboveStandard) { parts.append("Power above 60 HP") }
-        if profile.alphaEvidence.contains(.tractionControlConfigured) { parts.append("TC configured") }
+        if profile.alphaEvidence.contains(.powerAboveStandard) {
+            parts.append(String(localized: .appSettingsPowerTierEvidencePowerAboveStandard))
+        }
+        if profile.alphaEvidence.contains(.tractionControlConfigured) {
+            parts.append(String(localized: .appSettingsPowerTierEvidenceTractionControl))
+        }
         if let date = profile.alphaDetectedAt {
             parts.append(date.formatted(date: .abbreviated, time: .shortened))
         }
-        return parts.joined(separator: " · ")
+        return .appSettingsPowerTierEvidenceSummary(parts.joined(separator: " · "))
     }
 
     private func isAuthenticated(_ state: ConnectionState) -> Bool {
@@ -164,66 +175,68 @@ public struct AppSettingsViewStateMapper: Sendable {
         }
     }
 
-    private func speedSourceTitle(_ source: SpeedSource) -> String {
+    private func speedSourceTitle(_ source: SpeedSource) -> LocalizedStringResource {
         switch source {
-        case .motorcycle: "Bike"
-        case .gps: "GPS"
-        case .hybrid: "GPS+"
+        case .motorcycle: .appSettingsSpeedSourceBike
+        case .gps: .appSettingsSpeedSourceGps
+        case .hybrid: .appSettingsSpeedSourceHybrid
         }
     }
 
-    private func dashboardProgressBarModeTitle(_ mode: DashboardProgressBarMode) -> String {
+    private func dashboardProgressBarModeTitle(_ mode: DashboardProgressBarMode) -> LocalizedStringResource {
         switch mode {
-        case .energy: "Energy"
-        case .speed: "Speed"
-        case .hidden: "Hidden"
+        case .energy: .appSettingsProgressBarEnergy
+        case .speed: .appSettingsProgressBarSpeed
+        case .hidden: .appSettingsCommonHidden
         }
     }
 
-    private func dashboardProgressBarModeDescription(_ mode: DashboardProgressBarMode) -> String {
+    private func dashboardProgressBarModeDescription(_ mode: DashboardProgressBarMode) -> LocalizedStringResource {
         switch mode {
-        case .energy: "Regeneration fills left from the center; consumption fills right."
-        case .speed: "Fills from left to right as speed increases."
-        case .hidden: "Hides the progress bar from the ride dashboard."
+        case .energy: .appSettingsProgressBarEnergyDescription
+        case .speed: .appSettingsProgressBarSpeedDescription
+        case .hidden: .appSettingsProgressBarHiddenDescription
         }
     }
 
-    private func dashboardBatteryIndicatorModeTitle(_ mode: DashboardBatteryIndicatorMode) -> String {
+    private func dashboardBatteryIndicatorModeTitle(_ mode: DashboardBatteryIndicatorMode) -> LocalizedStringResource {
         switch mode {
-        case .percentage: "Percentage"
-        case .estimatedRange: "Estimated range"
+        case .percentage: .appSettingsBatteryIndicatorPercentage
+        case .estimatedRange: .appSettingsBatteryIndicatorEstimatedRange
         }
     }
 
-    private func dashboardDeviceBatteryDisplayModeTitle(_ mode: DashboardDeviceBatteryDisplayMode) -> String {
+    private func dashboardDeviceBatteryDisplayModeTitle(
+        _ mode: DashboardDeviceBatteryDisplayMode
+    ) -> LocalizedStringResource {
         switch mode {
-        case .iconAndText: "Icon and percentage"
-        case .textOnly: "Percentage only"
-        case .iconOnly: "Icon only"
-        case .hidden: "Hidden"
+        case .iconAndText: .appSettingsDeviceBatteryIconAndPercentage
+        case .textOnly: .appSettingsDeviceBatteryPercentageOnly
+        case .iconOnly: .appSettingsDeviceBatteryIconOnly
+        case .hidden: .appSettingsCommonHidden
         }
     }
 
-    private func speedSourceDescription(_ source: SpeedSource) -> String {
+    private func speedSourceDescription(_ source: SpeedSource) -> LocalizedStringResource {
         switch source {
-        case .motorcycle: "Uses speed reported by the motorcycle."
-        case .gps: "Uses phone GPS when a recent, accurate reading is available."
-        case .hybrid: "Uses GPS when available and falls back to motorcycle telemetry."
+        case .motorcycle: .appSettingsSpeedSourceBikeDescription
+        case .gps: .appSettingsSpeedSourceGpsDescription
+        case .hybrid: .appSettingsSpeedSourceHybridDescription
         }
     }
 
-    private func measurementSystemTitle(_ system: MeasurementSystem) -> String {
+    private func measurementSystemTitle(_ system: MeasurementSystem) -> LocalizedStringResource {
         switch system {
-        case .system: "System"
-        case .metric: "Metric"
-        case .imperial: "Imperial"
+        case .system: .appSettingsMeasurementSystem
+        case .metric: .appSettingsMeasurementMetric
+        case .imperial: .appSettingsMeasurementImperial
         }
     }
 
-    private func batteryPackCapacityTitle(_ capacity: BatteryPackCapacity) -> String {
+    private func batteryPackCapacityTitle(_ capacity: BatteryPackCapacity) -> LocalizedStringResource {
         switch capacity {
-        case .sixPointEightKilowattHours: "6.8 kWh"
-        case .sevenPointTwoKilowattHours: "7.2 kWh"
+        case .sixPointEightKilowattHours: .appSettingsBatteryCapacitySixPointEight
+        case .sevenPointTwoKilowattHours: .appSettingsBatteryCapacitySevenPointTwo
         }
     }
 

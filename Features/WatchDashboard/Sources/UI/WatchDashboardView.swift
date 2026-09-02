@@ -37,7 +37,7 @@ public struct WatchDashboardView: View {
                 Button(action: onOpenSettings) {
                     Image(systemName: "gearshape")
                 }
-                .accessibilityLabel("Settings")
+                .accessibilityLabel(Text(.watchDashboardSettings))
             }
         }
         .task { viewModel.start() }
@@ -48,25 +48,27 @@ public struct WatchDashboardView: View {
         List {
             Section {
                 ContentUnavailableView(
-                    "Waiting for bike",
+                    String(localized: .watchDashboardWaitingForBike),
                     systemImage: "bolt.horizontal.circle",
-                    description: Text(detail)
+                    description: Text(verbatim: detail)
                 )
                 WatchChangeBikeButton(action: onChangeBike)
             }
 
             if !viewModel.debugEvents.isEmpty {
-                Section("Debug") {
+                Section {
                     ForEach(viewModel.debugEvents) { event in
                         VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
-                            Text(event.title)
+                            Text(verbatim: event.title)
                                 .font(.caption2.weight(.semibold))
-                            Text(event.detail)
+                            Text(verbatim: event.detail)
                                 .font(.caption2.monospaced())
                                 .foregroundStyle(.secondary)
                                 .lineLimit(4)
                         }
                     }
+                } header: {
+                    Text(.watchDashboardDebug)
                 }
             }
         }

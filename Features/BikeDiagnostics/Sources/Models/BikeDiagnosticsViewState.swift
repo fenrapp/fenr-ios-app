@@ -5,7 +5,7 @@ public struct BikeDiagnosticsViewState: Equatable, Sendable {
     public var metrics: [BikeDiagnosticsMetricViewData]
     public var powerMetrics: [BikeDiagnosticsMetricViewData]
     public var batteryMetrics: [BikeDiagnosticsMetricViewData]
-    public var badges: [String]
+    public var badges: [BikeDiagnosticsBadgeViewData]
     public var rawFlags: [BikeDiagnosticsMetricViewData]
     public var debugEvents: [DebugEventViewData]
     public var hasDebugLog: Bool
@@ -30,7 +30,7 @@ public struct BikeDiagnosticsViewState: Equatable, Sendable {
         metrics: [BikeDiagnosticsMetricViewData] = [],
         powerMetrics: [BikeDiagnosticsMetricViewData] = [],
         batteryMetrics: [BikeDiagnosticsMetricViewData] = [],
-        badges: [String] = [],
+        badges: [BikeDiagnosticsBadgeViewData] = [],
         rawFlags: [BikeDiagnosticsMetricViewData] = [],
         debugEvents: [DebugEventViewData] = [],
         hasDebugLog: Bool = false,

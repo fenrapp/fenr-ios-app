@@ -1,3 +1,4 @@
+import Foundation
 import LocalAuthentication
 import SettingsDomain
 
@@ -17,7 +18,7 @@ private final class LocalAuthenticationContext: @unchecked Sendable {
     private let context = LAContext()
 
     init() {
-        context.localizedFallbackTitle = "Enter PIN"
+        context.localizedFallbackTitle = String(localized: .appBikeLockEnterPIN)
     }
 
     func authenticate(reason: String) async throws -> Bool {

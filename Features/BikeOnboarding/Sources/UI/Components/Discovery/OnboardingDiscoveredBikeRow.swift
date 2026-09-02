@@ -20,7 +20,9 @@ struct OnboardingDiscoveredBikeRow: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
-        .accessibilityHint(isSelectable ? "Selects this bike for pairing" : "Confirming automatically")
+        .accessibilityHint(isSelectable
+            ? BikeOnboardingL10n.text(.bikeOnboardingAccessibilitySelectBikeHint)
+            : BikeOnboardingL10n.text(.bikeOnboardingAccessibilityConfirmingHint))
     }
 
     @ViewBuilder private var rowContent: some View {
@@ -78,7 +80,7 @@ struct OnboardingDiscoveredBikeRow: View {
     }
 
     private var signalText: some View {
-        Text("\(bike.signalText)  ·  \(bike.rssiText)")
+        Text(verbatim: "\(bike.signalText)  ·  \(bike.rssiText)")
             .font(.caption.weight(.medium))
             .foregroundStyle(.primary)
             .fixedSize(horizontal: false, vertical: true)
@@ -96,7 +98,12 @@ struct OnboardingDiscoveredBikeRow: View {
     }
 
     private var accessibilityLabel: String {
-        "\(bike.modelTitle). VIN \(bike.accessibilityVIN). \(bike.signalText), \(bike.rssiText)."
+        BikeOnboardingL10n.bikeAccessibility(
+            title: bike.modelTitle,
+            vin: bike.accessibilityVIN,
+            signal: bike.signalText,
+            rssi: bike.rssiText
+        )
     }
 }
 

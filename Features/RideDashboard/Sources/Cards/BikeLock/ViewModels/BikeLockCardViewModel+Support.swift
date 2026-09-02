@@ -21,6 +21,6 @@ enum BikeLockCardOperationError: LocalizedError {
     case vehicleMustBeStationary
 
     var errorDescription: String? {
-        "Stop the motorcycle and disengage the gear before using Bike Lock."
+        rideDashboardLocalized(.rideDashboardBikeLockErrorStopBike)
     }
 }

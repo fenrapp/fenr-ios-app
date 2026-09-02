@@ -13,7 +13,7 @@ struct BatteryCellsGridView: View {
                     Button {
                         selectedCell = selectedCell?.id == cell.id ? nil : cell
                     } label: {
-                        Text("\(cell.position)")
+                        Text(verbatim: "\(cell.position)")
                             .font(.system(size: Constants.positionFontSize, design: .monospaced).weight(.semibold))
                             .foregroundStyle(foregroundColor(for: cell))
                             .frame(maxWidth: .infinity, minHeight: Constants.tileHeight)
@@ -44,10 +44,10 @@ struct BatteryCellsGridView: View {
 
     private var legend: some View {
         HStack(spacing: Constants.legendSpacing) {
-            legendItem(title: "Low", color: color(for: .belowAverage))
-            legendItem(title: "Normal", color: color(for: .normal))
-            legendItem(title: "High", color: color(for: .aboveAverage))
-            legendItem(title: "Critical", color: color(for: .critical))
+            legendItem(title: String(localized: .batteryHealthCellConditionLow), color: color(for: .belowAverage))
+            legendItem(title: String(localized: .batteryHealthCellConditionNormal), color: color(for: .normal))
+            legendItem(title: String(localized: .batteryHealthCellConditionHigh), color: color(for: .aboveAverage))
+            legendItem(title: String(localized: .batteryHealthCellConditionCritical), color: color(for: .critical))
         }
         .font(.caption2)
         .foregroundStyle(.secondary)
@@ -55,13 +55,13 @@ struct BatteryCellsGridView: View {
 
     private func selectedCellDetail(_ cell: BatteryCellViewData) -> some View {
         HStack(spacing: Constants.detailSpacing) {
-            Text("Cell \(cell.position)")
+            Text(String(localized: .batteryHealthCellPosition(cell.position)))
                 .font(.subheadline.weight(.semibold))
             Text(cell.voltage)
             Text(cell.deviation)
                 .foregroundStyle(.secondary)
             if cell.isBalancing {
-                Text("Balancing")
+                Text(String(localized: .batteryHealthCellBalancing))
                     .foregroundStyle(.orange)
             }
         }
@@ -108,11 +108,18 @@ struct BatteryCellsGridView: View {
     }
 
     private func accessibilityLabel(for cell: BatteryCellViewData) -> String {
-        var components = ["Cell \(cell.position)", cell.voltage, cell.deviation]
         if cell.isBalancing {
-            components.append("Balancing")
+            return String(
+                localized: .batteryHealthCellAccessibilityBalancing(
+                    cell.position,
+                    cell.voltage,
+                    cell.deviation
+                )
+            )
         }
-        return components.joined(separator: ", ")
+        return String(
+            localized: .batteryHealthCellAccessibility(cell.position, cell.voltage, cell.deviation)
+        )
     }
 
     private enum Constants {

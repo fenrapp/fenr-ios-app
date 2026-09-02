@@ -4,8 +4,8 @@ enum EfficiencyDashboardPage: Int, CaseIterable, Hashable {
 
     var accessibilityLabel: String {
         switch self {
-        case .live: "Live efficiency"
-        case .trend: "Efficiency trend"
+        case .live: rideDashboardLocalized(.rideDashboardPageLiveEfficiencyAccessibility)
+        case .trend: rideDashboardLocalized(.rideDashboardPageEfficiencyTrendAccessibility)
         }
     }
 }

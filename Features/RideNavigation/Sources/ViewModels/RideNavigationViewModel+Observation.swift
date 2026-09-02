@@ -67,7 +67,7 @@ extension RideNavigationViewModel {
                 trailProgress = nil
                 resetRoadStepGuidance()
                 didAnnounceOffRoute = false
-                announce("Trail reached. Enduro mode active")
+                announce(String(localized: .rideNavigationAnnouncementTrailReached))
             } else if roadNavigationPurpose == .trailExit {
                 finishActivity(reason: .exitPointReached)
             } else {
@@ -182,7 +182,7 @@ extension RideNavigationViewModel {
                 isRerouting = false
                 errorText = nil
                 render()
-                announce("Route updated")
+                announce(String(localized: .rideNavigationAnnouncementRouteUpdated))
             } catch is CancellationError {
                 return
             } catch {
@@ -190,7 +190,7 @@ extension RideNavigationViewModel {
                       operations.isCurrent(.route, generation: generation, lifecycle: lifecycle),
                       isStarted else { return }
                 isRerouting = false
-                errorText = "Rerouting is unavailable. Continue toward the highlighted route."
+                errorText = String(localized: .rideNavigationReroutingUnavailable)
                 render()
             }
         }
@@ -224,7 +224,7 @@ extension RideNavigationViewModel {
 
     func startBreadcrumb(at date: Date) {
         breadcrumbRecorder.reset()
-        breadcrumbRecorder.start(at: date, name: "Navigation breadcrumb")
+        breadcrumbRecorder.start(at: date, name: String(localized: .rideNavigationBreadcrumbName))
         trailProgress = nil
         didAnnounceOffRoute = false
         lastRoadRerouteAt = nil

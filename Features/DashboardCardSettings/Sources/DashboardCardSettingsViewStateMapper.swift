@@ -1,4 +1,5 @@
 import BikeDomain
+import Foundation
 import SettingsDomain
 
 public struct DashboardCardSettingsViewStateMapper: Sendable {
@@ -12,14 +13,14 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
             fixedCards: [
                 .init(
                     id: "speedometer",
-                    title: "Speedometer",
-                    detail: "Always first while riding",
+                    title: .dashboardCardSettingsFixedSpeedometerTitle,
+                    detail: .dashboardCardSettingsFixedSpeedometerDetail,
                     thumbnail: .init(style: .gauge, systemImage: "speedometer", accent: .accent)
                 ),
                 .init(
                     id: "charging",
-                    title: "Charging",
-                    detail: "Shown automatically while charging",
+                    title: .dashboardCardSettingsFixedChargingTitle,
+                    detail: .dashboardCardSettingsFixedChargingDetail,
                     thumbnail: .init(style: .charging, systemImage: "bolt.fill", accent: .positive)
                 )
             ],
@@ -43,7 +44,9 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
                 forVIN: bikeLockCapability.vehicleIdentifier
             ).securityMode.requiresPIN
         let visibleCount = pages.filter(\.isVisible).count
-        let firstVisibleTitle = pages.first(where: \.isVisible)?.title ?? pages.first?.title ?? ""
+        let firstVisibleTitle = pages.first(where: \.isVisible)?.title
+            ?? pages.first?.title
+            ?? .dashboardCardSettingsGenericCardTitle
         let detail = sectionDetail(
             configuration.id,
             pages: pages,
@@ -58,7 +61,7 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
             isVisible: configuration.isVisible || bikeLockRequiresPIN,
             isVisibilityEnabled: !bikeLockRequiresPIN,
             disabledVisibilityHint: bikeLockRequiresPIN
-                ? "Bike Lock must remain visible while unlock protection is configured"
+                ? .dashboardCardSettingsBikeLockVisibilityHint
                 : nil,
             thumbnail: sectionThumbnail(configuration.id),
             pages: pages
@@ -69,18 +72,22 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
         _ id: DashboardCardSectionID,
         pages: [DashboardCardPageRowViewData],
         visibleCount: Int,
-        firstVisibleTitle: String,
+        firstVisibleTitle: LocalizedStringResource,
         bikeLockIsConfigured: Bool
-    ) -> String {
+    ) -> LocalizedStringResource {
         switch id {
         case .bikeLock:
             bikeLockIsConfigured
-                ? "Required while unlock protection is configured"
-                : "Lock and unlock the motorcycle from the dashboard"
+                ? .dashboardCardSettingsBikeLockRequiredDetail
+                : .dashboardCardSettingsBikeLockDetail
         case .navigation:
-            "Open ride navigation from the dashboard"
+            .dashboardCardSettingsNavigationDetail
         default:
-            "\(visibleCount) of \(pages.count) cards visible · \(firstVisibleTitle) first"
+            .dashboardCardSettingsSectionVisibleSummary(
+                visibleCount,
+                String(pages.count),
+                String(localized: firstVisibleTitle)
+            )
         }
     }
 
@@ -97,32 +104,32 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
         )
     }
 
-    private func sectionTitle(_ id: DashboardCardSectionID) -> String {
+    private func sectionTitle(_ id: DashboardCardSectionID) -> LocalizedStringResource {
         switch id {
-        case .bikeLock: "Bike Lock"
-        case .navigation: "Ride Navigation"
-        case .currentTrip: "Current Trip"
-        case .efficiency: "Efficiency"
-        case .range: "Range"
-        case .systemHealth: "System Health"
-        case .rideDynamics: "Ride Dynamics"
+        case .bikeLock: .dashboardCardSettingsSectionBikeLock
+        case .navigation: .dashboardCardSettingsSectionNavigation
+        case .currentTrip: .dashboardCardSettingsSectionCurrentTrip
+        case .efficiency: .dashboardCardSettingsSectionEfficiency
+        case .range: .dashboardCardSettingsSectionRange
+        case .systemHealth: .dashboardCardSettingsSectionSystemHealth
+        case .rideDynamics: .dashboardCardSettingsSectionRideDynamics
         }
     }
 
-    private func pageTitle(_ id: DashboardCardPageID) -> String {
+    private func pageTitle(_ id: DashboardCardPageID) -> LocalizedStringResource {
         switch id {
-        case .currentTrip: "Current Trip"
-        case .rideStatistics: "Ride Statistics"
-        case .efficiencyLive: "Live Efficiency"
-        case .efficiencyTrend: "Efficiency Trend"
-        case .range: "Range"
-        case .batteryTrip: "Battery Trip"
-        case .systemHealth: "Health"
-        case .batteryCells: "Cells"
-        case .thermal: "Thermal"
-        case .lean: "Lean"
-        case .pitch: "Pitch"
-        case .course: "Course"
+        case .currentTrip: .dashboardCardSettingsPageCurrentTrip
+        case .rideStatistics: .dashboardCardSettingsPageRideStatistics
+        case .efficiencyLive: .dashboardCardSettingsPageEfficiencyLive
+        case .efficiencyTrend: .dashboardCardSettingsPageEfficiencyTrend
+        case .range: .dashboardCardSettingsPageRange
+        case .batteryTrip: .dashboardCardSettingsPageBatteryTrip
+        case .systemHealth: .dashboardCardSettingsPageSystemHealth
+        case .batteryCells: .dashboardCardSettingsPageBatteryCells
+        case .thermal: .dashboardCardSettingsPageThermal
+        case .lean: .dashboardCardSettingsPageLean
+        case .pitch: .dashboardCardSettingsPagePitch
+        case .course: .dashboardCardSettingsPageCourse
         }
     }
 

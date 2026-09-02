@@ -65,13 +65,15 @@ public struct RideNavigationPresentationMapper: Sendable {
         measurementSystem: MeasurementSystem
     ) -> RideNavigationRoadRouteOption {
         let notices = [
-            route.containsTolls ? "Tolls" : nil,
-            route.containsHighways ? "Highways" : nil
+            route.containsTolls ? String(localized: .rideNavigationRouteTolls) : nil,
+            route.containsHighways ? String(localized: .rideNavigationRouteHighways) : nil
         ].compactMap { $0 }
         let noticeText = notices.isEmpty ? "" : " · " + notices.joined(separator: " · ")
         return RideNavigationRoadRouteOption(
             id: index,
-            title: index == .zero ? "Recommended" : "Alternative \(index + 1)",
+            title: index == .zero
+                ? String(localized: .rideNavigationRouteRecommended)
+                : String(localized: .rideNavigationRouteAlternative(index + 1)),
             detail: "\(travelTime(route.expectedTravelTime)) · "
                 + distance(meters: route.distanceMeters, measurementSystem: measurementSystem)
                 + noticeText,

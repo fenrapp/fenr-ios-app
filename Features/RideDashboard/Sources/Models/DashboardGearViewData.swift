@@ -12,10 +12,11 @@ public struct DashboardGearViewData: Equatable, Sendable {
     public init(
         display: Display = .text("--"),
         isActive: Bool = false,
-        accessibilityLabel: String = "Gear unavailable"
+        accessibilityLabel: String? = nil
     ) {
         self.display = display
         self.isActive = isActive
         self.accessibilityLabel = accessibilityLabel
+            ?? rideDashboardLocalized(.rideDashboardGearUnavailableAccessibility)
     }
 }

@@ -2,7 +2,7 @@ import DesignSystem
 import SwiftUI
 
 struct BikeLockPINInputView: View {
-    let title: String
+    let title: LocalizedStringResource
     let errorMessage: String?
     let onComplete: (String) -> Void
     @State private var pin = ""
@@ -15,14 +15,16 @@ struct BikeLockPINInputView: View {
                 if let errorMessage {
                     Text(errorMessage)
                         .foregroundStyle(DesignColor.critical)
-                        .accessibilityLabel("Error: \(errorMessage)")
+                        .accessibilityLabel(
+                            Text(.bikeLockSettingsErrorAccessibility(errorMessage))
+                        )
                         .accessibilityFocused($isErrorFocused)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding()
         }
-        .navigationTitle(title)
+        .navigationTitle(Text(title))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { focusErrorIfNeeded(errorMessage) }
         .onChange(of: errorMessage) { _, newValue in focusErrorIfNeeded(newValue) }

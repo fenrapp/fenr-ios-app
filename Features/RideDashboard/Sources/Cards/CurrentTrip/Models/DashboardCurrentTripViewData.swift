@@ -11,24 +11,34 @@ public struct DashboardCurrentTripViewData: Equatable, Sendable {
 
     public init(
         durationText: String = "00:00:00",
-        statusText: String = "STARTS IN GEAR",
-        distance: Metric = .init(label: "DISTANCE", systemImage: "location"),
-        averageSpeed: Metric = .init(label: "AVERAGE", systemImage: "speedometer"),
-        maximumSpeed: Metric = .init(label: "MAX SPEED", systemImage: "arrow.up.right"),
+        statusText: String? = nil,
+        distance: Metric? = nil,
+        averageSpeed: Metric? = nil,
+        maximumSpeed: Metric? = nil,
         speedSourceIndicator: DashboardSpeedSourceIndicatorViewData? = nil,
         isActive: Bool = false,
         isPaused: Bool = false,
-        accessibilityLabel: String = "Current trip has not started"
+        accessibilityLabel: String? = nil
     ) {
         self.durationText = durationText
-        self.statusText = statusText
-        self.distance = distance
-        self.averageSpeed = averageSpeed
-        self.maximumSpeed = maximumSpeed
+        self.statusText = statusText ?? rideDashboardLocalized(.rideDashboardCurrentTripStatusStartsInGear)
+        self.distance = distance ?? .init(
+            label: rideDashboardLocalized(.rideDashboardMetricDistance),
+            systemImage: "location"
+        )
+        self.averageSpeed = averageSpeed ?? .init(
+            label: rideDashboardLocalized(.rideDashboardMetricAverage),
+            systemImage: "speedometer"
+        )
+        self.maximumSpeed = maximumSpeed ?? .init(
+            label: rideDashboardLocalized(.rideDashboardMetricMaximumSpeed),
+            systemImage: "arrow.up.right"
+        )
         self.speedSourceIndicator = speedSourceIndicator
         self.isActive = isActive
         self.isPaused = isPaused
         self.accessibilityLabel = accessibilityLabel
+            ?? rideDashboardLocalized(.rideDashboardCurrentTripAccessibilityNotStarted)
     }
 
     public struct Metric: Equatable, Sendable {

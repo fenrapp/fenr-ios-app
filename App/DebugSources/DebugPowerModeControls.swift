@@ -1,27 +1,34 @@
 import BikeEmulator
+import Foundation
 import SwiftUI
 
 struct DebugPowerModeControls: View {
     @ObservedObject var controller: DebugScenarioController
 
     var body: some View {
-        Section("FENRDebug") {
-            Picker("Operational scenario", selection: scenarioBinding) {
+        Section(.debugPowerModeSection) {
+            Picker(selection: scenarioBinding) {
                 ForEach(BikeEmulatorScenario.allCases) { scenario in
-                    Text(scenario.displayName).tag(scenario)
+                    Text(scenario.localizedTitle).tag(scenario)
                 }
+            } label: {
+                Text(.debugOperationalScenario)
             }
-            Picker("Power mode data", selection: presetBinding) {
+            Picker(selection: presetBinding) {
                 ForEach(BikeEmulatorPowerModePreset.allCases) { preset in
-                    Text(preset.displayName).tag(preset)
+                    Text(preset.localizedTitle).tag(preset)
                 }
+            } label: {
+                Text(.debugPowerModeData)
             }
-            Picker("Active map", selection: mapBinding) {
+            Picker(selection: mapBinding) {
                 ForEach(Array(1 ... 5), id: \.self) { map in
-                    Text("Map \(map)").tag(map)
+                    Text(.debugMapNumber(mapNumber: map)).tag(map)
                 }
+            } label: {
+                Text(.debugActiveMap)
             }
-            Text("Changes publish live telemetry and appear on the dashboard immediately.")
+            Text(.debugChangesPublishLive)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
@@ -46,5 +53,32 @@ struct DebugPowerModeControls: View {
             get: { controller.selectedMap },
             set: { controller.selectMap($0) }
         )
+    }
+}
+
+private extension BikeEmulatorScenario {
+    var localizedTitle: LocalizedStringResource {
+        switch self {
+        case .riding: .debugScenarioRiding
+        case .ridingClean: .debugScenarioRidingClean
+        case .charging: .debugScenarioCharging
+        case .cellBalancing: .debugScenarioCellBalancing
+        case .chargerIdle: .debugScenarioChargerIdle
+        case .chargingDataUnavailable: .debugScenarioChargingUnavailable
+        case .cellAnomaly: .debugScenarioCellAnomaly
+        }
+    }
+}
+
+private extension BikeEmulatorPowerModePreset {
+    var localizedTitle: LocalizedStringResource {
+        switch self {
+        case .standard: .debugPresetStandard
+        case .alpha: .debugPresetAlpha
+        case .claimedAlpha: .debugPresetClaimedAlpha
+        case .mismatch: .debugPresetMismatch
+        case .partial: .debugPresetPartial
+        case .failure: .debugPresetFailure
+        }
     }
 }

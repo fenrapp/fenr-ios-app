@@ -1,0 +1,138 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "rideHistoryBatteryNoRecordedChange" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No recorded change" } } } },
+    "rideHistoryBatteryPointsGained" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld percentage points gained" } } } },
+    "rideHistoryBatteryPointsUsed" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld percentage points used" } } } },
+    "rideHistoryBikeUnavailable" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bike Unavailable" } } } },
+    "rideHistoryBikeUnavailableDescription" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connect or configure a bike to view its saved rides." } } } },
+    "rideHistoryCancel" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } } } },
+    "rideHistoryChartBatteryAccessibility" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery level over ride distance" } } } },
+    "rideHistoryChartBatteryAxis" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery (%)" } } } },
+    "rideHistoryChartDistanceAxis" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Distance (%@)" } } } },
+    "rideHistoryChartEfficiencyAccessibility" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Energy efficiency over ride distance" } } } },
+    "rideHistoryComparisonBaseline" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Compared with up to 10 previous rides" } } } },
+    "rideHistoryComparisonFarther" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "farther" } } } },
+    "rideHistoryComparisonFaster" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "faster" } } } },
+    "rideHistoryComparisonLessEfficient" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "less efficient" } } } },
+    "rideHistoryComparisonLessRecovered" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "less recovered" } } } },
+    "rideHistoryComparisonLonger" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "longer" } } } },
+    "rideHistoryComparisonMoreEfficient" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "more efficient" } } } },
+    "rideHistoryComparisonMoreRecovered" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "more recovered" } } } },
+    "rideHistoryComparisonRecentAverage" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "on your recent average" } } } },
+    "rideHistoryComparisonShorter" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "shorter" } } } },
+    "rideHistoryComparisonSlower" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "slower" } } } },
+    "rideHistoryDelete" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete" } } } },
+    "rideHistoryDeleteConfirmation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "substitutions" : {
+            "rideCount" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : { "stringUnit" : { "state" : "translated", "value" : "Delete %arg ride?" } },
+                  "other" : { "stringUnit" : { "state" : "translated", "value" : "Delete %arg rides?" } }
+                }
+              }
+            }
+          },
+          "stringUnit" : { "state" : "translated", "value" : "%#@rideCount@" }
+        }
+      }
+    },
+    "rideHistoryDeleteConfirmationMessage" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The selected rides and their saved energy data will be permanently deleted." } } } },
+    "rideHistoryDeleteMultipleError" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Some rides could not be deleted. Please try again." } } } },
+    "rideHistoryDeleteRides" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete Rides" } } } },
+    "rideHistoryDeleteSelectedRides" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete selected rides" } } } },
+    "rideHistoryDeleteSingleError" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The ride could not be deleted. Please try again." } } } },
+    "rideHistoryDeleting" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Deleting" } } } },
+    "rideHistoryDeselectAll" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Deselect All" } } } },
+    "rideHistoryEfficiencyUnavailable" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Efficiency unavailable" } } } },
+    "rideHistoryEnergyChart" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Energy chart" } } } },
+    "rideHistoryLoading" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Loading ride history" } } } },
+    "rideHistoryLoadingDetails" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Loading ride details" } } } },
+    "rideHistoryMetricAverageSpeed" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Average Speed" } } } },
+    "rideHistoryMetricBattery" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery" } } } },
+    "rideHistoryMetricDistance" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Distance" } } } },
+    "rideHistoryMetricEfficiency" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Efficiency" } } } },
+    "rideHistoryMetricEnergyRecovered" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Energy Recovered" } } } },
+    "rideHistoryMetricEnergyUsed" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Energy Used" } } } },
+    "rideHistoryMetricMaximumDownhill" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Maximum Downhill" } } } },
+    "rideHistoryMetricMaximumLeftLean" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Maximum Left Lean" } } } },
+    "rideHistoryMetricMaximumRightLean" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Maximum Right Lean" } } } },
+    "rideHistoryMetricMaximumSpeed" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Maximum Speed" } } } },
+    "rideHistoryMetricMaximumUphill" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Maximum Uphill" } } } },
+    "rideHistoryMetricNetEnergy" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Net Energy" } } } },
+    "rideHistoryMetricPeakRegen" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Peak Regen" } } } },
+    "rideHistoryMetricPeakUse" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Peak Use" } } } },
+    "rideHistoryMetricPowerCoverage" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Power Coverage" } } } },
+    "rideHistoryMetricRecovered" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Recovered" } } } },
+    "rideHistoryMetricRegeneration" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Regeneration" } } } },
+    "rideHistoryMetricRideTime" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Ride Time" } } } },
+    "rideHistoryNoSavedRides" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No Saved Rides" } } } },
+    "rideHistoryNoSavedRidesDescription" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Completed rides for this bike will appear here." } } } },
+    "rideHistoryOfEnergyUsed" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "of energy used" } } } },
+    "rideHistoryOK" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "OK" } } } },
+    "rideHistoryPartialElectricalCoverage" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Partial electrical coverage" } } } },
+    "rideHistoryPleaseTryAgain" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Please try again." } } } },
+    "rideHistoryRideAccessibility" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Ride on %1$@ at %2$@, %3$@, %4$@, %5$@" } } } },
+    "rideHistoryRideCount" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "substitutions" : {
+            "rideCount" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : { "stringUnit" : { "state" : "translated", "value" : "%arg ride" } },
+                  "other" : { "stringUnit" : { "state" : "translated", "value" : "%arg rides" } }
+                }
+              }
+            }
+          },
+          "stringUnit" : { "state" : "translated", "value" : "%#@rideCount@" }
+        }
+      }
+    },
+    "rideHistoryRideDetails" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Ride details" } } } },
+    "rideHistoryRideTitle" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Ride" } } } },
+    "rideHistoryRideUnavailable" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Ride Unavailable" } } } },
+    "rideHistoryRideUnavailableDescription" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "This saved ride could not be loaded." } } } },
+    "rideHistorySavedRideHistory" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Saved ride history" } } } },
+    "rideHistorySectionEnergy" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Energy" } } } },
+    "rideHistorySectionEnergyProfile" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Energy Profile" } } } },
+    "rideHistorySectionOverview" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Overview" } } } },
+    "rideHistorySectionPower" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Power" } } } },
+    "rideHistorySectionRecentComparison" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Recent Comparison" } } } },
+    "rideHistorySectionRideDynamics" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Ride Dynamics" } } } },
+    "rideHistorySelectAll" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Select All" } } } },
+    "rideHistorySelectedCount" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "substitutions" : {
+            "selectionCount" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : { "stringUnit" : { "state" : "translated", "value" : "%arg Selected" } },
+                  "other" : { "stringUnit" : { "state" : "translated", "value" : "%arg Selected" } }
+                }
+              }
+            }
+          },
+          "stringUnit" : { "state" : "translated", "value" : "%#@selectionCount@" }
+        }
+      }
+    },
+    "rideHistoryTitle" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Ride History" } } } },
+    "rideHistoryUnableToDelete" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unable to Delete" } } } }
+  },
+  "version" : "1.0"
+}

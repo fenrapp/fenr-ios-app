@@ -8,14 +8,16 @@ struct DashboardRangeLiveCard: View {
     var body: some View {
         DashboardAdaptiveCardSurface {
             VStack(alignment: .leading, spacing: Constants.spacing) {
-                DashboardTripCardHeader(title: "RANGE · LIVE")
+                DashboardTripCardHeader(title: rideDashboardLocalized(.rideDashboardRangeLiveTitle))
                 hero
                 consumptionChart
                 rangeComparison
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Estimated range, \(state.rangeText) \(state.distanceUnitText), \(state.status.rawValue)")
+        .accessibilityLabel(rideDashboardLocalized(
+            .rideDashboardRangeLiveAccessibility(state.rangeText, state.distanceUnitText, state.status.text)
+        ))
     }
 
     private var hero: some View {
@@ -27,7 +29,11 @@ struct DashboardRangeLiveCard: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(DesignColor.secondaryText)
             Spacer(minLength: DesignSpace.small)
-            Text(state.isLoadingHistory ? "LOADING" : state.status.rawValue)
+            Text(
+                state.isLoadingHistory
+                    ? rideDashboardLocalized(.rideDashboardCommonLoading)
+                    : state.status.text
+            )
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(statusColor)
         }
@@ -35,24 +41,24 @@ struct DashboardRangeLiveCard: View {
 
     private var consumptionChart: some View {
         Chart {
-            RuleMark(y: .value("Zero", 0))
+            RuleMark(y: .value(rideDashboardLocalized(.rideDashboardChartZero), 0))
                 .foregroundStyle(DesignColor.secondaryText.opacity(0.35))
             if let typicalEfficiency = state.typicalEfficiency {
-                RuleMark(y: .value("Typical", typicalEfficiency))
+                RuleMark(y: .value(rideDashboardLocalized(.rideDashboardChartTypical), typicalEfficiency))
                     .foregroundStyle(DesignColor.secondaryText.opacity(0.65))
                     .lineStyle(.init(lineWidth: 1, dash: [4, 3]))
             }
             ForEach(state.consumptionPoints) { point in
                 AreaMark(
-                    x: .value("Distance", point.distance),
-                    y: .value("Efficiency", point.efficiency)
+                    x: .value(rideDashboardLocalized(.rideDashboardChartDistance), point.distance),
+                    y: .value(rideDashboardLocalized(.rideDashboardChartEfficiency), point.efficiency)
                 )
                 .foregroundStyle(point.efficiency >= .zero
                     ? DesignColor.informational.opacity(0.2)
                     : DesignColor.positive.opacity(0.22))
                 LineMark(
-                    x: .value("Distance", point.distance),
-                    y: .value("Efficiency", point.efficiency)
+                    x: .value(rideDashboardLocalized(.rideDashboardChartDistance), point.distance),
+                    y: .value(rideDashboardLocalized(.rideDashboardChartEfficiency), point.efficiency)
                 )
                 .foregroundStyle(point.efficiency >= .zero ? DesignColor.informational : DesignColor.positive)
                 .lineStyle(.init(lineWidth: 2, lineCap: .round, lineJoin: .round))
@@ -64,18 +70,18 @@ struct DashboardRangeLiveCard: View {
         .frame(maxWidth: .infinity, minHeight: Constants.chartHeight)
         .overlay {
             if state.consumptionPoints.isEmpty {
-                Text("LEARNING YOUR CONSUMPTION")
+                Text(.rideDashboardRangeLearningConsumption)
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(DesignColor.secondaryText)
             }
         }
-        .accessibilityLabel("Energy consumption over the latest distance")
+        .accessibilityLabel(.rideDashboardRangeChartAccessibility)
     }
 
     private var rangeComparison: some View {
         HStack(spacing: DesignSpace.large) {
-            comparison(title: "TYPICAL", value: state.typicalRangeText)
-            comparison(title: "CURRENT PACE", value: state.currentRangeText)
+            comparison(title: rideDashboardLocalized(.rideDashboardRangeTypical), value: state.typicalRangeText)
+            comparison(title: rideDashboardLocalized(.rideDashboardRangeCurrentPace), value: state.currentRangeText)
         }
     }
 
@@ -84,7 +90,7 @@ struct DashboardRangeLiveCard: View {
             Text(title)
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(DesignColor.secondaryText)
-            Text("\(value) \(state.distanceUnitText)")
+            Text(verbatim: "\(value) \(state.distanceUnitText)")
                 .font(.subheadline.weight(.semibold))
                 .monospacedDigit()
         }

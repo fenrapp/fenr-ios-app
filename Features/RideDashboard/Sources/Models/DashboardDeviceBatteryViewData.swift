@@ -19,19 +19,21 @@ public struct DashboardDeviceBatteryViewData: Equatable, Sendable {
         percentageText: String = "--%",
         systemImage: String = "battery.0percent",
         emphasis: Emphasis = .unavailable,
-        accessibilityLabel: String = "iPhone battery unavailable",
+        accessibilityLabel: String? = nil,
         isVisible: Bool = true,
         showsIcon: Bool = true,
         showsPercentage: Bool = true,
-        displayModeAccessibilityHint: String = "Switches to percentage-only display"
+        displayModeAccessibilityHint: String? = nil
     ) {
         self.percentageText = percentageText
         self.systemImage = systemImage
         self.emphasis = emphasis
         self.accessibilityLabel = accessibilityLabel
+            ?? rideDashboardLocalized(.rideDashboardDeviceBatteryUnavailableAccessibility)
         self.isVisible = isVisible
         self.showsIcon = showsIcon
         self.showsPercentage = showsPercentage
         self.displayModeAccessibilityHint = displayModeAccessibilityHint
+            ?? rideDashboardLocalized(.rideDashboardDeviceBatteryDisplayPercentageHint)
     }
 }
