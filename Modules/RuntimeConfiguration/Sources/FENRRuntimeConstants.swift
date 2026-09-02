@@ -25,6 +25,9 @@ public enum FENRRuntimeConstants {
 
     public enum Onboarding {
         public static let bluetoothPermissionResponseTimeout: Duration = .seconds(10)
+        public static let discoveryNoResultsTimeout: Duration = .seconds(15)
+        public static let discoveryStabilizationDelay: Duration = .seconds(2)
+        public static let successPresentationDelay: Duration = .milliseconds(900)
     }
 
     public enum BikeSDK {

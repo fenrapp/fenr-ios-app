@@ -1,4 +1,3 @@
-import BikeOnboarding
 import Combine
 import Foundation
 import RideNavigation
@@ -33,7 +32,6 @@ private extension SwiftUIAppRootAnimator {
 @MainActor
 final class AppRootRouter: ObservableObject {
     enum Route: Hashable {
-        case onboarding(BikeOnboardingStep)
         case batteryHealth
         case diagnostics
         case settings
@@ -57,7 +55,6 @@ final class AppRootRouter: ObservableObject {
     }
 
     private let setupFlow: BikeSetupFlowController
-    private let onboardingViewModel: BikeOnboardingViewModel
     private let incomingMapLinkStore: any IncomingMapLinkStoring
     private let interfaceOrientationController: any InterfaceOrientationControlling
     private let animator: any AppRootAnimating
@@ -66,14 +63,12 @@ final class AppRootRouter: ObservableObject {
 
     init(
         setupFlow: BikeSetupFlowController,
-        onboardingViewModel: BikeOnboardingViewModel,
         incomingMapLinkStore: any IncomingMapLinkStoring,
         interfaceOrientationController: any InterfaceOrientationControlling,
         animator: any AppRootAnimating,
         opensRideNavigationOnLaunch: Bool = false
     ) {
         self.setupFlow = setupFlow
-        self.onboardingViewModel = onboardingViewModel
         self.incomingMapLinkStore = incomingMapLinkStore
         self.interfaceOrientationController = interfaceOrientationController
         self.animator = animator
@@ -130,14 +125,6 @@ final class AppRootRouter: ObservableObject {
         requestOrientation()
     }
 
-    func navigateToOnboardingStep(_ step: BikeOnboardingStep) {
-        guard setupFlow.isLoaded, !setupFlow.isCompleted else { return }
-        let route = Route.onboarding(step)
-        guard path.last != route else { return }
-        path.append(route)
-        requestOrientation()
-    }
-
     func showRideNavigation(reduceMotion: Bool) {
         expandRideNavigation(reduceMotion: reduceMotion)
     }
@@ -165,66 +152,27 @@ final class AppRootRouter: ObservableObject {
     }
 
     func rootPresentationDidStart() {
-        synchronizeOnboardingObservation()
         requestOrientation()
-    }
-
-    func rootPresentationDidStop() {
-        onboardingViewModel.stopObserving()
     }
 
     func setupStateDidChange() {
         if setupFlow.isCompleted {
             path.removeAll()
         }
-        synchronizeOnboardingObservation()
         requestOrientation()
     }
 
     func pathDidChange() {
-        synchronizeOnboardingBackNavigation()
         requestOrientation()
-    }
-
-    func onboardingStepDidChange() {
-        guard setupFlow.isLoaded, !setupFlow.isCompleted else { return }
-        let visibleStep = visibleOnboardingStep
-        let viewModelStep = onboardingViewModel.viewState.step
-        guard viewModelStep.rawValue > visibleStep.rawValue else { return }
-        navigateToOnboardingStep(viewModelStep)
     }
 
     func changeBikeDidComplete() {
         path.removeAll()
-        synchronizeOnboardingObservation()
         requestOrientation()
     }
 }
 
 private extension AppRootRouter {
-    var visibleOnboardingStep: BikeOnboardingStep {
-        if case .onboarding(let step)? = path.last {
-            return step
-        }
-        return .welcome
-    }
-
-    func synchronizeOnboardingBackNavigation() {
-        guard setupFlow.isLoaded, !setupFlow.isCompleted else { return }
-        let visibleStep = visibleOnboardingStep
-        while onboardingViewModel.viewState.step.rawValue > visibleStep.rawValue {
-            onboardingViewModel.back()
-        }
-    }
-
-    func synchronizeOnboardingObservation() {
-        if setupFlow.isLoaded && !setupFlow.isCompleted {
-            onboardingViewModel.startObserving()
-        } else {
-            onboardingViewModel.stopObserving()
-        }
-    }
-
     func requestOrientation() {
         let orientations: UIInterfaceOrientationMask
         if rideNavigationPresentation != .hidden {

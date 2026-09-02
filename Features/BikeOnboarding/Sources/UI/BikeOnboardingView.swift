@@ -1,119 +1,112 @@
-import DesignSystem
 import SwiftUI
 import UIKit
 
 public struct BikeOnboardingView: View {
     @Environment(\.openURL) private var openURL
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
     @ObservedObject private var viewModel: BikeOnboardingViewModel
-    @State private var isScannerPresented = false
-    @State private var isScannerUnavailable = false
-    private let visibleStep: BikeOnboardingStep
-    private let managesObservation: Bool
-    private let onNavigateToStep: @MainActor (BikeOnboardingStep) -> Void
+    @State private var navigationPath: [BikeOnboardingRoute] = []
+    @State private var navigationSynchronizationTask: Task<Void, Never>?
 
-    public init(
-        viewModel: BikeOnboardingViewModel,
-        visibleStep: BikeOnboardingStep = .welcome,
-        managesObservation: Bool = true,
-        onNavigateToStep: @escaping @MainActor (BikeOnboardingStep) -> Void = { _ in }
-    ) {
+    public init(viewModel: BikeOnboardingViewModel) {
         self.viewModel = viewModel
-        self.visibleStep = visibleStep
-        self.managesObservation = managesObservation
-        self.onNavigateToStep = onNavigateToStep
     }
 
     public var body: some View {
-        onboardingScreen(for: visibleStep)
+        NavigationStack(path: $navigationPath) {
+            onboardingScene { rootContent }
+            .navigationDestination(for: BikeOnboardingRoute.self) { route in
+                switch route {
+                case .setup:
+                    onboardingScene { setupContent }
+                case .detail:
+                    onboardingScene { detailContent }
+                }
+            }
+            .toolbarBackground(.hidden, for: .navigationBar)
+        }
+        .foregroundStyle(.primary)
+        .tint(.primary)
         .task {
-            guard managesObservation else { return }
+            viewModel.setVoiceOverEnabled(voiceOverEnabled)
             viewModel.startObserving()
         }
+        .onChange(of: voiceOverEnabled) { _, isEnabled in
+            viewModel.setVoiceOverEnabled(isEnabled)
+        }
+        .onChange(of: viewModel.viewState.step, initial: true) { _, _ in
+            scheduleNavigationSynchronization()
+        }
+        .onChange(of: navigationPath) { _, path in
+            handleNavigationChange(path)
+        }
         .onDisappear {
-            guard managesObservation else { return }
+            navigationSynchronizationTask?.cancel()
+            navigationSynchronizationTask = nil
             viewModel.stopObserving()
         }
-    }
-
-    private func onboardingScreen(for step: BikeOnboardingStep) -> some View {
-        ZStack {
-            OnboardingBackground()
-
-            VStack(spacing: 0) {
-                ScrollView {
-                    stepContent(for: step)
-                        .frame(maxWidth: Constants.contentMaxWidth)
-                        .padding(.horizontal, DesignSpace.large)
-                        .padding(.top, DesignSpace.large)
-                        .padding(.bottom, DesignSpace.large)
-                        .frame(maxWidth: .infinity)
-                }
-
-                controls(for: step)
-                    .padding(.horizontal, DesignSpace.large)
-                    .padding(.bottom, DesignSpace.extraSmall)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .dynamicTypeSize(.medium ... .accessibility2)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarRole(.editor)
-        .sheet(isPresented: $isScannerPresented) { scannerSheet }
-        .alert("Scanner unavailable", isPresented: $isScannerUnavailable) {
-            Button("Use Manual Entry", role: .cancel) {}
-        } message: {
-            Text("Enter the 17-character VIN manually to continue.")
+        .sensoryFeedback(.success, trigger: viewModel.viewState.step) { _, currentStep in
+            currentStep == .success
         }
     }
 
-    @ViewBuilder
-    private func stepContent(for step: BikeOnboardingStep) -> some View {
-        switch step {
-        case .welcome:
-            WelcomeOnboardingStepView()
-        case .preparation:
-            PrepareBikeOnboardingStepView(
+    @ViewBuilder private var rootContent: some View {
+        if viewModel.viewState.step == .success {
+            OnboardingSuccessView(
+                requiresExplicitContinue: voiceOverEnabled,
+                onContinue: viewModel.continueFromSuccess
+            )
+        } else {
+            OnboardingHeroView(onContinue: viewModel.getStarted)
+        }
+    }
+
+    @ViewBuilder private var setupContent: some View {
+        switch viewModel.viewState.step {
+        case .bluetooth:
+            OnboardingBluetoothView(
                 viewState: viewModel.viewState,
+                onContinue: viewModel.continueBluetooth,
                 onOpenSettings: openAppSettings
             )
-        case .identify:
-            IdentifyBikeOnboardingStepView(
+        case .discovery:
+            OnboardingDiscoveryView(
                 viewState: viewModel.viewState,
-                onVINChange: viewModel.vinChanged,
                 onSelectBike: viewModel.selectDiscoveredBike,
-                onStartDiscovery: viewModel.startDiscovery,
-                onScanVIN: { isScannerPresented = true }
+                onRetry: viewModel.retryDiscovery
             )
-        case .connect:
-            ConnectBikeOnboardingStepView(
+        default:
+            OnboardingDiscoveryView(
                 viewState: viewModel.viewState,
-                onOpenSettings: openAppSettings,
-                onRetry: viewModel.retry
+                onSelectBike: viewModel.selectDiscoveredBike,
+                onRetry: viewModel.retryDiscovery
             )
         }
     }
 
-    private func controls(for step: BikeOnboardingStep) -> some View {
-        OnboardingNavigationControls(
-            step: step,
-            isContinueDisabled: !viewModel.viewState.canContinue,
-            isContinueBusy: viewModel.viewState.isRequestingBluetoothAccess,
-            onContinue: { continueTapped(from: step) }
-        )
-        .frame(maxWidth: Constants.contentMaxWidth)
+    @ViewBuilder private var detailContent: some View {
+        switch viewModel.viewState.step {
+        case .pairing:
+            OnboardingPairingView(
+                viewState: viewModel.viewState,
+                onCopyAndPair: viewModel.copyAndPair
+            )
+        case .connecting:
+            OnboardingConnectingView(
+                viewState: viewModel.viewState,
+                onRetry: viewModel.retryConnection,
+                onCancel: viewModel.cancelConnection
+            )
+        default:
+            EmptyView()
+        }
     }
 
-    private var scannerSheet: some View {
-        VINScannerView(onVIN: { vin in
-            if viewModel.scannedVIN(vin) {
-                isScannerPresented = false
-            }
-        }, onUnavailable: {
-            isScannerPresented = false
-            isScannerUnavailable = true
-        })
-        .ignoresSafeArea()
+    private func onboardingScene<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        ZStack {
+            OnboardingObsidianBackground()
+            content()
+        }
     }
 
     private func openAppSettings() {
@@ -121,14 +114,43 @@ public struct BikeOnboardingView: View {
         openURL(url)
     }
 
-    private func continueTapped(from visibleStep: BikeOnboardingStep) {
-        viewModel.next()
-        let nextStep = viewModel.viewState.step
-        guard nextStep.rawValue > visibleStep.rawValue else { return }
-        onNavigateToStep(nextStep)
+    private var desiredNavigationPath: [BikeOnboardingRoute] {
+        switch viewModel.viewState.step {
+        case .welcome, .success:
+            []
+        case .bluetooth, .discovery:
+            [.setup]
+        case .pairing, .connecting:
+            [.setup, .detail]
+        }
     }
 
-    private enum Constants {
-        static let contentMaxWidth: CGFloat = 480
+    private func synchronizeNavigation() {
+        let desiredPath = desiredNavigationPath
+        guard navigationPath != desiredPath else { return }
+        navigationPath = desiredPath
     }
+
+    private func scheduleNavigationSynchronization() {
+        navigationSynchronizationTask?.cancel()
+        navigationSynchronizationTask = Task { @MainActor in
+            await Task.yield()
+            guard !Task.isCancelled else { return }
+            synchronizeNavigation()
+        }
+    }
+
+    private func handleNavigationChange(_ path: [BikeOnboardingRoute]) {
+        guard path != desiredNavigationPath else { return }
+        if path.count < desiredNavigationPath.count {
+            viewModel.back()
+        } else {
+            synchronizeNavigation()
+        }
+    }
+}
+
+private enum BikeOnboardingRoute: Hashable {
+    case setup
+    case detail
 }

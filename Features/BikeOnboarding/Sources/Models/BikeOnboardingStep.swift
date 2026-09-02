@@ -1,6 +1,8 @@
 public enum BikeOnboardingStep: Int, CaseIterable, Hashable, Sendable {
     case welcome
-    case preparation
-    case identify
-    case connect
+    case bluetooth
+    case discovery
+    case pairing
+    case connecting
+    case success
 }
