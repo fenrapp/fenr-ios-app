@@ -11,6 +11,7 @@ import SwiftUI
         Section("Navigation") {
             SettingsNavigationRow(
                 icon: "rectangle.stack.fill",
+                iconTint: .indigo,
                 title: "Dashboard cards",
                 detail: "Choose their order and visibility",
                 accessibilityIdentifier: "settings.dashboardCards",
@@ -18,6 +19,7 @@ import SwiftUI
             )
             SettingsNavigationRow(
                 icon: "slider.horizontal.3",
+                iconTint: .orange,
                 title: "Power modes",
                 detail: "5 maps configured",
                 accessibilityIdentifier: "settings.powerModes",
@@ -25,13 +27,64 @@ import SwiftUI
             )
             SettingsNavigationRow(
                 icon: "clock.arrow.circlepath",
+                iconTint: .cyan,
                 title: "Ride history",
                 detail: "Review saved rides and recent comparisons",
                 accessibilityIdentifier: "settings.rideHistory",
                 action: {}
             )
-            TelemetryActionRow(action: {})
         }
+    }
+}
+
+#Preview("Ride display") {
+    Form {
+        RideDisplaySettingsContent(
+            progressBarMode: .init(
+                selection: .init(
+                    selectedID: "energy",
+                    options: [
+                        .init(id: "energy", title: "Energy"),
+                        .init(id: "speed", title: "Speed"),
+                        .init(id: "hidden", title: "Hidden")
+                    ]
+                ),
+                description: "Regeneration fills left from the center; consumption fills right."
+            ),
+            bikeBatteryDisplayMode: .init(
+                selectedID: "percentage",
+                options: [
+                    .init(id: "percentage", title: "Percentage"),
+                    .init(id: "estimatedRange", title: "Estimated range")
+                ]
+            ),
+            deviceBatteryDisplayMode: .init(
+                selectedID: "iconAndText",
+                options: [
+                    .init(id: "iconAndText", title: "Icon and percentage"),
+                    .init(id: "hidden", title: "Hidden")
+                ]
+            ),
+            showsTemperatures: true,
+            speedSource: .init(
+                selection: .init(
+                    selectedID: "gps",
+                    options: [
+                        .init(id: "motorcycle", title: "Bike"),
+                        .init(id: "gps", title: "GPS"),
+                        .init(id: "hybrid", title: "GPS+")
+                    ]
+                ),
+                description: "Uses phone GPS when a recent, accurate reading is available.",
+                locationPermission: .authorized
+            ),
+            onSelectProgressBarMode: { _ in },
+            onSelectBikeBatteryDisplayMode: { _ in },
+            onSelectDeviceBatteryDisplayMode: { _ in },
+            onSetShowsTemperatures: { _ in },
+            onSelectSpeedSource: { _ in },
+            onRequestLocationAccess: {}
+        )
     }
 }
 
@@ -92,6 +145,7 @@ private enum PreviewFixtures {
         selection: powerTierSelection,
         status: "Standard baseline · 60 HP max",
         verificationMessage: "Verification failed: The operation could not be completed",
+        verificationMessageIsError: true,
         isVerifyEnabled: true
     )
 }

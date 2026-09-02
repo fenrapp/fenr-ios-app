@@ -1,4 +1,5 @@
 #if os(iOS)
+import DesignSystem
 import SwiftUI
 
 struct PowerTierSettingsSection: View {
@@ -7,24 +8,27 @@ struct PowerTierSettingsSection: View {
     let onVerify: () -> Void
 
     var body: some View {
-        Section("Bike power tier") {
-            Picker("Declared model", selection: selectionBinding) {
+        Section {
+            Picker("Declared Model", selection: selectionBinding) {
                 ForEach(state.selection.options) { option in
                     Text(option.title).tag(option.id)
                 }
             }
             .pickerStyle(.segmented)
 
-            Text(state.status)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+            LabeledContent("Detected Status", value: state.status)
+
             if let evidence = state.evidence {
-                Text(evidence)
-                    .font(.footnote)
+                LabeledContent("Evidence", value: evidence)
             }
             if let verificationMessage = state.verificationMessage {
                 Text(verificationMessage)
                     .font(.footnote)
+                    .foregroundStyle(
+                        state.verificationMessageIsError
+                            ? DesignColor.critical
+                            : DesignColor.positive
+                    )
             }
             Button(action: onVerify) {
                 if state.isVerifying {
@@ -35,12 +39,13 @@ struct PowerTierSettingsSection: View {
             }
             .disabled(!state.isVerifyEnabled)
 
+        } header: {
+            Text("Model and Capability")
+        } footer: {
             Text(
                 "The manual selection is only an expectation. "
                     + "Bike telemetry determines HP, TC and the effective tier."
             )
-                .font(.caption)
-                .foregroundStyle(.secondary)
         }
     }
 

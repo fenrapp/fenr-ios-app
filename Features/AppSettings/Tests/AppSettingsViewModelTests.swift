@@ -125,6 +125,7 @@ struct AppSettingsViewModelTests {
         })
         #expect(fixture.viewModel.viewState.powerTier.status == "Standard baseline · 60 HP max")
         #expect(!fixture.viewModel.viewState.powerTier.isVerifying)
+        #expect(!fixture.viewModel.viewState.powerTier.verificationMessageIsError)
         fixture.viewModel.stop()
     }
 
@@ -142,6 +143,7 @@ struct AppSettingsViewModelTests {
         })
         #expect(fixture.viewModel.viewState.powerTier.status == "Standard baseline · 60 HP max")
         #expect(!fixture.viewModel.viewState.powerTier.isVerifying)
+        #expect(fixture.viewModel.viewState.powerTier.verificationMessageIsError)
         fixture.viewModel.stop()
     }
 
@@ -161,6 +163,22 @@ struct AppSettingsViewModelTests {
 
         #expect(!fixture.viewModel.viewState.powerTier.isVerifying)
         #expect(fixture.viewModel.viewState.powerTier.verificationMessage == nil)
+    }
+
+    @Test("Keeps observing while a settings detail remains presented")
+    func keepsObservingAcrossSettingsNavigation() async {
+        let fixture = AppSettingsViewModelFixture()
+
+        await fixture.start()
+        fixture.viewModel.start()
+        fixture.viewModel.stop()
+
+        await fixture.settingsRepository.save(.init(measurementSystem: .imperial))
+
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.measurementSystem.selectedID == MeasurementSystem.imperial.rawValue
+        })
+        fixture.viewModel.stop()
     }
 
 }
