@@ -26,7 +26,9 @@ struct TrailMapPresentationMapperTests {
     func previewOverlayPreservesRoutePresentation() async throws {
         let route = makeLongRoute()
         let plan = try #require(
-            await DefaultRideRouteGuidancePlanner().makePlan(
+            await DefaultRideRouteGuidancePlanner(
+                entryClassifier: RideRouteEntryClassifier()
+            ).makePlan(
                 for: route,
                 direction: .reverse
             )

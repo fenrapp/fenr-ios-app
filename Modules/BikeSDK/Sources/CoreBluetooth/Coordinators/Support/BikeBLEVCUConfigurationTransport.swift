@@ -8,42 +8,24 @@ final class BikeBLEVCUConfigurationTransport {
     private let peripheralOperations: BikeBLEPeripheralOperations
     let configurationReadinessWaiter: BikeBLEConfigurationReadinessWaiter
     private let transactionGate: BikeBLEVCUConfigurationTransactionGate
-    var activeOperation: BikeBLEVCUConfigurationOperation?
-    var expectedConfigurationResponse: BikeBLEVCUConfigurationExpectedResponse?
-    var bufferedConfigurationResponse: Result<Data, BikeSDKError>?
-    private var timeoutTask: Task<Void, Never>?
-    var isDesynchronized = false
+    let operationController: BikeBLEVCUConfigurationOperationController
 
     init(
         sessionStore: BLESessionStore,
         eventEmitter: BikeBLEEventEmitter,
         peripheralOperations: BikeBLEPeripheralOperations,
         configurationReadinessWaiter: BikeBLEConfigurationReadinessWaiter,
-        transactionGate: BikeBLEVCUConfigurationTransactionGate
+        transactionGate: BikeBLEVCUConfigurationTransactionGate,
+        operationController: BikeBLEVCUConfigurationOperationController
     ) {
         self.sessionStore = sessionStore
         self.eventEmitter = eventEmitter
         self.peripheralOperations = peripheralOperations
         self.configurationReadinessWaiter = configurationReadinessWaiter
         self.transactionGate = transactionGate
+        self.operationController = operationController
     }
 
-    convenience init(
-        sessionStore: BLESessionStore,
-        eventEmitter: BikeBLEEventEmitter,
-        peripheralOperations: BikeBLEPeripheralOperations,
-        configurationReadinessWaiter: BikeBLEConfigurationReadinessWaiter
-    ) {
-        self.init(
-            sessionStore: sessionStore,
-            eventEmitter: eventEmitter,
-            peripheralOperations: peripheralOperations,
-            configurationReadinessWaiter: configurationReadinessWaiter,
-            transactionGate: BikeBLEVCUConfigurationTransactionGate()
-        )
-    }
-
-    deinit { timeoutTask?.cancel() }
     func authenticatedPeripheral() throws -> CBPeripheral {
         guard let peripheral = sessionStore.peripheral else {
             BikePowerModeDebugLog.log("transport rejected operation: no active peripheral")
@@ -145,43 +127,19 @@ final class BikeBLEVCUConfigurationTransport {
     }
 
     func completeWriteIfNeeded(characteristic: CBCharacteristic, error: Error?) {
-        guard let operation = activeOperation,
-              operation.uuid == characteristic.uuid,
-              operation.kind == .write
-        else {
-            return
-        }
-        finish(operation: operation, error: error, data: Data())
+        operationController.completeWrite(uuid: characteristic.uuid, error: error)
     }
 
     func completeReadIfNeeded(characteristic: CBCharacteristic, error: Error?) -> Bool {
-        if captureConfigurationResponseIfNeeded(characteristic: characteristic, error: error) {
-            return true
-        }
-        guard let operation = activeOperation,
-              operation.uuid == characteristic.uuid,
-              operation.kind == .read
-        else {
-            return false
-        }
-        finish(
-            operation: operation,
-            error: error,
-            data: characteristic.value ?? Data()
+        operationController.completeRead(
+            uuid: characteristic.uuid,
+            data: characteristic.value,
+            error: error
         )
-        return true
     }
 
     func reset() {
-        timeoutTask?.cancel()
-        timeoutTask = nil
-        if let operation = activeOperation {
-            activeOperation = nil
-            operation.continuation.resume(throwing: CancellationError())
-        }
-        expectedConfigurationResponse = nil
-        bufferedConfigurationResponse = nil
-        isDesynchronized = false
+        operationController.reset()
     }
 }
 extension BikeBLEVCUConfigurationTransport {
@@ -208,67 +166,6 @@ extension BikeBLEVCUConfigurationTransport {
         }
     }
 
-    private func captureConfigurationResponseIfNeeded(
-        characteristic: CBCharacteristic,
-        error: Error?
-    ) -> Bool {
-        guard characteristic.uuid == BikeSDKConstants.vcuBikeConfigurationUUID,
-              let expectedConfigurationResponse
-        else {
-            return false
-        }
-        if let error {
-            let sdkError = BikeSDKError.operationFailed(
-                "4005 response failed: \(error.localizedDescription)"
-            )
-            return captureConfigurationResult(.failure(sdkError), characteristic: characteristic)
-        }
-        guard let data = characteristic.value,
-              expectedConfigurationResponse.matches(data)
-        else {
-            return false
-        }
-        return captureConfigurationResult(.success(data), characteristic: characteristic)
-    }
-
-    private func captureConfigurationResult(
-        _ result: Result<Data, BikeSDKError>,
-        characteristic: CBCharacteristic
-    ) -> Bool {
-        if let operation = activeOperation,
-           operation.uuid == characteristic.uuid,
-           operation.kind == .configurationResponse {
-            switch result {
-            case .success(let data):
-                finish(operation: operation, error: nil, data: data)
-            case .failure(let error):
-                finish(operation: operation, error: error, data: Data())
-            }
-            return true
-        }
-        if let operation = activeOperation,
-           operation.uuid == characteristic.uuid,
-           operation.kind == .write {
-            bufferedConfigurationResponse = result
-            BikePowerModeDebugLog.log(
-                "4005 response arrived before write callback; accepting response as acknowledgement"
-            )
-            switch result {
-            case .success:
-                finish(operation: operation, error: nil, data: Data())
-            case .failure(let error):
-                finish(operation: operation, error: error, data: Data())
-            }
-            return true
-        }
-        guard activeOperation != nil else {
-            bufferedConfigurationResponse = result
-            BikePowerModeDebugLog.log("4005 response arrived before response wait; buffering")
-            return true
-        }
-        return false
-    }
-
     func emitConfigurationDebug(prefix: String, data: Data) async {
         guard BikePowerModeDebugLog.isEnabled else { return }
         BikePowerModeDebugLog.log("4005 \(prefix) \(data.count)b \(data.bikeSDKHexString)")
@@ -284,50 +181,12 @@ extension BikeBLEVCUConfigurationTransport {
         operationName: String,
         continuation: CheckedContinuation<Data, Error>
     ) {
-        activeOperation = BikeBLEVCUConfigurationOperation(
+        operationController.start(
             uuid: uuid,
             kind: kind,
             operationName: operationName,
             continuation: continuation
         )
-        timeoutTask?.cancel()
-        timeoutTask = Task { @MainActor [weak self] in
-            do {
-                try await Task.sleep(for: .seconds(5))
-            } catch {
-                return
-            }
-            guard let self,
-                  let operation = self.activeOperation,
-                  operation.uuid == uuid,
-                  operation.kind == kind
-            else {
-                return
-            }
-            self.timeoutTask = nil
-            self.activeOperation = nil
-            self.isDesynchronized = kind != .configurationResponse
-            operation.continuation.resume(throwing: BikeSDKError.operationFailed(
-                "VCU configuration \(operation.operationName) timed out: \(uuid.uuidString)"
-            ))
-        }
-    }
-
-    private func finish(
-        operation: BikeBLEVCUConfigurationOperation,
-        error: Error?,
-        data: Data
-    ) {
-        timeoutTask?.cancel()
-        timeoutTask = nil
-        activeOperation = nil
-        if let error {
-            operation.continuation.resume(throwing: BikeSDKError.operationFailed(
-                "\(operation.operationName) failed: \(error.localizedDescription)"
-            ))
-        } else {
-            operation.continuation.resume(returning: data)
-        }
     }
 
     func withTransaction<Value: Sendable>(

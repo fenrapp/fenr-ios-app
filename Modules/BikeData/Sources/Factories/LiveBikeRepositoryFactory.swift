@@ -56,7 +56,11 @@ public enum LiveBikeRepositoryFactory {
             discoveredBikesHub: AsyncEventHub(
                 bufferingPolicy: .bufferingNewest(configuration.connectionBufferLimit)
             ),
-            chargePowerMapper: BikeSDKChargePowerControlToDomainMapper()
+            controlService: LiveBikeControlService(
+                client: client,
+                chargePowerMapper: BikeSDKChargePowerControlToDomainMapper(),
+                bikeLockMapper: BikeSDKBikeLockControlToDomainMapper()
+            )
         )
     }
 

@@ -16,6 +16,9 @@ public struct RideNavigationViewModelDependencies: Sendable {
     let saveSettings: SaveAppSettingsUseCase
     let presentationMapper: RideNavigationPresentationMapper
     let mapPresentationMapper: RideNavigationMapPresentationMapper
+    let mapSceneBuilder: RideNavigationMapSceneBuilder
+    let searchService: RideNavigationSearchService
+    let locationGeometry: RideNavigationLocationGeometry
     let timing: RideNavigationTiming
 
     public init(
@@ -31,6 +34,9 @@ public struct RideNavigationViewModelDependencies: Sendable {
         saveSettings: SaveAppSettingsUseCase,
         presentationMapper: RideNavigationPresentationMapper,
         mapPresentationMapper: RideNavigationMapPresentationMapper,
+        mapSceneBuilder: RideNavigationMapSceneBuilder,
+        searchService: RideNavigationSearchService,
+        locationGeometry: RideNavigationLocationGeometry,
         timing: RideNavigationTiming
     ) {
         self.vehicleSession = vehicleSession
@@ -45,6 +51,9 @@ public struct RideNavigationViewModelDependencies: Sendable {
         self.saveSettings = saveSettings
         self.presentationMapper = presentationMapper
         self.mapPresentationMapper = mapPresentationMapper
+        self.mapSceneBuilder = mapSceneBuilder
+        self.searchService = searchService
+        self.locationGeometry = locationGeometry
         self.timing = timing
     }
 }

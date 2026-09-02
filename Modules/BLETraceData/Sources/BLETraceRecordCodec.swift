@@ -26,9 +26,11 @@ struct BLETraceRecordCodec: Sendable {
     }
 
     private let lineEncoder: BLETraceJSONLineEncoder
+    private let boundaryDecoder: BLETraceBoundaryDecoder
 
-    init(lineEncoder: BLETraceJSONLineEncoder) {
+    init(lineEncoder: BLETraceJSONLineEncoder, boundaryDecoder: BLETraceBoundaryDecoder) {
         self.lineEncoder = lineEncoder
+        self.boundaryDecoder = boundaryDecoder
     }
 
     func encodeHeader(
@@ -126,33 +128,14 @@ struct BLETraceRecordCodec: Sendable {
     }
 
     func decodeHeaderBoundary(_ data: Data) -> HeaderBoundary? {
-        guard let header = try? JSONDecoder().decode(StoredHeaderBoundary.self, from: data),
-              header.recordType == Constants.headerRecordType,
-              header.schemaVersion == Constants.schemaVersion,
-              let startedAt = Self.parseTimestamp(header.startedAt) else { return nil }
-        return HeaderBoundary(sessionID: header.sessionID, startedAt: startedAt)
+        boundaryDecoder.decodeHeader(data)
     }
 
     func decodeSessionBoundary(
         headerData: Data,
         footerData: Data
     ) -> SessionBoundary? {
-        guard let header = decodeHeaderBoundary(headerData),
-              let footer = try? JSONDecoder().decode(StoredFooterBoundary.self, from: footerData),
-              footer.recordType == Constants.footerRecordType,
-              footer.schemaVersion == Constants.schemaVersion,
-              footer.sessionID == header.sessionID,
-              let endedAt = Self.parseTimestamp(footer.endedAt),
-              endedAt >= header.startedAt,
-              footer.eventCount >= 0,
-              let status = BLETraceSessionStatus(rawValue: footer.status) else { return nil }
-        return SessionBoundary(
-            sessionID: header.sessionID,
-            startedAt: header.startedAt,
-            endedAt: endedAt,
-            eventCount: footer.eventCount,
-            status: status
-        )
+        boundaryDecoder.decodeSession(headerData: headerData, footerData: footerData)
     }
 }
 
@@ -243,38 +226,6 @@ private extension BLETraceRecordCodec {
         }
     }
 
-    struct StoredHeaderBoundary: Decodable {
-        let recordType: String
-        let schemaVersion: Int
-        let sessionID: UUID
-        let startedAt: String
-
-        enum CodingKeys: String, CodingKey {
-            case recordType = "record_type"
-            case schemaVersion = "schema_version"
-            case sessionID = "session_id"
-            case startedAt = "started_at"
-        }
-    }
-
-    struct StoredFooterBoundary: Decodable {
-        let recordType: String
-        let schemaVersion: Int
-        let sessionID: UUID
-        let endedAt: String
-        let eventCount: Int
-        let status: String
-
-        enum CodingKeys: String, CodingKey {
-            case recordType = "record_type"
-            case schemaVersion = "schema_version"
-            case sessionID = "session_id"
-            case endedAt = "ended_at"
-            case eventCount = "event_count"
-            case status
-        }
-    }
-
     func makeFooter(_ input: FooterInput, bytes: Int64) -> FooterRecord {
         FooterRecord(
             recordType: Constants.footerRecordType,
@@ -296,10 +247,6 @@ private extension BLETraceRecordCodec {
     static func elapsedMilliseconds(_ uptime: UInt64, since start: UInt64) -> Int64 {
         guard uptime >= start else { return 0 }
         return Int64((uptime - start) / 1_000_000)
-    }
-
-    static func parseTimestamp(_ value: String) -> Date? {
-        try? Date(value, strategy: .iso8601)
     }
 
     enum Constants {

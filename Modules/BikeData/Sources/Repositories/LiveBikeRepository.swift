@@ -23,7 +23,7 @@ public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryH
     private let batteryHealthHub: AsyncEventHub<BikeBatteryHealth>
     private let batteryCaptureHub: AsyncEventHub<BatteryDatasetCapture>
     private let discoveredBikesHub: AsyncEventHub<[DiscoveredBike]>
-    private let chargePowerMapper: BikeSDKChargePowerControlToDomainMapper
+    private let controlService: LiveBikeControlService
     private(set) var lifecycleState: LiveBikeRepositoryLifecycleState = .stopped
     private var generation: UInt64 = 0
     private var startupTask: Task<AsyncStream<BikeSDKEvent>?, Never>?
@@ -42,7 +42,7 @@ public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryH
         batteryHealthHub: AsyncEventHub<BikeBatteryHealth>,
         batteryCaptureHub: AsyncEventHub<BatteryDatasetCapture>,
         discoveredBikesHub: AsyncEventHub<[DiscoveredBike]>,
-        chargePowerMapper: BikeSDKChargePowerControlToDomainMapper
+        controlService: LiveBikeControlService
     ) {
         self.client = client
         self.stateStore = stateStore
@@ -54,16 +54,14 @@ public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryH
         self.batteryHealthHub = batteryHealthHub
         self.batteryCaptureHub = batteryCaptureHub
         self.discoveredBikesHub = discoveredBikesHub
-        self.chargePowerMapper = chargePowerMapper
+        self.controlService = controlService
         self.eventHandler = eventHandler
     }
-
     deinit {
         startupTask?.cancel()
         eventsTask?.cancel()
         shutdownTask?.cancel()
     }
-
     public func start() async {
         while !Task.isCancelled {
             switch lifecycleState {
@@ -100,7 +98,6 @@ public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryH
             }
         }
     }
-
     public func stop() async {
         switch lifecycleState {
         case .stopped:
@@ -118,7 +115,6 @@ public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryH
             completeStop(generation: stopGeneration)
         }
     }
-
     private func completeStart(
         events: AsyncStream<BikeSDKEvent>?,
         generation startGeneration: UInt64
@@ -231,33 +227,23 @@ extension LiveBikeRepository {
     }
 
     public func prepareBikeLockControl() async throws -> BikeLockControlSnapshot {
-        let snapshot = try await client.prepareBikeLockControl()
-        return .init(
-            vcuFirmware: snapshot.vcuFirmware,
-            isLocked: snapshot.isLocked,
-            didPassNoOpWrite: snapshot.didPassNoOpWrite
-        )
+        try await controlService.prepareBikeLockControl()
     }
 
     public func setBikeLocked(_ isLocked: Bool) async throws -> BikeLockControlSnapshot {
-        let snapshot = try await client.setBikeLocked(isLocked)
-        return .init(
-            vcuFirmware: snapshot.vcuFirmware,
-            isLocked: snapshot.isLocked,
-            didPassNoOpWrite: snapshot.didPassNoOpWrite
-        )
+        try await controlService.setBikeLocked(isLocked)
     }
 
     public func refreshPowerModeConfigurations() async throws {
-        try await client.refreshPowerModeConfigurations()
+        try await controlService.refreshPowerModeConfigurations()
     }
 
     public func refreshPowerModeConfiguration(mapIndex: Int) async throws {
-        try await client.refreshPowerModeConfiguration(mapIndex: mapIndex)
+        try await controlService.refreshPowerModeConfiguration(mapIndex: mapIndex)
     }
 
     public func preparePowerModeControl(mapIndex: Int) async throws {
-        try await client.preparePowerModeControl(mapIndex: mapIndex)
+        try await controlService.preparePowerModeControl(mapIndex: mapIndex)
     }
 
     public func setPowerModeConfiguration(
@@ -265,7 +251,7 @@ extension LiveBikeRepository {
         horsepower: Int,
         regenerativeBrakingPercent: Int
     ) async throws {
-        try await client.setPowerModeConfiguration(
+        try await controlService.setPowerModeConfiguration(
             mapIndex: mapIndex,
             horsepower: horsepower,
             regenerativeBrakingPercent: regenerativeBrakingPercent
@@ -273,7 +259,7 @@ extension LiveBikeRepository {
     }
 
     public func prepareTractionControl(mapIndex: Int) async throws {
-        try await client.prepareTractionControl(mapIndex: mapIndex)
+        try await controlService.prepareTractionControl(mapIndex: mapIndex)
     }
 
     public func setTractionControlConfiguration(
@@ -281,7 +267,7 @@ extension LiveBikeRepository {
         powerTractionPercent: Double,
         brakingTractionPercent: Double
     ) async throws {
-        try await client.setTractionControlConfiguration(
+        try await controlService.setTractionControlConfiguration(
             mapIndex: mapIndex,
             powerTractionPercent: powerTractionPercent,
             brakingTractionPercent: brakingTractionPercent
@@ -289,7 +275,7 @@ extension LiveBikeRepository {
     }
 
     public func refreshTractionControlConfiguration(mapIndex: Int) async throws {
-        try await client.refreshTractionControlConfiguration(mapIndex: mapIndex)
+        try await controlService.refreshTractionControlConfiguration(mapIndex: mapIndex)
     }
 
     public func observeTelemetry() async -> AsyncStream<BikeTelemetry> {
@@ -335,25 +321,14 @@ extension LiveBikeRepository {
     public func prepareChargePowerControl(
         chargingStatus: BikeChargingStatus
     ) async throws -> BikeChargePowerControlSnapshot {
-        let snapshot = try await client.prepareChargePowerControl(
-            context: .init(
-                requestedCurrentAmperes: chargingStatus.requestedCurrentAmperes,
-                maximumCurrentAmperes: chargingStatus.maximumCurrentAmperes,
-                maximumPowerWatts: chargingStatus.maximumPowerWatts,
-                maximumStateOfChargePercent: chargingStatus.maximumStateOfChargePercent,
-                chargerTypeRaw: chargingStatus.chargerType.rawValue
-            )
-        )
-        return chargePowerMapper.map(snapshot)
+        try await controlService.prepareChargePowerControl(chargingStatus: chargingStatus)
     }
 
     public func setChargePowerLimit(watts: Int) async throws -> BikeChargePowerControlSnapshot {
-        let snapshot = try await client.setChargePowerLimit(watts: watts)
-        return chargePowerMapper.map(snapshot)
+        try await controlService.setChargePowerLimit(watts: watts)
     }
 
     public func setChargeTarget(percent: Int) async throws -> BikeChargePowerControlSnapshot {
-        let snapshot = try await client.setChargeTarget(percent: percent)
-        return chargePowerMapper.map(snapshot)
+        try await controlService.setChargeTarget(percent: percent)
     }
 }

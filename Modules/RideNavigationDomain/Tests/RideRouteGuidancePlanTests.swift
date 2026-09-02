@@ -138,6 +138,7 @@ struct RideRouteGuidancePlanTests {
             route: RideRouteGuidanceTestFactory.route(segments: [points]),
             direction: .forward,
             configuration: .standard,
+            entryClassifier: .init(),
             shouldCancel: {
                 cancellationChecks += 1
                 return cancellationChecks > 1

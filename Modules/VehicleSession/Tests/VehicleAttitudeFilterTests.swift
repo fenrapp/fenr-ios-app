@@ -5,7 +5,6 @@ import Testing
 @testable import VehicleSession
 
 // The boundary-focused scenarios intentionally share one exact numeric fixture.
-// swiftlint:disable file_length
 
 @Suite("Vehicle attitude filter")
 struct VehicleAttitudeFilterTests {
@@ -434,4 +433,3 @@ private extension VehicleAttitudeFilterTests {
         #expect(abs((value ?? .infinity) - expected) < tolerance)
     }
 }
-// swiftlint:enable file_length

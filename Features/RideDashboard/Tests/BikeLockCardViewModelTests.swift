@@ -89,6 +89,33 @@ struct BikeLockCardViewModelTests {
         #expect(await fixture.repository.recordedLockRequests().isEmpty)
     }
 
+    @Test("Revalidates stationary telemetry after biometric authentication")
+    func rejectsUnlockWhenBikeMovesDuringAuthentication() async {
+        var settings = AppSettings()
+        settings.setBikeLockSettings(
+            .init(securityMode: .pinAndFaceID),
+            forVIN: BikeLockCardFixtures.vin
+        )
+        let authenticator = ControllableBikeLockCardAuthenticator()
+        let fixture = BikeLockCardViewModelTestFactory.make(
+            isLocked: true,
+            settings: settings,
+            authenticator: authenticator
+        )
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot(settings: settings))
+        #expect(await waitUntil { fixture.viewModel.viewState.isActionEnabled })
+
+        fixture.viewModel.performPrimaryAction()
+        #expect(await waitUntil { await authenticator.hasPendingAuthentication() })
+        await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot(speed: 8, settings: settings))
+        await authenticator.succeed()
+
+        #expect(await waitUntil { fixture.viewModel.viewState.errorText != nil })
+        #expect(await fixture.repository.recordedLockRequests().isEmpty)
+        #expect(fixture.viewModel.viewState.isLocked)
+    }
+
     @Test("No PIN protection does not force the dashboard card visible")
     func noPINConfigurationKeepsCardHidden() async {
         var settings = AppSettings()

@@ -34,17 +34,13 @@ extension BikeBLEVCUConfigurationTransport {
                         + "read is unavailable and notifications are not enabled"
                 )
             }
-            expectedConfigurationResponse = expectedResponse
-            bufferedConfigurationResponse = nil
-            defer {
-                expectedConfigurationResponse = nil
-                bufferedConfigurationResponse = nil
-            }
+            operationController.expect(expectedResponse)
+            defer { operationController.clearExpectation() }
             await emitConfigurationDebug(prefix: "Request", data: request)
             try await write(request, peripheral: peripheral, characteristic: characteristic)
             let response: Data
-            if let bufferedConfigurationResponse {
-                response = try bufferedConfigurationResponse.get()
+            if let bufferedResponse = try operationController.takeBufferedResponse() {
+                response = bufferedResponse
             } else {
                 response = try await awaitConfigurationResponse(
                     peripheral: peripheral,
@@ -73,16 +69,12 @@ extension BikeBLEVCUConfigurationTransport {
                 writeRequest: payload
             )
             try await waitForConfigurationNotificationsIfNeeded(characteristic)
-            expectedConfigurationResponse = expectedResponse
-            bufferedConfigurationResponse = nil
-            defer {
-                expectedConfigurationResponse = nil
-                bufferedConfigurationResponse = nil
-            }
+            operationController.expect(expectedResponse)
+            defer { operationController.clearExpectation() }
             try await write(payload, peripheral: peripheral, characteristic: characteristic)
             let response: Data
-            if let bufferedConfigurationResponse {
-                response = try bufferedConfigurationResponse.get()
+            if let bufferedResponse = try operationController.takeBufferedResponse() {
+                response = bufferedResponse
             } else {
                 response = try await awaitConfigurationResponse(
                     peripheral: peripheral,

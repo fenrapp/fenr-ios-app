@@ -134,7 +134,7 @@ private func previewFeature(
         efficiencyViewModel: previewEfficiencyViewModel(),
         rangeViewModel: previewRangeViewModel(),
         systemHealthViewModel: SystemHealthCardPreviewFactory.makeViewModel(
-            state: previewDashboardSystemHealthState
+            state: RideDashboardPreviewFixtures.systemHealth
         ),
         dynamicsViewModel: RideDynamicsCardPreviewFactory.makeViewModel(
             state: .init(
@@ -164,18 +164,6 @@ private func previewFeature(
         bikeLockViewModel: BikeLockCardPreviewFactory.makeViewModel()
     )
 }
-
-private let previewDashboardSystemHealthState = DashboardSystemHealthViewData(
-    status: .healthy,
-    statusText: "OK",
-    statusDetail: "ALL SYSTEMS NORMAL",
-    stateOfHealthText: "94%",
-    stateOfHealthProgress: 0.94,
-    cellDeltaText: "8 mV",
-    dcBusVoltageText: "394.8 V",
-    batteryTemperatureText: "29°C",
-    inverterTemperatureText: "44°C"
-)
 
 @MainActor
 private func previewCurrentTripViewModel() -> CurrentTripCardViewModel {

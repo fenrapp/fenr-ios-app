@@ -29,14 +29,7 @@ struct BikeBLEConfigurationReadinessWaiter {
 
 extension BikeBLEVCUConfigurationTransport {
     func ensureReady() throws {
-        guard activeOperation == nil else {
-            throw BikeSDKError.operationFailed("VCU configuration operation is already running")
-        }
-        guard !isDesynchronized else {
-            throw BikeSDKError.operationFailed(
-                "VCU configuration transport timed out; reconnect before another transaction"
-            )
-        }
+        try operationController.ensureReady()
     }
 
     func waitForConfigurationNotificationsIfNeeded(_ characteristic: CBCharacteristic) async throws {

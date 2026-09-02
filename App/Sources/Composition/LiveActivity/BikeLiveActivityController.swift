@@ -9,7 +9,7 @@ final class BikeLiveActivityController {
     private let clock: any BikeLiveActivityClock
     private let timing: BikeLiveActivityTiming
     private let continuityPolicy: RideDashboardContinuityPolicy
-    private let updateInterval: TimeInterval
+    private let updatePolicy: BikeLiveActivityUpdatePolicy
     private let reconnectionNoticeDelay: Duration
     private let stateMapper: BikeLiveActivityStateMapper
 
@@ -36,7 +36,7 @@ final class BikeLiveActivityController {
         clock: any BikeLiveActivityClock,
         timing: BikeLiveActivityTiming,
         continuityPolicy: RideDashboardContinuityPolicy,
-        updateInterval: TimeInterval,
+        updatePolicy: BikeLiveActivityUpdatePolicy,
         reconnectionNoticeDelay: Duration,
         stateMapper: BikeLiveActivityStateMapper
     ) {
@@ -45,7 +45,7 @@ final class BikeLiveActivityController {
         self.clock = clock
         self.timing = timing
         self.continuityPolicy = continuityPolicy
-        self.updateInterval = updateInterval
+        self.updatePolicy = updatePolicy
         self.reconnectionNoticeDelay = reconnectionNoticeDelay
         self.stateMapper = stateMapper
     }
@@ -182,16 +182,8 @@ private extension BikeLiveActivityController {
         lastUpdateDate = clock.now
     }
 
-    private func canStartActivity(with snapshot: BikeLiveActivitySnapshot) -> Bool {
-        isSetupCompleted
-            && self.snapshot.isCanonicalTelemetryAvailable
-            && snapshot.hasRecentTelemetry
-            && snapshot.hasDisplayableTelemetry
-            && snapshot.isReceivingTelemetry
-            && snapshot.isLiveRunState
-            && snapshot.contentState.phase != .complete
-            && snapshot.contentState.mode != .stale
-            && snapshot.contentState.mode != .connectionLost
+    private func canStartActivity(with mapped: BikeLiveActivitySnapshot) -> Bool {
+        updatePolicy.canStart(mapped: mapped, source: snapshot, isSetupCompleted: isSetupCompleted)
     }
 
     private func updateBatteryHealthMonitoring(for state: BikeLiveActivityContentState) async {
@@ -212,30 +204,16 @@ private extension BikeLiveActivityController {
     }
 
     private func shouldUpdate(with state: BikeLiveActivityContentState) -> Bool {
-        guard let lastContentState, let lastUpdateDate else { return true }
-        guard state != lastContentState else { return false }
-        if state.phase != lastContentState.phase {
-            return true
-        }
-        if state.mode != lastContentState.mode
-            || state.runState != lastContentState.runState
-            || state.modeIndex != lastContentState.modeIndex
-            || state.isFaultActive != lastContentState.isFaultActive
-            || state.isConnectionLost != lastContentState.isConnectionLost {
-            return true
-        }
-        return clock.now.timeIntervalSince(lastUpdateDate) >= updateInterval
+        updatePolicy.shouldUpdate(
+            state: state,
+            previous: lastContentState,
+            previousUpdateDate: lastUpdateDate,
+            now: clock.now
+        )
     }
 
     private func shouldEndActivity(with snapshot: BikeLiveActivitySnapshot) -> Bool {
-        let state = snapshot.contentState
-        if !isSetupCompleted { return true }
-        if state.phase == .complete { return true }
-        if !snapshot.hasRecentTelemetry, state.mode != .connectionLost, state.mode != .stale { return true }
-        if !snapshot.isLiveRunState, !state.isFaultActive, state.mode != .connectionLost {
-            return true
-        }
-        return false
+        updatePolicy.shouldEnd(mapped: snapshot, isSetupCompleted: isSetupCompleted)
     }
 
     private func preserveActivityDuringRecovery() async {
@@ -271,7 +249,7 @@ private extension BikeLiveActivityController {
         guard generation == reconnectionNoticeGeneration,
               isStarted,
               activityClient.isActive,
-              let stableState = lastStableContentState else {
+              lastStableContentState != nil else {
             return
         }
         let mapped = stateMapper.map(snapshot: snapshot, now: clock.now)

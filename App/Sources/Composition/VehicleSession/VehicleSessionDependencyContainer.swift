@@ -56,16 +56,34 @@ enum VehicleSessionDependencyContainer {
                 maximumAccuracyMetersPerSecond: Constants.maximumGPSAccuracyMetersPerSecond,
                 maximumSampleAge: FENRRuntimeConstants.VehicleSession.locationSampleMaximumAge
             ),
-            motionEstimator: .init(
-                profile: dependencies.imuProfile,
-                now: Date.init,
-                maximumSampleAge: Constants.maximumMotionSampleAge,
-                minimumGPSCourseSpeedKilometersPerHour: Constants.minimumGPSCourseSpeedKilometersPerHour,
-                maximumGPSCourseAccuracyDegrees: Constants.maximumGPSCourseAccuracyDegrees,
-                maximumLocationSampleAge: FENRRuntimeConstants.VehicleSession.locationSampleMaximumAge
-            ),
+            motionEstimator: makeMotionEstimator(dependencies: dependencies),
             sleep: { duration in try await Task.sleep(for: duration) }
         )
+    }
+
+    private static func makeMotionEstimator(
+        dependencies: VehicleSessionDependencies
+    ) -> VehicleMotionEstimator {
+        VehicleMotionEstimator(
+            profile: dependencies.imuProfile,
+            now: Date.init,
+            maximumSampleAge: Constants.maximumMotionSampleAge,
+            attitudeFilter: .init(),
+            calibrationTracker: .init(),
+            locationResolver: .init(
+                now: Date.init,
+                maximumSampleAge: FENRRuntimeConstants.VehicleSession.locationSampleMaximumAge,
+                minimumCourseSpeedKilometersPerHour: Constants.minimumGPSCourseSpeedKilometersPerHour,
+                maximumCourseAccuracyDegrees: Constants.maximumGPSCourseAccuracyDegrees
+            )
+        )
+    }
+
+    private enum Constants {
+        static let maximumGPSAccuracyMetersPerSecond: Double = 5
+        static let maximumMotionSampleAge: TimeInterval = 0.75
+        static let minimumGPSCourseSpeedKilometersPerHour: Double = 5
+        static let maximumGPSCourseAccuracyDegrees: Double = 35
     }
 }
 
@@ -77,13 +95,4 @@ struct VehicleSessionDependencies {
     let imuRepository: any BikeIMURepository
     let motionCalibrationRepository: any VehicleMotionCalibrationRepository
     let imuProfile: BikeIMUProfile?
-}
-
-private extension VehicleSessionDependencyContainer {
-    enum Constants {
-        static let maximumGPSAccuracyMetersPerSecond: Double = 5
-        static let maximumMotionSampleAge: TimeInterval = 0.75
-        static let minimumGPSCourseSpeedKilometersPerHour: Double = 5
-        static let maximumGPSCourseAccuracyDegrees: Double = 35
-    }
 }

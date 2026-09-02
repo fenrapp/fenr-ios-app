@@ -20,7 +20,7 @@ struct RideNavigationHomePanel: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let safeFrame = rideNavigationSafeContentFrame(in: proxy)
+            let safeFrame = RideNavigationHomeGeometry.safeContentFrame(in: proxy)
 
             ZStack {
                 homeCards
@@ -36,7 +36,7 @@ struct RideNavigationHomePanel: View {
                         )
                         .rideNavigationGlassSurface(cornerRadius: Constants.keyboardDismissButtonRadius)
                         .position(
-                            rideNavigationKeyboardDismissButtonPosition(
+                            RideNavigationHomeGeometry.keyboardDismissButtonPosition(
                                 in: proxy,
                                 keyboardFrame: keyboardFrame,
                                 buttonSize: CGSize(
@@ -129,9 +129,9 @@ struct RideNavigationHomePanel: View {
                 )
                     .transition(.opacity.combined(with: .move(edge: .top)))
             } else {
-                rideActions
+                RideNavigationHomeActions(onImport: onImport, onRecord: onRecord)
                 if let errorText = state.errorText, state.savedRoutes.isEmpty {
-                    errorBanner(errorText)
+                    RideNavigationErrorBanner(text: errorText)
                 }
             }
         }
@@ -218,34 +218,6 @@ struct RideNavigationHomePanel: View {
         .background(DesignColor.groupedSurface, in: RoundedRectangle(cornerRadius: DesignRadius.medium))
     }
 
-    @ViewBuilder
-    private var rideActions: some View {
-        let actions = Group {
-            RideNavigationQuickAction(
-                title: "Import GPX",
-                subtitle: "Open a trail",
-                systemImage: "square.and.arrow.down",
-                color: DesignColor.accent,
-                action: onImport
-            )
-            RideNavigationQuickAction(
-                title: "Record Ride",
-                subtitle: "Track as you go",
-                systemImage: "record.circle",
-                color: DesignColor.critical,
-                action: onRecord
-            )
-        }
-        if dynamicTypeSize.isAccessibilitySize {
-            VStack(spacing: DesignSpace.small) {
-                actions
-            }
-        } else {
-            HStack(spacing: DesignSpace.small) {
-                actions
-            }
-        }
-    }
 }
 
 private extension RideNavigationHomePanel {
@@ -267,18 +239,6 @@ private extension RideNavigationHomePanel {
 
     private var homePanelHeight: CGFloat {
         max(Constants.planningPanelHeight, savedRoutesPanelHeight)
-    }
-
-    private func errorBanner(_ text: String) -> some View {
-        Label(text, systemImage: "exclamationmark.triangle.fill")
-            .font(.caption)
-            .foregroundStyle(DesignColor.critical)
-            .padding(DesignSpace.small)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                DesignColor.critical.opacity(Constants.errorBackgroundOpacity),
-                in: RoundedRectangle(cornerRadius: DesignRadius.medium)
-            )
     }
 
     private func clearSearch() {
@@ -317,29 +277,5 @@ private extension RideNavigationHomePanel {
         static let doneTransitionScale = 0.96
         static let doneTransitionDuration = 0.2
         static let interactionShieldOpacity = 0.001
-        static let errorBackgroundOpacity = 0.12
     }
-}
-
-private func rideNavigationKeyboardDismissButtonPosition(
-    in proxy: GeometryProxy,
-    keyboardFrame: CGRect,
-    buttonSize: CGSize
-) -> CGPoint {
-    let viewFrame = proxy.frame(in: .global)
-    return CGPoint(
-        x: keyboardFrame.maxX - viewFrame.minX - DesignSpace.medium - buttonSize.width / 2,
-        y: keyboardFrame.minY - viewFrame.minY - DesignSpace.medium - buttonSize.height / 2
-    )
-}
-
-private func rideNavigationSafeContentFrame(in proxy: GeometryProxy) -> CGRect {
-    let insets = proxy.safeAreaInsets
-    let margin = DesignSpace.medium
-    return CGRect(
-        x: insets.leading + margin,
-        y: insets.top + margin,
-        width: max(.zero, proxy.size.width - insets.leading - insets.trailing - margin * 2),
-        height: max(.zero, proxy.size.height - insets.top - insets.bottom - margin * 2)
-    )
 }

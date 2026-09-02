@@ -7,7 +7,6 @@ import TestSupport
 @testable import VehicleSession
 
 // The lifecycle scenarios intentionally share one complete dependency fixture.
-// swiftlint:disable file_length
 
 @Suite("Live vehicle session service")
 struct LiveVehicleSessionServiceTests {
@@ -634,8 +633,14 @@ extension LiveVehicleSessionServiceTests {
                 ),
                 now: now,
                 maximumSampleAge: maximumSampleAge,
-                minimumGPSCourseSpeedKilometersPerHour: 5,
-                maximumGPSCourseAccuracyDegrees: 35
+                attitudeFilter: .init(),
+                calibrationTracker: .init(),
+                locationResolver: .init(
+                    now: now,
+                    maximumSampleAge: maximumSampleAge,
+                    minimumCourseSpeedKilometersPerHour: 5,
+                    maximumCourseAccuracyDegrees: 35
+                )
             ),
             sleep: sleep
         )
@@ -668,4 +673,3 @@ extension LiveVehicleSessionServiceTests {
         }
     }
 }
-// swiftlint:enable file_length

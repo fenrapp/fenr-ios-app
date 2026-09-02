@@ -14,7 +14,7 @@ struct RideRouteGuidanceSessionTests {
                 segments: [[start, northWest, northEast, southEast, start]]
             )
         )
-        var session = RideRouteGuidanceSession(plan: plan)
+        var session = RideRouteGuidanceSession(plan: plan, projectionSelector: .init())
 
         let initialResult = session.update(
             with: RideRouteGuidanceTestFactory.sample(start, seconds: 0, courseDegrees: 0)
@@ -54,7 +54,11 @@ struct RideRouteGuidanceSessionTests {
         let outbound = try #require(
             match.projections.first { $0.localBearingDegrees < 1 || $0.localBearingDegrees > 359 }
         )
-        var session = RideRouteGuidanceSession(plan: plan, startingAt: outbound)
+        var session = RideRouteGuidanceSession(
+            plan: plan,
+            startingAt: outbound,
+            projectionSelector: .init()
+        )
 
         let snapshotResult = session.update(
             with: RideRouteGuidanceTestFactory.sample(
@@ -98,7 +102,11 @@ struct RideRouteGuidanceSessionTests {
             )
         )
         let later = try #require(match.projections.last)
-        var session = RideRouteGuidanceSession(plan: plan, startingAt: later)
+        var session = RideRouteGuidanceSession(
+            plan: plan,
+            startingAt: later,
+            projectionSelector: .init()
+        )
 
         let snapshotResult = session.update(
             with: RideRouteGuidanceTestFactory.sample(
@@ -120,7 +128,7 @@ struct RideRouteGuidanceSessionTests {
         let plan = try await RideRouteGuidanceTestFactory.plan(
             for: RideRouteGuidanceTestFactory.route(segments: [[start, end]])
         )
-        var session = RideRouteGuidanceSession(plan: plan)
+        var session = RideRouteGuidanceSession(plan: plan, projectionSelector: .init())
         let initialResult = session.update(with: RideRouteGuidanceTestFactory.sample(start))
         let initial = try #require(initialResult)
 
@@ -161,7 +169,8 @@ struct RideRouteGuidanceSessionTests {
         var session = RideRouteGuidanceSession(
             plan: plan,
             startingAt: entry,
-            configuration: configuration
+            configuration: configuration,
+            projectionSelector: .init()
         )
         #expect(plan.nextDecision(
             after: entry.position.distanceAlongRouteMeters

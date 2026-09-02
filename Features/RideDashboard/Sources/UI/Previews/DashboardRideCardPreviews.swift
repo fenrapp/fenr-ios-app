@@ -118,17 +118,17 @@ import SwiftUI
 }
 
 #Preview("Ride dynamics lean") {
-    DashboardLeanCard(state: previewDynamicsState, reduceMotion: false, calibrate: {})
+    DashboardLeanCard(state: DashboardDynamicsPreviewFixtures.available, reduceMotion: false, calibrate: {})
         .dashboardCardPreviewCanvas()
 }
 
 #Preview("Ride dynamics pitch") {
-    DashboardPitchCard(state: previewDynamicsState, reduceMotion: false, calibrate: {})
+    DashboardPitchCard(state: DashboardDynamicsPreviewFixtures.available, reduceMotion: false, calibrate: {})
         .dashboardCardPreviewCanvas()
 }
 
 #Preview("Ride dynamics calibration") {
-    DashboardLeanCard(state: previewCalibrationRequiredState, reduceMotion: false, calibrate: {})
+    DashboardLeanCard(state: DashboardDynamicsPreviewFixtures.calibrationRequired, reduceMotion: false, calibrate: {})
         .dashboardCardPreviewCanvas()
 }
 
@@ -138,12 +138,12 @@ import SwiftUI
 }
 
 #Preview("Ride dynamics course") {
-    DashboardCourseCard(state: previewDynamicsState, reduceMotion: false)
+    DashboardCourseCard(state: DashboardDynamicsPreviewFixtures.available, reduceMotion: false)
         .dashboardCardPreviewCanvas()
 }
 
 #Preview("Ride dynamics course without location") {
-    DashboardCourseCard(state: previewCompassWithoutLocationState, reduceMotion: false)
+    DashboardCourseCard(state: DashboardDynamicsPreviewFixtures.withoutLocation, reduceMotion: false)
         .dashboardCardPreviewCanvas()
 }
 
@@ -260,47 +260,6 @@ private func makePreviewSystemHealthState(
         )
     )
 }
-
-private let previewDynamicsState = DashboardRideDynamicsViewData(
-    status: .live,
-    leanDegrees: -18,
-    leanText: "18°",
-    leanDirectionText: "LEFT",
-    maximumLeftLeanText: "34°",
-    maximumRightLeanText: "29°",
-    pitchDegrees: 6,
-    pitchText: "6°",
-    pitchDirectionText: "UP",
-    maximumUphillPitchText: "14°",
-    maximumDownhillPitchText: "11°",
-    headingDegrees: 336,
-    isHeadingAvailable: true,
-    headingText: "336°",
-    cardinalDirectionText: "NNW",
-    headingSourceText: "GPS",
-    altitudeText: "1,045 m",
-    latitudeText: "40°25′35″ N",
-    longitudeText: "3°42′14″ W",
-    canCalibrate: true
-)
-
-private let previewCompassWithoutLocationState = DashboardRideDynamicsViewData(
-    status: .live,
-    headingDegrees: 74,
-    isHeadingAvailable: true,
-    headingText: "74°",
-    cardinalDirectionText: "ENE",
-    headingSourceText: "COMPASS",
-    altitudeText: nil,
-    canCalibrate: true
-)
-
-private let previewCalibrationRequiredState = DashboardRideDynamicsViewData(
-    status: .calibrating,
-    maximumLeftLeanText: "34°",
-    maximumRightLeanText: "29°",
-    canCalibrate: true
-)
 
 private extension View {
     func dashboardCardPreviewCanvas() -> some View {

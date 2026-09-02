@@ -7,10 +7,12 @@ struct VehicleMotionAngles: Equatable, Sendable {
     let pitch: Double
 }
 
-struct VehicleAttitudeFilter: Sendable {
+public struct VehicleAttitudeFilter: Sendable {
     private var filteredRollDegrees: Double?
     private var filteredPitchDegrees: Double?
     private var previousSampleDate: Date?
+
+    public init() {}
 
     mutating func update(
         sample: BikeIMUSample,

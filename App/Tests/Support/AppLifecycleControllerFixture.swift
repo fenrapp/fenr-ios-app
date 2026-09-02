@@ -40,7 +40,9 @@ final class AppLifecycleControllerFixture {
             clock: FakeBikeLiveActivityClock(),
             timing: .live,
             continuityPolicy: RideDashboardContinuityPolicy(),
-            updateInterval: FENRRuntimeConstants.LiveActivity.chargingUpdateInterval,
+            updatePolicy: BikeLiveActivityUpdatePolicy(
+                updateInterval: FENRRuntimeConstants.LiveActivity.chargingUpdateInterval
+            ),
             reconnectionNoticeDelay: FENRRuntimeConstants.RideDashboard.reconnectionNoticeDelay,
             stateMapper: BikeLiveActivityStateMapper(
                 makeDashboardMapper: { settings in

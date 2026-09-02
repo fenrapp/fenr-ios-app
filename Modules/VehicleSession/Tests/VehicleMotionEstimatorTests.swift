@@ -5,7 +5,7 @@ import Testing
 @testable import VehicleSession
 
 // A single synthetic profile fixture keeps all filter edge cases directly comparable.
-// swiftlint:disable file_length type_body_length
+// swiftlint:disable type_body_length
 
 @Suite("Vehicle motion estimator")
 struct VehicleMotionEstimatorTests {
@@ -681,9 +681,14 @@ private extension VehicleMotionEstimatorTests {
             profile: profile,
             now: { now },
             maximumSampleAge: maximumSampleAge,
-            minimumGPSCourseSpeedKilometersPerHour: 5,
-            maximumGPSCourseAccuracyDegrees: 35,
-            maximumLocationSampleAge: 3
+            attitudeFilter: .init(),
+            calibrationTracker: .init(),
+            locationResolver: .init(
+                now: { now },
+                maximumSampleAge: 3,
+                minimumCourseSpeedKilometersPerHour: 5,
+                maximumCourseAccuracyDegrees: 35
+            )
         )
     }
 
@@ -719,4 +724,4 @@ private extension VehicleMotionEstimatorTests {
         )
     }
 }
-// swiftlint:enable file_length type_body_length
+// swiftlint:enable type_body_length

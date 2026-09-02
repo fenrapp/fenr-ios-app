@@ -43,7 +43,10 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
             environment: environment,
             configuration: configuration,
             fileManager: dependencies.fileManager,
-            recordCodec: BLETraceRecordCodec(lineEncoder: dependencies.lineEncoder),
+            recordCodec: BLETraceRecordCodec(
+                lineEncoder: dependencies.lineEncoder,
+                boundaryDecoder: .init()
+            ),
             sessionHub: dependencies.sessionHub,
             now: dependencies.now,
             uptimeNanoseconds: dependencies.uptimeNanoseconds,

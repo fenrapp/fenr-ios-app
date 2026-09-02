@@ -20,48 +20,6 @@ import RuntimeConfiguration
 import SettingsDomain
 import VehicleSession
 
-struct AppSessionServices {
-    let vehicle: any VehicleSessionService
-    let ride: any RideSessionService
-}
-
-enum AppSessionDependencyContainer {
-    static func makeServices(
-        dependencies: AppSessionDependencies,
-        applicationSessionID: UUID = UUID()
-    ) -> AppSessionServices {
-        let vehicleSession = VehicleSessionDependencyContainer.makeService(
-            dependencies: .init(
-                repository: dependencies.repository,
-                profileRepository: dependencies.profileRepository,
-                settingsRepository: dependencies.settingsRepository,
-                deviceSpeedRepository: dependencies.deviceSpeedRepository,
-                imuRepository: dependencies.repository,
-                motionCalibrationRepository: dependencies.motionCalibrationRepository,
-                imuProfile: dependencies.imuProfile
-            )
-        )
-        let rideSession = RideSessionDependencyContainer.makeService(
-            dependencies: .init(
-                rideTripRepository: dependencies.rideTripRepository,
-                applicationSessionID: applicationSessionID
-            ),
-            vehicleSession: vehicleSession
-        )
-        return AppSessionServices(vehicle: vehicleSession, ride: rideSession)
-    }
-}
-
-struct AppSessionDependencies {
-    let repository: any BikeRepository & BikeIMURepository & BikeBatteryHealthRepository
-    let profileRepository: any BikeProfileRepository
-    let settingsRepository: any AppSettingsRepository
-    let deviceSpeedRepository: any DeviceSpeedRepository
-    let motionCalibrationRepository: any VehicleMotionCalibrationRepository
-    let imuProfile: BikeIMUProfile?
-    let rideTripRepository: any RideTripRepository
-}
-
 @MainActor
 struct AppDependencyContainer {
     private let diagnosticsContainer: BikeDiagnosticsDependencyContainer
@@ -205,11 +163,13 @@ struct AppDependencyContainer {
         BikeLockSettingsViewModel(
             vehicleSession: vehicleSession,
             capabilityStore: bikeLockCapabilityStore,
-            credentialStore: bikeLockCredentialStore,
-            authenticator: bikeLockAuthenticator,
-            updateSecurity: UpdateBikeLockSecurityUseCase(
-                repository: settingsRepository,
-                credentialStore: bikeLockCredentialStore
+            securityService: BikeLockSettingsSecurityService(
+                credentialStore: bikeLockCredentialStore,
+                authenticator: bikeLockAuthenticator,
+                updateSecurity: UpdateBikeLockSecurityUseCase(
+                    repository: settingsRepository,
+                    credentialStore: bikeLockCredentialStore
+                )
             ),
             mapper: BikeLockSettingsViewStateMapper()
         )
@@ -290,7 +250,9 @@ struct AppDependencyContainer {
             clock: SystemBikeLiveActivityClock(),
             timing: .live,
             continuityPolicy: RideDashboardContinuityPolicy(),
-            updateInterval: FENRRuntimeConstants.LiveActivity.chargingUpdateInterval,
+            updatePolicy: BikeLiveActivityUpdatePolicy(
+                updateInterval: FENRRuntimeConstants.LiveActivity.chargingUpdateInterval
+            ),
             reconnectionNoticeDelay: FENRRuntimeConstants.RideDashboard.reconnectionNoticeDelay,
             stateMapper: BikeLiveActivityStateMapper(
                 makeDashboardMapper: { settings in

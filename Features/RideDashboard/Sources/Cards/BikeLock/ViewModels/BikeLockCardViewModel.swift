@@ -3,40 +3,16 @@ import Combine
 import Foundation
 import SettingsDomain
 import VehicleSession
-
 @MainActor
 public final class BikeLockCardViewModel: ObservableObject {
     @Published public private(set) var viewState = BikeLockCardViewState()
+    public let securityOptions: [BikeLockSecurityOptionViewData]
 
-    public let securityOptions: [BikeLockSecurityOptionViewData] = [
-        .init(
-            id: BikeLockSecurityMode.pinAndFaceID.rawValue,
-            title: "PIN + Face ID",
-            detail: "Use Face ID first, with your PIN as a fallback.",
-            requiresPIN: true
-        ),
-        .init(
-            id: BikeLockSecurityMode.pin.rawValue,
-            title: "PIN",
-            detail: "Enter a 6-digit PIN whenever you unlock.",
-            requiresPIN: true
-        ),
-        .init(
-            id: BikeLockSecurityMode.withoutPIN.rawValue,
-            title: "No PIN",
-            detail: "Lock and unlock immediately from the card.",
-            requiresPIN: false
-        )
-    ]
-
-    private let prepareControl: PrepareBikeLockControlUseCase
-    private let setLocked: SetBikeLockedUseCase
-    private let updateSecurity: UpdateBikeLockSecurityUseCase
+    private let operationService: BikeLockCardOperationService
     private let vehicleSession: any VehicleSessionService
-    private let credentialStore: any BikeLockCredentialStoring
-    private let authenticator: any BikeLockAuthenticating
     private let capabilityStore: any BikeLockCapabilityStateStoring
     private let mapper: BikeLockCardViewStateMapper
+    private let vehicleContextMapper: BikeLockCardVehicleContextMapper
     private let allowsExperimentalControl: Bool
     private var observationTask: Task<Void, Never>?
     private var operationTask: Task<Void, Never>?
@@ -49,24 +25,20 @@ public final class BikeLockCardViewModel: ObservableObject {
     private var isReceivingTelemetry = false
 
     public init(
-        prepareControl: PrepareBikeLockControlUseCase,
-        setLocked: SetBikeLockedUseCase,
-        updateSecurity: UpdateBikeLockSecurityUseCase,
+        operationService: BikeLockCardOperationService,
         vehicleSession: any VehicleSessionService,
-        credentialStore: any BikeLockCredentialStoring,
-        authenticator: any BikeLockAuthenticating,
         capabilityStore: any BikeLockCapabilityStateStoring,
         mapper: BikeLockCardViewStateMapper,
+        vehicleContextMapper: BikeLockCardVehicleContextMapper,
+        securityOptionProvider: BikeLockSecurityOptionProvider,
         allowsExperimentalControl: Bool
     ) {
-        self.prepareControl = prepareControl
-        self.setLocked = setLocked
-        self.updateSecurity = updateSecurity
+        self.operationService = operationService
         self.vehicleSession = vehicleSession
-        self.credentialStore = credentialStore
-        self.authenticator = authenticator
         self.capabilityStore = capabilityStore
         self.mapper = mapper
+        self.vehicleContextMapper = vehicleContextMapper
+        securityOptions = securityOptionProvider.options
         self.allowsExperimentalControl = allowsExperimentalControl
     }
 
@@ -84,12 +56,12 @@ public extension BikeLockCardViewModel {
             let stream = await vehicleSession.observe()
             for await snapshot in stream {
                 guard !Task.isCancelled, let self else { return }
-                guard let vin = snapshot.profile?.vin, !vin.isEmpty else {
+                let context = vehicleContextMapper.map(snapshot)
+                guard let vin = context.vehicleIdentifier else {
                     invalidateVehicle()
                     continue
                 }
-                let receivesTelemetry = Self.receivesTelemetry(snapshot)
-                if !receivesTelemetry {
+                if !context.isReceivingTelemetry {
                     suspendControlPreparation()
                     continue
                 }
@@ -97,12 +69,12 @@ public extension BikeLockCardViewModel {
                     invalidateControlPreparation()
                 }
                 isReceivingTelemetry = true
-                isVehicleStationary = Self.isSafeToOperate(snapshot)
+                isVehicleStationary = context.isStationary
                 if vehicleIdentifier != vin {
                     operationTask?.cancel()
                     operationTask = nil
                     vehicleIdentifier = vin
-                    settings = snapshot.settings.bikeLockSettings(forVIN: vin)
+                    settings = context.settings
                     firmware = nil
                     hasAttemptedPreparation = false
                     capabilityStore.update(.init(vehicleIdentifier: vin))
@@ -112,7 +84,7 @@ public extension BikeLockCardViewModel {
                         render()
                     }
                 } else {
-                    settings = snapshot.settings.bikeLockSettings(forVIN: vin)
+                    settings = context.settings
                     if firmware == nil, !hasAttemptedPreparation, isVehicleStationary {
                         prepare()
                     } else {
@@ -172,17 +144,18 @@ public extension BikeLockCardViewModel {
         let normalizedPIN = mode.requiresPIN ? pin : ""
         operationTask?.cancel()
         render(isWorking: true, sheetUpdate: .dismiss)
-        operationTask = Task { [weak self, updateSecurity] in
+        operationTask = Task { [weak self, operationService] in
             guard let self else { return }
             do {
-                try await updateSecurity.execute(
+                let snapshot = try await operationService.configure(
                     vehicleIdentifier: vehicleIdentifier,
-                    securityMode: mode,
-                    newPIN: mode.requiresPIN ? normalizedPIN : nil
+                    mode: mode,
+                    pin: mode.requiresPIN ? normalizedPIN : nil,
+                    authorizeWrite: authorizeBikeLockWrite
                 )
                 guard !Task.isCancelled else { return }
                 settings = .init(securityMode: mode)
-                try await applyLockState(true)
+                apply(snapshot)
             } catch {
                 guard !Task.isCancelled else { return }
                 render(error: error.localizedDescription, sheetUpdate: .present(.setup))
@@ -197,16 +170,19 @@ public extension BikeLockCardViewModel {
             return
         }
         operationTask?.cancel()
-        operationTask = Task { [weak self, credentialStore] in
+        operationTask = Task { [weak self, operationService] in
             guard let self else { return }
-            let isValid = await credentialStore.verify(pin: pin, for: vehicleIdentifier)
-            guard !Task.isCancelled else { return }
-            guard isValid else {
-                render(error: "Incorrect PIN", sheetUpdate: .present(.enterPIN))
-                return
-            }
             do {
-                try await applyLockState(false)
+                guard let snapshot = try await operationService.unlock(
+                    pin: pin,
+                    vehicleIdentifier: vehicleIdentifier,
+                    authorizeWrite: authorizeBikeLockWrite
+                ) else {
+                    render(error: "Incorrect PIN", sheetUpdate: .present(.enterPIN))
+                    return
+                }
+                guard !Task.isCancelled else { return }
+                apply(snapshot)
             } catch {
                 guard !Task.isCancelled else { return }
                 render(error: error.localizedDescription, sheetUpdate: .dismiss)
@@ -226,10 +202,10 @@ private extension BikeLockCardViewModel {
         operationTask?.cancel()
         firmware = nil
         render(isWorking: true)
-        operationTask = Task { [weak self, prepareControl] in
+        operationTask = Task { [weak self, operationService] in
             guard let self else { return }
             do {
-                let snapshot = try await prepareControl.execute()
+                let snapshot = try await operationService.prepare()
                 guard !Task.isCancelled else { return }
                 firmware = snapshot.vcuFirmware
                 isLocked = snapshot.isLocked
@@ -250,26 +226,22 @@ private extension BikeLockCardViewModel {
     private func authenticateAndUnlock() {
         operationTask?.cancel()
         render(isWorking: true)
-        operationTask = Task { [weak self, authenticator] in
+        operationTask = Task { [weak self, operationService] in
             guard let self else { return }
-            let authenticated: Bool
             do {
-                authenticated = try await authenticator.authenticate(reason: "Unlock your motorcycle")
+                let result = try await operationService.authenticateAndUnlock(
+                    authorizeWrite: authorizeBikeLockWrite
+                )
+                guard !Task.isCancelled else { return }
+                switch result {
+                case .unlocked(let snapshot): apply(snapshot)
+                case .requiresPIN: render(sheetUpdate: .present(.enterPIN))
+                case .writeFailed(let message):
+                    render(error: message, sheetUpdate: .dismiss)
+                }
             } catch {
                 guard !Task.isCancelled else { return }
                 render(error: error.localizedDescription, sheetUpdate: .present(.enterPIN))
-                return
-            }
-            guard !Task.isCancelled else { return }
-            guard authenticated else {
-                render(sheetUpdate: .present(.enterPIN))
-                return
-            }
-            do {
-                try await applyLockState(false)
-            } catch {
-                guard !Task.isCancelled else { return }
-                render(error: error.localizedDescription, sheetUpdate: .dismiss)
             }
         }
     }
@@ -281,10 +253,15 @@ private extension BikeLockCardViewModel {
         }
         operationTask?.cancel()
         render(isWorking: true)
-        operationTask = Task { [weak self, setLocked] in
+        operationTask = Task { [weak self, operationService] in
             guard let self else { return }
             do {
-                try await applyLockState(target, using: setLocked)
+                let snapshot = try await operationService.setLocked(
+                    target,
+                    authorizeWrite: authorizeBikeLockWrite
+                )
+                guard !Task.isCancelled else { return }
+                apply(snapshot)
             } catch {
                 guard !Task.isCancelled else { return }
                 render(error: error.localizedDescription, sheetUpdate: .dismiss)
@@ -292,19 +269,19 @@ private extension BikeLockCardViewModel {
         }
     }
 
-    private func applyLockState(
-        _ target: Bool,
-        using useCase: SetBikeLockedUseCase? = nil
-    ) async throws {
-        guard isVehicleStationary, isReceivingTelemetry else {
-            throw BikeLockCardOperationError.vehicleMustBeStationary
-        }
-        render(isWorking: true)
-        let snapshot = try await (useCase ?? setLocked).execute(target)
-        guard !Task.isCancelled else { return }
+    private func apply(_ snapshot: BikeLockControlSnapshot) {
         firmware = snapshot.vcuFirmware
         isLocked = snapshot.isLocked
         render(sheetUpdate: .dismiss)
+    }
+
+    private var authorizeBikeLockWrite: @MainActor @Sendable () throws -> Void {
+        { [weak self] in
+            guard let self else { throw CancellationError() }
+            guard isVehicleStationary, isReceivingTelemetry else {
+                throw BikeLockCardOperationError.vehicleMustBeStationary
+            }
+        }
     }
 
     private func invalidateControlPreparation() {
@@ -357,20 +334,6 @@ extension BikeLockCardViewModel {
             sheetUpdate: sheetUpdate,
             currentSheet: viewState.sheet
         ))
-    }
-
-    private static func isSafeToOperate(_ snapshot: VehicleSessionSnapshot) -> Bool {
-        guard receivesTelemetry(snapshot),
-              !snapshot.telemetry.statusFlags.isInGear,
-              snapshot.telemetry.runState != .charging,
-              let speed = snapshot.resolvedSpeedKilometersPerHour,
-              speed.isFinite
-        else { return false }
-        return abs(speed) < 0.5
-    }
-
-    private static func receivesTelemetry(_ snapshot: VehicleSessionSnapshot) -> Bool {
-        snapshot.isCanonicalTelemetryAvailable
     }
 
     private static func isValidPIN(_ pin: String) -> Bool {

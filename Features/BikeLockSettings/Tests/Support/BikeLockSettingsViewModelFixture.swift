@@ -39,9 +39,11 @@ struct BikeLockSettingsViewModelFixture {
         viewModel = BikeLockSettingsViewModel(
             vehicleSession: session,
             capabilityStore: capabilityStore,
-            credentialStore: credentialStore,
-            authenticator: authenticator,
-            updateSecurity: .init(repository: repository, credentialStore: credentialStore),
+            securityService: BikeLockSettingsSecurityService(
+                credentialStore: credentialStore,
+                authenticator: authenticator,
+                updateSecurity: .init(repository: repository, credentialStore: credentialStore)
+            ),
             mapper: BikeLockSettingsViewStateMapper()
         )
     }

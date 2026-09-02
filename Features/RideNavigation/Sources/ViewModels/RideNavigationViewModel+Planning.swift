@@ -17,7 +17,6 @@ extension RideNavigationViewModel {
         render(isSearching: true)
         startSearch(query, debounce: true)
     }
-
     public func search() {
         let query = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         guard query.count >= Constants.minimumSearchCharacters else { return }
@@ -25,7 +24,6 @@ extension RideNavigationViewModel {
         render(isSearching: true)
         startSearch(query, debounce: false)
     }
-
     public func selectSearchResult(id: UUID) {
         guard let destination = searchResults.first(where: { $0.id == id }),
               let origin = locationSnapshot.coordinate else {
@@ -77,7 +75,6 @@ extension RideNavigationViewModel {
             }
         }
     }
-
     public func cancelTrailExitPreview() {
         trailExitTask?.cancel()
         trailExitPreview = nil
@@ -85,7 +82,6 @@ extension RideNavigationViewModel {
         cameraMode = followCamera
         render()
     }
-
     public func startTrailExit() {
         guard activity == .following, let exit = trailExitPreview else { return }
         roadRoute = exit.route
@@ -102,7 +98,6 @@ extension RideNavigationViewModel {
         render()
         announce("Exit navigation started")
     }
-
     public func resumeGPX() {
         guard activity == .navigating,
               roadNavigationPurpose == .trailExit,
@@ -196,19 +191,17 @@ extension RideNavigationViewModel {
     }
 
     func startSearch(_ query: String, debounce: Bool) {
-        let placeSearch = placeSearch
+        let searchService = searchService
         let coordinate = locationSnapshot.coordinate
-        let sleep = timing.sleep
         let generation = operations.begin(.search)
         let lifecycle = operations.lifecycleGeneration
         searchTask = Task { [weak self] in
             do {
-                if debounce {
-                    try await sleep(.milliseconds(Constants.searchDebounceMilliseconds))
-                }
-                try Task.checkCancellation()
-                let places = try await placeSearch.search(query, near: coordinate)
-                try Task.checkCancellation()
+                let places = try await searchService.results(
+                    for: query,
+                    near: coordinate,
+                    debounce: debounce
+                )
                 guard let self,
                       operations.isCurrent(.search, generation: generation, lifecycle: lifecycle) else { return }
                 receiveSearchResults(places, query: query)
@@ -225,7 +218,7 @@ extension RideNavigationViewModel {
 
     func receiveSearchResults(_ places: [NavigationPlace], query: String) {
         guard query == normalizedSearchQuery else { return }
-        searchResults = Array(places.prefix(Constants.maximumSearchResults))
+        searchResults = places
         errorText = searchResults.isEmpty ? "No destinations found." : nil
         render(isSearching: false)
     }
@@ -280,29 +273,6 @@ extension RideNavigationViewModel {
                 render()
             }
         }
-    }
-
-    func routePoint(from snapshot: RideNavigationLocationSnapshot) -> RideRoutePoint? {
-        guard let coordinate = snapshot.coordinate,
-              let observedAt = snapshot.observedAt else { return nil }
-        return RideRoutePoint(
-            coordinate: coordinate,
-            elevationMeters: snapshot.altitudeMeters,
-            timestamp: observedAt,
-            horizontalAccuracyMeters: snapshot.horizontalAccuracyMeters
-        )
-    }
-
-    func relativeBearingDegrees(_ absoluteBearingDegrees: Double) -> Double {
-        let courseDegrees = locationSnapshot.courseDegrees ?? .zero
-        var delta = (absoluteBearingDegrees - courseDegrees)
-            .truncatingRemainder(dividingBy: Constants.fullCircleDegrees)
-        if delta > Constants.halfCircleDegrees {
-            delta -= Constants.fullCircleDegrees
-        } else if delta < -Constants.halfCircleDegrees {
-            delta += Constants.fullCircleDegrees
-        }
-        return delta
     }
 
     func startApproachRoute(

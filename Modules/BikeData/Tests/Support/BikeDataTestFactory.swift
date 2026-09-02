@@ -25,7 +25,11 @@ func makeRepository(
         batteryHealthHub: .init(bufferingPolicy: .unbounded),
         batteryCaptureHub: .init(bufferingPolicy: .unbounded),
         discoveredBikesHub: .init(bufferingPolicy: .unbounded),
-        chargePowerMapper: .init()
+        controlService: .init(
+            client: client,
+            chargePowerMapper: .init(),
+            bikeLockMapper: .init()
+        )
     )
 }
 

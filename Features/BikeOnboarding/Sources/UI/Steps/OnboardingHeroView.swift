@@ -7,13 +7,7 @@ struct OnboardingHeroView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .largeTitle) private var scaledTitleSize = Constants.titleSize
     @State private var dragTranslation = CGSize.zero
-    @State private var isLightPresented = false
-    @State private var isPhotoPresented = false
-    @State private var isBrandPresented = false
-    @State private var isConnectedPresented = false
-    @State private var isRidingPresented = false
-    @State private var isDetailPresented = false
-    @State private var isButtonPresented = false
+    @State private var presentationPhase = OnboardingHeroPresentationPhase.initial
     @State private var ambientProgress = 0.0
 
     let onContinue: () -> Void
@@ -26,13 +20,13 @@ struct OnboardingHeroView: View {
                 heroImage(size: proxy.size)
                     .ignoresSafeArea()
                 OnboardingHeroAtmosphereView(
-                    isLightPresented: isLightPresented,
+                    isLightPresented: presentationPhase.includes(.light),
                     ambientProgress: ambientProgress,
                     parallaxOffset: atmosphereParallaxOffset,
                     reduceMotion: accessibilityAnimationDisabled
                 )
                 .ignoresSafeArea()
-                imageTreatment
+                OnboardingHeroImageTreatment(usesOpaqueTreatment: reduceTransparency)
                     .ignoresSafeArea()
                 content(size: proxy.size)
             }
@@ -48,36 +42,14 @@ struct OnboardingHeroView: View {
             .resizable()
             .scaledToFill()
             .frame(width: size.width, height: size.height)
-            .scaleEffect(isPhotoPresented || reduceMotion ? Constants.presentedImageScale : Constants.initialImageScale)
+            .scaleEffect(
+                presentationPhase.includes(.photo) || reduceMotion
+                    ? Constants.presentedImageScale
+                    : Constants.initialImageScale
+            )
             .offset(backgroundParallaxOffset)
-            .opacity(isPhotoPresented || reduceMotion ? 1 : 0)
+            .opacity(presentationPhase.includes(.photo) || reduceMotion ? 1 : 0)
             .accessibilityHidden(true)
-    }
-
-    private var imageTreatment: some View {
-        ZStack {
-            LinearGradient(
-                stops: [
-                    .init(color: .black.opacity(Constants.topShadeOpacity), location: .zero),
-                    .init(color: .clear, location: Constants.topClearLocation),
-                    .init(color: .black.opacity(Constants.middleShadeOpacity), location: Constants.middleShadeLocation),
-                    .init(color: .black.opacity(bottomShadeOpacity), location: 1)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            LinearGradient(
-                colors: [
-                    .black.opacity(Constants.sideShadeOpacity),
-                    .clear,
-                    .black.opacity(Constants.sideShadeOpacity)
-                ],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
     }
 
     private func content(size: CGSize) -> some View {
@@ -105,7 +77,7 @@ struct OnboardingHeroView: View {
             .font(.system(size: Constants.brandSize, weight: .bold))
             .tracking(Constants.brandTracking)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .opacity(isBrandPresented || reduceMotion ? 1 : 0)
+            .opacity(presentationPhase.includes(.photo) || reduceMotion ? 1 : 0)
             .accessibilityLabel("FENR")
     }
 
@@ -129,8 +101,12 @@ struct OnboardingHeroView: View {
                 .lineSpacing(Constants.detailLineSpacing)
                 .frame(maxWidth: Constants.detailMaxWidth)
                 .fixedSize(horizontal: false, vertical: true)
-                .opacity(isDetailPresented || reduceMotion ? 1 : 0)
-                .offset(y: isDetailPresented || reduceMotion ? 0 : Constants.detailInitialOffset)
+                .opacity(presentationPhase.includes(.detail) || reduceMotion ? 1 : 0)
+                .offset(
+                    y: presentationPhase.includes(.detail) || reduceMotion
+                        ? 0
+                        : Constants.detailInitialOffset
+                )
         }
         .padding(.vertical, Constants.copyScrimVerticalPadding)
         .background(copyScrim)
@@ -138,8 +114,8 @@ struct OnboardingHeroView: View {
 
     private func titleBlock(font: Font) -> some View {
         VStack(spacing: Constants.titleSpacing) {
-            revealedTitleLine("CONNECTED", font: font, isPresented: isConnectedPresented)
-            revealedTitleLine("RIDING", font: font, isPresented: isRidingPresented)
+            revealedTitleLine("CONNECTED", font: font, isPresented: presentationPhase.includes(.connected))
+            revealedTitleLine("RIDING", font: font, isPresented: presentationPhase.includes(.riding))
         }
     }
 
@@ -193,8 +169,8 @@ struct OnboardingHeroView: View {
             action: onContinue
         )
         .environment(\.colorScheme, .dark)
-        .scaleEffect(isButtonPresented || reduceMotion ? 1 : Constants.buttonInitialScale)
-        .opacity(isButtonPresented || reduceMotion ? 1 : 0)
+        .scaleEffect(presentationPhase.includes(.complete) || reduceMotion ? 1 : Constants.buttonInitialScale)
+        .opacity(presentationPhase.includes(.complete) || reduceMotion ? 1 : 0)
         .accessibilityHint("Starts bike setup")
     }
 }
@@ -213,10 +189,6 @@ private extension OnboardingHeroView {
             width: dragTranslation.width / Constants.maximumHorizontalDrag * maximum,
             height: dragTranslation.height / Constants.maximumVerticalDrag * maximum
         )
-    }
-
-    private var bottomShadeOpacity: Double {
-        reduceTransparency ? Constants.opaqueBottomShadeOpacity : Constants.bottomShadeOpacity
     }
 
     private var accessibilityAnimationDisabled: Bool {
@@ -249,34 +221,11 @@ private extension OnboardingHeroView {
             return
         }
 
-        withAnimation(.easeOut(duration: Constants.lightRevealDuration)) {
-            isLightPresented = true
-        }
-
-        guard await wait(for: Constants.photoRevealDelay) else { return }
-        withAnimation(.easeOut(duration: Constants.photoRevealDuration)) {
-            isPhotoPresented = true
-            isBrandPresented = true
-        }
-
-        guard await wait(for: Constants.titleRevealDelay) else { return }
-        withAnimation(.easeOut(duration: Constants.titleRevealDuration)) {
-            isConnectedPresented = true
-        }
-
-        guard await wait(for: Constants.titleLineDelay) else { return }
-        withAnimation(.easeOut(duration: Constants.titleRevealDuration)) {
-            isRidingPresented = true
-        }
-
-        guard await wait(for: Constants.detailRevealDelay) else { return }
-        withAnimation(.easeOut(duration: Constants.detailRevealDuration)) {
-            isDetailPresented = true
-        }
-
-        guard await wait(for: Constants.buttonRevealDelay) else { return }
-        withAnimation(.easeOut(duration: Constants.buttonRevealDuration)) {
-            isButtonPresented = true
+        for step in OnboardingHeroTimeline.standard.steps {
+            guard await wait(for: step.delay) else { return }
+            withAnimation(.easeOut(duration: step.animationDuration)) {
+                presentationPhase = step.phase
+            }
         }
 
         withAnimation(.linear(duration: Constants.ambientDuration)) {
@@ -286,13 +235,7 @@ private extension OnboardingHeroView {
 
     @MainActor
     private func presentStaticFrame() {
-        isLightPresented = true
-        isPhotoPresented = true
-        isBrandPresented = true
-        isConnectedPresented = true
-        isRidingPresented = true
-        isDetailPresented = true
-        isButtonPresented = true
+        presentationPhase = .complete
         ambientProgress = 1
     }
 
@@ -312,13 +255,6 @@ private extension OnboardingHeroView {
         static let presentedImageScale: CGFloat = 1.04
         static let backgroundParallax: CGFloat = 4
         static let atmosphereParallax: CGFloat = 18
-        static let topShadeOpacity = 0.52
-        static let topClearLocation = 0.2
-        static let middleShadeOpacity = 0.42
-        static let middleShadeLocation = 0.52
-        static let bottomShadeOpacity = 0.94
-        static let opaqueBottomShadeOpacity = 0.98
-        static let sideShadeOpacity = 0.2
         static let horizontalPadding: CGFloat = 24
         static let brandTopPadding: CGFloat = 12
         static let brandSize: CGFloat = 13
@@ -347,16 +283,6 @@ private extension OnboardingHeroView {
         static let maximumHorizontalDrag: CGFloat = 48
         static let maximumVerticalDrag: CGFloat = 36
         static let parallaxReturnResponse = 0.38
-        static let lightRevealDuration = 0.18
-        static let photoRevealDelay: Duration = .milliseconds(160)
-        static let photoRevealDuration = 0.7
-        static let titleRevealDelay: Duration = .milliseconds(270)
-        static let titleLineDelay: Duration = .milliseconds(70)
-        static let titleRevealDuration = 0.32
-        static let detailRevealDelay: Duration = .milliseconds(120)
-        static let detailRevealDuration = 0.25
-        static let buttonRevealDelay: Duration = .milliseconds(80)
-        static let buttonRevealDuration = 0.2
         static let ambientDuration = 5.5
     }
 }
