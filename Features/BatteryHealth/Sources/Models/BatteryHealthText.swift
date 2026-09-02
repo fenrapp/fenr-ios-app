@@ -1,16 +1,17 @@
+import Foundation
+
 enum BatteryHealthText {
-    static let placeholder = "--"
-    static let awaitingSample = "Awaiting sample"
-    static let captured = "Captured"
-    static let validated = "Validated"
-    static let summary = "Summary"
-    static let pack = "Pack health"
-    static let charging = "Charging"
-    static let cells = "Cells"
-    static let temperatures = "Temperatures"
-    static let dataSources = "Data sources"
-    static let chargePowerControl = "Charge power"
-    static let noValidatedCells = "No validated cell samples"
-    static let noValidatedTemperatures = "No validated temperature samples"
-    static let copyLog = "Copy battery log"
+    static let placeholder = String(localized: .batteryHealthPlaceholder)
+    static let awaitingSample = String(localized: .batteryHealthDatasetAwaitingSample)
+    static let validated = String(localized: .batteryHealthDatasetValidated)
+    static let summary = String(localized: .batteryHealthSectionSummary)
+    static let pack = String(localized: .batteryHealthSectionPack)
+    static let charging = String(localized: .batteryHealthSectionCharging)
+    static let cells = String(localized: .batteryHealthSectionCells)
+    static let temperatures = String(localized: .batteryHealthSectionTemperatures)
+    static let dataSources = String(localized: .batteryHealthSectionDataSources)
+    static let chargePowerControl = String(localized: .batteryHealthSectionChargePower)
+    static let noValidatedCells = String(localized: .batteryHealthCellsEmpty)
+    static let noValidatedTemperatures = String(localized: .batteryHealthTemperaturesEmpty)
+    static let copyLog = String(localized: .batteryHealthCopyLogButton)
 }

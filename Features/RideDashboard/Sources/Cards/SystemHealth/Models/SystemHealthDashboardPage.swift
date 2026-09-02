@@ -5,9 +5,9 @@ enum SystemHealthDashboardPage: Int, CaseIterable, Hashable, Sendable {
 
     var accessibilityLabel: String {
         switch self {
-        case .health: "Health"
-        case .cells: "Cells"
-        case .thermal: "Thermal"
+        case .health: rideDashboardLocalized(.rideDashboardPageHealthAccessibility)
+        case .cells: rideDashboardLocalized(.rideDashboardPageCellsAccessibility)
+        case .thermal: rideDashboardLocalized(.rideDashboardPageThermalAccessibility)
         }
     }
 }

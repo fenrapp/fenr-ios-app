@@ -1,5 +1,6 @@
 @testable import BatteryHealth
 import BikeDomain
+import ChargeControl
 import Foundation
 import Testing
 import TestSupport
@@ -168,6 +169,46 @@ struct BatteryHealthViewModelTests {
         #expect(viewModel.viewState.cells[0].condition == .aboveAverage)
         #expect(viewModel.viewState.cells[2].condition == .critical)
         #expect(viewModel.viewState.cells[2].deviation == "-53 mV")
+        viewModel.stop()
+    }
+
+    @Test("Charge control semantic state maps to localized presentation text")
+    func mapsChargeControlSemanticState() {
+        let mapper = BikeBatteryHealthToViewStateMapper(formatter: makeBatteryHealthFormatter())
+        let state = mapper.map(
+            health: .init(),
+            captures: [:],
+            chargeControl: .init(
+                isVisible: true,
+                chargerType: .unknown(91),
+                status: .confirming(.powerWatts(1_500)),
+                failure: .confirmationTimedOut,
+                phase: .failed
+            ),
+            isMonitoring: false,
+            monitorError: nil
+        ).chargePowerControl
+
+        #expect(state.chargerText == "Unknown charger (91)")
+        #expect(state.statusText == "Confirming \(1_500.formatted()) W")
+        #expect(state.errorText == "The bike did not confirm the change")
+        #expect(state.statusIsError)
+    }
+
+    @Test("Monitoring failures do not expose transport details")
+    func hidesMonitoringFailureDetails() async {
+        let repository = FakeBatteryHealthRepository()
+        let viewModel = makeBatteryHealthViewModel(
+            repository: repository,
+            monitoringState: .failed("transport detail")
+        )
+        viewModel.start()
+        await repository.sendHealth(.init())
+
+        #expect(await waitUntil {
+            viewModel.viewState.monitorError == String(localized: .batteryHealthMonitoringError)
+        })
+        #expect(!(viewModel.viewState.monitorError ?? "").contains("transport detail"))
         viewModel.stop()
     }
 

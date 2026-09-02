@@ -17,7 +17,7 @@ public struct WatchDashboardViewState: Equatable, Sendable {
     public let chargeETA: String?
 
     public init(
-        mode: Mode = .unavailable(detail: "Waiting for telemetry"),
+        mode: Mode? = nil,
         batteryPercent: Int? = nil,
         gear: String = "--",
         odometer: String? = nil,
@@ -26,7 +26,9 @@ public struct WatchDashboardViewState: Equatable, Sendable {
         batteryTemperature: String? = nil,
         chargeETA: String? = nil
     ) {
-        self.mode = mode
+        self.mode = mode ?? .unavailable(
+            detail: String(localized: .watchDashboardConnectionWaitingTelemetry)
+        )
         self.batteryPercent = batteryPercent
         self.gear = gear
         self.odometer = odometer

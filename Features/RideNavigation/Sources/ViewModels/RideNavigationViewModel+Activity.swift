@@ -13,9 +13,8 @@ extension RideNavigationViewModel {
         cameraMode = followCamera
         startClock()
         render()
-        announce("Recording started")
+        announce(String(localized: .rideNavigationAnnouncementRecordingStarted))
     }
-
     public func toggleRecordingPause() {
         let date = now()
         switch activity {
@@ -23,17 +22,16 @@ extension RideNavigationViewModel {
             recorder.pause(at: date)
             activity = .paused
             scheduleDraftSave()
-            announce("Recording paused")
+            announce(String(localized: .rideNavigationAnnouncementRecordingPaused))
         case .paused:
             recorder.resume(at: date)
             activity = .recording
-            announce("Recording resumed")
+            announce(String(localized: .rideNavigationAnnouncementRecordingResumed))
         default:
             return
         }
         render()
     }
-
     public func finishActivity() {
         let reason: CompletionReason
         switch activity {
@@ -50,7 +48,6 @@ extension RideNavigationViewModel {
         }
         finishActivity(reason: reason)
     }
-
     func finishActivity(reason: CompletionReason) {
         routeTask?.cancel()
         routeTask = nil
@@ -93,7 +90,6 @@ extension RideNavigationViewModel {
             beginCompletedRouteSave(completedTrailRouteToSave)
         }
     }
-
     private func prepareCompletionSummary(
         reason: CompletionReason,
         finishedActivity: RideNavigationViewState.Activity,
@@ -107,7 +103,7 @@ extension RideNavigationViewModel {
                     measurementSystem: measurementSystem
                 )
                 return "\(distance) · \(elapsedText(at: date))"
-            } ?? "No valid GPS points were recorded."
+            } ?? String(localized: .rideNavigationNoValidGPSPoints)
             replaceDraftPersistenceTask { [routeLibrary = dependencies.routeLibrary] in
                 try? await routeLibrary.saveDraft(nil)
             }
@@ -120,12 +116,14 @@ extension RideNavigationViewModel {
         guard let breadcrumb = breadcrumbRecorder.finish(at: date) else {
             completedRecording = nil
             state.routePersistence.reset()
-            summaryDetail = "No valid GPS points were recorded."
+            summaryDetail = String(localized: .rideNavigationNoValidGPSPoints)
             return nil
         }
         let route = RideRoute(
             id: UUID(),
-            name: "Ride · \(selectedRoute?.name ?? "Trail")",
+            name: String(localized: .rideNavigationRideWithTrailName(
+                selectedRoute?.name ?? String(localized: .rideNavigationTrailName)
+            )),
             createdAt: breadcrumb.createdAt,
             updatedAt: date,
             segments: breadcrumb.segments
@@ -153,10 +151,12 @@ extension RideNavigationViewModel {
                 )
                 : trailProgress.targetBearingDegrees
             return RideNavigationGuidance(
-                text: didAnnounceOffRoute ? "OFF TRAIL" : "ENDURO · FOLLOW THE ARROW",
+                text: didAnnounceOffRoute
+                    ? String(localized: .rideNavigationOffTrail)
+                    : String(localized: .rideNavigationEnduroFollowArrow),
                 detail: didAnnounceOffRoute
                     ? offTrailDistanceText(trailProgress.distanceFromRouteMeters)
-                    : "\(remainingDistance) remaining",
+                    : String(localized: .rideNavigationDistanceRemaining(remainingDistance)),
                 systemImage: "location.north.fill",
                 rotationDegrees: locationGeometry.relativeBearingDegrees(
                     targetBearing,
@@ -167,15 +167,15 @@ extension RideNavigationViewModel {
         }
         if activity == .following {
             return RideNavigationGuidance(
-                text: "ENDURO · FOLLOW THE TRACK",
-                detail: "Waiting for an accurate location",
+                text: String(localized: .rideNavigationEnduroFollowTrack),
+                detail: String(localized: .rideNavigationWaitingForAccurateLocation),
                 systemImage: "location.north.fill",
                 emphasis: .standard
             )
         }
         if activity == .paused {
             return RideNavigationGuidance(
-                text: "RECORDING PAUSED",
+                text: String(localized: .rideNavigationRecordingPaused),
                 systemImage: "pause.circle.fill",
                 emphasis: .warning
             )
@@ -184,7 +184,7 @@ extension RideNavigationViewModel {
             let step = activeRoadStep
             let instruction = step?.instruction.isEmpty == false
                 ? step?.instruction
-                : "Continue toward the selected destination"
+                : String(localized: .rideNavigationContinueToDestination)
             let distance = step.flatMap(roadStepDistanceToManeuver).map {
                 mapper.distance(meters: $0, measurementSystem: measurementSystem)
             }
@@ -195,18 +195,19 @@ extension RideNavigationViewModel {
                 )
             } ?? .zero
             return RideNavigationGuidance(
-                text: instruction ?? "ROAD NAVIGATION",
-                detail: distance.map { "\($0) to next maneuver" },
+                text: instruction ?? String(localized: .rideNavigationRoadNavigation),
+                detail: distance.map { String(localized: .rideNavigationDistanceToNextManeuver($0)) },
                 systemImage: "location.north.fill",
                 rotationDegrees: rotation,
                 emphasis: .standard
             )
         }
-        return nil
-    }
-
+            return nil
+        }
     func offTrailDistanceText(_ distanceMeters: Double) -> String {
-        "\(mapper.distance(meters: distanceMeters, measurementSystem: measurementSystem)) to trail"
+        String(localized: .rideNavigationDistanceToTrail(
+            mapper.distance(meters: distanceMeters, measurementSystem: measurementSystem)
+        ))
     }
 
     var currentDistanceText: String {
@@ -307,7 +308,6 @@ extension RideNavigationViewModel {
         isFindingTrailExit = false
         stopClock()
     }
-
     enum CompletionReason: Equatable {
         case destinationReached
         case navigationEnded
@@ -319,13 +319,13 @@ extension RideNavigationViewModel {
 
         var title: String {
             switch self {
-            case .destinationReached: "Destination reached"
-            case .navigationEnded: "Navigation ended"
-            case .trailComplete: "Trail complete"
-            case .trailEnded: "Trail ended"
-            case .exitPointReached: "Exit point reached"
-            case .exitNavigationEnded: "Exit navigation ended"
-            case .rideRecorded: "Ride recorded"
+            case .destinationReached: String(localized: .rideNavigationSummaryDestinationReached)
+            case .navigationEnded: String(localized: .rideNavigationSummaryNavigationEnded)
+            case .trailComplete: String(localized: .rideNavigationSummaryTrailComplete)
+            case .trailEnded: String(localized: .rideNavigationSummaryTrailEnded)
+            case .exitPointReached: String(localized: .rideNavigationSummaryExitPointReached)
+            case .exitNavigationEnded: String(localized: .rideNavigationSummaryExitNavigationEnded)
+            case .rideRecorded: String(localized: .rideNavigationSummaryRideRecorded)
             }
         }
 

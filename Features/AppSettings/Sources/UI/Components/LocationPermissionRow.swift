@@ -12,16 +12,16 @@ struct LocationPermissionRow: View {
     var body: some View {
         switch status {
         case .authorized:
-            Label("Location access enabled", systemImage: "location.fill")
+            Label(.appSettingsLocationAccessEnabled, systemImage: "location.fill")
                 .foregroundStyle(DesignColor.positive)
         case .notDetermined:
-            Button("Allow location access", action: onRequestAccess)
+            Button(.appSettingsLocationAllowButton, action: onRequestAccess)
         case .denied:
             VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
-                Text("Location access is required for GPS speed.")
+                Text(.appSettingsLocationRequiredMessage)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-                Button("Open iOS Settings", action: openSystemSettings)
+                Button(.appSettingsLocationOpenSystemSettingsButton, action: openSystemSettings)
             }
         }
     }

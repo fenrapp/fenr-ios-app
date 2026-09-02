@@ -29,7 +29,7 @@ struct BikeDiagnosticsBLETraceTests {
         )])
 
         #expect(await waitUntil { viewModel.viewState.bleTraceSessions.count == 1 })
-        #expect(viewModel.viewState.bleTraceSessions.first?.status == "Recording")
+        #expect(viewModel.viewState.bleTraceSessions.first?.statusKind == .recording)
         #expect(viewModel.viewState.bleTraceSessions.first?.canDelete == false)
 
         viewModel.exportBLETraceSession(id: id)

@@ -14,11 +14,15 @@ struct DashboardNavigationCard: View {
                     .foregroundStyle(DesignColor.accent)
 
                 VStack(spacing: DesignSpace.extraSmall) {
-                    Text("RIDE NAVIGATION")
+                    Text(.rideDashboardNavigationTitle)
                         .font(.caption.weight(.semibold))
                         .tracking(Constants.eyebrowTracking)
                         .foregroundStyle(DesignColor.secondaryText)
-                    Text(isNavigationActive ? "Navigation is running" : "The trail, front and center")
+                    Text(
+                        isNavigationActive
+                            ? rideDashboardLocalized(.rideDashboardNavigationRunning)
+                            : rideDashboardLocalized(.rideDashboardNavigationTagline)
+                    )
                         .font(.title2.weight(.bold))
                 }
 
@@ -32,7 +36,11 @@ struct DashboardNavigationCard: View {
             Button(action: openNavigation) {
                 HStack {
                     Image(systemName: isNavigationActive ? "arrow.up.left.and.arrow.down.right" : "location.north.fill")
-                    Text(isNavigationActive ? "Return to Navigation" : "Open Navigation")
+                    Text(
+                        isNavigationActive
+                            ? rideDashboardLocalized(.rideDashboardNavigationReturn)
+                            : rideDashboardLocalized(.rideDashboardNavigationOpen)
+                    )
                         .fontWeight(.semibold)
                 }
                 .frame(maxWidth: .infinity)
@@ -47,9 +55,9 @@ struct DashboardNavigationCard: View {
 
     private var description: String {
         if isNavigationActive {
-            return "Your route continues in the mini map while the dashboard remains available."
+            return rideDashboardLocalized(.rideDashboardNavigationRunningDetail)
         }
-        return "Follow a GPX, navigate to a destination, or record a new route."
+        return rideDashboardLocalized(.rideDashboardNavigationInactiveDetail)
     }
 
     private enum Constants {

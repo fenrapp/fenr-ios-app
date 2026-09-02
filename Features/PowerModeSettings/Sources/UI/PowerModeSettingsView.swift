@@ -9,7 +9,7 @@ public struct PowerModeSettingsView: View {
 
     public var body: some View {
         Form {
-            Section("Bike") {
+            Section(.powerModeSettingsBikeSection) {
                 PowerModeStatusPanel(
                     connectionText: viewModel.viewState.connectionText,
                     capabilityText: viewModel.viewState.capabilityText,
@@ -18,14 +18,14 @@ public struct PowerModeSettingsView: View {
                 )
             }
 
-            Section("Map") {
+            Section(.powerModeSettingsMapSection) {
                 PowerModeSelector(
                     maps: viewModel.viewState.maps,
                     select: viewModel.selectMap(index:)
                 )
             }
 
-            Section("Map name") {
+            Section(.powerModeSettingsMapNameSection) {
                 PowerModeNameEditor(
                     mapIndex: viewModel.viewState.selectedMapIndex,
                     currentName: viewModel.viewState.currentName,
@@ -47,14 +47,12 @@ public struct PowerModeSettingsView: View {
                     )
                 }
             } header: {
-                Text("Configuration")
+                Text(.powerModeSettingsConfigurationSection)
             } footer: {
-                Text(
-                    "Each map value is sent only after a confirmed read and its own no-op safety check."
-                )
+                Text(.powerModeSettingsConfigurationFooter)
             }
         }
-        .navigationTitle("Power Modes")
+        .navigationTitle(Text(.powerModeSettingsTitle))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -62,7 +60,7 @@ public struct PowerModeSettingsView: View {
                     Image(systemName: "arrow.clockwise")
                 }
                 .disabled(!viewModel.viewState.canRefresh)
-                .accessibilityLabel("Refresh power modes")
+                .accessibilityLabel(.powerModeSettingsRefreshAccessibility)
             }
         }
         .task { viewModel.start() }

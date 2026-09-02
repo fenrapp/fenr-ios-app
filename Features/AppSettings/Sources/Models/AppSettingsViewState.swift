@@ -13,10 +13,7 @@ public struct AppSettingsViewState: Equatable, Sendable {
 
     public init(
         speedSource: SpeedSourceSettingsViewState,
-        dashboardProgressBarMode: DashboardProgressBarSettingsViewState = .init(
-            selection: .init(selectedID: "energy", options: []),
-            description: "Regeneration fills left from the center; consumption fills right."
-        ),
+        dashboardProgressBarMode: DashboardProgressBarSettingsViewState? = nil,
         dashboardBatteryIndicatorMode: AppSettingsSelectionViewState = .init(
             selectedID: "percentage",
             options: []
@@ -28,24 +25,27 @@ public struct AppSettingsViewState: Equatable, Sendable {
         showsDashboardTemperatures: Bool = false,
         measurementSystem: AppSettingsSelectionViewState,
         batteryCapacity: AppSettingsSelectionViewState,
-        powerTier: PowerTierSettingsViewState = .init(
-            selection: .init(selectedID: "standard", options: []),
-            status: "Standard baseline"
-        ),
-        rideDisplay: SettingsNavigationSummaryViewData = .init(detail: "Energy · Bike"),
-        dashboardCards: SettingsNavigationSummaryViewData = .init(detail: "Order and visibility"),
-        powerModes: SettingsNavigationSummaryViewData = .init(detail: "5 maps configured")
+        powerTier: PowerTierSettingsViewState? = nil,
+        rideDisplay: SettingsNavigationSummaryViewData? = nil,
+        dashboardCards: SettingsNavigationSummaryViewData? = nil,
+        powerModes: SettingsNavigationSummaryViewData? = nil
     ) {
         self.speedSource = speedSource
-        self.dashboardProgressBarMode = dashboardProgressBarMode
+        self.dashboardProgressBarMode = dashboardProgressBarMode ?? .init(
+            selection: .init(selectedID: "energy", options: []),
+            description: .appSettingsProgressBarEnergyDescription
+        )
         self.dashboardBatteryIndicatorMode = dashboardBatteryIndicatorMode
         self.dashboardDeviceBatteryDisplayMode = dashboardDeviceBatteryDisplayMode
         self.showsDashboardTemperatures = showsDashboardTemperatures
         self.measurementSystem = measurementSystem
         self.batteryCapacity = batteryCapacity
-        self.powerTier = powerTier
-        self.rideDisplay = rideDisplay
-        self.dashboardCards = dashboardCards
-        self.powerModes = powerModes
+        self.powerTier = powerTier ?? .init(
+            selection: .init(selectedID: "standard", options: []),
+            status: .appSettingsPowerTierStandardBaseline
+        )
+        self.rideDisplay = rideDisplay ?? .init(detail: .appSettingsRideDisplayDefaultSummary)
+        self.dashboardCards = dashboardCards ?? .init(detail: .appSettingsDashboardCardsDefaultSummary)
+        self.powerModes = powerModes ?? .init(detail: .appSettingsPowerModesConfigured)
     }
 }

@@ -8,13 +8,13 @@ public struct WatchOnboardingViewState: Equatable, Sendable {
     public init(
         discoveredBikes: [WatchDiscoveredBikeViewData] = [],
         debugEvents: [WatchDebugEventViewData] = [],
-        detail: String = "Searching for nearby bikes",
+        detail: String? = nil,
         errorMessage: String? = nil,
         isConnecting: Bool = false
     ) {
         self.discoveredBikes = discoveredBikes
         self.debugEvents = debugEvents
-        self.detail = detail
+        self.detail = detail ?? String(localized: .watchOnboardingSearching)
         self.errorMessage = errorMessage
         self.isConnecting = isConnecting
     }

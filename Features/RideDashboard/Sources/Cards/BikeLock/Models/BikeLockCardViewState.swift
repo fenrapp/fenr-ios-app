@@ -22,10 +22,10 @@ public struct BikeLockCardViewState: Equatable, Sendable {
         isWorking: Bool = false,
         isActionEnabled: Bool = false,
         isConfigured: Bool = false,
-        title: String = "Bike Lock",
-        statusText: String = "Checking compatibility",
-        actionTitle: String = "Set Up",
-        detailText: String = "VCU compatibility must be verified before Bike Lock is enabled.",
+        title: String? = nil,
+        statusText: String? = nil,
+        actionTitle: String? = nil,
+        detailText: String? = nil,
         errorText: String? = nil,
         sheet: Sheet? = nil
     ) {
@@ -34,10 +34,12 @@ public struct BikeLockCardViewState: Equatable, Sendable {
         self.isWorking = isWorking
         self.isActionEnabled = isActionEnabled
         self.isConfigured = isConfigured
-        self.title = title
+        self.title = title ?? rideDashboardLocalized(.rideDashboardBikeLockTitle)
         self.statusText = statusText
-        self.actionTitle = actionTitle
+            ?? rideDashboardLocalized(.rideDashboardBikeLockStatusCheckingCompatibility)
+        self.actionTitle = actionTitle ?? rideDashboardLocalized(.rideDashboardBikeLockActionSetUp)
         self.detailText = detailText
+            ?? rideDashboardLocalized(.rideDashboardBikeLockDetailCompatibilityRequired)
         self.errorText = errorText
         self.sheet = sheet
     }

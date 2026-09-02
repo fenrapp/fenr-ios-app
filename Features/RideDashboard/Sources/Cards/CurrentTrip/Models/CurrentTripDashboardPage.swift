@@ -4,8 +4,8 @@ enum CurrentTripDashboardPage: Int, CaseIterable, Hashable {
 
     var accessibilityLabel: String {
         switch self {
-        case .current: "Current trip"
-        case .statistics: "Ride statistics"
+        case .current: rideDashboardLocalized(.rideDashboardPageCurrentTripAccessibility)
+        case .statistics: rideDashboardLocalized(.rideDashboardPageRideStatisticsAccessibility)
         }
     }
 }

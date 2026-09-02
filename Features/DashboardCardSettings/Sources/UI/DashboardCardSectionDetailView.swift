@@ -12,27 +12,26 @@ struct DashboardCardSectionDetailView: View {
                     DashboardCardVisibilityRow(
                         title: page.title,
                         isEnabled: page.canHide,
-                        disabledHint: "At least one card must remain visible",
+                        disabledHint: .dashboardCardSettingsAtLeastOneVisibleHint,
                         isVisible: visibilityBinding(for: page)
                     ) {
                         DashboardCardRowLabel(
                             title: page.title,
-                            detail: page.isVisible ? "Visible" : "Hidden",
+                            detail: page.isVisible
+                                ? .dashboardCardSettingsVisibleStatus
+                                : .dashboardCardSettingsHiddenStatus,
                             thumbnail: page.thumbnail
                         )
                     }
                     .moveDisabled(false)
                 }
             } header: {
-                Text("Cards")
+                Text(.dashboardCardSettingsCardsHeader)
             } footer: {
-                Text(
-                    "Drag cards while editing to set their swipe order. "
-                        + "The first visible card opens first. At least one card must remain visible."
-                )
+                Text(.dashboardCardSettingsCardsFooter)
             }
         }
-        .navigationTitle(section?.title ?? "Dashboard Cards")
+        .navigationTitle(Text(section?.title ?? .dashboardCardSettingsTitle))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

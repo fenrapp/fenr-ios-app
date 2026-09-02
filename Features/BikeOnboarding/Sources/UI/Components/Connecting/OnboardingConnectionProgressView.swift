@@ -18,8 +18,12 @@ struct OnboardingConnectionProgressView: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Connection progress")
-        .accessibilityValue("\(title(for: phase)), step \(phase.rawValue + 1) of \(phases.count)")
+        .accessibilityLabel(.bikeOnboardingAccessibilityConnectionProgress)
+        .accessibilityValue(BikeOnboardingL10n.progressAccessibility(
+            title: title(for: phase),
+            step: phase.rawValue + 1,
+            count: phases.count
+        ))
         .accessibilityAddTraits(.updatesFrequently)
         .task(id: animationIdentity) { await animateCurrentPhase() }
     }
@@ -144,9 +148,9 @@ struct OnboardingConnectionProgressView: View {
 
     private func title(for phase: BikeOnboardingConnectionPhase) -> String {
         switch phase {
-        case .finding: "Finding"
-        case .securing: "Securing"
-        case .live: "Live"
+        case .finding: BikeOnboardingL10n.text(.bikeOnboardingProgressFinding)
+        case .securing: BikeOnboardingL10n.text(.bikeOnboardingProgressSecuring)
+        case .live: BikeOnboardingL10n.text(.bikeOnboardingProgressLive)
         }
     }
 }

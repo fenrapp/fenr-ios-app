@@ -22,8 +22,8 @@ struct ChargeControlSessionFailureTests {
 
         #expect(session.state.isVisible)
         #expect(!session.state.isEnabled)
-        #expect(session.state.status == "Unsupported firmware")
-        #expect(session.state.error == "VCU firmware is not compatible with charge control")
+        #expect(session.state.status == .unsupportedFirmware)
+        #expect(session.state.failure == .incompatibleFirmware)
 
         session.setPowerLimit(watts: 1_500)
         session.setTarget(percent: 80)
@@ -65,7 +65,7 @@ struct ChargeControlSessionFailureTests {
         #expect(await waitUntil { await repository.writtenPowerValues() == [1_500] })
         #expect(await waitUntil { session.state.phase == .failed })
         #expect(session.state.selectedWatts == 1_000)
-        #expect(session.state.error?.contains("target=1500 W") == true)
+        #expect(session.state.failure == .confirmationTimedOut)
     }
 
     @Test("Rejected power write restores the confirmed value")
@@ -84,7 +84,7 @@ struct ChargeControlSessionFailureTests {
         #expect(await waitUntil { session.state.phase == .failed })
         #expect(session.state.selectedWatts == 1_000)
         #expect(session.state.confirmedWatts == 1_000)
-        #expect(session.state.error != nil)
+        #expect(session.state.failure == .writeFailed)
     }
 
     @Test("Unconfirmed target restores telemetry after confirmation timeout")
@@ -104,7 +104,7 @@ struct ChargeControlSessionFailureTests {
         #expect(await waitUntil { session.state.phase == .failed })
         #expect(session.state.selectedTargetPercent == 100)
         #expect(session.state.confirmedTargetPercent == 100)
-        #expect(session.state.error?.contains("target=80%") == true)
+        #expect(session.state.failure == .confirmationTimedOut)
     }
 
     @Test("Reconnect cancels the previous connection confirmation timeout")
@@ -118,7 +118,7 @@ struct ChargeControlSessionFailureTests {
         session.receive(ChargeControlFixtures.chargingHealth())
         #expect(await waitUntil { session.state.isEnabled })
         session.setPowerLimit(watts: 1_500)
-        #expect(await waitUntil { session.state.status == "Confirming 1500 W" })
+        #expect(await waitUntil { session.state.status == .confirming(.powerWatts(1_500)) })
 
         session.receive(BikeBatteryHealth())
         session.receive(ChargeControlFixtures.chargingHealth())
@@ -129,7 +129,7 @@ struct ChargeControlSessionFailureTests {
         try? await Task.sleep(for: .milliseconds(60))
 
         #expect(session.state.phase == .ready)
-        #expect(session.state.error == nil)
+        #expect(session.state.failure == nil)
         #expect(session.state.selectedWatts == 1_000)
     }
 }

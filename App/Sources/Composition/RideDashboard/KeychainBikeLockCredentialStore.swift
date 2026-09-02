@@ -64,6 +64,6 @@ private struct KeychainBikeLockCredentialError: LocalizedError {
 
     var errorDescription: String? {
         SecCopyErrorMessageString(status, nil) as String?
-            ?? "Unable to access the Bike Lock PIN"
+            ?? String(localized: .appBikeLockKeychainUnavailable)
     }
 }

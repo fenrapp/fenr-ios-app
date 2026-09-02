@@ -16,13 +16,14 @@ struct RideNavigationMapSourceMenu: View {
         }
         .buttonStyle(.plain)
         .rideNavigationGlassControl()
-        .accessibilityLabel("Map style")
+        .accessibilityLabel(.rideNavigationMapStyleAccessibility)
         .accessibilityValue(selectedStyleTitle)
     }
 
     private var selectedStyleTitle: String {
-        if selectedStyleID == Constants.focusStyleID { return "Focus" }
-        return sources.first(where: { $0.id == selectedStyleID })?.title ?? "Map"
+        if selectedStyleID == Constants.focusStyleID { return String(localized: .rideNavigationMapStyleFocus) }
+        return sources.first(where: { $0.id == selectedStyleID })?.title
+            ?? String(localized: .rideNavigationMapStyleFallback)
     }
 
     private enum Constants {
@@ -39,11 +40,11 @@ struct RideNavigationMapSourcePicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.rowSpacing) {
-            Text("Map Style")
+            Text(.rideNavigationMapStyleTitle)
                 .font(.headline)
             if allowsFocus {
                 styleButton(
-                    title: "Focus",
+                    title: String(localized: .rideNavigationMapStyleFocus),
                     systemImage: "location.north.line.fill",
                     id: Constants.focusStyleID
                 )

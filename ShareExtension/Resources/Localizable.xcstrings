@@ -1,0 +1,54 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "shareDone" : {
+      "comment" : "Title of the button that closes the share extension.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        }
+      }
+    },
+    "shareInvalidMapLink" : {
+      "comment" : "Status shown when the shared map link cannot be imported.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FENR could not read this map link."
+          }
+        }
+      }
+    },
+    "sharePreparingRoute" : {
+      "comment" : "Status shown while the share extension imports a route.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparing route…"
+          }
+        }
+      }
+    },
+    "shareRouteReady" : {
+      "comment" : "Status shown after a route is ready to open in FENR.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Route ready in FENR"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

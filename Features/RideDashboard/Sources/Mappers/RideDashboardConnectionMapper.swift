@@ -5,21 +5,23 @@ public struct RideDashboardConnectionMapper: Sendable {
 
     func text(_ state: ConnectionState) -> String {
         switch state {
-        case .idle: "Restoring bike session"
-        case .reconnecting(_, let attempt, let maximumAttempts): "Reconnecting (\(attempt)/\(maximumAttempts))"
-        case .pairingResetRequired(let message): message
-        case .scanning: "Scanning for bike"
-        case .connecting: "Connecting"
-        case .discovering: "Discovering bike services"
-        case .authenticating: "Authenticating"
-        case .authenticated: "Enabling live telemetry"
-        case .subscribed: "Waiting for live telemetry"
-        case .receivingTelemetry: "Live telemetry active"
-        case .disconnected(let reason): reason ?? "Disconnected"
-        case .failed(let message): message
-        case .bluetoothUnavailable: "Bluetooth is unavailable"
-        case .bluetoothPoweredOff: "Bluetooth is off"
-        case .bluetoothUnauthorized: "Bluetooth access is required"
+        case .idle: rideDashboardLocalized(.rideDashboardConnectionRestoring)
+        case .reconnecting(_, let attempt, let maximumAttempts):
+            rideDashboardLocalized(.rideDashboardConnectionReconnectingAttempt(attempt, maximumAttempts))
+        case .pairingResetRequired:
+            rideDashboardLocalized(.rideDashboardConnectionPairingResetRequired)
+        case .scanning: rideDashboardLocalized(.rideDashboardConnectionScanning)
+        case .connecting: rideDashboardLocalized(.rideDashboardConnectionConnecting)
+        case .discovering: rideDashboardLocalized(.rideDashboardConnectionDiscovering)
+        case .authenticating: rideDashboardLocalized(.rideDashboardConnectionAuthenticating)
+        case .authenticated: rideDashboardLocalized(.rideDashboardConnectionEnablingTelemetry)
+        case .subscribed: rideDashboardLocalized(.rideDashboardConnectionWaitingTelemetry)
+        case .receivingTelemetry: rideDashboardLocalized(.rideDashboardConnectionLive)
+        case .disconnected: rideDashboardLocalized(.rideDashboardConnectionDisconnected)
+        case .failed: rideDashboardLocalized(.rideDashboardConnectionFailed)
+        case .bluetoothUnavailable: rideDashboardLocalized(.rideDashboardConnectionBluetoothUnavailable)
+        case .bluetoothPoweredOff: rideDashboardLocalized(.rideDashboardConnectionBluetoothOff)
+        case .bluetoothUnauthorized: rideDashboardLocalized(.rideDashboardConnectionBluetoothRequired)
         }
     }
 

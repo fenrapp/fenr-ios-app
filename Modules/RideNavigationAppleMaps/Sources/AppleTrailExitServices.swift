@@ -57,8 +57,8 @@ public struct AppleTrailExitCandidateSearch: TrailExitCandidateSearching {
     private static func place(_ item: MKMapItem) -> NavigationPlace? {
         guard let coordinate = GeographicCoordinate(item.placemark.coordinate) else { return nil }
         return NavigationPlace(
-            name: item.name ?? "Road-accessible place",
-            detail: item.placemark.title ?? "Apple Maps",
+            name: item.name ?? String(localized: .rideNavigationAppleMapsRoadAccessiblePlace),
+            detail: item.placemark.title ?? String(localized: .rideNavigationAppleMapsProvider),
             coordinate: coordinate
         )
     }

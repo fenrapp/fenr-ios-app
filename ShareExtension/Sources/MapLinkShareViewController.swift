@@ -24,7 +24,7 @@ final class MapLinkShareViewController: UIViewController {
         let statusLabel = statusLabel
         let doneButton = doneButton
         guard let processor else {
-            statusLabel.text = "FENR could not read this map link."
+            statusLabel.text = String(localized: .shareInvalidMapLink)
             doneButton.isHidden = false
             return
         }
@@ -35,11 +35,11 @@ final class MapLinkShareViewController: UIViewController {
                     item as? NSExtensionItem
                 }
                 try await processor.process(inputItems: inputItems)
-                message = "Route ready in FENR"
+                message = String(localized: .shareRouteReady)
             } catch is CancellationError {
                 return
             } catch {
-                message = "FENR could not read this map link."
+                message = String(localized: .shareInvalidMapLink)
             }
             guard !Task.isCancelled else { return }
             statusLabel.text = message
@@ -56,10 +56,10 @@ final class MapLinkShareViewController: UIViewController {
         statusLabel.font = .preferredFont(forTextStyle: .headline)
         statusLabel.textAlignment = .center
         statusLabel.numberOfLines = .zero
-        statusLabel.text = "Preparing route…"
+        statusLabel.text = String(localized: .sharePreparingRoute)
 
         var configuration = UIButton.Configuration.filled()
-        configuration.title = "Done"
+        configuration.title = String(localized: .shareDone)
         configuration.cornerStyle = .capsule
         doneButton.configuration = configuration
         doneButton.addTarget(self, action: #selector(finish), for: .touchUpInside)

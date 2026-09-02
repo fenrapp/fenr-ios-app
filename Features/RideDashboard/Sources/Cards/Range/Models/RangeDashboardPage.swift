@@ -4,8 +4,8 @@ public enum RangeDashboardPage: Int, CaseIterable, Hashable, Sendable {
 
     var accessibilityLabel: String {
         switch self {
-        case .range: "Range"
-        case .battery: "Battery trip"
+        case .range: rideDashboardLocalized(.rideDashboardCardRangeAccessibility)
+        case .battery: rideDashboardLocalized(.rideDashboardPageBatteryTripAccessibility)
         }
     }
 }

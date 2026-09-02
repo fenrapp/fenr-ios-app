@@ -1,20 +1,21 @@
+import Foundation
 import SwiftUI
 
 struct DashboardCardVisibilityToggle: View {
-    let title: String
+    let title: LocalizedStringResource
     let isEnabled: Bool
-    let disabledHint: String?
+    let disabledHint: LocalizedStringResource?
     @Binding var isVisible: Bool
 
     var body: some View {
-        Toggle("Show \(title)", isOn: $isVisible)
+        Toggle(.dashboardCardSettingsShowCard(String(localized: title)), isOn: $isVisible)
             .labelsHidden()
             .disabled(!isEnabled)
-            .accessibilityLabel("Show \(title)")
+            .accessibilityLabel(.dashboardCardSettingsShowCard(String(localized: title)))
             .accessibilityHint(
                 isEnabled
-                    ? "Controls whether this card appears on the dashboard"
-                    : disabledHint ?? "This card cannot be hidden"
+                    ? .dashboardCardSettingsVisibilityHint
+                    : disabledHint ?? .dashboardCardSettingsCannotHideHint
             )
     }
 }

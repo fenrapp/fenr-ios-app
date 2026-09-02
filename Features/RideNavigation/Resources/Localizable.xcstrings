@@ -1,0 +1,1996 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "rideNavigationDefaultExportFilename": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Ride.gpx" } } }
+    },
+    "rideNavigationDefaultExportName": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Ride" } } }
+    },
+    "rideNavigationAnnouncementBackOnTrail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back on trail"
+          }
+        }
+      }
+    },
+    "rideNavigationAnnouncementEnduroResumed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enduro navigation resumed"
+          }
+        }
+      }
+    },
+    "rideNavigationAnnouncementEnduroStarted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enduro navigation started"
+          }
+        }
+      }
+    },
+    "rideNavigationAnnouncementExitStarted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exit navigation started"
+          }
+        }
+      }
+    },
+    "rideNavigationAnnouncementOffTrail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You are off trail. Follow the arrow back to the track"
+          }
+        }
+      }
+    },
+    "rideNavigationAnnouncementRecordingPaused": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording paused"
+          }
+        }
+      }
+    },
+    "rideNavigationAnnouncementRecordingResumed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording resumed"
+          }
+        }
+      }
+    },
+    "rideNavigationAnnouncementRecordingStarted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording started"
+          }
+        }
+      }
+    },
+    "rideNavigationAnnouncementRoadStarted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Road navigation started"
+          }
+        }
+      }
+    },
+    "rideNavigationAnnouncementRouteUpdated": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Route updated"
+          }
+        }
+      }
+    },
+    "rideNavigationAnnouncementTrailApproachStarted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Road navigation to the trail entry started"
+          }
+        }
+      }
+    },
+    "rideNavigationAnnouncementTrailReached": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trail reached. Enduro mode active"
+          }
+        }
+      }
+    },
+    "rideNavigationAnnouncementWrongDirection": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wrong direction. Return to the highlighted track"
+          }
+        }
+      }
+    },
+    "rideNavigationApproachCalculationError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The approach route could not be calculated."
+          }
+        }
+      }
+    },
+    "rideNavigationArrivalDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can finish this ride or keep following the route."
+          }
+        }
+      }
+    },
+    "rideNavigationArrivalTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You reached the end. Finish route?"
+          }
+        }
+      }
+    },
+    "rideNavigationAvoidHighways": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avoid Highways"
+          }
+        }
+      }
+    },
+    "rideNavigationAvoidTolls": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avoid Tolls"
+          }
+        }
+      }
+    },
+    "rideNavigationBackToPlanning": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back to ride planning"
+          }
+        }
+      }
+    },
+    "rideNavigationBreadcrumbName": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Navigation breadcrumb"
+          }
+        }
+      }
+    },
+    "rideNavigationCancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "rideNavigationChooseRouteDirection": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose route direction"
+          }
+        }
+      }
+    },
+    "rideNavigationChooseTrailDirection": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose trail direction"
+          }
+        }
+      }
+    },
+    "rideNavigationChooseTrailDirectionDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The route overlaps here, so choose the direction you want to follow."
+          }
+        }
+      }
+    },
+    "rideNavigationClearSearch": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear search"
+          }
+        }
+      }
+    },
+    "rideNavigationClose": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close ride navigation"
+          }
+        }
+      }
+    },
+    "rideNavigationCloseRoute": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close route"
+          }
+        }
+      }
+    },
+    "rideNavigationCloseSummary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close ride summary"
+          }
+        }
+      }
+    },
+    "rideNavigationContinueStraight": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue straight"
+          }
+        }
+      }
+    },
+    "rideNavigationContinueStraightUppercase": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CONTINUE STRAIGHT"
+          }
+        }
+      }
+    },
+    "rideNavigationContinueToDestination": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue toward the selected destination"
+          }
+        }
+      }
+    },
+    "rideNavigationCurrentLocationRequired": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A current location is required to calculate this route."
+          }
+        }
+      }
+    },
+    "rideNavigationCurrentLocationRequiredForExit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A current location is required to find a road-accessible exit."
+          }
+        }
+      }
+    },
+    "rideNavigationDefaultRideName": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ride %@"
+          }
+        }
+      }
+    },
+    "rideNavigationDelete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        }
+      }
+    },
+    "rideNavigationDirectionForward": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forward"
+          }
+        }
+      }
+    },
+    "rideNavigationDirectionReverse": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reverse"
+          }
+        }
+      }
+    },
+    "rideNavigationDiscardRide": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard Ride"
+          }
+        }
+      }
+    },
+    "rideNavigationDistanceRemaining": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ remaining"
+          }
+        }
+      }
+    },
+    "rideNavigationDistanceToNextManeuver": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ to next maneuver"
+          }
+        }
+      }
+    },
+    "rideNavigationDistanceToTrail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ to trail"
+          }
+        }
+      }
+    },
+    "rideNavigationDone": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "rideNavigationEnableVoiceGuidance": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable voice guidance"
+          }
+        }
+      }
+    },
+    "rideNavigationEndAndOpen": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End & Open"
+          }
+        }
+      }
+    },
+    "rideNavigationEndReachedTap": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "END REACHED · TAP"
+          }
+        }
+      }
+    },
+    "rideNavigationEndRide": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End ride"
+          }
+        }
+      }
+    },
+    "rideNavigationEndRoute": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End Route"
+          }
+        }
+      }
+    },
+    "rideNavigationEndRouteDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Navigation will stop and you will see your ride summary."
+          }
+        }
+      }
+    },
+    "rideNavigationEndRouteQuestion": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End this route?"
+          }
+        }
+      }
+    },
+    "rideNavigationEnduroFollowArrow": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ENDURO · FOLLOW THE ARROW"
+          }
+        }
+      }
+    },
+    "rideNavigationEnduroFollowTrack": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ENDURO · FOLLOW THE TRACK"
+          }
+        }
+      }
+    },
+    "rideNavigationEnduroNavigation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enduro Navigation"
+          }
+        }
+      }
+    },
+    "rideNavigationExpandNavigation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expand navigation"
+          }
+        }
+      }
+    },
+    "rideNavigationExportGPX": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export GPX"
+          }
+        }
+      }
+    },
+    "rideNavigationFindExit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find Exit"
+          }
+        }
+      }
+    },
+    "rideNavigationFindRoadExitDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FENR will look for a place reachable by road. This is not a rescue service."
+          }
+        }
+      }
+    },
+    "rideNavigationFindRoadExitQuestion": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find a road-accessible exit?"
+          }
+        }
+      }
+    },
+    "rideNavigationFindingExit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finding Exit..."
+          }
+        }
+      }
+    },
+    "rideNavigationFinish": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish"
+          }
+        }
+      }
+    },
+    "rideNavigationFinishRecording": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish Recording"
+          }
+        }
+      }
+    },
+    "rideNavigationFinishRecordingDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your recorded track will be ready to save or export."
+          }
+        }
+      }
+    },
+    "rideNavigationFinishRecordingQuestion": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish recording?"
+          }
+        }
+      }
+    },
+    "rideNavigationFinishRoute": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish Route"
+          }
+        }
+      }
+    },
+    "rideNavigationFollowForward": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow Forward"
+          }
+        }
+      }
+    },
+    "rideNavigationFollowInReverse": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow in Reverse"
+          }
+        }
+      }
+    },
+    "rideNavigationFollowReverseDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your direction is opposite to the planned track."
+          }
+        }
+      }
+    },
+    "rideNavigationFollowReverseTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow in reverse?"
+          }
+        }
+      }
+    },
+    "rideNavigationGPXCreateError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The GPX file could not be created."
+          }
+        }
+      }
+    },
+    "rideNavigationGPXMultipleTracks": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "substitutions": { "trackCount": { "argNum": 1, "formatSpecifier": "lld", "variations": { "plural": {
+            "one": { "stringUnit": { "state": "translated", "value": "This GPX contains %arg track. Showing the first track." } },
+            "other": { "stringUnit": { "state": "translated", "value": "This GPX contains %arg tracks. Showing the first track." } }
+          } } } },
+          "stringUnit": { "state": "translated", "value": "%#@trackCount@" }
+        }
+      }
+    },
+    "rideNavigationGPXReadError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This GPX file could not be read."
+          }
+        }
+      }
+    },
+    "rideNavigationGetMeOut": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get Me Out"
+          }
+        }
+      }
+    },
+    "rideNavigationHeadingUp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heading Up"
+          }
+        }
+      }
+    },
+    "rideNavigationImportGPX": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import GPX"
+          }
+        }
+      }
+    },
+    "rideNavigationImportedGPXSaveError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The imported GPX could not be saved."
+          }
+        }
+      }
+    },
+    "rideNavigationImportedGPXSaveInterrupted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The imported GPX save was interrupted. Try again before starting."
+          }
+        }
+      }
+    },
+    "rideNavigationImportedGPXSaveRetry": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The imported GPX could not be saved. Try again before starting."
+          }
+        }
+      }
+    },
+    "rideNavigationIncomingDestinationDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A destination was shared with FENR while this ride is active."
+          }
+        }
+      }
+    },
+    "rideNavigationInsufficientConnectedPoints": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This route does not contain enough connected points to navigate."
+          }
+        }
+      }
+    },
+    "rideNavigationKeepFollowingTrail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Following Trail"
+          }
+        }
+      }
+    },
+    "rideNavigationKeepLeft": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep left"
+          }
+        }
+      }
+    },
+    "rideNavigationKeepLeftUppercase": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KEEP LEFT"
+          }
+        }
+      }
+    },
+    "rideNavigationKeepRiding": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Riding"
+          }
+        }
+      }
+    },
+    "rideNavigationKeepRight": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep right"
+          }
+        }
+      }
+    },
+    "rideNavigationKeepRightUppercase": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KEEP RIGHT"
+          }
+        }
+      }
+    },
+    "rideNavigationMapLinkNoDestination": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This map link does not contain a destination FENR can open."
+          }
+        }
+      }
+    },
+    "rideNavigationMapMarkerFinish": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish"
+          }
+        }
+      }
+    },
+    "rideNavigationMapMarkerStart": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start"
+          }
+        }
+      }
+    },
+    "rideNavigationMapOrientation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Map Orientation"
+          }
+        }
+      }
+    },
+    "rideNavigationMapOrientationAccessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Map orientation, %@"
+          }
+        }
+      }
+    },
+    "rideNavigationMapStyleAccessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Map style"
+          }
+        }
+      }
+    },
+    "rideNavigationMapStyleFallback": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Map"
+          }
+        }
+      }
+    },
+    "rideNavigationMapStyleFocus": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focus"
+          }
+        }
+      }
+    },
+    "rideNavigationMapStyleSatellite": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Satellite"
+          }
+        }
+      }
+    },
+    "rideNavigationMapStyleStandard": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standard"
+          }
+        }
+      }
+    },
+    "rideNavigationMapStyleTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Map Style"
+          }
+        }
+      }
+    },
+    "rideNavigationMetricBike": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bike"
+          }
+        }
+      }
+    },
+    "rideNavigationMetricPower": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Power"
+          }
+        }
+      }
+    },
+    "rideNavigationMetricSpeed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speed"
+          }
+        }
+      }
+    },
+    "rideNavigationMetricTime": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time"
+          }
+        }
+      }
+    },
+    "rideNavigationMini": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mini"
+          }
+        }
+      }
+    },
+    "rideNavigationMiniMapAccessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mini navigation map"
+          }
+        }
+      }
+    },
+    "rideNavigationMiniMapHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag to reposition, pinch to resize, or tap to expand navigation"
+          }
+        }
+      }
+    },
+    "rideNavigationMiniMapStatusAccessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mini navigation map, %@"
+          }
+        }
+      }
+    },
+    "rideNavigationMinimizeAccessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minimize navigation"
+          }
+        }
+      }
+    },
+    "rideNavigationModeNumber": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MODE %lld"
+          }
+        }
+      }
+    },
+    "rideNavigationModeUnavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MODE --"
+          }
+        }
+      }
+    },
+    "rideNavigationMuteVoiceGuidance": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mute voice guidance"
+          }
+        }
+      }
+    },
+    "rideNavigationNavigation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Navigation"
+          }
+        }
+      }
+    },
+    "rideNavigationNoDestinationsFound": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No destinations found."
+          }
+        }
+      }
+    },
+    "rideNavigationNoRoadExitFound": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No road-accessible exit could be found."
+          }
+        }
+      }
+    },
+    "rideNavigationNoRouteToExport": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There is no route available to export."
+          }
+        }
+      }
+    },
+    "rideNavigationNoValidGPSPoints": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No valid GPS points were recorded."
+          }
+        }
+      }
+    },
+    "rideNavigationNorthUp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "North Up"
+          }
+        }
+      }
+    },
+    "rideNavigationOff": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        }
+      }
+    },
+    "rideNavigationOffTrail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OFF TRAIL"
+          }
+        }
+      }
+    },
+    "rideNavigationOn": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On"
+          }
+        }
+      }
+    },
+    "rideNavigationOpenIncomingDestination": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open %@?"
+          }
+        }
+      }
+    },
+    "rideNavigationOpenTrail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open a trail"
+          }
+        }
+      }
+    },
+    "rideNavigationPause": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause"
+          }
+        }
+      }
+    },
+    "rideNavigationPlanRide": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan a ride"
+          }
+        }
+      }
+    },
+    "rideNavigationPreferencesUpdateError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Maps could not update these route preferences."
+          }
+        }
+      }
+    },
+    "rideNavigationPreparing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing..."
+          }
+        }
+      }
+    },
+    "rideNavigationRecenterMap": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recenter map"
+          }
+        }
+      }
+    },
+    "rideNavigationRecordRide": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record Ride"
+          }
+        }
+      }
+    },
+    "rideNavigationRecordedRidePlaceholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recorded ride"
+          }
+        }
+      }
+    },
+    "rideNavigationRecordedRouteSaveError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The recorded route could not be saved. It is still available to retry."
+          }
+        }
+      }
+    },
+    "rideNavigationRecordingPaused": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RECORDING PAUSED"
+          }
+        }
+      }
+    },
+    "rideNavigationRecordingRide": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording Ride"
+          }
+        }
+      }
+    },
+    "rideNavigationRerouting": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "REROUTING"
+          }
+        }
+      }
+    },
+    "rideNavigationReroutingUnavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rerouting is unavailable. Continue toward the highlighted route."
+          }
+        }
+      }
+    },
+    "rideNavigationResults": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Results"
+          }
+        }
+      }
+    },
+    "rideNavigationResume": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resume"
+          }
+        }
+      }
+    },
+    "rideNavigationResumeGPX": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resume GPX"
+          }
+        }
+      }
+    },
+    "rideNavigationRetrySave": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry Save"
+          }
+        }
+      }
+    },
+    "rideNavigationReturnToTrack": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Return to the highlighted track"
+          }
+        }
+      }
+    },
+    "rideNavigationReverse": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reverse"
+          }
+        }
+      }
+    },
+    "rideNavigationRideWithTrailName": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ride · %@"
+          }
+        }
+      }
+    },
+    "rideNavigationRoadNavigation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ROAD NAVIGATION"
+          }
+        }
+      }
+    },
+    "rideNavigationRouteAlternative": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alternative %lld"
+          }
+        }
+      }
+    },
+    "rideNavigationRouteCalculationError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Maps could not calculate this route."
+          }
+        }
+      }
+    },
+    "rideNavigationRouteDeleteError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The route could not be deleted."
+          }
+        }
+      }
+    },
+    "rideNavigationRouteHighways": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Highways"
+          }
+        }
+      }
+    },
+    "rideNavigationRouteLibrary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your route library"
+          }
+        }
+      }
+    },
+    "rideNavigationRouteName": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Route"
+          }
+        }
+      }
+    },
+    "rideNavigationRouteNameLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Route Name"
+          }
+        }
+      }
+    },
+    "rideNavigationRoutePreview": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Route Preview"
+          }
+        }
+      }
+    },
+    "rideNavigationRouteRecommended": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recommended"
+          }
+        }
+      }
+    },
+    "rideNavigationRouteTolls": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tolls"
+          }
+        }
+      }
+    },
+    "rideNavigationSave": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        }
+      }
+    },
+    "rideNavigationSavedRouteCount": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "substitutions": { "routeCount": { "argNum": 1, "formatSpecifier": "lld", "variations": { "plural": {
+            "one": { "stringUnit": { "state": "translated", "value": "%arg saved route" } },
+            "other": { "stringUnit": { "state": "translated", "value": "%arg saved routes" } }
+          } } } },
+          "stringUnit": { "state": "translated", "value": "%#@routeCount@" }
+        }
+      }
+    },
+    "rideNavigationSavedRoutes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved Routes"
+          }
+        }
+      }
+    },
+    "rideNavigationSavingRoute": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saving route..."
+          }
+        }
+      }
+    },
+    "rideNavigationSearchDestination": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search a destination"
+          }
+        }
+      }
+    },
+    "rideNavigationSearchHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type a place or address to see nearby matches."
+          }
+        }
+      }
+    },
+    "rideNavigationSearchUnavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search is unavailable. Check your connection."
+          }
+        }
+      }
+    },
+    "rideNavigationSelectDirectionDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select the direction to follow."
+          }
+        }
+      }
+    },
+    "rideNavigationShare": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share"
+          }
+        }
+      }
+    },
+    "rideNavigationSharedDestination": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "shared destination"
+          }
+        }
+      }
+    },
+    "rideNavigationShowRouteOverview": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show route overview"
+          }
+        }
+      }
+    },
+    "rideNavigationStart": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start"
+          }
+        }
+      }
+    },
+    "rideNavigationStartExit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Exit"
+          }
+        }
+      }
+    },
+    "rideNavigationSummaryDestinationReached": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Destination reached"
+          }
+        }
+      }
+    },
+    "rideNavigationSummaryExitNavigationEnded": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exit navigation ended"
+          }
+        }
+      }
+    },
+    "rideNavigationSummaryExitPointReached": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exit point reached"
+          }
+        }
+      }
+    },
+    "rideNavigationSummaryNavigationEnded": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Navigation ended"
+          }
+        }
+      }
+    },
+    "rideNavigationSummaryRideComplete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ride complete"
+          }
+        }
+      }
+    },
+    "rideNavigationSummaryRideRecorded": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ride recorded"
+          }
+        }
+      }
+    },
+    "rideNavigationSummaryTrailComplete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trail complete"
+          }
+        }
+      }
+    },
+    "rideNavigationSummaryTrailEnded": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trail ended"
+          }
+        }
+      }
+    },
+    "rideNavigationTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ride Navigation"
+          }
+        }
+      }
+    },
+    "rideNavigationTrackAsYouGo": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Track as you go"
+          }
+        }
+      }
+    },
+    "rideNavigationTrailApproachDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Road approach to the selected trail entry"
+          }
+        }
+      }
+    },
+    "rideNavigationTrailFinish": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trail finish"
+          }
+        }
+      }
+    },
+    "rideNavigationTrailName": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trail"
+          }
+        }
+      }
+    },
+    "rideNavigationTrailStart": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trail start"
+          }
+        }
+      }
+    },
+    "rideNavigationUpdatingRoutes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updating routes"
+          }
+        }
+      }
+    },
+    "rideNavigationUseHorizontalMiniMap": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use horizontal mini map"
+          }
+        }
+      }
+    },
+    "rideNavigationUseVerticalMiniMap": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use vertical mini map"
+          }
+        }
+      }
+    },
+    "rideNavigationWaitingForAccurateLocation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for an accurate location"
+          }
+        }
+      }
+    },
+    "rideNavigationWrongFork": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WRONG FORK"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

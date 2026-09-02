@@ -1,13 +1,15 @@
+import Foundation
+
 public struct DashboardCardFixedRowViewData: Identifiable, Equatable, Sendable {
     public let id: String
-    public let title: String
-    public let detail: String
+    public let title: LocalizedStringResource
+    public let detail: LocalizedStringResource
     public let thumbnail: DashboardCardThumbnailViewData
 
     public init(
         id: String,
-        title: String,
-        detail: String,
+        title: LocalizedStringResource,
+        detail: LocalizedStringResource,
         thumbnail: DashboardCardThumbnailViewData
     ) {
         self.id = id

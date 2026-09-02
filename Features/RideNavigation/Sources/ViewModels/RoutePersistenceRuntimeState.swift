@@ -57,7 +57,7 @@ struct RoutePersistenceRuntimeState {
     mutating func cancelTransientSave() {
         guard activeSave == .plannedRoute else { return }
         activeSave = nil
-        status = .failed(message: "The imported GPX save was interrupted. Try again before starting.")
+        status = .failed(message: String(localized: .rideNavigationImportedGPXSaveInterrupted))
     }
 
     mutating func clearFailure() {

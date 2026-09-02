@@ -4,9 +4,14 @@ import VehicleSession
 
 actor FakeBatteryHealthVehicleSession: VehicleSessionService {
     private let repository: any BikeBatteryHealthRepository
+    private let monitoringState: VehicleBatteryHealthMonitoringState
 
-    init(repository: any BikeBatteryHealthRepository) {
+    init(
+        repository: any BikeBatteryHealthRepository,
+        monitoringState: VehicleBatteryHealthMonitoringState = .active
+    ) {
         self.repository = repository
+        self.monitoringState = monitoringState
     }
 
     func observe() -> AsyncStream<VehicleSessionSnapshot> {
@@ -18,7 +23,7 @@ actor FakeBatteryHealthVehicleSession: VehicleSessionService {
                     guard !Task.isCancelled else { return }
                     continuation.yield(.init(
                         batteryHealth: health,
-                        batteryHealthMonitoringState: .active
+                        batteryHealthMonitoringState: monitoringState
                     ))
                 }
             }

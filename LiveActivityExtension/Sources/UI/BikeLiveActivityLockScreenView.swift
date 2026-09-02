@@ -20,7 +20,7 @@ struct BikeLiveActivityLockScreenView: View {
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline, spacing: DesignSpace.extraSmall) {
-            Text(context.state.phase.displayTitle)
+            Text(BikeLiveActivityText.phase(context.state.phase))
                 .font(.caption.weight(.semibold))
                 .lineLimit(accessibilityLineLimit)
                 .fixedSize(horizontal: false, vertical: usesAccessibilityLayout)

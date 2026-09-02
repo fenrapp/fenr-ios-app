@@ -63,39 +63,41 @@ struct RideNavigationMapOverlay: View {
         .animation(.smooth(duration: Constants.mapSelectorTransitionDuration), value: activeMapSelector)
         .animation(.smooth(duration: Constants.confirmationTransitionDuration), value: showsFinishConfirmation)
         .confirmationDialog(
-            "Find a road-accessible exit?",
+            .rideNavigationFindRoadExitQuestion,
             isPresented: $showsTrailExitConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Find Exit", action: onFindTrailExit)
-            Button("Cancel", role: .cancel) {}
+            Button(.rideNavigationFindExit, action: onFindTrailExit)
+            Button(.rideNavigationCancel, role: .cancel) {}
         } message: {
-            Text("FENR will look for a place reachable by road. This is not a rescue service.")
+            Text(.rideNavigationFindRoadExitDetail)
         }
         .confirmationDialog(
-            "Open \(state.incomingDestinationTitle ?? "shared destination")?",
+            .rideNavigationOpenIncomingDestination(
+                state.incomingDestinationTitle ?? String(localized: .rideNavigationSharedDestination)
+            ),
             isPresented: incomingDestinationPrompt,
             titleVisibility: .visible
         ) {
-            Button("End & Open", role: .destructive, action: onEndRideAndOpenIncomingDestination)
-            Button("Keep Riding", action: onKeepRidingWithIncomingDestination)
+            Button(.rideNavigationEndAndOpen, role: .destructive, action: onEndRideAndOpenIncomingDestination)
+            Button(.rideNavigationKeepRiding, action: onKeepRidingWithIncomingDestination)
         } message: {
-            Text("A destination was shared with FENR while this ride is active.")
+            Text(.rideNavigationIncomingDestinationDetail)
         }
         .confirmationDialog(
-            state.trailEntryPrompt?.title ?? "Choose route direction",
+            state.trailEntryPrompt?.title ?? String(localized: .rideNavigationChooseRouteDirection),
             isPresented: trailEntryPrompt,
             titleVisibility: .visible
         ) {
             if state.trailEntryPrompt?.availableDirections.contains(.forward) == true {
-                Button("Follow Forward") { onSelectTrailDirection(.forward) }
+                Button(.rideNavigationFollowForward) { onSelectTrailDirection(.forward) }
             }
             if state.trailEntryPrompt?.availableDirections.contains(.reverse) == true {
-                Button("Follow in Reverse") { onSelectTrailDirection(.reverse) }
+                Button(.rideNavigationFollowInReverse) { onSelectTrailDirection(.reverse) }
             }
-            Button("Cancel", role: .cancel, action: onCancelTrailDirectionSelection)
+            Button(.rideNavigationCancel, role: .cancel, action: onCancelTrailDirectionSelection)
         } message: {
-            Text(state.trailEntryPrompt?.detail ?? "Select the direction to follow.")
+            Text(state.trailEntryPrompt?.detail ?? String(localized: .rideNavigationSelectDirectionDetail))
         }
     }
 }

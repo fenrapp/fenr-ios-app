@@ -11,7 +11,7 @@ struct OnboardingDiscoveryView: View {
 
     var body: some View {
         OnboardingStepLayout(
-            eyebrow: "DISCOVERY",
+            eyebrow: BikeOnboardingL10n.text(.bikeOnboardingDiscoveryEyebrow),
             title: title,
             detail: detail
         ) {
@@ -26,7 +26,7 @@ struct OnboardingDiscoveryView: View {
         } footer: {
             if showsRecovery {
                 OnboardingPrimaryButton(
-                    title: "Scan Again",
+                    title: BikeOnboardingL10n.text(.bikeOnboardingActionScanAgain),
                     systemImage: "arrow.clockwise",
                     action: onRetry
                 )
@@ -72,12 +72,12 @@ struct OnboardingDiscoveryView: View {
             case .stabilizing:
                 EmptyView()
             case .multiple:
-                Text("\(viewState.discoveredBikes.count) bikes nearby")
+                Text(.bikeOnboardingDiscoveryNearbyCount(viewState.discoveredBikes.count))
                     .font(.subheadline.weight(.semibold))
             case .timedOut:
                 EmptyView()
             case .paused, .failed:
-                Text("Discovery paused")
+                Text(.bikeOnboardingDiscoveryPaused)
                     .font(.subheadline.weight(.semibold))
             }
         }
@@ -93,18 +93,18 @@ struct OnboardingDiscoveryView: View {
     private var discoveryClusterTitle: String {
         switch viewState.discoveryState {
         case .stabilizing:
-            "Confirming this nearby bike…"
+            BikeOnboardingL10n.text(.bikeOnboardingDiscoveryConfirming)
         default:
-            "Scanning nearby…"
+            BikeOnboardingL10n.text(.bikeOnboardingDiscoveryScanningNearby)
         }
     }
 
     private var discoveryAccessibilityLabel: String {
         switch viewState.discoveryState {
         case .stabilizing:
-            "Bike found. Confirming this nearby bike"
+            BikeOnboardingL10n.text(.bikeOnboardingAccessibilityDiscoveryConfirming)
         default:
-            "Scanning for nearby bikes"
+            BikeOnboardingL10n.text(.bikeOnboardingAccessibilityDiscoveryScanning)
         }
     }
 
@@ -133,30 +133,30 @@ struct OnboardingDiscoveryView: View {
     private var title: String {
         switch viewState.discoveryState {
         case .scanning:
-            "Finding your bike."
+            BikeOnboardingL10n.text(.bikeOnboardingDiscoveryScanningTitle)
         case .stabilizing:
-            "Bike found."
+            BikeOnboardingL10n.text(.bikeOnboardingDiscoveryStabilizingTitle)
         case .multiple:
-            "Choose your bike."
+            BikeOnboardingL10n.text(.bikeOnboardingDiscoveryMultipleTitle)
         case .timedOut:
-            "No bike found."
+            BikeOnboardingL10n.text(.bikeOnboardingDiscoveryTimedOutTitle)
         case .paused, .failed:
-            "We couldn't find your bike."
+            BikeOnboardingL10n.text(.bikeOnboardingDiscoveryFailedTitle)
         }
     }
 
     private var detail: String {
         switch viewState.discoveryState {
         case .scanning:
-            "Keep your bike on and nearby. FENR will connect automatically when it finds one."
+            BikeOnboardingL10n.text(.bikeOnboardingDiscoveryScanningDetail)
         case .stabilizing:
-            "FENR found one nearby bike and is confirming it before pairing."
+            BikeOnboardingL10n.text(.bikeOnboardingDiscoveryStabilizingDetail)
         case .multiple:
-            "More than one bike is nearby. Choose the model and VIN you want to pair."
+            BikeOnboardingL10n.text(.bikeOnboardingDiscoveryMultipleDetail)
         case .timedOut:
-            "Keep your bike on and nearby, and power off Arkenstone."
+            BikeOnboardingL10n.text(.bikeOnboardingDiscoveryTimedOutDetail)
         case .paused, .failed:
-            "Make sure the bike is awake, nearby and disconnected from Arkenstone."
+            BikeOnboardingL10n.text(.bikeOnboardingDiscoveryFailedDetail)
         }
     }
 

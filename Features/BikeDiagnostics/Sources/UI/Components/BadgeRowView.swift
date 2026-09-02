@@ -2,20 +2,20 @@ import DesignSystem
 import SwiftUI
 
 struct BadgeRowView: View {
-    let badges: [String]
+    let badges: [BikeDiagnosticsBadgeViewData]
 
     var body: some View {
-        SurfacePanel(title: "State") {
+        SurfacePanel(title: BikeDiagnosticsL10n.text(.bikeDiagnosticsSectionState)) {
             if badges.isEmpty {
-                Text("No state yet")
+                Text(.bikeDiagnosticsNoState)
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: Constants.badgeSpacing) {
-                        ForEach(badges, id: \.self) { badge in
-                            Text(badge)
+                        ForEach(badges) { badge in
+                            Text(verbatim: badge.title)
                                 .font(.caption.weight(.semibold))
                                 .lineLimit(Constants.lineLimit)
                                 .padding(.horizontal, Constants.horizontalPadding)
@@ -38,6 +38,10 @@ struct BadgeRowView: View {
 }
 
 #Preview("Badges") {
-    BadgeRowView(badges: ["On", "Charger", "Fault", "Crawl FWD"])
+    BadgeRowView(badges: [
+        .init(kind: .on, title: "On"),
+        .init(kind: .charger, title: "Charger"),
+        .init(kind: .fault, title: "Fault")
+    ])
         .padding()
 }

@@ -6,13 +6,13 @@ struct RideHistoryDetailContent: View {
     var body: some View {
         switch state.status {
         case .idle, .loading:
-            ProgressView("Loading ride details")
+            ProgressView(.rideHistoryLoadingDetails)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .unavailable:
             ContentUnavailableView(
-                "Ride Unavailable",
+                .rideHistoryRideUnavailable,
                 systemImage: "exclamationmark.triangle",
-                description: Text("This saved ride could not be loaded.")
+                description: Text(.rideHistoryRideUnavailableDescription)
             )
         case .loaded:
             list
@@ -25,11 +25,11 @@ struct RideHistoryDetailContent: View {
                 RideHistoryDetailHeader(state: state)
             }
 
-            metricSection(title: "Overview", metrics: state.overviewMetrics)
-            metricSection(title: "Energy", metrics: state.energyMetrics)
+            metricSection(title: .rideHistorySectionOverview, metrics: state.overviewMetrics)
+            metricSection(title: .rideHistorySectionEnergy, metrics: state.energyMetrics)
 
             if hasChartData {
-                Section("Energy Profile") {
+                Section(.rideHistorySectionEnergyProfile) {
                     RideHistoryEnergyChart(state: state)
                         .padding(.vertical, Constants.chartVerticalPadding)
                 }
@@ -41,7 +41,7 @@ struct RideHistoryDetailContent: View {
                         RideHistoryComparisonRow(comparison: comparison)
                     }
                 } header: {
-                    Text("Recent Comparison")
+                    Text(.rideHistorySectionRecentComparison)
                 } footer: {
                     if let detail = state.comparisonDetail {
                         Text(detail)
@@ -49,15 +49,15 @@ struct RideHistoryDetailContent: View {
                 }
             }
 
-            metricSection(title: "Power", metrics: state.performanceMetrics)
-            metricSection(title: "Ride Dynamics", metrics: state.dynamicsMetrics)
+            metricSection(title: .rideHistorySectionPower, metrics: state.performanceMetrics)
+            metricSection(title: .rideHistorySectionRideDynamics, metrics: state.dynamicsMetrics)
         }
         .listStyle(.insetGrouped)
     }
 
     @ViewBuilder
     private func metricSection(
-        title: String,
+        title: LocalizedStringResource,
         metrics: [RideHistoryDetailViewState.Metric]
     ) -> some View {
         if !metrics.isEmpty {

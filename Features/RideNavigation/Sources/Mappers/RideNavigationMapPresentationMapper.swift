@@ -81,7 +81,7 @@ public struct RideNavigationMapPresentationMapper: Sendable {
                 NavigationMapMarker(
                     id: "start",
                     coordinate: start,
-                    title: "Start",
+                    title: String(localized: .rideNavigationMapMarkerStart),
                     role: .start
                 )
             )
@@ -91,7 +91,7 @@ public struct RideNavigationMapPresentationMapper: Sendable {
                 NavigationMapMarker(
                     id: "finish",
                     coordinate: finish,
-                    title: "Finish",
+                    title: String(localized: .rideNavigationMapMarkerFinish),
                     role: .finish
                 )
             )

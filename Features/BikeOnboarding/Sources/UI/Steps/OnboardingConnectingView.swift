@@ -9,7 +9,7 @@ struct OnboardingConnectingView: View {
 
     var body: some View {
         OnboardingStepLayout(
-            eyebrow: "CONNECTION",
+            eyebrow: BikeOnboardingL10n.text(.bikeOnboardingConnectionEyebrow),
             title: viewState.connectionState.title,
             detail: viewState.connectionState.detail
         ) {
@@ -39,7 +39,7 @@ struct OnboardingConnectingView: View {
                         action: onRetry
                     )
                 }
-                Button("Choose Another Bike", action: onCancel)
+                Button(BikeOnboardingL10n.text(.bikeOnboardingActionChooseAnotherBike), action: onCancel)
                     .buttonStyle(.plain)
                     .font(.subheadline.weight(.semibold))
                     .frame(maxWidth: .infinity, minHeight: Constants.minimumActionHeight)
@@ -57,7 +57,7 @@ struct OnboardingConnectingView: View {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundStyle(.green)
                 .accessibilityHidden(true)
-            Text("Pairing code copied")
+            Text(.bikeOnboardingPairingCodeCopied)
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(.secondary)
         }

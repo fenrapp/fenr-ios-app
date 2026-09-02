@@ -12,7 +12,8 @@ public struct BikeConnectionToConnectionPanelMapper: Sendable {
             status: stateMapper.title(for: connection.state),
             detail: stateMapper.detail(for: connection.state),
             rssi: connection.rssi.map { "\($0) dBm" } ?? BikeDiagnosticsText.emptyRSSI,
-            peripheral: peripheralText(connection)
+            peripheral: peripheralText(connection),
+            emphasis: stateMapper.emphasis(for: connection.state)
         )
     }
 

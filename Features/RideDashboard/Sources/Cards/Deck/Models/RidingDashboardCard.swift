@@ -10,14 +10,14 @@ public enum RidingDashboardCard: Int, CaseIterable, Hashable, Sendable {
 
     var accessibilityLabel: String {
         switch self {
-        case .speedometer: "Speedometer"
-        case .bikeLock: "Bike Lock"
-        case .navigation: "Ride Navigation"
-        case .currentTrip: "Current Trip"
-        case .efficiency: "Efficiency"
-        case .range: "Range"
-        case .systemHealth: "System Health"
-        case .dynamics: "Ride Dynamics"
+        case .speedometer: rideDashboardLocalized(.rideDashboardCardSpeedometerAccessibility)
+        case .bikeLock: rideDashboardLocalized(.rideDashboardCardBikeLockAccessibility)
+        case .navigation: rideDashboardLocalized(.rideDashboardCardNavigationAccessibility)
+        case .currentTrip: rideDashboardLocalized(.rideDashboardCardCurrentTripAccessibility)
+        case .efficiency: rideDashboardLocalized(.rideDashboardCardEfficiencyAccessibility)
+        case .range: rideDashboardLocalized(.rideDashboardCardRangeAccessibility)
+        case .systemHealth: rideDashboardLocalized(.rideDashboardCardSystemHealthAccessibility)
+        case .dynamics: rideDashboardLocalized(.rideDashboardCardDynamicsAccessibility)
         }
     }
 }

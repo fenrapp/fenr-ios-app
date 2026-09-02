@@ -26,7 +26,9 @@ struct OnboardingConnectionRecoveryView: View {
         .background { surfaceBackground }
         .clipShape(RoundedRectangle(cornerRadius: Constants.radius, style: .continuous))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(bikeTitle). VIN \(accessibilityVIN). Connection needs attention.")
+        .accessibilityLabel(BikeOnboardingL10n.text(
+            .bikeOnboardingAccessibilityConnectionNeedsAttention(bikeTitle, accessibilityVIN)
+        ))
     }
 
     @ViewBuilder private var surfaceBackground: some View {

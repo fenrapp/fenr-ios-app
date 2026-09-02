@@ -5,10 +5,16 @@ public struct BikeLockCardViewStateMapper: Sendable {
 
     func map(_ input: BikeLockCardMappingInput) -> BikeLockCardViewState {
         let isAvailable = input.firmware != nil
-        let status = input.isLocked ? "Locked" : "Unlocked"
+        let status = rideDashboardLocalized(
+            input.isLocked ? .rideDashboardBikeLockStatusLocked : .rideDashboardBikeLockStatusUnlocked
+        )
         let actionTitle = input.isLocked
-            ? "Unlock"
-            : (input.securityMode.isConfigured ? "Lock" : "Set Up")
+            ? rideDashboardLocalized(.rideDashboardBikeLockActionUnlock)
+            : rideDashboardLocalized(
+                input.securityMode.isConfigured
+                    ? .rideDashboardBikeLockActionLock
+                    : .rideDashboardBikeLockActionSetUp
+            )
         return .init(
             isAvailable: isAvailable,
             isLocked: input.isLocked,
@@ -18,11 +24,11 @@ public struct BikeLockCardViewStateMapper: Sendable {
                 && input.isVehicleStationary
                 && !input.isWorking,
             isConfigured: input.securityMode.isConfigured,
-            statusText: isAvailable ? status : "Unavailable",
+            statusText: isAvailable ? status : rideDashboardLocalized(.rideDashboardCommonUnavailable),
             actionTitle: actionTitle,
             detailText: isAvailable
-                ? "VCU PIC \(input.firmware ?? "")"
-                : "Bike Lock requires VCU PIC 1.6.29 or newer.",
+                ? rideDashboardLocalized(.rideDashboardBikeLockDetailFirmware(input.firmware ?? ""))
+                : rideDashboardLocalized(.rideDashboardBikeLockDetailMinimumFirmware),
             errorText: input.error,
             sheet: input.sheetUpdate.resolve(current: input.currentSheet)
         )

@@ -1,5 +1,6 @@
 #if os(iOS)
 import DesignSystem
+import Foundation
 import SwiftUI
 
 struct SettingsNavigationRow: View {
@@ -7,10 +8,42 @@ struct SettingsNavigationRow: View {
 
     let icon: String
     let iconTint: Color
-    let title: String
-    let detail: String
+    let title: LocalizedStringResource
+    let detail: Text
     let accessibilityIdentifier: String
     let action: () -> Void
+
+    init(
+        icon: String,
+        iconTint: Color,
+        title: LocalizedStringResource,
+        detail: LocalizedStringResource,
+        accessibilityIdentifier: String,
+        action: @escaping () -> Void
+    ) {
+        self.icon = icon
+        self.iconTint = iconTint
+        self.title = title
+        self.detail = Text(detail)
+        self.accessibilityIdentifier = accessibilityIdentifier
+        self.action = action
+    }
+
+    init(
+        icon: String,
+        iconTint: Color,
+        title: LocalizedStringResource,
+        verbatimDetail: String,
+        accessibilityIdentifier: String,
+        action: @escaping () -> Void
+    ) {
+        self.icon = icon
+        self.iconTint = iconTint
+        self.title = title
+        self.detail = Text(verbatim: verbatimDetail)
+        self.accessibilityIdentifier = accessibilityIdentifier
+        self.action = action
+    }
 
     var body: some View {
         Button(action: action) {
@@ -50,7 +83,7 @@ struct SettingsNavigationRow: View {
     }
 
     private var detailLabel: some View {
-        Text(detail)
+        detail
             .font(.subheadline)
             .foregroundStyle(.secondary)
     }

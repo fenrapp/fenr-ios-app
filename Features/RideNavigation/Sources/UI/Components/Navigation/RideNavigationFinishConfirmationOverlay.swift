@@ -59,7 +59,7 @@ struct RideNavigationFinishConfirmationOverlay: View {
 
     @ViewBuilder
     private var actionButtons: some View {
-        Button("Keep Riding", action: onCancel)
+        Button(.rideNavigationKeepRiding, action: onCancel)
             .controlSize(.large)
             .rideNavigationSecondaryButton()
         Button(confirmTitle, action: onConfirm)
@@ -74,19 +74,23 @@ struct RideNavigationFinishConfirmationOverlay: View {
 
     private var title: String {
         if let arrivalPrompt { return arrivalPrompt.title }
-        return isRecording ? "Finish recording?" : "End this route?"
+        return String(localized: isRecording
+            ? .rideNavigationFinishRecordingQuestion
+            : .rideNavigationEndRouteQuestion)
     }
 
     private var message: String {
         if let arrivalPrompt { return arrivalPrompt.detail }
         return isRecording
-            ? "Your recorded track will be ready to save or export."
-            : "Navigation will stop and you will see your ride summary."
+            ? String(localized: .rideNavigationFinishRecordingDetail)
+            : String(localized: .rideNavigationEndRouteDetail)
     }
 
     private var confirmTitle: String {
-        if arrivalPrompt != nil { return "Finish Route" }
-        return isRecording ? "Finish Recording" : "End Route"
+        if arrivalPrompt != nil { return String(localized: .rideNavigationFinishRoute) }
+        return String(localized: isRecording
+            ? .rideNavigationFinishRecording
+            : .rideNavigationEndRoute)
     }
 
     private var confirmTint: Color {

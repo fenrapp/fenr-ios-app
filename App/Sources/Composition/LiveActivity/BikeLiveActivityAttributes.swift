@@ -38,17 +38,6 @@ enum BikeLiveActivityRunState: String, Codable, Hashable {
     case crawlForward
     case crawlReverse
 
-    var displayTitle: String {
-        switch self {
-        case .unknown: "Unknown"
-        case .off: "Off"
-        case .neutral: "Neutral"
-        case .ride: "Ride"
-        case .charging: "Charging"
-        case .crawlForward: "Crawl"
-        case .crawlReverse: "Reverse"
-        }
-    }
 }
 
 enum BikeLiveActivityPhase: String, Codable, Hashable {
@@ -63,18 +52,4 @@ enum BikeLiveActivityPhase: String, Codable, Hashable {
     case stale
     case connectionLost
 
-    var displayTitle: String {
-        switch self {
-        case .charging: "Charging"
-        case .balancing: "Balancing"
-        case .complete: "Charge complete"
-        case .riding: "Riding"
-        case .neutral: "Neutral"
-        case .crawl: "Crawl"
-        case .fault: "Fault active"
-        case .reconnecting: "Reconnecting"
-        case .stale: "Waiting for update"
-        case .connectionLost: "Connection lost"
-        }
-    }
 }

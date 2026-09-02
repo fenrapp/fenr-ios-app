@@ -1,6 +1,7 @@
 import AppSettings
 import BikeDomain
 import EnvironmentDomain
+import Foundation
 import SettingsDomain
 import Testing
 import TestSupport
@@ -16,7 +17,9 @@ struct AppSettingsViewModelTests {
         let viewModel = fixture.viewModel
 
         await fixture.start()
-        #expect(await waitUntil { viewModel.viewState.powerTier.status == "Pending bike verification" })
+        #expect(await waitUntil {
+            String(localized: viewModel.viewState.powerTier.status) == "Pending bike verification"
+        })
         viewModel.selectSpeedSource(id: SpeedSource.hybrid.rawValue)
         viewModel.selectDashboardProgressBarMode(id: DashboardProgressBarMode.hidden.rawValue)
         viewModel.selectDashboardBatteryIndicatorMode(id: DashboardBatteryIndicatorMode.estimatedRange.rawValue)
@@ -56,28 +59,31 @@ struct AppSettingsViewModelTests {
         })
 
         #expect(viewModel.viewState.speedSource.selection.selectedID == SpeedSource.gps.rawValue)
-        #expect(viewModel.viewState.speedSource.selection.options.map(\.title) == ["Bike", "GPS", "GPS+"])
-        #expect(viewModel.viewState.speedSource.description.contains("phone GPS"))
+        #expect(viewModel.viewState.speedSource.selection.options.map { String(localized: $0.title) }
+            == ["Bike", "GPS", "GPS+"])
+        #expect(String(localized: viewModel.viewState.speedSource.description).contains("phone GPS"))
         #expect(viewModel.viewState.speedSource.locationPermission == .authorized)
         #expect(viewModel.viewState.dashboardProgressBarMode.selection.selectedID == "energy")
         #expect(
-            viewModel.viewState.dashboardProgressBarMode.selection.options.map(\.title)
+            viewModel.viewState.dashboardProgressBarMode.selection.options.map { String(localized: $0.title) }
                 == ["Energy", "Speed", "Hidden"]
         )
-        #expect(viewModel.viewState.dashboardProgressBarMode.description.contains("Regeneration"))
+        #expect(String(localized: viewModel.viewState.dashboardProgressBarMode.description).contains("Regeneration"))
         #expect(viewModel.viewState.dashboardBatteryIndicatorMode.selectedID == "percentage")
         #expect(
-            viewModel.viewState.dashboardBatteryIndicatorMode.options.map(\.title)
+            viewModel.viewState.dashboardBatteryIndicatorMode.options.map { String(localized: $0.title) }
                 == ["Percentage", "Estimated range"]
         )
         #expect(viewModel.viewState.dashboardDeviceBatteryDisplayMode.selectedID == "iconAndText")
         #expect(
-            viewModel.viewState.dashboardDeviceBatteryDisplayMode.options.map(\.title)
+            viewModel.viewState.dashboardDeviceBatteryDisplayMode.options.map { String(localized: $0.title) }
                 == ["Icon and percentage", "Percentage only", "Icon only", "Hidden"]
         )
         #expect(!viewModel.viewState.showsDashboardTemperatures)
-        #expect(viewModel.viewState.measurementSystem.options.map(\.title) == ["System", "Metric", "Imperial"])
-        #expect(viewModel.viewState.batteryCapacity.options.map(\.title) == ["6.8 kWh", "7.2 kWh"])
+        #expect(viewModel.viewState.measurementSystem.options.map { String(localized: $0.title) }
+            == ["System", "Metric", "Imperial"])
+        #expect(viewModel.viewState.batteryCapacity.options.map { String(localized: $0.title) }
+            == ["6.8 kWh", "7.2 kWh"])
 
         viewModel.selectSpeedSource(id: SpeedSource.motorcycle.rawValue)
         #expect(viewModel.viewState.speedSource.locationPermission == nil)
@@ -94,7 +100,7 @@ struct AppSettingsViewModelTests {
 
         await fixture.start()
         #expect(await waitUntil {
-            fixture.viewModel.viewState.powerTier.status == "Pending bike verification"
+            String(localized: fixture.viewModel.viewState.powerTier.status) == "Pending bike verification"
         })
         fixture.viewModel.selectDeclaredPowerTier(id: BikeDeclaredPowerTier.standard.rawValue)
         let firstSave = await saveStarts.next()
@@ -121,9 +127,10 @@ struct AppSettingsViewModelTests {
         _ = await refreshStarts.next()
 
         #expect(await waitUntil {
-            fixture.viewModel.viewState.powerTier.verificationMessage == "Bike verification completed"
+            fixture.viewModel.viewState.powerTier.verificationMessage.map(String.init(localized:))
+                == "Bike verification completed"
         })
-        #expect(fixture.viewModel.viewState.powerTier.status == "Standard baseline · 60 HP max")
+        #expect(String(localized: fixture.viewModel.viewState.powerTier.status) == "Standard baseline · 60 HP max")
         #expect(!fixture.viewModel.viewState.powerTier.isVerifying)
         #expect(!fixture.viewModel.viewState.powerTier.verificationMessageIsError)
         fixture.viewModel.stop()
@@ -139,9 +146,10 @@ struct AppSettingsViewModelTests {
         _ = await refreshStarts.next()
 
         #expect(await waitUntil {
-            fixture.viewModel.viewState.powerTier.verificationMessage == "Verification failed: Refresh failed"
+            fixture.viewModel.viewState.powerTier.verificationMessage.map { String(localized: $0) }
+                == "Bike verification failed. Try again."
         })
-        #expect(fixture.viewModel.viewState.powerTier.status == "Standard baseline · 60 HP max")
+        #expect(String(localized: fixture.viewModel.viewState.powerTier.status) == "Standard baseline · 60 HP max")
         #expect(!fixture.viewModel.viewState.powerTier.isVerifying)
         #expect(fixture.viewModel.viewState.powerTier.verificationMessageIsError)
         fixture.viewModel.stop()

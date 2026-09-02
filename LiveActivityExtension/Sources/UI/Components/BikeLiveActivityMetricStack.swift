@@ -28,7 +28,10 @@ struct BikeLiveActivityMetricStack: View {
                     .lineLimit(accessibilityLineLimit)
                     .minimumScaleFactor(Constants.compactMinimumScale)
                     .fixedSize(horizontal: false, vertical: usesAccessibilityLayout)
-                    .accessibilityLabel("\(metric.title), \(metric.value)")
+                    .accessibilityLabel(BikeLiveActivityText.metricAccessibilityLabel(
+                        title: metric.title,
+                        value: metric.value
+                    ))
             }
         }
     }
@@ -91,7 +94,10 @@ struct BikeLiveActivityMetricStack: View {
                     value: BikeLiveActivityFormatter.modeText(state.modeIndex)
                 ),
                 OptionalBikeLiveActivityMetric(title: BikeLiveActivityText.speed, value: state.speedText),
-                OptionalBikeLiveActivityMetric(title: "State", value: state.runState.displayTitle)
+                OptionalBikeLiveActivityMetric(
+                    title: BikeLiveActivityText.state,
+                    value: BikeLiveActivityText.runState(state.runState)
+                )
             ]
         }
     }

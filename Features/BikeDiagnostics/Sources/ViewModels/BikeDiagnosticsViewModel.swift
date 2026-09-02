@@ -124,7 +124,7 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
             } catch is CancellationError {
                 return
             } catch {
-                self?.bleTraceError = "Unable to prepare BLE log: \(error.localizedDescription)"
+                self?.bleTraceError = BikeDiagnosticsL10n.text(.bikeDiagnosticsBleLogPrepareError)
                 self?.render()
             }
         }
@@ -234,7 +234,10 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
     }
 
     private func appendDebugError(_ error: Error) {
-        appendDebugEvent(BikeDebugEvent(title: "Error", detail: String(describing: error)))
+        appendDebugEvent(BikeDebugEvent(
+            title: BikeDiagnosticsL10n.text(.bikeDiagnosticsDebugErrorTitle),
+            detail: String(describing: error)
+        ))
     }
 
     private func appendDebugEvent(_ event: BikeDebugEvent) {
@@ -269,7 +272,7 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
             } catch is CancellationError {
                 return
             } catch {
-                self?.bleTraceError = "BLE log operation failed: \(error.localizedDescription)"
+                self?.bleTraceError = BikeDiagnosticsL10n.text(.bikeDiagnosticsBleLogOperationError)
                 self?.render()
             }
         }

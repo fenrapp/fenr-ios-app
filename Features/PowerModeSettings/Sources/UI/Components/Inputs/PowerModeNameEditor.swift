@@ -34,7 +34,7 @@ struct PowerModeNameEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.spacing) {
-            TextField("Map name", text: $draft)
+            TextField(String(localized: .powerModeSettingsMapNameField), text: $draft)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .submitLabel(.done)
@@ -49,7 +49,7 @@ struct PowerModeNameEditor: View {
                 Text(error)
                     .font(.caption)
                     .foregroundStyle(DesignColor.critical)
-                    .accessibilityLabel("Error: \(error)")
+                    .accessibilityLabel(Text(.powerModeSettingsErrorAccessibility(error)))
             }
 
             nameActions
@@ -66,12 +66,12 @@ struct PowerModeNameEditor: View {
     private var nameGuidance: some View {
         if dynamicTypeSize.isAccessibilitySize {
             VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
-                Text("One word · letters and numbers only")
+                Text(.powerModeSettingsNameGuidance)
                 characterCount
             }
         } else {
             HStack {
-                Text("One word · letters and numbers only")
+                Text(.powerModeSettingsNameGuidance)
                 Spacer()
                 characterCount
             }
@@ -79,7 +79,7 @@ struct PowerModeNameEditor: View {
     }
 
     private var characterCount: some View {
-        Text("\(draft.count)/\(maximumLength)")
+        Text(.powerModeSettingsCharacterCount(draft.count, maximumLength))
             .foregroundStyle(
                 draft.count > maximumLength
                     ? DesignColor.critical
@@ -103,7 +103,7 @@ struct PowerModeNameEditor: View {
     }
 
     private var saveButton: some View {
-        Button("Save", action: submit)
+        Button(.powerModeSettingsSaveName, action: submit)
             .buttonStyle(.borderedProminent)
             .disabled(!canSave)
     }
@@ -111,7 +111,7 @@ struct PowerModeNameEditor: View {
     @ViewBuilder
     private var resetButton: some View {
         if !currentName.isEmpty {
-            Button("Reset name", role: .destructive, action: reset)
+            Button(.powerModeSettingsResetName, role: .destructive, action: reset)
                 .buttonStyle(.bordered)
         }
     }

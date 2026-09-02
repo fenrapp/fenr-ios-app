@@ -32,7 +32,9 @@ struct WatchChangeBikeButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button("Change Bike", role: .destructive, action: action)
+        Button(role: .destructive, action: action) {
+            Text(.watchDashboardChangeBike)
+        }
             .font(.caption)
     }
 }

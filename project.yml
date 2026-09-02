@@ -2,6 +2,7 @@ name: FENR
 options:
   minimumXcodeGenVersion: 2.42.0
   createIntermediateGroups: true
+  developmentLanguage: en
   deploymentTarget:
     iOS: "17.0"
     watchOS: "10.0"
@@ -14,6 +15,9 @@ settings:
     IPHONEOS_DEPLOYMENT_TARGET: "17.0"
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
+    STRING_CATALOG_GENERATE_SYMBOLS: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
 targets:
   AsyncSupport:
     type: framework
@@ -232,6 +236,8 @@ targets:
     supportedDestinations: [iOS, watchOS]
     sources:
       - path: Modules/DesignSystem/Sources
+      - path: Modules/DesignSystem/Resources
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.designsystem
@@ -258,6 +264,8 @@ targets:
     platform: iOS
     sources:
       - path: Features/BikeDiagnostics/Sources
+      - path: Features/BikeDiagnostics/Resources
+        buildPhase: resources
     dependencies:
       - target: AsyncSupport
       - target: BLETraceDomain
@@ -288,6 +296,8 @@ targets:
     platform: iOS
     sources:
       - path: Features/RideDashboard/Sources
+      - path: Features/RideDashboard/Resources
+        buildPhase: resources
     dependencies:
       - target: BikeDomain
       - target: RideSession
@@ -306,6 +316,8 @@ targets:
     platform: iOS
     sources:
       - path: Features/BatteryHealth/Sources
+      - path: Features/BatteryHealth/Resources
+        buildPhase: resources
     dependencies:
       - target: BikeDomain
       - target: SettingsDomain
@@ -323,6 +335,8 @@ targets:
     supportedDestinations: [iOS, watchOS]
     sources:
       - path: Features/AppSettings/Sources
+      - path: Features/AppSettings/Resources
+        buildPhase: resources
     dependencies:
       - target: BikeDomain
       - target: SettingsDomain
@@ -336,6 +350,8 @@ targets:
     platform: iOS
     sources:
       - path: Features/DashboardCardSettings/Sources
+      - path: Features/DashboardCardSettings/Resources
+        buildPhase: resources
     dependencies:
       - target: BikeDomain
       - target: SettingsDomain
@@ -348,6 +364,8 @@ targets:
     platform: iOS
     sources:
       - path: Features/BikeLockSettings/Sources
+      - path: Features/BikeLockSettings/Resources
+        buildPhase: resources
     dependencies:
       - target: BikeDomain
       - target: SettingsDomain
@@ -361,6 +379,8 @@ targets:
     platform: iOS
     sources:
       - path: Features/PowerModeSettings/Sources
+      - path: Features/PowerModeSettings/Resources
+        buildPhase: resources
     dependencies:
       - target: BikeDomain
       - target: SettingsDomain
@@ -374,6 +394,8 @@ targets:
     platform: iOS
     sources:
       - path: Features/RideHistory/Sources
+      - path: Features/RideHistory/Resources
+        buildPhase: resources
     dependencies:
       - target: RideSession
       - target: RideSessionDomain
@@ -388,6 +410,8 @@ targets:
     platform: iOS
     sources:
       - path: Features/RideNavigation/Sources
+      - path: Features/RideNavigation/Resources
+        buildPhase: resources
     dependencies:
       - target: EnvironmentDomain
       - target: RideNavigationDomain
@@ -402,6 +426,8 @@ targets:
     platform: iOS
     sources:
       - path: Modules/RideNavigationAppleMaps/Sources
+      - path: Modules/RideNavigationAppleMaps/Resources
+        buildPhase: resources
     dependencies:
       - target: EnvironmentDomain
       - target: RideNavigationDomain
@@ -415,6 +441,8 @@ targets:
     deploymentTarget: "10.0"
     sources:
       - path: Features/WatchDashboard/Sources
+      - path: Features/WatchDashboard/Resources
+        buildPhase: resources
     dependencies:
       - target: BikeDomain
       - target: DesignSystem
@@ -430,6 +458,8 @@ targets:
     deploymentTarget: "10.0"
     sources:
       - path: Features/WatchOnboarding/Sources
+      - path: Features/WatchOnboarding/Resources
+        buildPhase: resources
     dependencies:
       - target: BikeDomain
       - target: DesignSystem
@@ -484,7 +514,11 @@ targets:
           - UIInterfaceOrientationLandscapeRight
     sources:
       - path: App/Sources
-      - path: App/Resources
+      - path: App/Resources/Assets.xcassets
+      - path: App/Resources/Shared/Localizable.xcstrings
+        buildPhase: resources
+      - path: App/Resources/Production/InfoPlist.xcstrings
+        buildPhase: resources
     preBuildScripts:
       - name: SwiftLint
         basedOnDependencyAnalysis: false
@@ -616,7 +650,11 @@ targets:
           - Composition/StarkProtocol
           - Composition/Production
       - path: App/DebugSources
-      - path: App/Resources
+      - path: App/Resources/Assets.xcassets
+      - path: App/Resources/Shared/Localizable.xcstrings
+        buildPhase: resources
+      - path: App/Resources/Debug/InfoPlist.xcstrings
+        buildPhase: resources
     preBuildScripts:
       - name: SwiftLint
         basedOnDependencyAnalysis: false
@@ -682,6 +720,7 @@ targets:
         ENABLE_USER_SCRIPT_SANDBOXING: NO
         INFOPLIST_KEY_CFBundleDisplayName: FENR Debug
         INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: FENR uses Bluetooth to authenticate with your Stark Varg and display telemetry.
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: FENR uses your location for GPS speed, ride recording, and route navigation.
         CODE_SIGN_ENTITLEMENTS: App/FENRDebug.entitlements
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone:
@@ -699,6 +738,8 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: LiveActivityExtension/Sources
+      - path: LiveActivityExtension/Resources
+        buildPhase: resources
       - path: App/Sources/Composition/LiveActivity/BikeLiveActivityAttributes.swift
     dependencies:
       - target: DesignSystem
@@ -713,6 +754,8 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: LiveActivityExtension/Sources
+      - path: LiveActivityExtension/Resources
+        buildPhase: resources
       - path: App/Sources/Composition/LiveActivity/BikeLiveActivityAttributes.swift
     dependencies:
       - target: DesignSystem
@@ -727,6 +770,8 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: ShareExtension/Sources
+      - path: ShareExtension/Resources
+        buildPhase: resources
     dependencies:
       - target: RideNavigationData
       - target: RideNavigationDomain
@@ -745,6 +790,8 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: ShareExtension/Sources
+      - path: ShareExtension/Resources
+        buildPhase: resources
     dependencies:
       - target: RideNavigationData
       - target: RideNavigationDomain
@@ -768,6 +815,8 @@ targets:
           - bluetooth-central
     sources:
       - path: Watch/Sources
+      - path: Watch/Resources/Production/InfoPlist.xcstrings
+        buildPhase: resources
     dependencies:
       - target: AsyncSupport
         embed: true
@@ -816,6 +865,8 @@ targets:
           - App/FENRWatchApp.swift
           - Composition/Production/LiveWatchAppDependencyContainerFactory.swift
       - path: Watch/DebugSources
+      - path: Watch/Resources/Debug/InfoPlist.xcstrings
+        buildPhase: resources
     dependencies:
       - target: AsyncSupport
         embed: true
@@ -846,6 +897,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watch.debug
         INFOPLIST_KEY_CFBundleDisplayName: FENR Debug
         INFOPLIST_KEY_WKWatchOnly: YES
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: FENR uses Bluetooth to connect directly to your bike and show live telemetry.
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
   StarkProtocolTests:
     type: bundle.unit-test
@@ -1304,6 +1356,8 @@ targets:
     sources:
       - path: App/Tests
       - path: App/Sources/Composition
+      - path: App/Resources/Shared/Localizable.xcstrings
+        buildPhase: resources
     dependencies:
       - target: TestSupport
       - target: BLETraceData
@@ -1352,6 +1406,8 @@ targets:
           - BikeSDK
           - StarkProtocol
           - Production
+      - path: App/Resources/Shared/Localizable.xcstrings
+        buildPhase: resources
     dependencies:
       - target: BLETraceData
       - target: BLETraceDomain

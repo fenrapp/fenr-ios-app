@@ -44,23 +44,25 @@ public struct CurrentTripCardMapper: Sendable {
         let durationText = Duration.seconds(trip.elapsedSeconds).formatted(durationFormatStyle)
         return .init(
             durationText: durationText,
-            statusText: trip.isPaused ? "PAUSED" : "IN PROGRESS",
+            statusText: rideDashboardLocalized(
+                trip.isPaused ? .rideDashboardCurrentTripStatusPaused : .rideDashboardCurrentTripStatusInProgress
+            ),
             distance: metric(
-                label: "DISTANCE",
+                label: rideDashboardLocalized(.rideDashboardMetricDistance),
                 measurement: distance,
                 fractionDigits: 1,
                 systemImage: "location",
                 mapper: measurementMapper
             ),
             averageSpeed: metric(
-                label: "AVERAGE",
+                label: rideDashboardLocalized(.rideDashboardMetricAverage),
                 measurement: averageSpeed,
                 fractionDigits: 0,
                 systemImage: "speedometer",
                 mapper: measurementMapper
             ),
             maximumSpeed: metric(
-                label: "MAX SPEED",
+                label: rideDashboardLocalized(.rideDashboardMetricMaximumSpeed),
                 measurement: maximumSpeed,
                 fractionDigits: 0,
                 systemImage: "arrow.up.right",
@@ -69,25 +71,51 @@ public struct CurrentTripCardMapper: Sendable {
             speedSourceIndicator: sourceIndicator,
             isActive: true,
             isPaused: trip.isPaused,
-            accessibilityLabel: "Current trip\(trip.isPaused ? ", paused" : ""). "
-                + "Duration \(durationText). "
-                + "Distance \(distance.value) \(distance.unit). "
-                + "Average speed \(averageSpeed.value) \(averageSpeed.unit). "
-                + "Maximum speed \(maximumSpeed.value) \(maximumSpeed.unit)."
-                + sourceAccessibility(sourceIndicator)
+            accessibilityLabel: accessibilityLabel(.init(
+                isPaused: trip.isPaused,
+                durationText: durationText,
+                distance: distance,
+                averageSpeed: averageSpeed,
+                maximumSpeed: maximumSpeed,
+                sourceIndicator: sourceIndicator
+            ))
+        )
+    }
+
+    private func accessibilityLabel(_ input: CurrentTripAccessibilityInput) -> String {
+        let source = sourceAccessibility(input.sourceIndicator)
+        return rideDashboardLocalized(
+            input.isPaused
+                ? .rideDashboardCurrentTripAccessibilityPaused(
+                    input.durationText, String(input.distance.value), input.distance.unit,
+                    String(input.averageSpeed.value), input.averageSpeed.unit,
+                    String(input.maximumSpeed.value), input.maximumSpeed.unit, source
+                )
+                : .rideDashboardCurrentTripAccessibility(
+                    input.durationText, String(input.distance.value), input.distance.unit,
+                    String(input.averageSpeed.value), input.averageSpeed.unit,
+                    String(input.maximumSpeed.value), input.maximumSpeed.unit, source
+                )
         )
     }
 
     private func readyAccessibilityLabel(
         sourceIndicator: DashboardSpeedSourceIndicatorViewData?
     ) -> String {
-        "Current trip has not started" + sourceAccessibility(sourceIndicator)
+        guard let sourceIndicator else {
+            return rideDashboardLocalized(.rideDashboardCurrentTripAccessibilityNotStarted)
+        }
+        return rideDashboardLocalized(
+            .rideDashboardCurrentTripAccessibilityNotStartedWithSource(sourceIndicator.text)
+        )
     }
 
     private func sourceAccessibility(
         _ sourceIndicator: DashboardSpeedSourceIndicatorViewData?
     ) -> String {
-        sourceIndicator.map { " \($0.text) speed source." } ?? ""
+        sourceIndicator.map {
+            rideDashboardLocalized(.rideDashboardCurrentTripSourceAccessibility($0.text))
+        } ?? ""
     }
 
     private func metric(
@@ -104,4 +132,13 @@ public struct CurrentTripCardMapper: Sendable {
             systemImage: systemImage
         )
     }
+}
+
+private struct CurrentTripAccessibilityInput {
+    let isPaused: Bool
+    let durationText: String
+    let distance: RideDashboardMeasurement
+    let averageSpeed: RideDashboardMeasurement
+    let maximumSpeed: RideDashboardMeasurement
+    let sourceIndicator: DashboardSpeedSourceIndicatorViewData?
 }

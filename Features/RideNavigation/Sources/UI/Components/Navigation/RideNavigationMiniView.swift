@@ -85,7 +85,9 @@ struct RideNavigationMiniView: View {
         }
         .buttonStyle(.plain)
         .rideNavigationGlassControl()
-        .accessibilityLabel(state.isLandscape ? "Use vertical mini map" : "Use horizontal mini map")
+        .accessibilityLabel(state.isLandscape
+            ? .rideNavigationUseVerticalMiniMap
+            : .rideNavigationUseHorizontalMiniMap)
         .accessibilityIdentifier("rideNavigation.miniMap.orientation")
     }
 
@@ -126,14 +128,14 @@ struct RideNavigationMiniView: View {
         .contentShape(RoundedRectangle(cornerRadius: Constants.cornerRadius, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(state.accessibilityLabel)
-        .accessibilityHint("Drag to reposition, pinch to resize, or tap to expand navigation")
+        .accessibilityHint(.rideNavigationMiniMapHint)
         .accessibilityAddTraits(.isButton)
-        .accessibilityAction(named: Text("Expand navigation"), onExpand)
+        .accessibilityAction(named: Text(.rideNavigationExpandNavigation), onExpand)
         .accessibilityIdentifier("rideNavigation.miniMap")
     }
 
     private var miniStatusText: String? {
-        if state.isArrivalPending { return "END REACHED - TAP" }
+        if state.isArrivalPending { return String(localized: .rideNavigationEndReachedTap) }
         if let forkGuidance = state.forkGuidance {
             return [forkGuidance.instructionText, forkGuidance.distanceText]
                 .compactMap { $0 }

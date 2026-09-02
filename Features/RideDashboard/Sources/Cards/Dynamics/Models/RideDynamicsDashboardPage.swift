@@ -5,9 +5,9 @@ public enum RideDynamicsDashboardPage: Int, CaseIterable, Hashable, Sendable {
 
     var accessibilityLabel: String {
         switch self {
-        case .lean: "Lean"
-        case .pitch: "Pitch"
-        case .course: "Course"
+        case .lean: rideDashboardLocalized(.rideDashboardPageLeanAccessibility)
+        case .pitch: rideDashboardLocalized(.rideDashboardPagePitchAccessibility)
+        case .course: rideDashboardLocalized(.rideDashboardPageCourseAccessibility)
         }
     }
 }

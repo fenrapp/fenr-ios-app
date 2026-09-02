@@ -37,7 +37,7 @@ struct DashboardRidingCardDeck<Content: View>: View {
             selection: $selection,
             axis: .vertical,
             reduceMotion: reduceMotion,
-            accessibilityLabel: "Dashboard cards",
+            accessibilityLabel: rideDashboardLocalized(.rideDashboardCardsAccessibility),
             accessibilityValue: \.accessibilityLabel,
             onInteractionChanged: { isInteracting in
                 if isInteracting {

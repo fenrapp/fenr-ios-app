@@ -1,0 +1,28 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "appDefaultBikeName" : { "comment" : "Fallback bike name shown in Live Activities when no VIN is available.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Stark Varg" } } } },
+    "appBikeLockEnterPIN" : { "comment" : "Fallback action title shown by LocalAuthentication for Bike Lock.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter PIN" } } } },
+    "appBikeLockKeychainUnavailable" : { "comment" : "Fallback error when the Bike Lock PIN cannot be read from Keychain.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unable to access the Bike Lock PIN" } } } },
+    "debugActiveMap" : { "comment" : "Debug picker title for the active power map.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Active map" } } } },
+    "debugChangesPublishLive" : { "comment" : "Explains that debug power-mode changes are immediately published.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Changes publish live telemetry and appear on the dashboard immediately." } } } },
+    "debugMapNumber" : { "comment" : "Title of a numbered power map in the debug picker.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Map %1$(mapNumber)lld" } } } },
+    "debugOperationalScenario" : { "comment" : "Debug picker title for the emulator scenario.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Operational scenario" } } } },
+    "debugPowerModeData" : { "comment" : "Debug picker title for emulated power-mode data.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Power mode data" } } } },
+    "debugPowerModeSection" : { "comment" : "Title of the debug power-mode controls section.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "FENR Debug" } } } },
+    "debugPresetAlpha" : { "comment" : "Debug emulator power-mode preset.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Alpha 80" } } } },
+    "debugPresetClaimedAlpha" : { "comment" : "Debug emulator power-mode preset.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Claimed Alpha" } } } },
+    "debugPresetFailure" : { "comment" : "Debug emulator power-mode preset.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Read failure" } } } },
+    "debugPresetMismatch" : { "comment" : "Debug emulator power-mode preset.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Tier mismatch" } } } },
+    "debugPresetPartial" : { "comment" : "Debug emulator power-mode preset.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Partial data" } } } },
+    "debugPresetStandard" : { "comment" : "Debug emulator power-mode preset.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Standard 60" } } } },
+    "debugScenarioCellAnomaly" : { "comment" : "Debug emulator scenario.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cell anomaly" } } } },
+    "debugScenarioCellBalancing" : { "comment" : "Debug emulator scenario.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cell balancing" } } } },
+    "debugScenarioChargerIdle" : { "comment" : "Debug emulator scenario.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charger idle" } } } },
+    "debugScenarioCharging" : { "comment" : "Debug emulator scenario.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Normal charging" } } } },
+    "debugScenarioChargingUnavailable" : { "comment" : "Debug emulator scenario.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charging data unavailable" } } } },
+    "debugScenarioRiding" : { "comment" : "Debug emulator scenario.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Riding" } } } },
+    "debugScenarioRidingClean" : { "comment" : "Debug emulator scenario without indicator flags.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Riding (no indicators)" } } } }
+  },
+  "version" : "1.0"
+}

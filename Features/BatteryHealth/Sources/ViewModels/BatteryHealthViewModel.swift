@@ -140,9 +140,9 @@ public final class BatteryHealthViewModel: ObservableObject {
         case .active:
             isMonitoring = true
             monitorError = nil
-        case .failed(let message):
+        case .failed:
             isMonitoring = false
-            monitorError = message
+            monitorError = String(localized: .batteryHealthMonitoringError)
         }
         scheduleRender()
     }

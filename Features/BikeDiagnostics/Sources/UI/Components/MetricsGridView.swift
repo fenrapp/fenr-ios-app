@@ -5,7 +5,10 @@ struct MetricsGridView: View {
     let title: String
     let metrics: [BikeDiagnosticsMetricViewData]
 
-    init(title: String = "Telemetry", metrics: [BikeDiagnosticsMetricViewData]) {
+    init(
+        title: String = BikeDiagnosticsL10n.text(.bikeDiagnosticsSectionTelemetry),
+        metrics: [BikeDiagnosticsMetricViewData]
+    ) {
         self.title = title
         self.metrics = metrics
     }
@@ -17,7 +20,7 @@ struct MetricsGridView: View {
     var body: some View {
         SurfacePanel(title: title) {
             if metrics.isEmpty {
-                Text("Waiting for telemetry")
+                Text(.bikeDiagnosticsWaitingForTelemetry)
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)

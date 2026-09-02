@@ -49,7 +49,7 @@ struct FocusNavigationMapView: View {
                 resetViewportInteraction()
             }
             .accessibilityElement()
-            .accessibilityLabel("Focus navigation map")
+            .accessibilityLabel(.rideNavigationAppleMapsFocusMapAccessibility)
         }
     }
 

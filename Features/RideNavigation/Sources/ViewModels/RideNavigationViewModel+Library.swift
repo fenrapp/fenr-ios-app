@@ -48,7 +48,7 @@ extension RideNavigationViewModel {
                           generation: generation
                       ) else { return }
                 state.routePersistence.fail(
-                    "The recorded route could not be saved. It is still available to retry."
+                    String(localized: .rideNavigationRecordedRouteSaveError)
                 )
                 errorText = nil
                 if isStarted { render() }
@@ -98,7 +98,7 @@ extension RideNavigationViewModel {
 
     public func exportCompletedRoute() {
         guard let route = completedRecording ?? selectedRoute ?? roadRouteForExport else {
-            errorText = "There is no route available to export."
+            errorText = String(localized: .rideNavigationNoRouteToExport)
             render()
             return
         }
@@ -108,7 +108,7 @@ extension RideNavigationViewModel {
                 data: try dependencies.routeLibrary.export(route)
             )
         } catch {
-            errorText = "The GPX file could not be created."
+            errorText = String(localized: .rideNavigationGPXCreateError)
             render()
         }
     }
@@ -127,7 +127,7 @@ extension RideNavigationViewModel {
             errorText = nil
             render()
         } catch {
-            errorText = "The GPX file could not be created."
+            errorText = String(localized: .rideNavigationGPXCreateError)
             render()
         }
     }
@@ -162,7 +162,7 @@ extension RideNavigationViewModel {
                 self?.receiveRouteDeletion(
                     routes,
                     id: id,
-                    errorText: "The route could not be deleted."
+                    errorText: String(localized: .rideNavigationRouteDeleteError)
                 )
             }
         }
@@ -193,7 +193,7 @@ extension RideNavigationViewModel {
                 guard let self,
                       operations.isCurrent(.externalLink, generation: generation, lifecycle: lifecycle),
                       isStarted else { return }
-                errorText = "This map link does not contain a destination FENR can open."
+                errorText = String(localized: .rideNavigationMapLinkNoDestination)
                 render()
             }
         }
@@ -249,12 +249,12 @@ extension RideNavigationViewModel {
             mapDisplayStyle = .map
             cameraMode = .automatic
             errorText = routes.count > 1
-                ? "This GPX contains \(routes.count) tracks. Showing the first track."
+                ? String(localized: .rideNavigationGPXMultipleTracks(trackCount: routes.count))
                 : nil
             render()
             prepareTrailPreview()
         } catch {
-            errorText = "This GPX file could not be read."
+            errorText = String(localized: .rideNavigationGPXReadError)
             render()
         }
     }
@@ -311,7 +311,9 @@ extension RideNavigationViewModel {
         screen = .map
         startClock()
         render()
-        announce(activity == .following ? "Enduro navigation started" : "Road navigation started")
+        announce(String(localized: activity == .following
+            ? .rideNavigationAnnouncementEnduroStarted
+            : .rideNavigationAnnouncementRoadStarted))
     }
 
     func receiveLoadedRoutes(_ routes: [RideRoute]) {
@@ -332,13 +334,13 @@ extension RideNavigationViewModel {
     }
 
     func defaultRouteName(at date: Date) -> String {
-        "Ride \(date.formatted(date: .abbreviated, time: .shortened))"
+        String(localized: .rideNavigationDefaultRideName(date.formatted(date: .abbreviated, time: .shortened)))
     }
 
     func sanitizedFilename(_ value: String) -> String {
         let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_"))
         let sanitized = value.unicodeScalars.map { allowed.contains($0) ? Character(String($0)) : "-" }
         let filename = String(sanitized).trimmingCharacters(in: CharacterSet(charactersIn: "-"))
-        return filename.isEmpty ? "Ride" : filename
+        return filename.isEmpty ? String(localized: .rideNavigationDefaultExportName) : filename
     }
 }

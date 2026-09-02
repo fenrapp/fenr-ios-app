@@ -13,7 +13,7 @@ struct DashboardEfficiencyTrendCard: View {
                     ProgressView()
                         .tint(DesignColor.informational)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .accessibilityLabel("Loading efficiency trend")
+                        .accessibilityLabel(.rideDashboardEfficiencyTrendLoading)
                 } else if state.trendPoints.isEmpty {
                     emptyState
                 } else {
@@ -27,8 +27,8 @@ struct DashboardEfficiencyTrendCard: View {
     }
 
     private var header: some View {
-        DashboardTripCardHeader(title: "EFFICIENCY · TREND") {
-            Text("LAST 10 TRIPS")
+        DashboardTripCardHeader(title: rideDashboardLocalized(.rideDashboardEfficiencyTrendTitle)) {
+            Text(.rideDashboardEfficiencyTrendLastTrips)
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(DesignColor.secondaryText)
         }
@@ -48,8 +48,8 @@ struct DashboardEfficiencyTrendCard: View {
     private var trendChart: some View {
         Chart(state.trendPoints) { point in
             AreaMark(
-                x: .value("Trip", point.date),
-                y: .value("Efficiency", point.efficiency)
+                x: .value(rideDashboardLocalized(.rideDashboardChartTrip), point.date),
+                y: .value(rideDashboardLocalized(.rideDashboardChartEfficiency), point.efficiency)
             )
             .foregroundStyle(
                 .linearGradient(
@@ -59,15 +59,15 @@ struct DashboardEfficiencyTrendCard: View {
                 )
             )
             LineMark(
-                x: .value("Trip", point.date),
-                y: .value("Efficiency", point.efficiency)
+                x: .value(rideDashboardLocalized(.rideDashboardChartTrip), point.date),
+                y: .value(rideDashboardLocalized(.rideDashboardChartEfficiency), point.efficiency)
             )
             .foregroundStyle(DesignColor.informational)
             .lineStyle(.init(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
             if point.id == state.trendPoints.last?.id {
                 PointMark(
-                    x: .value("Trip", point.date),
-                    y: .value("Efficiency", point.efficiency)
+                    x: .value(rideDashboardLocalized(.rideDashboardChartTrip), point.date),
+                    y: .value(rideDashboardLocalized(.rideDashboardChartEfficiency), point.efficiency)
                 )
                 .foregroundStyle(DesignColor.positive)
                 .symbolSize(Constants.lastPointSize)
@@ -81,7 +81,9 @@ struct DashboardEfficiencyTrendCard: View {
             }
         }
         .frame(maxWidth: .infinity, minHeight: Constants.chartHeight)
-        .accessibilityLabel("Efficiency across \(state.trendPoints.count) trips")
+        .accessibilityLabel(rideDashboardLocalized(
+            .rideDashboardEfficiencyTrendAccessibility(state.trendPoints.count)
+        ))
     }
 
     private var emptyState: some View {
@@ -89,10 +91,14 @@ struct DashboardEfficiencyTrendCard: View {
             Image(systemName: state.hasConfirmedVehicle ? "chart.xyaxis.line" : "motorcycle")
                 .font(.title2)
                 .foregroundStyle(DesignColor.secondaryText)
-            Text(state.hasConfirmedVehicle ? "NO QUALIFYING TRIPS YET" : "WAITING FOR BIKE IDENTITY")
+            Text(
+                state.hasConfirmedVehicle
+                    ? rideDashboardLocalized(.rideDashboardEfficiencyTrendNoTrips)
+                    : rideDashboardLocalized(.rideDashboardEfficiencyTrendWaitingIdentity)
+            )
                 .font(.caption.weight(.bold))
                 .foregroundStyle(DesignColor.secondaryText)
-            Text("Trips need at least 1 km and 90% power coverage.")
+            Text(.rideDashboardEfficiencyTrendRequirements)
                 .font(.caption2)
                 .foregroundStyle(DesignColor.secondaryText)
                 .multilineTextAlignment(.center)
@@ -102,8 +108,11 @@ struct DashboardEfficiencyTrendCard: View {
 
     private var accessibilityLabel: String {
         state.trendPoints.isEmpty
-            ? "Efficiency trend has no qualifying trips"
-            : "Efficiency trend, latest \(state.trendPoints.last?.efficiency ?? .zero) \(state.unitText)"
+            ? rideDashboardLocalized(.rideDashboardEfficiencyTrendEmptyAccessibility)
+            : rideDashboardLocalized(.rideDashboardEfficiencyTrendLatestAccessibility(
+                (state.trendPoints.last?.efficiency ?? .zero).formatted(),
+                state.unitText
+            ))
     }
 
     private enum Constants {

@@ -6,7 +6,7 @@ public struct ChargeControlLogStore {
     public init() {}
 
     mutating func appendTelemetry(charging: BikeChargingStatus) {
-        let type = "\(charging.chargerType.displayName) raw=\(charging.chargerType.rawValue)"
+        let type = "\(charging.chargerType.technicalLogName) raw=\(charging.chargerType.rawValue)"
         let line = "5001 type=\(type) "
             + "maximumPower=\(Int(charging.maximumPowerWatts.rounded())) W "
             + "maxSoc=\(charging.maximumStateOfChargePercent)%"

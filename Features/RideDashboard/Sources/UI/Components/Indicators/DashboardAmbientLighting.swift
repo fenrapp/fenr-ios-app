@@ -27,7 +27,7 @@ struct DashboardAmbientLighting: View {
         .padding(Constants.screenInset)
         .allowsHitTesting(false)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Active bike indicators")
+        .accessibilityLabel(.rideDashboardIndicatorsActiveAccessibility)
         .accessibilityValue(accessibilityValue)
         .accessibilityHidden(accessibilityValue.isEmpty)
         .animation(Constants.stateAnimation, value: indicators)

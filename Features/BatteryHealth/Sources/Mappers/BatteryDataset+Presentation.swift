@@ -1,15 +1,16 @@
 import BikeDomain
+import Foundation
 
 extension BatteryDataset {
     var displayName: String {
         switch self {
-        case .bmsStatus: "BMS status"
-        case .temperatures: "Temperatures"
-        case .dcBus: "DC bus"
-        case .cellVoltages: "Cell voltages"
-        case .balancing: "Balancing"
-        case .signals: "BMS signals"
-        case .charger: "Charger"
+        case .bmsStatus: String(localized: .batteryHealthDatasetBmsStatus)
+        case .temperatures: String(localized: .batteryHealthDatasetTemperatures)
+        case .dcBus: String(localized: .batteryHealthDatasetDcBus)
+        case .cellVoltages: String(localized: .batteryHealthDatasetCellVoltages)
+        case .balancing: String(localized: .batteryHealthDatasetBalancing)
+        case .signals: String(localized: .batteryHealthDatasetBmsSignals)
+        case .charger: String(localized: .batteryHealthDatasetCharger)
         }
     }
 }

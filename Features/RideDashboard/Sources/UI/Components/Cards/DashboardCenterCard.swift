@@ -150,7 +150,9 @@ struct DashboardCenterCard: View {
 
     private var speedometerAccessibilityLabel: String {
         guard bikeLock.isLocked else { return speedometer.accessibilityLabel }
-        return "\(speedometer.accessibilityLabel), bike locked"
+        return rideDashboardLocalized(
+            .rideDashboardCenterAccessibilityBikeLocked(speedometer.accessibilityLabel)
+        )
     }
 
     private var bikeLockCard: some View {

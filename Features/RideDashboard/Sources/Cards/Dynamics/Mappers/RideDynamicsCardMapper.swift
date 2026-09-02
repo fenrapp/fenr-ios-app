@@ -22,12 +22,20 @@ public struct RideDynamicsCardMapper: Sendable {
             status: status(motion.availability),
             leanDegrees: roll,
             leanText: angleText(motion.rollDegrees),
-            leanDirectionText: direction(value: roll, negative: "LEFT", positive: "RIGHT"),
+            leanDirectionText: direction(
+                value: roll,
+                negative: rideDashboardLocalized(.rideDashboardDynamicsDirectionLeft),
+                positive: rideDashboardLocalized(.rideDashboardDynamicsDirectionRight)
+            ),
             maximumLeftLeanText: angleText(trip?.maximumLeftLeanDegrees),
             maximumRightLeanText: angleText(trip?.maximumRightLeanDegrees),
             pitchDegrees: pitch,
             pitchText: angleText(motion.pitchDegrees),
-            pitchDirectionText: direction(value: pitch, negative: "DOWN", positive: "UP"),
+            pitchDirectionText: direction(
+                value: pitch,
+                negative: rideDashboardLocalized(.rideDashboardDynamicsDirectionDown),
+                positive: rideDashboardLocalized(.rideDashboardDynamicsDirectionUp)
+            ),
             maximumUphillPitchText: angleText(trip?.maximumUphillPitchDegrees),
             maximumDownhillPitchText: angleText(trip?.maximumDownhillPitchDegrees),
             headingDegrees: heading,
@@ -37,10 +45,18 @@ public struct RideDynamicsCardMapper: Sendable {
             headingSourceText: headingSourceText(motion.headingSource),
             altitudeText: altitudeText(motion.altitudeMeters, system: snapshot.measurementSystem),
             latitudeText: coordinate.map {
-                coordinateText($0.latitudeDegrees, positiveHemisphere: "N", negativeHemisphere: "S")
+                coordinateText(
+                    $0.latitudeDegrees,
+                    positiveHemisphere: rideDashboardLocalized(.rideDashboardCompassDirectionNorth),
+                    negativeHemisphere: rideDashboardLocalized(.rideDashboardCompassDirectionSouth)
+                )
             },
             longitudeText: coordinate.map {
-                coordinateText($0.longitudeDegrees, positiveHemisphere: "E", negativeHemisphere: "W")
+                coordinateText(
+                    $0.longitudeDegrees,
+                    positiveHemisphere: rideDashboardLocalized(.rideDashboardCompassDirectionEast),
+                    negativeHemisphere: rideDashboardLocalized(.rideDashboardCompassDirectionWest)
+                )
             },
             canCalibrate: snapshot.vehicleIdentity.confirmedVIN != nil
                 && motion.availability == .available
@@ -60,7 +76,7 @@ private extension RideDynamicsCardMapper {
     }
 
     func direction(value: Double, negative: String, positive: String) -> String {
-        guard abs(value) >= 1 else { return "LEVEL" }
+        guard abs(value) >= 1 else { return rideDashboardLocalized(.rideDashboardDynamicsDirectionLevel) }
         return value < .zero ? negative : positive
     }
 
@@ -76,19 +92,33 @@ private extension RideDynamicsCardMapper {
 
     func headingSourceText(_ source: VehicleMotionHeadingSource) -> String {
         switch source {
-        case .unavailable: "NO COURSE"
-        case .gpsCourse: "GPS"
+        case .unavailable: rideDashboardLocalized(.rideDashboardDynamicsCourseUnavailable)
+        case .gpsCourse: rideDashboardLocalized(.rideDashboardDynamicsCourseSourceGPS)
         }
     }
 
     func cardinalDirection(_ degrees: Double) -> String {
-        let directions = [
-            "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-            "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"
+        let directions: [LocalizedStringResource] = [
+            .rideDashboardCompassDirectionNorth,
+            .rideDashboardCompassDirectionNorthNortheast,
+            .rideDashboardCompassDirectionNortheast,
+            .rideDashboardCompassDirectionEastNortheast,
+            .rideDashboardCompassDirectionEast,
+            .rideDashboardCompassDirectionEastSoutheast,
+            .rideDashboardCompassDirectionSoutheast,
+            .rideDashboardCompassDirectionSouthSoutheast,
+            .rideDashboardCompassDirectionSouth,
+            .rideDashboardCompassDirectionSouthSouthwest,
+            .rideDashboardCompassDirectionSouthwest,
+            .rideDashboardCompassDirectionWestSouthwest,
+            .rideDashboardCompassDirectionWest,
+            .rideDashboardCompassDirectionWestNorthwest,
+            .rideDashboardCompassDirectionNorthwest,
+            .rideDashboardCompassDirectionNorthNorthwest
         ]
         let index = Int((degrees.normalizedDegrees + 11.25) / 22.5)
             .quotientAndRemainder(dividingBy: directions.count).remainder
-        return directions[index]
+        return rideDashboardLocalized(directions[index])
     }
 
     func altitudeText(_ meters: Double?, system: MeasurementSystem) -> String? {

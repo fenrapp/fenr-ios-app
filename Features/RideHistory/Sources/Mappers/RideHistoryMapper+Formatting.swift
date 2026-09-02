@@ -16,7 +16,7 @@ extension RideHistoryMapper {
         }
         let efficiencyText = efficiency.map {
             format($0, fractionDigits: abs($0) < 10 ? 1 : 0) + (usesMiles ? " Wh/mi" : " Wh/km")
-        } ?? "Efficiency unavailable"
+        } ?? String(localized: .rideHistoryEfficiencyUnavailable)
         let distanceText = distanceText(distance)
         let durationText = formatDuration(trip.elapsedSeconds)
         let dateText = trip.startedAt.formatted(
@@ -30,8 +30,9 @@ extension RideHistoryMapper {
             distanceText: distanceText,
             durationText: durationText,
             efficiencyText: efficiencyText,
-            accessibilityLabel: "Ride on \(dateText) at \(timeText), "
-                + "\(distanceText), \(durationText), \(efficiencyText)"
+            accessibilityLabel: String(localized: .rideHistoryRideAccessibility(
+                dateText, timeText, distanceText, durationText, efficiencyText
+            ))
         )
     }
 

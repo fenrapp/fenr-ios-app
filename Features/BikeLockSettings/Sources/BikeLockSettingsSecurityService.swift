@@ -27,7 +27,9 @@ public struct BikeLockSettingsSecurityService: Sendable {
             throw BikeLockSettingsError.missingCredential
         }
         do {
-            return try await authenticator.authenticate(reason: "Change Bike Lock protection")
+            return try await authenticator.authenticate(
+                reason: String(localized: .bikeLockSettingsAuthenticationReason)
+            )
         } catch is CancellationError {
             throw CancellationError()
         } catch {
@@ -55,9 +57,9 @@ enum BikeLockSettingsError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .incorrectPIN: "Incorrect PIN"
-        case .missingCredential: "The saved PIN is unavailable."
-        case .pinMismatch: "The PINs do not match."
+        case .incorrectPIN: String(localized: .bikeLockSettingsIncorrectPINError)
+        case .missingCredential: String(localized: .bikeLockSettingsMissingCredentialError)
+        case .pinMismatch: String(localized: .bikeLockSettingsPINMismatchError)
         }
     }
 }

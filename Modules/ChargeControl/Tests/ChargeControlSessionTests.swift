@@ -130,7 +130,7 @@ struct ChargeControlSessionTests {
         #expect(!session.state.canAcceptInput)
 
         await repository.resumePowerWrites()
-        #expect(await waitUntil { session.state.status == "Confirming 1500 W" })
+        #expect(await waitUntil { session.state.status == .confirming(.powerWatts(1_500)) })
         session.receive(ChargeControlFixtures.chargingHealth(powerWatts: 1_500))
 
         #expect(await waitUntil { session.state.canAcceptInput })
@@ -160,7 +160,7 @@ struct ChargeControlSessionTests {
         #expect(await waitUntil { session.state.phase == .ready })
         try? await Task.sleep(for: .milliseconds(50))
         #expect(session.state.phase == .ready)
-        #expect(session.state.error == nil)
+        #expect(session.state.failure == nil)
         #expect(session.state.confirmedWatts == 1_500)
     }
 

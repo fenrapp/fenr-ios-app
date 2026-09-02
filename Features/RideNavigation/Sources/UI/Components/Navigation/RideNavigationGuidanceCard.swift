@@ -12,7 +12,7 @@ struct RideNavigationGuidanceCard: View {
         if state.isRerouting {
             HStack(spacing: DesignSpace.small) {
                 ProgressView().controlSize(.small)
-                Text("REROUTING").font(.headline.weight(.semibold))
+                Text(.rideNavigationRerouting).font(.headline.weight(.semibold))
             }
             .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
             .padding(.horizontal, DesignSpace.medium)

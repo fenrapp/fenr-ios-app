@@ -11,7 +11,7 @@ struct RideHistoryEnergyChart: View {
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSpace.small) {
             if availableSelections.count > 1 {
-                Picker("Energy chart", selection: selectionBinding) {
+                Picker(.rideHistoryEnergyChart, selection: selectionBinding) {
                     ForEach(availableSelections) { item in
                         Text(item.title).tag(item)
                     }
@@ -30,8 +30,8 @@ struct RideHistoryEnergyChart: View {
         case .battery:
             Chart(state.batteryPoints) { point in
                 AreaMark(
-                    x: .value("Distance", point.distance),
-                    y: .value("Battery", point.value)
+                    x: .value(String(localized: .rideHistoryMetricDistance), point.distance),
+                    y: .value(String(localized: .rideHistoryMetricBattery), point.value)
                 )
                 .foregroundStyle(
                     .linearGradient(
@@ -44,8 +44,8 @@ struct RideHistoryEnergyChart: View {
                     )
                 )
                 LineMark(
-                    x: .value("Distance", point.distance),
-                    y: .value("Battery", point.value)
+                    x: .value(String(localized: .rideHistoryMetricDistance), point.distance),
+                    y: .value(String(localized: .rideHistoryMetricBattery), point.value)
                 )
                 .foregroundStyle(DesignColor.positive)
                 .lineStyle(.init(lineWidth: Constants.lineWidth, lineCap: .round, lineJoin: .round))
@@ -56,7 +56,7 @@ struct RideHistoryEnergyChart: View {
                     AxisGridLine()
                     AxisValueLabel {
                         if let percentage = value.as(Int.self) {
-                            Text("\(percentage)%")
+                            Text(verbatim: "\(percentage)%")
                         }
                     }
                 }
@@ -67,21 +67,21 @@ struct RideHistoryEnergyChart: View {
                     AxisValueLabel()
                 }
             }
-            .chartYAxisLabel("Battery (%)")
-            .chartXAxisLabel("Distance (\(state.distanceUnit))")
-            .accessibilityLabel("Battery level over ride distance")
+            .chartYAxisLabel(String(localized: .rideHistoryChartBatteryAxis))
+            .chartXAxisLabel(String(localized: .rideHistoryChartDistanceAxis(state.distanceUnit)))
+            .accessibilityLabel(.rideHistoryChartBatteryAccessibility)
         case .efficiency:
             Chart(state.efficiencyPoints) { point in
                 BarMark(
-                    x: .value("Distance", point.distance),
-                    y: .value("Efficiency", point.value)
+                    x: .value(String(localized: .rideHistoryMetricDistance), point.distance),
+                    y: .value(String(localized: .rideHistoryMetricEfficiency), point.value)
                 )
                 .foregroundStyle(point.value >= .zero ? DesignColor.informational : DesignColor.positive)
                 .cornerRadius(Constants.barRadius)
             }
             .chartYAxisLabel(state.efficiencyUnit)
-            .chartXAxisLabel("Distance (\(state.distanceUnit))")
-            .accessibilityLabel("Energy efficiency over ride distance")
+            .chartXAxisLabel(String(localized: .rideHistoryChartDistanceAxis(state.distanceUnit)))
+            .accessibilityLabel(.rideHistoryChartEfficiencyAccessibility)
         }
     }
 
@@ -111,10 +111,10 @@ struct RideHistoryEnergyChart: View {
         case efficiency
 
         var id: Self { self }
-        var title: String {
+        var title: LocalizedStringResource {
             switch self {
-            case .battery: "Battery"
-            case .efficiency: "Efficiency"
+            case .battery: .rideHistoryMetricBattery
+            case .efficiency: .rideHistoryMetricEfficiency
             }
         }
     }

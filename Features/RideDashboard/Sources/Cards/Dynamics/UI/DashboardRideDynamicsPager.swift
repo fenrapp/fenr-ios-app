@@ -13,7 +13,7 @@ struct DashboardRideDynamicsPager: View {
                 pages: pages,
                 selection: $selection,
                 reduceMotion: reduceMotion,
-                accessibilityLabel: "Ride dynamics pages",
+                accessibilityLabel: rideDashboardLocalized(.rideDashboardDynamicsPagesAccessibility),
                 accessibilityValue: \.accessibilityLabel,
                 indicatorVerticalOffset: indicatorVerticalOffset(for: proxy.size.height)
             ) { page in

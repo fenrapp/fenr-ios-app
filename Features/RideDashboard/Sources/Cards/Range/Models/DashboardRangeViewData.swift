@@ -41,10 +41,18 @@ public struct DashboardRangeViewData: Equatable, Sendable {
         }
     }
 
-    public enum Status: String, Equatable, Sendable {
-        case learning = "LEARNING"
-        case adapting = "ADAPTING"
-        case stable = "STABLE"
+    public enum Status: Equatable, Sendable {
+        case learning
+        case adapting
+        case stable
+
+        var text: String {
+            switch self {
+            case .learning: rideDashboardLocalized(.rideDashboardRangeStatusLearning)
+            case .adapting: rideDashboardLocalized(.rideDashboardRangeStatusAdapting)
+            case .stable: rideDashboardLocalized(.rideDashboardRangeStatusStable)
+            }
+        }
     }
 
     public let rangeText: String

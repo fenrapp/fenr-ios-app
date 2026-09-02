@@ -11,7 +11,7 @@ struct DashboardRideTemperatureSummary: View {
                     DashboardTemperatureItem(
                         text: batteryTemperatureText,
                         systemImage: "battery.100percent",
-                        accessibilityLabel: "Battery temperature"
+                        accessibilityLabel: rideDashboardLocalized(.rideDashboardHeaderBatteryTemperatureAccessibility)
                     )
                 }
 
@@ -24,7 +24,7 @@ struct DashboardRideTemperatureSummary: View {
                     DashboardTemperatureItem(
                         text: inverterTemperatureText,
                         systemImage: "bolt.horizontal.fill",
-                        accessibilityLabel: "Inverter temperature"
+                        accessibilityLabel: rideDashboardLocalized(.rideDashboardHeaderInverterTemperatureAccessibility)
                     )
                 }
             }

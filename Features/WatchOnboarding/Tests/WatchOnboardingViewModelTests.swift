@@ -5,6 +5,13 @@ import TestSupport
 
 @MainActor
 struct WatchOnboardingViewModelTests {
+    @Test("default state uses catalog-backed discovery copy")
+    func defaultStateUsesLocalizedDiscoveryCopy() {
+        let state = WatchOnboardingViewState()
+
+        #expect(state.detail == String(localized: .watchOnboardingSearching))
+    }
+
     @Test("Completes after telemetry starts for the selected bike")
     func completesAfterTelemetryStartsForSelectedBike() async {
         let repository = WatchOnboardingRepository()
@@ -100,6 +107,27 @@ struct WatchOnboardingViewModelTests {
 
         await repository.resumeDiscoveryStop()
         #expect(await waitUntil { await repository.discoveryStartCount() == 2 })
+    }
+
+    @Test("Connection failures do not expose transport details")
+    func hidesConnectionFailureDetails() async {
+        let repository = WatchOnboardingRepository()
+        let viewModel = makeViewModel(repository: repository)
+        viewModel.start()
+
+        await repository.sendConnection(.init(state: .failed(message: "transport detail")))
+        #expect(await waitUntil {
+            viewModel.viewState.errorMessage == String(localized: .watchOnboardingUnableToConnect)
+        })
+
+        await repository.sendConnection(.init(
+            state: .pairingResetRequired(message: "transport detail")
+        ))
+        #expect(await waitUntil {
+            viewModel.viewState.errorMessage == String(localized: .watchOnboardingPairAgain)
+        })
+        #expect(!(viewModel.viewState.errorMessage ?? "").contains("transport detail"))
+        viewModel.stop()
     }
 
     private func makeViewModel(repository: WatchOnboardingRepository) -> WatchOnboardingViewModel {

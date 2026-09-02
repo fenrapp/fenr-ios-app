@@ -14,8 +14,8 @@ struct PowerTierSettingsMapperTests {
     func claimedAlphaIsPending() {
         let state = map(profile: .init(vin: syntheticVIN, declaredPowerTier: .alpha))
 
-        #expect(state.powerTier.status == "Pending bike verification")
-        #expect(state.powerTier.navigationDetail == "Alpha · Unverified")
+        #expect(String(localized: state.powerTier.status) == "Pending bike verification")
+        #expect(String(localized: state.powerTier.navigationDetail) == "Alpha · Unverified")
         #expect(state.powerTier.evidence == nil)
     }
 
@@ -27,9 +27,9 @@ struct PowerTierSettingsMapperTests {
             alphaDetectedAt: .now
         ))
 
-        #expect(state.powerTier.status.contains("Tier mismatch"))
-        #expect(state.powerTier.navigationDetail == "Model mismatch")
-        #expect(state.powerTier.evidence?.contains("Power above 60 HP") == true)
+        #expect(String(localized: state.powerTier.status) == "Tier mismatch: bike reports Alpha evidence")
+        #expect(String(localized: state.powerTier.navigationDetail) == "Model mismatch")
+        #expect(state.powerTier.evidence.map(String.init(localized:))?.contains("Power above 60 HP") == true)
     }
 
     @Test("Verification requires an authenticated session")
@@ -56,8 +56,8 @@ struct PowerTierSettingsMapperTests {
             verificationMessage: "Bike verification completed"
         )
 
-        #expect(state.powerTier.status == "Tier mismatch: bike reports Alpha evidence")
-        #expect(state.powerTier.verificationMessage == "Bike verification completed")
+        #expect(String(localized: state.powerTier.status) == "Tier mismatch: bike reports Alpha evidence")
+        #expect(state.powerTier.verificationMessage.map(String.init(localized:)) == "Bike verification completed")
         #expect(!state.powerTier.verificationMessageIsError)
     }
 
@@ -71,7 +71,7 @@ struct PowerTierSettingsMapperTests {
             verificationMessageIsError: true
         )
 
-        #expect(state.powerTier.verificationMessage == "Verification failed")
+        #expect(state.powerTier.verificationMessage.map(String.init(localized:)) == "Verification failed")
         #expect(state.powerTier.verificationMessageIsError)
     }
 

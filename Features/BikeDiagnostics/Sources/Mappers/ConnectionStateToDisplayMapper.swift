@@ -1,4 +1,5 @@
 import BikeDomain
+import Foundation
 
 public struct ConnectionStateToDisplayMapper: Sendable {
     public init() {}
@@ -6,70 +7,95 @@ public struct ConnectionStateToDisplayMapper: Sendable {
     public func title(for state: ConnectionState) -> String {
         switch state {
         case .idle:
-            "Idle"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionIdle)
         case .bluetoothUnavailable:
-            "Bluetooth unavailable"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionBluetoothUnavailable)
         case .bluetoothUnauthorized:
-            "Bluetooth unauthorized"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionBluetoothUnauthorized)
         case .bluetoothPoweredOff:
-            "Bluetooth off"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionBluetoothOff)
         case .scanning:
-            "Scanning"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionScanning)
         case .connecting:
-            "Connecting"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionConnecting)
         case .discovering:
-            "Discovering"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDiscovering)
         case .authenticating:
-            "Authenticating"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionAuthenticating)
         case .authenticated:
-            "Authenticated"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionAuthenticated)
         case .subscribed:
-            "Waiting for data"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionWaiting)
         case .receivingTelemetry:
-            "Receiving telemetry"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionReceivingTelemetry)
         case .reconnecting:
-            "Reconnecting"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionReconnecting)
         case .pairingResetRequired:
-            "Pairing reset required"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionPairingResetRequired)
         case .disconnected:
-            "Disconnected"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDisconnected)
         case .failed:
-            "Failed"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionFailed)
         }
     }
 
     public func detail(for state: ConnectionState) -> String {
         switch state {
         case .idle:
-            "Ready"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDetailReady)
         case .bluetoothUnavailable:
-            "This device cannot use BLE central mode"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDetailUnavailable)
         case .bluetoothUnauthorized:
-            "Bluetooth permission is required"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDetailUnauthorized)
         case .bluetoothPoweredOff:
-            "Enable Bluetooth"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDetailBluetoothOff)
         case .scanning(let vin):
-            "Looking for \(vin)"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDetailScanning(vin))
         case .connecting(let vin, let peripheralName):
-            "Connecting to \(peripheralName ?? vin)"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDetailConnecting(peripheralName ?? vin))
         case .discovering(let peripheralName):
-            "Discovering \(peripheralName ?? "bike")"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDetailDiscovering(
+                peripheralName ?? BikeDiagnosticsL10n.text(.bikeDiagnosticsBikeFallback)
+            ))
         case .authenticating(let peripheralName):
-            "Completing Stark security with \(peripheralName ?? "bike")"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDetailAuthenticating(
+                peripheralName ?? BikeDiagnosticsL10n.text(.bikeDiagnosticsBikeFallback)
+            ))
         case .authenticated(let peripheralName):
-            "Security accepted; enabling SOC \(peripheralName ?? "")"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDetailAuthenticated(
+                peripheralName ?? BikeDiagnosticsL10n.text(.bikeDiagnosticsBikeFallback)
+            ))
         case .subscribed(let peripheralName):
-            "SOC notifications enabled \(peripheralName ?? "")"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDetailSubscribed(
+                peripheralName ?? BikeDiagnosticsL10n.text(.bikeDiagnosticsBikeFallback)
+            ))
         case .receivingTelemetry(let peripheralName):
-            "Secure telemetry active \(peripheralName ?? "")"
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDetailReceiving(
+                peripheralName ?? BikeDiagnosticsL10n.text(.bikeDiagnosticsBikeFallback)
+            ))
         case .reconnecting(let vin, let attempt, let maximumAttempts):
-            "Retrying \(vin) (\(attempt)/\(maximumAttempts))"
-        case .pairingResetRequired(let message):
-            message
-        case .disconnected(let reason):
-            reason ?? "No active connection"
-        case .failed(let message):
-            message
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDetailReconnecting(vin, attempt, maximumAttempts))
+        case .pairingResetRequired:
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDetailPairingReset)
+        case .disconnected:
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDetailDisconnected)
+        case .failed:
+            BikeDiagnosticsL10n.text(.bikeDiagnosticsConnectionDetailFailed)
+        }
+    }
+
+    public func emphasis(for state: ConnectionState) -> ConnectionPanelViewData.Emphasis {
+        switch state {
+        case .receivingTelemetry:
+            .success
+        case .scanning, .connecting, .discovering, .authenticating, .authenticated, .subscribed, .reconnecting:
+            .progress
+        case .bluetoothPoweredOff, .pairingResetRequired, .disconnected:
+            .warning
+        case .bluetoothUnavailable, .bluetoothUnauthorized, .failed:
+            .critical
+        case .idle:
+            .neutral
         }
     }
 

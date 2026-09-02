@@ -8,9 +8,9 @@ enum DashboardUnavailableState {
             Image(systemName: "rotate.right")
                 .font(.system(size: Constants.iconSize, weight: .medium))
                 .foregroundStyle(DesignColor.informational)
-            Text("Rotate to landscape")
+            Text(.rideDashboardUnavailableRotateTitle)
                 .font(.title3.weight(.semibold))
-            Text("The ride dashboard is designed for landscape viewing.")
+            Text(.rideDashboardUnavailableRotateDetail)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
         }
@@ -25,11 +25,11 @@ enum DashboardUnavailableState {
             Image(systemName: "antenna.radiowaves.left.and.right")
                 .font(.system(size: Constants.iconSize))
                 .foregroundStyle(.secondary)
-            Text("No live telemetry").font(.title3.weight(.semibold))
+            Text(.rideDashboardUnavailableTelemetryTitle).font(.title3.weight(.semibold))
             Text(detail)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
-            Button("Open Diagnostics", action: onDiagnostics).buttonStyle(.borderedProminent)
+            Button(.rideDashboardUnavailableDiagnosticsAction, action: onDiagnostics).buttonStyle(.borderedProminent)
         }
         .padding(DesignSpace.large)
     }
@@ -38,14 +38,14 @@ enum DashboardUnavailableState {
         VStack(spacing: DesignSpace.small) {
             ProgressView()
                 .controlSize(.large)
-            Text("Connecting to bike").font(.title3.weight(.semibold))
+            Text(.rideDashboardUnavailableConnectingTitle).font(.title3.weight(.semibold))
             Text(detail)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
         }
         .padding(DesignSpace.large)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Connecting to bike. \(detail)")
+        .accessibilityLabel(rideDashboardLocalized(.rideDashboardUnavailableConnectingAccessibility(detail)))
     }
 
     private enum Constants {

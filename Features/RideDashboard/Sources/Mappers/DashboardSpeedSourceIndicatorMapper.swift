@@ -10,7 +10,7 @@ public struct DashboardSpeedSourceIndicatorMapper: Sendable {
         guard source != .motorcycle else { return nil }
         guard isGPSAvailable else {
             return .init(
-                text: "NO GPS",
+                text: rideDashboardLocalized(.rideDashboardSpeedSourceNoGPS),
                 systemImage: "location.slash.fill",
                 emphasis: .warning
             )
@@ -19,9 +19,9 @@ public struct DashboardSpeedSourceIndicatorMapper: Sendable {
         case .motorcycle:
             nil
         case .gps:
-            .init(text: "GPS", systemImage: "location.fill")
+            .init(text: rideDashboardLocalized(.rideDashboardSpeedSourceGps), systemImage: "location.fill")
         case .hybrid:
-            .init(text: "GPS+", systemImage: "arrow.triangle.branch")
+            .init(text: rideDashboardLocalized(.rideDashboardSpeedSourceHybrid), systemImage: "arrow.triangle.branch")
         }
     }
 }

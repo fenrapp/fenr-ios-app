@@ -1,18 +1,21 @@
+import Foundation
+
 enum BikeLiveActivityText {
-    static let current = "Current"
-    static let mode = "Mode"
-    static let power = "Power"
-    static let ready = "Ready"
+    static var current: String { String(localized: .liveActivityCurrent) }
+    static var mode: String { String(localized: .liveActivityMode) }
+    static var power: String { String(localized: .liveActivityPower) }
+    static var ready: String { String(localized: .liveActivityReady) }
     static let singleLineLimit = 1
-    static let speed = "Speed"
-    static let temperature = "Temp"
+    static var speed: String { String(localized: .liveActivitySpeed) }
+    static var state: String { String(localized: .liveActivityState) }
+    static var temperature: String { String(localized: .liveActivityTemperature) }
 
     static func remaining(_ text: String) -> String {
-        "\(text) remaining"
+        String(localized: .liveActivityRemaining(duration: text))
     }
 
     static func target(_ percent: Int) -> String {
-        "Target \(percent)%"
+        String(localized: .liveActivityTarget(percent: percent))
     }
 
     static func status(_ state: BikeLiveActivityAttributes.ContentState) -> String {
@@ -23,21 +26,25 @@ enum BikeLiveActivityText {
             return remaining(estimatedTimeRemaining)
         }
         if state.mode == .riding {
-            return state.runState.displayTitle
+            return runState(state.runState)
         }
-        return state.phase.displayTitle
+        return phase(state.phase)
     }
 
     static func batteryAccessibilityLabel(_ percent: Int?) -> String {
-        "Battery \(BikeLiveActivityFormatter.batteryText(percent))"
+        String(localized: .liveActivityAccessibilityBattery(
+            batteryValue: BikeLiveActivityFormatter.batteryText(percent)
+        ))
     }
 
     static func modeAccessibilityLabel(_ modeIndex: Int?) -> String {
-        "Mode \(BikeLiveActivityFormatter.modeText(modeIndex))"
+        String(localized: .liveActivityAccessibilityMode(
+            modeValue: BikeLiveActivityFormatter.modeText(modeIndex)
+        ))
     }
 
     static func statusAccessibilityLabel(_ state: BikeLiveActivityAttributes.ContentState) -> String {
-        "Status \(status(state))"
+        String(localized: .liveActivityAccessibilityStatus(statusValue: status(state)))
     }
 
     static func minimalAccessibilityLabel(_ state: BikeLiveActivityAttributes.ContentState) -> String {
@@ -46,6 +53,39 @@ enum BikeLiveActivityText {
             labels.append(modeAccessibilityLabel(state.modeIndex))
         }
         labels.append(statusAccessibilityLabel(state))
-        return labels.joined(separator: ", ")
+        return labels.formatted(.list(type: .and))
+    }
+
+    static func metricAccessibilityLabel(title: String, value: String) -> String {
+        String(localized: .liveActivityAccessibilityMetric(metricTitle: title, metricValue: value))
+    }
+
+    static func runState(_ state: BikeLiveActivityRunState) -> String {
+        let resource: LocalizedStringResource = switch state {
+        case .unknown: .liveActivityRunStateUnknown
+        case .off: .liveActivityRunStateOff
+        case .neutral: .liveActivityRunStateNeutral
+        case .ride: .liveActivityRunStateRide
+        case .charging: .liveActivityRunStateCharging
+        case .crawlForward: .liveActivityRunStateCrawl
+        case .crawlReverse: .liveActivityRunStateReverse
+        }
+        return String(localized: resource)
+    }
+
+    static func phase(_ phase: BikeLiveActivityPhase) -> String {
+        let resource: LocalizedStringResource = switch phase {
+        case .charging: .liveActivityPhaseCharging
+        case .balancing: .liveActivityPhaseBalancing
+        case .complete: .liveActivityPhaseChargeComplete
+        case .riding: .liveActivityPhaseRiding
+        case .neutral: .liveActivityPhaseNeutral
+        case .crawl: .liveActivityPhaseCrawl
+        case .fault: .liveActivityPhaseFault
+        case .reconnecting: .liveActivityPhaseReconnecting
+        case .stale: .liveActivityPhaseWaitingForUpdate
+        case .connectionLost: .liveActivityPhaseConnectionLost
+        }
+        return String(localized: resource)
     }
 }

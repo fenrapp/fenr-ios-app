@@ -40,7 +40,9 @@ public struct RangeCardMapper: Sendable {
                 .init(
                     valueText: rangeText,
                     unitText: distanceUnitText,
-                    accessibilityLabel: "Estimated range \(rangeText) \(distanceUnitText)"
+                    accessibilityLabel: rideDashboardLocalized(
+                        .rideDashboardRangeEstimatedAccessibility(rangeText, distanceUnitText)
+                    )
                 )
             },
             status: status(estimate.confidence),

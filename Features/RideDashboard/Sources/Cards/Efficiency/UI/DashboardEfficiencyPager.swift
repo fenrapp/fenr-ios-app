@@ -11,7 +11,7 @@ struct DashboardEfficiencyPager: View {
             pages: pages,
             selection: $selection,
             reduceMotion: reduceMotion,
-            accessibilityLabel: "Efficiency pages",
+            accessibilityLabel: rideDashboardLocalized(.rideDashboardEfficiencyPagesAccessibility),
             accessibilityValue: \.accessibilityLabel
         ) { page in
             switch page {

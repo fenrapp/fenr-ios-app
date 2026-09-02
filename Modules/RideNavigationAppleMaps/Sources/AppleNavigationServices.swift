@@ -24,7 +24,11 @@ public struct ApplePlaceSearchService: PlaceSearching {
             let detail = [item.placemark.locality, item.placemark.administrativeArea]
                 .compactMap { $0 }
                 .joined(separator: ", ")
-            return NavigationPlace(name: item.name ?? "Destination", detail: detail, coordinate: coordinate)
+            return NavigationPlace(
+                name: item.name ?? String(localized: .rideNavigationAppleMapsDestination),
+                detail: detail,
+                coordinate: coordinate
+            )
         }
     }
 

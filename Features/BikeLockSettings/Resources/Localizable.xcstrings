@@ -1,0 +1,300 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "bikeLockSettingsAuthenticationReason" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change Bike Lock protection"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsChangePIN" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change PIN"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsChangeProtection" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change protection"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsChoosePIN" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a 6-digit PIN"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsCreatePINTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create PIN"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsCurrentMode" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current mode"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsEnterCurrentPINTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter Current PIN"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsEnterPINAgain" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter the PIN again"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsErrorAccessibility" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error: %@"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsExplanation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "These settings protect unlocking in FENR. They do not lock or unlock the motorcycle."
+          }
+        }
+      }
+    },
+    "bikeLockSettingsGenericError" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unable to update Bike Lock settings. Try again."
+          }
+        }
+      }
+    },
+    "bikeLockSettingsIncorrectPINError" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incorrect PIN"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsMissingCredentialError" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The saved PIN is unavailable."
+          }
+        }
+      }
+    },
+    "bikeLockSettingsModeNotConfigured" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not set up"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsModePIN" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PIN"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsModePINAndFaceID" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PIN + Face ID"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsModePINAndFaceIDDetail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use Face ID first, with your PIN as a fallback."
+          }
+        }
+      }
+    },
+    "bikeLockSettingsModePINDetail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a 6-digit PIN whenever you unlock."
+          }
+        }
+      }
+    },
+    "bikeLockSettingsModeWithoutPIN" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No PIN"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsModeWithoutPINDetail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lock and unlock immediately from the card."
+          }
+        }
+      }
+    },
+    "bikeLockSettingsPINMismatchError" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The PINs do not match."
+          }
+        }
+      }
+    },
+    "bikeLockSettingsTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bike Lock"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsUnavailableDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connect a compatible motorcycle to configure unlock protection."
+          }
+        }
+      }
+    },
+    "bikeLockSettingsUnavailableTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bike Lock Unavailable"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsUnlockProtectionSection" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlock protection"
+          }
+        }
+      }
+    },
+    "bikeLockSettingsUnlockProtectionTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlock Protection"
+          }
+        }
+      }
+    },
+    "Create PIN" : {
+      "comment" : "Title of the screen where a user can create a new PIN.",
+      "isCommentAutoGenerated" : true
+    },
+    "Enter Current PIN" : {
+      "comment" : "Label for the current PIN input field.",
+      "isCommentAutoGenerated" : true
+    }
+  },
+  "version" : "1.1"
+}

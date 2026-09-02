@@ -34,9 +34,9 @@ struct RideNavigationTrailExitPreviewCard: View {
             if !dynamicTypeSize.isAccessibilitySize {
                 Spacer(minLength: DesignSpace.medium)
             }
-            Button("Keep Following Trail", action: onCancel)
+            Button(.rideNavigationKeepFollowingTrail, action: onCancel)
                 .rideNavigationSecondaryButton()
-            Button("Start Exit", action: onStart)
+            Button(.rideNavigationStartExit, action: onStart)
                 .rideNavigationPrimaryButton()
     }
 

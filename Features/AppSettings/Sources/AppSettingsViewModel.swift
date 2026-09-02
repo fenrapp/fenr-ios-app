@@ -1,6 +1,7 @@
 import BikeDomain
 import Combine
 import EnvironmentDomain
+import Foundation
 import SettingsDomain
 
 @MainActor
@@ -14,7 +15,7 @@ public final class AppSettingsViewModel: ObservableObject {
     private var profile: BikeProfile?
     private var connection = BikeConnection()
     private var isVerifyingPowerTier = false
-    private var powerTierVerificationMessage: String?
+    private var powerTierVerificationMessage: LocalizedStringResource?
     private var powerTierVerificationMessageIsError = false
     private var observationTask: Task<Void, Never>?
     private var settingsSaveTask: Task<Void, Never>?
@@ -178,7 +179,7 @@ public final class AppSettingsViewModel: ObservableObject {
                 try Task.checkCancellation()
                 guard let self else { return }
                 self.isVerifyingPowerTier = false
-                self.powerTierVerificationMessage = "Bike verification completed"
+                self.powerTierVerificationMessage = .appSettingsVerificationCompleted
                 self.powerTierVerificationMessageIsError = false
                 self.render()
             } catch is CancellationError {
@@ -186,7 +187,7 @@ public final class AppSettingsViewModel: ObservableObject {
             } catch {
                 guard !Task.isCancelled, let self else { return }
                 self.isVerifyingPowerTier = false
-                self.powerTierVerificationMessage = "Verification failed: \(error.localizedDescription)"
+                self.powerTierVerificationMessage = .appSettingsVerificationFailed
                 self.powerTierVerificationMessageIsError = true
                 self.render()
             }

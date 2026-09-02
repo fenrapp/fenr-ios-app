@@ -30,7 +30,7 @@ public struct WatchDashboardViewStateMapper: Sendable {
         settings: AppSettings
     ) -> WatchDashboardViewState {
         guard hasRecentTelemetry(telemetry) else {
-            return unavailable(detail: "Waiting for telemetry")
+            return unavailable(detail: String(localized: .watchDashboardConnectionWaitingTelemetry))
         }
         let measurementMapper = makeMeasurementMapper(settings.measurementSystem)
         let isCharging = telemetry.runState == .charging
@@ -75,7 +75,7 @@ public struct WatchDashboardViewStateMapper: Sendable {
         case .on: telemetry.mode.displayIndex.map(String.init) ?? "R"
         case .crawlForward: "􀋺"
         case .crawlReverse: "􀋻"
-        case .off: "OFF"
+        case .off: String(localized: .watchDashboardGearOff)
         case .unknown: "--"
         }
     }
@@ -134,15 +134,18 @@ public struct WatchDashboardViewStateMapper: Sendable {
 
     private func connectionDetail(_ state: ConnectionState) -> String {
         switch state {
-        case .reconnecting: "Reconnecting"
-        case .scanning: "Looking for bike"
-        case .connecting, .discovering, .authenticating, .authenticated, .subscribed: "Connecting"
-        case .bluetoothPoweredOff: "Bluetooth is off"
-        case .bluetoothUnauthorized: "Bluetooth permission required"
-        case .pairingResetRequired: "Forget and re-pair the bike on iPhone"
-        case .failed(let message): message
-        case .disconnected(let reason): reason ?? "Disconnected"
-        default: "Waiting for telemetry"
+        case .reconnecting: String(localized: .watchDashboardConnectionReconnecting)
+        case .scanning: String(localized: .watchDashboardConnectionLookingForBike)
+        case .connecting, .discovering, .authenticating, .authenticated, .subscribed:
+            String(localized: .watchDashboardConnectionConnecting)
+        case .bluetoothPoweredOff: String(localized: .watchDashboardConnectionBluetoothOff)
+        case .bluetoothUnauthorized: String(localized: .watchDashboardConnectionBluetoothPermission)
+        case .pairingResetRequired: String(localized: .watchDashboardConnectionPairAgain)
+        case .failed:
+            String(localized: .watchDashboardConnectionFailed)
+        case .disconnected:
+            String(localized: .watchDashboardConnectionDisconnected)
+        default: String(localized: .watchDashboardConnectionWaitingTelemetry)
         }
     }
 

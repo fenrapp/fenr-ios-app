@@ -1,12 +1,14 @@
+import Foundation
+
 public struct RideNavigationArrivalPrompt: Equatable, Sendable {
     public let title: String
     public let detail: String
 
     public init(
-        title: String = "You reached the end. Finish route?",
-        detail: String = "You can finish this ride or keep following the route."
+        title: String? = nil,
+        detail: String? = nil
     ) {
-        self.title = title
-        self.detail = detail
+        self.title = title ?? String(localized: .rideNavigationArrivalTitle)
+        self.detail = detail ?? String(localized: .rideNavigationArrivalDetail)
     }
 }

@@ -4,9 +4,10 @@ public struct DashboardOdometerViewData: Equatable, Sendable {
 
     public init(
         valueText: String = "--",
-        accessibilityLabel: String = "Odometer unavailable"
+        accessibilityLabel: String? = nil
     ) {
         self.valueText = valueText
         self.accessibilityLabel = accessibilityLabel
+            ?? rideDashboardLocalized(.rideDashboardOdometerUnavailableAccessibility)
     }
 }

@@ -3,16 +3,21 @@ import BikeDomain
 import ChargeControl
 import Foundation
 import MeasurementPresentation
+import VehicleSession
 
 @MainActor
 func makeBatteryHealthViewModel(
-    repository: any BikeBatteryHealthRepository & BikeChargePowerControlRepository
+    repository: any BikeBatteryHealthRepository & BikeChargePowerControlRepository,
+    monitoringState: VehicleBatteryHealthMonitoringState = .active
 ) -> BatteryHealthViewModel {
     BatteryHealthViewModel(
         useCases: .init(
             observeCaptures: .init(repository: repository)
         ),
-        vehicleSession: FakeBatteryHealthVehicleSession(repository: repository),
+        vehicleSession: FakeBatteryHealthVehicleSession(
+            repository: repository,
+            monitoringState: monitoringState
+        ),
         mapper: .init(formatter: makeBatteryHealthFormatter()),
         makeMapper: { _ in .init(formatter: makeBatteryHealthFormatter()) },
         chargeControl: makeChargeControlSession(repository: repository),

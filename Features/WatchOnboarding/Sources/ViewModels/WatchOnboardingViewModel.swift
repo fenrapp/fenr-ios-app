@@ -1,5 +1,6 @@
 import BikeDomain
 import Combine
+import Foundation
 
 @MainActor
 public final class WatchOnboardingViewModel: ObservableObject {
@@ -56,7 +57,7 @@ public final class WatchOnboardingViewModel: ObservableObject {
         viewState.discoveredBikes = []
         viewState.debugEvents = []
         viewState.errorMessage = nil
-        viewState.detail = "Searching for nearby bikes"
+        viewState.detail = String(localized: .watchOnboardingSearching)
         let observeDiscoveredBikes = useCases.observeDiscoveredBikes
         let startDiscovery = useCases.startDiscovery
         let pendingStop = discoveryStopTask
@@ -78,7 +79,7 @@ public final class WatchOnboardingViewModel: ObservableObject {
         guard !viewState.isConnecting else { return }
         selectedVIN = bike.vin
         viewState.isConnecting = true
-        viewState.detail = "Connecting to \(bike.vin)"
+        viewState.detail = String(localized: .watchOnboardingConnectingToBike(vin: bike.vin))
         let pendingStop = stopDiscovery()
         let connectToBike = useCases.connectToBike
         connectionAttemptTask?.cancel()
@@ -92,7 +93,7 @@ public final class WatchOnboardingViewModel: ObservableObject {
             } catch {
                 guard !Task.isCancelled, let self else { return }
                 self.viewState.isConnecting = false
-                self.viewState.errorMessage = "Unable to connect. Try again."
+                self.viewState.errorMessage = String(localized: .watchOnboardingUnableToConnect)
             }
         }
     }
@@ -122,7 +123,12 @@ public final class WatchOnboardingViewModel: ObservableObject {
     private func receive(_ bikes: [DiscoveredBike]) {
         viewState.discoveredBikes = bikes
             .sorted { $0.rssi > $1.rssi }
-            .map { .init(vin: $0.vin, signalText: "Signal \($0.rssi) dBm") }
+            .map {
+                .init(
+                    vin: $0.vin,
+                    signalText: String(localized: .watchOnboardingSignal(rssi: $0.rssi))
+                )
+            }
         guard viewState.discoveredBikes.count == 1, let bike = viewState.discoveredBikes.first else { return }
         select(bike)
     }
@@ -137,7 +143,7 @@ public final class WatchOnboardingViewModel: ObservableObject {
             didComplete = true
             viewState.isConnecting = false
             viewState.errorMessage = nil
-            viewState.detail = "Receiving data"
+            viewState.detail = String(localized: .watchOnboardingReceivingData)
             let profile = BikeProfile(vin: selectedVIN)
             let saveProfile = useCases.saveProfile
             completionTask?.cancel()
@@ -146,18 +152,18 @@ public final class WatchOnboardingViewModel: ObservableObject {
                 guard !Task.isCancelled, self?.didComplete == true else { return }
                 onCompleted(profile)
             }
-        case .failed(let message):
+        case .failed:
             viewState.isConnecting = false
-            viewState.errorMessage = message
-        case .pairingResetRequired(let message):
+            viewState.errorMessage = String(localized: .watchOnboardingUnableToConnect)
+        case .pairingResetRequired:
             viewState.isConnecting = false
-            viewState.errorMessage = message
+            viewState.errorMessage = String(localized: .watchOnboardingPairAgain)
         case .bluetoothPoweredOff:
             viewState.isConnecting = false
-            viewState.errorMessage = "Turn on Bluetooth to continue."
+            viewState.errorMessage = String(localized: .watchOnboardingTurnOnBluetooth)
         case .bluetoothUnauthorized:
             viewState.isConnecting = false
-            viewState.errorMessage = "Allow Bluetooth access to continue."
+            viewState.errorMessage = String(localized: .watchOnboardingAllowBluetooth)
         default:
             viewState.detail = detail(for: connection.state)
         }
@@ -187,12 +193,12 @@ public final class WatchOnboardingViewModel: ObservableObject {
 
     private func detail(for state: ConnectionState) -> String {
         switch state {
-        case .connecting: "Connecting"
-        case .discovering: "Discovering bike"
-        case .authenticating: "Authenticating"
-        case .authenticated, .subscribed: "Starting telemetry"
-        case .reconnecting: "Reconnecting"
-        case .pairingResetRequired: "Forget and re-pair the bike on iPhone"
+        case .connecting: String(localized: .watchOnboardingConnecting)
+        case .discovering: String(localized: .watchOnboardingDiscoveringBike)
+        case .authenticating: String(localized: .watchOnboardingAuthenticating)
+        case .authenticated, .subscribed: String(localized: .watchOnboardingStartingTelemetry)
+        case .reconnecting: String(localized: .watchOnboardingReconnecting)
+        case .pairingResetRequired: String(localized: .watchOnboardingPairAgain)
         default: viewState.detail
         }
     }

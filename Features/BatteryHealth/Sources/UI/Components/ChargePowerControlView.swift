@@ -25,7 +25,7 @@ struct ChargePowerControlView: View {
         VStack(alignment: .leading, spacing: Constants.spacing) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: Constants.labelSpacing) {
-                    Text("\(Int(displayedPowerWatts)) W")
+                    Text(verbatim: "\(Int(displayedPowerWatts)) W")
                         .font(.title3.weight(.semibold))
                     Text(state.chargerText)
                         .font(.caption)
@@ -39,7 +39,7 @@ struct ChargePowerControlView: View {
             }
 
             VStack(alignment: .leading, spacing: Constants.controlSpacing) {
-                Text("Power limit")
+                Text(String(localized: .batteryHealthChargeControlPowerLimit))
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.secondary)
 
@@ -61,9 +61,9 @@ struct ChargePowerControlView: View {
                 .disabled(!state.isEnabled)
 
                 HStack {
-                    Text("\(Int(state.power.minimum)) W")
+                    Text(verbatim: "\(Int(state.power.minimum)) W")
                     Spacer()
-                    Text("\(Int(state.power.maximum)) W")
+                    Text(verbatim: "\(Int(state.power.maximum)) W")
                 }
                 .font(.caption2)
                 .foregroundStyle(.secondary)
@@ -71,11 +71,11 @@ struct ChargePowerControlView: View {
 
             VStack(alignment: .leading, spacing: Constants.controlSpacing) {
                 HStack {
-                    Text("Charge target")
+                    Text(String(localized: .batteryHealthChargeControlChargeTarget))
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text("\(Int(displayedTargetPercent))%")
+                    Text(verbatim: "\(Int(displayedTargetPercent))%")
                         .font(.callout.weight(.semibold))
                 }
 
@@ -97,9 +97,9 @@ struct ChargePowerControlView: View {
                 .disabled(!state.isEnabled)
 
                 HStack {
-                    Text("\(Int(state.target.minimum))%")
+                    Text(verbatim: "\(Int(state.target.minimum))%")
                     Spacer()
-                    Text("\(Int(state.target.maximum))%")
+                    Text(verbatim: "\(Int(state.target.maximum))%")
                 }
                 .font(.caption2)
                 .foregroundStyle(.secondary)

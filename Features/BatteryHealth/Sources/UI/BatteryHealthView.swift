@@ -65,7 +65,7 @@ public struct BatteryHealthView: View {
             .frame(maxWidth: .infinity, alignment: .top)
         }
         .background(DesignColor.groupedSurface)
-        .navigationTitle("Battery Health")
+        .navigationTitle(String(localized: .batteryHealthTitle))
         .navigationBarTitleDisplayMode(.inline)
         .dynamicTypeSize(.medium ... .large)
         .task { viewModel.start() }

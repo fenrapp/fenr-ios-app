@@ -5,7 +5,7 @@ struct RideNavigationMetric: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let value: String
     let unit: String
-    let label: String
+    let label: LocalizedStringResource
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.verticalSpacing) {

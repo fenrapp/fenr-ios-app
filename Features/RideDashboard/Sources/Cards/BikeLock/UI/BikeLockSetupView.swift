@@ -17,11 +17,11 @@ struct BikeLockSetupView: View {
     var body: some View {
         NavigationStack {
             protectionOptions
-                .navigationTitle("Set Up Bike Lock")
+                .navigationTitle(.rideDashboardBikeLockSetupTitle)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel", action: cancel)
+                        Button(.rideDashboardCommonCancel, action: cancel)
                     }
                     ToolbarItem(placement: .confirmationAction) {
                         protectionConfirmationButton
@@ -29,11 +29,11 @@ struct BikeLockSetupView: View {
                 }
                 .navigationDestination(isPresented: $isShowingPINSetup) {
                     pinSetup
-                        .navigationTitle("Create Unlock PIN")
+                        .navigationTitle(.rideDashboardBikeLockSetupCreatePINTitle)
                         .navigationBarTitleDisplayMode(.inline)
                         .toolbar {
                             ToolbarItem(placement: .confirmationAction) {
-                                Button("Enable", action: enableSelectedMode)
+                                Button(.rideDashboardCommonEnable, action: enableSelectedMode)
                                     .disabled(pinPhase != .confirmed)
                             }
                         }
@@ -44,7 +44,7 @@ struct BikeLockSetupView: View {
 
     private var protectionOptions: some View {
         Form {
-            Section("Unlock protection") {
+            Section(.rideDashboardBikeLockSetupSectionProtection) {
                 ForEach(options) { option in
                     Button {
                         select(option)
@@ -114,12 +114,12 @@ struct BikeLockSetupView: View {
     private var pinControl: some View {
         if pinPhase == .confirmed {
             VStack(spacing: Constants.pinContentSpacing) {
-                Label("PIN confirmed", systemImage: "checkmark.circle.fill")
+                Label(.rideDashboardBikeLockSetupPinConfirmed, systemImage: "checkmark.circle.fill")
                     .font(.headline)
                     .foregroundStyle(.green)
                     .padding(.vertical, Constants.confirmedPadding)
 
-                Button("Enter PIN Again", action: resetPIN)
+                Button(.rideDashboardBikeLockSetupEnterPINAgain, action: resetPIN)
                     .buttonStyle(.bordered)
             }
         } else {
@@ -130,12 +130,12 @@ struct BikeLockSetupView: View {
     @ViewBuilder
     private var protectionConfirmationButton: some View {
         if selectedOption?.requiresPIN == true {
-            Button("Continue") {
+            Button(.rideDashboardBikeLockSetupContinue) {
                 resetPIN()
                 isShowingPINSetup = true
             }
         } else {
-            Button("Enable", action: enableSelectedMode)
+            Button(.rideDashboardCommonEnable, action: enableSelectedMode)
         }
     }
 
@@ -159,7 +159,7 @@ struct BikeLockSetupView: View {
         case .confirm:
             guard value == pin else {
                 pinEntry = ""
-                pinError = "PINs did not match. Try the confirmation again."
+                pinError = rideDashboardLocalized(.rideDashboardBikeLockSetupPinMismatch)
                 return
             }
             pinPhase = .confirmed
@@ -196,17 +196,17 @@ struct BikeLockSetupView: View {
 
         var title: String {
             switch self {
-            case .create: "Enter a 6-digit PIN"
-            case .confirm: "Confirm your PIN"
-            case .confirmed: "PIN ready"
+            case .create: rideDashboardLocalized(.rideDashboardBikeLockSetupPhaseCreateTitle)
+            case .confirm: rideDashboardLocalized(.rideDashboardBikeLockSetupPhaseConfirmTitle)
+            case .confirmed: rideDashboardLocalized(.rideDashboardBikeLockSetupPhaseConfirmedTitle)
             }
         }
 
         var detail: String {
             switch self {
-            case .create: "Use the keypad below."
-            case .confirm: "Enter the same six digits again."
-            case .confirmed: "Your PIN is ready to enable."
+            case .create: rideDashboardLocalized(.rideDashboardBikeLockSetupPhaseCreateDetail)
+            case .confirm: rideDashboardLocalized(.rideDashboardBikeLockSetupPhaseConfirmDetail)
+            case .confirmed: rideDashboardLocalized(.rideDashboardBikeLockSetupPhaseConfirmedDetail)
             }
         }
     }

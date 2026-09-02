@@ -20,23 +20,37 @@ public struct ChargingDashboardReadoutMapper: Sendable {
         let title: String
         let subtitle: String?
         if input.isBalancingAtFullCharge {
-            title = "BALANCING"
+            title = rideDashboardLocalized(.rideDashboardChargingBalancing)
             let count = input.batteryHealth.balancingCellIndexes.count
-            subtitle = "\(count) \(count == 1 ? "CELL" : "CELLS") ACTIVE"
+            subtitle = rideDashboardLocalized(.rideDashboardChargingBalancingCellsActive(count))
         } else if let estimatedTimeRemaining = input.estimatedTimeRemaining {
-            title = "ETA: \(estimatedTimeRemaining)"
-            subtitle = input.targetPercent.map { "TARGET \($0)%" }
+            title = rideDashboardLocalized(.rideDashboardChargingEta(estimatedTimeRemaining))
+            subtitle = input.targetPercent.map {
+                rideDashboardLocalized(.rideDashboardChargingTarget($0))
+            }
         } else {
-            title = "CHARGING"
-            subtitle = input.targetPercent.map { "TARGET \($0)%" }
+            title = rideDashboardLocalized(.rideDashboardChargingTitle)
+            subtitle = input.targetPercent.map {
+                rideDashboardLocalized(.rideDashboardChargingTarget($0))
+            }
         }
-        let chargeState = input.isBalancingAtFullCharge ? "Balancing" : "Charging"
-        let chargeLevel = input.batteryPercent.map { "\($0) percent" } ?? "unavailable"
-        let target = input.targetPercent.map { ". Target \($0) percent" } ?? ""
+        let chargeState = rideDashboardLocalized(
+            input.isBalancingAtFullCharge
+                ? .rideDashboardChargingBalancingAccessibility
+                : .rideDashboardChargingChargingAccessibility
+        )
+        let chargeLevel = input.batteryPercent.map {
+            rideDashboardLocalized(.rideDashboardChargingPercentAccessibility($0))
+        } ?? rideDashboardLocalized(.rideDashboardCommonUnavailable)
+        let target = input.targetPercent.map {
+            rideDashboardLocalized(.rideDashboardChargingTargetAccessibility($0))
+        } ?? ""
         return .init(
             title: title,
             subtitle: subtitle,
-            accessibilityLabel: "\(chargeState) \(chargeLevel)\(target)",
+            accessibilityLabel: rideDashboardLocalized(
+                .rideDashboardChargingStateAccessibility(chargeState, chargeLevel, target)
+            ),
             emphasis: input.isBalancingAtFullCharge ? .balancing : .charging,
             allowsControl: !input.isBalancingAtFullCharge
         )
@@ -51,9 +65,9 @@ public struct ChargingDashboardReadoutMapper: Sendable {
               input.batteryHealth.chargeState != .unknown,
               input.batteryHealth.chargingStatus != nil else {
             return .init(
-                title: "CHARGING",
-                subtitle: "DATA UNAVAILABLE",
-                accessibilityLabel: "Charging data unavailable",
+                title: rideDashboardLocalized(.rideDashboardChargingTitle),
+                subtitle: rideDashboardLocalized(.rideDashboardChargingDataUnavailable),
+                accessibilityLabel: rideDashboardLocalized(.rideDashboardChargingDataUnavailableAccessibility),
                 systemImage: "exclamationmark.triangle.fill",
                 emphasis: .warning,
                 allowsControl: false,
@@ -68,9 +82,9 @@ public struct ChargingDashboardReadoutMapper: Sendable {
         }
         guard input.batteryHealth.chargeState != .connected else {
             return .init(
-                title: "CHARGER",
-                subtitle: "CONNECTED · IDLE",
-                accessibilityLabel: "Charger connected but not charging",
+                title: rideDashboardLocalized(.rideDashboardChargingCharger),
+                subtitle: rideDashboardLocalized(.rideDashboardChargingConnectedIdle),
+                accessibilityLabel: rideDashboardLocalized(.rideDashboardChargingConnectedIdleAccessibility),
                 systemImage: "powerplug.fill",
                 emphasis: .warning,
                 allowsControl: false,
@@ -83,9 +97,9 @@ public struct ChargingDashboardReadoutMapper: Sendable {
 
     private var disconnected: ChargingDashboardReadoutViewData {
         .init(
-            title: "CHARGER",
-            subtitle: "DISCONNECTED",
-            accessibilityLabel: "Charger disconnected",
+            title: rideDashboardLocalized(.rideDashboardChargingCharger),
+            subtitle: rideDashboardLocalized(.rideDashboardChargingDisconnected),
+            accessibilityLabel: rideDashboardLocalized(.rideDashboardChargingDisconnectedAccessibility),
             systemImage: "bolt.slash.fill",
             emphasis: .critical,
             allowsControl: false,
@@ -97,13 +111,17 @@ public struct ChargingDashboardReadoutMapper: Sendable {
         batteryPercent: Int?,
         targetPercent: Int?
     ) -> ChargingDashboardReadoutViewData {
-        let batteryLevel = batteryPercent.map { "BATTERY \($0)%" }
-        let target = targetPercent.map { "TARGET \($0)%" }
+        let batteryLevel = batteryPercent.map { rideDashboardLocalized(.rideDashboardChargingBattery($0)) }
+        let target = targetPercent.map { rideDashboardLocalized(.rideDashboardChargingTarget($0)) }
         let subtitle = [target, batteryLevel].compactMap { $0 }.joined(separator: " · ")
         return .init(
-            title: "LIMIT REACHED",
+            title: rideDashboardLocalized(.rideDashboardChargingLimitReached),
             subtitle: subtitle.isEmpty ? nil : subtitle,
-            accessibilityLabel: ["Charge limit reached", target, batteryLevel]
+            accessibilityLabel: [
+                rideDashboardLocalized(.rideDashboardChargingLimitReachedAccessibility),
+                target,
+                batteryLevel
+            ]
                 .compactMap { $0 }
                 .joined(separator: ". "),
             systemImage: "checkmark.circle.fill",

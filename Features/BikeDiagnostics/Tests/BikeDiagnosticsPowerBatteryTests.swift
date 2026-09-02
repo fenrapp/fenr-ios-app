@@ -23,27 +23,21 @@ struct BikeDiagnosticsPowerBatteryTests {
 
         #expect(viewModel.viewState.powerMetrics.contains {
             $0.id == "electricalPower"
-                && $0.title == "Estimated electrical power"
                 && $0.value == "10.000 W / 10 kW"
         })
         #expect(viewModel.viewState.powerMetrics.contains {
             $0.id == "starkHorsepower"
-                && $0.title == "Estimated Stark power"
                 && $0.value == "11 hp"
         })
         #expect(viewModel.viewState.batteryMetrics.contains {
             $0.id == "batteryCurrent"
-                && $0.title == "Battery current candidate"
                 && $0.value == "25 A (raw 25)"
         })
         #expect(viewModel.viewState.batteryMetrics.contains {
-            $0.id == "positiveVoltageCandidate"
-                && $0.title == "Positive BMS voltage candidate"
-                && $0.value == "raw 408"
+            $0.id == "positiveVoltageCandidate" && $0.value == "raw 408"
         })
         #expect(viewModel.viewState.batteryMetrics.contains {
             $0.id == "positiveTemp"
-                && $0.title == "Positive BMS temperature candidate"
                 && $0.value == "25,34 C (raw 2534)"
         })
     }

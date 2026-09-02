@@ -7,7 +7,7 @@ struct DashboardLeanCard: View {
 
     var body: some View {
         DashboardDynamicsInstrumentCard(
-            title: "LEAN",
+            title: rideDashboardLocalized(.rideDashboardDynamicsLeanTitle),
             status: state.status,
             angleDegrees: state.leanDegrees,
             maximumAngleDegrees: Constants.maximumLeanDegrees,
@@ -15,8 +15,15 @@ struct DashboardLeanCard: View {
             angleText: state.leanText,
             directionText: state.leanDirectionText,
             maximums: [
-                .init(label: "MAX LEFT", value: state.maximumLeftLeanText),
-                .init(label: "MAX RIGHT", value: state.maximumRightLeanText, trailing: true)
+                .init(
+                    label: rideDashboardLocalized(.rideDashboardDynamicsLeanMaximumLeft),
+                    value: state.maximumLeftLeanText
+                ),
+                .init(
+                    label: rideDashboardLocalized(.rideDashboardDynamicsLeanMaximumRight),
+                    value: state.maximumRightLeanText,
+                    trailing: true
+                )
             ],
             canCalibrate: state.canCalibrate,
             reduceMotion: reduceMotion,

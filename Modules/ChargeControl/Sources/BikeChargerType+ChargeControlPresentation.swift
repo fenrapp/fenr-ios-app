@@ -1,7 +1,7 @@
 import BikeDomain
 
 extension BikeChargerType {
-    var displayName: String {
+    var technicalLogName: String {
         switch self {
         case .standard:
             "Standard"

@@ -17,23 +17,23 @@ public struct ChargeControlStateUpdater {
         state.isVisible = true
         guard snapshot.isFirmwareCompatible else {
             state.isEnabled = false
-            state.status = "Unsupported firmware"
+            state.status = .unsupportedFirmware
             state.phase = .failed
-            state.error = "VCU firmware is not compatible with charge control"
+            state.failure = .incompatibleFirmware
             return
         }
         state.isEnabled = snapshot.didPassNoOpWrite
-        state.status = snapshot.didPassNoOpWrite ? "Ready" : "No-op guard failed"
+        state.status = snapshot.didPassNoOpWrite ? .ready : .noOpGuardFailed
         state.phase = snapshot.didPassNoOpWrite ? .ready : .failed
-        state.error = snapshot.didPassNoOpWrite ? nil : "No-op validation failed"
+        state.failure = snapshot.didPassNoOpWrite ? nil : .noOpValidationFailed
     }
 
-    func applyPreparationFailure(_ error: Error, to state: inout ChargeControlState) {
+    func applyPreparationFailure(_: Error, to state: inout ChargeControlState) {
         state.isVisible = true
         state.isEnabled = false
-        state.status = "Unavailable"
+        state.status = .unavailable
         state.phase = .failed
-        state.error = String(describing: error)
+        state.failure = .preparationFailed
     }
 
     func synchronize(
@@ -48,7 +48,7 @@ public struct ChargeControlStateUpdater {
         state.minimumTargetPercent = Double(ChargeControlConstants.minimumTargetPercent)
         state.maximumTargetPercent = Double(ChargeControlConstants.maximumTargetPercent)
         state.targetStepPercent = Double(ChargeControlConstants.targetStepPercent)
-        state.chargerType = charging.chargerType.displayName
+        state.chargerType = charging.chargerType
 
         let confirmed = ChargeControlConfirmedValues(
             watts: Int(charging.maximumPowerWatts.rounded()),

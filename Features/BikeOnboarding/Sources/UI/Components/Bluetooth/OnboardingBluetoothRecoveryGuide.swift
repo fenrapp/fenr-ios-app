@@ -44,7 +44,12 @@ struct OnboardingBluetoothRecoveryGuide: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "Step \(index + 1) of \(steps.count). \(step.title). \(step.detail)"
+            BikeOnboardingL10n.stepAccessibility(
+                index: index + 1,
+                count: steps.count,
+                title: step.title,
+                detail: step.detail
+            )
         )
     }
 

@@ -41,7 +41,7 @@ private enum SurfacePanelConstants {
 
 #Preview("Surface panel") {
     SurfacePanel(title: "Summary") {
-        Text("76%")
+        Text(verbatim: "76%")
             .font(.title3.bold())
     }
     .padding()
@@ -49,8 +49,8 @@ private enum SurfacePanelConstants {
 
 #Preview("Surface panel - multiline content") {
     SurfacePanel(title: "Battery health and charging summary") {
-        Text("Battery temperature is within the recommended operating range.")
-        Text("Last updated a few moments ago")
+        Text(verbatim: "Battery temperature is within the recommended operating range.")
+        Text(verbatim: "Last updated a few moments ago")
             .foregroundStyle(DesignColor.secondaryText)
     }
     .frame(width: SurfacePanelConstants.previewWidth)

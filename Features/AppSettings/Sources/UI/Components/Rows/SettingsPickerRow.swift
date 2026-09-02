@@ -1,11 +1,12 @@
 #if os(iOS)
 import DesignSystem
+import Foundation
 import SwiftUI
 
 struct SettingsPickerRow: View {
     let icon: String
     let iconTint: Color
-    let title: String
+    let title: LocalizedStringResource
     let selection: Binding<String>
     let options: [AppSettingsOptionViewData]
 

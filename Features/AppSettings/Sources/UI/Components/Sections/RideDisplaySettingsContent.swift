@@ -1,5 +1,6 @@
 #if os(iOS)
 import DesignSystem
+import Foundation
 import SwiftUI
 
 struct RideDisplaySettingsContent: View {
@@ -18,36 +19,33 @@ struct RideDisplaySettingsContent: View {
     var body: some View {
         Section {
             selectionPicker(
-                "Progress Bar",
+                .appSettingsProgressBarPickerTitle,
                 selection: progressBarMode.selection,
                 onSelect: onSelectProgressBarMode
             )
             selectionPicker(
-                "Bike Battery",
+                .appSettingsBikeBatteryPickerTitle,
                 selection: bikeBatteryDisplayMode,
                 onSelect: onSelectBikeBatteryDisplayMode
             )
             selectionPicker(
-                "Phone Battery",
+                .appSettingsPhoneBatteryPickerTitle,
                 selection: deviceBatteryDisplayMode,
                 onSelect: onSelectDeviceBatteryDisplayMode
             )
-            Toggle("Battery and Inverter Temperatures", isOn: showsTemperaturesBinding)
+            Toggle(.appSettingsTemperaturesToggle, isOn: showsTemperaturesBinding)
         } header: {
-            Text("Dashboard Presentation")
+            Text(.appSettingsDashboardPresentationHeader)
         } footer: {
             VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
                 Text(progressBarMode.description)
-                Text(
-                    "Estimated range falls back to battery percentage until range data is available. "
-                        + "Temperature readings appear only when reported by the bike."
-                )
+                Text(.appSettingsDashboardPresentationFooter)
             }
         }
 
         Section {
             selectionPicker(
-                "Speed Source",
+                .appSettingsSpeedSourcePickerTitle,
                 selection: speedSource.selection,
                 onSelect: onSelectSpeedSource
             )
@@ -59,14 +57,14 @@ struct RideDisplaySettingsContent: View {
                 )
             }
         } header: {
-            Text("Speed")
+            Text(.appSettingsSpeedSectionHeader)
         } footer: {
             Text(speedSource.description)
         }
     }
 
     private func selectionPicker(
-        _ title: String,
+        _ title: LocalizedStringResource,
         selection: AppSettingsSelectionViewState,
         onSelect: @escaping (String) -> Void
     ) -> some View {

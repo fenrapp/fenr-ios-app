@@ -31,7 +31,7 @@ struct DashboardChargingCard: View {
             chargingStatus
             chargeControl(
                 configuration: .init(
-                    title: "Max Charging Power",
+                    title: rideDashboardLocalized(.rideDashboardChargingMaximumPower),
                     adjustment: viewState.control.power,
                     tint: DesignColor.informational,
                     valueFormatter: formattedPower
@@ -42,7 +42,7 @@ struct DashboardChargingCard: View {
             )
             chargeControl(
                 configuration: .init(
-                    title: "Charge Limit",
+                    title: rideDashboardLocalized(.rideDashboardChargingChargeLimit),
                     adjustment: viewState.control.target,
                     tint: DesignColor.positive,
                     valueFormatter: formattedPercentage
@@ -156,12 +156,12 @@ struct DashboardChargingCard: View {
 
             HStack {
                 limitLabel(
-                    "MIN",
+                    rideDashboardLocalized(.rideDashboardCommonMinimum),
                     value: configuration.valueFormatter(configuration.adjustment.minimum)
                 )
                 Spacer()
                 limitLabel(
-                    "MAX",
+                    rideDashboardLocalized(.rideDashboardCommonMaximum),
                     value: configuration.valueFormatter(configuration.adjustment.maximum)
                 )
             }
@@ -178,7 +178,7 @@ struct DashboardChargingCard: View {
     }
 
     private func limitLabel(_ label: String, value: String) -> some View {
-        Text("\(label)  \(value)")
+        Text(verbatim: "\(label)  \(value)")
             .font(.caption2.weight(.medium))
             .monospacedDigit()
             .foregroundStyle(DesignColor.secondaryText)

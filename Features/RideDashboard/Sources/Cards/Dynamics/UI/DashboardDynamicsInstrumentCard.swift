@@ -45,7 +45,7 @@ struct DashboardDynamicsInstrumentCard: View {
             Circle()
                 .fill(statusColor)
                 .frame(width: Constants.statusDotSize, height: Constants.statusDotSize)
-            Text(status.rawValue)
+            Text(status.text)
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(DesignColor.secondaryText)
             if status == .live {
@@ -65,8 +65,10 @@ struct DashboardDynamicsInstrumentCard: View {
         .foregroundStyle(DesignColor.informational)
         .disabled(!canCalibrate)
         .opacity(canCalibrate ? 1 : Constants.disabledOpacity)
-        .accessibilityLabel("Zero \(title.lowercased())")
-        .accessibilityHint("Calibrates the current level position")
+        .accessibilityLabel(
+            rideDashboardLocalized(.rideDashboardDynamicsZeroAccessibility(title.lowercased()))
+        )
+        .accessibilityHint(.rideDashboardDynamicsZeroHint)
     }
 
     private var maximumMetrics: some View {
@@ -115,7 +117,11 @@ struct DashboardDynamicsInstrumentCard: View {
 
     private var accessibilityText: String {
         let maximumText = maximums.map { "\($0.label) \($0.value)" }.joined(separator: ", ")
-        return "\(title), \(status.rawValue), \(angleText), \(directionText), \(maximumText)"
+        return rideDashboardLocalized(
+            .rideDashboardDynamicsInstrumentAccessibility(
+                title, status.text, angleText, directionText, maximumText
+            )
+        )
     }
 
     struct Maximum: Identifiable {

@@ -1,19 +1,20 @@
 import DesignSystem
+import Foundation
 import SwiftUI
 
 struct DashboardCardVisibilityRow<Label: View>: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    let title: String
+    let title: LocalizedStringResource
     let isEnabled: Bool
-    let disabledHint: String?
+    let disabledHint: LocalizedStringResource?
     @Binding var isVisible: Bool
     private let label: Label
 
     init(
-        title: String,
+        title: LocalizedStringResource,
         isEnabled: Bool,
-        disabledHint: String?,
+        disabledHint: LocalizedStringResource?,
         isVisible: Binding<Bool>,
         @ViewBuilder label: () -> Label
     ) {

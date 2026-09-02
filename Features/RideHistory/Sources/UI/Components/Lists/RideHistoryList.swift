@@ -13,19 +13,19 @@ struct RideHistoryList<Destination: View>: View {
     var body: some View {
         switch state.status {
         case .loading:
-            ProgressView("Loading ride history")
+            ProgressView(.rideHistoryLoading)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .bikeUnavailable:
             ContentUnavailableView(
-                "Bike Unavailable",
+                .rideHistoryBikeUnavailable,
                 systemImage: "motorcycle",
-                description: Text("Connect or configure a bike to view its saved rides.")
+                description: Text(.rideHistoryBikeUnavailableDescription)
             )
         case .empty:
             ContentUnavailableView(
-                "No Saved Rides",
+                .rideHistoryNoSavedRides,
                 systemImage: "clock.arrow.circlepath",
-                description: Text("Completed rides for this bike will appear here.")
+                description: Text(.rideHistoryNoSavedRidesDescription)
             )
         case .loaded:
             list
@@ -73,7 +73,7 @@ struct RideHistoryList<Destination: View>: View {
                 Button(role: .destructive) {
                     deleteRide(ride.id)
                 } label: {
-                    Label("Delete", systemImage: "trash")
+                    Label(.rideHistoryDelete, systemImage: "trash")
                 }
                 .disabled(state.isDeleting)
             }

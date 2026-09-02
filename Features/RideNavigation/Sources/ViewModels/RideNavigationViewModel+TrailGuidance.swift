@@ -40,15 +40,15 @@ extension RideNavigationViewModel {
             }
         case .announceOffRoute:
             didAnnounceOffRoute = true
-            announce("You are off trail. Follow the arrow back to the track")
+            announce(String(localized: .rideNavigationAnnouncementOffTrail))
             replaceFeedbackTask { [guidance] in await guidance.notifyWarning() }
         case .announceWrongFork:
             didAnnounceOffRoute = true
-            announce("Wrong direction. Return to the highlighted track")
+            announce(String(localized: .rideNavigationAnnouncementWrongDirection))
             replaceFeedbackTask { [guidance] in await guidance.notifyWarning() }
         case .announceRejoined:
             didAnnounceOffRoute = false
-            announce("Back on trail")
+            announce(String(localized: .rideNavigationAnnouncementBackOnTrail))
         }
     }
 
@@ -58,11 +58,11 @@ extension RideNavigationViewModel {
               trailGuidance.shouldAnnounceDecision(decision) else { return }
         switch decision.direction {
         case .left:
-            announce("Keep left")
+            announce(String(localized: .rideNavigationKeepLeft))
         case .right:
-            announce("Keep right")
+            announce(String(localized: .rideNavigationKeepRight))
         case .straight:
-            announce("Continue straight")
+            announce(String(localized: .rideNavigationContinueStraight))
         }
     }
 
@@ -99,7 +99,7 @@ extension RideNavigationViewModel {
             }
             let shouldStart = trailGuidance.acceptPreparedPlan(plan)
             if plan == nil || preparedMap == nil {
-                errorText = "This route does not contain enough connected points to navigate."
+                errorText = String(localized: .rideNavigationInsufficientConnectedPoints)
                 render()
                 return
             }
@@ -198,9 +198,9 @@ extension RideNavigationViewModel {
                       ),
                       isStarted else { return }
                 state.routePersistence.fail(
-                    "The imported GPX could not be saved. Try again before starting."
+                    String(localized: .rideNavigationImportedGPXSaveRetry)
                 )
-                errorText = "The imported GPX could not be saved."
+                errorText = String(localized: .rideNavigationImportedGPXSaveError)
                 render()
             }
         }
@@ -226,15 +226,15 @@ extension RideNavigationViewModel {
             beginTrailFollowing(plan: plan, projection: match.selectedProjection)
         case .reverse:
             trailGuidance.presentEntryPrompt(RideNavigationTrailEntryPrompt(
-                title: "Follow in reverse?",
-                detail: "Your direction is opposite to the planned track.",
+                title: String(localized: .rideNavigationFollowReverseTitle),
+                detail: String(localized: .rideNavigationFollowReverseDetail),
                 availableDirections: [.reverse, .forward]
             ))
             render()
         case .ambiguous:
             trailGuidance.presentEntryPrompt(RideNavigationTrailEntryPrompt(
-                title: "Choose trail direction",
-                detail: "The route overlaps here, so choose the direction you want to follow.",
+                title: String(localized: .rideNavigationChooseTrailDirection),
+                detail: String(localized: .rideNavigationChooseTrailDirectionDetail),
                 availableDirections: [.forward, .reverse]
             ))
             render()
@@ -266,7 +266,7 @@ extension RideNavigationViewModel {
             updateTrailGuidance(with: sample)
         }
         render()
-        announce("Enduro navigation started")
+        announce(String(localized: .rideNavigationAnnouncementEnduroStarted))
     }
 
     var trailGuidanceSample: RideRouteGuidanceSample? {

@@ -139,7 +139,7 @@ public struct RideDashboardMapper: Sendable {
             percentageText: "\(clampedPercentage)%",
             progress: Double(clampedPercentage) / Double(Constants.maximumBatteryPercentage),
             emphasis: emphasis,
-            accessibilityLabel: "Battery \(clampedPercentage) percent"
+            accessibilityLabel: rideDashboardLocalized(.rideDashboardAccessibilityBatteryPercent(clampedPercentage))
         )
     }
 
@@ -155,7 +155,10 @@ public struct RideDashboardMapper: Sendable {
             minimumFractionDigits: 1
         )
         let text = "\(value) \(distance.unit)"
-        return .init(valueText: text, accessibilityLabel: "Odometer \(text)")
+        return .init(
+            valueText: text,
+            accessibilityLabel: rideDashboardLocalized(.rideDashboardAccessibilityOdometer(text))
+        )
     }
 
     private func percent(_ value: Double?) -> String {
@@ -181,13 +184,14 @@ public struct RideDashboardMapper: Sendable {
             source,
             isGPSAvailable: isGPSAvailable
         )
-        let sourceAccessibility = sourceIndicator.map { ", \($0.text) speed source" } ?? ""
         return .init(
             valueText: valueText,
             unit: unit,
             progress: progress,
             sourceIndicator: sourceIndicator,
-            accessibilityLabel: "Speed \(valueText) \(unit)\(sourceAccessibility)"
+            accessibilityLabel: sourceIndicator.map {
+                rideDashboardLocalized(.rideDashboardAccessibilitySpeedWithSource(valueText, unit, $0.text))
+            } ?? rideDashboardLocalized(.rideDashboardAccessibilitySpeed(valueText, unit))
         )
     }
 
@@ -196,35 +200,35 @@ public struct RideDashboardMapper: Sendable {
             indicator(
                 id: "highBeam",
                 symbolName: "headlight.high.beam",
-                label: "High beam",
+                label: rideDashboardLocalized(.rideDashboardIndicatorHighBeam),
                 isActive: hasTelemetry && flags.indicatorState.isHighBeamOn,
                 emphasis: .informational
             ),
             indicator(
                 id: "leftTurn",
                 symbolName: "arrow.left",
-                label: "Left turn",
+                label: rideDashboardLocalized(.rideDashboardIndicatorLeftTurn),
                 isActive: hasTelemetry && flags.indicatorState.isLeftBlinkerOn,
                 emphasis: .warning
             ),
             indicator(
                 id: "brake",
                 symbolName: "exclamationmark.circle.fill",
-                label: "Brake",
+                label: rideDashboardLocalized(.rideDashboardIndicatorBrake),
                 isActive: hasTelemetry && flags.isBrakeActive,
                 emphasis: .critical
             ),
             indicator(
                 id: "rightTurn",
                 symbolName: "arrow.right",
-                label: "Right turn",
+                label: rideDashboardLocalized(.rideDashboardIndicatorRightTurn),
                 isActive: hasTelemetry && flags.indicatorState.isRightBlinkerOn,
                 emphasis: .warning
             ),
             indicator(
                 id: "fault",
                 symbolName: "exclamationmark.triangle.fill",
-                label: "Fault",
+                label: rideDashboardLocalized(.rideDashboardIndicatorFault),
                 isActive: hasTelemetry && flags.isFaultActive,
                 emphasis: .critical
             )
@@ -242,7 +246,9 @@ public struct RideDashboardMapper: Sendable {
             id: id,
             symbolName: symbolName,
             accessibilityLabel: label,
-            accessibilityValue: isActive ? "On" : "Off",
+            accessibilityValue: rideDashboardLocalized(
+                isActive ? .rideDashboardIndicatorStateOn : .rideDashboardIndicatorStateOff
+            ),
             isActive: isActive,
             emphasis: emphasis
         )

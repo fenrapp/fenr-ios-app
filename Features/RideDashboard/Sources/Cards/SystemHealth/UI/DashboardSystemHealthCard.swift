@@ -7,7 +7,10 @@ struct DashboardSystemHealthCard: View {
     var body: some View {
         DashboardAdaptiveCardSurface {
             VStack(spacing: Constants.spacing) {
-                DashboardSystemHealthHeader(title: "SYSTEM HEALTH", state: state)
+                DashboardSystemHealthHeader(
+                    title: rideDashboardLocalized(.rideDashboardSystemHealthTitle),
+                    state: state
+                )
                 healthRing
                     .layoutPriority(1)
                 metrics
@@ -36,7 +39,7 @@ struct DashboardSystemHealthCard: View {
                 Text(state.stateOfHealthText)
                     .font(.system(size: Constants.healthFontSize, weight: .medium, design: .rounded))
                     .monospacedDigit()
-                Text("BATTERY HEALTH")
+                Text(.rideDashboardSystemHealthBatteryHealth)
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(DesignColor.secondaryText)
                 Text(state.statusText)
@@ -51,12 +54,18 @@ struct DashboardSystemHealthCard: View {
     private var metrics: some View {
         Grid(horizontalSpacing: DesignSpace.small, verticalSpacing: DesignSpace.extraSmall) {
             GridRow {
-                metric(title: "CELL DELTA", value: state.cellDeltaText)
-                metric(title: "DC BUS", value: state.dcBusVoltageText)
+                metric(title: rideDashboardLocalized(.rideDashboardSystemHealthCellDelta), value: state.cellDeltaText)
+                metric(title: rideDashboardLocalized(.rideDashboardSystemHealthDcBus), value: state.dcBusVoltageText)
             }
             GridRow {
-                metric(title: "BATTERY", value: state.batteryTemperatureText)
-                metric(title: "INVERTER", value: state.inverterTemperatureText)
+                metric(
+                    title: rideDashboardLocalized(.rideDashboardSystemHealthBattery),
+                    value: state.batteryTemperatureText
+                )
+                metric(
+                    title: rideDashboardLocalized(.rideDashboardSystemHealthInverter),
+                    value: state.inverterTemperatureText
+                )
             }
         }
     }
@@ -98,15 +107,14 @@ struct DashboardSystemHealthCard: View {
     }
 
     private var accessibilityText: String {
-        [
-            "System health \(state.statusText)",
-            "battery health \(state.stateOfHealthText)",
-            "cell delta \(state.cellDeltaText)",
-            "DC bus \(state.dcBusVoltageText)",
-            "battery temperature \(state.batteryTemperatureText)",
-            "inverter temperature \(state.inverterTemperatureText)",
-            state.statusDetail
-        ].filter { !$0.isEmpty }.joined(separator: ", ")
+        rideDashboardLocalized(.rideDashboardSystemHealthAccessibility(
+            state.statusText,
+            state.stateOfHealthText,
+            state.cellDeltaText,
+            state.dcBusVoltageText,
+            state.batteryTemperatureText,
+            state.inverterTemperatureText
+        )) + (state.statusDetail.isEmpty ? "" : ", \(state.statusDetail)")
     }
 
     private enum Constants {

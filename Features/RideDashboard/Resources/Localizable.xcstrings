@@ -1,0 +1,3508 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "rideDashboard.connection.failed": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Unable to connect. Try again." } } }
+    },
+    "rideDashboard.connection.pairingResetRequired": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Forget the bike in Bluetooth settings, then pair it again." } } }
+    },
+    "rideDashboard.compass.direction.east": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "E" } } }
+    },
+    "rideDashboard.compass.direction.eastNortheast": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "ENE" } } }
+    },
+    "rideDashboard.compass.direction.eastSoutheast": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "ESE" } } }
+    },
+    "rideDashboard.compass.direction.north": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "N" } } }
+    },
+    "rideDashboard.compass.direction.northeast": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "NE" } } }
+    },
+    "rideDashboard.compass.direction.northNortheast": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "NNE" } } }
+    },
+    "rideDashboard.compass.direction.northNorthwest": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "NNW" } } }
+    },
+    "rideDashboard.compass.direction.northwest": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "NW" } } }
+    },
+    "rideDashboard.compass.direction.south": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "S" } } }
+    },
+    "rideDashboard.compass.direction.southeast": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "SE" } } }
+    },
+    "rideDashboard.compass.direction.southSoutheast": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "SSE" } } }
+    },
+    "rideDashboard.compass.direction.southSouthwest": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "SSW" } } }
+    },
+    "rideDashboard.compass.direction.southwest": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "SW" } } }
+    },
+    "rideDashboard.compass.direction.west": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "W" } } }
+    },
+    "rideDashboard.compass.direction.westNorthwest": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "WNW" } } }
+    },
+    "rideDashboard.compass.direction.westSouthwest": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "WSW" } } }
+    },
+    "rideDashboard.gear.display.neutral": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "N" } } }
+    },
+    "rideDashboard.gear.display.off": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "OFF" } } }
+    },
+    "rideDashboard.speedSource.gps": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "GPS" } } }
+    },
+    "rideDashboard.speedSource.hybrid": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "GPS+" } } }
+    },
+    "rideDashboard.value.notAvailable": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "N/A" } } }
+    },
+    "rideDashboard.chart.battery": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Battery" } } }
+    },
+    "rideDashboard.chart.distance": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Distance" } } }
+    },
+    "rideDashboard.chart.efficiency": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Efficiency" } } }
+    },
+    "rideDashboard.chart.regeneratedPower": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Regenerated power" } } }
+    },
+    "rideDashboard.chart.time": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Time" } } }
+    },
+    "rideDashboard.chart.trip": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Trip" } } }
+    },
+    "rideDashboard.chart.typical": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Typical" } } }
+    },
+    "rideDashboard.chart.usedPower": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Used power" } } }
+    },
+    "rideDashboard.chart.zero": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Zero" } } }
+    },
+    "rideDashboard.accessibility.batteryPercent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Battery %lld percent"
+          }
+        }
+      }
+    },
+    "rideDashboard.accessibility.consuming": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consuming %@ %@"
+          }
+        }
+      }
+    },
+    "rideDashboard.accessibility.odometer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odometer %@"
+          }
+        }
+      }
+    },
+    "rideDashboard.accessibility.powerMode": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Power mode %@"
+          }
+        }
+      }
+    },
+    "rideDashboard.accessibility.regenerating": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regenerating %@ %@"
+          }
+        }
+      }
+    },
+    "rideDashboard.accessibility.speed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speed %@ %@"
+          }
+        }
+      }
+    },
+    "rideDashboard.accessibility.speedWithSource": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speed %@ %@, %@ speed source"
+          }
+        }
+      }
+    },
+    "rideDashboard.battery.range.alert.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated range"
+          }
+        }
+      }
+    },
+    "rideDashboard.battery.range.explanation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calculated from the remaining battery energy, recent consumption, and eligible saved trips for this bike. Riding style, terrain, temperature, and conditions can change the actual range."
+          }
+        }
+      }
+    },
+    "rideDashboard.battery.range.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shows how the estimate is calculated"
+          }
+        }
+      }
+    },
+    "rideDashboard.battery.unavailable.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Battery unavailable"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.accessibility.locked": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bike locked"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.action.lock": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.action.setUp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set Up"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.action.unlock": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.authentication.reason": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock your motorcycle"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.detail.chooseProtection": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose your unlock protection."
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.detail.compatibilityRequired": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VCU compatibility must be verified before Bike Lock is enabled."
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.detail.connectionRequired": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Requires a compatible VCU connection."
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.detail.firmware": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VCU PIC %@"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.detail.minimumFirmware": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bike Lock requires VCU PIC 1.6.29 or newer."
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.detail.notConfigured": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock protection is not set up on this device."
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.detail.protectionActive": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock protection is active."
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.detail.ready": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ready to secure the motorcycle."
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.error.enterPIN": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a 6-digit PIN"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.error.incorrectPIN": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incorrect PIN"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.error.stopBike": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop the motorcycle and disengage the gear before using Bike Lock."
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.error.operationFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bike Lock could not complete the request. Try again."
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.pinEntry.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter Unlock PIN"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.security.faceID.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use Face ID first, with your PIN as a fallback."
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.security.faceID.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PIN + Face ID"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.security.none.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock and unlock immediately from the card."
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.security.none.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No PIN"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.security.pin.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a 6-digit PIN whenever you unlock."
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.security.pin.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PIN"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.setup.continue": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.setup.createPIN.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create Unlock PIN"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.setup.enterPINAgain": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter PIN Again"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.setup.phase.confirm.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the same six digits again."
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.setup.phase.confirm.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm your PIN"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.setup.phase.confirmed.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your PIN is ready to enable."
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.setup.phase.confirmed.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PIN ready"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.setup.phase.create.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use the keypad below."
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.setup.phase.create.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a 6-digit PIN"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.setup.pinConfirmed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PIN confirmed"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.setup.pinMismatch": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PINs did not match. Try the confirmation again."
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.setup.section.protection": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock protection"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.setup.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set Up Bike Lock"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.statusBadge": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BIKE LOCKED"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.status.checkingCompatibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking compatibility"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.status.locked": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Locked"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.status.unlocked": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlocked"
+          }
+        }
+      }
+    },
+    "rideDashboard.bikeLock.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bike Lock"
+          }
+        }
+      }
+    },
+    "rideDashboard.card.bikeLock.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bike Lock"
+          }
+        }
+      }
+    },
+    "rideDashboard.card.currentTrip.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current Trip"
+          }
+        }
+      }
+    },
+    "rideDashboard.card.dynamics.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ride Dynamics"
+          }
+        }
+      }
+    },
+    "rideDashboard.card.efficiency.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efficiency"
+          }
+        }
+      }
+    },
+    "rideDashboard.card.navigation.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ride Navigation"
+          }
+        }
+      }
+    },
+    "rideDashboard.card.range.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Range"
+          }
+        }
+      }
+    },
+    "rideDashboard.card.speedometer.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speedometer"
+          }
+        }
+      }
+    },
+    "rideDashboard.card.systemHealth.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System Health"
+          }
+        }
+      }
+    },
+    "rideDashboard.cards.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dashboard cards"
+          }
+        }
+      }
+    },
+    "rideDashboard.center.accessibility.bikeLocked": {
+      "extractionState": "manual",
+      "localizations": {"en": {"stringUnit": {"state": "translated", "value": "%@, bike locked"}}}
+    },
+    "rideDashboard.charging.balancing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BALANCING"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.battery": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BATTERY %lld%%"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.chargeLimit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charge Limit"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.charger": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CHARGER"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.connectedIdle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CONNECTED · IDLE"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.connectedIdle.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charger connected but not charging"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.dataUnavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DATA UNAVAILABLE"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.dataUnavailable.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charging data unavailable"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.disconnected": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DISCONNECTED"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.disconnected.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charger disconnected"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.eta": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ETA: %@"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.limitReached": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LIMIT REACHED"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.limitReached.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charge limit reached"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.maximumPower": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Max Charging Power"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.metric.cells": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CELLS"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.metric.current": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CURRENT"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.metric.input": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "INPUT"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.metric.temperature": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TEMP"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.status.updateFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "UPDATE FAILED"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.status.updatingLimit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "UPDATING CHARGE LIMIT"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.status.updatingPower": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "UPDATING CHARGING POWER"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.status.updatingSettings": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "UPDATING CHARGE SETTINGS"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.target": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TARGET %lld%%"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CHARGING"
+          }
+        }
+      }
+    },
+    "rideDashboard.common.cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "rideDashboard.common.enable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable"
+          }
+        }
+      }
+    },
+    "rideDashboard.common.loading": {
+      "extractionState": "manual",
+      "localizations": {"en": {"stringUnit": {"state": "translated", "value": "LOADING"}}}
+    },
+    "rideDashboard.common.maximum": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAX"
+          }
+        }
+      }
+    },
+    "rideDashboard.common.minimum": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MIN"
+          }
+        }
+      }
+    },
+    "rideDashboard.common.ok": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "rideDashboard.common.unavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unavailable"
+          }
+        }
+      }
+    },
+    "rideDashboard.connection.authenticating": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authenticating"
+          }
+        }
+      }
+    },
+    "rideDashboard.connection.bluetoothOff": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bluetooth is off"
+          }
+        }
+      }
+    },
+    "rideDashboard.connection.bluetoothRequired": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bluetooth access is required"
+          }
+        }
+      }
+    },
+    "rideDashboard.connection.bluetoothUnavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bluetooth is unavailable"
+          }
+        }
+      }
+    },
+    "rideDashboard.connection.connecting": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecting"
+          }
+        }
+      }
+    },
+    "rideDashboard.connection.disconnected": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disconnected"
+          }
+        }
+      }
+    },
+    "rideDashboard.connection.discovering": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discovering bike services"
+          }
+        }
+      }
+    },
+    "rideDashboard.connection.enablingTelemetry": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enabling live telemetry"
+          }
+        }
+      }
+    },
+    "rideDashboard.connection.live": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live telemetry active"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.unavailable.accessibility": {"extractionState": "manual","localizations": {"en": {"stringUnit": {"state": "translated","value": "Charging unavailable"}}}},
+    "rideDashboard.connection.reconnecting.accessibility": {"extractionState": "manual","localizations": {"en": {"stringUnit": {"state": "translated","value": "Reconnecting to bike"}}}},
+    "rideDashboard.connection.reconnecting": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnecting"
+          }
+        }
+      }
+    },
+    "rideDashboard.connection.reconnectingAttempt": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnecting (%lld/%lld)"
+          }
+        }
+      }
+    },
+    "rideDashboard.connection.restoring": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restoring bike session"
+          }
+        }
+      }
+    },
+    "rideDashboard.connection.scanning": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanning for bike"
+          }
+        }
+      }
+    },
+    "rideDashboard.connection.verifying": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verifying a stable telemetry stream"
+          }
+        }
+      }
+    },
+    "rideDashboard.connection.waitingTelemetry": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for live telemetry"
+          }
+        }
+      }
+    },
+    "rideDashboard.currentTrip.accessibility": {
+      "extractionState": "manual",
+      "localizations": {"en": {"stringUnit": {"state": "translated","value": "Current trip. Duration %@. Distance %@ %@. Average speed %@ %@. Maximum speed %@ %@.%@"}}}
+    },
+    "rideDashboard.currentTrip.accessibility.paused": {
+      "extractionState": "manual",
+      "localizations": {"en": {"stringUnit": {"state": "translated","value": "Current trip, paused. Duration %@. Distance %@ %@. Average speed %@ %@. Maximum speed %@ %@.%@"}}}
+    },
+    "rideDashboard.currentTrip.accessibility.notStartedWithSource": {
+      "extractionState": "manual",
+      "localizations": {"en": {"stringUnit": {"state": "translated","value": "Current trip has not started. %@ speed source."}}}
+    },
+    "rideDashboard.currentTrip.source.accessibility": {
+      "extractionState": "manual",
+      "localizations": {"en": {"stringUnit": {"state": "translated","value": " %@ speed source."}}}
+    },
+    "rideDashboard.currentTrip.accessibility.notStarted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current trip has not started"
+          }
+        }
+      }
+    },
+    "rideDashboard.currentTrip.accessibility.pause": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause current trip"
+          }
+        }
+      }
+    },
+    "rideDashboard.currentTrip.accessibility.reset": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset current trip"
+          }
+        }
+      }
+    },
+    "rideDashboard.currentTrip.accessibility.resume": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resume current trip"
+          }
+        }
+      }
+    },
+    "rideDashboard.currentTrip.action.pause": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause"
+          }
+        }
+      }
+    },
+    "rideDashboard.currentTrip.action.reset": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset"
+          }
+        }
+      }
+    },
+    "rideDashboard.currentTrip.action.resume": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resume"
+          }
+        }
+      }
+    },
+    "rideDashboard.currentTrip.pages.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current trip pages"
+          }
+        }
+      }
+    },
+    "rideDashboard.currentTrip.reset.action": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset Trip"
+          }
+        }
+      }
+    },
+    "rideDashboard.currentTrip.reset.confirmation.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset current trip?"
+          }
+        }
+      }
+    },
+    "rideDashboard.currentTrip.reset.message": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The current trip will be saved. A new trip starts immediately if a drive mode is active."
+          }
+        }
+      }
+    },
+    "rideDashboard.currentTrip.status.inProgress": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IN PROGRESS"
+          }
+        }
+      }
+    },
+    "rideDashboard.currentTrip.status.paused": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PAUSED"
+          }
+        }
+      }
+    },
+    "rideDashboard.currentTrip.status.startsInGear": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "STARTS IN GEAR"
+          }
+        }
+      }
+    },
+    "rideDashboard.currentTrip.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CURRENT TRIP"
+          }
+        }
+      }
+    },
+    "rideDashboard.deviceBattery.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone battery %lld percent"
+          }
+        }
+      }
+    },
+    "rideDashboard.deviceBattery.charging.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone battery %lld percent, charging"
+          }
+        }
+      }
+    },
+    "rideDashboard.deviceBattery.display.both.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switches to icon and percentage display"
+          }
+        }
+      }
+    },
+    "rideDashboard.deviceBattery.display.icon.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switches to icon-only display"
+          }
+        }
+      }
+    },
+    "rideDashboard.deviceBattery.display.percentage.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switches to percentage-only display"
+          }
+        }
+      }
+    },
+    "rideDashboard.deviceBattery.unavailable.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone battery unavailable"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.course.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Course %@, %@, source %@"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.altitude.accessibility": {
+      "extractionState": "manual",
+      "localizations": {"en": {"stringUnit": {"state": "translated", "value": "altitude %@"}}}
+    },
+    "rideDashboard.dynamics.coordinates.accessibility": {
+      "extractionState": "manual",
+      "localizations": {"en": {"stringUnit": {"state": "translated", "value": "coordinates %@, %@"}}}
+    },
+    "rideDashboard.dynamics.instrument.accessibility": {
+      "extractionState": "manual",
+      "localizations": {"en": {"stringUnit": {"state": "translated", "value": "%@, %@, %@, %@, %@"}}}
+    },
+    "rideDashboard.dynamics.course.sourceGPS": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GPS"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.course.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "COURSE"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.course.unavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NO COURSE"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.direction.down": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DOWN"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.direction.left": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LEFT"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.direction.level": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LEVEL"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.direction.right": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RIGHT"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.direction.up": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "UP"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.gauge.imuUnavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IMU UNAVAILABLE"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.lean.maximumLeft": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAX LEFT"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.lean.maximumRight": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAX RIGHT"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.lean.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LEAN"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.pages.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ride dynamics pages"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.pitch.maximumDown": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAX DOWN"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.pitch.maximumUp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAX UP"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.pitch.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PITCH"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.status.calibrating": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CALIBRATING"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.status.live": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IMU BETA"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.status.signalLost": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SIGNAL LOST"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.status.unavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "UNAVAILABLE"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.status.zeroing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HOLD STILL"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.zero.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zero %@"
+          }
+        }
+      }
+    },
+    "rideDashboard.dynamics.zero.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calibrates the current level position"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.chart.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Used and regenerated electrical power over the last 60 seconds"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.legend.recovered": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RECOVERED"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.legend.regen": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "REGEN"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.legend.used": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USED"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.live.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live efficiency, %@ %@, %@"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.live.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EFFICIENCY · LIVE"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.pages.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efficiency pages"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.power.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Used %@ kilowatts, regenerated %@ kilowatts"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.status.calculated": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CALCULATED"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.status.calculating": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CALCULATING"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.status.netRecovery": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NET RECOVERY"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.status.partial": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PARTIAL"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.trend.empty.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efficiency trend has no qualifying trips"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.trend.lastTrips": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LAST 10 TRIPS"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.trend.latest.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efficiency trend, latest %@ %@"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.trend.loading": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading efficiency trend"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.trend.noTrips": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NO QUALIFYING TRIPS YET"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.trend.requirements": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trips need at least 1 km and 90% power coverage."
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.trend.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EFFICIENCY · TREND"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.trend.waitingIdentity": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WAITING FOR BIKE IDENTITY"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.waitingPower": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WAITING FOR POWER DATA"
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.waitingPower.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for power data"
+          }
+        }
+      }
+    },
+    "rideDashboard.gear.crawlForward.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crawl forward"
+          }
+        }
+      }
+    },
+    "rideDashboard.gear.crawlReverse.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crawl reverse"
+          }
+        }
+      }
+    },
+    "rideDashboard.gear.neutral.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gear neutral"
+          }
+        }
+      }
+    },
+    "rideDashboard.gear.off.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gear off"
+          }
+        }
+      }
+    },
+    "rideDashboard.gear.unavailable.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gear unavailable"
+          }
+        }
+      }
+    },
+    "rideDashboard.header.batteryTemperature.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Battery temperature"
+          }
+        }
+      }
+    },
+    "rideDashboard.header.inverterTemperature.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inverter temperature"
+          }
+        }
+      }
+    },
+    "rideDashboard.header.settings": {
+      "extractionState": "manual",
+      "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Settings"}}}
+    },
+    "rideDashboard.header.time.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time"
+          }
+        }
+      }
+    },
+    "rideDashboard.indicator.brake": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brake"
+          }
+        }
+      }
+    },
+    "rideDashboard.indicator.fault": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fault"
+          }
+        }
+      }
+    },
+    "rideDashboard.indicator.highBeam": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "High beam"
+          }
+        }
+      }
+    },
+    "rideDashboard.indicator.leftTurn": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Left turn"
+          }
+        }
+      }
+    },
+    "rideDashboard.indicator.rightTurn": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Right turn"
+          }
+        }
+      }
+    },
+    "rideDashboard.indicator.state.off": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        }
+      }
+    },
+    "rideDashboard.indicator.state.on": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On"
+          }
+        }
+      }
+    },
+    "rideDashboard.indicators.active.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active bike indicators"
+          }
+        }
+      }
+    },
+    "rideDashboard.metric.average": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AVERAGE"
+          }
+        }
+      }
+    },
+    "rideDashboard.metric.distance": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DISTANCE"
+          }
+        }
+      }
+    },
+    "rideDashboard.metric.maximumSpeed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAX SPEED"
+          }
+        }
+      }
+    },
+    "rideDashboard.metric.rideTime": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RIDE TIME"
+          }
+        }
+      }
+    },
+    "rideDashboard.metric.totalDistance": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TOTAL DISTANCE"
+          }
+        }
+      }
+    },
+    "rideDashboard.navigation.inactive.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow a GPX, navigate to a destination, or record a new route."
+          }
+        }
+      }
+    },
+    "rideDashboard.navigation.open": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Navigation"
+          }
+        }
+      }
+    },
+    "rideDashboard.navigation.return": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Return to Navigation"
+          }
+        }
+      }
+    },
+    "rideDashboard.navigation.running": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Navigation is running"
+          }
+        }
+      }
+    },
+    "rideDashboard.navigation.running.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your route continues in the mini map while the dashboard remains available."
+          }
+        }
+      }
+    },
+    "rideDashboard.navigation.tagline": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The trail, front and center"
+          }
+        }
+      }
+    },
+    "rideDashboard.navigation.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RIDE NAVIGATION"
+          }
+        }
+      }
+    },
+    "rideDashboard.odometer.unavailable.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odometer unavailable"
+          }
+        }
+      }
+    },
+    "rideDashboard.page.batteryTrip.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Battery trip"
+          }
+        }
+      }
+    },
+    "rideDashboard.page.cells.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cells"
+          }
+        }
+      }
+    },
+    "rideDashboard.page.course.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Course"
+          }
+        }
+      }
+    },
+    "rideDashboard.page.currentTrip.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current trip"
+          }
+        }
+      }
+    },
+    "rideDashboard.page.efficiencyTrend.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efficiency trend"
+          }
+        }
+      }
+    },
+    "rideDashboard.page.health.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Health"
+          }
+        }
+      }
+    },
+    "rideDashboard.page.lean.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lean"
+          }
+        }
+      }
+    },
+    "rideDashboard.page.liveEfficiency.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live efficiency"
+          }
+        }
+      }
+    },
+    "rideDashboard.page.pitch.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pitch"
+          }
+        }
+      }
+    },
+    "rideDashboard.page.rideStatistics.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ride statistics"
+          }
+        }
+      }
+    },
+    "rideDashboard.page.thermal.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thermal"
+          }
+        }
+      }
+    },
+    "rideDashboard.power.neutral.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Power neutral"
+          }
+        }
+      }
+    },
+    "rideDashboard.powerMode.power.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Power"
+          }
+        }
+      }
+    },
+    "rideDashboard.powerMode.regen.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regenerative braking"
+          }
+        }
+      }
+    },
+    "rideDashboard.powerMode.traction.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Power traction control"
+          }
+        }
+      }
+    },
+    "rideDashboard.powerMode.traction.value.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ percent"
+          }
+        }
+      }
+    },
+    "rideDashboard.powerMode.unavailable.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Power mode unavailable"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.batteryTrip.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BATTERY · TRIP"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.chart.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Energy consumption over the latest distance"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.currentPace": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CURRENT PACE"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.energyLeft": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ENERGY LEFT"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.estimated.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated range %@ %@"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.learningConsumption": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LEARNING YOUR CONSUMPTION"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.live.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated range, %@ %@, %@"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.live.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RANGE · LIVE"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.pages.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Range pages"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.peakRegen": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PEAK REGEN"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.peakUse": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PEAK USE"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.status.adapting": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ADAPTING"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.status.learning": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LEARNING"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.status.stable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "STABLE"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.trip.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trip battery, %@, %@ remaining"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.tripChart.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Battery use over the current trip"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.typical": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TYPICAL"
+          }
+        }
+      }
+    },
+    "rideDashboard.range.waitingTrip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WAITING FOR TRIP DATA"
+          }
+        }
+      }
+    },
+    "rideDashboard.speed.default.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speed 0 km/h"
+          }
+        }
+      }
+    },
+    "rideDashboard.speedSource.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ speed source"
+          }
+        }
+      }
+    },
+    "rideDashboard.speedSource.noGPS": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NO GPS"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System health %@, battery health %@, cell delta %@, DC bus %@, battery temperature %@, inverter temperature %@"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.battery": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BATTERY"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.batteryHealth": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BATTERY HEALTH"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.cellDelta": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CELL DELTA"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.cells.check": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CHECK"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.cells.critical": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CRITICAL"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.cells.highest": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HIGHEST"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.cells.lowest": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LOWEST"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.cells.normal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NORMAL"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.cells.packDistribution": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PACK DISTRIBUTION"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.cells.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CELL HEALTH"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.cells.uniform": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "UNIFORM PACK"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.dcBus": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DC BUS"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.inverter": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "INVERTER"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.pages.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System health pages"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.status.bmsFault": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BMS FAULT ACTIVE"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.status.lowBatteryShort": {"extractionState": "manual","localizations": {"en": {"stringUnit": {"state": "translated","value": "LOW BATTERY"}}}},
+    "rideDashboard.systemHealth.cells.toCheck": {"extractionState": "manual","localizations": {"en": {"stringUnit": {"state": "translated","value": "TO CHECK"}}}},
+    "rideDashboard.systemHealth.status.balancing": {"extractionState": "manual","localizations": {"en": {"stringUnit": {"state": "translated","value": "CELL BALANCING ACTIVE"}}}},
+    "rideDashboard.systemHealth.status.normal": {"extractionState": "manual","localizations": {"en": {"stringUnit": {"state": "translated","value": "ALL SYSTEMS NORMAL"}}}},
+    "rideDashboard.systemHealth.status.outsideRange": {"extractionState": "manual","localizations": {"en": {"stringUnit": {"state": "translated","value": "VALUE OUTSIDE NORMAL RANGE"}}}},
+    "rideDashboard.systemHealth.status.limitExceeded": {"extractionState": "manual","localizations": {"en": {"stringUnit": {"state": "translated","value": "SYSTEM LIMIT EXCEEDED"}}}},
+    "rideDashboard.systemHealth.status.dataUnavailable": {"extractionState": "manual","localizations": {"en": {"stringUnit": {"state": "translated","value": "BMS DATA UNAVAILABLE"}}}},
+    "rideDashboard.systemHealth.status.lowBattery": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LOW BATTERY · CHARGE SOON"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.status.scanning": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SCANNING"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.thermal.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thermal, battery maximum %@, inverter maximum %@"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.thermal.average": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AVG"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.thermal.maximum": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAX"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.thermal.minimum": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MIN"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.thermal.noData": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NO DATA"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.thermal.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "THERMAL"
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SYSTEM HEALTH"
+          }
+        }
+      }
+    },
+    "rideDashboard.tripStatistics.accessibility": {
+      "extractionState": "manual",
+      "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Ride statistics. %@. Total distance %@ %@. Ride time %@. Average speed %@ %@. Maximum speed %@ %@."}}}
+    },
+    "rideDashboard.tripStatistics.accessibility.none": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ride statistics, no saved trips"
+          }
+        }
+      }
+    },
+    "rideDashboard.tripStatistics.loading": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading ride statistics"
+          }
+        }
+      }
+    },
+    "rideDashboard.tripStatistics.status.none": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NO SAVED TRIPS"
+          }
+        }
+      }
+    },
+    "rideDashboard.tripStatistics.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RIDE STATS"
+          }
+        }
+      }
+    },
+    "rideDashboard.unavailable.connecting.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecting to bike. %@"
+          }
+        }
+      }
+    },
+    "rideDashboard.unavailable.connecting.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecting to bike"
+          }
+        }
+      }
+    },
+    "rideDashboard.unavailable.diagnostics.action": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Diagnostics"
+          }
+        }
+      }
+    },
+    "rideDashboard.unavailable.rotate.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The ride dashboard is designed for landscape viewing."
+          }
+        }
+      }
+    },
+    "rideDashboard.unavailable.rotate.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rotate to landscape"
+          }
+        }
+      }
+    },
+    "rideDashboard.unavailable.telemetry.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No live telemetry"
+          }
+        }
+      }
+    },
+    "rideDashboard.charging.balancing.accessibility": {"extractionState": "manual","localizations": {"en": {"stringUnit": {"state": "translated","value": "Balancing"}}}},
+    "rideDashboard.charging.charging.accessibility": {"extractionState": "manual","localizations": {"en": {"stringUnit": {"state": "translated","value": "Charging"}}}},
+    "rideDashboard.charging.percent.accessibility": {"extractionState": "manual","localizations": {"en": {"stringUnit": {"state": "translated","value": "%lld percent"}}}},
+    "rideDashboard.charging.target.accessibility": {"extractionState": "manual","localizations": {"en": {"stringUnit": {"state": "translated","value": ". Target %lld percent"}}}},
+    "rideDashboard.charging.state.accessibility": {"extractionState": "manual","localizations": {"en": {"stringUnit": {"state": "translated","value": "%@ %@%@"}}}},
+    "rideDashboard.charging.balancingCellsActive": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld CELL ACTIVE"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld CELLS ACTIVE"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rideDashboard.tripStatistics.savedTrips": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld SAVED TRIP"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld SAVED TRIPS"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rideDashboard.efficiency.trend.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Efficiency across %lld trip"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Efficiency across %lld trips"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.cells.count": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld CELL"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld CELLS"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.cells.accessibility": {
+      "extractionState": "manual",
+      "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Cell health %@, cell delta %@, %lld normal cells, %lld cells to check, %lld critical cells, lowest %@, highest %@, %lld balancing"}}}
+    },
+    "rideDashboard.systemHealth.cells.balancing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld BALANCING"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld BALANCING"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.cells.criticalStatus": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld CRITICAL"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld CRITICAL"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.cells.checkStatus": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld TO CHECK"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld TO CHECK"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.cellCountQualifier": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld CELL %@"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld CELLS %@"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.normalCells.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld normal cell"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld normal cells"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.checkCells.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld cell to check"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld cells to check"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.criticalCells.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld critical cell"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld critical cells"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rideDashboard.systemHealth.balancingCells.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld balancing cell"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld balancing cells"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "version": "1.1"
+}

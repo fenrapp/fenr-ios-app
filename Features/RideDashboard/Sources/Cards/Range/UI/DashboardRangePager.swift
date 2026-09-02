@@ -11,7 +11,7 @@ struct DashboardRangePager: View {
             pages: pages,
             selection: $selection,
             reduceMotion: reduceMotion,
-            accessibilityLabel: "Range pages",
+            accessibilityLabel: rideDashboardLocalized(.rideDashboardRangePagesAccessibility),
             accessibilityValue: \.accessibilityLabel
         ) { page in
             switch page {

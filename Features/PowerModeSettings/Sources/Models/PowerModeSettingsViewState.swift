@@ -1,3 +1,5 @@
+import Foundation
+
 public struct PowerModeSettingsViewState: Equatable, Sendable {
     public let maps: [PowerModeMapViewData]
     public let selectedMapIndex: Int
@@ -19,9 +21,9 @@ public struct PowerModeSettingsViewState: Equatable, Sendable {
         maximumNameLength: Int = 10,
         canEditName: Bool = false,
         nameError: String? = nil,
-        connectionText: String = "Bike unavailable",
-        capabilityText: String = "Capability unavailable",
-        statusText: String = "Waiting for bike data",
+        connectionText: String? = nil,
+        capabilityText: String? = nil,
+        statusText: String? = nil,
         statusIsError: Bool = false,
         canRefresh: Bool = false,
         adjustments: [PowerModeAdjustmentViewState] = []
@@ -33,8 +35,11 @@ public struct PowerModeSettingsViewState: Equatable, Sendable {
         self.canEditName = canEditName
         self.nameError = nameError
         self.connectionText = connectionText
+            ?? String(localized: .powerModeSettingsBikeUnavailable)
         self.capabilityText = capabilityText
+            ?? String(localized: .powerModeSettingsCapabilityUnavailable)
         self.statusText = statusText
+            ?? String(localized: .powerModeSettingsWaitingForBikeData)
         self.statusIsError = statusIsError
         self.canRefresh = canRefresh
         self.adjustments = adjustments

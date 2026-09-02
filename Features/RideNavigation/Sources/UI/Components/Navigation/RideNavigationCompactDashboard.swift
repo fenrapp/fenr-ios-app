@@ -9,21 +9,29 @@ struct RideNavigationCompactDashboard: View {
             if isFocusDriving {
                 Grid(horizontalSpacing: DesignSpace.medium, verticalSpacing: DesignSpace.small) {
                     GridRow {
-                        RideNavigationMetric(value: state.speedText, unit: state.speedUnit, label: "Speed")
-                        RideNavigationMetric(value: state.modeText, unit: "", label: "Power")
+                        RideNavigationMetric(
+                            value: state.speedText,
+                            unit: state.speedUnit,
+                            label: .rideNavigationMetricSpeed
+                        )
+                        RideNavigationMetric(value: state.modeText, unit: "", label: .rideNavigationMetricPower)
                     }
                     GridRow {
-                        RideNavigationMetric(value: state.batteryText, unit: "", label: "Bike")
-                        RideNavigationMetric(value: state.elapsedText, unit: "", label: "Time")
+                        RideNavigationMetric(value: state.batteryText, unit: "", label: .rideNavigationMetricBike)
+                        RideNavigationMetric(value: state.elapsedText, unit: "", label: .rideNavigationMetricTime)
                     }
                 }
             } else {
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: DesignSpace.medium) { metrics }
                     VStack(alignment: .leading, spacing: DesignSpace.small) {
-                        RideNavigationMetric(value: state.speedText, unit: state.speedUnit, label: "Speed")
-                        RideNavigationMetric(value: state.modeText, unit: "", label: "Power")
-                        RideNavigationMetric(value: state.batteryText, unit: "", label: "Bike")
+                        RideNavigationMetric(
+                            value: state.speedText,
+                            unit: state.speedUnit,
+                            label: .rideNavigationMetricSpeed
+                        )
+                        RideNavigationMetric(value: state.modeText, unit: "", label: .rideNavigationMetricPower)
+                        RideNavigationMetric(value: state.batteryText, unit: "", label: .rideNavigationMetricBike)
                     }
                 }
             }
@@ -38,11 +46,11 @@ struct RideNavigationCompactDashboard: View {
 
     @ViewBuilder
     private var metrics: some View {
-        RideNavigationMetric(value: state.speedText, unit: state.speedUnit, label: "Speed")
+        RideNavigationMetric(value: state.speedText, unit: state.speedUnit, label: .rideNavigationMetricSpeed)
         divider
-        RideNavigationMetric(value: state.modeText, unit: "", label: "Power")
+        RideNavigationMetric(value: state.modeText, unit: "", label: .rideNavigationMetricPower)
         divider
-        RideNavigationMetric(value: state.batteryText, unit: "", label: "Bike")
+        RideNavigationMetric(value: state.batteryText, unit: "", label: .rideNavigationMetricBike)
     }
 
     private var divider: some View {

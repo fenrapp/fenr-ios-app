@@ -2,7 +2,7 @@ import DesignSystem
 import SwiftUI
 
 struct WatchDashboardMetric: View {
-    let title: String
+    let title: LocalizedStringResource
     let value: String
 
     var body: some View {
@@ -10,7 +10,7 @@ struct WatchDashboardMetric: View {
             Text(title)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
-            Text(value)
+            Text(verbatim: value)
                 .font(.headline.monospacedDigit())
                 .lineLimit(1)
                 .minimumScaleFactor(Constants.minimumScaleFactor)
@@ -25,7 +25,7 @@ struct WatchDashboardMetric: View {
 
 #if DEBUG
 #Preview {
-    WatchDashboardMetric(title: "ODOMETER", value: "180.0 km")
+    WatchDashboardMetric(title: .watchDashboardOdometer, value: "180.0 km")
         .padding()
 }
 #endif

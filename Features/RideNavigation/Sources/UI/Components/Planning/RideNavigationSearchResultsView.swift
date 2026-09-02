@@ -24,7 +24,7 @@ struct RideNavigationSearchResultsView: View {
 
     private var resultsHeader: some View {
         HStack {
-            Text("Results")
+            Text(.rideNavigationResults)
                 .font(.headline)
             Spacer()
             if !results.isEmpty {
@@ -66,7 +66,7 @@ struct RideNavigationSearchResultsView: View {
             Image(systemName: "mappin.and.ellipse")
                 .font(.title2)
                 .foregroundStyle(.secondary)
-            Text("Type a place or address to see nearby matches.")
+            Text(.rideNavigationSearchHint)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

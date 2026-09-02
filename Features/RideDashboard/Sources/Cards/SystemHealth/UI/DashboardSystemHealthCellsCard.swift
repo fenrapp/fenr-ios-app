@@ -7,7 +7,10 @@ struct DashboardSystemHealthCellsCard: View {
     var body: some View {
         DashboardAdaptiveCardSurface {
             VStack(spacing: Constants.spacing) {
-                DashboardSystemHealthHeader(title: "CELL HEALTH", state: state)
+                DashboardSystemHealthHeader(
+                    title: rideDashboardLocalized(.rideDashboardSystemHealthCellsTitle),
+                    state: state
+                )
                 summary
                 if state.cells.isEmpty {
                     emptyState
@@ -29,7 +32,7 @@ struct DashboardSystemHealthCellsCard: View {
                 Text(state.cellDeltaText)
                     .font(.title2.weight(.semibold))
                     .monospacedDigit()
-                Text("CELL DELTA")
+                Text(.rideDashboardSystemHealthCellDelta)
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(DesignColor.secondaryText)
             }
@@ -44,9 +47,9 @@ struct DashboardSystemHealthCellsCard: View {
     private var distribution: some View {
         VStack(spacing: DesignSpace.small) {
             HStack {
-                Text("PACK DISTRIBUTION")
+                Text(.rideDashboardSystemHealthCellsPackDistribution)
                 Spacer()
-                Text("\(state.cells.count) CELLS")
+                Text(rideDashboardLocalized(.rideDashboardSystemHealthCellsCount(state.cells.count)))
                     .monospacedDigit()
             }
             .font(.caption2.weight(.bold))
@@ -59,9 +62,21 @@ struct DashboardSystemHealthCellsCard: View {
             )
 
             HStack(spacing: DesignSpace.extraSmall) {
-                distributionMetric("NORMAL", value: normalCellCount, color: DesignColor.positive)
-                distributionMetric("CHECK", value: state.attentionCellCount, color: DesignColor.warning)
-                distributionMetric("CRITICAL", value: state.criticalCellCount, color: DesignColor.critical)
+                distributionMetric(
+                    rideDashboardLocalized(.rideDashboardSystemHealthCellsNormal),
+                    value: normalCellCount,
+                    color: DesignColor.positive
+                )
+                distributionMetric(
+                    rideDashboardLocalized(.rideDashboardSystemHealthCellsCheck),
+                    value: state.attentionCellCount,
+                    color: DesignColor.warning
+                )
+                distributionMetric(
+                    rideDashboardLocalized(.rideDashboardSystemHealthCellsCritical),
+                    value: state.criticalCellCount,
+                    color: DesignColor.critical
+                )
             }
         }
         .padding(DesignSpace.small)
@@ -70,15 +85,26 @@ struct DashboardSystemHealthCellsCard: View {
 
     private var extremes: some View {
         HStack(spacing: DesignSpace.small) {
-            extremeMetric(title: "LOWEST", value: state.minimumCellText, systemImage: "arrow.down")
-            extremeMetric(title: "HIGHEST", value: state.maximumCellText, systemImage: "arrow.up")
+            extremeMetric(
+                title: rideDashboardLocalized(.rideDashboardSystemHealthCellsLowest),
+                value: state.minimumCellText,
+                systemImage: "arrow.down"
+            )
+            extremeMetric(
+                title: rideDashboardLocalized(.rideDashboardSystemHealthCellsHighest),
+                value: state.maximumCellText,
+                systemImage: "arrow.up"
+            )
         }
     }
 
     @ViewBuilder
     private var balancingStatus: some View {
         if state.balancingCellCount > .zero {
-            Label("\(state.balancingCellCount) BALANCING", systemImage: "arrow.triangle.2.circlepath")
+            Label(
+                rideDashboardLocalized(.rideDashboardSystemHealthCellsBalancing(state.balancingCellCount)),
+                systemImage: "arrow.triangle.2.circlepath"
+            )
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(DesignColor.informational)
                 .frame(maxWidth: .infinity)
@@ -103,9 +129,13 @@ struct DashboardSystemHealthCellsCard: View {
     }
 
     private var issueSummaryText: String {
-        if state.criticalCellCount > .zero { return "\(state.criticalCellCount) CRITICAL" }
-        if state.attentionCellCount > .zero { return "\(state.attentionCellCount) TO CHECK" }
-        return "UNIFORM PACK"
+        if state.criticalCellCount > .zero {
+            return rideDashboardLocalized(.rideDashboardSystemHealthCellsCriticalStatus(state.criticalCellCount))
+        }
+        if state.attentionCellCount > .zero {
+            return rideDashboardLocalized(.rideDashboardSystemHealthCellsCheckStatus(state.attentionCellCount))
+        }
+        return rideDashboardLocalized(.rideDashboardSystemHealthCellsUniform)
     }
 
     private var issueColor: Color {
@@ -144,16 +174,16 @@ struct DashboardSystemHealthCellsCard: View {
     }
 
     private var accessibilityText: String {
-        [
-            "Cell health \(state.statusText)",
-            "cell delta \(state.cellDeltaText)",
-            "\(normalCellCount) normal cells",
-            "\(state.attentionCellCount) cells to check",
-            "\(state.criticalCellCount) critical cells",
-            "lowest \(state.minimumCellText)",
-            "highest \(state.maximumCellText)",
-            "\(state.balancingCellCount) balancing"
-        ].joined(separator: ", ")
+        rideDashboardLocalized(.rideDashboardSystemHealthCellsAccessibility(
+            state.statusText,
+            state.cellDeltaText,
+            normalCellCount,
+            state.attentionCellCount,
+            state.criticalCellCount,
+            state.minimumCellText,
+            state.maximumCellText,
+            state.balancingCellCount
+        ))
     }
 
     private enum Constants {

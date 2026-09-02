@@ -27,7 +27,7 @@ struct WatchBatteryRing: View {
                     .animation(.smooth, value: progress)
 
                 HStack(alignment: .firstTextBaseline, spacing: DesignSpace.extraExtraSmall) {
-                    Text(percentage.map(String.init) ?? "--")
+                    Text(verbatim: percentage.map(String.init) ?? "--")
                         .font(
                             .system(
                                 size: size * Constants.valueFontMultiplier,
@@ -37,7 +37,7 @@ struct WatchBatteryRing: View {
                         )
                         .contentTransition(.numericText())
                     if percentage != nil {
-                        Text("%")
+                        Text(verbatim: "%")
                             .font(
                                 .system(
                                     size: size * Constants.percentFontMultiplier,
@@ -53,7 +53,13 @@ struct WatchBatteryRing: View {
             .frame(width: size, height: size)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .accessibilityLabel("Battery \(percentage.map(String.init) ?? "unknown") percent")
+        .accessibilityLabel(
+            Text(
+                percentage.map {
+                    .watchDashboardAccessibilityBatteryPercent(percentage: $0)
+                } ?? .watchDashboardAccessibilityBatteryUnknown
+            )
+        )
     }
 
     private var progress: Double {

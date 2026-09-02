@@ -198,6 +198,33 @@ struct PowerModeSettingsViewStateMapperTests {
         #expect(preparing.statusText == "Verifying map write safety")
     }
 
+    @Test("Connection failures do not expose transport messages")
+    func connectionFailuresUseSafePresentationCopy() {
+        let failed = mapper.map(.init(
+            telemetry: .init(),
+            connection: .init(state: .failed(message: "private transport detail")),
+            settings: .init(),
+            profile: .init(vin: vin),
+            selectedMapIndex: 0,
+            isRefreshing: false,
+            refreshError: nil,
+            nameError: nil
+        ))
+        let disconnected = mapper.map(.init(
+            telemetry: .init(),
+            connection: .init(state: .disconnected(reason: "private disconnect detail")),
+            settings: .init(),
+            profile: .init(vin: vin),
+            selectedMapIndex: 0,
+            isRefreshing: false,
+            refreshError: nil,
+            nameError: nil
+        ))
+
+        #expect(failed.connectionText == "Bike connection failed")
+        #expect(disconnected.connectionText == "Bike disconnected")
+    }
+
     private func statusInput(
         isRefreshing: Bool = false,
         refreshError: String? = nil,

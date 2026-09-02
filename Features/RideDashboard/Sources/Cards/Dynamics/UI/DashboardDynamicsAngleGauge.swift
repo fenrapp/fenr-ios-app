@@ -92,13 +92,13 @@ struct DashboardDynamicsAngleGauge: View {
     private var centerContent: some View {
         switch status {
         case .calibrating:
-            waitingContent(message: "CALIBRATING")
+            waitingContent(message: rideDashboardLocalized(.rideDashboardDynamicsStatusCalibrating))
         case .zeroing:
-            waitingContent(message: "HOLD STILL")
+            waitingContent(message: rideDashboardLocalized(.rideDashboardDynamicsStatusZeroing))
         case .unavailable:
-            unavailableContent(message: "IMU UNAVAILABLE")
+            unavailableContent(message: rideDashboardLocalized(.rideDashboardDynamicsGaugeImuUnavailable))
         case .signalLost:
-            unavailableContent(message: "SIGNAL LOST")
+            unavailableContent(message: rideDashboardLocalized(.rideDashboardDynamicsStatusSignalLost))
         case .live:
             liveContent
         }

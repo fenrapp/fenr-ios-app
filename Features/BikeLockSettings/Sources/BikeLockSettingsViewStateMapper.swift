@@ -1,4 +1,5 @@
 import BikeDomain
+import Foundation
 import SettingsDomain
 
 public struct BikeLockSettingsViewStateMapper: Sendable {
@@ -52,18 +53,18 @@ public struct BikeLockSettingsViewStateMapper: Sendable {
 
     private func title(for mode: BikeLockSecurityMode) -> String {
         switch mode {
-        case .notConfigured: "Not set up"
-        case .withoutPIN: "No PIN"
-        case .pin: "PIN"
-        case .pinAndFaceID: "PIN + Face ID"
+        case .notConfigured: String(localized: .bikeLockSettingsModeNotConfigured)
+        case .withoutPIN: String(localized: .bikeLockSettingsModeWithoutPIN)
+        case .pin: String(localized: .bikeLockSettingsModePIN)
+        case .pinAndFaceID: String(localized: .bikeLockSettingsModePINAndFaceID)
         }
     }
 
     private func detail(for mode: BikeLockSecurityMode) -> String {
         switch mode {
-        case .pinAndFaceID: "Use Face ID first, with your PIN as a fallback."
-        case .pin: "Enter a 6-digit PIN whenever you unlock."
-        case .withoutPIN: "Lock and unlock immediately from the card."
+        case .pinAndFaceID: String(localized: .bikeLockSettingsModePINAndFaceIDDetail)
+        case .pin: String(localized: .bikeLockSettingsModePINDetail)
+        case .withoutPIN: String(localized: .bikeLockSettingsModeWithoutPINDetail)
         case .notConfigured: ""
         }
     }

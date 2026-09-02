@@ -9,17 +9,25 @@ struct PowerTierSettingsSection: View {
 
     var body: some View {
         Section {
-            Picker("Declared Model", selection: selectionBinding) {
+            Picker(.appSettingsDeclaredModelPickerTitle, selection: selectionBinding) {
                 ForEach(state.selection.options) { option in
                     Text(option.title).tag(option.id)
                 }
             }
             .pickerStyle(.segmented)
 
-            LabeledContent("Detected Status", value: state.status)
+            LabeledContent {
+                Text(state.status)
+            } label: {
+                Text(.appSettingsDetectedStatusLabel)
+            }
 
             if let evidence = state.evidence {
-                LabeledContent("Evidence", value: evidence)
+                LabeledContent {
+                    Text(evidence)
+                } label: {
+                    Text(.appSettingsEvidenceLabel)
+                }
             }
             if let verificationMessage = state.verificationMessage {
                 Text(verificationMessage)
@@ -34,18 +42,15 @@ struct PowerTierSettingsSection: View {
                 if state.isVerifying {
                     ProgressView()
                 } else {
-                    Text("Verify with bike")
+                    Text(.appSettingsVerifyWithBikeButton)
                 }
             }
             .disabled(!state.isVerifyEnabled)
 
         } header: {
-            Text("Model and Capability")
+            Text(.appSettingsModelCapabilityHeader)
         } footer: {
-            Text(
-                "The manual selection is only an expectation. "
-                    + "Bike telemetry determines HP, TC and the effective tier."
-            )
+            Text(.appSettingsModelCapabilityFooter)
         }
     }
 

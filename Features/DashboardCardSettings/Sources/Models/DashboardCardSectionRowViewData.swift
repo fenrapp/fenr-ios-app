@@ -1,20 +1,22 @@
+import Foundation
+
 public struct DashboardCardSectionRowViewData: Identifiable, Equatable, Sendable {
     public let id: String
-    public let title: String
-    public let detail: String
+    public let title: LocalizedStringResource
+    public let detail: LocalizedStringResource
     public let isVisible: Bool
     public let isVisibilityEnabled: Bool
-    public let disabledVisibilityHint: String?
+    public let disabledVisibilityHint: LocalizedStringResource?
     public let thumbnail: DashboardCardThumbnailViewData
     public let pages: [DashboardCardPageRowViewData]
 
     public init(
         id: String,
-        title: String,
-        detail: String,
+        title: LocalizedStringResource,
+        detail: LocalizedStringResource,
         isVisible: Bool,
         isVisibilityEnabled: Bool = true,
-        disabledVisibilityHint: String? = nil,
+        disabledVisibilityHint: LocalizedStringResource? = nil,
         thumbnail: DashboardCardThumbnailViewData,
         pages: [DashboardCardPageRowViewData]
     ) {

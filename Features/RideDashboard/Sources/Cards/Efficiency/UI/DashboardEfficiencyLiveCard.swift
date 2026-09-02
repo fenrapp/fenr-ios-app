@@ -16,11 +16,13 @@ struct DashboardEfficiencyLiveCard: View {
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Live efficiency, \(state.valueText) \(state.unitText), \(state.status.rawValue)")
+        .accessibilityLabel(rideDashboardLocalized(
+            .rideDashboardEfficiencyLiveAccessibility(state.valueText, state.unitText, state.status.text)
+        ))
     }
 
     private var header: some View {
-        DashboardTripCardHeader(title: "EFFICIENCY · LIVE")
+        DashboardTripCardHeader(title: rideDashboardLocalized(.rideDashboardEfficiencyLiveTitle))
     }
 
     private var hero: some View {
@@ -32,7 +34,7 @@ struct DashboardEfficiencyLiveCard: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(DesignColor.secondaryText)
             Spacer(minLength: DesignSpace.small)
-            Text(state.status.rawValue)
+            Text(state.status.text)
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(statusColor)
         }
@@ -40,31 +42,31 @@ struct DashboardEfficiencyLiveCard: View {
 
     private var powerChart: some View {
         Chart {
-            RuleMark(y: .value("Zero", 0))
+            RuleMark(y: .value(rideDashboardLocalized(.rideDashboardChartZero), 0))
                 .foregroundStyle(DesignColor.secondaryText.opacity(0.45))
                 .lineStyle(.init(lineWidth: 1, dash: [3, 3]))
             ForEach(state.powerPoints) { point in
                 AreaMark(
-                    x: .value("Time", point.date),
-                    y: .value("Used power", point.usedKilowatts)
+                    x: .value(rideDashboardLocalized(.rideDashboardChartTime), point.date),
+                    y: .value(rideDashboardLocalized(.rideDashboardChartUsedPower), point.usedKilowatts)
                 )
                 .foregroundStyle(DesignColor.informational.opacity(0.18))
                 LineMark(
-                    x: .value("Time", point.date),
-                    y: .value("Used power", point.usedKilowatts)
+                    x: .value(rideDashboardLocalized(.rideDashboardChartTime), point.date),
+                    y: .value(rideDashboardLocalized(.rideDashboardChartUsedPower), point.usedKilowatts)
                 )
                 .foregroundStyle(DesignColor.informational)
                 .lineStyle(.init(lineWidth: 2, lineCap: .round, lineJoin: .round))
             }
             ForEach(state.powerPoints) { point in
                 AreaMark(
-                    x: .value("Time", point.date),
-                    y: .value("Regenerated power", point.regenKilowatts)
+                    x: .value(rideDashboardLocalized(.rideDashboardChartTime), point.date),
+                    y: .value(rideDashboardLocalized(.rideDashboardChartRegeneratedPower), point.regenKilowatts)
                 )
                 .foregroundStyle(DesignColor.positive.opacity(0.2))
                 LineMark(
-                    x: .value("Time", point.date),
-                    y: .value("Regenerated power", point.regenKilowatts)
+                    x: .value(rideDashboardLocalized(.rideDashboardChartTime), point.date),
+                    y: .value(rideDashboardLocalized(.rideDashboardChartRegeneratedPower), point.regenKilowatts)
                 )
                 .foregroundStyle(DesignColor.positive)
                 .lineStyle(.init(lineWidth: 2, lineCap: .round, lineJoin: .round))
@@ -76,20 +78,26 @@ struct DashboardEfficiencyLiveCard: View {
         .frame(maxWidth: .infinity, minHeight: Constants.chartHeight)
         .overlay {
             if state.powerPoints.isEmpty {
-                Text("WAITING FOR POWER DATA")
+                Text(.rideDashboardEfficiencyWaitingPower)
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(DesignColor.secondaryText)
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Used and regenerated electrical power over the last 60 seconds")
+        .accessibilityLabel(.rideDashboardEfficiencyChartAccessibility)
         .accessibilityValue(powerAccessibilityValue)
     }
 
     private var powerLegend: some View {
         HStack(spacing: DesignSpace.medium) {
-            powerLegendItem(title: "USED", color: DesignColor.informational)
-            powerLegendItem(title: "REGEN", color: DesignColor.positive)
+            powerLegendItem(
+                title: rideDashboardLocalized(.rideDashboardEfficiencyLegendUsed),
+                color: DesignColor.informational
+            )
+            powerLegendItem(
+                title: rideDashboardLocalized(.rideDashboardEfficiencyLegendRegen),
+                color: DesignColor.positive
+            )
         }
         .accessibilityHidden(true)
     }
@@ -107,8 +115,16 @@ struct DashboardEfficiencyLiveCard: View {
 
     private var energySummary: some View {
         HStack(spacing: DesignSpace.large) {
-            energyItem(title: "USED", value: state.usedEnergyText, color: DesignColor.informational)
-            energyItem(title: "RECOVERED", value: state.recoveredEnergyText, color: DesignColor.positive)
+            energyItem(
+                title: rideDashboardLocalized(.rideDashboardEfficiencyLegendUsed),
+                value: state.usedEnergyText,
+                color: DesignColor.informational
+            )
+            energyItem(
+                title: rideDashboardLocalized(.rideDashboardEfficiencyLegendRecovered),
+                value: state.recoveredEnergyText,
+                color: DesignColor.positive
+            )
         }
     }
 
@@ -132,10 +148,12 @@ struct DashboardEfficiencyLiveCard: View {
     }
 
     private var powerAccessibilityValue: String {
-        guard let latest = state.powerPoints.last else { return "Waiting for power data" }
+        guard let latest = state.powerPoints.last else {
+            return rideDashboardLocalized(.rideDashboardEfficiencyWaitingPowerAccessibility)
+        }
         let used = latest.usedKilowatts.formatted(.number.precision(.fractionLength(1)))
         let regen = latest.regenKilowatts.formatted(.number.precision(.fractionLength(1)))
-        return "Used \(used) kilowatts, regenerated \(regen) kilowatts"
+        return rideDashboardLocalized(.rideDashboardEfficiencyPowerAccessibility(used, regen))
     }
 
     private var statusColor: Color {

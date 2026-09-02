@@ -4,8 +4,8 @@ public enum RideNavigationTrailDirection: Equatable, Sendable {
 
     public var title: String {
         return switch self {
-        case .forward: "Forward"
-        case .reverse: "Reverse"
+        case .forward: String(localized: .rideNavigationDirectionForward)
+        case .reverse: String(localized: .rideNavigationDirectionReverse)
         }
     }
 

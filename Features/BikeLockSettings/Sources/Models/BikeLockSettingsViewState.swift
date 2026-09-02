@@ -1,3 +1,5 @@
+import Foundation
+
 public struct BikeLockSettingsViewState: Equatable, Sendable {
     public let isAvailable: Bool
     public let currentModeTitle: String
@@ -9,7 +11,7 @@ public struct BikeLockSettingsViewState: Equatable, Sendable {
 
     public init(
         isAvailable: Bool = false,
-        currentModeTitle: String = "Not set up",
+        currentModeTitle: String? = nil,
         canChangePIN: Bool = false,
         protectionOptions: [BikeLockProtectionOptionViewData] = [],
         isWorking: Bool = false,
@@ -18,6 +20,7 @@ public struct BikeLockSettingsViewState: Equatable, Sendable {
     ) {
         self.isAvailable = isAvailable
         self.currentModeTitle = currentModeTitle
+            ?? String(localized: .bikeLockSettingsModeNotConfigured)
         self.canChangePIN = canChangePIN
         self.protectionOptions = protectionOptions
         self.isWorking = isWorking

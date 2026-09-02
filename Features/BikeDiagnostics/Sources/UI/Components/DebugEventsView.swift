@@ -8,10 +8,10 @@ struct DebugEventsView: View {
     let logTextProvider: () -> String
 
     var body: some View {
-        SurfacePanel(title: "Debug Events") {
+        SurfacePanel(title: BikeDiagnosticsL10n.text(.bikeDiagnosticsSectionDebugEvents)) {
             copyButton
             if events.isEmpty {
-                Text("No events yet")
+                Text(.bikeDiagnosticsNoEvents)
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -47,13 +47,13 @@ struct DebugEventsView: View {
 
     private var copyButton: some View {
         Button(action: copyLog) {
-            Label("Copy log", systemImage: "doc.on.doc")
+            Label(.bikeDiagnosticsCopyLog, systemImage: "doc.on.doc")
                 .font(.caption.weight(.semibold))
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .buttonStyle(.bordered)
         .disabled(!hasLog)
-        .accessibilityLabel("Copy debug log")
+        .accessibilityLabel(.bikeDiagnosticsCopyLogAccessibility)
     }
 
     private func copyLog() {

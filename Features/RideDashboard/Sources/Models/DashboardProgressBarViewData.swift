@@ -10,6 +10,6 @@ public enum DashboardProgressBarViewData: Equatable, Sendable {
     public static let neutralEnergy = DashboardProgressBarViewData.energy(
         regenerationProgress: .zero,
         consumptionProgress: .zero,
-        accessibilityLabel: "Power neutral"
+        accessibilityLabel: rideDashboardLocalized(.rideDashboardPowerNeutralAccessibility)
     )
 }

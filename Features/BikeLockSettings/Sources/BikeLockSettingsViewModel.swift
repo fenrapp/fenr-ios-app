@@ -246,7 +246,10 @@ private extension BikeLockSettingsViewModel {
             } catch {
                 self?.completeOperation(
                     { viewModel in
-                        viewModel.render(error: .set(error.localizedDescription), isWorking: false)
+                        viewModel.render(
+                            error: .set(viewModel.presentationMessage(for: error)),
+                            isWorking: false
+                        )
                     },
                     generation: generation,
                     vin: vin
@@ -281,6 +284,13 @@ private extension BikeLockSettingsViewModel {
         operationTask = nil
         actionAfterAuthentication = nil
         render(destination: .set(nil), error: .set(nil), isWorking: false)
+    }
+
+    func presentationMessage(for error: Error) -> String {
+        if let settingsError = error as? BikeLockSettingsError {
+            return settingsError.localizedDescription
+        }
+        return String(localized: .bikeLockSettingsGenericError)
     }
 
     func render(

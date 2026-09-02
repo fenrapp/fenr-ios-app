@@ -3,7 +3,7 @@ import SwiftUI
 
 struct DashboardBikeLockStatusBadge: View {
     var body: some View {
-        Label("BIKE LOCKED", systemImage: "lock.fill")
+        Label(.rideDashboardBikeLockStatusBadge, systemImage: "lock.fill")
             .font(.caption.weight(.bold))
             .foregroundStyle(DesignColor.warning)
             .padding(.horizontal, DesignSpace.medium)
@@ -19,7 +19,7 @@ struct DashboardBikeLockStatusBadge: View {
                         lineWidth: Constants.borderWidth
                     )
             }
-            .accessibilityLabel("Bike locked")
+            .accessibilityLabel(.rideDashboardBikeLockAccessibilityLocked)
     }
 
     private enum Constants {

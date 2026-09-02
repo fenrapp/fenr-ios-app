@@ -246,7 +246,7 @@ extension PowerModeSettingsViewModelTests {
             connection: .init(state: .disconnected(reason: "Connection lost"))
         ))
         #expect(await waitUntil {
-            fixture.viewModel.viewState.connectionText == "Connection lost"
+            fixture.viewModel.viewState.connectionText == "Bike disconnected"
         })
         await preparation.succeedNext()
         let hasEnabledAdjustment = fixture.viewModel.viewState.adjustments.contains { $0.isEnabled }
@@ -267,6 +267,8 @@ extension PowerModeSettingsViewModelTests {
         #expect(await waitUntil { await writeOperation.pendingCount == 1 })
         await writeOperation.failNext(message: "write failed")
         #expect(await waitUntil { fixture.viewModel.viewState.statusIsError })
+        #expect(fixture.viewModel.viewState.statusText == "Unable to apply the map. Try again.")
+        #expect(!fixture.viewModel.viewState.statusText.contains("write failed"))
         #expect(fixture.viewModel.viewState.adjustments[0].value == 35)
         #expect(!fixture.viewModel.viewState.adjustments[0].isEnabled)
 

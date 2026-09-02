@@ -9,6 +9,13 @@ enum ChargeControlCommand: Equatable {
         }
     }
 
+    var settingValue: ChargeControlSettingValue {
+        switch self {
+        case .power(let watts): .powerWatts(watts)
+        case .target(let percent): .targetPercent(percent)
+        }
+    }
+
     func controlsSameSetting(as other: Self) -> Bool {
         switch (self, other) {
         case (.power, .power), (.target, .target): true

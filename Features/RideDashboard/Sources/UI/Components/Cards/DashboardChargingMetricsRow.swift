@@ -10,14 +10,18 @@ struct DashboardChargingMetricsRow: View {
 
     var body: some View {
         HStack(spacing: .zero) {
-            metric(title: "INPUT", data: power)
+            metric(title: rideDashboardLocalized(.rideDashboardChargingMetricInput), data: power)
             divider
-            metric(title: "CURRENT", data: current)
+            metric(title: rideDashboardLocalized(.rideDashboardChargingMetricCurrent), data: current)
             divider
-            metric(title: "TEMP", data: temperature, valueColor: temperatureColor)
+            metric(
+                title: rideDashboardLocalized(.rideDashboardChargingMetricTemperature),
+                data: temperature,
+                valueColor: temperatureColor
+            )
             if let activeBalancingCells {
                 divider
-                metric(title: "CELLS", data: activeBalancingCells)
+                metric(title: rideDashboardLocalized(.rideDashboardChargingMetricCells), data: activeBalancingCells)
             }
         }
         .padding(.top, Constants.topPadding)

@@ -209,4 +209,20 @@ struct BikeLockSettingsViewModelTests {
         #expect(await fixture.repository.saveCount() == 0)
         #expect(await fixture.credentialStore.storedPIN(for: fixture.vin) == nil)
     }
+
+    @Test("Credential failures use safe presentation copy")
+    func credentialFailureUsesSafePresentationCopy() async {
+        let fixture = BikeLockSettingsViewModelFixture()
+        await fixture.start()
+        await fixture.credentialStore.failWrites()
+        fixture.viewModel.changeProtection()
+
+        fixture.viewModel.saveNewPIN("123456", confirmation: "123456", optionID: .pin)
+
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.errorMessage
+                == "Unable to update Bike Lock settings. Try again."
+        })
+        #expect(fixture.viewModel.viewState.errorMessage?.contains("Failure") == false)
+    }
 }
