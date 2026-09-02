@@ -165,38 +165,23 @@ extension RideNavigationViewModel {
     }
 
     func makeMiniMapScene() -> NavigationMapScene {
-        var scene = makeMapScene()
-        var polylines = scene.polylines
-        if activity == .following,
-           didAnnounceOffRoute,
-           !polylines.contains(where: { $0.role == .rejoinGuide }),
-           let location = locationSnapshot.coordinate,
-           let rejoinCoordinate = trailProgress?.rejoinCoordinate {
-            polylines.append(
-                .init(
-                    id: "trail-rejoin-guide",
-                    points: mapMapper.coordinates([location, rejoinCoordinate]),
-                    role: .rejoinGuide
-                )
-            )
-        }
-        scene = NavigationMapScene(
-            source: scene.source,
-            displayStyle: scene.displayStyle,
+        mapSceneBuilder.makeMiniScene(
+            from: makeMapScene(),
             camera: followCamera,
-            userCoordinate: scene.userCoordinate,
-            userHeadingDegrees: scene.userHeadingDegrees,
-            polylines: polylines,
-            markers: [],
-            directionalIndicators: scene.directionalIndicators
+            rejoinGuide: rejoinGuide(inFocusModeOnly: false)
         )
-        return scene
     }
 
     func makeMapScene() -> NavigationMapScene {
         let guidanceSnapshot = trailGuidance.snapshot
-        let trailOverlay = mapMapper.trailOverlay(
-            RideNavigationMapPresentationMapper.TrailOverlayInput(
+        return mapSceneBuilder.makeScene(
+            RideNavigationMapSceneBuilder.Input(
+                source: mapSource,
+                displayStyle: mapDisplayStyle,
+                camera: cameraMode,
+                userCoordinate: locationSnapshot.coordinate,
+                userHeadingDegrees: locationSnapshot.courseDegrees,
+                trailOverlay: RideNavigationMapPresentationMapper.TrailOverlayInput(
                 hasSelectedRoute: selectedRoute != nil,
                 activity: activity,
                 isPresentingTrailExit: trailExitPreview != nil
@@ -204,108 +189,41 @@ extension RideNavigationViewModel {
                 trailMap: trailMap.presentationSnapshot,
                 guidancePlan: guidanceSnapshot.plan,
                 guidance: guidanceSnapshot.guidance
+                ),
+                roadRoute: roadRoute,
+                roadRouteRevision: state.roadRouteRevision,
+                destination: selectedDestination,
+                trailExit: trailExitPreview,
+                trailExitRevision: state.trailExitPreviewRevision,
+                rejoinGuide: rejoinGuide(inFocusModeOnly: true),
+                traces: routeTraces
             )
         )
-        var polylines = trailOverlay.polylines
-        var markers = trailOverlay.markers
-        appendRoadRoutes(to: &polylines, markers: &markers)
-        appendRejoinGuide(to: &polylines)
-        appendRecordedRoutes(to: &polylines)
-        return NavigationMapScene(
-            source: mapSource,
-            displayStyle: mapDisplayStyle,
-            camera: cameraMode,
-            userCoordinate: locationSnapshot.coordinate.map(mapMapper.coordinate),
-            userHeadingDegrees: locationSnapshot.courseDegrees,
-            polylines: polylines,
-            markers: markers,
-            directionalIndicators: trailOverlay.directionalIndicators
-        )
     }
 
-    func appendRoadRoutes(
-        to polylines: inout [NavigationMapPolyline],
-        markers: inout [NavigationMapMarker]
-    ) {
-        if let roadRoute {
-            polylines.append(
-                .init(
-                    id: "road-route",
-                    points: mapMapper.coordinates(roadRoute.points),
-                    role: .approach,
-                    revision: state.roadRouteRevision
-                )
-            )
-            if let selectedDestination {
-                markers.append(
-                    .init(
-                        id: "destination",
-                        coordinate: mapMapper.coordinate(selectedDestination.coordinate),
-                        title: selectedDestination.name,
-                        role: .finish
-                    )
-                )
-            }
-        }
-        if let trailExitPreview {
-            polylines.append(
-                .init(
-                    id: "trail-exit-preview",
-                    points: mapMapper.coordinates(trailExitPreview.route.points),
-                    role: .approach,
-                    revision: state.trailExitPreviewRevision
-                )
-            )
-            markers.append(
-                .init(
-                    id: "trail-exit-destination",
-                    coordinate: mapMapper.coordinate(trailExitPreview.destination.coordinate),
-                    title: trailExitPreview.destination.name,
-                    role: .finish
-                )
-            )
-        }
+    private func rejoinGuide(inFocusModeOnly: Bool) -> [GeographicCoordinate]? {
+        guard !inFocusModeOnly || mapDisplayStyle == .focus,
+              activity == .following,
+              didAnnounceOffRoute,
+              let location = locationSnapshot.coordinate,
+              let rejoinCoordinate = trailProgress?.rejoinCoordinate
+        else { return nil }
+        return [location, rejoinCoordinate]
     }
 
-    func appendRejoinGuide(to polylines: inout [NavigationMapPolyline]) {
-        if mapDisplayStyle == .focus,
-           activity == .following,
-           didAnnounceOffRoute,
-           let location = locationSnapshot.coordinate,
-           let rejoinCoordinate = trailProgress?.rejoinCoordinate {
-            polylines.append(
-                .init(
-                    id: "trail-rejoin-guide",
-                    points: mapMapper.coordinates([location, rejoinCoordinate]),
-                    role: .rejoinGuide
-                )
+    private var routeTraces: [RideNavigationMapSceneBuilder.RouteTrace] {
+        [
+            .init(
+                idPrefix: "recorded",
+                role: .recorded,
+                segments: recorder.snapshot(at: now()).route?.segments ?? []
+            ),
+            .init(
+                idPrefix: "breadcrumb",
+                role: .completed,
+                segments: breadcrumbRecorder.snapshot(at: now()).route?.segments ?? []
             )
-        }
-    }
-
-    func appendRecordedRoutes(to polylines: inout [NavigationMapPolyline]) {
-        let recordingRoute = recorder.snapshot(at: now()).route
-        for (index, segment) in (recordingRoute?.segments ?? []).enumerated() {
-            polylines.append(
-                .init(
-                    id: "recorded-\(index)",
-                    points: mapMapper.coordinates(segment.points.map(\.coordinate)),
-                    role: .recorded,
-                    revision: segment.points.count
-                )
-            )
-        }
-        let breadcrumbRoute = breadcrumbRecorder.snapshot(at: now()).route
-        for (index, segment) in (breadcrumbRoute?.segments ?? []).enumerated() {
-            polylines.append(
-                .init(
-                    id: "breadcrumb-\(index)",
-                    points: mapMapper.coordinates(segment.points.map(\.coordinate)),
-                    role: .completed,
-                    revision: segment.points.count
-                )
-            )
-        }
+        ]
     }
 
     var roadRouteOptions: [RideNavigationRoadRouteOption] {
@@ -367,10 +285,6 @@ extension RideNavigationViewModel {
         static let voiceDecisionDistanceMeters = 80.0
         static let minimumRerouteIntervalSeconds: TimeInterval = 15
         static let minimumSearchCharacters = 2
-        static let searchDebounceMilliseconds = 300
-        static let maximumSearchResults = 8
-        static let halfCircleDegrees = 180.0
-        static let fullCircleDegrees = 360.0
         static let roadStepAdvanceDistanceMeters = 30.0
         static let roadStepDistanceAdvantageMeters = 10.0
         static let focusMapStyleID = "focus"

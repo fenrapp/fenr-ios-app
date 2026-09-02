@@ -135,11 +135,12 @@ struct RideNavigationTrailGuidanceControllerTests {
 
     private func makeController() -> RideNavigationTrailGuidanceController {
         RideNavigationTrailGuidanceController(
-            planner: DefaultRideRouteGuidancePlanner(),
+            planner: DefaultRideRouteGuidancePlanner(entryClassifier: RideRouteEntryClassifier()),
             configuration: RideRouteGuidanceConfiguration(
                 arrivalDistanceMeters: 30,
                 minimumArrivalAdvanceMeters: 10
-            )
+            ),
+            projectionSelector: RideRouteProjectionSelector()
         )
     }
 

@@ -101,7 +101,8 @@ struct RideRouteRecorderTests {
         )
         let midpoint = GeographicCoordinate(latitudeDegrees: 41, longitudeDegrees: 2.01)!
 
-        #expect((RideRouteGeometry.closestDistanceMeters(from: midpoint, to: route) ?? 100) < 1)
+        let coordinates = route.segments.flatMap(\.points).map(\.coordinate)
+        #expect((RideRouteGeometry.closestDistanceMeters(from: midpoint, to: coordinates) ?? 100) < 1)
     }
 
     private func point(latitude: Double, longitude: Double, date: Date) -> RideRoutePoint {

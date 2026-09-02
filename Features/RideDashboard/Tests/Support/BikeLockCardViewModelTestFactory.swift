@@ -27,17 +27,21 @@ enum BikeLockCardViewModelTestFactory {
         let capabilityStore = BikeLockCardCapabilityStore()
         return .init(
             viewModel: BikeLockCardViewModel(
-                prepareControl: .init(repository: repository),
-                setLocked: .init(repository: repository),
-                updateSecurity: .init(
-                    repository: settingsRepository,
-                    credentialStore: credentialStore
+                operationService: BikeLockCardOperationService(
+                    prepareControl: .init(repository: repository),
+                    setLocked: .init(repository: repository),
+                    updateSecurity: .init(
+                        repository: settingsRepository,
+                        credentialStore: credentialStore
+                    ),
+                    credentialStore: credentialStore,
+                    authenticator: authenticator
                 ),
                 vehicleSession: vehicleSession,
-                credentialStore: credentialStore,
-                authenticator: authenticator,
                 capabilityStore: capabilityStore,
                 mapper: BikeLockCardViewStateMapper(),
+                vehicleContextMapper: BikeLockCardVehicleContextMapper(),
+                securityOptionProvider: BikeLockSecurityOptionProvider(),
                 allowsExperimentalControl: allowsExperimentalControl
             ),
             repository: repository,

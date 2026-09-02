@@ -29,7 +29,9 @@ final class BikeLiveActivityControllerFixture {
             clock: clock,
             timing: timing.makeTiming(),
             continuityPolicy: RideDashboardContinuityPolicy(),
-            updateInterval: FENRRuntimeConstants.LiveActivity.chargingUpdateInterval,
+            updatePolicy: BikeLiveActivityUpdatePolicy(
+                updateInterval: FENRRuntimeConstants.LiveActivity.chargingUpdateInterval
+            ),
             reconnectionNoticeDelay: FENRRuntimeConstants.RideDashboard.reconnectionNoticeDelay,
             stateMapper: BikeLiveActivityStateMapper(
                 makeDashboardMapper: { settings in
@@ -95,8 +97,14 @@ private func makeBikeLiveActivityVehicleSession(
             profile: nil,
             now: Date.init,
             maximumSampleAge: 5,
-            minimumGPSCourseSpeedKilometersPerHour: 5,
-            maximumGPSCourseAccuracyDegrees: 35
+            attitudeFilter: .init(),
+            calibrationTracker: .init(),
+            locationResolver: .init(
+                now: Date.init,
+                maximumSampleAge: 5,
+                minimumCourseSpeedKilometersPerHour: 5,
+                maximumCourseAccuracyDegrees: 35
+            )
         ),
         sleep: { duration in try await Task.sleep(for: duration) }
     )

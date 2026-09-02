@@ -58,7 +58,9 @@ enum RideRouteGuidanceTestFactory {
         configuration: RideRouteGuidanceConfiguration = .standard
     ) async throws -> RideRouteGuidancePlan {
         try #require(
-            await DefaultRideRouteGuidancePlanner().makePlan(
+            await DefaultRideRouteGuidancePlanner(
+                entryClassifier: RideRouteEntryClassifier()
+            ).makePlan(
                 for: route,
                 direction: direction,
                 configuration: configuration

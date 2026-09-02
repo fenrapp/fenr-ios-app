@@ -1,6 +1,5 @@
 import Foundation
 import RideNavigationDomain
-
 @MainActor
 extension RideNavigationViewModel {
     public func startRecording() {
@@ -159,7 +158,10 @@ extension RideNavigationViewModel {
                     ? offTrailDistanceText(trailProgress.distanceFromRouteMeters)
                     : "\(remainingDistance) remaining",
                 systemImage: "location.north.fill",
-                rotationDegrees: relativeBearingDegrees(targetBearing),
+                rotationDegrees: locationGeometry.relativeBearingDegrees(
+                    targetBearing,
+                    courseDegrees: locationSnapshot.courseDegrees
+                ),
                 emphasis: didAnnounceOffRoute ? .warning : .standard
             )
         }
@@ -186,7 +188,12 @@ extension RideNavigationViewModel {
             let distance = step.flatMap(roadStepDistanceToManeuver).map {
                 mapper.distance(meters: $0, measurementSystem: measurementSystem)
             }
-            let rotation = step.flatMap(roadStepTargetBearing).map(relativeBearingDegrees) ?? .zero
+            let rotation = step.flatMap(roadStepTargetBearing).map {
+                locationGeometry.relativeBearingDegrees(
+                    $0,
+                    courseDegrees: locationSnapshot.courseDegrees
+                )
+            } ?? .zero
             return RideNavigationGuidance(
                 text: instruction ?? "ROAD NAVIGATION",
                 detail: distance.map { "\($0) to next maneuver" },

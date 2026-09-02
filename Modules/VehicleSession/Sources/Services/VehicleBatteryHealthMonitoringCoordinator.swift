@@ -2,21 +2,7 @@ import BikeDomain
 import Foundation
 
 public actor VehicleBatteryHealthMonitoringCoordinator {
-    public struct Snapshot: Equatable, Sendable {
-        public let health: BikeBatteryHealth
-        public let state: VehicleBatteryHealthMonitoringState
-        public let revision: Int
-
-        public init(
-            health: BikeBatteryHealth = .init(),
-            state: VehicleBatteryHealthMonitoringState = .inactive,
-            revision: Int = 0
-        ) {
-            self.health = health
-            self.state = state
-            self.revision = revision
-        }
-    }
+    public typealias Snapshot = VehicleBatteryHealthMonitoringSnapshot
 
     private let observeBatteryHealth: ObserveBikeBatteryHealthUseCase
     private let startBatteryHealthMonitoring: StartBatteryHealthMonitoringUseCase

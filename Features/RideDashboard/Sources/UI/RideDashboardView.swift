@@ -57,7 +57,13 @@ public extension RideDashboardView {
 extension RideDashboardView {
     public var body: some View {
         GeometryReader { proxy in
-            Group {
+            DashboardRideChrome(
+                state: viewModel.viewState,
+                deviceBattery: deviceBatteryViewModel.viewState,
+                toggleDeviceBatteryDisplayMode: deviceBatteryViewModel.toggleDisplayMode,
+                onSettings: onSettings
+            ) {
+                Group {
                 if proxy.size.width <= proxy.size.height {
                     DashboardUnavailableState.rotationRequired
                 } else if viewModel.viewState.hasTelemetry {
@@ -173,36 +179,8 @@ extension RideDashboardView {
                         onDiagnostics: onDiagnostics
                     )
                 }
-            }
-            .frame(width: proxy.size.width, height: proxy.size.height)
-            .overlay(alignment: .topLeading) {
-                DashboardRideHeader(
-                    deviceBattery: deviceBatteryViewModel.viewState,
-                    connectionNotice: viewModel.viewState.connectionNotice,
-                    toggleDeviceBatteryDisplayMode: deviceBatteryViewModel.toggleDisplayMode
-                )
-                    .padding(Constants.accessoryEdgePadding)
-            }
-            .overlay(alignment: .topTrailing) {
-                if viewModel.viewState.hasTelemetry {
-                    DashboardOdometerLabel(state: viewModel.viewState.odometer)
-                        .padding(Constants.accessoryEdgePadding)
                 }
-            }
-            .overlay(alignment: .bottomLeading) {
-                if viewModel.viewState.temperatureSummary.hasValues {
-                    DashboardRideTemperatureSummary(state: viewModel.viewState.temperatureSummary)
-                        .padding(Constants.accessoryEdgePadding)
-                }
-            }
-            .overlay(alignment: .bottomTrailing) {
-                Button(action: onSettings) {
-                    Label("Settings", systemImage: "gearshape.fill")
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-                .padding(Constants.accessoryEdgePadding)
-                .accessibilityIdentifier("dashboard.settings")
+                .frame(width: proxy.size.width, height: proxy.size.height)
             }
         }
         .background(Color(uiColor: .systemBackground).ignoresSafeArea())

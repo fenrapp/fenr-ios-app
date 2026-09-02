@@ -23,6 +23,7 @@ public final class RideNavigationTrailGuidanceController {
 
     private let planner: any RideRouteGuidancePlanning
     private let configuration: RideRouteGuidanceConfiguration
+    private let projectionSelector: RideRouteProjectionSelector
 
     private var routeID: UUID?
     private var direction: RideRouteDirection?
@@ -40,10 +41,12 @@ public final class RideNavigationTrailGuidanceController {
 
     public init(
         planner: any RideRouteGuidancePlanning,
-        configuration: RideRouteGuidanceConfiguration = .standard
+        configuration: RideRouteGuidanceConfiguration = .standard,
+        projectionSelector: RideRouteProjectionSelector
     ) {
         self.planner = planner
         self.configuration = configuration
+        self.projectionSelector = projectionSelector
     }
 
     var snapshot: Snapshot {
@@ -106,7 +109,8 @@ public final class RideNavigationTrailGuidanceController {
         session = RideRouteGuidanceSession(
             plan: plan,
             startingAt: projection,
-            configuration: configuration
+            configuration: configuration,
+            projectionSelector: projectionSelector
         )
         guidance = nil
         entryPrompt = nil

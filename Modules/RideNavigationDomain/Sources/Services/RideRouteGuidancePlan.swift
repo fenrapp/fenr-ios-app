@@ -1,65 +1,6 @@
 import EnvironmentDomain
 import Foundation
 
-public protocol RideRouteGuidancePlanning: Sendable {
-    func makePlan(
-        for route: RideRoute,
-        direction: RideRouteDirection,
-        configuration: RideRouteGuidanceConfiguration
-    ) async -> RideRouteGuidancePlan?
-}
-
-public actor DefaultRideRouteGuidancePlanner: RideRouteGuidancePlanning {
-    public init() {}
-
-    public func makePlan(
-        for route: RideRoute,
-        direction: RideRouteDirection,
-        configuration: RideRouteGuidanceConfiguration = .standard
-    ) async -> RideRouteGuidancePlan? {
-        guard let orientedRoute = orientedRoute(route, direction: direction) else { return nil }
-        return RideRouteGuidancePlan(
-            route: orientedRoute,
-            direction: direction,
-            configuration: configuration,
-            shouldCancel: { Task.isCancelled }
-        )
-    }
-
-    private func orientedRoute(
-        _ route: RideRoute,
-        direction: RideRouteDirection
-    ) -> RideRoute? {
-        guard !Task.isCancelled else { return nil }
-        guard direction == .reverse else { return route }
-        var segments: [RideRouteSegment] = []
-        segments.reserveCapacity(route.segments.count)
-        for segment in route.segments.reversed() {
-            var points: [RideRoutePoint] = []
-            points.reserveCapacity(segment.points.count)
-            for (offset, point) in segment.points.reversed().enumerated() {
-                if offset.isMultiple(of: PlannerConstants.cancellationCheckInterval),
-                   Task.isCancelled {
-                    return nil
-                }
-                points.append(point)
-            }
-            segments.append(RideRouteSegment(id: segment.id, points: points))
-        }
-        return RideRoute(
-            id: route.id,
-            name: route.name,
-            createdAt: route.createdAt,
-            updatedAt: route.updatedAt,
-            segments: segments
-        )
-    }
-
-    private enum PlannerConstants {
-        static let cancellationCheckInterval = 1_024
-    }
-}
-
 public struct RideRouteGuidancePlan: Sendable {
     public let direction: RideRouteDirection
     public let totalDistanceMeters: Double
@@ -68,11 +9,13 @@ public struct RideRouteGuidancePlan: Sendable {
     let configuration: RideRouteGuidanceConfiguration
     let edges: [RideRouteGuidanceEdge]
     let spatialIndex: RideRouteGuidanceSpatialIndex
+    let entryClassifier: RideRouteEntryClassifier
 
     init?(
         route: RideRoute,
         direction: RideRouteDirection,
         configuration: RideRouteGuidanceConfiguration,
+        entryClassifier: RideRouteEntryClassifier,
         shouldCancel: () -> Bool = { false }
     ) {
         var builtEdges: [RideRouteGuidanceEdge] = []
@@ -130,6 +73,7 @@ public struct RideRouteGuidancePlan: Sendable {
         totalDistanceMeters = distanceAlongRouteMeters
         segmentRanges = builtSegmentRanges
         self.configuration = configuration
+        self.entryClassifier = entryClassifier
         edges = builtEdges
         spatialIndex = builtSpatialIndex
     }
@@ -139,7 +83,7 @@ public struct RideRouteGuidancePlan: Sendable {
             near: sample.coordinate,
             maximumDistanceMeters: configuration.entryDistanceMeters
         )
-        guard let closest = matches.first else { return nil }
+        guard !matches.isEmpty else { return nil }
         guard hasReliableCourse(sample) else {
             return RideRouteEntryMatch(
                 classification: .ambiguous,
@@ -147,37 +91,10 @@ public struct RideRouteGuidancePlan: Sendable {
                 projections: matches
             )
         }
-        let courseDegrees = sample.courseDegrees ?? .zero
-        let tiedMatches = matches.filter {
-            $0.distanceFromRouteMeters
-                <= closest.distanceFromRouteMeters + configuration.entryProjectionTieMeters
-        }
-        let forward = occurrenceRepresentatives(in: tiedMatches.filter {
-            angleDifference($0.localBearingDegrees, courseDegrees)
-                <= configuration.compatibleCourseDifferenceDegrees
-        })
-        let reverse = occurrenceRepresentatives(in: tiedMatches.filter {
-            angleDifference(oppositeBearing($0.localBearingDegrees), courseDegrees)
-                <= configuration.compatibleCourseDifferenceDegrees
-        })
-        if forward.count == 1, reverse.isEmpty {
-            return RideRouteEntryMatch(
-                classification: .forward,
-                selectedProjection: forward[0],
-                projections: matches
-            )
-        }
-        if reverse.count == 1, forward.isEmpty {
-            return RideRouteEntryMatch(
-                classification: .reverse,
-                selectedProjection: reverse[0],
-                projections: matches
-            )
-        }
-        return RideRouteEntryMatch(
-            classification: .ambiguous,
-            selectedProjection: nil,
-            projections: matches
+        return entryClassifier.classify(
+            matches: matches,
+            courseDegrees: sample.courseDegrees ?? .zero,
+            configuration: configuration
         )
     }
 
@@ -314,47 +231,8 @@ private extension RideRouteGuidancePlan {
         return result
     }
 
-    private func angleDifference(_ lhs: Double, _ rhs: Double) -> Double {
-        abs(signedAngle(from: lhs, to: rhs))
-    }
-
-    private func oppositeBearing(_ bearing: Double) -> Double {
-        (bearing + 180).truncatingRemainder(dividingBy: 360)
-    }
-
-    private func occurrenceRepresentatives(
-        in projections: [RideRouteProjection]
-    ) -> [RideRouteProjection] {
-        let ordered = projections.sorted {
-            if $0.position.segmentIndex == $1.position.segmentIndex {
-                return $0.position.edgeIndex < $1.position.edgeIndex
-            }
-            return $0.position.segmentIndex < $1.position.segmentIndex
-        }
-        var groups: [[RideRouteProjection]] = []
-        for projection in ordered {
-            guard let previous = groups.last?.last,
-                  previous.position.segmentIndex == projection.position.segmentIndex,
-                  projection.position.distanceAlongRouteMeters
-                    - previous.position.distanceAlongRouteMeters
-                    <= Constants.maximumOccurrenceGapMeters,
-                  angleDifference(
-                    previous.localBearingDegrees,
-                    projection.localBearingDegrees
-                  ) <= configuration.compatibleCourseDifferenceDegrees else {
-                groups.append([projection])
-                continue
-            }
-            groups[groups.index(before: groups.endIndex)].append(projection)
-        }
-        return groups.compactMap { group in
-            group.min { $0.distanceFromRouteMeters < $1.distanceFromRouteMeters }
-        }
-    }
-
     private enum Constants {
         static let cancellationCheckInterval = 1_024
-        static let maximumOccurrenceGapMeters = 12.0
         static let minimumSlicePointSpacingMeters = 2.0
     }
 

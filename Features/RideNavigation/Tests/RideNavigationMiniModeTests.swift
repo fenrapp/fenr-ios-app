@@ -89,7 +89,7 @@ struct RideNavigationMiniModeTests {
 
     @Test("mini map layout keeps every edge inside the screen margin")
     func miniMapLayoutRespectsScreenMargins() {
-        let layout = RideNavigationMiniView.MiniMapLayout(
+        let layout = RideNavigationMiniMapLayout(
             containerSize: CGSize(width: 900, height: 400),
             scale: 1.5,
             isLandscape: false
@@ -105,12 +105,12 @@ struct RideNavigationMiniModeTests {
 
     @Test("mini map layout rotates and scales within its supported range")
     func miniMapLayoutRotatesAndScales() {
-        let compact = RideNavigationMiniView.MiniMapLayout(
+        let compact = RideNavigationMiniMapLayout(
             containerSize: CGSize(width: 900, height: 400),
             scale: 0.5,
             isLandscape: false
         )
-        let expanded = RideNavigationMiniView.MiniMapLayout(
+        let expanded = RideNavigationMiniMapLayout(
             containerSize: CGSize(width: 900, height: 400),
             scale: 1.5,
             isLandscape: true
@@ -123,7 +123,7 @@ struct RideNavigationMiniModeTests {
 
     @Test("mini map drag preserves the original pickup point")
     func miniMapDragUsesTranslationFromItsRestingPosition() {
-        let layout = RideNavigationMiniView.MiniMapLayout(
+        let layout = RideNavigationMiniMapLayout(
             containerSize: CGSize(width: 900, height: 400),
             scale: 1,
             isLandscape: true

@@ -25,7 +25,10 @@ public enum RideDashboardMapperFactory {
                 )
             },
             speedSourceIndicatorMapper: DashboardSpeedSourceIndicatorMapper(),
-            progressBarMapper: DashboardProgressBarMapper()
+            progressBarMapper: DashboardProgressBarMapper(),
+            connectionMapper: RideDashboardConnectionMapper(),
+            temperatureMapper: DashboardTemperatureSummaryMapper(),
+            compactSpeedVisibilityMapper: DashboardCompactSpeedVisibilityMapper()
         )
     }
 
@@ -90,20 +93,25 @@ public enum RideDashboardMapperFactory {
         locale: Locale,
         vin: String? = nil
     ) -> ChargingDashboardMapper {
-        ChargingDashboardMapper(
-            measurementMapper: makeMeasurementMapper(
-                measurementSystem: settings.measurementSystem,
-                locale: locale
-            ),
-            timeRemainingFormatStyle: Duration.UnitsFormatStyle(
+        let measurementMapper = makeMeasurementMapper(
+            measurementSystem: settings.measurementSystem,
+            locale: locale
+        )
+        let timeRemainingFormatStyle = Duration.UnitsFormatStyle(
                 allowedUnits: [.hours, .minutes],
                 width: .narrow,
                 maximumUnitCount: 2,
                 zeroValueUnits: .hide,
                 fractionalPart: .hide(rounded: .towardZero)
-            ).locale(locale),
-            batteryPackCapacity: settings.batteryPackCapacity(forVIN: vin),
-            controlStatusMapper: ChargingDashboardControlStatusMapper()
+            ).locale(locale)
+        return ChargingDashboardMapper(
+            controlStatusMapper: ChargingDashboardControlStatusMapper(),
+            readoutMapper: ChargingDashboardReadoutMapper(),
+            metricsMapper: ChargingDashboardMetricsMapper(measurementMapper: measurementMapper),
+            timeRemainingEstimator: ChargingTimeRemainingEstimator(
+                formatStyle: timeRemainingFormatStyle,
+                batteryPackCapacity: settings.batteryPackCapacity(forVIN: vin)
+            )
         )
     }
 }

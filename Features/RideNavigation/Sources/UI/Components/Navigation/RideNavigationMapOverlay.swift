@@ -213,49 +213,12 @@ private extension RideNavigationMapOverlay {
         && verticalSizeClass == .compact }
     private var hasPlanningOptions: Bool { (state.activity == .preview
         && state.roadRouteOptions.count > 1) || state.showsRoadRoutePreferences }
-    @ViewBuilder
     private var guidance: some View {
-        if state.isRerouting {
-            HStack(spacing: DesignSpace.small) {
-                ProgressView()
-                    .controlSize(.small)
-                Text("REROUTING")
-                    .font(.headline.weight(.semibold))
-            }
-            .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
-            .padding(.horizontal, DesignSpace.medium)
-            .frame(minHeight: Constants.guidanceHeight)
-            .rideNavigationGlassSurface(cornerRadius: Constants.guidanceRadius)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        } else if let guidance = state.guidance {
-            HStack(spacing: DesignSpace.small) {
-                Image(systemName: guidance.systemImage)
-                    .font(.headline)
-                    .rotationEffect(.degrees(guidance.rotationDegrees))
-                    .animation(.smooth, value: guidance.rotationDegrees)
-                    .foregroundStyle(isFocus ? Color.white : guidance.emphasis == .warning
-                        ? DesignColor.warning : DesignColor.accent)
-                VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
-                    Text(guidance.text)
-                        .font(.headline.weight(.semibold))
-                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
-                    if let detail = guidance.detail {
-                        Text(detail)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
-                    }
-                }
-                .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
-                Spacer(minLength: .zero)
-            }
-            .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
-            .padding(.horizontal, DesignSpace.medium)
-            .frame(maxWidth: usesCompactAccessibilityLayout ? .infinity : Constants.guidanceWidth)
-            .frame(minHeight: Constants.guidanceHeight)
-            .rideNavigationGlassSurface(cornerRadius: Constants.guidanceRadius)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
+        RideNavigationGuidanceCard(
+            state: state,
+            isMonochrome: isFocus,
+            usesFullWidth: usesCompactAccessibilityLayout
+        )
     }
     @ViewBuilder
     private var forkGuidance: some View {
@@ -324,8 +287,6 @@ private extension RideNavigationMapOverlay {
         action()
     }
     private enum Constants {
-        static let guidanceWidth: CGFloat = 360, guidanceHeight: CGFloat = 52
-        static let guidanceRadius: CGFloat = 18
         static let compactTransitionScale = 0.96
         static let mapSelectorTransitionScale = 0.94
         static let mapSelectorTransitionDuration = 0.2

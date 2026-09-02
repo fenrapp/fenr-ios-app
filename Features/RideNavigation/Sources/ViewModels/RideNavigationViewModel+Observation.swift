@@ -24,7 +24,7 @@ extension RideNavigationViewModel {
     }
 
     func processLocationUpdate() {
-        if let point = routePoint(from: locationSnapshot) {
+        if let point = locationGeometry.routePoint(from: locationSnapshot) {
             if activity == .recording {
                 recorder.append(point)
                 scheduleDraftSave()
@@ -228,7 +228,7 @@ extension RideNavigationViewModel {
         trailProgress = nil
         didAnnounceOffRoute = false
         lastRoadRerouteAt = nil
-        if let point = routePoint(from: locationSnapshot) {
+        if let point = locationGeometry.routePoint(from: locationSnapshot) {
             breadcrumbRecorder.append(point)
         }
     }

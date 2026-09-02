@@ -5,7 +5,10 @@ import Testing
 
 @Suite("BLE trace record codec")
 struct BLETraceRecordCodecTests {
-    private let codec = BLETraceRecordCodec(lineEncoder: BLETraceJSONLineEncoder())
+    private let codec = BLETraceRecordCodec(
+        lineEncoder: BLETraceJSONLineEncoder(),
+        boundaryDecoder: .init()
+    )
     private let sessionID = UUID(uuidString: "00000000-0000-0000-0000-000000000101")!
 
     @Test("Encodes the schema-one header as exact JSONL bytes")

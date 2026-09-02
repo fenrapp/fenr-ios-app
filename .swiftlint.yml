@@ -47,9 +47,8 @@ type_body_length:
   warning: 250
   error: 400
 
-file_length:
-  warning: 400
-  error: 650
+disabled_rules:
+  - file_length
 
 function_body_length:
   warning: 60
@@ -85,6 +84,13 @@ nesting:
 reporter: xcode
 
 custom_rules:
+  production_file_length:
+    included: ".*\\.swift"
+    excluded: ".*/Tests/.*"
+    name: "Production File Length"
+    regex: "(?s)\\A(?:[^\\n]*\\n){350}."
+    message: "Production Swift files must not exceed 350 physical lines."
+    severity: error
   test_double_location:
     included: ".*Tests/.*"
     excluded: ".*Tests/TestDoubles/.*"

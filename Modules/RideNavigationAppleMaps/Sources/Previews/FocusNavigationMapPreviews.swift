@@ -8,6 +8,7 @@ private struct FocusNavigationMapPreview: View {
     var body: some View {
         FocusNavigationMapView(
             scene: scene,
+            renderer: FocusNavigationRenderer(pathCache: FocusNavigationPathCache()),
             onIntent: { _ in },
             onInteraction: {}
         )

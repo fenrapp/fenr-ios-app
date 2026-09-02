@@ -10,7 +10,7 @@ struct RideRouteGuidanceSessionRecoveryTests {
         let plan = try await RideRouteGuidanceTestFactory.plan(
             for: RideRouteGuidanceTestFactory.route(segments: [[start, finish]])
         )
-        var session = RideRouteGuidanceSession(plan: plan)
+        var session = RideRouteGuidanceSession(plan: plan, projectionSelector: .init())
 
         _ = session.update(with: RideRouteGuidanceTestFactory.sample(start))
         let offRoute = RideRouteGuidanceTestFactory.coordinate(latitude: 41.0002, longitude: 2.001)
@@ -34,7 +34,7 @@ struct RideRouteGuidanceSessionRecoveryTests {
         let plan = try await RideRouteGuidanceTestFactory.plan(
             for: RideRouteGuidanceTestFactory.route(segments: [[start, finish]])
         )
-        var session = RideRouteGuidanceSession(plan: plan)
+        var session = RideRouteGuidanceSession(plan: plan, projectionSelector: .init())
         _ = session.update(with: RideRouteGuidanceTestFactory.sample(start))
         let far = RideRouteGuidanceTestFactory.coordinate(latitude: 41.0002, longitude: 2.001)
         _ = session.update(with: RideRouteGuidanceTestFactory.sample(far, seconds: 5))
@@ -60,7 +60,7 @@ struct RideRouteGuidanceSessionRecoveryTests {
         let plan = try await RideRouteGuidanceTestFactory.plan(
             for: RideRouteGuidanceTestFactory.route(segments: [[start, finish]])
         )
-        var session = RideRouteGuidanceSession(plan: plan)
+        var session = RideRouteGuidanceSession(plan: plan, projectionSelector: .init())
 
         _ = session.update(with: RideRouteGuidanceTestFactory.sample(start))
         let forwardResult = session.update(
@@ -132,7 +132,8 @@ struct RideRouteGuidanceSessionRecoveryTests {
         return RideRouteGuidanceSession(
             plan: plan,
             startingAt: entry,
-            configuration: configuration
+            configuration: configuration,
+            projectionSelector: .init()
         )
     }
 

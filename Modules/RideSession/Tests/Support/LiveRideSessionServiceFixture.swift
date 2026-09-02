@@ -99,8 +99,14 @@ private func makeRideSessionVehicleService(
             profile: nil,
             now: { date },
             maximumSampleAge: 5,
-            minimumGPSCourseSpeedKilometersPerHour: 5,
-            maximumGPSCourseAccuracyDegrees: 35
+            attitudeFilter: .init(),
+            calibrationTracker: .init(),
+            locationResolver: .init(
+                now: { date },
+                maximumSampleAge: 5,
+                minimumCourseSpeedKilometersPerHour: 5,
+                maximumCourseAccuracyDegrees: 35
+            )
         ),
         sleep: { duration in try await Task.sleep(for: duration) }
     )

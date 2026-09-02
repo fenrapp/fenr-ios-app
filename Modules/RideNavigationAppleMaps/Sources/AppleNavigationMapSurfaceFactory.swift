@@ -12,6 +12,7 @@ public struct AppleNavigationMapSurfaceFactory {
                 return AnyView(
                     FocusNavigationMapView(
                         scene: scene,
+                        renderer: FocusNavigationRenderer(pathCache: FocusNavigationPathCache()),
                         onIntent: onIntent,
                         onInteraction: onInteraction
                     )

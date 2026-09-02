@@ -34,7 +34,6 @@ public final class RideNavigationViewModel: ObservableObject {
 
     var vehicleSession: any VehicleSessionService { dependencies.vehicleSession }
     var observeDeviceSpeed: ObserveDeviceSpeedUseCase { dependencies.observeDeviceSpeed }
-    var placeSearch: any PlaceSearching { dependencies.planning.placeSearch }
     var roadRouteCalculator: any RoadRouteCalculating { dependencies.planning.roadRouteCalculator }
     var externalMapLinkResolver: any ExternalMapLinkResolving { dependencies.planning.externalMapLinkResolver }
     var trailExitFinder: any TrailExitFinding { dependencies.planning.trailExitFinder }
@@ -46,6 +45,9 @@ public final class RideNavigationViewModel: ObservableObject {
     var saveSettings: SaveAppSettingsUseCase { dependencies.saveSettings }
     var mapper: RideNavigationPresentationMapper { dependencies.presentationMapper }
     var mapMapper: RideNavigationMapPresentationMapper { dependencies.mapPresentationMapper }
+    var mapSceneBuilder: RideNavigationMapSceneBuilder { dependencies.mapSceneBuilder }
+    var searchService: RideNavigationSearchService { dependencies.searchService }
+    var locationGeometry: RideNavigationLocationGeometry { dependencies.locationGeometry }
     var timing: RideNavigationTiming { dependencies.timing }
     var now: @Sendable () -> Date { timing.now }
 

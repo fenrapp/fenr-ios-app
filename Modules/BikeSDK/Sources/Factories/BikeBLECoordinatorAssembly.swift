@@ -38,7 +38,8 @@ enum BikeBLECoordinatorAssembly {
                 checkInterval: .milliseconds(50),
                 maximumCheckCount: 100
             ),
-            transactionGate: transactionGate
+            transactionGate: transactionGate,
+            operationController: .init(timeoutScheduler: BikeBLEOperationTimeoutScheduler(duration: .seconds(5)))
         )
         let experimentalCaptureCoordinator = BikeBLEExperimentalCaptureCoordinator(
             sessionStore: dependencies.sessionStore,

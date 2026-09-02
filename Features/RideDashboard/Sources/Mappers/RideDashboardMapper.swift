@@ -6,15 +6,24 @@ public struct RideDashboardMapper: Sendable {
     private let makeMeasurementMapper: @Sendable (MeasurementSystem) -> RideDashboardMeasurementMapper
     private let speedSourceIndicatorMapper: DashboardSpeedSourceIndicatorMapper
     private let progressBarMapper: DashboardProgressBarMapper
+    private let connectionMapper: RideDashboardConnectionMapper
+    private let temperatureMapper: DashboardTemperatureSummaryMapper
+    private let compactSpeedVisibilityMapper: DashboardCompactSpeedVisibilityMapper
 
     public init(
         makeMeasurementMapper: @escaping @Sendable (MeasurementSystem) -> RideDashboardMeasurementMapper,
         speedSourceIndicatorMapper: DashboardSpeedSourceIndicatorMapper,
-        progressBarMapper: DashboardProgressBarMapper
+        progressBarMapper: DashboardProgressBarMapper,
+        connectionMapper: RideDashboardConnectionMapper,
+        temperatureMapper: DashboardTemperatureSummaryMapper,
+        compactSpeedVisibilityMapper: DashboardCompactSpeedVisibilityMapper
     ) {
         self.makeMeasurementMapper = makeMeasurementMapper
         self.speedSourceIndicatorMapper = speedSourceIndicatorMapper
         self.progressBarMapper = progressBarMapper
+        self.connectionMapper = connectionMapper
+        self.temperatureMapper = temperatureMapper
+        self.compactSpeedVisibilityMapper = compactSpeedVisibilityMapper
     }
 
     public func map(
@@ -30,11 +39,11 @@ public struct RideDashboardMapper: Sendable {
         powerModeNames: [Int: PowerModeName] = [:]
     ) -> RideDashboardViewState {
         let measurementMapper = makeMeasurementMapper(measurementSystem)
-        let hasTelemetry = hasTelemetry(telemetry, connection: connection)
+        let hasTelemetry = connectionMapper.hasTelemetry(telemetry, connection: connection)
         let speed = hasTelemetry
             ? speedKilometersPerHour.map {
                 measurementMapper.speed(
-                    kilometersPerHour: displaySpeed(
+                    kilometersPerHour: connectionMapper.displaySpeed(
                         $0,
                         runState: telemetry.runState
                     )
@@ -53,7 +62,8 @@ public struct RideDashboardMapper: Sendable {
         )
         return RideDashboardViewState(
             speedometer: speedometer,
-            showsCompactSpeedReadout: hasTelemetry && CompactSpeedVisibility.isVisible(for: telemetry.runState),
+            showsCompactSpeedReadout: hasTelemetry
+                && compactSpeedVisibilityMapper.isVisible(for: telemetry.runState),
             odometer: odometer(
                 kilometers: hasTelemetry ? telemetry.odometer.kilometers : nil,
                 measurementMapper: measurementMapper
@@ -67,7 +77,7 @@ public struct RideDashboardMapper: Sendable {
             ),
             battery: battery(percentage: hasTelemetry ? telemetry.batteryLevel.percent : nil),
             showsEstimatedRangeBatteryIndicator: batteryIndicatorMode == .estimatedRange,
-            temperatureSummary: DashboardTemperatureSummaryMapper.map(
+            temperatureSummary: temperatureMapper.map(
                 telemetry: telemetry, isVisible: hasTelemetry && showsTemperatures, measurementMapper: measurementMapper
             ),
             gear: DashboardGearMapper.map(
@@ -83,9 +93,9 @@ public struct RideDashboardMapper: Sendable {
             centerMode: hasTelemetry && telemetry.statusFlags.isChargerConnected
                 ? .charging
                 : .riding,
-            connectionDetail: RideDashboardConnectionMapper.text(connection.state),
+            connectionDetail: connectionMapper.text(connection.state),
             hasTelemetry: hasTelemetry,
-            showsConnectionProgress: !hasTelemetry && RideDashboardConnectionMapper.showsProgress(connection.state),
+            showsConnectionProgress: !hasTelemetry && connectionMapper.showsProgress(connection.state),
             indicators: indicators(flags: telemetry.statusFlags, hasTelemetry: hasTelemetry)
         )
     }
@@ -238,112 +248,10 @@ public struct RideDashboardMapper: Sendable {
         )
     }
 
-    private func displaySpeed(_ speed: Double, runState: BikeRunState) -> Double {
-        guard speed < .zero, runState != .crawlReverse else {
-            return speed
-        }
-        return .zero
-    }
-
-    private func hasTelemetry(_ telemetry: BikeTelemetry, connection: BikeConnection) -> Bool {
-        guard case .receivingTelemetry = connection.state else { return false }
-        return telemetry.speed.kmh != nil
-            || telemetry.batteryLevel.percent != nil
-            || telemetry.odometer.kilometers != nil
-    }
-
     private enum Constants {
         static let maximumBatteryPercentage = 100
         static let criticalBatteryPercentage = 21
         static let warningBatteryPercentage = 51
         static let validPowerModeRange = 1 ... 5
-    }
-}
-
-private enum CompactSpeedVisibility {
-    static func isVisible(for runState: BikeRunState) -> Bool {
-        switch runState {
-        case .on, .crawlForward, .crawlReverse:
-            true
-        case .unknown, .off, .neutral, .charging:
-            false
-        }
-    }
-}
-
-private enum RideDashboardConnectionMapper {
-    static func text(_ state: ConnectionState) -> String {
-        switch state {
-        case .idle: "Restoring bike session"
-        case .reconnecting(_, let attempt, let maximumAttempts): "Reconnecting (\(attempt)/\(maximumAttempts))"
-        case .pairingResetRequired(let message): message
-        case .scanning: "Scanning for bike"
-        case .connecting: "Connecting"
-        case .discovering: "Discovering bike services"
-        case .authenticating: "Authenticating"
-        case .authenticated: "Enabling live telemetry"
-        case .subscribed: "Waiting for live telemetry"
-        case .receivingTelemetry: "Live telemetry active"
-        case .disconnected(let reason): reason ?? "Disconnected"
-        case .failed(let message): message
-        case .bluetoothUnavailable: "Bluetooth is unavailable"
-        case .bluetoothPoweredOff: "Bluetooth is off"
-        case .bluetoothUnauthorized: "Bluetooth access is required"
-        }
-    }
-
-    static func showsProgress(_ state: ConnectionState) -> Bool {
-        switch state {
-        case .idle,
-             .scanning,
-             .connecting,
-             .discovering,
-             .authenticating,
-             .authenticated,
-             .subscribed,
-             .receivingTelemetry,
-             .reconnecting:
-            true
-        case .bluetoothUnavailable,
-             .bluetoothUnauthorized,
-             .bluetoothPoweredOff,
-             .pairingResetRequired,
-             .disconnected,
-             .failed:
-            false
-        }
-    }
-}
-
-private enum DashboardTemperatureSummaryMapper {
-    static func map(
-        telemetry: BikeTelemetry,
-        isVisible: Bool,
-        measurementMapper: RideDashboardMeasurementMapper
-    ) -> RideDashboardViewState.TemperatureSummary {
-        guard isVisible else { return .init() }
-        let batteryTemperatures = [
-            telemetry.batteryTelemetry.positiveBMS?.temperatureCelsius,
-            telemetry.batteryTelemetry.negativeBMS?.temperatureCelsius
-        ]
-        return .init(
-            batteryTemperatureText: temperatureText(
-                batteryTemperatures.compactMap { $0 }.filter(\.isFinite).max(),
-                measurementMapper: measurementMapper
-            ),
-            inverterTemperatureText: temperatureText(
-                telemetry.inverterTemperaturesCelsius.compactMap { $0 }.filter(\.isFinite).max(),
-                measurementMapper: measurementMapper
-            )
-        )
-    }
-
-    private static func temperatureText(
-        _ celsius: Double?,
-        measurementMapper: RideDashboardMeasurementMapper
-    ) -> String? {
-        guard let celsius else { return nil }
-        let temperature = measurementMapper.temperature(celsius: celsius)
-        return measurementMapper.number(temperature.value, fractionDigits: .zero) + temperature.unit
     }
 }

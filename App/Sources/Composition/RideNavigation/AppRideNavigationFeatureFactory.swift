@@ -21,7 +21,10 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
         let placeSearch = ApplePlaceSearchService()
         let roadRouteCalculator = AppleRoadRouteCalculator()
         let mapPresentationMapper = RideNavigationMapPresentationMapper()
-        let trailGuidance = RideNavigationTrailGuidanceController(planner: DefaultRideRouteGuidancePlanner())
+        let trailGuidance = RideNavigationTrailGuidanceController(
+            planner: DefaultRideRouteGuidancePlanner(entryClassifier: RideRouteEntryClassifier()),
+            projectionSelector: RideRouteProjectionSelector()
+        )
         let mapLinkSecurityPolicy = AppleMapLinkSecurityPolicy.standard
         let redirectSession = Self.makeRedirectSession(policy: mapLinkSecurityPolicy)
         return RideNavigationFeatureModel(
@@ -29,21 +32,11 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
                 dependencies: RideNavigationViewModelDependencies(
                     vehicleSession: vehicleSession,
                     observeDeviceSpeed: observeDeviceSpeed,
-                    routeLibrary: RideNavigationRouteLibraryService(
+                    routeLibrary: Self.makeRouteLibrary(
                         repository: repository,
-                        importer: GPXRouteParser(
-                            now: Date.init,
-                            dateFormat: iso8601,
-                            fallbackDateFormat: Date.ISO8601FormatStyle(),
-                            limits: GPXRouteImportLimits(
-                                maximumFileSizeBytes: Constants.maximumGPXFileSizeBytes,
-                                maximumPointCount: Constants.maximumGPXPointCount
-                            )
-                        ),
-                        exporter: GPXRouteExporter(dateFormat: iso8601)
+                        dateFormat: iso8601
                     ),
                     planning: RideNavigationPlanningService(
-                        placeSearch: placeSearch,
                         roadRouteCalculator: roadRouteCalculator,
                         externalMapLinkResolver: AppleExternalMapLinkResolver(
                             redirectResolver: URLSessionMapLinkRedirectResolver(ownedSession: redirectSession),
@@ -66,12 +59,37 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
                     saveSettings: SaveAppSettingsUseCase(repository: settingsRepository),
                     presentationMapper: RideNavigationPresentationMapper(locale: .autoupdatingCurrent),
                     mapPresentationMapper: mapPresentationMapper,
+                    mapSceneBuilder: RideNavigationMapSceneBuilder(mapper: mapPresentationMapper),
+                    searchService: RideNavigationSearchService(
+                        placeSearch: placeSearch,
+                        sleep: RideNavigationTiming.live.sleep
+                    ),
+                    locationGeometry: RideNavigationLocationGeometry(),
                     timing: .live
                 ),
                 recorder: RideRouteRecorder(),
                 breadcrumbRecorder: RideRouteRecorder()
             ),
             mapSurfaceFactory: AppleNavigationMapSurfaceFactory().makeFactory()
+        )
+    }
+
+    nonisolated private static func makeRouteLibrary(
+        repository: FileRecordedRouteRepository,
+        dateFormat: Date.ISO8601FormatStyle
+    ) -> RideNavigationRouteLibraryService {
+        RideNavigationRouteLibraryService(
+            repository: repository,
+            importer: GPXRouteParser(
+                now: Date.init,
+                dateFormat: dateFormat,
+                fallbackDateFormat: Date.ISO8601FormatStyle(),
+                limits: GPXRouteImportLimits(
+                    maximumFileSizeBytes: Constants.maximumGPXFileSizeBytes,
+                    maximumPointCount: Constants.maximumGPXPointCount
+                )
+            ),
+            exporter: GPXRouteExporter(dateFormat: dateFormat)
         )
     }
 

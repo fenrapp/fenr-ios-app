@@ -4,21 +4,24 @@ import Foundation
 public struct RideRouteGuidanceSession: Sendable {
     private let plan: RideRouteGuidancePlan
     private let configuration: RideRouteGuidanceConfiguration
+    private let projectionSelector: RideRouteProjectionSelector
     private var activeProjection: RideRouteProjection?
     private var startingDistanceMeters: Double?
     private var maximumDistanceAlongRouteMeters: Double
     private var routeState: RideRouteGuidanceRouteState = .onRoute
-    private var alternativeCandidate: AlternativeCandidate?
+    private var alternativeCandidate: RideRouteAlternativeCandidate?
     private var lastReliableObservedAt: Date?
     private var protectedForkRange: ClosedRange<Double>?
 
     public init(
         plan: RideRouteGuidancePlan,
         startingAt projection: RideRouteProjection? = nil,
-        configuration: RideRouteGuidanceConfiguration = .standard
+        configuration: RideRouteGuidanceConfiguration = .standard,
+        projectionSelector: RideRouteProjectionSelector
     ) {
         self.plan = plan
         self.configuration = configuration
+        self.projectionSelector = projectionSelector
         activeProjection = projection
         startingDistanceMeters = projection?.position.distanceAlongRouteMeters
         maximumDistanceAlongRouteMeters = projection?.position.distanceAlongRouteMeters ?? .zero
@@ -54,7 +57,7 @@ public struct RideRouteGuidanceSession: Sendable {
             )
         }
         guard let previous = activeProjection else {
-            let selected = initialProjection(from: nearby, sample: sample)
+            let selected = projectionSelector.initial(from: nearby, sample: sample, plan: plan)
             lastReliableObservedAt = sample.observedAt
             activeProjection = selected
             startingDistanceMeters = selected.position.distanceAlongRouteMeters
@@ -88,12 +91,15 @@ public struct RideRouteGuidanceSession: Sendable {
     ) -> RideRouteGuidanceSnapshot {
         let previousDistance = previous.position.distanceAlongRouteMeters
         updateProtectedForkRange(after: previousDistance)
-        let expected = expectedProjection(
-            from: nearby,
+        let expected = projectionSelector.expected(.init(
+            projections: nearby,
             previous: previous,
             sample: sample,
-            elapsedSeconds: elapsedSeconds
-        )
+            elapsedSeconds: elapsedSeconds,
+            isInsideProtectedFork: isInsideProtectedFork,
+            plan: plan,
+            configuration: configuration
+        ))
 
         let expectedDistanceLimit = routeState == .onRoute
             ? configuration.offRouteDistanceMeters
@@ -119,17 +125,17 @@ public struct RideRouteGuidanceSession: Sendable {
             )
         }
 
-        let global = nearby.min {
-            globalProjectionScore($0, sample: sample)
-                < globalProjectionScore($1, sample: sample)
-        }
+        let global = projectionSelector.global(from: nearby, sample: sample, plan: plan)
         guard let global,
               global.distanceFromRouteMeters <= configuration.alternativeRouteDistanceMeters,
               plan.hasReliableCourse(sample),
               plan.courseDifference(for: global, sample: sample)
                 <= configuration.compatibleCourseDifferenceDegrees,
               abs(global.position.distanceAlongRouteMeters - previousDistance)
-                > minimumAlternativeProgressDelta else {
+                > projectionSelector.minimumAlternativeProgressDelta(
+                    isInsideProtectedFork: isInsideProtectedFork,
+                    configuration: configuration
+                ) else {
             alternativeCandidate = nil
             routeState = .offRoute
             return snapshot(
@@ -197,56 +203,6 @@ public struct RideRouteGuidanceSession: Sendable {
 }
 
 private extension RideRouteGuidanceSession {
-    private func expectedProjection(
-        from projections: [RideRouteProjection],
-        previous: RideRouteProjection,
-        sample: RideRouteGuidanceSample,
-        elapsedSeconds: TimeInterval
-    ) -> RideRouteProjection? {
-        let previousDistance = previous.position.distanceAlongRouteMeters
-        let maximumAdvance = plausibleAdvanceMeters(for: sample, elapsedSeconds: elapsedSeconds)
-        let continuityWeight = progressContinuityWeight(after: previousDistance)
-        return projections.filter {
-            let delta = $0.position.distanceAlongRouteMeters - previousDistance
-            return delta >= -configuration.continuityBacktrackMeters
-                && delta <= maximumAdvance
-        }.min {
-            projectionScore(
-                $0,
-                from: previous,
-                sample: sample,
-                continuityWeight: continuityWeight
-            ) < projectionScore(
-                $1,
-                from: previous,
-                sample: sample,
-                continuityWeight: continuityWeight
-            )
-        }
-    }
-
-    private func plausibleAdvanceMeters(
-        for sample: RideRouteGuidanceSample,
-        elapsedSeconds: TimeInterval
-    ) -> Double {
-        let routeLimit = !isInsideProtectedFork
-            ? configuration.continuityLookAheadMeters
-            : configuration.forkDivergenceLookAheadMeters
-        let motionLimit = max(
-            Constants.minimumPlausibleAdvanceMeters,
-            sample.speedKilometersPerHour / 3.6
-                * elapsedSeconds * Constants.plausibleAdvanceMultiplier
-                + Constants.plausibleAdvanceToleranceMeters
-        )
-        return min(routeLimit, motionLimit)
-    }
-
-    private var minimumAlternativeProgressDelta: Double {
-        !isInsideProtectedFork
-            ? configuration.continuityLookAheadMeters
-            : configuration.forkDivergenceLookAheadMeters
-    }
-
     private var isInsideProtectedFork: Bool {
         guard let protectedForkRange else { return false }
         return maximumDistanceAlongRouteMeters
@@ -269,58 +225,13 @@ private extension RideRouteGuidanceSession {
         )
     }
 
-    private func progressContinuityWeight(after distanceMeters: Double) -> Double {
-        plan.nextDecision(after: distanceMeters)?.isFork == true
-            ? Constants.forkProgressContinuityWeight
-            : Constants.progressContinuityWeight
-    }
-
-    private func initialProjection(
-        from projections: [RideRouteProjection],
-        sample: RideRouteGuidanceSample
-    ) -> RideRouteProjection {
-        projections.min {
-            let lhs = globalProjectionScore($0, sample: sample)
-            let rhs = globalProjectionScore($1, sample: sample)
-            if lhs == rhs {
-                return $0.position.distanceAlongRouteMeters < $1.position.distanceAlongRouteMeters
-            }
-            return lhs < rhs
-        } ?? projections[0]
-    }
-
-    private func projectionScore(
-        _ projection: RideRouteProjection,
-        from previous: RideRouteProjection,
-        sample: RideRouteGuidanceSample,
-        continuityWeight: Double
-    ) -> Double {
-        let progressDelta = abs(
-            projection.position.distanceAlongRouteMeters
-                - previous.position.distanceAlongRouteMeters
-        )
-        return projection.distanceFromRouteMeters
-            + progressDelta * continuityWeight
-            + plan.courseDifference(for: projection, sample: sample)
-                * Constants.courseWeight
-    }
-
-    private func globalProjectionScore(
-        _ projection: RideRouteProjection,
-        sample: RideRouteGuidanceSample
-    ) -> Double {
-        projection.distanceFromRouteMeters
-            + plan.courseDifference(for: projection, sample: sample)
-                * Constants.courseWeight
-    }
-
     private mutating func updateAlternativeCandidate(
         with projection: RideRouteProjection,
         sample: RideRouteGuidanceSample
     ) {
         guard var candidate = alternativeCandidate,
               candidate.matches(projection, configuration: configuration) else {
-            alternativeCandidate = AlternativeCandidate(
+            alternativeCandidate = RideRouteAlternativeCandidate(
                 projection: projection,
                 firstCoordinate: sample.coordinate,
                 firstObservedAt: sample.observedAt,

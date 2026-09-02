@@ -10,9 +10,7 @@ public final class BikeLockSettingsViewModel: ObservableObject {
 
     private let vehicleSession: any VehicleSessionService
     private let capabilityStore: any BikeLockCapabilityStateStoring
-    private let credentialStore: any BikeLockCredentialStoring
-    private let authenticator: any BikeLockAuthenticating
-    private let updateSecurity: UpdateBikeLockSecurityUseCase
+    private let securityService: BikeLockSettingsSecurityService
     private let mapper: BikeLockSettingsViewStateMapper
     private var activeVIN: String?
     private var settings = AppSettings()
@@ -27,16 +25,12 @@ public final class BikeLockSettingsViewModel: ObservableObject {
     public init(
         vehicleSession: any VehicleSessionService,
         capabilityStore: any BikeLockCapabilityStateStoring,
-        credentialStore: any BikeLockCredentialStoring,
-        authenticator: any BikeLockAuthenticating,
-        updateSecurity: UpdateBikeLockSecurityUseCase,
+        securityService: BikeLockSettingsSecurityService,
         mapper: BikeLockSettingsViewStateMapper
     ) {
         self.vehicleSession = vehicleSession
         self.capabilityStore = capabilityStore
-        self.credentialStore = credentialStore
-        self.authenticator = authenticator
-        self.updateSecurity = updateSecurity
+        self.securityService = securityService
         self.mapper = mapper
     }
 
@@ -97,11 +91,9 @@ public final class BikeLockSettingsViewModel: ObservableObject {
               viewState.destination == .verifyCurrentPIN,
               let vin = activeVIN,
               let destination = actionAfterAuthentication else { return }
-        let credentialStore = credentialStore
+        let securityService = securityService
         runOperation(for: vin) {
-            guard await credentialStore.verify(pin: pin, for: vin) else {
-                throw BikeLockSettingsError.incorrectPIN
-            }
+            try await securityService.verify(pin: pin, for: vin)
             return { viewModel in
                 viewModel.actionAfterAuthentication = nil
                 viewModel.render(destination: .set(destination), error: .set(nil), isWorking: false)
@@ -200,22 +192,9 @@ private extension BikeLockSettingsViewModel {
             return
         }
         guard let vin = activeVIN else { return }
-        let credentialStore = credentialStore
-        let authenticator = authenticator
+        let securityService = securityService
         runOperation(for: vin) {
-            guard await credentialStore.containsPIN(for: vin) else {
-                throw BikeLockSettingsError.missingCredential
-            }
-            let authenticated: Bool
-            do {
-                authenticated = try await authenticator.authenticate(
-                    reason: "Change Bike Lock protection"
-                )
-            } catch is CancellationError {
-                throw CancellationError()
-            } catch {
-                authenticated = false
-            }
+            let authenticated = try await securityService.authenticate(for: vin)
             return { viewModel in
                 if authenticated {
                     viewModel.actionAfterAuthentication = nil
@@ -234,11 +213,11 @@ private extension BikeLockSettingsViewModel {
     func update(mode: BikeLockSecurityMode, newPIN: String?) {
         guard let vin = activeVIN else { return }
         guard !mode.requiresPIN || currentMode.requiresPIN || newPIN != nil else { return }
-        let updateSecurity = updateSecurity
+        let securityService = securityService
         runOperation(for: vin) {
-            try await updateSecurity.execute(
+            try await securityService.update(
                 vehicleIdentifier: vin,
-                securityMode: mode,
+                mode: mode,
                 newPIN: newPIN
             )
             return { viewModel in
@@ -305,8 +284,8 @@ private extension BikeLockSettingsViewModel {
     }
 
     func render(
-        destination: ValueUpdate<BikeLockSettingsDestination?> = .preserve,
-        error: ValueUpdate<String?> = .preserve,
+        destination: BikeLockSettingsViewUpdate<BikeLockSettingsDestination?> = .preserve,
+        error: BikeLockSettingsViewUpdate<String?> = .preserve,
         isWorking: Bool? = nil
     ) {
         viewState = mapper.map(
@@ -318,31 +297,5 @@ private extension BikeLockSettingsViewModel {
             destination: destination.resolve(previous: viewState.destination),
             isCanonicalTelemetryAvailable: isCanonicalTelemetryAvailable
         )
-    }
-}
-
-private enum ValueUpdate<Value> {
-    case preserve
-    case set(Value)
-
-    func resolve(previous: Value) -> Value {
-        switch self {
-        case .preserve: previous
-        case .set(let value): value
-        }
-    }
-}
-
-private enum BikeLockSettingsError: LocalizedError {
-    case incorrectPIN
-    case missingCredential
-    case pinMismatch
-
-    var errorDescription: String? {
-        switch self {
-        case .incorrectPIN: "Incorrect PIN"
-        case .missingCredential: "The saved PIN is unavailable."
-        case .pinMismatch: "The PINs do not match."
-        }
     }
 }

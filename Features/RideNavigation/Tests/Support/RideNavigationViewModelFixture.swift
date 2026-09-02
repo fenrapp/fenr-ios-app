@@ -54,13 +54,13 @@ struct RideNavigationViewModelFixture {
                     exporter: StubGPXRouteExporter()
                 ),
                 planning: RideNavigationPlanningService(
-                    placeSearch: placeSearch,
                     roadRouteCalculator: roadRouteCalculator,
                     externalMapLinkResolver: externalMapLinkResolver,
                     trailExitFinder: trailExitFinder
                 ),
                 trailGuidance: RideNavigationTrailGuidanceController(
-                    planner: DefaultRideRouteGuidancePlanner()
+                    planner: DefaultRideRouteGuidancePlanner(entryClassifier: RideRouteEntryClassifier()),
+                    projectionSelector: RideRouteProjectionSelector()
                 ),
                 trailMapPreparer: RideNavigationTrailMapPreparer(
                     mapper: mapPresentationMapper
@@ -71,6 +71,12 @@ struct RideNavigationViewModelFixture {
                 saveSettings: SaveAppSettingsUseCase(repository: settingsRepository),
                 presentationMapper: RideNavigationPresentationMapper(locale: Locale(identifier: "en_US")),
                 mapPresentationMapper: mapPresentationMapper,
+                mapSceneBuilder: RideNavigationMapSceneBuilder(mapper: mapPresentationMapper),
+                searchService: RideNavigationSearchService(
+                    placeSearch: placeSearch,
+                    sleep: timing.sleep
+                ),
+                locationGeometry: RideNavigationLocationGeometry(),
                 timing: timing
             ),
             recorder: RideRouteRecorder(),
