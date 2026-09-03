@@ -143,9 +143,54 @@ extension RideHistoryMapper {
             return .init(id: bucket.id, distance: distance, value: value * efficiencyScale)
         }
         return (
-            battery.count >= Constants.minimumChartPoints ? battery : [],
-            efficiency.count >= Constants.minimumChartPoints ? efficiency : []
+            battery.count >= Constants.minimumChartPoints ? reducedChartPoints(battery) : [],
+            efficiency.count >= Constants.minimumChartPoints ? reducedChartPoints(efficiency) : []
         )
+    }
+
+    /// Swift Charts creates every mark when this lazy list section first becomes visible.
+    /// Keep the data proportional to the chart's pixel width while retaining local peaks
+    /// and troughs so long rides do not stall the main thread during scrolling.
+    private func reducedChartPoints(
+        _ points: [RideHistoryDetailViewState.ChartPoint]
+    ) -> [RideHistoryDetailViewState.ChartPoint] {
+        let limit = Constants.maximumRenderedChartPoints
+        guard points.count > limit else { return points }
+
+        let interiorCount = points.count - 2
+        let bucketCount = max((limit - 2) / 2, 1)
+        var result = [points[0]]
+        result.reserveCapacity(limit)
+
+        for bucketIndex in 0 ..< bucketCount {
+            let lowerBound = 1 + bucketIndex * interiorCount / bucketCount
+            let upperBound = 1 + (bucketIndex + 1) * interiorCount / bucketCount
+            guard lowerBound < upperBound else { continue }
+
+            var minimumIndex = lowerBound
+            var maximumIndex = lowerBound
+            for index in (lowerBound + 1) ..< upperBound {
+                if points[index].value < points[minimumIndex].value {
+                    minimumIndex = index
+                }
+                if points[index].value > points[maximumIndex].value {
+                    maximumIndex = index
+                }
+            }
+
+            if minimumIndex < maximumIndex {
+                result.append(points[minimumIndex])
+                result.append(points[maximumIndex])
+            } else if maximumIndex < minimumIndex {
+                result.append(points[maximumIndex])
+                result.append(points[minimumIndex])
+            } else {
+                result.append(points[minimumIndex])
+            }
+        }
+
+        result.append(points[points.index(before: points.endIndex)])
+        return result
     }
 
     private func chartDistance(

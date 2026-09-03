@@ -136,6 +136,41 @@ struct BikeBLEChargePowerCoordinatorTests {
         ))
     }
 
+    @Test("A failed write invalidates charge power and target guards")
+    func invalidatesGuardsAfterWriteFailure() async throws {
+        let powerTransport = FakeBikeBLEChargePowerConfigurationTransport()
+        let powerCoordinator = BikeBLEChargePowerCoordinator(
+            transport: powerTransport,
+            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter()
+        )
+        _ = try await powerCoordinator.prepareChargePowerControl(context: telemetryContext)
+        powerTransport.writeError = .operationFailed("Synthetic write failure")
+
+        await #expect(throws: BikeSDKError.self) {
+            _ = try await powerCoordinator.setChargePowerLimit(watts: 1_500)
+        }
+        powerTransport.writeError = nil
+        await #expect(throws: BikeSDKError.self) {
+            _ = try await powerCoordinator.setChargePowerLimit(watts: 1_500)
+        }
+
+        let targetTransport = FakeBikeBLEChargePowerConfigurationTransport()
+        let targetCoordinator = BikeBLEChargePowerCoordinator(
+            transport: targetTransport,
+            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter()
+        )
+        _ = try await targetCoordinator.prepareChargePowerControl(context: telemetryContext)
+        targetTransport.writeError = .operationFailed("Synthetic write failure")
+
+        await #expect(throws: BikeSDKError.self) {
+            _ = try await targetCoordinator.setChargeTarget(percent: 80)
+        }
+        targetTransport.writeError = nil
+        await #expect(throws: BikeSDKError.self) {
+            _ = try await targetCoordinator.setChargeTarget(percent: 80)
+        }
+    }
+
     private var telemetryContext: BikeSDKChargePowerTelemetryContext {
         BikeSDKChargePowerTelemetryContext(
             requestedCurrentAmperes: 2,

@@ -34,13 +34,18 @@ struct BikeBLEBikeLockConfigurationCoordinatorTests {
     @Test("Writes the flag only after preparation and confirms the new state")
     func writesAndConfirmsLockFlag() async throws {
         let transport = FakeBikeBLEBikeLockConfigurationTransport()
+        transport.configuration = .init(
+            isLocked: false,
+            lockType: 2,
+            timeoutSeconds: 300
+        )
         let coordinator = makeCoordinator(transport: transport)
 
         _ = try await coordinator.prepare()
         let snapshot = try await coordinator.setLocked(true)
 
         #expect(snapshot.isLocked)
-        #expect(transport.writePayloads.last == Data([1, 5, 0x83, 1, 1, 0, 0]))
+        #expect(transport.writePayloads.last == Data([1, 5, 0x83, 1, 2, 0x2C, 0x01]))
         #expect(transport.requests.count == 3)
     }
 
@@ -54,6 +59,28 @@ struct BikeBLEBikeLockConfigurationCoordinatorTests {
         await #expect(throws: BikeSDKError.self) {
             try await coordinator.setLocked(true)
         }
+
+        await #expect(throws: BikeSDKError.self) {
+            try await coordinator.setLocked(false)
+        }
+    }
+
+    @Test("Invalidates preparation after a write transport failure")
+    func invalidatesGuardAfterWriteFailure() async throws {
+        let transport = FakeBikeBLEBikeLockConfigurationTransport()
+        let coordinator = makeCoordinator(transport: transport)
+        _ = try await coordinator.prepare()
+        transport.writeError = .operationFailed("Synthetic write failure")
+
+        await #expect(throws: BikeSDKError.self) {
+            try await coordinator.setLocked(true)
+        }
+        transport.writeError = nil
+
+        await #expect(throws: BikeSDKError.self) {
+            try await coordinator.setLocked(false)
+        }
+        #expect(transport.writePayloads.count == 2)
     }
 
     private func makeCoordinator(

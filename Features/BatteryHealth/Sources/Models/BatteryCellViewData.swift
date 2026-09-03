@@ -6,6 +6,8 @@ public struct BatteryCellViewData: Equatable, Identifiable, Sendable {
     public let isBalancing: Bool
     public let isMinimum: Bool
     public let isMaximum: Bool
+    public let deviationProgress: Double
+    public let deviationMillivolts: Double
 
     public var id: Int { position }
 
@@ -16,7 +18,9 @@ public struct BatteryCellViewData: Equatable, Identifiable, Sendable {
         condition: BatteryCellCondition,
         isBalancing: Bool,
         isMinimum: Bool,
-        isMaximum: Bool
+        isMaximum: Bool,
+        deviationProgress: Double = 0,
+        deviationMillivolts: Double = 0
     ) {
         self.position = position
         self.voltage = voltage
@@ -25,5 +29,7 @@ public struct BatteryCellViewData: Equatable, Identifiable, Sendable {
         self.isBalancing = isBalancing
         self.isMinimum = isMinimum
         self.isMaximum = isMaximum
+        self.deviationProgress = deviationProgress
+        self.deviationMillivolts = deviationMillivolts
     }
 }

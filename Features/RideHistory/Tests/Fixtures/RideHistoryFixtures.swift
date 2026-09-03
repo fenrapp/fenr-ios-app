@@ -59,4 +59,18 @@ enum RideHistoryFixtures {
         }
         return result
     }
+
+    static func denseBuckets(startedAt: Date, count: Int, spikeIndex: Int) -> [RideEnergyBucket] {
+        (0 ..< count).map { index in
+            let startDistance = Double(index) * 0.25
+            return RideEnergyBucket(
+                startedAt: startedAt.addingTimeInterval(Double(index * 30)),
+                startDistanceKilometers: startDistance,
+                endDistanceKilometers: startDistance + 0.25,
+                stateOfChargePercent: max(100 - index / 10, 0),
+                consumedEnergyWattHours: index == spikeIndex ? 250 : 20 + Double(index % 5),
+                recoveredEnergyWattHours: .zero
+            )
+        }
+    }
 }

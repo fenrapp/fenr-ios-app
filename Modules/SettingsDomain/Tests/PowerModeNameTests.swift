@@ -4,32 +4,25 @@ import Testing
 
 @Suite("Power mode names")
 struct PowerModeNameTests {
-    @Test("Accepts one ASCII alphanumeric word and preserves letter case")
+    @Test("Accepts names, spaces, symbols, and emoji within ten characters")
     func acceptsValidNames() throws {
         #expect(try PowerModeName("Enduro").value == "Enduro")
-        #expect(try PowerModeName("MX2").value == "MX2")
+        #expect(try PowerModeName("Race Mode").value == "Race Mode")
+        #expect(try PowerModeName("⚡️ MX 🏁").value == "⚡️ MX 🏁")
         #expect(try PowerModeName("1234567890").value == "1234567890")
+        #expect(try PowerModeName("  Trail  ").value == "Trail")
     }
 
-    @Test("Rejects empty, long, spaced, symbolic, and non-ASCII names")
+    @Test("Rejects empty and names longer than ten characters")
     func rejectsInvalidNames() {
         #expect(throws: PowerModeNameValidationError.empty) {
             try PowerModeName("")
         }
+        #expect(throws: PowerModeNameValidationError.empty) {
+            try PowerModeName("   ")
+        }
         #expect(throws: PowerModeNameValidationError.tooLong(maximumLength: 10)) {
             try PowerModeName("12345678901")
-        }
-        #expect(throws: PowerModeNameValidationError.invalidCharacters) {
-            try PowerModeName("Hard Enduro")
-        }
-        #expect(throws: PowerModeNameValidationError.invalidCharacters) {
-            try PowerModeName(" ECO")
-        }
-        #expect(throws: PowerModeNameValidationError.invalidCharacters) {
-            try PowerModeName("MX-2")
-        }
-        #expect(throws: PowerModeNameValidationError.invalidCharacters) {
-            try PowerModeName("ECOÁ")
         }
     }
 
@@ -40,11 +33,13 @@ struct PowerModeNameTests {
     }
 
     @Test("Revalidates persisted names while decoding")
-    func revalidatesPersistedNames() {
-        let data = Data(#"{"value":"ECO MODE"}"#.utf8)
+    func revalidatesPersistedNames() throws {
+        let validData = Data(#"{"value":"⚡️ ECO"}"#.utf8)
+        let invalidData = Data(#"{"value":"12345678901"}"#.utf8)
 
-        #expect(throws: PowerModeNameValidationError.invalidCharacters) {
-            try JSONDecoder().decode(PowerModeName.self, from: data)
+        #expect(try JSONDecoder().decode(PowerModeName.self, from: validData).value == "⚡️ ECO")
+        #expect(throws: PowerModeNameValidationError.tooLong(maximumLength: 10)) {
+            try JSONDecoder().decode(PowerModeName.self, from: invalidData)
         }
     }
 }

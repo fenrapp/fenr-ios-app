@@ -49,6 +49,7 @@ extension PowerModeSettingsViewModel {
         attemptedPreparationMapIndex = nil
         isPreparingControl = false
         isApplyingControl = false
+        clearAdjustmentFeedback()
         controlMessage = nil
         controlError = nil
     }

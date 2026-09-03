@@ -53,21 +53,25 @@ extension BikeBLEPowerModeConfigurationCoordinator {
             powerTractionPercent: powerTractionPercent,
             brakingTractionPercent: brakingTractionPercent
         )
-        try await transport.writeConfiguration(packet)
-        try await Task.sleep(for: Constants.writeVerificationDelay)
-        let verified = try await readTractionControlConfiguration(mapIndex: mapIndex)
-        guard verified.powerRaw == expectedPowerRaw,
-              verified.brakingRaw == expectedBrakingRaw
-        else {
-            preparedTractionConfigurations[mapIndex] = nil
-            throw BikeSDKError.operationFailed(
-                "Traction-control write was not confirmed by the VCU response"
+        do {
+            try await transport.writeConfiguration(packet)
+            try await Task.sleep(for: Constants.writeVerificationDelay)
+            let verified = try await readTractionControlConfiguration(mapIndex: mapIndex)
+            guard verified.powerRaw == expectedPowerRaw,
+                  verified.brakingRaw == expectedBrakingRaw
+            else {
+                throw BikeSDKError.operationFailed(
+                    "Traction-control write was not confirmed by the VCU response"
+                )
+            }
+            preparedTractionConfigurations[mapIndex] = verified
+            await report(
+                "4005 TC map \(mapIndex) write verified power=\(powerTractionPercent)% "
+                    + "braking=\(brakingTractionPercent)% packet=\(packet.bikeSDKHexString)"
             )
+        } catch {
+            preparedTractionConfigurations[mapIndex] = nil
+            throw error
         }
-        preparedTractionConfigurations[mapIndex] = verified
-        await report(
-            "4005 TC map \(mapIndex) write verified power=\(powerTractionPercent)% "
-                + "braking=\(brakingTractionPercent)% packet=\(packet.bikeSDKHexString)"
-        )
     }
 }

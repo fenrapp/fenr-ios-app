@@ -18,9 +18,13 @@ enum BikeLockCardViewModelTestFactory {
         isLocked: Bool = false,
         settings: AppSettings = .init(),
         authenticator: any BikeLockAuthenticating = BikeLockCardAuthenticator(),
+        suspendsPreparation: Bool = false,
         allowsExperimentalControl: Bool = true
     ) -> BikeLockCardViewModelTestFixture {
-        let repository = BikeLockCardRepository(isLocked: isLocked)
+        let repository = BikeLockCardRepository(
+            isLocked: isLocked,
+            suspendsPreparation: suspendsPreparation
+        )
         let settingsRepository = BikeLockCardSettingsRepository(settings: settings)
         let vehicleSession = RideDashboardVehicleSession()
         let credentialStore = BikeLockCardCredentialStore()

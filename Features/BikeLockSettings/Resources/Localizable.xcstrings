@@ -100,17 +100,6 @@
         }
       }
     },
-    "bikeLockSettingsExplanation" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "These settings protect unlocking in FENR. They do not lock or unlock the motorcycle."
-          }
-        }
-      }
-    },
     "bikeLockSettingsGenericError" : {
       "extractionState" : "manual",
       "localizations" : {

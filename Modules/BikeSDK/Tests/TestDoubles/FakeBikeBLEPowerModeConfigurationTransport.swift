@@ -10,6 +10,7 @@ final class FakeBikeBLEPowerModeConfigurationTransport: BikeBLEPowerModeConfigur
     var failingRequests = Set<Data>()
     var versionData = Data("1.12.0".utf8)
     var curveOverrides: [UInt8: UInt8] = [:]
+    var writeError: BikeSDKError?
     private var powerResponses: [UInt8: Data] = [:]
     private var tractionResponses: [UInt8: Data] = [:]
 
@@ -47,6 +48,7 @@ final class FakeBikeBLEPowerModeConfigurationTransport: BikeBLEPowerModeConfigur
 
     func writeConfiguration(_ payload: Data) async throws {
         writePayloads.append(payload)
+        if let writeError { throw writeError }
         guard !payload.isEmpty, payload[0] == 1 else {
             throw BikeSDKError.operationFailed("Unsupported fake 4005 write")
         }

@@ -42,7 +42,7 @@ enum ProductionAppDependencyContainerFactory {
                 settingsRepository: settingsRepository,
                 deviceSpeedRepository: deviceSpeedRepository,
                 motionCalibrationRepository: motionCalibrationRepository,
-                imuProfile: BikeIMUProfile.productionV1,
+                imuProfile: makeIMUProfile(),
                 rideTripRepository: rideTripRepository
             )
         )
@@ -74,6 +74,14 @@ enum ProductionAppDependencyContainerFactory {
 
     private static func makeBikeLockCredentialStore() -> KeychainBikeLockCredentialStore {
         KeychainBikeLockCredentialStore(service: "com.fenr.app.bike-lock")
+    }
+
+    private static func makeIMUProfile() -> BikeIMUProfile? {
+#if DEBUG
+        .experimentalObservedV1
+#else
+        .productionV1
+#endif
     }
 
     private static func makeIncomingMapLinkStore() -> UserDefaultsIncomingMapLinkStore {

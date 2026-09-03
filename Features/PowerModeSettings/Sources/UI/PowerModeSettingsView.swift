@@ -1,20 +1,22 @@
+import DesignSystem
 import SwiftUI
 
 public struct PowerModeSettingsView: View {
     @ObservedObject private var viewModel: PowerModeSettingsViewModel
+    @State private var isNameEditorPresented = false
 
     public init(viewModel: PowerModeSettingsViewModel) {
         self.viewModel = viewModel
     }
 
     public var body: some View {
-        Form {
-            Section(.powerModeSettingsBikeSection) {
+        List {
+            Section {
                 PowerModeStatusPanel(
-                    connectionText: viewModel.viewState.connectionText,
-                    capabilityText: viewModel.viewState.capabilityText,
-                    statusText: viewModel.viewState.statusText,
-                    statusIsError: viewModel.viewState.statusIsError
+                    status: viewModel.viewState.status,
+                    canRetry: viewModel.viewState.statusIsError
+                        && viewModel.viewState.canRefresh,
+                    retry: viewModel.refresh
                 )
             }
 
@@ -23,33 +25,24 @@ public struct PowerModeSettingsView: View {
                     maps: viewModel.viewState.maps,
                     select: viewModel.selectMap(index:)
                 )
+                mapNameButton
             }
 
-            Section(.powerModeSettingsMapNameSection) {
-                PowerModeNameEditor(
-                    mapIndex: viewModel.viewState.selectedMapIndex,
-                    currentName: viewModel.viewState.currentName,
-                    maximumLength: viewModel.viewState.maximumNameLength,
-                    isEnabled: viewModel.viewState.canEditName,
-                    error: viewModel.viewState.nameError,
-                    save: viewModel.saveName,
-                    reset: viewModel.resetName
-                )
-            }
-
-            Section {
-                ForEach(viewModel.viewState.adjustments) { adjustment in
-                    PowerModeAdjustmentRow(
-                        state: adjustment,
-                        commit: { value in
-                            viewModel.updateAdjustment(id: adjustment.id, value: value)
-                        }
-                    )
+            ForEach(viewModel.viewState.controlGroups) { group in
+                Section {
+                    ForEach(group.adjustments) { adjustment in
+                        PowerModeAdjustmentRow(
+                            state: adjustment,
+                            commit: { value in
+                                viewModel.updateAdjustment(id: adjustment.id, value: value)
+                            }
+                        )
+                    }
+                } header: {
+                    Text(group.title)
+                } footer: {
+                    Text(group.detail)
                 }
-            } header: {
-                Text(.powerModeSettingsConfigurationSection)
-            } footer: {
-                Text(.powerModeSettingsConfigurationFooter)
             }
         }
         .navigationTitle(Text(.powerModeSettingsTitle))
@@ -63,7 +56,57 @@ public struct PowerModeSettingsView: View {
                 .accessibilityLabel(.powerModeSettingsRefreshAccessibility)
             }
         }
+        .sheet(isPresented: $isNameEditorPresented) {
+            PowerModeNameEditor(
+                mapIndex: viewModel.viewState.selectedMapIndex,
+                currentName: viewModel.viewState.currentName,
+                maximumLength: viewModel.viewState.maximumNameLength,
+                isEnabled: viewModel.viewState.canEditName,
+                error: viewModel.viewState.nameError,
+                save: viewModel.saveName,
+                reset: viewModel.resetName
+            )
+        }
         .task { viewModel.start() }
         .onDisappear { viewModel.stop() }
+    }
+
+    private var mapNameButton: some View {
+        Button {
+            isNameEditorPresented = true
+        } label: {
+            HStack(spacing: DesignSpace.small) {
+                VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
+                    Text(.powerModeSettingsMapNameSection)
+                        .foregroundStyle(DesignColor.primaryText)
+                    Text(selectedMapTitle)
+                        .font(.subheadline)
+                        .foregroundStyle(DesignColor.secondaryText)
+                }
+                Spacer(minLength: DesignSpace.small)
+                Text(.powerModeSettingsEditName)
+                    .font(.callout.weight(.semibold))
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(DesignColor.secondaryText)
+                    .accessibilityHidden(true)
+            }
+            .frame(minHeight: Constants.minimumControlSize)
+        }
+        .disabled(!viewModel.viewState.canEditName)
+        .accessibilityHint(.powerModeSettingsEditNameHint)
+    }
+
+    private var selectedMapTitle: String {
+        viewModel.viewState.maps
+            .first(where: \PowerModeMapViewData.isSelected)?
+            .title
+            ?? String(localized: .powerModeSettingsMapAccessibility(
+                viewModel.viewState.selectedMapIndex + 1
+            ))
+    }
+
+    private enum Constants {
+        static let minimumControlSize: CGFloat = 44
     }
 }

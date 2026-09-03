@@ -52,32 +52,39 @@ final class BikeBLEBikeLockConfigurationCoordinator {
                 "Bike Lock has not passed its no-op preparation guard"
             )
         }
-        let expected = StarkBikeLockConfigurationPayload(
-            isLocked: isLocked,
-            lockType: currentConfiguration.lockType,
-            timeoutSeconds: currentConfiguration.timeoutSeconds
-        )
-        let packet = StarkBikeLockConfigurationCommand.writePacket(
-            isLocked: expected.isLocked,
-            lockType: expected.lockType,
-            timeoutSeconds: expected.timeoutSeconds
-        )
-        try await transport.writeConfiguration(packet)
-        try await Task.sleep(for: Constants.writeVerificationDelay)
-        let verified = try await readConfiguration()
-        guard verified == expected else {
-            preparedConfiguration = nil
-            self.preparedFirmware = nil
-            throw BikeSDKError.operationFailed(
-                "Bike Lock write was not confirmed by a fresh VCU read"
+        do {
+            let expected = StarkBikeLockConfigurationPayload(
+                isLocked: isLocked,
+                lockType: currentConfiguration.lockType,
+                timeoutSeconds: currentConfiguration.timeoutSeconds
             )
+            let packet = StarkBikeLockConfigurationCommand.writePacket(
+                isLocked: expected.isLocked,
+                lockType: expected.lockType,
+                timeoutSeconds: expected.timeoutSeconds
+            )
+            try await transport.writeConfiguration(packet)
+            try await Task.sleep(for: Constants.writeVerificationDelay)
+            let verified = try await readConfiguration()
+            guard verified == expected else {
+                throw BikeSDKError.operationFailed(
+                    "Bike Lock write was not confirmed by a fresh VCU read"
+                )
+            }
+            preparedConfiguration = verified
+            await report("Bike Lock write verified state=\(verified.isLocked)")
+            return snapshot(configuration: verified, firmware: preparedFirmware)
+        } catch {
+            clearGuardState()
+            throw error
         }
-        preparedConfiguration = verified
-        await report("Bike Lock write verified state=\(verified.isLocked)")
-        return snapshot(configuration: verified, firmware: preparedFirmware)
     }
 
     func reset() {
+        clearGuardState()
+    }
+
+    private func clearGuardState() {
         preparedConfiguration = nil
         preparedFirmware = nil
     }

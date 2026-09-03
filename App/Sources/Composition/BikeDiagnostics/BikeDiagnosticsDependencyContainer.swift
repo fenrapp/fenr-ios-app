@@ -4,22 +4,19 @@ import BLETraceDomain
 import Foundation
 import MeasurementPresentation
 import SettingsDomain
+import VehicleSession
 
 @MainActor
 struct BikeDiagnosticsDependencyContainer {
     func makeBikeDiagnosticsViewModel(
         repository: BikeRepository,
-        pinDeriver: any BikePinDeriving,
-        profileRepository: any BikeProfileRepository,
-        settingsRepository: AppSettingsRepository,
+        vehicleSession: any VehicleSessionService,
         bleTraceLogRepository: any BLETraceLogRepository
     ) -> BikeDiagnosticsViewModel {
         BikeDiagnosticsViewModel(
             useCases: makeUseCases(
                 repository: repository,
-                pinDeriver: pinDeriver,
-                profileRepository: profileRepository,
-                settingsRepository: settingsRepository,
+                vehicleSession: vehicleSession,
                 bleTraceLogRepository: bleTraceLogRepository
             ),
             mappers: makeMappers(measurementSystem: .system),
@@ -29,24 +26,15 @@ struct BikeDiagnosticsDependencyContainer {
 
     private func makeUseCases(
         repository: BikeRepository,
-        pinDeriver: any BikePinDeriving,
-        profileRepository: any BikeProfileRepository,
-        settingsRepository: AppSettingsRepository,
+        vehicleSession: any VehicleSessionService,
         bleTraceLogRepository: any BLETraceLogRepository
     ) -> BikeDiagnosticsUseCases {
         BikeDiagnosticsUseCases(
-            start: StartBikeRepositoryUseCase(repository: repository),
-            stop: StopBikeRepositoryUseCase(repository: repository),
+            session: vehicleSession,
             connect: ConnectToBikeUseCase(repository: repository),
             disconnect: DisconnectBikeUseCase(repository: repository),
             retrySecurityHandshake: RetryBikeSecurityHandshakeUseCase(repository: repository),
-            readTelemetrySnapshot: ReadBikeTelemetrySnapshotUseCase(repository: repository),
-            observeTelemetry: ObserveBikeTelemetryUseCase(repository: repository),
-            observeConnection: ObserveBikeConnectionUseCase(repository: repository),
             observeDebugEvents: ObserveBikeDebugEventsUseCase(repository: repository),
-            derivePin: DeriveBikePinUseCase(pinDeriver: pinDeriver),
-            loadProfile: LoadBikeProfileUseCase(repository: profileRepository),
-            observeSettings: ObserveAppSettingsUseCase(repository: settingsRepository),
             observeBLETraceSessions: ObserveBLETraceSessionsUseCase(repository: bleTraceLogRepository),
             prepareBLETraceExport: PrepareBLETraceExportUseCase(repository: bleTraceLogRepository),
             deleteBLETraceSession: DeleteBLETraceSessionUseCase(repository: bleTraceLogRepository),
@@ -90,7 +78,8 @@ struct BikeDiagnosticsDependencyContainer {
                 rawFlagsMapper: BikeTelemetryToRawFlagsMapper(),
                 debugEventMapper: BikeDebugEventToDebugEventViewDataMapper(
                     dateFormatStyle: dateFormatStyle
-                )
+                ),
+                speedFormatter: speedFormatter
             ),
             bleTraceSession: BLETraceSessionViewDataMapper(
                 dateFormatStyle: Date.FormatStyle(date: .abbreviated, time: .standard),

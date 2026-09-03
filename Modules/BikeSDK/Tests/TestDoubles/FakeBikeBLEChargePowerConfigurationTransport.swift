@@ -22,6 +22,7 @@ final class FakeBikeBLEChargePowerConfigurationTransport:
     ])
     var ignoresWrites = false
     var staleReadCountAfterWrite = 0
+    var writeError: BikeSDKError?
     private var queuedReadResponses: [Data] = []
 
     func readVersions() async throws -> Data {
@@ -42,6 +43,7 @@ final class FakeBikeBLEChargePowerConfigurationTransport:
 
     func writeConfiguration(_ payload: Data) async throws {
         writePayloads.append(payload)
+        if let writeError { throw writeError }
         guard !ignoresWrites else { return }
         let staleResponse = response
         guard payload.count == StarkChargerConfigurationCommand.writePacketLength,

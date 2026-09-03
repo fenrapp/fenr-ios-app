@@ -5,7 +5,8 @@ struct BikeLockCardVehicleContext {
     let vehicleIdentifier: String?
     let settings: BikeLockSettings
     let isReceivingTelemetry: Bool
-    let isStationary: Bool
+    let canPrepareNoOp: Bool
+    let canPerformLockWrite: Bool
 }
 
 public struct BikeLockCardVehicleContextMapper: Sendable {
@@ -16,16 +17,16 @@ public struct BikeLockCardVehicleContextMapper: Sendable {
         let vin = rawVIN?.isEmpty == false ? rawVIN : nil
         let receivesTelemetry = snapshot.isCanonicalTelemetryAvailable
         let speed = snapshot.resolvedSpeedKilometersPerHour
-        let isStationary = receivesTelemetry
+        let isStopped = receivesTelemetry
             && !snapshot.telemetry.statusFlags.isInGear
-            && snapshot.telemetry.runState != .charging
             && speed?.isFinite == true
             && abs(speed ?? .infinity) < Constants.maximumStationarySpeed
         return .init(
             vehicleIdentifier: vin,
             settings: vin.map { snapshot.settings.bikeLockSettings(forVIN: $0) } ?? .init(),
             isReceivingTelemetry: receivesTelemetry,
-            isStationary: isStationary
+            canPrepareNoOp: isStopped,
+            canPerformLockWrite: isStopped && snapshot.telemetry.runState != .charging
         )
     }
 

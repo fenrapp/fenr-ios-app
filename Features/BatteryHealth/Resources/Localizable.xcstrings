@@ -1,86 +1,929 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "battery.health.cell.accessibility" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cell %1$lld, %2$@, %3$@"
+          }
+        }
+      }
+    },
+    "battery.health.cell.accessibility.balancing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cell %1$lld, %2$@, %3$@, balancing"
+          }
+        }
+      }
+    },
+    "battery.health.cell.balancing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Balancing"
+          }
+        }
+      }
+    },
+    "battery.health.cell.condition.critical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Critical"
+          }
+        }
+      }
+    },
+    "battery.health.cell.condition.high" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "High"
+          }
+        }
+      }
+    },
+    "battery.health.cell.condition.low" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Low"
+          }
+        }
+      }
+    },
+    "battery.health.cell.condition.normal" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
+          }
+        }
+      }
+    },
+    "battery.health.cell.position" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cell %lld"
+          }
+        }
+      }
+    },
+    "battery.health.cells.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No validated cell samples"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.charge.target" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charge target"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.error.confirmation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The bike did not confirm the change"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.error.incompatible.firmware" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VCU firmware is not compatible with charge control"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.error.no.op.validation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No-op validation failed"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.error.preparation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charge control is unavailable"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.error.write" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The charge setting could not be updated"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.power.limit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Power limit"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.status.confirmed.power" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmed %lld W"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.status.confirmed.target" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmed %lld%%"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.status.confirming.power" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirming %lld W"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.status.confirming.target" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirming %lld%%"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.status.no.op.guard.failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No-op guard failed"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.status.preparing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparing"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.status.ready" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.status.unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unavailable"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.status.unsupported.firmware" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unsupported firmware"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.status.update.failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Update failed"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.status.updating" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updating"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.status.writing.power" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writing %lld W"
+          }
+        }
+      }
+    },
+    "battery.health.charge.control.status.writing.target" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writing %lld%%"
+          }
+        }
+      }
+    },
+    "battery.health.charge.state.charging" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charging"
+          }
+        }
+      }
+    },
+    "battery.health.charge.state.connected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connected"
+          }
+        }
+      }
+    },
+    "battery.health.charge.state.disconnected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disconnected"
+          }
+        }
+      }
+    },
+    "battery.health.charger.backpack" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backpack charger"
+          }
+        }
+      }
+    },
+    "battery.health.charger.fast" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fast charger"
+          }
+        }
+      }
+    },
+    "battery.health.charger.standard" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard charger"
+          }
+        }
+      }
+    },
+    "battery.health.charger.unknown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unknown charger"
+          }
+        }
+      }
+    },
+    "battery.health.charger.unknown.value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unknown charger (%lld)"
+          }
+        }
+      }
+    },
+    "battery.health.copy.log.button" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy battery log"
+          }
+        }
+      }
+    },
+    "battery.health.dataset.awaiting.sample" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Awaiting sample"
+          }
+        }
+      }
+    },
+    "battery.health.dataset.balancing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Balancing"
+          }
+        }
+      }
+    },
+    "battery.health.dataset.bms.signals" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BMS signals"
+          }
+        }
+      }
+    },
+    "battery.health.dataset.bms.status" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BMS status"
+          }
+        }
+      }
+    },
+    "battery.health.dataset.captured.bytes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Captured %lld B"
+          }
+        }
+      }
+    },
+    "battery.health.dataset.cell.voltages" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cell voltages"
+          }
+        }
+      }
+    },
+    "battery.health.dataset.charger" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charger"
+          }
+        }
+      }
+    },
+    "battery.health.dataset.dc.bus" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DC bus"
+          }
+        }
+      }
+    },
+    "battery.health.dataset.temperatures" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temperatures"
+          }
+        }
+      }
+    },
+    "battery.health.dataset.validated" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Validated"
+          }
+        }
+      }
+    },
+    "battery.health.metric.bms.fault" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BMS fault"
+          }
+        }
+      }
+    },
+    "battery.health.metric.captured.datasets" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Captured datasets"
+          }
+        }
+      }
+    },
+    "battery.health.metric.cell.delta" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cell delta"
+          }
+        }
+      }
+    },
+    "battery.health.metric.cell.target" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cell target"
+          }
+        }
+      }
+    },
+    "battery.health.metric.charge" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charge"
+          }
+        }
+      }
+    },
+    "battery.health.metric.charge.current" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charge current"
+          }
+        }
+      }
+    },
+    "battery.health.metric.current.limit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current limit"
+          }
+        }
+      }
+    },
+    "battery.health.metric.current.target" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current target"
+          }
+        }
+      }
+    },
+    "battery.health.metric.dc.bus" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DC bus"
+          }
+        }
+      }
+    },
+    "battery.health.metric.output.power" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Output power"
+          }
+        }
+      }
+    },
+    "battery.health.metric.power.limit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Power limit"
+          }
+        }
+      }
+    },
+    "battery.health.metric.soc" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SOC"
+          }
+        }
+      }
+    },
+    "battery.health.metric.soc.limit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SOC limit"
+          }
+        }
+      }
+    },
+    "battery.health.metric.soh" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SOH"
+          }
+        }
+      }
+    },
+    "battery.health.metric.updated" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updated"
+          }
+        }
+      }
+    },
     "battery.health.monitoring.error" : {
       "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery monitoring is unavailable. Try again." } } }
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Battery monitoring is unavailable. Try again."
+          }
+        }
+      }
     },
-    "battery.health.cell.accessibility" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cell %1$lld, %2$@, %3$@" } } } },
-    "battery.health.cell.accessibility.balancing" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cell %1$lld, %2$@, %3$@, balancing" } } } },
-    "battery.health.cell.balancing" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Balancing" } } } },
-    "battery.health.cell.condition.critical" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Critical" } } } },
-    "battery.health.cell.condition.high" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "High" } } } },
-    "battery.health.cell.condition.low" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Low" } } } },
-    "battery.health.cell.condition.normal" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Normal" } } } },
-    "battery.health.cell.position" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cell %lld" } } } },
-    "battery.health.cells.empty" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No validated cell samples" } } } },
-    "battery.health.charge.control.charge.target" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charge target" } } } },
-    "battery.health.charge.control.error.confirmation" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The bike did not confirm the change" } } } },
-    "battery.health.charge.control.error.incompatible.firmware" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "VCU firmware is not compatible with charge control" } } } },
-    "battery.health.charge.control.error.no.op.validation" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No-op validation failed" } } } },
-    "battery.health.charge.control.error.preparation" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charge control is unavailable" } } } },
-    "battery.health.charge.control.error.write" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The charge setting could not be updated" } } } },
-    "battery.health.charge.control.power.limit" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Power limit" } } } },
-    "battery.health.charge.control.status.confirmed.power" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Confirmed %lld W" } } } },
-    "battery.health.charge.control.status.confirmed.target" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Confirmed %lld%%" } } } },
-    "battery.health.charge.control.status.confirming.power" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Confirming %lld W" } } } },
-    "battery.health.charge.control.status.confirming.target" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Confirming %lld%%" } } } },
-    "battery.health.charge.control.status.no.op.guard.failed" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No-op guard failed" } } } },
-    "battery.health.charge.control.status.preparing" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Preparing" } } } },
-    "battery.health.charge.control.status.ready" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Ready" } } } },
-    "battery.health.charge.control.status.unavailable" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unavailable" } } } },
-    "battery.health.charge.control.status.unsupported.firmware" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unsupported firmware" } } } },
-    "battery.health.charge.control.status.update.failed" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Update failed" } } } },
-    "battery.health.charge.control.status.updating" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Updating" } } } },
-    "battery.health.charge.control.status.writing.power" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Writing %lld W" } } } },
-    "battery.health.charge.control.status.writing.target" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Writing %lld%%" } } } },
-    "battery.health.charge.state.charging" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charging" } } } },
-    "battery.health.charge.state.connected" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connected" } } } },
-    "battery.health.charge.state.disconnected" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Disconnected" } } } },
-    "battery.health.charger.backpack" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Backpack charger" } } } },
-    "battery.health.charger.fast" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Fast charger" } } } },
-    "battery.health.charger.standard" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Standard charger" } } } },
-    "battery.health.charger.unknown" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unknown charger" } } } },
-    "battery.health.charger.unknown.value" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unknown charger (%lld)" } } } },
-    "battery.health.copy.log.button" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Copy battery log" } } } },
-    "battery.health.dataset.awaiting.sample" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Awaiting sample" } } } },
-    "battery.health.dataset.balancing" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Balancing" } } } },
-    "battery.health.dataset.bms.signals" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "BMS signals" } } } },
-    "battery.health.dataset.bms.status" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "BMS status" } } } },
-    "battery.health.dataset.captured.bytes" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Captured %lld B" } } } },
-    "battery.health.dataset.cell.voltages" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cell voltages" } } } },
-    "battery.health.dataset.charger" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charger" } } } },
-    "battery.health.dataset.dc.bus" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "DC bus" } } } },
-    "battery.health.dataset.temperatures" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Temperatures" } } } },
-    "battery.health.dataset.validated" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Validated" } } } },
-    "battery.health.metric.bms.fault" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "BMS fault" } } } },
-    "battery.health.metric.captured.datasets" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Captured datasets" } } } },
-    "battery.health.metric.cell.delta" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cell delta" } } } },
-    "battery.health.metric.cell.target" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cell target" } } } },
-    "battery.health.metric.charge" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charge" } } } },
-    "battery.health.metric.charge.current" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charge current" } } } },
-    "battery.health.metric.current.limit" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Current limit" } } } },
-    "battery.health.metric.current.target" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Current target" } } } },
-    "battery.health.metric.dc.bus" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "DC bus" } } } },
-    "battery.health.metric.output.power" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Output power" } } } },
-    "battery.health.metric.power.limit" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Power limit" } } } },
-    "battery.health.metric.soc" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SOC" } } } },
-    "battery.health.metric.soc.limit" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SOC limit" } } } },
-    "battery.health.metric.soh" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SOH" } } } },
-    "battery.health.metric.updated" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Updated" } } } },
-    "battery.health.placeholder" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "--" } } } },
-    "battery.health.section.cells" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cells" } } } },
-    "battery.health.section.charge.power" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charge power" } } } },
-    "battery.health.section.charging" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charging" } } } },
-    "battery.health.section.data.sources" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Data sources" } } } },
-    "battery.health.section.pack" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Pack health" } } } },
-    "battery.health.section.summary" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Summary" } } } },
-    "battery.health.section.temperatures" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Temperatures" } } } },
-    "battery.health.sensor.position" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Sensor %lld" } } } },
-    "battery.health.status.active" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Active" } } } },
-    "battery.health.status.clear" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear" } } } },
-    "battery.health.temperatures.empty" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No validated temperature samples" } } } },
-    "battery.health.title" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery Health" } } } }
+    "battery.health.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "--"
+          }
+        }
+      }
+    },
+    "battery.health.section.cells" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cells"
+          }
+        }
+      }
+    },
+    "battery.health.section.charge.power" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charge power"
+          }
+        }
+      }
+    },
+    "battery.health.section.charging" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charging"
+          }
+        }
+      }
+    },
+    "battery.health.section.data.sources" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data sources"
+          }
+        }
+      }
+    },
+    "battery.health.section.pack" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pack health"
+          }
+        }
+      }
+    },
+    "battery.health.section.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Summary"
+          }
+        }
+      }
+    },
+    "battery.health.section.temperatures" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temperatures"
+          }
+        }
+      }
+    },
+    "battery.health.sensor.position" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sensor %lld"
+          }
+        }
+      }
+    },
+    "battery.health.status.active" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active"
+          }
+        }
+      }
+    },
+    "battery.health.status.clear" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear"
+          }
+        }
+      }
+    },
+    "battery.health.temperatures.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No validated temperature samples"
+          }
+        }
+      }
+    },
+    "battery.health.action.copy.all" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Copy all" } } } },
+    "battery.health.action.copy.hexadecimal" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Copy hexadecimal" } } } },
+    "battery.health.action.export" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Export" } } } },
+    "battery.health.accessibility.cell.deviation" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cell voltage deviation from the pack average" } } } },
+    "battery.health.accessibility.cell.distribution" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cell health: %1$lld normal, %2$lld attention, %3$lld critical" } } } },
+    "battery.health.accessibility.temperature.range" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery temperature range" } } } },
+    "battery.health.balancing.explanation" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Balancing is reported separately and does not imply poor cell health." } } } },
+    "battery.health.banner.charge.setting.failed.title" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charge setting failed" } } } },
+    "battery.health.banner.data.stale.message" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery values have not been updated recently." } } } },
+    "battery.health.banner.data.stale.title" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Data is stale" } } } },
+    "battery.health.banner.fault.bms.message" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The BMS reports an active fault. Review the raw flags before riding." } } } },
+    "battery.health.banner.fault.title" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Fault reported" } } } },
+    "battery.health.banner.fault.vehicle.message" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The vehicle reports an active fault." } } } },
+    "battery.health.banner.monitoring.unavailable.title" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Monitoring unavailable" } } } },
+    "battery.health.cell.condition.above.average" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Above average" } } } },
+    "battery.health.cell.condition.below.average" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Below average" } } } },
+    "battery.health.cells.awaiting.detail" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Validated cell voltages will appear here." } } } },
+    "battery.health.cells.awaiting.title" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Awaiting cell data" } } } },
+    "battery.health.cells.no.decoded" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No decoded cells" } } } },
+    "battery.health.chart.baseline" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Baseline" } } } },
+    "battery.health.chart.cell" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cell" } } } },
+    "battery.health.chart.deviation" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Deviation" } } } },
+    "battery.health.charge.controls.unavailable.detail" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connect a supported charger to configure charging." } } } },
+    "battery.health.charge.controls.unavailable.title" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Controls unavailable" } } } },
+    "battery.health.charge.operations.empty" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No charge operations recorded" } } } },
+    "battery.health.dataset.status.awaiting" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Awaiting" } } } },
+    "battery.health.dataset.status.captured.only" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Captured Only" } } } },
+    "battery.health.dataset.status.decoded" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Decoded" } } } },
+    "battery.health.destination.raw.data" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Raw Data" } } } },
+    "battery.health.destination.thermal" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Thermal" } } } },
+    "battery.health.metric.active.cells" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Active cells" } } } },
+    "battery.health.metric.average" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Average" } } } },
+    "battery.health.metric.bytes" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bytes" } } } },
+    "battery.health.metric.captured" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Captured" } } } },
+    "battery.health.metric.charger" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charger" } } } },
+    "battery.health.metric.delta" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Delta" } } } },
+    "battery.health.metric.maximum" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Maximum" } } } },
+    "battery.health.metric.minimum" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Minimum" } } } },
+    "battery.health.metric.monitoring" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Monitoring" } } } },
+    "battery.health.metric.negative.bms.fault.bits" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Negative BMS fault bits" } } } },
+    "battery.health.metric.positive.bms.fault.bits" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Positive BMS fault bits" } } } },
+    "battery.health.metric.power" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Power" } } } },
+    "battery.health.metric.state" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "State" } } } },
+    "battery.health.metric.vehicle.fault" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Vehicle fault" } } } },
+    "battery.health.overview.default.detail" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery data is unavailable" } } } },
+    "battery.health.overview.detail.attention" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cell variation is outside the preferred range" } } } },
+    "battery.health.overview.detail.collecting" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Waiting for confirmed battery datasets" } } } },
+    "battery.health.overview.detail.critical" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "One or more cells require immediate attention" } } } },
+    "battery.health.overview.detail.healthy" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Confirmed battery data is within the expected range" } } } },
+    "battery.health.overview.detail.monitoring.unavailable" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Monitoring data is unavailable" } } } },
+    "battery.health.overview.detail.bms.fault" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The BMS reports an active fault" } } } },
+    "battery.health.overview.detail.vehicle.fault" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The vehicle reports an active fault" } } } },
+    "battery.health.overview.subtitle.cells" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Voltage spread, deviation, health and balancing" } } } },
+    "battery.health.overview.subtitle.charging" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Live charging values and supported controls" } } } },
+    "battery.health.overview.subtitle.raw.data" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Captured datasets, flags and operation audit" } } } },
+    "battery.health.overview.subtitle.thermal" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Pack range and every temperature sensor" } } } },
+    "battery.health.section.actions" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Actions" } } } },
+    "battery.health.section.attention" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Attention" } } } },
+    "battery.health.section.cell.deviation" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cell deviation" } } } },
+    "battery.health.section.charge.operation.audit" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charge operation audit" } } } },
+    "battery.health.section.charging.status" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charging status" } } } },
+    "battery.health.section.details" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Details" } } } },
+    "battery.health.section.health.distribution" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Health distribution" } } } },
+    "battery.health.section.live.summary" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Live summary" } } } },
+    "battery.health.section.pack.range" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Pack range" } } } },
+    "battery.health.section.raw.flags" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Raw flags" } } } },
+    "battery.health.section.sensors" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Sensors" } } } },
+    "battery.health.section.supported.controls" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Supported controls" } } } },
+    "battery.health.section.temperature.range" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Temperature range" } } } },
+    "battery.health.sensors.no.decoded" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No decoded sensors" } } } },
+    "battery.health.status.collecting" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Collecting" } } } },
+    "battery.health.status.healthy" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Healthy" } } } },
+    "battery.health.status.inactive" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Inactive" } } } },
+    "battery.health.status.unavailable" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unavailable" } } } },
+    "battery.health.temperatures.awaiting.detail" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Validated temperature sensors will appear here." } } } },
+    "battery.health.temperatures.awaiting.title" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Awaiting temperatures" } } } },
+    "battery.health.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Battery Health"
+          }
+        }
+      }
+    }
   },
   "version" : "1.1"
 }

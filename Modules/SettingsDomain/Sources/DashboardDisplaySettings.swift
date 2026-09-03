@@ -48,3 +48,22 @@ public enum DashboardDeviceBatteryDisplayMode: String, Codable, CaseIterable, Se
         }
     }
 }
+
+public enum DashboardTemperatureDisplayMode: String, Codable, CaseIterable, Sendable {
+    case off
+    case battery
+    case inverter
+    case both
+
+    public var includesBattery: Bool {
+        self == .battery || self == .both
+    }
+
+    public var includesInverter: Bool {
+        self == .inverter || self == .both
+    }
+
+    public var isEnabled: Bool {
+        self != .off
+    }
+}

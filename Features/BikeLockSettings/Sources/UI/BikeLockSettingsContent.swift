@@ -46,7 +46,6 @@ struct BikeLockSettingsContent: View {
             }
         }
 
-        explanationSection
     }
 
     @ViewBuilder
@@ -59,13 +58,5 @@ struct BikeLockSettingsContent: View {
             )
         }
 
-        explanationSection
-    }
-
-    private var explanationSection: some View {
-        Section {
-            Text(.bikeLockSettingsExplanation)
-                .foregroundStyle(DesignColor.secondaryText)
-        }
     }
 }

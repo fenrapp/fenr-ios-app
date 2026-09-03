@@ -269,6 +269,7 @@ private func sendChargingHealth(
             targetCellVoltageVolts: 4.275,
             maximumStateOfChargePercent: maximumStateOfChargePercent,
             chargerType: .backpack
-        )
+        ),
+        lastUpdated: Date()
     ))
 }

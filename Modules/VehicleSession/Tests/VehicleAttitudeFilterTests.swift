@@ -8,6 +8,60 @@ import Testing
 
 @Suite("Vehicle attitude filter")
 struct VehicleAttitudeFilterTests {
+#if DEBUG
+    @Test("Experimental hardware profile accepts its candidate gravity magnitude")
+    func experimentalHardwareProfileAcceptsCandidateGravity() {
+        var filter = VehicleAttitudeFilter()
+
+        let angles = filter.update(
+            sample: sample(
+                acceleration: .init(x: 509, y: -1_510, z: 1_294),
+                gyroscope: .init(x: -4, y: -20, z: 0),
+                at: referenceDate
+            ),
+            calibration: nil,
+            profile: .experimentalObservedV1
+        )
+
+        #expect(angles != nil)
+    }
+
+    @Test("Experimental hardware profile applies its candidate gyroscope scale")
+    func experimentalHardwareProfileAppliesCandidateGyroscopeScale() {
+        let profile = BikeIMUProfile.experimentalObservedV1
+        let calibration = VehicleMotionCalibration(
+            vin: vin,
+            gyroscopeBiasXRaw: 0,
+            gyroscopeBiasYRaw: 0,
+            gyroscopeBiasZRaw: 0,
+            profileVersion: profile.version,
+            calibratedAt: referenceDate
+        )
+        var filter = VehicleAttitudeFilter()
+        _ = filter.update(
+            sample: sample(
+                acceleration: .init(x: 0, y: 0, z: profile.oneGRaw),
+                at: referenceDate
+            ),
+            calibration: calibration,
+            profile: profile
+        )
+
+        let angles = filter.update(
+            sample: sample(
+                acceleration: .init(x: 0, y: 0, z: 0),
+                gyroscope: .init(x: 16.4, y: 0, z: 0),
+                at: referenceDate.addingTimeInterval(0.1)
+            ),
+            calibration: calibration,
+            profile: profile
+        )
+
+        expect(angles?.roll, equals: 0.1)
+        expect(angles?.pitch, equals: 0)
+    }
+#endif
+
     @Test("Initializes roll and pitch from trustworthy gravity")
     func gravityInitialization() {
         var filter = VehicleAttitudeFilter()

@@ -42,7 +42,8 @@ public struct BikeBatteryTelemetryToMetricsMapper {
             metric(
                 "batteryCurrent",
                 BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricBatteryCurrentCandidate),
-                current(telemetry.currentCandidateAmperes, raw: telemetry.currentRaw)
+                current(telemetry.currentCandidateAmperes, raw: telemetry.currentRaw),
+                verification: .candidate
             )
         ]
     }
@@ -73,8 +74,13 @@ public struct BikeBatteryTelemetryToMetricsMapper {
         ]
     }
 
-    private func metric(_ id: String, _ title: String, _ value: String) -> BikeDiagnosticsMetricViewData {
-        .init(id: id, title: title, value: value)
+    private func metric(
+        _ id: String,
+        _ title: String,
+        _ value: String,
+        verification: BikeDiagnosticsMetricViewData.Verification = .confirmed
+    ) -> BikeDiagnosticsMetricViewData {
+        .init(id: id, title: title, value: value, verification: verification)
     }
 
     private func percent(_ value: Int?) -> String {
@@ -115,8 +121,15 @@ public struct BikeBatteryTelemetryToMetricsMapper {
         _ title: String,
         _ telemetry: BikeBMSSignalsTelemetry?
     ) -> BikeDiagnosticsMetricViewData {
-        guard let telemetry else { return metric(id, title, BikeDiagnosticsText.placeholder) }
-        return metric(id, title, "raw \(telemetry.voltageCandidateRaw)")
+        guard let telemetry else {
+            return metric(id, title, BikeDiagnosticsText.placeholder, verification: .candidate)
+        }
+        return metric(
+            id,
+            title,
+            "raw \(telemetry.voltageCandidateRaw)",
+            verification: .candidate
+        )
     }
 
     private func date(_ value: Date?) -> String {

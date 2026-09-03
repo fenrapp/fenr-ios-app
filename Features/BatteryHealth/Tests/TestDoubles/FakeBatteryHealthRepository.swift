@@ -6,8 +6,8 @@ actor FakeBatteryHealthRepository: BikeBatteryHealthRepository, BikeChargePowerC
     private let healthHub = TestEventHub<BikeBatteryHealth>(bufferingPolicy: .unbounded)
     private let captureHub = TestEventHub<BatteryDatasetCapture>(bufferingPolicy: .unbounded)
     private var latestHealth = BikeBatteryHealth()
-    private var didStartMonitoring = false
-    private var didStopMonitoring = false
+    private var monitoringStarts = 0
+    private var monitoringStops = 0
     private var delaysNextMonitoringStart = false
     private var prepareCount = 0
     private var writtenWatts: [Int] = []
@@ -18,11 +18,11 @@ actor FakeBatteryHealthRepository: BikeBatteryHealthRepository, BikeChargePowerC
             delaysNextMonitoringStart = false
             try? await Task.sleep(for: Constants.delayedMonitoringStartDuration)
         }
-        didStartMonitoring = true
+        monitoringStarts += 1
     }
 
     func stopBatteryHealthMonitoring() async {
-        didStopMonitoring = true
+        monitoringStops += 1
     }
 
     func observeBatteryHealth() async -> AsyncStream<BikeBatteryHealth> {
@@ -64,8 +64,10 @@ actor FakeBatteryHealthRepository: BikeBatteryHealthRepository, BikeChargePowerC
         await captureHub.send(capture)
     }
 
-    func monitoringStarted() -> Bool { didStartMonitoring }
-    func monitoringStopped() -> Bool { didStopMonitoring }
+    func monitoringStarted() -> Bool { monitoringStarts > 0 }
+    func monitoringStopped() -> Bool { monitoringStops > 0 }
+    func monitoringStartCount() -> Int { monitoringStarts }
+    func monitoringStopCount() -> Int { monitoringStops }
     func delayNextMonitoringStart() { delaysNextMonitoringStart = true }
     func chargePowerPrepareCount() -> Int { prepareCount }
     func chargePowerWrites() -> [Int] { writtenWatts }

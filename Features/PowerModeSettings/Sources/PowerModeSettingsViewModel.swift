@@ -27,6 +27,8 @@ public final class PowerModeSettingsViewModel: ObservableObject {
     var attemptedPreparationMapIndex: Int?
     var isPreparingControl = false
     var isApplyingControl = false
+    var activeAdjustmentID: PowerModeAdjustmentID?
+    var recentAdjustmentResult: PowerModeAdjustmentResult?
     var controlMessage: String?
     var controlError: String?
     private var observationTask: Task<Void, Never>?
@@ -87,26 +89,29 @@ public final class PowerModeSettingsViewModel: ObservableObject {
         prepareControlIfPossible()
     }
 
-    public func saveName(_ candidate: String) {
+    @discardableResult
+    public func saveName(_ candidate: String) -> Bool {
         guard let vin = profile?.vin else {
             nameError = String(localized: .powerModeSettingsProfileRequiredError)
             render()
-            return
+            return false
         }
         do {
             let name = try PowerModeName(candidate)
             guard !isDuplicate(name, vin: vin) else {
                 nameError = String(localized: .powerModeSettingsDuplicateNameError)
                 render()
-                return
+                return false
             }
             try settings.setPowerModeName(name, forVIN: vin, mapIndex: selectedMapIndex)
             nameError = nil
             render()
             save(settings)
+            return true
         } catch {
             nameError = String(localized: .powerModeSettingsInvalidNameError)
             render()
+            return false
         }
     }
 
@@ -129,6 +134,7 @@ public final class PowerModeSettingsViewModel: ObservableObject {
         didRequestRefresh = true
         isRefreshing = true
         refreshError = nil
+        clearAdjustmentFeedback()
         controlError = nil
         controlMessage = nil
         preparedBaseMapIndex = nil
@@ -228,6 +234,8 @@ extension PowerModeSettingsViewModel {
             nameError: nameError,
             isPreparingControl: isPreparingControl,
             isApplyingControl: isApplyingControl,
+            activeAdjustmentID: activeAdjustmentID,
+            recentAdjustmentResult: recentAdjustmentResult,
             isBaseControlReady: preparedBaseMapIndex == selectedMapIndex,
             isTractionControlReady: preparedTractionMapIndex == selectedMapIndex,
             controlMessage: controlMessage,
@@ -243,6 +251,11 @@ extension PowerModeSettingsViewModel {
         case .authenticated, .subscribed, .receivingTelemetry: true
         default: false
         }
+    }
+
+    func clearAdjustmentFeedback() {
+        activeAdjustmentID = nil
+        recentAdjustmentResult = nil
     }
 
 }

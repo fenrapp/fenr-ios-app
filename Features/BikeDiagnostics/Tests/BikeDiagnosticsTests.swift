@@ -4,273 +4,165 @@ import Foundation
 import MeasurementPresentation
 import Testing
 import TestSupport
+import VehicleSession
 
 @MainActor
-@Suite("BikeDiagnostics view model")
+@Suite("BikeDiagnostics")
 struct BikeDiagnosticsTests {
-    @Test("VIN changes update PIN and connect availability")
-    func vinChangesUpdatePin() {
-        let repository = FakeBikeDiagnosticsRepository()
-        let viewModel = makeViewModel(repository: repository)
-        viewModel.vinChanged("abc123")
-
-        #expect(viewModel.viewState.vin == "ABC123")
-        #expect(viewModel.viewState.pin == "999999")
-        #expect(viewModel.viewState.isConnectEnabled)
+    @Test("Destination family is stable and complete")
+    func destinationFamily() {
+        #expect(BikeDiagnosticsDestination.allCases == [
+            .overview, .connection, .telemetry, .status, .events, .bleLogs
+        ])
+        #expect(Set(BikeDiagnosticsDestination.allCases.map(\.title)).count == 6)
     }
 
-    @Test("Start restores the configured bike profile")
-    func startRestoresConfiguredProfile() async {
-        let repository = FakeBikeDiagnosticsRepository()
-        let profileRepository = FakeBikeProfileRepository(profile: .init(vin: "vin123"))
-        let viewModel = makeViewModel(repository: repository, profileRepository: profileRepository)
-
-        #expect(viewModel.viewState.vin.isEmpty)
-        viewModel.start()
-        #expect(await waitUntil {
-            viewModel.viewState.vin == "VIN123"
-        })
-
-        #expect(viewModel.viewState.vin == "VIN123")
-        #expect(viewModel.viewState.pin == "999999")
+    @Test("New presentation copy resolves through the module catalog")
+    func localizedPresentationCopy() {
+        #expect(BikeDiagnosticsDestination.overview.title == "Diagnostics")
+        #expect(BikeDiagnosticsDestination.bleLogs.title == "BLE Logs")
+        #expect(DiagnosticsCopy.batteryHealthDetail == "Cells, temperature, charging and raw data")
+        #expect(DiagnosticsCopy.eventsExportFooter.contains("600 events"))
+        #expect(BikeDiagnosticsMetricViewData.Verification.candidate.title == "Candidate")
+        #expect(BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricMap(5)) == "Map 5")
+        #expect(BikeDiagnosticsL10n.text(.bikeDiagnosticsValueAttention(2)) == "Attention (2)")
     }
 
-    @Test("Stopping observation cancels profile restoration")
-    func stopCancelsProfileRestoration() async {
+    @Test("Presentation lifecycle observes once and never owns the shared session")
+    func presentationLifecycle() async {
+        let session = FakeVehicleSession()
         let repository = FakeBikeDiagnosticsRepository()
-        let profileRepository = FakeBikeProfileRepository(
-            profile: .init(vin: "vin123"),
-            loadDelay: .seconds(5)
+        let viewModel = makeViewModel(repository: repository, session: session)
+
+        #expect(await session.observeCount == 0)
+        viewModel.setPresentationActive(true)
+        viewModel.setPresentationActive(true)
+        #expect(await waitUntil { await session.observeCount == 1 })
+
+        viewModel.setPresentationActive(false)
+        viewModel.setPresentationActive(true)
+        #expect(await waitUntil { await session.observeCount == 2 })
+        #expect(await session.startCount == 0)
+        #expect(await session.stopCount == 0)
+        #expect(await repository.startCount() == 0)
+        #expect(await repository.stopCount() == 0)
+    }
+
+    @Test("Unified snapshot maps identity, connection and the complete telemetry surface")
+    func mapsUnifiedSnapshot() async {
+        let session = FakeVehicleSession()
+        let viewModel = makeViewModel(
+            repository: FakeBikeDiagnosticsRepository(),
+            session: session
         )
-        let viewModel = makeViewModel(repository: repository, profileRepository: profileRepository)
-        viewModel.startObserving()
-        #expect(await waitUntil { await profileRepository.loadStarted() })
+        viewModel.setPresentationActive(true)
+        await session.send(fullSnapshot())
+        #expect(await waitUntil { viewModel.viewState.vin == "FENRTEST000000001" })
 
-        viewModel.stopObserving()
-
-        #expect(await waitUntil { await profileRepository.loadWasCancelled() })
-        #expect(viewModel.viewState.vin.isEmpty)
+        #expect(viewModel.viewState.connection.rssi == "-58 dBm")
+        #expect(viewModel.viewState.connection.peripheralName == "FENR Bike")
+        #expect(viewModel.viewState.connection.peripheralIdentifier != "--")
+        #expect(viewModel.viewState.overviewMetrics.map(\.id) == [
+            "mode", "speed", "electricalPower", "battery", "soh", "alerts"
+        ])
+        #expect(viewModel.viewState.telemetrySections.map(\.id) == [
+            "vehicle", "live", "power", "battery", "temperatures", "configurations", "powerTier"
+        ])
+        #expect(metric("odometer", in: viewModel.viewState).value.contains("123"))
+        #expect(metric("inverterTemperature0", in: viewModel.viewState).value.contains("31"))
+        #expect(metric("configuration0", in: viewModel.viewState).value.contains("62 hp"))
+        #expect(metric("powerTierEvidence", in: viewModel.viewState).value.contains("Power above standard"))
     }
 
-    @Test("Connection requests do not replace the configured bike profile")
-    func connectionRequestDoesNotPersistVIN() async {
+    @Test("Candidates are explicit while confirmed values remain confirmed")
+    func candidateLabels() async {
+        let session = FakeVehicleSession()
+        let viewModel = makeViewModel(
+            repository: FakeBikeDiagnosticsRepository(),
+            session: session
+        )
+        viewModel.setPresentationActive(true)
+        await session.send(fullSnapshot())
+        #expect(await waitUntil { !viewModel.viewState.batteryMetrics.isEmpty })
+
+        #expect(viewModel.viewState.batteryMetrics.first { $0.id == "batteryCurrent" }?.verification == .candidate)
+        #expect(
+            viewModel.viewState.batteryMetrics
+                .first { $0.id == "positiveVoltageCandidate" }?.verification == .candidate
+        )
+        #expect(viewModel.viewState.batteryMetrics.first { $0.id == "batteryDcBus" }?.verification == .confirmed)
+    }
+
+    @Test("Decoded status is paired with every original bitfield")
+    func mapsStatusAndRawFlags() async {
+        let session = FakeVehicleSession()
+        let viewModel = makeViewModel(
+            repository: FakeBikeDiagnosticsRepository(),
+            session: session
+        )
+        viewModel.setPresentationActive(true)
+        await session.send(fullSnapshot())
+        #expect(await waitUntil { viewModel.viewState.decodedStatus.first?.value == "On" })
+
+        #expect(viewModel.viewState.decodedStatus.contains { $0.id == "fault" && $0.value == "Yes" })
+        #expect(viewModel.viewState.decodedStatus.contains { $0.id == "leftBlinker" && $0.value == "Yes" })
+        #expect(viewModel.viewState.rawFlags.map(\.id) == ["misc", "indicator", "alert", "fault", "info"])
+        #expect(viewModel.viewState.rawFlags.first { $0.id == "fault" }?.value == "0x0002")
+    }
+
+    @Test("Explicit actions use configured identity and shared-session refresh")
+    func actions() async {
         let repository = FakeBikeDiagnosticsRepository()
-        let profileRepository = FakeBikeProfileRepository()
-        let viewModel = makeViewModel(repository: repository, profileRepository: profileRepository)
-        viewModel.vinChanged("vin123")
+        let session = FakeVehicleSession()
+        let viewModel = makeViewModel(repository: repository, session: session)
+        viewModel.setPresentationActive(true)
+        await session.send(fullSnapshot(connection: .init(state: .disconnected(reason: nil))))
+        #expect(await waitUntil { viewModel.viewState.isReconnectEnabled })
 
-        viewModel.connectTapped()
-        #expect(await waitUntil { await repository.connectedVIN() == "VIN123" })
-
-        #expect(await profileRepository.loadProfile() == nil)
-    }
-
-    @Test("Init does not start streams")
-    func initDoesNotStartStreams() async {
-        let repository = FakeBikeDiagnosticsRepository()
-        _ = makeViewModel(repository: repository)
-
-        #expect(await repository.startCount() == 0)
-        #expect(await repository.telemetryObserverCount() == 0)
-    }
-
-    @Test("Observing Diagnostics does not restart the shared BLE repository")
-    func observingDoesNotRestartRepository() async {
-        let repository = FakeBikeDiagnosticsRepository()
-        let viewModel = makeViewModel(repository: repository)
-
-        viewModel.startObserving()
-
-        #expect(await waitUntil { await repository.telemetryObserverCount() == 1 })
-        #expect(await repository.startCount() == 0)
-    }
-
-    @Test("Telemetry maps to UI metrics and badges")
-    func telemetryMapsToUI() async {
-        let repository = FakeBikeDiagnosticsRepository()
-        let viewModel = makeViewModel(repository: repository)
-        viewModel.start()
-        #expect(await waitUntil { await repository.telemetryObserverCount() > 0 })
-
-        await repository.sendTelemetry(.init(
-            batteryLevel: .known(percent: 91),
-            healthLevel: .known(percent: 99),
-            mode: .index(3),
-            speed: .known(kmh: 42.1, kmhX10: 421),
-            motorRPM: .known(3180),
-            statusFlags: .init(
-                isOn: true,
-                isChargerConnected: true,
-                isInGear: true,
-                isFaultActive: true,
-                crawlState: .inactive
-            ),
-            rawStatusFlags: .init(misc: 12, indicator: 4, alert: 1, fault: 2, info: 0x0018),
-            lastUpdated: Date(timeIntervalSince1970: 0)
-        ))
-        #expect(await waitUntil {
-            viewModel.viewState.metrics.contains {
-                $0.id == "battery" && $0.value == formattedPercent(91)
-            }
-        })
-
-        #expect(viewModel.viewState.metrics.contains { $0.id == "battery" && $0.value == formattedPercent(91) })
-        #expect(viewModel.viewState.metrics.contains { $0.id == "soh" && $0.value == formattedPercent(99) })
-        #expect(viewModel.viewState.metrics.contains { $0.id == "mode" && $0.value == "3" })
-        #expect(viewModel.viewState.metrics.contains { $0.id == "speed" && $0.value == "42,1 km/h" })
-        #expect(viewModel.viewState.metrics.contains { $0.id == "rpm" && $0.value == "3180" })
-        #expect(viewModel.viewState.metrics.contains {
-            $0.id == "updated" && $0.value != "--"
-        })
-        #expect(viewModel.viewState.badges.contains { $0.kind == .on })
-        #expect(viewModel.viewState.badges.contains { $0.kind == .charger })
-        #expect(viewModel.viewState.badges.contains { $0.kind == .fault })
-        #expect(viewModel.viewState.rawFlags.contains(.init(id: "misc", title: "miscBits", value: "0x000C")))
-    }
-
-    private func formattedPercent(_ value: Int) -> String {
-        VehicleMeasurementTextFormatter(locale: .init(identifier: "es_ES")).percentage(value)
-    }
-
-    @Test("Missing telemetry values render placeholders")
-    func missingValues() async {
-        let repository = FakeBikeDiagnosticsRepository()
-        let viewModel = makeViewModel(repository: repository)
-        viewModel.start()
-        #expect(await waitUntil { await repository.telemetryObserverCount() > 0 })
-
-        #expect(await waitUntil {
-            !viewModel.viewState.metrics.isEmpty
-        })
-
-        #expect(viewModel.viewState.metrics.contains { $0.id == "battery" && $0.value == "--" })
-        #expect(viewModel.viewState.rawFlags.contains(.init(id: "info", title: "infoBits", value: "0x0000")))
-    }
-
-    @Test("Connect and disconnect propagate through use cases")
-    func actionsDelegate() async {
-        let repository = FakeBikeDiagnosticsRepository()
-        let viewModel = makeViewModel(repository: repository)
-        viewModel.vinChanged("VIN123")
-        viewModel.connectTapped()
-        #expect(await waitUntil { await repository.connectedVIN() == "VIN123" })
-        viewModel.disconnectTapped()
-        #expect(await waitUntil { await repository.didDisconnect() })
-
-        #expect(await repository.connectedVIN() == "VIN123")
-        #expect(await repository.didDisconnect())
-    }
-
-    @Test("Pair retry propagates through use case")
-    func pairRetryDelegates() async {
-        let repository = FakeBikeDiagnosticsRepository()
-        let viewModel = makeViewModel(repository: repository)
+        viewModel.reconnectTapped()
+        #expect(await waitUntil { await repository.connectedVIN() == "FENRTEST000000001" })
         viewModel.pairRetryTapped()
         #expect(await waitUntil { await repository.didRetrySecurityHandshake() })
-
-        #expect(await repository.didRetrySecurityHandshake())
-    }
-
-    @Test("Manual read snapshot propagates through use case")
-    func readSnapshotDelegates() async {
-        let repository = FakeBikeDiagnosticsRepository()
-        let viewModel = makeViewModel(repository: repository)
+        viewModel.disconnectTapped()
+        #expect(await waitUntil { await repository.didDisconnect() })
         viewModel.readSnapshotTapped()
-        #expect(await waitUntil { await repository.didReadTelemetrySnapshot() })
-
-        #expect(await repository.didReadTelemetrySnapshot())
+        #expect(await waitUntil { await session.refreshCount == 1 })
     }
 
-    @Test("Debug events expose copyable log text")
-    func debugEventsExposeCopyableLog() async {
+    @Test("Visible events coalesce to 30 while export preserves 600")
+    func eventLimitsAndExport() async {
         let repository = FakeBikeDiagnosticsRepository()
         let viewModel = makeViewModel(repository: repository)
-        let date = Date(timeIntervalSince1970: 0)
-        viewModel.start()
-
-        await repository.sendDebugEvent(.init(
-            date: date,
-            title: "Subscription",
-            detail: "Enabled 00006004-5374-6172-4B20-467574757265"
-        ))
-        #expect(await waitUntil {
-            viewModel.viewState.debugEvents.first?.title == "Subscription"
-        })
-
-        let expectedTime = date.formatted(
-            Date.FormatStyle()
-                .hour(.twoDigits(amPM: .omitted))
-                .minute(.twoDigits)
-                .second(.twoDigits)
-        )
-        let debugLogText = viewModel.debugLogText()
-        #expect(viewModel.viewState.debugEvents.first?.title == "Subscription")
-        #expect(viewModel.viewState.hasDebugLog)
-        #expect(debugLogText.contains(expectedTime))
-        #expect(debugLogText.contains(" | Subscription | "))
-        #expect(debugLogText.contains("Enabled 00006004-5374-6172-4B20-467574757265"))
-    }
-
-    @Test("Debug export retains more events than the visible diagnostics list")
-    func debugExportRetainsExtendedHistory() async {
-        let repository = FakeBikeDiagnosticsRepository()
-        let viewModel = makeViewModel(repository: repository)
-        let eventCount = BikeDiagnosticsConstants.maxVisibleDebugEvents + 1
-        let finalPacketDetail = "Packet \(eventCount - 1)"
-        viewModel.start()
-
-        for index in 0..<eventCount {
+        viewModel.setPresentationActive(true)
+        let repeatedID = UUID()
+        for index in 0..<605 {
             await repository.sendDebugEvent(.init(
+                id: index < 2 ? repeatedID : UUID(),
                 title: "Notification",
                 detail: "Packet \(index)"
             ))
         }
-        #expect(await waitUntil {
-            viewModel.viewState.debugEvents.first?.detail == finalPacketDetail
-        })
+        #expect(await waitUntil { viewModel.viewState.debugEvents.first?.detail == "Packet 604" })
 
-        let exportedLog = viewModel.debugLogText()
-        let exportedLines = exportedLog
+        let eventLines = viewModel.debugLogText()
             .components(separatedBy: BikeDiagnosticsConstants.debugLogLineSeparator)
-        #expect(viewModel.viewState.debugEvents.count == BikeDiagnosticsConstants.maxVisibleDebugEvents)
-        #expect(exportedLog.contains("[Power Telemetry]"))
-        #expect(exportedLog.contains("[Battery Telemetry]"))
-        #expect(exportedLines.filter { $0.contains(" | Notification | ") }.count == eventCount)
-        #expect(exportedLines.contains { $0.contains(finalPacketDetail) })
+            .filter { $0.contains(" | Notification | ") }
+        #expect(viewModel.viewState.debugEvents.count == 30)
+        #expect(eventLines.count == 600)
+        #expect(viewModel.debugLogText().contains("[Decoded Status]"))
+        #expect(viewModel.debugLogText().contains("[Raw Status]"))
+
+        viewModel.clearDebugEvents()
+        #expect(viewModel.viewState.debugEvents.isEmpty)
     }
 
-    @Test("Stop delegates lifecycle cleanup")
-    func stopDelegatesLifecycleCleanup() async {
-        let repository = FakeBikeDiagnosticsRepository()
-        let viewModel = makeViewModel(repository: repository)
-        viewModel.start()
-        viewModel.stop()
-        #expect(await waitUntil { await repository.stopCount() == 1 })
-
-        #expect(await repository.stopCount() == 1)
+    private func metric(
+        _ id: String,
+        in state: BikeDiagnosticsViewState
+    ) -> BikeDiagnosticsMetricViewData {
+        state.telemetrySections
+            .flatMap(\.metrics)
+            .first(where: { $0.id == id })!
     }
 
-    @Test("Connection UI distinguishes waiting from received telemetry")
-    func mapsTelemetryConnectionStatus() {
-        let mapper = ConnectionStateToDisplayMapper()
-        let connectionMapper = BikeConnectionToConnectionPanelMapper(stateMapper: mapper)
-
-        #expect(mapper.emphasis(for: .authenticating(peripheralName: "VIN")) == .progress)
-        #expect(mapper.emphasis(for: .authenticated(peripheralName: "VIN")) == .progress)
-        #expect(mapper.emphasis(for: .subscribed(peripheralName: "VIN")) == .progress)
-        #expect(mapper.emphasis(for: .receivingTelemetry(peripheralName: "VIN")) == .success)
-        #expect(mapper.isActive(.receivingTelemetry(peripheralName: "VIN")))
-        #expect(!connectionMapper.isVINEditingEnabled(.init(state: .receivingTelemetry(peripheralName: "VIN"))))
-        #expect(connectionMapper.isVINEditingEnabled(.init(state: .disconnected(reason: nil))))
-
-        let missingPeripheralDetail = mapper.detail(for: .receivingTelemetry(peripheralName: nil))
-        #expect(!missingPeripheralDetail.hasSuffix(" "))
-        #expect(missingPeripheralDetail.hasSuffix("bike"))
-
-        let pairingReset = ConnectionState.pairingResetRequired(message: "Forget and re-pair")
-        #expect(mapper.emphasis(for: pairingReset) == .warning)
-        #expect(mapper.detail(for: pairingReset) != "Forget and re-pair")
-        #expect(!mapper.isActive(pairingReset))
-        #expect(!connectionMapper.isPairRetryEnabled(.init(state: pairingReset)))
-    }
 }

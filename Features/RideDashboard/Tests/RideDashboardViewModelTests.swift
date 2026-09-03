@@ -52,12 +52,16 @@ struct RideDashboardViewModelTests {
         let fixture = makeFixture()
         fixture.viewModel.startObserving()
 
-        await fixture.vehicleSession.send(ridingSnapshot(speed: 42, showsTemperatures: true))
+        await fixture.vehicleSession.send(ridingSnapshot(speed: 42, temperatureDisplayMode: .battery))
         #expect(await waitUntil {
             await fixture.vehicleSession.recordedBatteryHealthMonitoringRequests() == [true]
         })
 
-        await fixture.vehicleSession.send(ridingSnapshot(speed: 43, showsTemperatures: false))
+        await fixture.vehicleSession.send(ridingSnapshot(speed: 43, temperatureDisplayMode: .inverter))
+        await fixture.vehicleSession.send(ridingSnapshot(speed: 44, temperatureDisplayMode: .both))
+        #expect(await fixture.vehicleSession.recordedBatteryHealthMonitoringRequests() == [true])
+
+        await fixture.vehicleSession.send(ridingSnapshot(speed: 45, temperatureDisplayMode: .off))
         #expect(await waitUntil {
             await fixture.vehicleSession.recordedBatteryHealthMonitoringRequests() == [true, false]
         })

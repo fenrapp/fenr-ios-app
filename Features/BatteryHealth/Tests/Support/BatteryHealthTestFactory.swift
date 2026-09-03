@@ -8,20 +8,37 @@ import VehicleSession
 @MainActor
 func makeBatteryHealthViewModel(
     repository: any BikeBatteryHealthRepository & BikeChargePowerControlRepository,
-    monitoringState: VehicleBatteryHealthMonitoringState = .active
+    monitoringState: VehicleBatteryHealthMonitoringState = .active,
+    vehicleSession: (any VehicleSessionService)? = nil
 ) -> BatteryHealthViewModel {
     BatteryHealthViewModel(
         useCases: .init(
             observeCaptures: .init(repository: repository)
         ),
-        vehicleSession: FakeBatteryHealthVehicleSession(
-            repository: repository,
-            monitoringState: monitoringState
-        ),
-        mapper: .init(formatter: makeBatteryHealthFormatter()),
-        makeMapper: { _ in .init(formatter: makeBatteryHealthFormatter()) },
+        vehicleSession: vehicleSession ?? FakeBatteryHealthVehicleSession(
+                repository: repository,
+                monitoringState: monitoringState
+            ),
+        mapper: makeBatteryHealthMapper(),
+        makeMapper: { _ in makeBatteryHealthMapper() },
         chargeControl: makeChargeControlSession(repository: repository),
-        captureTimeFormatStyle: Date.FormatStyle(date: .omitted, time: .standard)
+        captureFormatter: .init(
+            dateFormatStyle: Date.FormatStyle(date: .omitted, time: .standard)
+        )
+    )
+}
+
+@MainActor
+func makeBatteryHealthMapper(
+    now: @escaping @Sendable () -> Date = Date.init
+) -> BikeBatteryHealthToViewStateMapper {
+    BikeBatteryHealthToViewStateMapper(
+        formatter: makeBatteryHealthFormatter(),
+        analyzer: BatteryHealthAnalyzer(),
+        captureFormatter: BatteryHealthCaptureFormatter(
+            dateFormatStyle: Date.FormatStyle(date: .omitted, time: .standard)
+        ),
+        now: now
     )
 }
 

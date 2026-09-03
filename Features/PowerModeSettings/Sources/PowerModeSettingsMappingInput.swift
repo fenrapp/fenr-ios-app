@@ -13,6 +13,8 @@ struct PowerModeSettingsMappingInput: Sendable {
     let nameError: String?
     let isPreparingControl: Bool
     let isApplyingControl: Bool
+    let activeAdjustmentID: PowerModeAdjustmentID?
+    let recentAdjustmentResult: PowerModeAdjustmentResult?
     let isBaseControlReady: Bool
     let isTractionControlReady: Bool
     let controlMessage: String?
@@ -31,6 +33,8 @@ struct PowerModeSettingsMappingInput: Sendable {
         nameError: String?,
         isPreparingControl: Bool = false,
         isApplyingControl: Bool = false,
+        activeAdjustmentID: PowerModeAdjustmentID? = nil,
+        recentAdjustmentResult: PowerModeAdjustmentResult? = nil,
         isBaseControlReady: Bool = false,
         isTractionControlReady: Bool = false,
         controlMessage: String? = nil,
@@ -48,10 +52,17 @@ struct PowerModeSettingsMappingInput: Sendable {
         self.nameError = nameError
         self.isPreparingControl = isPreparingControl
         self.isApplyingControl = isApplyingControl
+        self.activeAdjustmentID = activeAdjustmentID
+        self.recentAdjustmentResult = recentAdjustmentResult
         self.isBaseControlReady = isBaseControlReady
         self.isTractionControlReady = isTractionControlReady
         self.controlMessage = controlMessage
         self.controlError = controlError
         self.isCanonicalTelemetryAvailable = isCanonicalTelemetryAvailable
     }
+}
+
+enum PowerModeAdjustmentResult: Equatable, Sendable {
+    case confirmed(PowerModeAdjustmentID)
+    case failed(PowerModeAdjustmentID, message: String)
 }

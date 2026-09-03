@@ -10,13 +10,29 @@ enum BatteryHealthPreviewFactory {
     static func makeViewModel() -> BatteryHealthViewModel {
         let formatter = makeFormatter()
         let repository = BatteryHealthPreviewRepository()
+        let analyzer = BatteryHealthAnalyzer()
+        let captureFormatter = BatteryHealthCaptureFormatter(
+            dateFormatStyle: Date.FormatStyle(date: .omitted, time: .standard)
+        )
         return BatteryHealthViewModel(
             useCases: .init(
                 observeCaptures: .init(repository: repository)
             ),
             vehicleSession: BatteryHealthPreviewVehicleSession(),
-            mapper: .init(formatter: formatter),
-            makeMapper: { _ in .init(formatter: makeFormatter()) },
+            mapper: .init(
+                formatter: formatter,
+                analyzer: analyzer,
+                captureFormatter: captureFormatter,
+                now: Date.init
+            ),
+            makeMapper: { _ in
+                .init(
+                    formatter: makeFormatter(),
+                    analyzer: analyzer,
+                    captureFormatter: captureFormatter,
+                    now: Date.init
+                )
+            },
             chargeControl: ChargeControlSession(
                 useCases: .init(
                     prepare: .init(repository: repository),
@@ -27,7 +43,7 @@ enum BatteryHealthPreviewFactory {
                 stateUpdater: ChargeControlStateUpdater(normalizer: ChargeControlNormalizer()),
                 taskScheduler: ChargeControlTaskScheduler()
             ),
-            captureTimeFormatStyle: Date.FormatStyle(date: .omitted, time: .standard)
+            captureFormatter: captureFormatter
         )
     }
 

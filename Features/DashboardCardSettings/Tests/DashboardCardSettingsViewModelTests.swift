@@ -43,7 +43,7 @@ struct DashboardCardSettingsViewModelTests {
         let fixture = DashboardCardSettingsViewModelFixture(repository: repository)
         let viewModel = fixture.viewModel
         viewModel.start()
-        #expect(await waitUntil { viewModel.viewState.sections.count == 6 })
+        #expect(await waitUntil { viewModel.viewState.sections.count == 7 })
 
         viewModel.setSectionOrder(ids: [
             DashboardCardSectionID.range.rawValue,
@@ -56,7 +56,8 @@ struct DashboardCardSettingsViewModelTests {
         await repository.waitForBlockedSave()
         viewModel.setSectionVisibility(false, id: DashboardCardSectionID.efficiency.rawValue)
 
-        #expect(viewModel.viewState.sections.first?.id == DashboardCardSectionID.range.rawValue)
+        #expect(viewModel.viewState.sections.first(where: { $0.id != DashboardCardSectionID.bikeLock.rawValue })?.id
+            == DashboardCardSectionID.range.rawValue)
         #expect(viewModel.viewState.section(id: DashboardCardSectionID.efficiency.rawValue)?.isVisible == false)
         #expect(await repository.savedSettings.isEmpty)
         await repository.releaseBlockedSave()
@@ -78,7 +79,7 @@ struct DashboardCardSettingsViewModelTests {
         let repository = fixture.repository
         let viewModel = fixture.viewModel
         viewModel.start()
-        #expect(await waitUntil { viewModel.viewState.sections.count == 6 })
+        #expect(await waitUntil { viewModel.viewState.sections.count == 7 })
 
         viewModel.setPageOrder(
             ids: [DashboardCardPageID.efficiencyTrend.rawValue, DashboardCardPageID.efficiencyLive.rawValue],
@@ -169,7 +170,7 @@ struct DashboardCardSettingsViewModelTests {
         let fixture = DashboardCardSettingsViewModelFixture(repository: repository)
         let viewModel = fixture.viewModel
         viewModel.start()
-        #expect(await waitUntil { viewModel.viewState.sections.count == 6 })
+        #expect(await waitUntil { viewModel.viewState.sections.count == 7 })
 
         viewModel.setSectionVisibility(false, id: DashboardCardSectionID.range.rawValue)
         await repository.waitForBlockedSave()

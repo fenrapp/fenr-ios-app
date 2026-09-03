@@ -5,7 +5,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var dashboardProgressBarMode: DashboardProgressBarMode
     public var dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode
     public var dashboardDeviceBatteryDisplayMode: DashboardDeviceBatteryDisplayMode
-    public var showsDashboardTemperatures: Bool
+    public var dashboardTemperatureDisplayMode: DashboardTemperatureDisplayMode
     public var dashboardCardConfiguration: DashboardCardConfiguration
     public var rideNavigation: RideNavigationSettings
     public var measurementSystem: MeasurementSystem
@@ -23,7 +23,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         dashboardProgressBarMode: DashboardProgressBarMode = .energy,
         dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
         dashboardDeviceBatteryDisplayMode: DashboardDeviceBatteryDisplayMode = .iconAndText,
-        showsDashboardTemperatures: Bool = false,
+        dashboardTemperatureDisplayMode: DashboardTemperatureDisplayMode = .off,
         dashboardCardConfiguration: DashboardCardConfiguration = .init(),
         rideNavigation: RideNavigationSettings = .init(),
         measurementSystem: MeasurementSystem = .system,
@@ -36,7 +36,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.dashboardProgressBarMode = dashboardProgressBarMode
         self.dashboardBatteryIndicatorMode = dashboardBatteryIndicatorMode
         self.dashboardDeviceBatteryDisplayMode = dashboardDeviceBatteryDisplayMode
-        self.showsDashboardTemperatures = showsDashboardTemperatures
+        self.dashboardTemperatureDisplayMode = dashboardTemperatureDisplayMode
         self.dashboardCardConfiguration = dashboardCardConfiguration
         self.rideNavigation = rideNavigation
         self.measurementSystem = measurementSystem
@@ -46,12 +46,43 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.bikeLockSettingsByVIN = bikeLockSettingsByVIN
     }
 
+    @available(*, deprecated, message: "Use dashboardTemperatureDisplayMode")
+    public init(
+        speedSource: SpeedSource = .motorcycle,
+        dashboardProgressBarMode: DashboardProgressBarMode = .energy,
+        dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
+        dashboardDeviceBatteryDisplayMode: DashboardDeviceBatteryDisplayMode = .iconAndText,
+        showsDashboardTemperatures: Bool,
+        dashboardCardConfiguration: DashboardCardConfiguration = .init(),
+        rideNavigation: RideNavigationSettings = .init(),
+        measurementSystem: MeasurementSystem = .system,
+        batteryPackCapacity: BatteryPackCapacity = .sevenPointTwoKilowattHours,
+        batteryPackCapacitiesByVIN: [String: BatteryPackCapacity] = [:],
+        powerModeNamesByVIN: [String: [Int: PowerModeName]] = [:],
+        bikeLockSettingsByVIN: [String: BikeLockSettings] = [:]
+    ) {
+        self.init(
+            speedSource: speedSource,
+            dashboardProgressBarMode: dashboardProgressBarMode,
+            dashboardBatteryIndicatorMode: dashboardBatteryIndicatorMode,
+            dashboardDeviceBatteryDisplayMode: dashboardDeviceBatteryDisplayMode,
+            dashboardTemperatureDisplayMode: showsDashboardTemperatures ? .both : .off,
+            dashboardCardConfiguration: dashboardCardConfiguration,
+            rideNavigation: rideNavigation,
+            measurementSystem: measurementSystem,
+            batteryPackCapacity: batteryPackCapacity,
+            batteryPackCapacitiesByVIN: batteryPackCapacitiesByVIN,
+            powerModeNamesByVIN: powerModeNamesByVIN,
+            bikeLockSettingsByVIN: bikeLockSettingsByVIN
+        )
+    }
+
     private enum CodingKeys: String, CodingKey {
         case speedSource
         case dashboardProgressBarMode
         case dashboardBatteryIndicatorMode
         case dashboardDeviceBatteryDisplayMode
-        case showsDashboardTemperatures
+        case dashboardTemperatureDisplayMode
         case dashboardCardConfiguration
         case rideNavigation
         case measurementSystem
@@ -59,6 +90,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case batteryPackCapacitiesByVIN
         case powerModeNamesByVIN
         case bikeLockSettingsByVIN
+    }
+
+    private enum LegacyCodingKeys: String, CodingKey {
+        case showsDashboardTemperatures
     }
 
     public init(from decoder: Decoder) throws {
@@ -76,10 +111,14 @@ public struct AppSettings: Codable, Equatable, Sendable {
             DashboardDeviceBatteryDisplayMode.self,
             forKey: .dashboardDeviceBatteryDisplayMode
         ) ?? .iconAndText
-        showsDashboardTemperatures = try container.decodeIfPresent(
+        let legacyContainer = try decoder.container(keyedBy: LegacyCodingKeys.self)
+        dashboardTemperatureDisplayMode = try container.decodeIfPresent(
+            DashboardTemperatureDisplayMode.self,
+            forKey: .dashboardTemperatureDisplayMode
+        ) ?? ((try legacyContainer.decodeIfPresent(
             Bool.self,
             forKey: .showsDashboardTemperatures
-        ) ?? false
+        ) ?? false) ? .both : .off)
         dashboardCardConfiguration = try container.decodeIfPresent(
             DashboardCardConfiguration.self,
             forKey: .dashboardCardConfiguration
@@ -166,6 +205,12 @@ public struct AppSettings: Codable, Equatable, Sendable {
         } else {
             bikeLockSettingsByVIN[vin] = settings
         }
+    }
+
+    @available(*, deprecated, message: "Use dashboardTemperatureDisplayMode")
+    public var showsDashboardTemperatures: Bool {
+        get { dashboardTemperatureDisplayMode.isEnabled }
+        set { dashboardTemperatureDisplayMode = newValue ? .both : .off }
     }
 
     private static let powerModeIndices = 0 ... 4

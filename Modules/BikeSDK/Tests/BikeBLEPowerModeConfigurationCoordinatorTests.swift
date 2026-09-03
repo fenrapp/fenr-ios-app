@@ -110,6 +110,51 @@ struct BikeBLEPowerModeConfigurationCoordinatorTests {
         #expect(transport.writePayloads.isEmpty)
     }
 
+    @Test("Invalidates base and traction guards after write transport failures")
+    func invalidatesGuardsAfterWriteFailures() async throws {
+        let baseTransport = FakeBikeBLEPowerModeConfigurationTransport()
+        let baseCoordinator = makeCoordinator(transport: baseTransport)
+        try await baseCoordinator.preparePowerModeControl(mapIndex: 0)
+        baseTransport.writeError = .operationFailed("Synthetic write failure")
+
+        await #expect(throws: BikeSDKError.self) {
+            try await baseCoordinator.setPowerModeConfiguration(
+                mapIndex: 0,
+                horsepower: 50,
+                regenerativeBrakingPercent: 30
+            )
+        }
+        baseTransport.writeError = nil
+        await #expect(throws: BikeSDKError.self) {
+            try await baseCoordinator.setPowerModeConfiguration(
+                mapIndex: 0,
+                horsepower: 50,
+                regenerativeBrakingPercent: 30
+            )
+        }
+
+        let tractionTransport = FakeBikeBLEPowerModeConfigurationTransport()
+        let tractionCoordinator = makeCoordinator(transport: tractionTransport)
+        try await tractionCoordinator.prepareTractionControl(mapIndex: 0)
+        tractionTransport.writeError = .operationFailed("Synthetic write failure")
+
+        await #expect(throws: BikeSDKError.self) {
+            try await tractionCoordinator.setTractionControlConfiguration(
+                mapIndex: 0,
+                powerTractionPercent: 20,
+                brakingTractionPercent: 30
+            )
+        }
+        tractionTransport.writeError = nil
+        await #expect(throws: BikeSDKError.self) {
+            try await tractionCoordinator.setTractionControlConfiguration(
+                mapIndex: 0,
+                powerTractionPercent: 20,
+                brakingTractionPercent: 30
+            )
+        }
+    }
+
     @Test("Rejects an unexpected map curve before enabling writes")
     func rejectsUnexpectedCurve() async {
         let transport = FakeBikeBLEPowerModeConfigurationTransport()

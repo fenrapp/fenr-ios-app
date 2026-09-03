@@ -28,7 +28,7 @@ struct UserDefaultsAppSettingsRepositoryTests {
             dashboardProgressBarMode: .speed,
             dashboardBatteryIndicatorMode: .estimatedRange,
             dashboardDeviceBatteryDisplayMode: .hidden,
-            showsDashboardTemperatures: false,
+            dashboardTemperatureDisplayMode: .inverter,
             dashboardCardConfiguration: cardConfiguration,
             rideNavigation: RideNavigationSettings(
                 avoidsTolls: true,

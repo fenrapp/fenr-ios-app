@@ -35,7 +35,7 @@ extension PowerModeSettingsViewModel {
             ? Int(value.rounded())
             : Int(currentRegeneration.rounded())
         let mapIndex = selectedMapIndex
-        let generation = startControlWrite()
+        let generation = startControlWrite(adjustmentID: id)
         let setPowerModeConfiguration = useCases.setPowerModeConfiguration
         controlTask = Task { [weak self] in
             do {
@@ -84,7 +84,7 @@ extension PowerModeSettingsViewModel {
             return
         }
         let mapIndex = selectedMapIndex
-        let generation = startControlWrite()
+        let generation = startControlWrite(adjustmentID: id)
         let setTractionControlConfiguration = useCases.setTractionControlConfiguration
         controlTask = Task { [weak self] in
             do {
@@ -116,9 +116,11 @@ extension PowerModeSettingsViewModel {
 }
 
 private extension PowerModeSettingsViewModel {
-    func startControlWrite() -> Int {
+    func startControlWrite(adjustmentID: PowerModeAdjustmentID) -> Int {
         controlGeneration += 1
         isApplyingControl = true
+        activeAdjustmentID = adjustmentID
+        recentAdjustmentResult = nil
         controlError = nil
         controlMessage = nil
         render()
@@ -139,13 +141,19 @@ private extension PowerModeSettingsViewModel {
         }
         controlTask = nil
         isApplyingControl = false
+        let adjustmentID = activeAdjustmentID
+        activeAdjustmentID = nil
         controlError = error
         if error == nil {
             applyConfirmed(values, mapIndex: mapIndex)
+            recentAdjustmentResult = adjustmentID.map(PowerModeAdjustmentResult.confirmed)
             controlMessage = String(
                 localized: .powerModeSettingsMapConfirmed(mapIndex + 1)
             )
         } else {
+            recentAdjustmentResult = adjustmentID.map {
+                .failed($0, message: error ?? "")
+            }
             clearPreparation(for: values)
             attemptedPreparationMapIndex = mapIndex
         }

@@ -185,9 +185,7 @@ struct AppDependencyContainer {
     func makeBikeDiagnosticsViewModel(session: BikeSession) -> BikeDiagnosticsViewModel {
         diagnosticsContainer.makeBikeDiagnosticsViewModel(
             repository: session.repository,
-            pinDeriver: session.pinDeriver,
-            profileRepository: profileRepository,
-            settingsRepository: settingsRepository,
+            vehicleSession: vehicleSession,
             bleTraceLogRepository: bleTraceLogRepository
         )
     }

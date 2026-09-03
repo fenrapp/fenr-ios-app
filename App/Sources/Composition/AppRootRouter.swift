@@ -1,3 +1,5 @@
+import BatteryHealth
+import BikeDiagnostics
 import Combine
 import Foundation
 import RideNavigation
@@ -32,8 +34,8 @@ private extension SwiftUIAppRootAnimator {
 @MainActor
 final class AppRootRouter: ObservableObject {
     enum Route: Hashable {
-        case batteryHealth
-        case diagnostics
+        case batteryHealth(BatteryHealthDestination)
+        case diagnostics(BikeDiagnosticsDestination)
         case settings
         case rideDisplaySettings
         case dashboardCards
@@ -54,6 +56,16 @@ final class AppRootRouter: ObservableObject {
 
     var isDashboardPresentationActive: Bool {
         path.isEmpty && rideNavigationPresentation != .fullScreen
+    }
+
+    var isDiagnosticsPresentationActive: Bool {
+        guard case .diagnostics = path.last else { return false }
+        return true
+    }
+
+    var isBatteryHealthPresentationActive: Bool {
+        guard case .batteryHealth = path.last else { return false }
+        return true
     }
 
     private let setupFlow: BikeSetupFlowController

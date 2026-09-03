@@ -2,22 +2,60 @@ import DesignSystem
 import SwiftUI
 
 struct PowerModeStatusPanel: View {
-    let connectionText: String
-    let capabilityText: String
-    let statusText: String
-    let statusIsError: Bool
+    let status: PowerModeStatusViewData
+    let canRetry: Bool
+    let retry: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Constants.spacing) {
-            Label(connectionText, systemImage: "motorcycle")
-            Label(capabilityText, systemImage: "bolt.fill")
-            Label(statusText, systemImage: statusIsError ? "exclamationmark.triangle.fill" : "checkmark.shield")
-                .foregroundStyle(statusIsError ? DesignColor.critical : DesignColor.secondaryText)
+        VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
+            HStack(alignment: .top, spacing: DesignSpace.small) {
+                statusSymbol
+
+                VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
+                    Text(status.title)
+                        .font(.headline)
+                    Text(status.detail)
+                        .font(.subheadline)
+                        .foregroundStyle(DesignColor.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .accessibilityElement(children: .combine)
+            }
+
+            if canRetry {
+                Button(.powerModeSettingsRetry, action: retry)
+                    .font(.callout.weight(.semibold))
+                    .frame(minHeight: Constants.minimumControlSize)
+            }
         }
-        .font(.footnote)
+    }
+
+    @ViewBuilder private var statusSymbol: some View {
+        if status.isActivity {
+            ProgressView()
+                .controlSize(.regular)
+                .frame(width: Constants.minimumControlSize, height: Constants.minimumControlSize)
+                .accessibilityHidden(true)
+        } else {
+            Image(systemName: status.systemImage)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(statusColor)
+                .frame(width: Constants.minimumControlSize, height: Constants.minimumControlSize)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private var statusColor: Color {
+        switch status.emphasis {
+        case .neutral: DesignColor.secondaryText
+        case .informational: DesignColor.informational
+        case .positive: DesignColor.positive
+        case .warning: DesignColor.warning
+        case .critical: DesignColor.critical
+        }
     }
 
     private enum Constants {
-        static let spacing = DesignSpace.extraSmall
+        static let minimumControlSize: CGFloat = 44
     }
 }

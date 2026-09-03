@@ -271,8 +271,9 @@ targets:
       - target: BLETraceDomain
       - target: BikeDomain
       - target: SettingsDomain
-      - target: DesignSystem
       - target: MeasurementPresentation
+      - target: VehicleSession
+      - target: DesignSystem
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.diagnostics
@@ -1187,6 +1188,7 @@ targets:
       - target: BikeDomain
       - target: SettingsDomain
       - target: TestSupport
+      - target: VehicleSession
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.diagnostics.tests
