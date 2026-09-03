@@ -2,6 +2,7 @@ import DesignSystem
 import SwiftUI
 
 struct RideNavigationMiniView: View {
+    @Environment(\.colorScheme) private var colorScheme
     let state: RideNavigationMiniViewState
     let mapSurfaceFactory: RideNavigationMapSurfaceFactory
     let transitionNamespace: Namespace.ID
@@ -57,6 +58,7 @@ struct RideNavigationMiniView: View {
             .animation(.smooth(duration: Constants.orientationAnimationDuration), value: state.isLandscape)
         }
         .coordinateSpace(name: Constants.dragCoordinateSpace)
+        .rideNavigationFocusAppearance(usesFocusAppearance)
         .task(id: orientationInteractionGeneration) {
             do {
                 try await Task.sleep(for: .seconds(Constants.orientationControlDelaySeconds))
@@ -111,18 +113,18 @@ struct RideNavigationMiniView: View {
                 }
                     .font(.caption.weight(.bold))
                     .tracking(Constants.statusTracking)
-                    .foregroundStyle(Color.black)
+                    .foregroundStyle(statusForeground)
                     .padding(.horizontal, DesignSpace.small)
                     .padding(.vertical, DesignSpace.extraSmall)
-                    .background(Color.white, in: Capsule())
+                    .background(statusBackground, in: Capsule())
                     .padding(.top, DesignSpace.small)
             }
         }
-        .background(Color.black)
+        .background(miniMapBackground)
         .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: Constants.cornerRadius, style: .continuous)
-                .stroke(Color.white.opacity(Constants.borderOpacity), lineWidth: Constants.borderWidth)
+                .stroke(borderColor.opacity(Constants.borderOpacity), lineWidth: Constants.borderWidth)
         }
         .shadow(color: .black.opacity(Constants.shadowOpacity), radius: Constants.shadowRadius, y: DesignSpace.small)
         .contentShape(RoundedRectangle(cornerRadius: Constants.cornerRadius, style: .continuous))
@@ -147,6 +149,30 @@ struct RideNavigationMiniView: View {
     private var miniStatusSystemImage: String? {
         if state.isArrivalPending { return "flag.checkered" }
         return state.forkGuidance?.systemImage
+    }
+
+    private var usesFocusAppearance: Bool {
+        state.mapScene.displayStyle == .focus
+    }
+
+    private var focusPalette: RideNavigationFocusPalette {
+        RideNavigationFocusPalette(colorScheme: colorScheme)
+    }
+
+    private var miniMapBackground: Color {
+        usesFocusAppearance ? focusPalette.background : .black
+    }
+
+    private var statusBackground: Color {
+        usesFocusAppearance ? focusPalette.foreground : .white
+    }
+
+    private var statusForeground: Color {
+        usesFocusAppearance ? focusPalette.background : .black
+    }
+
+    private var borderColor: Color {
+        usesFocusAppearance ? focusPalette.foreground : .white
     }
 
     private func dragGesture(layout: RideNavigationMiniMapLayout) -> some Gesture {

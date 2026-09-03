@@ -2,6 +2,7 @@ import DesignSystem
 import SwiftUI
 
 struct RideNavigationFinishConfirmationOverlay: View {
+    @Environment(\.colorScheme) private var colorScheme
     let activity: RideNavigationViewState.Activity
     let isMonochrome: Bool
     let arrivalPrompt: RideNavigationArrivalPrompt?
@@ -94,7 +95,13 @@ struct RideNavigationFinishConfirmationOverlay: View {
     }
 
     private var confirmTint: Color {
-        isMonochrome ? Color.white.opacity(Constants.focusActionOpacity) : DesignColor.critical
+        isMonochrome
+            ? focusPalette.foreground.opacity(Constants.focusActionOpacity)
+            : DesignColor.critical
+    }
+
+    private var focusPalette: RideNavigationFocusPalette {
+        RideNavigationFocusPalette(colorScheme: colorScheme)
     }
 
     private enum Constants {

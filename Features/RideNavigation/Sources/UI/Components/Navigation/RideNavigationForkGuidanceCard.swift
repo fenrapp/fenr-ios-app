@@ -3,6 +3,7 @@ import SwiftUI
 
 struct RideNavigationForkGuidanceCard: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.colorScheme) private var colorScheme
 
     let guidance: RideNavigationForkGuidance
     let isMonochrome: Bool
@@ -35,8 +36,12 @@ struct RideNavigationForkGuidanceCard: View {
     }
 
     private var iconColor: Color {
-        guard !isMonochrome else { return .white }
+        guard !isMonochrome else { return focusPalette.foreground }
         return guidance.emphasis == .warning ? DesignColor.warning : DesignColor.accent
+    }
+
+    private var focusPalette: RideNavigationFocusPalette {
+        RideNavigationFocusPalette(colorScheme: colorScheme)
     }
 
     private enum Constants {

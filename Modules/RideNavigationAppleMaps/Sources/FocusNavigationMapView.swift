@@ -2,6 +2,7 @@ import RideNavigation
 import SwiftUI
 
 struct FocusNavigationMapView: View {
+    @Environment(\.colorScheme) private var colorScheme
     let scene: NavigationMapScene
     let onIntent: (NavigationMapIntent) -> Void
     let onInteraction: () -> Void
@@ -27,12 +28,18 @@ struct FocusNavigationMapView: View {
     }
 
     var body: some View {
+        let palette = FocusNavigationPalette(colorScheme: colorScheme)
         GeometryReader { _ in
             ZStack {
-                Color.black
+                palette.background
                 Canvas { context, size in
                     let viewport = FocusNavigationViewport(scene: scene, camera: effectiveCamera, size: size)
-                    renderer.draw(scene: scene, in: &context, viewport: viewport)
+                    renderer.draw(
+                        scene: scene,
+                        in: &context,
+                        viewport: viewport,
+                        palette: palette
+                    )
                 }
                 .scaleEffect(effectiveScale)
                 .offset(effectiveTranslation)

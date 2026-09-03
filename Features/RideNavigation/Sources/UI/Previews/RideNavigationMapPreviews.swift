@@ -1,6 +1,7 @@
 import SwiftUI
 
 private struct RideNavigationMapPreview: View {
+    @Environment(\.colorScheme) private var colorScheme
     let state: RideNavigationViewState
     @State private var selector: RideNavigationMapSelector?
 
@@ -35,7 +36,13 @@ private struct RideNavigationMapPreview: View {
             onKeepRidingWithIncomingDestination: {},
             onEndRideAndOpenIncomingDestination: {}
         )
-        .background(Color.black)
+        .rideNavigationFocusAppearance(state.mapScene.displayStyle == .focus)
+        .background(previewBackground)
+    }
+
+    private var previewBackground: Color {
+        guard state.mapScene.displayStyle == .focus else { return .black }
+        return RideNavigationFocusPalette(colorScheme: colorScheme).background
     }
 }
 
@@ -111,6 +118,9 @@ private enum RideNavigationMapPreviewStates {
     static let offTrail = RideNavigationViewState(
         screen: .map,
         activity: .following,
+        mapScene: NavigationMapScene(displayStyle: .focus),
+        selectedMapStyleID: "focus",
+        allowsFocusMapStyle: true,
         speedText: "24",
         speedUnit: "km/h",
         modeText: "ENDURO",
@@ -165,6 +175,16 @@ private enum RideNavigationMapPreviewStates {
 #Preview("Map · Off trail · Accessibility", traits: .landscapeLeft) {
     RideNavigationMapPreview(state: RideNavigationMapPreviewStates.offTrail)
         .environment(\.dynamicTypeSize, .accessibility3)
+}
+
+#Preview("Map · Focus · Night", traits: .landscapeLeft) {
+    RideNavigationMapPreview(state: RideNavigationMapPreviewStates.offTrail)
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Map · Focus · Day", traits: .landscapeLeft) {
+    RideNavigationMapPreview(state: RideNavigationMapPreviewStates.offTrail)
+        .preferredColorScheme(.light)
 }
 
 #Preview("Map · Trail exit · Accessibility", traits: .landscapeLeft) {

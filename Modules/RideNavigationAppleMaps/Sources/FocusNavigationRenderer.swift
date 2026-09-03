@@ -12,18 +12,20 @@ final class FocusNavigationRenderer {
     func draw(
         scene: NavigationMapScene,
         in context: inout GraphicsContext,
-        viewport: FocusNavigationViewport
+        viewport: FocusNavigationViewport,
+        palette: FocusNavigationPalette
     ) {
-        drawPolylines(scene: scene, in: &context, viewport: viewport)
-        drawDirectionalIndicators(scene: scene, in: &context, viewport: viewport)
-        drawMarkers(scene: scene, in: &context, viewport: viewport)
-        drawRider(scene: scene, in: &context, viewport: viewport)
+        drawPolylines(scene: scene, in: &context, viewport: viewport, palette: palette)
+        drawDirectionalIndicators(scene: scene, in: &context, viewport: viewport, palette: palette)
+        drawMarkers(scene: scene, in: &context, viewport: viewport, palette: palette)
+        drawRider(scene: scene, in: &context, viewport: viewport, palette: palette)
     }
 
     private func drawPolylines(
         scene: NavigationMapScene,
         in context: inout GraphicsContext,
-        viewport: FocusNavigationViewport
+        viewport: FocusNavigationViewport,
+        palette: FocusNavigationPalette
     ) {
         let polylines = scene.polylines.sorted { $0.role.renderPriority < $1.role.renderPriority }
         for polyline in polylines where polyline.points.count > 1 {
@@ -34,7 +36,7 @@ final class FocusNavigationRenderer {
                 layer.concatenate(viewport.mapTransform)
                 layer.stroke(
                     path,
-                    with: .color(color(for: polyline.role)),
+                    with: .color(palette.polylineColor(for: polyline.role)),
                     style: StrokeStyle(
                         lineWidth: lineWidth(for: polyline.role) / scale,
                         lineCap: .round,
@@ -49,7 +51,8 @@ final class FocusNavigationRenderer {
     private func drawRider(
         scene: NavigationMapScene,
         in context: inout GraphicsContext,
-        viewport: FocusNavigationViewport
+        viewport: FocusNavigationViewport,
+        palette: FocusNavigationPalette
     ) {
         guard let coordinate = scene.userCoordinate else { return }
         let center = viewport.point(for: coordinate)
@@ -63,10 +66,10 @@ final class FocusNavigationRenderer {
         transform = transform.rotated(
             by: viewport.riderRotationDegrees * .pi / Constants.halfCircleDegrees
         )
-        context.fill(arrow.applying(transform), with: .color(Constants.rider))
+        context.fill(arrow.applying(transform), with: .color(palette.rider))
         context.stroke(
             arrow.applying(transform),
-            with: .color(Constants.riderOutline),
+            with: .color(palette.riderOutline),
             lineWidth: Constants.riderOutlineWidth
         )
     }
@@ -74,11 +77,12 @@ final class FocusNavigationRenderer {
     private func drawMarkers(
         scene: NavigationMapScene,
         in context: inout GraphicsContext,
-        viewport: FocusNavigationViewport
+        viewport: FocusNavigationViewport,
+        palette: FocusNavigationPalette
     ) {
         for marker in scene.markers {
             var image = context.resolve(Image(systemName: markerSymbol(for: marker.role)))
-            image.shading = .color(markerColor(for: marker.role))
+            image.shading = .color(palette.markerColor(for: marker.role))
             context.draw(image, at: viewport.point(for: marker.coordinate), anchor: .center)
         }
     }
@@ -86,7 +90,8 @@ final class FocusNavigationRenderer {
     private func drawDirectionalIndicators(
         scene: NavigationMapScene,
         in context: inout GraphicsContext,
-        viewport: FocusNavigationViewport
+        viewport: FocusNavigationViewport,
+        palette: FocusNavigationPalette
     ) {
         for indicator in scene.directionalIndicators {
             let center = viewport.point(for: indicator.coordinate)
@@ -101,22 +106,13 @@ final class FocusNavigationRenderer {
             )
             context.stroke(
                 chevron.applying(transform),
-                with: .color(Constants.directionalIndicator),
+                with: .color(palette.directionalIndicator),
                 style: StrokeStyle(
                     lineWidth: Constants.chevronLineWidth,
                     lineCap: .round,
                     lineJoin: .round
                 )
             )
-        }
-    }
-
-    private func color(for role: NavigationMapPolylineRole) -> Color {
-        switch role {
-        case .planned, .trailActive, .approach, .rejoinGuide: .white
-        case .trailFuture: Color(white: 0.72)
-        case .trailCompleted, .completed: Color(white: 0.35)
-        case .recorded: Color(white: 0.7)
         }
     }
 
@@ -128,14 +124,6 @@ final class FocusNavigationRenderer {
         case .planned, .approach: Constants.routeLineWidth
         case .recorded: Constants.recordedLineWidth
         case .rejoinGuide: Constants.rejoinLineWidth
-        }
-    }
-
-    private func markerColor(for role: NavigationMapMarkerRole) -> Color {
-        switch role {
-        case .start: .green
-        case .finish: .red
-        case .waypoint, .participant: Color(white: 0.55)
         }
     }
 
@@ -156,12 +144,9 @@ final class FocusNavigationRenderer {
         static let recordedLineWidth: CGFloat = 7
         static let rejoinLineWidth: CGFloat = 4
         static let rejoinDash: [CGFloat] = [2, 10]
-        static let rider = Color.white
-        static let riderOutline = Color(white: 0.35)
         static let riderLength: CGFloat = 18
         static let riderHalfWidth: CGFloat = 12
         static let riderOutlineWidth: CGFloat = 3
-        static let directionalIndicator = Color.white
         static let chevronHalfWidth: CGFloat = 7
         static let chevronHalfHeight: CGFloat = 5
         static let chevronLineWidth: CGFloat = 4

@@ -2,6 +2,7 @@ import DesignSystem
 import SwiftUI
 
 struct RideNavigationActivityDashboard: View {
+    @Environment(\.colorScheme) private var colorScheme
     let state: RideNavigationViewState
     let isFocus: Bool
     let onStart: () -> Void
@@ -172,8 +173,12 @@ struct RideNavigationActivityDashboard: View {
 
     private var finishButton: some View {
         actionButton(.rideNavigationFinish, systemImage: "stop.fill", action: onRequestFinish)
-            .tint(isFocus ? Color.white.opacity(Constants.focusActionOpacity) : DesignColor.critical)
+            .tint(isFocus ? focusPalette.foreground.opacity(Constants.focusActionOpacity) : DesignColor.critical)
             .rideNavigationPrimaryButton()
+    }
+
+    private var focusPalette: RideNavigationFocusPalette {
+        RideNavigationFocusPalette(colorScheme: colorScheme)
     }
 
     private var minimizeButton: some View {
