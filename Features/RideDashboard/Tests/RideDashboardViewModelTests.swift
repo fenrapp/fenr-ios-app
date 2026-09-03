@@ -317,11 +317,10 @@ extension RideDashboardViewModelTests {
         fixture.viewModel.stopObserving()
     }
 
-    @Test("Presents connection phases as progress instead of disconnection")
+    @Test("Presents active connection phases as progress instead of disconnection")
     func mapsConnectionProgress() {
         let mapper = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_US"))
         let states: [ConnectionState] = [
-            .idle,
             .scanning(vin: "FENRTEST000000001"),
             .connecting(vin: "FENRTEST000000001", peripheralName: nil),
             .discovering(peripheralName: nil),

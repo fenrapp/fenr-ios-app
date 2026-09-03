@@ -1,5 +1,6 @@
 import CoreBluetooth
 import Foundation
+import StarkProtocol
 
 struct BikeBLEVCUConfigurationOperation {
     let uuid: CBUUID
@@ -30,7 +31,9 @@ struct BikeBLEVCUConfigurationExpectedResponse {
         }
         type = writeRequest[1]
         mapIndex = nil
-        allowedOperations = [1]
+        allowedOperations = type == StarkBikeLockConfigurationCommand.configurationType
+            ? [1, 2]
+            : [1]
     }
 
     func matches(_ response: Data) -> Bool {

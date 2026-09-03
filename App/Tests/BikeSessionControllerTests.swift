@@ -24,9 +24,25 @@ struct BikeSessionControllerTests {
         let repository = SessionSpyRepository()
         let controller = makeController(repository: repository)
 
+        await controller.start()
         await controller.connectAutomatically(vin: "FENRTEST000000001")
 
         #expect(await repository.lastVIN() == "FENRTEST000000001")
+    }
+
+    @Test("Deduplicates dashboard retries through the shared repository")
+    func deduplicatesDashboardRetries() async {
+        let repository = SessionSpyRepository()
+        await repository.blockNextConnection()
+        let controller = makeController(repository: repository)
+        await controller.start()
+
+        controller.retryConnection(vin: "FENRTEST000000001")
+        controller.retryConnection(vin: "FENRTEST000000001")
+
+        #expect(await waitUntil { await repository.hasPendingConnection() })
+        #expect(await repository.connectionCount() == 1)
+        await repository.resumeConnection()
     }
 
     @Test("Stopping during start leaves the bike repository stopped")

@@ -66,6 +66,54 @@ struct VehicleMotionEstimatorTests {
         #expect(latest?.calibrationToPersist?.gyroscopeBiasZRaw == 1)
     }
 
+    @Test("Production profile remains available through the observed lean sequence")
+    func productionProfileObservedLeanSequence() {
+        let productionProfile = BikeIMUProfile.productionV1
+        var estimator = makeEstimator(profile: productionProfile, maximumSampleAge: 5)
+        var storedCalibration: VehicleMotionCalibration?
+        var availability: [VehicleMotionAvailability] = []
+        let start = now.addingTimeInterval(-3)
+
+        for index in 0 ... 20 {
+            let result = estimator.estimate(
+                imuSample: observedProductionSample(
+                    acceleration: .init(x: 518, y: -1_502, z: 1_308),
+                    at: start.addingTimeInterval(Double(index) / 10)
+                ),
+                calibration: storedCalibration,
+                vin: vin,
+                location: nil,
+                bikeSpeedKilometersPerHour: 0
+            )
+            storedCalibration = result.calibrationToPersist ?? storedCalibration
+            availability.append(result.snapshot.availability)
+        }
+
+        let observedSequence: [BikeIMUVector] = [
+            .init(x: 6, y: -1_503, z: 1_403),
+            .init(x: 602, y: -1_464, z: 1_309),
+            .init(x: 2, y: -1_525, z: 1_382),
+            .init(x: 542, y: -1_494, z: 1_288)
+        ]
+        for (index, acceleration) in observedSequence.enumerated() {
+            let result = estimator.estimate(
+                imuSample: observedProductionSample(
+                    acceleration: acceleration,
+                    at: now.addingTimeInterval(-0.9 + Double(index) / 10)
+                ),
+                calibration: storedCalibration,
+                vin: vin,
+                location: nil,
+                bikeSpeedKilometersPerHour: 0
+            )
+            availability.append(result.snapshot.availability)
+        }
+
+        #expect(availability.first == .calibrating)
+        #expect(availability[20] == .available)
+        #expect(availability.suffix(4).allSatisfy { $0 == .available })
+    }
+
     @Test("Maps normalized motorcycle acceleration to lean and pitch")
     func staticAngles() {
         var estimator = makeEstimator()
@@ -113,7 +161,7 @@ struct VehicleMotionEstimatorTests {
 
     @Test("Applies the configured sensor to bike axis transform")
     func axisTransform() {
-        let transform = BikeIMUAxisTransform(
+        let transform = BikeIMURigidTransform(
             bikeX: .negativeY,
             bikeY: .positiveX,
             bikeZ: .negativeZ
@@ -721,6 +769,17 @@ private extension VehicleMotionEstimatorTests {
             x: -sin(pitch) * 1_000,
             y: sin(roll) * cos(pitch) * 1_000,
             z: cos(roll) * cos(pitch) * 1_000
+        )
+    }
+
+    func observedProductionSample(
+        acceleration: BikeIMUVector,
+        at date: Date
+    ) -> BikeIMUSample {
+        return .init(
+            accelerationRaw: acceleration,
+            gyroscopeRaw: .init(x: 0, y: 0, z: 0),
+            observedAt: date
         )
     }
 }

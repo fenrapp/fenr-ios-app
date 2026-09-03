@@ -65,6 +65,7 @@ private extension AppRootView {
                 coordinator: navigationCoordinator,
                 featureStore: featureStore,
                 settingsAccessory: settingsAccessory,
+                onRetryConnection: lifecycleController.retryConnection,
                 onChangeBike: changeBike
             )
         }

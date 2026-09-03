@@ -3,9 +3,12 @@ import BikeDomain
 actor SessionSpyRepository: BikeRepository {
     private var starts = 0
     private var stops = 0
+    private var connections = 0
     private var vin: String?
     private var shouldBlockStart = false
     private var startContinuation: CheckedContinuation<Void, Never>?
+    private var shouldBlockConnection = false
+    private var connectionContinuation: CheckedContinuation<Void, Never>?
 
     func start() async {
         starts += 1
@@ -15,7 +18,14 @@ actor SessionSpyRepository: BikeRepository {
         }
     }
     func stop() async { stops += 1 }
-    func connect(vin: String) async throws { self.vin = vin }
+    func connect(vin: String) async throws {
+        connections += 1
+        self.vin = vin
+        guard shouldBlockConnection else { return }
+        await withCheckedContinuation { continuation in
+            connectionContinuation = continuation
+        }
+    }
     func disconnect() async throws {}
     func retrySecurityHandshake() async throws {}
     func readTelemetrySnapshot() async throws {}
@@ -25,6 +35,7 @@ actor SessionSpyRepository: BikeRepository {
 
     func startCount() -> Int { starts }
     func stopCount() -> Int { stops }
+    func connectionCount() -> Int { connections }
     func lastVIN() -> String? { vin }
     func blockNextStart() { shouldBlockStart = true }
     func hasPendingStart() -> Bool { startContinuation != nil }
@@ -32,5 +43,12 @@ actor SessionSpyRepository: BikeRepository {
         shouldBlockStart = false
         startContinuation?.resume()
         startContinuation = nil
+    }
+    func blockNextConnection() { shouldBlockConnection = true }
+    func hasPendingConnection() -> Bool { connectionContinuation != nil }
+    func resumeConnection() {
+        shouldBlockConnection = false
+        connectionContinuation?.resume()
+        connectionContinuation = nil
     }
 }

@@ -9,6 +9,10 @@ struct RideDashboardConnectionMapperTests {
         let mapper = RideDashboardConnectionMapper()
 
         #expect(
+            mapper.text(.idle)
+                == String(localized: .rideDashboardConnectionDisconnected)
+        )
+        #expect(
             mapper.text(.failed(message: "transport detail"))
                 == String(localized: .rideDashboardConnectionFailed)
         )
@@ -20,5 +24,32 @@ struct RideDashboardConnectionMapperTests {
             mapper.text(.pairingResetRequired(message: "transport detail"))
                 == String(localized: .rideDashboardConnectionPairingResetRequired)
         )
+    }
+
+    @Test("Only active connection phases show progress")
+    func mapsRetryAndProgressStates() {
+        let mapper = RideDashboardConnectionMapper()
+        let retryStates: [ConnectionState] = [
+            .idle,
+            .bluetoothUnavailable,
+            .bluetoothUnauthorized,
+            .bluetoothPoweredOff,
+            .pairingResetRequired(message: "reset"),
+            .disconnected(reason: "disconnected"),
+            .failed(message: "failed")
+        ]
+        let progressStates: [ConnectionState] = [
+            .scanning(vin: "FENRTEST000000001"),
+            .connecting(vin: "FENRTEST000000001", peripheralName: nil),
+            .discovering(peripheralName: nil),
+            .authenticating(peripheralName: nil),
+            .authenticated(peripheralName: nil),
+            .subscribed(peripheralName: nil),
+            .receivingTelemetry(peripheralName: nil),
+            .reconnecting(vin: "FENRTEST000000001", attempt: 1, maximumAttempts: 5)
+        ]
+
+        #expect(retryStates.allSatisfy { !mapper.showsProgress($0) })
+        #expect(progressStates.allSatisfy { mapper.showsProgress($0) })
     }
 }

@@ -140,6 +140,16 @@ final class AppLifecycleController {
         bikeLiveActivityController.setIsSetupCompleted(isCompleted)
     }
 
+    func retryConnection() {
+        guard state == .started,
+              changeBikeTask == nil,
+              let vin = setupFlow.configuredVIN
+        else {
+            return
+        }
+        sessionController.retryConnection(vin: vin)
+    }
+
     func changeBike(onCompleted: @escaping @MainActor () -> Void) {
         guard state == .started, changeBikeTask == nil else { return }
         let sessionController = sessionController

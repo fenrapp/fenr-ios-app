@@ -6,6 +6,7 @@ struct AppMainNavigationHost: View {
     @ObservedObject var coordinator: AppNavigationCoordinator
     let featureStore: AppFeatureStore
     let settingsAccessory: () -> AnyView
+    let onRetryConnection: () -> Void
     let onChangeBike: () -> Void
 
     var body: some View {
@@ -13,6 +14,7 @@ struct AppMainNavigationHost: View {
             RideDashboardScene(
                 factory: featureStore.rideDashboardFactory,
                 onNavigation: handleDashboardEvent,
+                onRetryConnection: onRetryConnection,
                 isNavigationActive: coordinator.state.rideNavigationMode == .mini,
                 isPresentationActive: coordinator.state.activeSurfaces.contains(.dashboard)
             )

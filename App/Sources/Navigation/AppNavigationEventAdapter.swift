@@ -9,7 +9,6 @@ enum AppNavigationEventAdapter {
     static func intent(for event: RideDashboardNavigationEvent) -> AppNavigationIntent {
         switch event {
         case .openSettings: .push(.settings(.overview))
-        case .openDiagnostics: .push(.diagnostics(.overview))
         case .openRideNavigation: .showRideNavigation(nil)
         }
     }

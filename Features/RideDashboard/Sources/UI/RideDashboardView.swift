@@ -19,7 +19,7 @@ public struct RideDashboardView: View {
     @State private var cardSelection = DashboardCardSelectionState()
     @State private var hiddenPageResetTask: Task<Void, Never>?
     private let onSettings: () -> Void
-    private let onDiagnostics: () -> Void
+    private let onRetryConnection: () -> Void
     private let onNavigation: () -> Void
     private let isNavigationActive: Bool
     private let isPresentationActive: Bool
@@ -32,7 +32,7 @@ public extension RideDashboardView {
         onNavigation: @escaping () -> Void = {},
         isNavigationActive: Bool = false,
         isPresentationActive: Bool = true,
-        onDiagnostics: @escaping () -> Void
+        onRetryConnection: @escaping () -> Void
     ) {
         self.feature = feature
         _viewModel = ObservedObject(wrappedValue: feature.dashboardViewModel)
@@ -50,7 +50,7 @@ public extension RideDashboardView {
         self.onNavigation = onNavigation
         self.isNavigationActive = isNavigationActive
         self.isPresentationActive = isPresentationActive
-        self.onDiagnostics = onDiagnostics
+        self.onRetryConnection = onRetryConnection
     }
 }
 
@@ -176,7 +176,7 @@ extension RideDashboardView {
                 } else {
                     DashboardUnavailableState.disconnected(
                         detail: viewModel.viewState.connectionDetail,
-                        onDiagnostics: onDiagnostics
+                        onRetryConnection: onRetryConnection
                     )
                 }
                 }

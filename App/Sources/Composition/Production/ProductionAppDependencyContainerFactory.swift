@@ -77,11 +77,7 @@ enum ProductionAppDependencyContainerFactory {
     }
 
     private static func makeIMUProfile() -> BikeIMUProfile? {
-#if DEBUG
-        .experimentalObservedV1
-#else
         .productionV1
-#endif
     }
 
     private static func makeIncomingMapLinkStore() -> UserDefaultsIncomingMapLinkStore {

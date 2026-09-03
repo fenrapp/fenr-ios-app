@@ -19,7 +19,7 @@ enum DashboardUnavailableState {
 
     static func disconnected(
         detail: String,
-        onDiagnostics: @escaping () -> Void
+        onRetryConnection: @escaping () -> Void
     ) -> some View {
         VStack(spacing: DesignSpace.small) {
             Image(systemName: "antenna.radiowaves.left.and.right")
@@ -29,7 +29,11 @@ enum DashboardUnavailableState {
             Text(detail)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
-            Button(.rideDashboardUnavailableDiagnosticsAction, action: onDiagnostics).buttonStyle(.borderedProminent)
+            Button(
+                .rideDashboardUnavailableRetryConnectionAction,
+                action: onRetryConnection
+            )
+            .buttonStyle(.borderedProminent)
         }
         .padding(DesignSpace.large)
     }
