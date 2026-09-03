@@ -15,7 +15,7 @@ public final class BatteryHealthViewModel: ObservableObject {
     private var mapper: BikeBatteryHealthToViewStateMapper
     private let makeMapper: (MeasurementSystem) -> BikeBatteryHealthToViewStateMapper
     private let chargeControl: ChargeControlSession
-    private let captureTimeFormatStyle: Date.FormatStyle
+    private let captureFormatter: BatteryHealthCaptureFormatter
     private var health = BikeBatteryHealth()
     private var captures: [BatteryDataset: BatteryDatasetCapture] = [:]
     private var streamTasks: [Task<Void, Never>] = []
@@ -23,9 +23,12 @@ public final class BatteryHealthViewModel: ObservableObject {
     private var monitoringRequestTask: Task<Void, Never>?
     private var renderTask: Task<Void, Never>?
     private var chargeControlCancellable: AnyCancellable?
-    private var isStarted = false
+    private var isPresentationActive = false
     private var isMonitoring = false
     private var monitorError: String?
+    private var activeVehicleIdentity: String?
+    private var hasResolvedVehicleIdentity = false
+    private var wasVehicleSessionActive = false
 
     public init(
         useCases: BatteryHealthUseCases,
@@ -33,14 +36,14 @@ public final class BatteryHealthViewModel: ObservableObject {
         mapper: BikeBatteryHealthToViewStateMapper,
         makeMapper: @escaping (MeasurementSystem) -> BikeBatteryHealthToViewStateMapper,
         chargeControl: ChargeControlSession,
-        captureTimeFormatStyle: Date.FormatStyle
+        captureFormatter: BatteryHealthCaptureFormatter
     ) {
         self.useCases = useCases
         self.vehicleSession = vehicleSession
         self.mapper = mapper
         self.makeMapper = makeMapper
         self.chargeControl = chargeControl
-        self.captureTimeFormatStyle = captureTimeFormatStyle
+        self.captureFormatter = captureFormatter
         chargeControlCancellable = chargeControl.$state
             .dropFirst()
             .sink { [weak self] _ in self?.scheduleRender() }
@@ -52,24 +55,29 @@ public final class BatteryHealthViewModel: ObservableObject {
         renderTask?.cancel()
     }
 
-    public func start() {
-        guard !isStarted else { return }
-        isStarted = true
-        bindStreams()
-        setBatteryHealthMonitoringRequired(true)
+    public func setPresentationActive(_ isActive: Bool) {
+        guard isPresentationActive != isActive else { return }
+        isPresentationActive = isActive
+        if isActive {
+            bindStreams()
+            setBatteryHealthMonitoringRequired(true)
+        } else {
+            streamTasks.forEach { $0.cancel() }
+            streamTasks.removeAll()
+            renderTask?.cancel()
+            renderTask = nil
+            setBatteryHealthMonitoringRequired(false)
+            isMonitoring = false
+        }
         render()
     }
 
+    public func start() {
+        setPresentationActive(true)
+    }
+
     public func stop() {
-        guard isStarted else { return }
-        isStarted = false
-        streamTasks.forEach { $0.cancel() }
-        streamTasks.removeAll()
-        renderTask?.cancel()
-        renderTask = nil
-        setBatteryHealthMonitoringRequired(false)
-        isMonitoring = false
-        render()
+        setPresentationActive(false)
     }
 
     public func setChargePowerLimit(watts: Double) {
@@ -81,17 +89,16 @@ public final class BatteryHealthViewModel: ObservableObject {
     }
 
     public func captureLogText() -> String {
-        let captureLines = captures.values
-            .sorted { $0.date > $1.date }
-            .map { capture in
-                "\(capture.date.formatted(captureTimeFormatStyle)) | "
-                    + "\(capture.dataset.displayName) | \(capture.byteCount) B | \(capture.hex)"
-            }
-        let chargeLines = chargeControl.logLines.map { "ChargePower | \($0)" }
-        return (chargeLines + captureLines).joined(separator: "\n")
+        captureFormatter.export(
+            captures: captures,
+            chargeAuditLines: chargeControl.logLines
+        )
     }
+}
 
-    private func bindStreams() {
+private extension BatteryHealthViewModel {
+    func bindStreams() {
+        guard streamTasks.isEmpty else { return }
         let vehicleSession = vehicleSession
         streamTasks.append(Task { [weak self] in
             let stream = await vehicleSession.observe()
@@ -110,29 +117,23 @@ public final class BatteryHealthViewModel: ObservableObject {
         })
     }
 
-    private func setBatteryHealthMonitoringRequired(_ required: Bool) {
+    func setBatteryHealthMonitoringRequired(_ required: Bool) {
         let previousRequest = monitoringRequestTask
         let vehicleSession = vehicleSession
         let consumerID = batteryHealthConsumerID
         monitoringRequestTask = Task {
             await previousRequest?.value
-            guard !Task.isCancelled else { return }
-            await vehicleSession.setBatteryHealthMonitoringRequired(
-                required,
-                consumerID: consumerID
-            )
+            guard !required || !Task.isCancelled else { return }
+            await vehicleSession.setBatteryHealthMonitoringRequired(required, consumerID: consumerID)
         }
     }
 
-    private func receive(_ health: BikeBatteryHealth) {
-        self.health = health
-        chargeControl.receive(health)
-        scheduleRender()
-    }
-
-    private func receive(_ snapshot: VehicleSessionSnapshot) {
+    func receive(_ snapshot: VehicleSessionSnapshot) {
+        resetCachesIfVehicleChanged(snapshot)
+        resetCachesIfSessionEnded(snapshot.connection.state)
         mapper = makeMapper(snapshot.settings.measurementSystem)
-        receive(snapshot.batteryHealth)
+        mergeConfirmedDatasets(snapshot.batteryHealth)
+        chargeControl.receive(health)
         switch snapshot.batteryHealthMonitoringState {
         case .inactive, .starting:
             isMonitoring = false
@@ -147,15 +148,59 @@ public final class BatteryHealthViewModel: ObservableObject {
         scheduleRender()
     }
 
-    private func receive(_ capture: BatteryDatasetCapture) {
+    func receive(_ capture: BatteryDatasetCapture) {
         captures[capture.dataset] = capture
         scheduleRender()
     }
 
-    // BMS frames arrive quickly enough to interrupt an active ScrollView gesture.
-    // Keep the latest data, but publish it to SwiftUI at a rider-readable cadence.
-    private func scheduleRender() {
-        guard renderTask == nil else { return }
+    func resetCachesIfVehicleChanged(_ snapshot: VehicleSessionSnapshot) {
+        guard snapshot.hasReceivedProfile else { return }
+        let nextIdentity = snapshot.profile?.vin
+        if hasResolvedVehicleIdentity, nextIdentity != activeVehicleIdentity {
+            resetCachedSessionData()
+        }
+        activeVehicleIdentity = nextIdentity
+        hasResolvedVehicleIdentity = true
+    }
+
+    func resetCachesIfSessionEnded(_ connectionState: ConnectionState) {
+        let isActive = connectionState.isBatteryHealthSessionActive
+        if wasVehicleSessionActive, !isActive, connectionState.isBatteryHealthSessionTerminal {
+            resetCachedSessionData()
+        }
+        wasVehicleSessionActive = isActive
+    }
+
+    func resetCachedSessionData() {
+        health = .init()
+        captures.removeAll()
+        chargeControl.receive(.init())
+    }
+
+    func mergeConfirmedDatasets(_ update: BikeBatteryHealth) {
+        if update.stateOfCharge != .unknown { health.stateOfCharge = update.stateOfCharge }
+        if update.stateOfHealth != .unknown { health.stateOfHealth = update.stateOfHealth }
+        if update.dcBusVoltage != .unknown { health.dcBusVoltage = update.dcBusVoltage }
+        if !update.cellVoltages.isEmpty {
+            health.cellVoltages = update.cellVoltages
+            health.balancingCellIndexes = update.balancingCellIndexes
+        }
+        if !update.temperatures.isEmpty { health.temperatures = update.temperatures }
+        if update.lastUpdated != nil {
+            health.chargeState = update.chargeState
+            health.chargingStatus = update.chargingStatus
+            health.positiveBMSFaultBits = update.positiveBMSFaultBits
+            health.negativeBMSFaultBits = update.negativeBMSFaultBits
+            health.isVehicleFaultActive = update.isVehicleFaultActive
+        }
+        if let updated = update.lastUpdated,
+           health.lastUpdated.map({ updated >= $0 }) ?? true {
+            health.lastUpdated = updated
+        }
+    }
+
+    func scheduleRender() {
+        guard isPresentationActive, renderTask == nil else { return }
         renderTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: RefreshConstants.renderInterval)
             guard !Task.isCancelled, let self else { return }
@@ -164,11 +209,12 @@ public final class BatteryHealthViewModel: ObservableObject {
         }
     }
 
-    private func render() {
+    func render() {
         let nextState = mapper.map(
             health: health,
             captures: captures,
             chargeControl: chargeControl.state,
+            chargeAuditLines: chargeControl.logLines,
             isMonitoring: isMonitoring,
             monitorError: monitorError
         )
@@ -176,7 +222,31 @@ public final class BatteryHealthViewModel: ObservableObject {
         viewState = nextState
     }
 
-    private enum RefreshConstants {
+    enum RefreshConstants {
         static let renderInterval = FENRRuntimeConstants.BatteryHealth.renderInterval
+    }
+}
+
+private extension ConnectionState {
+    var isBatteryHealthSessionActive: Bool {
+        switch self {
+        case .connecting, .discovering, .authenticating, .authenticated,
+             .subscribed, .receivingTelemetry, .reconnecting:
+            true
+        case .idle, .bluetoothUnavailable, .bluetoothUnauthorized, .bluetoothPoweredOff,
+             .scanning, .pairingResetRequired, .disconnected, .failed:
+            false
+        }
+    }
+
+    var isBatteryHealthSessionTerminal: Bool {
+        switch self {
+        case .idle, .bluetoothUnavailable, .bluetoothUnauthorized, .bluetoothPoweredOff,
+             .pairingResetRequired, .disconnected, .failed:
+            true
+        case .scanning, .connecting, .discovering, .authenticating, .authenticated,
+             .subscribed, .receivingTelemetry, .reconnecting:
+            false
+        }
     }
 }

@@ -65,7 +65,15 @@ import SwiftUI
                     .init(id: "hidden", title: "Hidden")
                 ]
             ),
-            showsTemperatures: true,
+            temperatureDisplayMode: .init(
+                selectedID: "both",
+                options: [
+                    .init(id: "off", title: "Off"),
+                    .init(id: "battery", title: "Battery"),
+                    .init(id: "inverter", title: "Inverter"),
+                    .init(id: "both", title: "Both")
+                ]
+            ),
             speedSource: .init(
                 selection: .init(
                     selectedID: "gps",
@@ -81,7 +89,7 @@ import SwiftUI
             onSelectProgressBarMode: { _ in },
             onSelectBikeBatteryDisplayMode: { _ in },
             onSelectDeviceBatteryDisplayMode: { _ in },
-            onSetShowsTemperatures: { _ in },
+            onSelectTemperatureDisplayMode: { _ in },
             onSelectSpeedSource: { _ in },
             onRequestLocationAccess: {}
         )

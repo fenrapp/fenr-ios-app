@@ -326,14 +326,14 @@ struct DashboardTemperatureSummaryTests {
             telemetry: telemetry,
             connection: connection,
             speedKilometersPerHour: nil,
-            showsTemperatures: true,
+            temperatureDisplayMode: .both,
             measurementSystem: .metric
         )
         let imperial = mapper.map(
             telemetry: telemetry,
             connection: connection,
             speedKilometersPerHour: nil,
-            showsTemperatures: true,
+            temperatureDisplayMode: .both,
             measurementSystem: .imperial
         )
 
@@ -358,20 +358,34 @@ struct DashboardTemperatureSummaryTests {
         #expect(state.temperatureSummary == .init())
     }
 
-    @Test("Omits temperatures when the dashboard setting is disabled")
-    func hidesTemperaturesFromSettings() {
+    @Test("Filters dashboard temperatures by display mode", arguments: [
+        (DashboardTemperatureDisplayMode.off, nil, nil),
+        (.battery, "26°C", nil),
+        (.inverter, nil, "48°C"),
+        (.both, "26°C", "48°C")
+    ])
+    func filtersTemperaturesFromSettings(
+        mode: DashboardTemperatureDisplayMode,
+        expectedBattery: String?,
+        expectedInverter: String?
+    ) {
+        let telemetry = BikeTelemetry(
+            inverterTemperaturesCelsius: [48],
+            batteryTelemetry: .init(
+                stateOfCharge: .known(percent: 64),
+                positiveBMS: bms(temperatureCelsius: 26)
+            )
+        )
         let state = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_GB")).map(
-            telemetry: .init(
-                batteryLevel: .known(percent: 64),
-                inverterTemperaturesCelsius: [48]
-            ),
+            telemetry: telemetry,
             connection: .init(state: .receivingTelemetry(peripheralName: "SYNTHETIC")),
             speedKilometersPerHour: nil,
-            showsTemperatures: false,
+            temperatureDisplayMode: mode,
             measurementSystem: .metric
         )
 
-        #expect(state.temperatureSummary == .init())
+        #expect(state.temperatureSummary.batteryTemperatureText == expectedBattery)
+        #expect(state.temperatureSummary.inverterTemperatureText == expectedInverter)
     }
 
     private func bms(temperatureCelsius: Double) -> BikeBMSSignalsTelemetry {

@@ -16,4 +16,12 @@ public struct BikeDiagnosticsSpeedFormatter: Sendable {
     public func string(kilometersPerHour: Double) -> String {
         textFormatter.string(from: measurementMapper.speed(kilometersPerHour: kilometersPerHour))
     }
+
+    public func distance(kilometers: Double) -> String {
+        textFormatter.string(from: measurementMapper.distance(kilometers: kilometers))
+    }
+
+    public func temperature(celsius: Double) -> String {
+        textFormatter.string(from: measurementMapper.temperature(celsius: celsius))
+    }
 }

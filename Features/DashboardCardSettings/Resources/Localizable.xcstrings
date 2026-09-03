@@ -60,6 +60,17 @@
         }
       }
     },
+    "dashboard.card.settings.bike.lock.unavailable.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connect a supported bike to enable this card"
+          }
+        }
+      }
+    },
     "dashboard.card.settings.bike.lock.visibility.hint" : {
       "extractionState" : "manual",
       "localizations" : {

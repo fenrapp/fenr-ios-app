@@ -77,4 +77,21 @@ struct AppSettingsPowerModesMapperTests {
 
         #expect(String(localized: state.dashboardCards.detail) == "6 visible")
     }
+
+    @Test("Hides the manual bike model fallback after confirmed Alpha detection")
+    func hidesDerivedBikeModel() {
+        let detected = AppSettingsViewStateMapper().map(
+            settings: .init(),
+            locationAuthorizationStatus: .notDetermined,
+            profile: .init(vin: vin, alphaEvidence: [.powerAboveStandard])
+        )
+        let fallback = AppSettingsViewStateMapper().map(
+            settings: .init(),
+            locationAuthorizationStatus: .notDetermined,
+            profile: .init(vin: vin)
+        )
+
+        #expect(!detected.isBikeModelSelectionVisible)
+        #expect(fallback.isBikeModelSelectionVisible)
+    }
 }

@@ -47,8 +47,7 @@ public final class BikeLockCardViewModel: ObservableObject {
 }
 public extension BikeLockCardViewModel {
     func start() {
-        guard allowsExperimentalControl else { return }
-        guard observationTask == nil else { return }
+        guard allowsExperimentalControl, observationTask == nil else { return }
         observationTask = Task { [weak self, vehicleSession] in
             let stream = await vehicleSession.observe()
             for await snapshot in stream {
@@ -66,7 +65,12 @@ public extension BikeLockCardViewModel {
                     invalidateControlPreparation()
                 }
                 isReceivingTelemetry = true
-                isVehicleStationary = context.isStationary
+                isVehicleStationary = context.canPerformLockWrite
+                if !context.canPrepareNoOp, firmware == nil, hasAttemptedPreparation {
+                    operationTask?.cancel()
+                    operationTask = nil
+                    hasAttemptedPreparation = false
+                }
                 if vehicleIdentifier != vin {
                     operationTask?.cancel()
                     operationTask = nil
@@ -75,14 +79,14 @@ public extension BikeLockCardViewModel {
                     firmware = nil
                     hasAttemptedPreparation = false
                     capabilityStore.update(.init(vehicleIdentifier: vin))
-                    if isVehicleStationary {
+                    if context.canPrepareNoOp {
                         prepare()
                     } else {
                         render()
                     }
                 } else {
                     settings = context.settings
-                    if firmware == nil, !hasAttemptedPreparation, isVehicleStationary {
+                    if firmware == nil, !hasAttemptedPreparation, context.canPrepareNoOp {
                         prepare()
                     } else {
                         render()
@@ -130,7 +134,7 @@ public extension BikeLockCardViewModel {
         guard isReceivingTelemetry, isVehicleStationary else { return }
         guard let mode = BikeLockSecurityMode(rawValue: securityOptionID), mode.isConfigured,
               let vehicleIdentifier else { return }
-        guard !mode.requiresPIN || Self.isValidPIN(pin) else {
+        guard !mode.requiresPIN || UpdateBikeLockSecurityUseCase.isValidPIN(pin) else {
             render(error: rideDashboardLocalized(.rideDashboardBikeLockErrorEnterPIN), sheetUpdate: .present(.setup))
             return
         }
@@ -160,7 +164,7 @@ public extension BikeLockCardViewModel {
     }
     func submitPIN(_ pin: String) {
         guard isReceivingTelemetry, isVehicleStationary else { return }
-        guard let vehicleIdentifier, Self.isValidPIN(pin) else {
+        guard let vehicleIdentifier, UpdateBikeLockSecurityUseCase.isValidPIN(pin) else {
             render(error: rideDashboardLocalized(.rideDashboardBikeLockErrorEnterPIN), sheetUpdate: .present(.enterPIN))
             return
         }
@@ -334,10 +338,6 @@ extension BikeLockCardViewModel {
             sheetUpdate: sheetUpdate,
             currentSheet: viewState.sheet
         ))
-    }
-
-    private static func isValidPIN(_ pin: String) -> Bool {
-        pin.count == 6 && pin.utf8.allSatisfy { (48 ... 57).contains($0) }
     }
 
 #if DEBUG

@@ -65,6 +65,23 @@ struct BatteryHealthViewModelTests {
         #expect(!viewModel.viewState.isMonitoring)
     }
 
+    @Test("Pending monitoring release survives view model teardown")
+    func pendingMonitoringReleaseSurvivesTeardown() async {
+        let repository = FakeBatteryHealthRepository()
+        await repository.delayNextMonitoringStart()
+        var viewModel: BatteryHealthViewModel? = makeBatteryHealthViewModel(repository: repository)
+
+        viewModel?.start()
+        viewModel?.stop()
+        viewModel = nil
+
+        #expect(await waitUntil {
+            let startCount = await repository.monitoringStartCount()
+            let stopCount = await repository.monitoringStopCount()
+            return startCount == 1 && stopCount == 1
+        })
+    }
+
     @Test("Unknown data remains a placeholder and captures never become numeric health values")
     func captureStatus() async {
         let repository = FakeBatteryHealthRepository()
@@ -83,11 +100,12 @@ struct BatteryHealthViewModelTests {
         })
 
         #expect(viewModel.viewState.summary.contains(.init(id: "soc", title: "SOC", value: "--")))
-        #expect(viewModel.viewState.datasets.contains(.init(
-            id: "cellVoltages",
-            title: "Cell voltages",
-            status: .init(text: "Captured 200 B", emphasis: .warning)
-        )))
+        let cellsDataset = viewModel.viewState.datasets.first { $0.id == "cellVoltages" }
+        #expect(cellsDataset?.title == "Cell voltages")
+        #expect(cellsDataset?.status == .init(text: "Captured Only", emphasis: .warning))
+        #expect(cellsDataset?.state == .capturedOnly)
+        #expect(cellsDataset?.byteCount == 200)
+        #expect(cellsDataset?.hex == "AA BB")
         #expect(viewModel.captureLogText().contains("AA BB"))
         viewModel.stop()
     }
@@ -111,11 +129,14 @@ struct BatteryHealthViewModelTests {
         #expect(viewModel.viewState.cells[0].isBalancing)
         #expect(viewModel.viewState.cells[0].isMinimum)
         #expect(viewModel.viewState.cells[1].isMaximum)
-        #expect(viewModel.viewState.temperatures == [.init(position: 1, value: "82.6°F")])
+        #expect(viewModel.viewState.temperatures == [
+            .init(position: 1, value: "82.6°F", emphasis: .positive)
+        ])
         #expect(viewModel.viewState.datasets.contains(.init(
             id: "cellVoltages",
             title: "Cell voltages",
-            status: .init(text: "Validated", emphasis: .positive)
+            status: .init(text: "Decoded", emphasis: .positive),
+            state: .decoded
         )))
         viewModel.stop()
     }
@@ -135,7 +156,8 @@ struct BatteryHealthViewModelTests {
                 maximumPowerWatts: 1_000,
                 targetCellVoltageVolts: 4.275,
                 maximumStateOfChargePercent: 100
-            )
+            ),
+            lastUpdated: Date()
         ))
         #expect(await waitUntil { !viewModel.viewState.charging.isEmpty })
 
@@ -174,7 +196,7 @@ struct BatteryHealthViewModelTests {
 
     @Test("Charge control semantic state maps to localized presentation text")
     func mapsChargeControlSemanticState() {
-        let mapper = BikeBatteryHealthToViewStateMapper(formatter: makeBatteryHealthFormatter())
+        let mapper = makeBatteryHealthMapper()
         let state = mapper.map(
             health: .init(),
             captures: [:],

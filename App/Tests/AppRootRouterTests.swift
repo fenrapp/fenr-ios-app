@@ -47,10 +47,30 @@ struct AppRootRouterTests {
         fixture.router.navigate(to: .settings, reduceMotion: false)
         #expect(fixture.router.path == [.settings])
         fixture.router.minimizeRideNavigation(reduceMotion: true)
-        fixture.router.navigate(to: .diagnostics, reduceMotion: false)
+        fixture.router.navigate(to: .diagnostics(.overview), reduceMotion: false)
 
         #expect(fixture.router.path == [.settings])
         #expect(fixture.router.rideNavigationPresentation == .fullScreen)
+    }
+
+    @Test("Keeps an advanced data family active while navigating through its details")
+    func advancedDataPresentationActivityFollowsVisibleRouteFamily() {
+        let fixture = AppRootRouterFixture()
+
+        fixture.router.navigate(to: .diagnostics(.overview), reduceMotion: true)
+        #expect(fixture.router.isDiagnosticsPresentationActive)
+        #expect(!fixture.router.isBatteryHealthPresentationActive)
+
+        fixture.router.navigate(to: .diagnostics(.telemetry), reduceMotion: true)
+        #expect(fixture.router.isDiagnosticsPresentationActive)
+
+        fixture.router.navigate(to: .batteryHealth(.overview), reduceMotion: true)
+        #expect(!fixture.router.isDiagnosticsPresentationActive)
+        #expect(fixture.router.isBatteryHealthPresentationActive)
+
+        fixture.router.path.removeAll()
+        #expect(!fixture.router.isDiagnosticsPresentationActive)
+        #expect(!fixture.router.isBatteryHealthPresentationActive)
     }
 
     @Test("Routes settings details directly")

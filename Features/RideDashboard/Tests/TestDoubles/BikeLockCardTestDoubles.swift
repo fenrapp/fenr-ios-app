@@ -5,11 +5,15 @@ import SettingsDomain
 
 actor BikeLockCardRepository: BikeRepository {
     private var lockState: Bool
+    private let suspendsPreparation: Bool
     private var prepareRequests = 0
     private var lockRequests: [Bool] = []
+    private var preparationContinuation: CheckedContinuation<Void, any Error>?
+    private var preparationCancellationCount = 0
 
-    init(isLocked: Bool = false) {
+    init(isLocked: Bool = false, suspendsPreparation: Bool = false) {
         lockState = isLocked
+        self.suspendsPreparation = suspendsPreparation
     }
 
     func start() {}
@@ -19,8 +23,17 @@ actor BikeLockCardRepository: BikeRepository {
     func retrySecurityHandshake() throws {}
     func readTelemetrySnapshot() throws {}
 
-    func prepareBikeLockControl() throws -> BikeLockControlSnapshot {
+    func prepareBikeLockControl() async throws -> BikeLockControlSnapshot {
         prepareRequests += 1
+        if suspendsPreparation {
+            try await withTaskCancellationHandler {
+                try await withCheckedThrowingContinuation { continuation in
+                    preparationContinuation = continuation
+                }
+            } onCancel: {
+                Task { await self.cancelPreparation() }
+            }
+        }
         return snapshot()
     }
 
@@ -36,6 +49,21 @@ actor BikeLockCardRepository: BikeRepository {
 
     func recordedPrepareRequests() -> Int { prepareRequests }
     func recordedLockRequests() -> [Bool] { lockRequests }
+    func hasPendingPreparation() -> Bool { preparationContinuation != nil }
+    func recordedPreparationCancellationCount() -> Int { preparationCancellationCount }
+
+    func succeedPreparation() {
+        let continuation = preparationContinuation
+        preparationContinuation = nil
+        continuation?.resume()
+    }
+
+    private func cancelPreparation() {
+        guard let continuation = preparationContinuation else { return }
+        preparationContinuation = nil
+        preparationCancellationCount += 1
+        continuation.resume(throwing: CancellationError())
+    }
 
     private func snapshot() -> BikeLockControlSnapshot {
         .init(vcuFirmware: "1.6.29", isLocked: lockState, didPassNoOpWrite: true)

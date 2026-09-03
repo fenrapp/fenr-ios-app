@@ -89,6 +89,7 @@ public final class AppSettingsViewModel: ObservableObject {
         var updated = settings
         updated.speedSource = speedSource
         settings = updated
+        render()
         save(updated)
     }
 
@@ -97,6 +98,7 @@ public final class AppSettingsViewModel: ObservableObject {
         var updated = settings
         updated.dashboardProgressBarMode = mode
         settings = updated
+        render()
         save(updated)
     }
 
@@ -105,6 +107,7 @@ public final class AppSettingsViewModel: ObservableObject {
         var updated = settings
         updated.dashboardBatteryIndicatorMode = mode
         settings = updated
+        render()
         save(updated)
     }
 
@@ -113,13 +116,16 @@ public final class AppSettingsViewModel: ObservableObject {
         var updated = settings
         updated.dashboardDeviceBatteryDisplayMode = mode
         settings = updated
+        render()
         save(updated)
     }
 
-    public func setShowsDashboardTemperatures(_ isVisible: Bool) {
+    public func selectDashboardTemperatureDisplayMode(id: String) {
+        guard let mode = DashboardTemperatureDisplayMode(rawValue: id) else { return }
         var updated = settings
-        updated.showsDashboardTemperatures = isVisible
+        updated.dashboardTemperatureDisplayMode = mode
         settings = updated
+        render()
         save(updated)
     }
 
@@ -128,6 +134,7 @@ public final class AppSettingsViewModel: ObservableObject {
         var updated = settings
         updated.measurementSystem = measurementSystem
         settings = updated
+        render()
         save(updated)
     }
 
@@ -136,6 +143,7 @@ public final class AppSettingsViewModel: ObservableObject {
         var updated = settings
         updated.setBatteryPackCapacity(batteryPackCapacity, forVIN: vin)
         settings = updated
+        render()
         save(updated)
     }
 
@@ -202,7 +210,6 @@ public final class AppSettingsViewModel: ObservableObject {
     }
 
     private func save(_ settings: AppSettings) {
-        render()
         let previousSaveTask = settingsSaveTask
         let saveSettings = useCases.settings.save
         settingsSaveTask = Task {

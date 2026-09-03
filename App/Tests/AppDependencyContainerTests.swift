@@ -14,9 +14,10 @@ struct AppDependencyContainerTests {
         let container = ProductionAppDependencyContainerFactory.makeDefault()
         let viewModel = container.makeRootDependencies().diagnosticsViewModel
 
-        #expect(viewModel.viewState.vin.isEmpty)
-        #expect(!viewModel.viewState.isConnectEnabled)
+        #expect(viewModel.viewState.vin == "--")
+        #expect(!viewModel.viewState.isReconnectEnabled)
         #expect(viewModel.viewState.debugEvents.isEmpty)
+        #expect(!viewModel.isPresentationActive)
     }
 
     @Test("Container assembles root dependencies before the view is created")
@@ -39,18 +40,15 @@ struct AppDependencyContainerTests {
 
         let client = bikeSDKContainer.makeBikeTelemetryClient(traceRecorder: traceRepository)
         let repository = bikeDataContainer.makeBikeRepository(client: client)
-        let pinDeriver = bikeDataContainer.makeBikePinDeriver()
-        let profileRepository = EmptyBikeProfileRepository()
         let viewModel = diagnosticsContainer.makeBikeDiagnosticsViewModel(
             repository: repository,
-            pinDeriver: pinDeriver,
-            profileRepository: profileRepository,
-            settingsRepository: EmptyAppSettingsRepository(),
+            vehicleSession: LifecycleVehicleSessionSpy(),
             bleTraceLogRepository: traceRepository
         )
 
         #expect(viewModel.viewState.connection.status == "Idle")
-        #expect(viewModel.viewState.metrics.isEmpty)
+        #expect(viewModel.viewState.metrics.allSatisfy { $0.value == "--" })
+        #expect(!viewModel.isPresentationActive)
     }
 
     @Test("Lifecycle starts shared sessions before the BLE repository")

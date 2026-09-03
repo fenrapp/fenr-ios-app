@@ -18,16 +18,30 @@ struct PowerModeSettingsViewModelTests {
         await fixture.vehicleSession.send(snapshot())
         #expect(await waitUntil { fixture.viewModel.viewState.canEditName })
 
-        fixture.viewModel.saveName("Eco")
+        #expect(fixture.viewModel.saveName("Eco"))
         #expect(await waitUntil {
             await fixture.repository.settings.powerModeName(forVIN: vin, mapIndex: 0)?.value == "Eco"
         })
 
         fixture.viewModel.selectMap(index: 1)
-        fixture.viewModel.saveName("ECO")
+        #expect(!fixture.viewModel.saveName("ECO"))
 
         #expect(fixture.viewModel.viewState.nameError == "Use a unique name for each map.")
         #expect(await fixture.repository.settings.powerModeName(forVIN: vin, mapIndex: 1) == nil)
+        fixture.viewModel.stop()
+    }
+
+    @Test("Rejects a name when a bike profile is unavailable")
+    func rejectsNameWithoutProfile() async {
+        let fixture = makeFixture()
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(.init(hasReceivedSettings: true))
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.connectionText == "Bike unavailable"
+        })
+
+        #expect(!fixture.viewModel.saveName("Eco"))
+        #expect(fixture.viewModel.viewState.nameError == "A bike profile is required to save map names.")
         fixture.viewModel.stop()
     }
 
@@ -80,6 +94,42 @@ struct PowerModeSettingsViewModelTests {
         #expect(fixture.viewModel.viewState.adjustments[2].value == 20)
         #expect(fixture.viewModel.viewState.adjustments[3].value == 30)
         fixture.viewModel.stop()
+    }
+
+    @Test("Publishes applying and confirmed feedback only after write confirmation")
+    func publishesApplyingAndConfirmedFeedback() async {
+        let writeOperation = ControllablePowerModeSettingsOperation()
+        let bikeRepository = PowerModeSettingsBikeRepository(baseWriteOperation: writeOperation)
+        let fixture = makeFixture(bikeRepository: bikeRepository)
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(connectedSnapshot())
+        #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
+
+        fixture.viewModel.updateAdjustment(id: .power, value: 50)
+        #expect(await waitUntil { await writeOperation.pendingCount == 1 })
+        #expect(feedback(for: .power, in: fixture.viewModel).state == .applying)
+        #expect(feedback(for: .power, in: fixture.viewModel).isActivity)
+        #expect(fixture.viewModel.viewState.adjustments.allSatisfy { adjustment in
+            adjustment.id == .power || adjustment.feedback.state == .idle
+        })
+
+        await writeOperation.succeedNext()
+        #expect(await waitUntil {
+            feedback(for: .power, in: fixture.viewModel).state == .confirmed
+        })
+        #expect(fixture.viewModel.viewState.adjustments[0].value == 50)
+
+        fixture.viewModel.updateAdjustment(id: .regeneration, value: 20)
+        #expect(await waitUntil { await writeOperation.pendingCount == 1 })
+        #expect(feedback(for: .power, in: fixture.viewModel).state == .idle)
+        #expect(feedback(for: .regeneration, in: fixture.viewModel).state == .applying)
+        await writeOperation.succeedNext()
+        #expect(await waitUntil {
+            feedback(for: .regeneration, in: fixture.viewModel).state == .confirmed
+        })
+
+        fixture.viewModel.stop()
+        #expect(feedback(for: .regeneration, in: fixture.viewModel).state == .idle)
     }
 }
 
@@ -182,18 +232,18 @@ extension PowerModeSettingsViewModelTests {
 
         fixture.viewModel.updateAdjustment(id: .power, value: 50)
         #expect(await waitUntil { await writeOperation.pendingCount == 1 })
-        fixture.viewModel.updateAdjustment(id: .regeneration, value: -30)
+        fixture.viewModel.updateAdjustment(id: .regeneration, value: 30)
         #expect(await bikeRepository.requestedWrites.count == 1)
         await writeOperation.succeedNext()
         #expect(await waitUntil { await bikeRepository.writes.count == 1 })
 
-        fixture.viewModel.updateAdjustment(id: .regeneration, value: -30)
+        fixture.viewModel.updateAdjustment(id: .regeneration, value: 30)
         #expect(await waitUntil { await writeOperation.pendingCount == 1 })
         await writeOperation.succeedNext()
         #expect(await waitUntil {
             await bikeRepository.writes == [
                 .init(mapIndex: 0, horsepower: 50, regenerativeBrakingPercent: 40),
-                .init(mapIndex: 0, horsepower: 50, regenerativeBrakingPercent: -30)
+                .init(mapIndex: 0, horsepower: 50, regenerativeBrakingPercent: 30)
             ]
         })
         fixture.viewModel.stop()
@@ -225,6 +275,7 @@ extension PowerModeSettingsViewModelTests {
         #expect(await waitUntil { await writeOperation.pendingCount == 1 })
         fixture.viewModel.selectMap(index: 2)
         #expect(await waitUntil { await preparation.requestCount == 3 })
+        #expect(feedback(for: .power, in: fixture.viewModel).state == .idle)
         await writeOperation.succeedNext()
         #expect(fixture.viewModel.viewState.selectedMapIndex == 2)
         #expect(fixture.viewModel.viewState.statusText != "Map 2 confirmed by the bike")
@@ -254,6 +305,27 @@ extension PowerModeSettingsViewModelTests {
         fixture.viewModel.stop()
     }
 
+    @Test("Disconnect clears confirmed control feedback")
+    func disconnectClearsConfirmedControlFeedback() async {
+        let fixture = makeFixture()
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(connectedSnapshot())
+        #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
+
+        fixture.viewModel.updateAdjustment(id: .power, value: 50)
+        #expect(await waitUntil {
+            feedback(for: .power, in: fixture.viewModel).state == .confirmed
+        })
+
+        await fixture.vehicleSession.send(.init(
+            connection: .init(state: .disconnected(reason: "Connection lost"))
+        ))
+        #expect(await waitUntil {
+            feedback(for: .power, in: fixture.viewModel).state == .idle
+        })
+        fixture.viewModel.stop()
+    }
+
     @Test("Write failure keeps confirmed values and requires fresh verification")
     func writeFailureDoesNotPublishUnconfirmedValuesAndRequiresFreshVerification() async {
         let writeOperation = ControllablePowerModeSettingsOperation()
@@ -271,8 +343,11 @@ extension PowerModeSettingsViewModelTests {
         #expect(!fixture.viewModel.viewState.statusText.contains("write failed"))
         #expect(fixture.viewModel.viewState.adjustments[0].value == 35)
         #expect(!fixture.viewModel.viewState.adjustments[0].isEnabled)
+        #expect(feedback(for: .power, in: fixture.viewModel).state == .failed)
+        #expect(feedback(for: .power, in: fixture.viewModel).title == "Unable to apply the map. Try again.")
 
         fixture.viewModel.refresh()
+        #expect(feedback(for: .power, in: fixture.viewModel).state == .idle)
         #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
         fixture.viewModel.stop()
     }
@@ -392,6 +467,13 @@ extension PowerModeSettingsViewModelTests {
     private func controlsAreEnabled(_ viewModel: PowerModeSettingsViewModel) -> Bool {
         let adjustments = viewModel.viewState.adjustments
         return adjustments.count == 4 && adjustments.allSatisfy(\.isEnabled)
+    }
+
+    private func feedback(
+        for id: PowerModeAdjustmentID,
+        in viewModel: PowerModeSettingsViewModel
+    ) -> PowerModeControlFeedback {
+        viewModel.viewState.adjustments.first { $0.id == id }?.feedback ?? .idle
     }
     private struct Fixture {
         let viewModel: PowerModeSettingsViewModel

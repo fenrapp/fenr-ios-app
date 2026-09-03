@@ -14,10 +14,12 @@ struct DashboardCardSettingsViewStateMapperTests {
 
         #expect(state.fixedCards.map { String(localized: $0.title) } == ["Speedometer", "Charging"])
         #expect(state.sections.map { String(localized: $0.title) } == [
-            "Ride Navigation", "Current Trip", "Efficiency", "Range", "System Health", "Ride Dynamics"
+            "Bike Lock", "Ride Navigation", "Current Trip", "Efficiency", "Range", "System Health", "Ride Dynamics"
         ])
         #expect(state.sections.first.map { String(localized: $0.detail) }
-            == "Open ride navigation from the dashboard")
+            == "Connect a supported bike to enable this card")
+        #expect(state.sections.first?.isVisible == false)
+        #expect(state.sections.first?.isVisibilityEnabled == false)
     }
 
     @Test("Publishes compatible Bike Lock and prevents hiding configured protection")

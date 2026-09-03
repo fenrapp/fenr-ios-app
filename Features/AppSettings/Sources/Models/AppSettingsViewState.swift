@@ -3,10 +3,11 @@ public struct AppSettingsViewState: Equatable, Sendable {
     public let dashboardProgressBarMode: DashboardProgressBarSettingsViewState
     public let dashboardBatteryIndicatorMode: AppSettingsSelectionViewState
     public let dashboardDeviceBatteryDisplayMode: AppSettingsSelectionViewState
-    public let showsDashboardTemperatures: Bool
+    public let dashboardTemperatureDisplayMode: AppSettingsSelectionViewState
     public let measurementSystem: AppSettingsSelectionViewState
     public let batteryCapacity: AppSettingsSelectionViewState
     public let powerTier: PowerTierSettingsViewState
+    public let isBikeModelSelectionVisible: Bool
     public let rideDisplay: SettingsNavigationSummaryViewData
     public let dashboardCards: SettingsNavigationSummaryViewData
     public let powerModes: SettingsNavigationSummaryViewData
@@ -22,10 +23,14 @@ public struct AppSettingsViewState: Equatable, Sendable {
             selectedID: "iconAndText",
             options: []
         ),
-        showsDashboardTemperatures: Bool = false,
+        dashboardTemperatureDisplayMode: AppSettingsSelectionViewState = .init(
+            selectedID: "off",
+            options: []
+        ),
         measurementSystem: AppSettingsSelectionViewState,
         batteryCapacity: AppSettingsSelectionViewState,
         powerTier: PowerTierSettingsViewState? = nil,
+        isBikeModelSelectionVisible: Bool = true,
         rideDisplay: SettingsNavigationSummaryViewData? = nil,
         dashboardCards: SettingsNavigationSummaryViewData? = nil,
         powerModes: SettingsNavigationSummaryViewData? = nil
@@ -37,13 +42,14 @@ public struct AppSettingsViewState: Equatable, Sendable {
         )
         self.dashboardBatteryIndicatorMode = dashboardBatteryIndicatorMode
         self.dashboardDeviceBatteryDisplayMode = dashboardDeviceBatteryDisplayMode
-        self.showsDashboardTemperatures = showsDashboardTemperatures
+        self.dashboardTemperatureDisplayMode = dashboardTemperatureDisplayMode
         self.measurementSystem = measurementSystem
         self.batteryCapacity = batteryCapacity
         self.powerTier = powerTier ?? .init(
             selection: .init(selectedID: "standard", options: []),
             status: .appSettingsPowerTierStandardBaseline
         )
+        self.isBikeModelSelectionVisible = isBikeModelSelectionVisible
         self.rideDisplay = rideDisplay ?? .init(detail: .appSettingsRideDisplayDefaultSummary)
         self.dashboardCards = dashboardCards ?? .init(detail: .appSettingsDashboardCardsDefaultSummary)
         self.powerModes = powerModes ?? .init(detail: .appSettingsPowerModesConfigured)

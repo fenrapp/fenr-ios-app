@@ -1,56 +1,106 @@
 import SwiftUI
 
-#Preview("Adjustment · Ready") {
-    Form {
-        PowerModeAdjustmentRow(
-            state: previewAdjustment(isEnabled: true),
-            commit: { _ in }
-        )
+#Preview("Controls") {
+    List {
+        Section("Performance") {
+            PowerModeAdjustmentRow(
+                state: previewAdjustment(id: .power, value: 58),
+                commit: { _ in }
+            )
+            PowerModeAdjustmentRow(
+                state: previewAdjustment(id: .regeneration, value: 42),
+                commit: { _ in }
+            )
+        }
+
+        Section("Traction") {
+            PowerModeAdjustmentRow(
+                state: previewAdjustment(
+                    id: .powerTraction,
+                    value: 65,
+                    feedback: .init(
+                        state: .confirmed,
+                        title: "Confirmed",
+                        systemImage: "checkmark.circle.fill",
+                        emphasis: .positive
+                    )
+                ),
+                commit: { _ in }
+            )
+        }
     }
 }
 
-#Preview("Adjustment · Accessibility XXXL") {
-    Form {
-        PowerModeAdjustmentRow(
-            state: previewAdjustment(isEnabled: false),
-            commit: { _ in }
-        )
-    }
-    .environment(\.dynamicTypeSize, .accessibility3)
-}
-
-#Preview("Name and status · Accessibility XXXL") {
-    Form {
+#Preview("Status and selector · Accessibility XXXL") {
+    List {
         PowerModeStatusPanel(
-            connectionText: "Bike connected",
-            capabilityText: "Alpha capability detected · 80 HP",
-            statusText: "Unable to apply traction control",
-            statusIsError: true
+            status: .init(
+                title: "Controls unavailable",
+                detail: "Unable to apply traction control. Try again.",
+                systemImage: "exclamationmark.triangle.fill",
+                emphasis: .critical,
+                isActivity: false
+            ),
+            canRetry: true,
+            retry: {}
         )
-        PowerModeNameEditor(
-            mapIndex: 0,
-            currentName: "Enduro",
-            maximumLength: 10,
-            isEnabled: true,
-            error: "Use a unique name for each map.",
-            save: { _ in },
-            reset: {}
+        PowerModeSelector(
+            maps: previewMaps,
+            select: { _ in }
         )
     }
     .environment(\.dynamicTypeSize, .accessibility3)
 }
 
-private func previewAdjustment(isEnabled: Bool) -> PowerModeAdjustmentViewState {
-    .init(
-        id: .regeneration,
-        title: "Regenerative braking",
-        value: -42,
-        valueText: "-42",
-        unit: "%",
-        minimum: -100,
-        maximum: 100,
-        step: 1,
-        isEnabled: isEnabled,
-        localeIdentifier: "en_US"
+#Preview("Edit map name") {
+    PowerModeNameEditor(
+        mapIndex: 0,
+        currentName: "Enduro",
+        maximumLength: 10,
+        isEnabled: true,
+        error: "Use a unique name for each map.",
+        save: { _ in false },
+        reset: {}
     )
+}
+
+private var previewMaps: [PowerModeMapViewData] {
+    (0 ... 4).map { index in
+        .init(
+            id: index,
+            title: index == 0 ? "Enduro" : "\(index + 1)",
+            accessibilityLabel: index == 0 ? "Map 1, Enduro" : "Map \(index + 1)",
+            isSelected: index == 0
+        )
+    }
+}
+
+private func previewAdjustment(
+    id: PowerModeAdjustmentID,
+    value: Double,
+    feedback: PowerModeControlFeedback = .idle
+) -> PowerModeAdjustmentViewState {
+    let isPower = id == .power
+    return .init(
+        id: id,
+        title: previewTitle(for: id),
+        value: value,
+        valueText: value.formatted(),
+        unit: isPower ? "HP" : "%",
+        minimum: isPower ? 10 : 0,
+        maximum: isPower ? 80 : 100,
+        step: 1,
+        isEnabled: true,
+        localeIdentifier: "en_US",
+        feedback: feedback
+    )
+}
+
+private func previewTitle(for id: PowerModeAdjustmentID) -> String {
+    switch id {
+    case .power: "Power"
+    case .regeneration: "Regenerative braking"
+    case .powerTraction: "Traction control"
+    case .brakingTraction: "Regen traction control"
+    }
 }

@@ -83,6 +83,33 @@ struct RideHistoryMapperTests {
         #expect(state.efficiencyUnit == "Wh/km")
     }
 
+    @Test("Bounds chart marks for long rides while retaining endpoints and peaks")
+    func downsamplesLongRideCharts() {
+        let date = Date(timeIntervalSince1970: 6_000)
+        let spikeIndex = 217
+        let buckets = RideHistoryFixtures.denseBuckets(
+            startedAt: date,
+            count: 500,
+            spikeIndex: spikeIndex
+        )
+        let trip = RideHistoryFixtures.trip(startedAt: date, buckets: buckets)
+
+        let state = mapper.mapDetail(
+            trip: trip,
+            history: [trip],
+            measurementSystem: .metric
+        )
+
+        #expect(state.batteryPoints.count <= 120)
+        #expect(state.efficiencyPoints.count <= 120)
+        #expect(state.batteryPoints.first?.id == buckets.first?.id)
+        #expect(state.batteryPoints.last?.id == buckets.last?.id)
+        #expect(state.efficiencyPoints.first?.id == buckets.first?.id)
+        #expect(state.efficiencyPoints.last?.id == buckets.last?.id)
+        #expect(state.efficiencyPoints.contains(where: { $0.id == buckets[spikeIndex].id }))
+        #expect(state.efficiencyPoints.map(\.distance) == state.efficiencyPoints.map(\.distance).sorted())
+    }
+
     @Test("Omits efficiency comparison when electrical coverage is partial")
     func excludesPartialEfficiency() {
         let date = Date(timeIntervalSince1970: 9_000)

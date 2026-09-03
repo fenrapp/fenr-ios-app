@@ -42,7 +42,7 @@ public struct AppSettingsView: View {
             dashboardSection
             bikeSection
             appSection
-            dataSection
+            advancedSection
             #else
             watchSettings
             #endif
@@ -88,6 +88,14 @@ public struct AppSettingsView: View {
                 accessibilityIdentifier: "settings.dashboardCards",
                 action: onOpenDashboardCards
             )
+            SettingsNavigationRow(
+                icon: "clock.arrow.circlepath",
+                iconTint: .cyan,
+                title: .appSettingsRideHistoryTitle,
+                detail: .appSettingsRideHistoryDetail,
+                accessibilityIdentifier: "settings.rideHistory",
+                action: onOpenRideHistory
+            )
         } header: {
             Text(.appSettingsDashboardSection)
         }
@@ -103,14 +111,16 @@ public struct AppSettingsView: View {
                 accessibilityIdentifier: "settings.powerModes",
                 action: onOpenPowerModes
             )
-            SettingsNavigationRow(
-                icon: "motorcycle",
-                iconTint: .purple,
-                title: .appSettingsBikeModelTitle,
-                detail: viewModel.viewState.powerTier.navigationDetail,
-                accessibilityIdentifier: "settings.bikeModel",
-                action: onOpenBikeModel
-            )
+            if viewModel.viewState.isBikeModelSelectionVisible {
+                SettingsNavigationRow(
+                    icon: "motorcycle",
+                    iconTint: .purple,
+                    title: .appSettingsBikeModelTitle,
+                    detail: viewModel.viewState.powerTier.navigationDetail,
+                    accessibilityIdentifier: "settings.bikeModel",
+                    action: onOpenBikeModel
+                )
+            }
             SettingsNavigationRow(
                 icon: "lock.fill",
                 iconTint: .green,
@@ -145,16 +155,8 @@ public struct AppSettingsView: View {
         }
     }
 
-    private var dataSection: some View {
+    private var advancedSection: some View {
         Section {
-            SettingsNavigationRow(
-                icon: "clock.arrow.circlepath",
-                iconTint: .cyan,
-                title: .appSettingsRideHistoryTitle,
-                detail: .appSettingsRideHistoryDetail,
-                accessibilityIdentifier: "settings.rideHistory",
-                action: onOpenRideHistory
-            )
             SettingsNavigationRow(
                 icon: "waveform.path.ecg",
                 iconTint: .red,
@@ -164,7 +166,7 @@ public struct AppSettingsView: View {
                 action: onOpenTelemetry
             )
         } header: {
-            Text(.appSettingsDataDiagnosticsSection)
+            Text(.appSettingsAdvancedSection)
         }
     }
     #else

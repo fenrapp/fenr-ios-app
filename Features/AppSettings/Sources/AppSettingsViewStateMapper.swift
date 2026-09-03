@@ -49,7 +49,7 @@ public struct AppSettingsViewStateMapper: Sendable {
                     .init(id: $0.rawValue, title: dashboardDeviceBatteryDisplayModeTitle($0))
                 }
             ),
-            showsDashboardTemperatures: settings.showsDashboardTemperatures,
+            dashboardTemperatureDisplayMode: temperatureDisplayMode(settings.dashboardTemperatureDisplayMode),
             measurementSystem: .init(
                 selectedID: settings.measurementSystem.rawValue,
                 options: MeasurementSystem.allCases.map {
@@ -69,6 +69,7 @@ public struct AppSettingsViewStateMapper: Sendable {
                 verificationMessage: verificationMessage,
                 verificationMessageIsError: verificationMessageIsError
             ),
+            isBikeModelSelectionVisible: profile?.alphaEvidence.isEmpty != false,
             rideDisplay: .init(detail: rideDisplayDetail(settings: settings)),
             dashboardCards: .init(detail: dashboardCardsDetail(settings.dashboardCardConfiguration)),
             powerModes: powerModes(settings: settings, profile: profile)
@@ -215,6 +216,28 @@ public struct AppSettingsViewStateMapper: Sendable {
         case .iconOnly: .appSettingsDeviceBatteryIconOnly
         case .hidden: .appSettingsCommonHidden
         }
+    }
+
+    private func dashboardTemperatureDisplayModeTitle(
+        _ mode: DashboardTemperatureDisplayMode
+    ) -> LocalizedStringResource {
+        switch mode {
+        case .off: .appSettingsTemperaturesOff
+        case .battery: .appSettingsTemperaturesBattery
+        case .inverter: .appSettingsTemperaturesInverter
+        case .both: .appSettingsTemperaturesBoth
+        }
+    }
+
+    private func temperatureDisplayMode(
+        _ mode: DashboardTemperatureDisplayMode
+    ) -> AppSettingsSelectionViewState {
+        .init(
+            selectedID: mode.rawValue,
+            options: DashboardTemperatureDisplayMode.allCases.map {
+                .init(id: $0.rawValue, title: dashboardTemperatureDisplayModeTitle($0))
+            }
+        )
     }
 
     private func speedSourceDescription(_ source: SpeedSource) -> LocalizedStringResource {

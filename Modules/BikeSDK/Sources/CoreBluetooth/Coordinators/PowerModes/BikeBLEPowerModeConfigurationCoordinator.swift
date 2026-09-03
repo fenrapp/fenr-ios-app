@@ -99,26 +99,30 @@ final class BikeBLEPowerModeConfigurationCoordinator {
             regenerativeBrakingPercent: regenerativeBrakingPercent,
             curve: writeCurve
         )
-        try await transport.writeConfiguration(packet)
-        try await Task.sleep(for: Constants.writeVerificationDelay)
-        let verified = try await readPowerModeConfiguration(mapIndex: mapIndex)
-        guard verified.horsepower == horsepower,
-              Int(verified.regenerativeBrakingPercent.rounded()) == regenerativeBrakingPercent,
-              StarkPowerModeConfigurationCommand.isSupportedReadCurve(
-                  verified.curve,
-                  mapIndex: mapIndex
-              )
-        else {
-            preparedConfigurations[mapIndex] = nil
-            throw BikeSDKError.operationFailed(
-                "Power mode write was not confirmed by the VCU response"
+        do {
+            try await transport.writeConfiguration(packet)
+            try await Task.sleep(for: Constants.writeVerificationDelay)
+            let verified = try await readPowerModeConfiguration(mapIndex: mapIndex)
+            guard verified.horsepower == horsepower,
+                  Int(verified.regenerativeBrakingPercent.rounded()) == regenerativeBrakingPercent,
+                  StarkPowerModeConfigurationCommand.isSupportedReadCurve(
+                      verified.curve,
+                      mapIndex: mapIndex
+                  )
+            else {
+                throw BikeSDKError.operationFailed(
+                    "Power mode write was not confirmed by the VCU response"
+                )
+            }
+            preparedConfigurations[mapIndex] = verified
+            await report(
+                "4005 map \(mapIndex) write verified hp=\(horsepower) "
+                    + "regen=\(regenerativeBrakingPercent)% packet=\(packet.bikeSDKHexString)"
             )
+        } catch {
+            preparedConfigurations[mapIndex] = nil
+            throw error
         }
-        preparedConfigurations[mapIndex] = verified
-        await report(
-            "4005 map \(mapIndex) write verified hp=\(horsepower) "
-                + "regen=\(regenerativeBrakingPercent)% packet=\(packet.bikeSDKHexString)"
-        )
     }
 
     func reset() {

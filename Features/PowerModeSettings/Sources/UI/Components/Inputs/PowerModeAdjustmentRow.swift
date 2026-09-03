@@ -7,53 +7,50 @@ struct PowerModeAdjustmentRow: View {
 
     let state: PowerModeAdjustmentViewState
     let commit: (Double) -> Void
-    @State private var draftValue: Double
-
-    init(state: PowerModeAdjustmentViewState, commit: @escaping (Double) -> Void) {
-        self.state = state
-        self.commit = commit
-        _draftValue = State(
-            initialValue: state.value.map { Self.clamped($0, to: state) } ?? state.minimum
-        )
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.spacing) {
-            adjustmentHeader
-
-            if state.value != nil {
-                Slider(
-                    value: $draftValue,
+            if let value = state.value {
+                CommitSlider(
+                    value: value,
                     in: state.minimum ... state.maximum,
                     step: state.step,
-                    onEditingChanged: { isEditing in
-                        guard !isEditing else { return }
-                        commit(draftValue)
+                    appearance: appearance,
+                    isEnabled: state.isEnabled,
+                    accessibilityLabel: state.title,
+                    accessibilityValue: valueText,
+                    onCommit: commit,
+                    header: { displayedValue in
+                        adjustmentHeader(displayedValue)
+                    },
+                    footer: {
+                        adjustmentFooter
                     }
                 )
-                .disabled(!state.isEnabled)
-                .onChange(of: state) { _, nextState in
-                    guard let nextValue = nextState.value else { return }
-                    draftValue = Self.clamped(nextValue, to: nextState)
-                }
+            } else {
+                adjustmentHeader(state.minimum)
+            }
+
+            if state.feedback.state != .idle {
+                PowerModeControlFeedbackView(feedback: state.feedback)
             }
         }
         .accessibilityElement(children: .contain)
     }
 
     @ViewBuilder
-    private var adjustmentHeader: some View {
+    private func adjustmentHeader(_ displayedValue: Double) -> some View {
         if dynamicTypeSize.isAccessibilitySize {
             VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
                 title
-                value
+                value(displayedValue)
             }
             .fixedSize(horizontal: false, vertical: true)
         } else {
             HStack {
                 title
                 Spacer()
-                value
+                value(displayedValue)
             }
         }
     }
@@ -63,16 +60,52 @@ struct PowerModeAdjustmentRow: View {
             .font(.callout.weight(.medium))
     }
 
-    private var value: some View {
-        Text(valueText)
+    private func value(_ displayedValue: Double) -> some View {
+        Text(valueText(displayedValue))
             .font(.callout.weight(.semibold))
             .monospacedDigit()
     }
 
-    private var valueText: String {
+    private func valueText(_ displayedValue: Double) -> String {
         guard state.value != nil else { return state.valueText }
-        let value = state.isEnabled ? formatted(draftValue) : state.valueText
+        let value = state.isEnabled ? formatted(displayedValue) : state.valueText
         return String(localized: .powerModeSettingsMeasurement(value, state.unit))
+    }
+
+    private var adjustmentFooter: some View {
+        HStack {
+            Text(measurement(state.minimum))
+            Spacer()
+            Text(measurement(state.maximum))
+        }
+        .font(.caption2.monospacedDigit())
+        .foregroundStyle(DesignColor.secondaryText)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            Text(.powerModeSettingsRangeAccessibility(
+                measurement(state.minimum),
+                measurement(state.maximum)
+            ))
+        )
+    }
+
+    private var appearance: CommitSliderAppearance {
+        switch state.id {
+        case .power, .regeneration:
+            .init(
+                gradientStops: [
+                    .init(color: Color.yellow, location: 0),
+                    .init(color: Color.orange, location: 1)
+                ]
+            )
+        case .powerTraction, .brakingTraction:
+            .init(
+                gradientStops: [
+                    .init(color: Color.teal, location: 0),
+                    .init(color: Color.blue, location: 1)
+                ]
+            )
+        }
     }
 
     private func formatted(_ value: Double) -> String {
@@ -83,8 +116,8 @@ struct PowerModeAdjustmentRow: View {
         )
     }
 
-    private static func clamped(_ value: Double, to state: PowerModeAdjustmentViewState) -> Double {
-        min(max(value, state.minimum), state.maximum)
+    private func measurement(_ value: Double) -> String {
+        String(localized: .powerModeSettingsMeasurement(formatted(value), state.unit))
     }
 
     private enum Constants {

@@ -4,7 +4,10 @@ import VehicleSession
 
 actor FakeBatteryHealthVehicleSession: VehicleSessionService {
     private let repository: any BikeBatteryHealthRepository
-    private let monitoringState: VehicleBatteryHealthMonitoringState
+    private var monitoringState: VehicleBatteryHealthMonitoringState
+    private var profile: BikeProfile?
+    private var hasReceivedProfile = false
+    private var connection = BikeConnection()
 
     init(
         repository: any BikeBatteryHealthRepository,
@@ -21,10 +24,7 @@ actor FakeBatteryHealthVehicleSession: VehicleSessionService {
                 let stream = await repository.observeBatteryHealth()
                 for await health in stream {
                     guard !Task.isCancelled else { return }
-                    continuation.yield(.init(
-                        batteryHealth: health,
-                        batteryHealthMonitoringState: monitoringState
-                    ))
+                    continuation.yield(self.snapshot(health: health))
                 }
             }
             continuation.onTermination = { _ in task.cancel() }
@@ -42,5 +42,24 @@ actor FakeBatteryHealthVehicleSession: VehicleSessionService {
         } else {
             await repository.stopBatteryHealthMonitoring()
         }
+    }
+
+    func setProfile(_ profile: BikeProfile?) {
+        self.profile = profile
+        hasReceivedProfile = true
+    }
+
+    func setConnection(_ state: ConnectionState) {
+        connection.state = state
+    }
+
+    private func snapshot(health: BikeBatteryHealth) -> VehicleSessionSnapshot {
+        .init(
+            connection: connection,
+            profile: profile,
+            batteryHealth: health,
+            batteryHealthMonitoringState: monitoringState,
+            hasReceivedProfile: hasReceivedProfile
+        )
     }
 }

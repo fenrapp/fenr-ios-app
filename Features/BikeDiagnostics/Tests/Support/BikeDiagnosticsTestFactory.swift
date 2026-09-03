@@ -7,24 +7,16 @@ import MeasurementPresentation
 @MainActor
 func makeViewModel(
     repository: FakeBikeDiagnosticsRepository,
-    profileRepository: any BikeProfileRepository = FakeBikeProfileRepository(),
+    session: FakeVehicleSession = FakeVehicleSession(),
     traceRepository: any BLETraceLogRepository = NoOpBLETraceRepository()
 ) -> BikeDiagnosticsViewModel {
-    let pinDeriver = FakeBikePinDeriver()
-    return BikeDiagnosticsViewModel(
+    BikeDiagnosticsViewModel(
         useCases: BikeDiagnosticsUseCases(
-            start: .init(repository: repository),
-            stop: .init(repository: repository),
+            session: session,
             connect: .init(repository: repository),
             disconnect: .init(repository: repository),
             retrySecurityHandshake: .init(repository: repository),
-            readTelemetrySnapshot: .init(repository: repository),
-            observeTelemetry: .init(repository: repository),
-            observeConnection: .init(repository: repository),
             observeDebugEvents: .init(repository: repository),
-            derivePin: .init(pinDeriver: pinDeriver),
-            loadProfile: .init(repository: profileRepository),
-            observeSettings: .init(repository: FakeAppSettingsRepository()),
             observeBLETraceSessions: .init(repository: traceRepository),
             prepareBLETraceExport: .init(repository: traceRepository),
             deleteBLETraceSession: .init(repository: traceRepository),
@@ -64,7 +56,8 @@ func makeMappers() -> BikeDiagnosticsMappers {
             ),
             badgesMapper: .init(runStateMapper: .init()),
             rawFlagsMapper: .init(),
-            debugEventMapper: .init(dateFormatStyle: dateFormatStyle)
+            debugEventMapper: .init(dateFormatStyle: dateFormatStyle),
+            speedFormatter: speedFormatter
         ),
         bleTraceSession: .init(
             dateFormatStyle: Date.FormatStyle(date: .abbreviated, time: .standard),

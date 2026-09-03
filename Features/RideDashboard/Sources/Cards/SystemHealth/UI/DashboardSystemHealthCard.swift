@@ -25,16 +25,11 @@ struct DashboardSystemHealthCard: View {
     }
 
     private var healthRing: some View {
-        ZStack {
-            Circle()
-                .stroke(DesignColor.inactive, lineWidth: Constants.ringLineWidth)
-            Circle()
-                .trim(from: .zero, to: state.stateOfHealthProgress)
-                .stroke(
-                    statusColor.gradient,
-                    style: StrokeStyle(lineWidth: Constants.ringLineWidth, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
+        ProgressRing(
+            progress: state.stateOfHealthProgress,
+            color: statusColor,
+            lineWidth: Constants.ringLineWidth
+        ) {
             VStack(spacing: DesignSpace.extraExtraSmall) {
                 Text(state.stateOfHealthText)
                     .font(.system(size: Constants.healthFontSize, weight: .medium, design: .rounded))

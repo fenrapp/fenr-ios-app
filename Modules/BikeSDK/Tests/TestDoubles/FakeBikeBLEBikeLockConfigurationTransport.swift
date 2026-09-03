@@ -13,6 +13,7 @@ final class FakeBikeBLEBikeLockConfigurationTransport: BikeBLEBikeLockConfigurat
         timeoutSeconds: 0
     )
     var ignoresWrites = false
+    var writeError: BikeSDKError?
 
     func ensureReady() throws {}
 
@@ -39,6 +40,7 @@ final class FakeBikeBLEBikeLockConfigurationTransport: BikeBLEBikeLockConfigurat
 
     func writeConfiguration(_ payload: Data) async throws {
         writePayloads.append(payload)
+        if let writeError { throw writeError }
         guard !ignoresWrites else { return }
         configuration = .init(
             isLocked: payload[3] == 1,

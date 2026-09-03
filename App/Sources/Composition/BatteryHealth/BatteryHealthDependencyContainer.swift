@@ -14,23 +14,39 @@ struct BatteryHealthDependencyContainer {
         chargeControl: ChargeControlSession
     ) -> BatteryHealthViewModel {
         let locale = Locale.autoupdatingCurrent
+        let analyzer = BatteryHealthAnalyzer()
+        let captureFormatter = BatteryHealthCaptureFormatter(
+            dateFormatStyle: Date.FormatStyle(date: .omitted, time: .standard)
+        )
         return BatteryHealthViewModel(
             useCases: .init(
                 observeCaptures: ObserveBatteryDatasetCapturesUseCase(repository: repository)
             ),
             vehicleSession: vehicleSession,
-            mapper: Self.makeMapper(measurementSystem: .system, locale: locale),
+            mapper: Self.makeMapper(
+                measurementSystem: .system,
+                locale: locale,
+                analyzer: analyzer,
+                captureFormatter: captureFormatter
+            ),
             makeMapper: { measurementSystem in
-                Self.makeMapper(measurementSystem: measurementSystem, locale: locale)
+                Self.makeMapper(
+                    measurementSystem: measurementSystem,
+                    locale: locale,
+                    analyzer: analyzer,
+                    captureFormatter: captureFormatter
+                )
             },
             chargeControl: chargeControl,
-            captureTimeFormatStyle: Date.FormatStyle(date: .omitted, time: .standard)
+            captureFormatter: captureFormatter
         )
     }
 
     private static func makeMapper(
         measurementSystem: MeasurementSystem,
-        locale: Locale
+        locale: Locale,
+        analyzer: BatteryHealthAnalyzer,
+        captureFormatter: BatteryHealthCaptureFormatter
     ) -> BikeBatteryHealthToViewStateMapper {
         BikeBatteryHealthToViewStateMapper(
             formatter: BatteryHealthFormatter(
@@ -39,7 +55,10 @@ struct BatteryHealthDependencyContainer {
                     measurementSystem: measurementSystem.resolved(for: locale)
                 ),
                 measurementTextFormatter: VehicleMeasurementTextFormatter(locale: locale)
-            )
+            ),
+            analyzer: analyzer,
+            captureFormatter: captureFormatter,
+            now: Date.init
         )
     }
 }

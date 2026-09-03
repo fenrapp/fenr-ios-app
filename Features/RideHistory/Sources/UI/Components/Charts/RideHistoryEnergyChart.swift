@@ -26,12 +26,14 @@ struct RideHistoryEnergyChart: View {
 
     @ViewBuilder
     private var chart: some View {
+        let distanceLabel = String(localized: .rideHistoryMetricDistance)
         switch effectiveSelection {
         case .battery:
+            let batteryLabel = String(localized: .rideHistoryMetricBattery)
             Chart(state.batteryPoints) { point in
                 AreaMark(
-                    x: .value(String(localized: .rideHistoryMetricDistance), point.distance),
-                    y: .value(String(localized: .rideHistoryMetricBattery), point.value)
+                    x: .value(distanceLabel, point.distance),
+                    y: .value(batteryLabel, point.value)
                 )
                 .foregroundStyle(
                     .linearGradient(
@@ -44,8 +46,8 @@ struct RideHistoryEnergyChart: View {
                     )
                 )
                 LineMark(
-                    x: .value(String(localized: .rideHistoryMetricDistance), point.distance),
-                    y: .value(String(localized: .rideHistoryMetricBattery), point.value)
+                    x: .value(distanceLabel, point.distance),
+                    y: .value(batteryLabel, point.value)
                 )
                 .foregroundStyle(DesignColor.positive)
                 .lineStyle(.init(lineWidth: Constants.lineWidth, lineCap: .round, lineJoin: .round))
@@ -71,10 +73,11 @@ struct RideHistoryEnergyChart: View {
             .chartXAxisLabel(String(localized: .rideHistoryChartDistanceAxis(state.distanceUnit)))
             .accessibilityLabel(.rideHistoryChartBatteryAccessibility)
         case .efficiency:
+            let efficiencyLabel = String(localized: .rideHistoryMetricEfficiency)
             Chart(state.efficiencyPoints) { point in
                 BarMark(
-                    x: .value(String(localized: .rideHistoryMetricDistance), point.distance),
-                    y: .value(String(localized: .rideHistoryMetricEfficiency), point.value)
+                    x: .value(distanceLabel, point.distance),
+                    y: .value(efficiencyLabel, point.value)
                 )
                 .foregroundStyle(point.value >= .zero ? DesignColor.informational : DesignColor.positive)
                 .cornerRadius(Constants.barRadius)

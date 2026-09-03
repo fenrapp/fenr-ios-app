@@ -24,15 +24,20 @@ struct AppSettingsViewModelTests {
         viewModel.selectDashboardProgressBarMode(id: DashboardProgressBarMode.hidden.rawValue)
         viewModel.selectDashboardBatteryIndicatorMode(id: DashboardBatteryIndicatorMode.estimatedRange.rawValue)
         viewModel.selectDashboardDeviceBatteryDisplayMode(id: DashboardDeviceBatteryDisplayMode.iconOnly.rawValue)
-        viewModel.setShowsDashboardTemperatures(true)
+        viewModel.selectDashboardTemperatureDisplayMode(id: DashboardTemperatureDisplayMode.inverter.rawValue)
         viewModel.selectMeasurementSystem(id: MeasurementSystem.imperial.rawValue)
         viewModel.selectBatteryPackCapacity(id: BatteryPackCapacity.sixPointEightKilowattHours.rawValue)
+        #expect(viewModel.viewState.measurementSystem.selectedID == MeasurementSystem.imperial.rawValue)
+        #expect(
+            viewModel.viewState.batteryCapacity.selectedID
+                == BatteryPackCapacity.sixPointEightKilowattHours.rawValue
+        )
         var expectedSettings = AppSettings(
             speedSource: .hybrid,
             dashboardProgressBarMode: .hidden,
             dashboardBatteryIndicatorMode: .estimatedRange,
             dashboardDeviceBatteryDisplayMode: .iconOnly,
-            showsDashboardTemperatures: true,
+            dashboardTemperatureDisplayMode: .inverter,
             measurementSystem: .imperial
         )
         expectedSettings.setBatteryPackCapacity(
@@ -79,7 +84,11 @@ struct AppSettingsViewModelTests {
             viewModel.viewState.dashboardDeviceBatteryDisplayMode.options.map { String(localized: $0.title) }
                 == ["Icon and percentage", "Percentage only", "Icon only", "Hidden"]
         )
-        #expect(!viewModel.viewState.showsDashboardTemperatures)
+        #expect(viewModel.viewState.dashboardTemperatureDisplayMode.selectedID == "off")
+        #expect(
+            viewModel.viewState.dashboardTemperatureDisplayMode.options.map { String(localized: $0.title) }
+                == ["Off", "Battery", "Inverter", "Both"]
+        )
         #expect(viewModel.viewState.measurementSystem.options.map { String(localized: $0.title) }
             == ["System", "Metric", "Imperial"])
         #expect(viewModel.viewState.batteryCapacity.options.map { String(localized: $0.title) }

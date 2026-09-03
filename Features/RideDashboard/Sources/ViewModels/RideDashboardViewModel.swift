@@ -123,7 +123,7 @@ private extension RideDashboardViewModel {
             speedSource: snapshot.speedSource,
             progressBarMode: snapshot.settings.dashboardProgressBarMode,
             batteryIndicatorMode: snapshot.settings.dashboardBatteryIndicatorMode,
-            showsTemperatures: snapshot.settings.showsDashboardTemperatures,
+            temperatureDisplayMode: snapshot.settings.dashboardTemperatureDisplayMode,
             measurementSystem: snapshot.settings.measurementSystem,
             isGPSAvailable: snapshot.isGPSAvailable,
             powerModeNames: snapshot.settings.powerModeNames(forVIN: snapshot.profile?.vin)
@@ -131,7 +131,7 @@ private extension RideDashboardViewModel {
         updateViewState(with: mappedViewState)
         updateStatusSnapshotRefresh()
         if mappedViewState.hasTelemetry, snapshot.isCanonicalTelemetryAvailable {
-            setTemperatureMonitoringRequired(snapshot.settings.showsDashboardTemperatures)
+            setTemperatureMonitoringRequired(snapshot.settings.dashboardTemperatureDisplayMode.isEnabled)
         } else if viewState.continuityPhase == .terminal {
             setTemperatureMonitoringRequired(false)
         }

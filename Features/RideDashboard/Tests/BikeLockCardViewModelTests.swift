@@ -6,8 +6,8 @@ import TestSupport
 @Suite("Bike Lock card view model")
 @MainActor
 struct BikeLockCardViewModelTests {
-    @Test("Prepares only after stationary telemetry and becomes available")
-    func preparesWhenStationary() async {
+    @Test("Prepares only after stopped telemetry and becomes available")
+    func preparesWhenStopped() async {
         let fixture = BikeLockCardViewModelTestFactory.make()
         fixture.viewModel.start()
 
@@ -21,6 +21,40 @@ struct BikeLockCardViewModelTests {
             vehicleIdentifier: BikeLockCardFixtures.vin,
             isAvailable: true
         ))
+    }
+
+    @Test("Prepares while charging but keeps lock actions disabled")
+    func preparesWhileChargingWithoutEnablingActions() async {
+        let fixture = BikeLockCardViewModelTestFactory.make()
+        fixture.viewModel.start()
+
+        await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot(isCharging: true))
+
+        #expect(await waitUntil { fixture.viewModel.viewState.isAvailable })
+        #expect(await fixture.repository.recordedPrepareRequests() == 1)
+        #expect(!fixture.viewModel.viewState.isActionEnabled)
+        fixture.viewModel.performPrimaryAction()
+        #expect(await fixture.repository.recordedLockRequests().isEmpty)
+    }
+
+    @Test("Cancels no-op preparation when stopped telemetry becomes unsafe")
+    func cancelsPreparationWhenBikeStartsMoving() async {
+        let fixture = BikeLockCardViewModelTestFactory.make(suspendsPreparation: true)
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot())
+        #expect(await waitUntil { await fixture.repository.hasPendingPreparation() })
+
+        await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot(speed: 8))
+
+        #expect(await waitUntil {
+            await fixture.repository.recordedPreparationCancellationCount() == 1
+        })
+        #expect(!fixture.viewModel.viewState.isAvailable)
+
+        await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot())
+        #expect(await waitUntil { await fixture.repository.recordedPrepareRequests() == 2 })
+        await fixture.repository.succeedPreparation()
+        #expect(await waitUntil { fixture.viewModel.viewState.isAvailable })
     }
 
     @Test("Keeps descriptive state disabled on disconnect and prepares again after reconnect")
@@ -109,6 +143,7 @@ struct BikeLockCardViewModelTests {
         fixture.viewModel.performPrimaryAction()
         #expect(await waitUntil { await authenticator.hasPendingAuthentication() })
         await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot(speed: 8, settings: settings))
+        #expect(await waitUntil { !fixture.viewModel.viewState.isActionEnabled })
         await authenticator.succeed()
 
         #expect(await waitUntil { fixture.viewModel.viewState.errorText != nil })

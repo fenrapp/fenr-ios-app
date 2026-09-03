@@ -136,6 +136,10 @@ public final class BLESessionStore {
         return true
     }
 
+    var shouldPublishSubscribedConnectionState: Bool {
+        !hasReportedCompleteTelemetry
+    }
+
     public func markExperimentalCaptureStarted() -> Bool {
         guard !hasStartedExperimentalCapture else { return false }
         hasStartedExperimentalCapture = true

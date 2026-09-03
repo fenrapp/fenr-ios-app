@@ -24,7 +24,7 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
                     thumbnail: .init(style: .charging, systemImage: "bolt.fill", accent: .positive)
                 )
             ],
-            sections: settings.dashboardCardConfiguration.sections.compactMap {
+            sections: settings.dashboardCardConfiguration.sections.map {
                 section($0, settings: settings, bikeLockCapability: bikeLockCapability)
             }
         )
@@ -34,35 +34,31 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
         _ configuration: DashboardCardSectionConfiguration,
         settings: AppSettings,
         bikeLockCapability: BikeLockCapabilityState
-    ) -> DashboardCardSectionRowViewData? {
-        if configuration.id == .bikeLock, !bikeLockCapability.isAvailable {
-            return nil
-        }
+    ) -> DashboardCardSectionRowViewData {
+        let bikeLockIsUnavailable = configuration.id == .bikeLock && !bikeLockCapability.isAvailable
         let pages = configuration.pages.map { page($0, in: configuration) }
         let bikeLockRequiresPIN = configuration.id == .bikeLock
             && settings.bikeLockSettings(
                 forVIN: bikeLockCapability.vehicleIdentifier
             ).securityMode.requiresPIN
         let visibleCount = pages.filter(\.isVisible).count
-        let firstVisibleTitle = pages.first(where: \.isVisible)?.title
-            ?? pages.first?.title
-            ?? .dashboardCardSettingsGenericCardTitle
         let detail = sectionDetail(
             configuration.id,
             pages: pages,
             visibleCount: visibleCount,
-            firstVisibleTitle: firstVisibleTitle,
-            bikeLockIsConfigured: bikeLockRequiresPIN
+            bikeLockIsConfigured: bikeLockRequiresPIN,
+            bikeLockIsUnavailable: bikeLockIsUnavailable
         )
         return .init(
             id: configuration.id.rawValue,
             title: sectionTitle(configuration.id),
             detail: detail,
-            isVisible: configuration.isVisible || bikeLockRequiresPIN,
-            isVisibilityEnabled: !bikeLockRequiresPIN,
-            disabledVisibilityHint: bikeLockRequiresPIN
-                ? .dashboardCardSettingsBikeLockVisibilityHint
-                : nil,
+            isVisible: !bikeLockIsUnavailable && (configuration.isVisible || bikeLockRequiresPIN),
+            isVisibilityEnabled: !bikeLockRequiresPIN && !bikeLockIsUnavailable,
+            disabledVisibilityHint: bikeLockDisabledHint(
+                isConfigured: bikeLockRequiresPIN,
+                isUnavailable: bikeLockIsUnavailable
+            ),
             thumbnail: sectionThumbnail(configuration.id),
             pages: pages
         )
@@ -72,14 +68,21 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
         _ id: DashboardCardSectionID,
         pages: [DashboardCardPageRowViewData],
         visibleCount: Int,
-        firstVisibleTitle: LocalizedStringResource,
-        bikeLockIsConfigured: Bool
+        bikeLockIsConfigured: Bool,
+        bikeLockIsUnavailable: Bool
     ) -> LocalizedStringResource {
-        switch id {
+        let firstVisibleTitle = pages.first(where: \.isVisible)?.title
+            ?? pages.first?.title
+            ?? .dashboardCardSettingsGenericCardTitle
+        return switch id {
         case .bikeLock:
-            bikeLockIsConfigured
-                ? .dashboardCardSettingsBikeLockRequiredDetail
-                : .dashboardCardSettingsBikeLockDetail
+            if bikeLockIsUnavailable {
+                .dashboardCardSettingsBikeLockUnavailableDetail
+            } else if bikeLockIsConfigured {
+                .dashboardCardSettingsBikeLockRequiredDetail
+            } else {
+                .dashboardCardSettingsBikeLockDetail
+            }
         case .navigation:
             .dashboardCardSettingsNavigationDetail
         default:
@@ -89,6 +92,15 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
                 String(localized: firstVisibleTitle)
             )
         }
+    }
+
+    private func bikeLockDisabledHint(
+        isConfigured: Bool,
+        isUnavailable: Bool
+    ) -> LocalizedStringResource? {
+        if isUnavailable { return .dashboardCardSettingsBikeLockUnavailableDetail }
+        if isConfigured { return .dashboardCardSettingsBikeLockVisibilityHint }
+        return nil
     }
 
     private func page(

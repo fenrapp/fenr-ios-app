@@ -72,9 +72,11 @@ struct AppRootView: View {
             router.open(url, reduceMotion: reduceMotion)
         }
         .task {
-            router.rootPresentationDidStart()
             await lifecycleController.start()
+            guard !Task.isCancelled else { return }
+            synchronizeAdvancedDataPresentation()
             await router.consumeIncomingMapLink(reduceMotion: reduceMotion)
+            guard !Task.isCancelled else { return }
             bikeLockSettingsViewModel.start()
         }
         .onAppear(perform: router.rootPresentationDidStart)
@@ -87,6 +89,7 @@ struct AppRootView: View {
         }
         .onChange(of: router.path) {
             router.pathDidChange()
+            synchronizeAdvancedDataPresentation()
         }
         .onChange(of: scenePhase) {
             lifecycleController.setCanShowLiveActivity(scenePhase != .active)
@@ -102,6 +105,7 @@ struct AppRootView: View {
             lifecycleController.terminate()
         }
         .onDisappear {
+            stopAdvancedDataPresentation()
             bikeLockSettingsViewModel.stop()
             lifecycleController.stop()
         }
@@ -130,7 +134,7 @@ private extension AppRootView {
                 isNavigationActive: router.rideNavigationPresentation == .mini,
                 isPresentationActive: router.isDashboardPresentationActive,
                 onDiagnostics: {
-                    router.navigate(to: .diagnostics, reduceMotion: reduceMotion)
+                    router.navigate(to: .diagnostics(.overview), reduceMotion: reduceMotion)
                 }
             )
             .navigationDestination(for: AppRootRouter.Route.self) { route in
@@ -141,45 +145,28 @@ private extension AppRootView {
 
     @ViewBuilder func appDestination(_ route: AppRootRouter.Route) -> some View {
         switch route {
-        case .batteryHealth:
-            BatteryHealthView(viewModel: batteryHealthViewModel)
-        case .diagnostics:
-            BikeDiagnosticsView(
+        case .batteryHealth(let destination):
+            BatteryHealthScene(
+                destination: destination,
+                viewModel: batteryHealthViewModel,
+                onNavigate: { destination in
+                    router.navigate(to: .batteryHealth(destination), reduceMotion: reduceMotion)
+                }
+            )
+        case .diagnostics(let destination):
+            BikeDiagnosticsScene(
+                destination: destination,
                 viewModel: diagnosticsViewModel,
+                onNavigate: { destination in
+                    router.navigate(to: .diagnostics(destination), reduceMotion: reduceMotion)
+                },
                 onBatteryHealth: {
-                    router.navigate(to: .batteryHealth, reduceMotion: reduceMotion)
+                    router.navigate(to: .batteryHealth(.overview), reduceMotion: reduceMotion)
                 },
                 onChangeBike: changeBike
             )
         case .settings:
-            AppSettingsView(
-                viewModel: appSettingsViewModel,
-                onOpenTelemetry: {
-                    router.navigate(to: .diagnostics, reduceMotion: reduceMotion)
-                },
-                onOpenRideDisplay: {
-                    router.navigate(to: .rideDisplaySettings, reduceMotion: reduceMotion)
-                },
-                onOpenDashboardCards: {
-                    router.navigate(to: .dashboardCards, reduceMotion: reduceMotion)
-                },
-                onOpenPowerModes: {
-                    router.navigate(to: .powerModes, reduceMotion: reduceMotion)
-                },
-                onOpenBikeModel: {
-                    router.navigate(to: .bikeModelSettings, reduceMotion: reduceMotion)
-                },
-                onOpenRideHistory: {
-                    router.navigate(to: .rideHistory, reduceMotion: reduceMotion)
-                },
-                bikeLockModeTitle: bikeLockSettingsViewModel.viewState.isAvailable
-                    ? bikeLockSettingsViewModel.viewState.currentModeTitle
-                    : nil,
-                onOpenBikeLock: {
-                    router.navigate(to: .bikeLockSettings, reduceMotion: reduceMotion)
-                },
-                accessory: settingsAccessory
-            )
+            appSettingsDestination
         case .rideDisplaySettings:
             RideDisplaySettingsView(viewModel: appSettingsViewModel)
         case .bikeLockSettings:
@@ -195,9 +182,40 @@ private extension AppRootView {
         }
     }
 
+    var appSettingsDestination: some View {
+        AppSettingsView(
+            viewModel: appSettingsViewModel,
+            onOpenTelemetry: { navigate(to: .diagnostics(.overview)) },
+            onOpenRideDisplay: { navigate(to: .rideDisplaySettings) },
+            onOpenDashboardCards: { navigate(to: .dashboardCards) },
+            onOpenPowerModes: { navigate(to: .powerModes) },
+            onOpenBikeModel: { navigate(to: .bikeModelSettings) },
+            onOpenRideHistory: { navigate(to: .rideHistory) },
+            bikeLockModeTitle: bikeLockSettingsViewModel.viewState.isAvailable
+                ? bikeLockSettingsViewModel.viewState.currentModeTitle
+                : nil,
+            onOpenBikeLock: { navigate(to: .bikeLockSettings) },
+            accessory: settingsAccessory
+        )
+    }
+
+    func navigate(to route: AppRootRouter.Route) {
+        router.navigate(to: route, reduceMotion: reduceMotion)
+    }
+
     func changeBike() {
         lifecycleController.changeBike {
             router.changeBikeDidComplete()
         }
+    }
+
+    func synchronizeAdvancedDataPresentation() {
+        diagnosticsViewModel.setPresentationActive(router.isDiagnosticsPresentationActive)
+        batteryHealthViewModel.setPresentationActive(router.isBatteryHealthPresentationActive)
+    }
+
+    func stopAdvancedDataPresentation() {
+        diagnosticsViewModel.setPresentationActive(false)
+        batteryHealthViewModel.setPresentationActive(false)
     }
 }

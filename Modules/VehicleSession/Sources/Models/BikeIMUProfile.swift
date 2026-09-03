@@ -77,6 +77,20 @@ public struct BikeIMUProfile: Equatable, Sendable {
     public static let productionV1: Self? = nil
 
 #if DEBUG
+    /// Debug-only hardware candidate. Axis orientation and gyroscope scale still
+    /// require physical validation before this can become a production profile.
+    public static let experimentalObservedV1 = Self(
+        version: 10_001,
+        accelerationTransform: .init(bikeX: .positiveX, bikeY: .positiveY, bikeZ: .positiveZ),
+        gyroscopeTransform: .init(bikeX: .positiveX, bikeY: .positiveY, bikeZ: .positiveZ),
+        gyroscopeDegreesPerSecondPerRawUnit: .init(
+            x: 1 / 16.4,
+            y: 1 / 16.4,
+            z: 1 / 16.4
+        ),
+        oneGRaw: 2_048
+    )
+
     public static let debug = Self(
         version: 1,
         accelerationTransform: .init(bikeX: .positiveX, bikeY: .positiveY, bikeZ: .positiveZ),

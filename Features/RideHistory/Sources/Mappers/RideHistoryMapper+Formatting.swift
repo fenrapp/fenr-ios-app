@@ -127,6 +127,7 @@ extension RideHistoryMapper {
         static let comparisonLimit = 10
         static let minimumComparisonSamples = 3
         static let minimumChartPoints = 2
+        static let maximumRenderedChartPoints = 120
         static let equalComparisonThreshold = 0.5
     }
 }

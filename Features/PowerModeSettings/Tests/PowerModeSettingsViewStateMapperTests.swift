@@ -40,6 +40,13 @@ struct PowerModeSettingsViewStateMapperTests {
         #expect(state.maps.count == 5)
         #expect(state.maps.map(\.title) == ["ECO", "2", "3", "4", "5"])
         #expect(state.currentName == "ECO")
+        #expect(state.controlGroups.map(\.id) == [.performance, .traction])
+        #expect(state.controlGroups.map(\.adjustments.count) == [2, 2])
+        #expect(state.controlGroups[0].adjustments.map(\.id) == [.power, .regeneration])
+        #expect(state.controlGroups[1].adjustments.map(\.id) == [
+            .powerTraction,
+            .brakingTraction
+        ])
         #expect(state.adjustments.map(\.valueText) == ["35", "40", "12", "30"])
         #expect(state.adjustments.allSatisfy { !$0.isEnabled })
         #expect(state.statusText == "Bike write verification required")
@@ -89,6 +96,10 @@ struct PowerModeSettingsViewStateMapperTests {
 
         #expect(state.adjustments.map(\.isEnabled) == [true, true, true, true])
         #expect(state.statusText == "All map controls ready")
+        #expect(state.status.title == "Bike connected")
+        #expect(state.status.systemImage == "checkmark.circle.fill")
+        #expect(state.status.emphasis == .positive)
+        #expect(!state.status.isActivity)
     }
 
     @Test("Maps typed adjustment IDs, supported ranges, and injected locale")
@@ -101,7 +112,7 @@ struct PowerModeSettingsViewStateMapperTests {
                 0: .init(
                     mapIndex: 0,
                     horsepower: 35,
-                    regenerativeBrakingPercent: -42.5,
+                    regenerativeBrakingPercent: 42.5,
                     powerTractionPercent: 12,
                     brakingTractionPercent: 30
                 )
@@ -116,9 +127,9 @@ struct PowerModeSettingsViewStateMapperTests {
         ))
 
         #expect(state.adjustments.map(\.id) == PowerModeAdjustmentID.allCases)
-        #expect(state.adjustments.map(\.minimum) == [10, -100, 0, 0])
+        #expect(state.adjustments.map(\.minimum) == [10, 0, 0, 0])
         #expect(state.adjustments.map(\.maximum) == [80, 100, 100, 100])
-        #expect(state.adjustments.map(\.valueText) == ["35", "-42,5", "12", "30"])
+        #expect(state.adjustments.map(\.valueText) == ["35", "42,5", "12", "30"])
         #expect(state.adjustments.allSatisfy { $0.localeIdentifier == "es_ES" })
     }
 
@@ -137,7 +148,7 @@ struct PowerModeSettingsViewStateMapperTests {
                     0: .init(
                         mapIndex: 0,
                         horsepower: 35,
-                        regenerativeBrakingPercent: -40,
+                        regenerativeBrakingPercent: 40,
                         powerTractionPercent: configuration.power,
                         brakingTractionPercent: configuration.braking
                     )
@@ -170,6 +181,8 @@ struct PowerModeSettingsViewStateMapperTests {
         ))
         #expect(refreshing.statusText == "Reading power modes")
         #expect(!refreshing.statusIsError)
+        #expect(refreshing.status.isActivity)
+        #expect(refreshing.status.systemImage == "arrow.clockwise")
 
         let refreshFailure = mapper.map(statusInput(
             refreshError: "refresh failed",
@@ -179,6 +192,7 @@ struct PowerModeSettingsViewStateMapperTests {
         ))
         #expect(refreshFailure.statusText == "refresh failed")
         #expect(refreshFailure.statusIsError)
+        #expect(refreshFailure.status.emphasis == .critical)
 
         let controlFailure = mapper.map(statusInput(
             controlError: "control failed",
@@ -193,9 +207,11 @@ struct PowerModeSettingsViewStateMapperTests {
             isPreparingControl: true
         ))
         #expect(applying.statusText == "Applying and verifying map")
+        #expect(!applying.status.isActivity)
 
         let preparing = mapper.map(statusInput(isPreparingControl: true))
         #expect(preparing.statusText == "Verifying map write safety")
+        #expect(!preparing.status.isActivity)
     }
 
     @Test("Connection failures do not expose transport messages")
@@ -230,7 +246,9 @@ struct PowerModeSettingsViewStateMapperTests {
         refreshError: String? = nil,
         controlError: String? = nil,
         isApplyingControl: Bool = false,
-        isPreparingControl: Bool = false
+        isPreparingControl: Bool = false,
+        activeAdjustmentID: PowerModeAdjustmentID? = nil,
+        recentAdjustmentResult: PowerModeAdjustmentResult? = nil
     ) -> PowerModeSettingsMappingInput {
         .init(
             telemetry: .init(powerModeConfigurations: [
@@ -245,6 +263,8 @@ struct PowerModeSettingsViewStateMapperTests {
             nameError: nil,
             isPreparingControl: isPreparingControl,
             isApplyingControl: isApplyingControl,
+            activeAdjustmentID: activeAdjustmentID,
+            recentAdjustmentResult: recentAdjustmentResult,
             controlError: controlError,
             isCanonicalTelemetryAvailable: true
         )

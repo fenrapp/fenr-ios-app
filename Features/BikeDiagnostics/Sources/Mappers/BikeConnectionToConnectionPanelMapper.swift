@@ -7,27 +7,21 @@ public struct BikeConnectionToConnectionPanelMapper: Sendable {
         self.stateMapper = stateMapper
     }
 
-    public func map(_ connection: BikeConnection) -> ConnectionPanelViewData {
+    public func map(_ connection: BikeConnection, configuredVIN: String?) -> ConnectionPanelViewData {
         ConnectionPanelViewData(
             status: stateMapper.title(for: connection.state),
             detail: stateMapper.detail(for: connection.state),
             rssi: connection.rssi.map { "\($0) dBm" } ?? BikeDiagnosticsText.emptyRSSI,
-            peripheral: peripheralText(connection),
+            configuredVIN: configuredVIN ?? BikeDiagnosticsText.placeholder,
+            peripheralName: connection.peripheralName ?? BikeDiagnosticsText.noPeripheral,
+            peripheralIdentifier: connection.peripheralIdentifier?.uuidString
+                ?? BikeDiagnosticsText.placeholder,
             emphasis: stateMapper.emphasis(for: connection.state)
         )
     }
 
     public func isDisconnectEnabled(_ connection: BikeConnection) -> Bool {
         stateMapper.isActive(connection.state)
-    }
-
-    public func isVINEditingEnabled(_ connection: BikeConnection) -> Bool {
-        switch connection.state {
-        case .receivingTelemetry, .reconnecting:
-            return false
-        default:
-            return true
-        }
     }
 
     public func isPairRetryEnabled(_ connection: BikeConnection) -> Bool {
@@ -64,9 +58,14 @@ public struct BikeConnectionToConnectionPanelMapper: Sendable {
         return false
     }
 
-    private func peripheralText(_ connection: BikeConnection) -> String {
-        let values = [connection.peripheralName, connection.peripheralIdentifier?.uuidString].compactMap { $0 }
-        let text = values.joined(separator: "\n")
-        return text.isEmpty ? BikeDiagnosticsText.noPeripheral : text
+    public func isReconnectEnabled(_ connection: BikeConnection, configuredVIN: String?) -> Bool {
+        guard configuredVIN?.isEmpty == false else { return false }
+        switch connection.state {
+        case .scanning, .connecting, .discovering, .authenticating, .authenticated,
+             .subscribed, .receivingTelemetry, .reconnecting:
+            return false
+        default:
+            return true
+        }
     }
 }

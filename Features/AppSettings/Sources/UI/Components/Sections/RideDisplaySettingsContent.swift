@@ -7,12 +7,12 @@ struct RideDisplaySettingsContent: View {
     let progressBarMode: DashboardProgressBarSettingsViewState
     let bikeBatteryDisplayMode: AppSettingsSelectionViewState
     let deviceBatteryDisplayMode: AppSettingsSelectionViewState
-    let showsTemperatures: Bool
+    let temperatureDisplayMode: AppSettingsSelectionViewState
     let speedSource: SpeedSourceSettingsViewState
     let onSelectProgressBarMode: (String) -> Void
     let onSelectBikeBatteryDisplayMode: (String) -> Void
     let onSelectDeviceBatteryDisplayMode: (String) -> Void
-    let onSetShowsTemperatures: (Bool) -> Void
+    let onSelectTemperatureDisplayMode: (String) -> Void
     let onSelectSpeedSource: (String) -> Void
     let onRequestLocationAccess: () -> Void
 
@@ -33,7 +33,6 @@ struct RideDisplaySettingsContent: View {
                 selection: deviceBatteryDisplayMode,
                 onSelect: onSelectDeviceBatteryDisplayMode
             )
-            Toggle(.appSettingsTemperaturesToggle, isOn: showsTemperaturesBinding)
         } header: {
             Text(.appSettingsDashboardPresentationHeader)
         } footer: {
@@ -41,6 +40,18 @@ struct RideDisplaySettingsContent: View {
                 Text(progressBarMode.description)
                 Text(.appSettingsDashboardPresentationFooter)
             }
+        }
+
+        Section {
+            selectionPicker(
+                .appSettingsTemperaturesPickerTitle,
+                selection: temperatureDisplayMode,
+                onSelect: onSelectTemperatureDisplayMode
+            )
+        } header: {
+            Text(.appSettingsTemperaturesSection)
+        } footer: {
+            Text(.appSettingsTemperaturesFooter)
         }
 
         Section {
@@ -72,7 +83,7 @@ struct RideDisplaySettingsContent: View {
             title,
             selection: Binding(
                 get: { selection.selectedID },
-                set: onSelect
+                set: { selectedID in onSelect(selectedID) }
             )
         ) {
             ForEach(selection.options) { option in
@@ -80,13 +91,6 @@ struct RideDisplaySettingsContent: View {
             }
         }
         .pickerStyle(.menu)
-    }
-
-    private var showsTemperaturesBinding: Binding<Bool> {
-        .init(
-            get: { showsTemperatures },
-            set: onSetShowsTemperatures
-        )
     }
 }
 #endif

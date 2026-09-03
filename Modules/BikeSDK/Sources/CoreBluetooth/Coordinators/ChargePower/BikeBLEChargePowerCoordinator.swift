@@ -77,21 +77,26 @@ final class BikeBLEChargePowerCoordinator {
 
         let nextConfiguration = configuration.settingChargePower(watts, chargerType: chargerType)
         let writePayload = try StarkChargerConfigurationCommand.encodeWrite(nextConfiguration)
-        try await transport.writeConfiguration(writePayload)
-        try await verificationWaiter.wait()
-        let verifiedResult = try await readChargeConfiguration(matching: nextConfiguration)
-        cachedChargePowerConfiguration = verifiedResult.configuration
+        do {
+            try await transport.writeConfiguration(writePayload)
+            try await verificationWaiter.wait()
+            let verifiedResult = try await readChargeConfiguration(matching: nextConfiguration)
+            cachedChargePowerConfiguration = verifiedResult.configuration
 
-        return BikeSDKChargePowerControlSnapshot(
-            vcuFirmware: cachedChargePowerFirmware,
-            isFirmwareCompatible: true,
-            readRequestHex: StarkChargerConfigurationCommand.readPacket.bikeSDKHexString,
-            readResponseHex: verifiedResult.responseHex,
-            parsedConfig: verifiedResult.configuration,
-            lastWriteHex: writePayload.bikeSDKHexString,
-            didPassNoOpWrite: true,
-            logLines: ["4005 write confirmed: \(writePayload.bikeSDKHexString)"]
-        )
+            return BikeSDKChargePowerControlSnapshot(
+                vcuFirmware: cachedChargePowerFirmware,
+                isFirmwareCompatible: true,
+                readRequestHex: StarkChargerConfigurationCommand.readPacket.bikeSDKHexString,
+                readResponseHex: verifiedResult.responseHex,
+                parsedConfig: verifiedResult.configuration,
+                lastWriteHex: writePayload.bikeSDKHexString,
+                didPassNoOpWrite: true,
+                logLines: ["4005 write confirmed: \(writePayload.bikeSDKHexString)"]
+            )
+        } catch {
+            clearGuardState()
+            throw error
+        }
     }
 
     func setChargeTarget(percent: Int) async throws -> BikeSDKChargePowerControlSnapshot {
@@ -102,21 +107,26 @@ final class BikeBLEChargePowerCoordinator {
         let targetPercent = max(1, min(100, percent))
         let nextConfiguration = configuration.settingMaximumStateOfCharge(percent: targetPercent)
         let writePayload = try StarkChargerConfigurationCommand.encodeWrite(nextConfiguration)
-        try await transport.writeConfiguration(writePayload)
-        try await verificationWaiter.wait()
-        let verifiedResult = try await readChargeConfiguration(matching: nextConfiguration)
-        cachedChargePowerConfiguration = verifiedResult.configuration
+        do {
+            try await transport.writeConfiguration(writePayload)
+            try await verificationWaiter.wait()
+            let verifiedResult = try await readChargeConfiguration(matching: nextConfiguration)
+            cachedChargePowerConfiguration = verifiedResult.configuration
 
-        return BikeSDKChargePowerControlSnapshot(
-            vcuFirmware: cachedChargePowerFirmware,
-            isFirmwareCompatible: true,
-            readRequestHex: StarkChargerConfigurationCommand.readPacket.bikeSDKHexString,
-            readResponseHex: verifiedResult.responseHex,
-            parsedConfig: verifiedResult.configuration,
-            lastWriteHex: writePayload.bikeSDKHexString,
-            didPassNoOpWrite: true,
-            logLines: ["4005 target write confirmed: \(writePayload.bikeSDKHexString)"]
-        )
+            return BikeSDKChargePowerControlSnapshot(
+                vcuFirmware: cachedChargePowerFirmware,
+                isFirmwareCompatible: true,
+                readRequestHex: StarkChargerConfigurationCommand.readPacket.bikeSDKHexString,
+                readResponseHex: verifiedResult.responseHex,
+                parsedConfig: verifiedResult.configuration,
+                lastWriteHex: writePayload.bikeSDKHexString,
+                didPassNoOpWrite: true,
+                logLines: ["4005 target write confirmed: \(writePayload.bikeSDKHexString)"]
+            )
+        } catch {
+            clearGuardState()
+            throw error
+        }
     }
 
     func didWriteValue(characteristic: CBCharacteristic, error: Error?) {

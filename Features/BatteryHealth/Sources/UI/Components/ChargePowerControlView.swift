@@ -1,13 +1,12 @@
+import DesignSystem
 import SwiftUI
 
 struct ChargePowerControlView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let state: BatteryHealthChargeControlViewState
     let setPowerLimit: (Double) -> Void
     let setChargeTarget: (Double) -> Void
-    @State private var displayedPowerWatts: Double
-    @State private var displayedTargetPercent: Double
-    @State private var isEditingPower = false
-    @State private var isEditingTarget = false
 
     init(
         state: BatteryHealthChargeControlViewState,
@@ -17,93 +16,57 @@ struct ChargePowerControlView: View {
         self.state = state
         self.setPowerLimit = setPowerLimit
         self.setChargeTarget = setChargeTarget
-        _displayedPowerWatts = State(initialValue: state.power.selected)
-        _displayedTargetPercent = State(initialValue: state.target.selected)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.spacing) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: Constants.labelSpacing) {
-                    Text(verbatim: "\(Int(displayedPowerWatts)) W")
-                        .font(.title3.weight(.semibold))
-                    Text(state.chargerText)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Text(state.statusText)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(state.statusIsError ? Color.red : Color.secondary)
-                    .multilineTextAlignment(.trailing)
-            }
+            controlSummary
 
-            VStack(alignment: .leading, spacing: Constants.controlSpacing) {
-                Text(String(localized: .batteryHealthChargeControlPowerLimit))
-                    .font(.caption.weight(.medium))
+            CommitSlider(
+                value: state.power.selected,
+                in: state.power.minimum ... state.power.maximum,
+                step: state.power.step,
+                isEnabled: state.isEnabled,
+                onCommit: setPowerLimit,
+                header: { value in
+                    controlHeader(
+                        title: BatteryHealthText.powerLimit,
+                        value: "\(Int(value)) W"
+                    )
+                },
+                footer: {
+                    HStack {
+                        Text(verbatim: "\(Int(state.power.minimum)) W")
+                        Spacer()
+                        Text(verbatim: "\(Int(state.power.maximum)) W")
+                    }
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
+                }
+            )
 
-                Slider(
-                    value: Binding(
-                        get: { displayedPowerWatts },
-                        set: { displayedPowerWatts = $0 }
-                    ),
-                    in: state.power.minimum ... state.power.maximum,
-                    step: state.power.step,
-                    onEditingChanged: { isEditing in
-                        isEditingPower = isEditing
-                        if !isEditing {
-                            guard displayedPowerWatts != state.power.selected else { return }
-                            setPowerLimit(displayedPowerWatts)
-                        }
+            CommitSlider(
+                value: state.target.selected,
+                in: state.target.minimum ... state.target.maximum,
+                step: state.target.step,
+                isEnabled: state.isEnabled,
+                onCommit: setChargeTarget,
+                header: { value in
+                    controlHeader(
+                        title: BatteryHealthText.chargeTarget,
+                        value: "\(Int(value))%"
+                    )
+                },
+                footer: {
+                    HStack {
+                        Text(verbatim: "\(Int(state.target.minimum))%")
+                        Spacer()
+                        Text(verbatim: "\(Int(state.target.maximum))%")
                     }
-                )
-                .disabled(!state.isEnabled)
-
-                HStack {
-                    Text(verbatim: "\(Int(state.power.minimum)) W")
-                    Spacer()
-                    Text(verbatim: "\(Int(state.power.maximum)) W")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
                 }
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            }
-
-            VStack(alignment: .leading, spacing: Constants.controlSpacing) {
-                HStack {
-                    Text(String(localized: .batteryHealthChargeControlChargeTarget))
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Text(verbatim: "\(Int(displayedTargetPercent))%")
-                        .font(.callout.weight(.semibold))
-                }
-
-                Slider(
-                    value: Binding(
-                        get: { displayedTargetPercent },
-                        set: { displayedTargetPercent = $0 }
-                    ),
-                    in: state.target.minimum ... state.target.maximum,
-                    step: state.target.step,
-                    onEditingChanged: { isEditing in
-                        isEditingTarget = isEditing
-                        if !isEditing {
-                            guard displayedTargetPercent != state.target.selected else { return }
-                            setChargeTarget(displayedTargetPercent)
-                        }
-                    }
-                )
-                .disabled(!state.isEnabled)
-
-                HStack {
-                    Text(verbatim: "\(Int(state.target.minimum))%")
-                    Spacer()
-                    Text(verbatim: "\(Int(state.target.maximum))%")
-                }
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            }
+            )
 
             if let error = state.errorText {
                 Text(error)
@@ -111,19 +74,58 @@ struct ChargePowerControlView: View {
                     .foregroundStyle(.red)
             }
         }
-        .onChange(of: state.power.selected) { _, value in
-            guard !isEditingPower else { return }
-            displayedPowerWatts = value
+    }
+
+    @ViewBuilder private var controlSummary: some View {
+        let value = Text(verbatim: "\(Int(state.power.selected)) W")
+            .font(.title3.weight(.semibold))
+        let charger = Text(state.chargerText)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        let status = Text(state.statusText)
+            .font(.caption.weight(.medium))
+            .foregroundStyle(state.statusIsError ? Color.red : Color.secondary)
+
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading, spacing: Constants.labelSpacing) {
+                value
+                charger
+                status
+            }
+        } else {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: Constants.labelSpacing) {
+                    value
+                    charger
+                }
+                Spacer()
+                status.multilineTextAlignment(.trailing)
+            }
         }
-        .onChange(of: state.target.selected) { _, value in
-            guard !isEditingTarget else { return }
-            displayedTargetPercent = value
+    }
+
+    @ViewBuilder
+    private func controlHeader(title: String, value: String) -> some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading, spacing: Constants.labelSpacing) {
+                Text(title)
+                    .foregroundStyle(.secondary)
+                Text(verbatim: value)
+                    .fontWeight(.semibold)
+            }
+        } else {
+            HStack {
+                Text(title)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text(verbatim: value)
+                    .fontWeight(.semibold)
+            }
         }
     }
 
     private enum Constants {
         static let spacing: CGFloat = 10
-        static let controlSpacing: CGFloat = 6
         static let labelSpacing: CGFloat = 2
     }
 }
@@ -135,8 +137,8 @@ struct ChargePowerControlView: View {
             isEnabled: true,
             power: .init(selected: 1_800, minimum: 300, maximum: 3_300, step: 100),
             target: .init(selected: 80, minimum: 1, maximum: 100, step: 1),
-            chargerText: "Standard charger",
-            statusText: "Ready"
+            chargerText: String(localized: .batteryHealthChargerStandard),
+            statusText: String(localized: .batteryHealthChargeControlStatusReady)
         ),
         setPowerLimit: { _ in },
         setChargeTarget: { _ in }

@@ -33,7 +33,7 @@ public struct RideDashboardMapper: Sendable {
         speedSource: SpeedSource = .motorcycle,
         progressBarMode: DashboardProgressBarMode = .energy,
         batteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
-        showsTemperatures: Bool = false,
+        temperatureDisplayMode: DashboardTemperatureDisplayMode = .off,
         measurementSystem: MeasurementSystem,
         isGPSAvailable: Bool = true,
         powerModeNames: [Int: PowerModeName] = [:]
@@ -53,6 +53,7 @@ public struct RideDashboardMapper: Sendable {
         let maximumSpeed = measurementMapper.speedometerMaximum()
         let powerModeName = telemetry.mode.powerModeConfigurationIndex
             .flatMap { powerModeNames[$0]?.value }
+        let temperatureMode = hasTelemetry ? temperatureDisplayMode : .off
         let speedometer = speedometer(
             speed: speed,
             maximum: maximumSpeed,
@@ -77,9 +78,7 @@ public struct RideDashboardMapper: Sendable {
             ),
             battery: battery(percentage: hasTelemetry ? telemetry.batteryLevel.percent : nil),
             showsEstimatedRangeBatteryIndicator: batteryIndicatorMode == .estimatedRange,
-            temperatureSummary: temperatureMapper.map(
-                telemetry: telemetry, isVisible: hasTelemetry && showsTemperatures, measurementMapper: measurementMapper
-            ),
+            temperatureSummary: temperatureMapper.map(telemetry, mode: temperatureMode, using: measurementMapper),
             gear: DashboardGearMapper.map(
                 runState: hasTelemetry ? telemetry.runState : .unknown,
                 modeIndex: hasTelemetry ? telemetry.mode.displayIndex : nil,

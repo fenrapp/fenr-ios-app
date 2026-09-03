@@ -157,6 +157,7 @@ struct BikeSDKProfileAndSessionTests {
             characteristicUUID: finalCharacteristicUUID,
             requiredCharacteristicUUIDs: requiredUUIDs
         ))
+        #expect(!store.shouldPublishSubscribedConnectionState)
         #expect(!store.markTelemetryReceived(
             characteristicUUID: repeatedCharacteristicUUID,
             requiredCharacteristicUUIDs: requiredUUIDs
@@ -164,7 +165,7 @@ struct BikeSDKProfileAndSessionTests {
 
         store.resetSession()
         #expect(store.receivedTelemetryCharacteristics.isEmpty)
-        #expect(!store.hasReportedCompleteTelemetry)
+        #expect(!store.hasReportedCompleteTelemetry && store.shouldPublishSubscribedConnectionState)
         #expect(!store.hasReportedRequiredSubscriptions)
     }
 

@@ -2,25 +2,24 @@ import BikeDomain
 import BLETraceDomain
 import Foundation
 import SettingsDomain
+import VehicleSession
 
 @MainActor
 public final class BikeDiagnosticsViewModel: ObservableObject {
     @Published public private(set) var viewState = BikeDiagnosticsViewState()
     @Published public private(set) var bleTraceExport: BLETraceExportViewData?
+    @Published public private(set) var isPresentationActive = false
 
     private let useCases: BikeDiagnosticsUseCases
     private var mappers: BikeDiagnosticsMappers
     private let makeMappers: (MeasurementSystem) -> BikeDiagnosticsMappers
-    private var snapshot = BikeDiagnosticsDomainSnapshot()
+    private var sessionSnapshot = VehicleSessionSnapshot()
     private var debugLogEvents: [BikeDebugEvent] = []
     private var bleTraceSessions: [BLETraceSessionSummary] = []
     private var bleTraceError: String?
-    private var streamTasks: [Task<Void, Never>] = []
-    private var lifecycleTask: Task<Void, Never>?
+    private var observationTasks: [Task<Void, Never>] = []
     private var actionTask: Task<Void, Never>?
-    private var profileRestoreTask: Task<Void, Never>?
     private var bleTraceActionTask: Task<Void, Never>?
-    private var isStarted = false
 
     public init(
         useCases: BikeDiagnosticsUseCases,
@@ -30,85 +29,59 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
         self.useCases = useCases
         self.mappers = mappers
         self.makeMappers = makeMappers
+        render()
     }
 
     deinit {
-        streamTasks.forEach { $0.cancel() }
-        lifecycleTask?.cancel()
+        observationTasks.forEach { $0.cancel() }
         actionTask?.cancel()
-        profileRestoreTask?.cancel()
         bleTraceActionTask?.cancel()
     }
 
-    public func start() {
-        startObserving()
-        lifecycleTask?.cancel()
-        let start = useCases.start
-        lifecycleTask = Task { await start.execute() }
-    }
-
-    public func stop() {
-        stopObserving()
-        lifecycleTask?.cancel()
-        let stop = useCases.stop
-        lifecycleTask = Task { await stop.execute() }
-    }
-
-    public func startObserving() {
-        guard !isStarted else { return }
-        isStarted = true
-        bindStreams()
-        render()
-        restoreProfileIfNeeded()
-    }
-
-    public func stopObserving() {
-        guard isStarted else { return }
-        isStarted = false
-        cancelStreamTasks()
-        profileRestoreTask?.cancel()
-        profileRestoreTask = nil
-    }
-
-    public func vinChanged(_ vin: String) {
-        snapshot.vin = vin.uppercased()
-        snapshot.pin = snapshot.vin.isEmpty
-            ? BikeDiagnosticsText.placeholderPIN
-            : useCases.derivePin.execute(vin: snapshot.vin)
-        render()
-    }
-
-    public func connectTapped() {
-        let vin = snapshot.vin.trimmingCharacters(in: .whitespacesAndNewlines)
-        let connect = useCases.connect
-        performAction {
-            try await connect.execute(vin: vin)
+    /// Controls feature observation only. The app owns the shared vehicle session lifecycle.
+    /// Keep this true while any destination in the Diagnostics family is visible.
+    public func setPresentationActive(_ active: Bool) {
+        guard active != isPresentationActive else { return }
+        isPresentationActive = active
+        if active {
+            bindStreams()
+        } else {
+            cancelObservationTasks()
+            actionTask?.cancel()
+            actionTask = nil
+            bleTraceActionTask?.cancel()
+            bleTraceActionTask = nil
         }
+    }
+
+    public func reconnectTapped() {
+        guard let vin = sessionSnapshot.profile?.vin, !vin.isEmpty else { return }
+        let connect = useCases.connect
+        performAction { try await connect.execute(vin: vin) }
     }
 
     public func disconnectTapped() {
         let disconnect = useCases.disconnect
-        performAction {
-            try await disconnect.execute()
-        }
+        performAction { try await disconnect.execute() }
     }
 
     public func pairRetryTapped() {
-        let retrySecurityHandshake = useCases.retrySecurityHandshake
-        performAction {
-            try await retrySecurityHandshake.execute()
-        }
+        let retry = useCases.retrySecurityHandshake
+        performAction { try await retry.execute() }
     }
 
     public func readSnapshotTapped() {
-        let readTelemetrySnapshot = useCases.readTelemetrySnapshot
-        performAction {
-            try await readTelemetrySnapshot.execute()
-        }
+        let session = useCases.session
+        performAction { await session.refreshBikeStatus() }
+    }
+
+    public func clearDebugEvents() {
+        debugLogEvents.removeAll()
+        render()
     }
 
     public func debugLogText() -> String {
-        mappers.viewState.exportDebugLog(snapshot, events: debugLogEvents)
+        mappers.viewState.exportDebugLog(sessionSnapshot, events: debugLogEvents)
     }
 
     public func exportBLETraceSession(id: UUID) {
@@ -124,6 +97,7 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
             } catch is CancellationError {
                 return
             } catch {
+                guard !Task.isCancelled else { return }
                 self?.bleTraceError = BikeDiagnosticsL10n.text(.bikeDiagnosticsBleLogPrepareError)
                 self?.render()
             }
@@ -147,90 +121,54 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
     }
 
     private func bindStreams() {
-        let observeTelemetry = useCases.observeTelemetry
-        streamTasks.append(Task { [weak self] in
-            let stream = await observeTelemetry.execute()
-            for await telemetry in stream {
-                guard !Task.isCancelled else { return }
-                self?.receive(telemetry)
+        let session = useCases.session
+        observationTasks.append(Task { [weak self] in
+            let stream = await session.observe()
+            for await snapshot in stream where !Task.isCancelled {
+                self?.receive(snapshot)
             }
         })
-        let observeConnection = useCases.observeConnection
-        streamTasks.append(Task { [weak self] in
-            let stream = await observeConnection.execute()
-            for await connection in stream {
-                guard !Task.isCancelled else { return }
-                self?.receive(connection)
-            }
-        })
+
         let observeDebugEvents = useCases.observeDebugEvents
-        streamTasks.append(Task { [weak self] in
+        observationTasks.append(Task { [weak self] in
             let stream = await observeDebugEvents.execute()
-            for await event in stream {
-                guard !Task.isCancelled else { return }
-                self?.receive(event)
+            for await event in stream where !Task.isCancelled {
+                self?.appendDebugEvent(event)
             }
         })
-        let observeSettings = useCases.observeSettings
-        streamTasks.append(Task { [weak self] in
-            let stream = await observeSettings.execute()
-            for await settings in stream {
-                guard !Task.isCancelled else { return }
-                guard let self else { return }
-                self.mappers = self.makeMappers(settings.measurementSystem)
-                self.render()
-            }
-        })
+
         let observeBLETraceSessions = useCases.observeBLETraceSessions
-        streamTasks.append(Task { [weak self] in
+        observationTasks.append(Task { [weak self] in
             let stream = await observeBLETraceSessions.execute()
-            for await sessions in stream {
-                guard !Task.isCancelled else { return }
+            for await sessions in stream where !Task.isCancelled {
                 self?.bleTraceSessions = sessions
                 self?.render()
             }
         })
     }
 
-    private func performAction(
-        _ operation: @escaping @Sendable () async throws -> Void,
-        onSuccess: (@MainActor @Sendable () -> Void)? = nil
-    ) {
+    private func receive(_ snapshot: VehicleSessionSnapshot) {
+        let measurementSystemChanged = sessionSnapshot.settings.measurementSystem
+            != snapshot.settings.measurementSystem
+        sessionSnapshot = snapshot
+        if measurementSystemChanged {
+            mappers = makeMappers(snapshot.settings.measurementSystem)
+        }
+        render()
+    }
+
+    private func performAction(_ operation: @escaping @Sendable () async throws -> Void) {
         actionTask?.cancel()
         actionTask = Task { @MainActor [weak self] in
             do {
                 try await operation()
-                onSuccess?()
             } catch is CancellationError {
                 return
             } catch {
+                guard !Task.isCancelled else { return }
                 self?.appendDebugError(error)
             }
         }
-    }
-
-    private func restoreProfileIfNeeded() {
-        profileRestoreTask?.cancel()
-        let loadProfile = useCases.loadProfile
-        profileRestoreTask = Task { [weak self] in
-            guard let profile = await loadProfile.execute() else { return }
-            guard !Task.isCancelled else { return }
-            self?.vinChanged(profile.vin)
-        }
-    }
-
-    private func receive(_ telemetry: BikeTelemetry) {
-        snapshot.telemetry = telemetry
-        render()
-    }
-
-    private func receive(_ connection: BikeConnection) {
-        snapshot.connection = connection
-        render()
-    }
-
-    private func receive(_ event: BikeDebugEvent) {
-        appendDebugEvent(event)
     }
 
     private func appendDebugError(_ error: Error) {
@@ -242,17 +180,17 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
 
     private func appendDebugEvent(_ event: BikeDebugEvent) {
         debugLogEvents.insert(event, at: .zero)
-        debugLogEvents = Array(debugLogEvents.prefix(BikeDiagnosticsConstants.maxExportDebugEvents))
-        if let existingIndex = snapshot.debugEvents.firstIndex(where: { $0.id == event.id }) {
-            snapshot.debugEvents.remove(at: existingIndex)
-        }
-        snapshot.debugEvents.insert(event, at: .zero)
-        snapshot.debugEvents = Array(snapshot.debugEvents.prefix(BikeDiagnosticsConstants.maxVisibleDebugEvents))
+        debugLogEvents = Array(
+            debugLogEvents.prefix(BikeDiagnosticsConstants.maxExportDebugEvents)
+        )
         render()
     }
 
     private func render() {
-        var nextViewState = mappers.viewState.map(snapshot)
+        var nextViewState = mappers.viewState.map(
+            sessionSnapshot,
+            debugEvents: visibleDebugEvents()
+        )
         nextViewState.bleTraceSessions = bleTraceSessions.map(mappers.bleTraceSession.map)
         nextViewState.bleTraceError = bleTraceError
         guard nextViewState != viewState else { return }
@@ -272,14 +210,24 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
             } catch is CancellationError {
                 return
             } catch {
+                guard !Task.isCancelled else { return }
                 self?.bleTraceError = BikeDiagnosticsL10n.text(.bikeDiagnosticsBleLogOperationError)
                 self?.render()
             }
         }
     }
 
-    private func cancelStreamTasks() {
-        streamTasks.forEach { $0.cancel() }
-        streamTasks.removeAll()
+    private func cancelObservationTasks() {
+        observationTasks.forEach { $0.cancel() }
+        observationTasks.removeAll()
+    }
+
+    private func visibleDebugEvents() -> [BikeDebugEvent] {
+        var identifiers = Set<UUID>()
+        return Array(
+            debugLogEvents
+                .filter { identifiers.insert($0.id).inserted }
+                .prefix(BikeDiagnosticsConstants.maxVisibleDebugEvents)
+        )
     }
 }

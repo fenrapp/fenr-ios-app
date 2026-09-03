@@ -10,20 +10,26 @@ public struct ConnectionPanelViewData: Equatable, Sendable {
     public let status: String
     public let detail: String
     public let rssi: String
-    public let peripheral: String
+    public let configuredVIN: String
+    public let peripheralName: String
+    public let peripheralIdentifier: String
     public let emphasis: Emphasis
 
     public init(
         status: String,
         detail: String,
         rssi: String,
-        peripheral: String,
+        configuredVIN: String = BikeDiagnosticsText.placeholder,
+        peripheralName: String = BikeDiagnosticsText.noPeripheral,
+        peripheralIdentifier: String = BikeDiagnosticsText.placeholder,
         emphasis: Emphasis = .neutral
     ) {
         self.status = status
         self.detail = detail
         self.rssi = rssi
-        self.peripheral = peripheral
+        self.configuredVIN = configuredVIN
+        self.peripheralName = peripheralName
+        self.peripheralIdentifier = peripheralIdentifier
         self.emphasis = emphasis
     }
 }

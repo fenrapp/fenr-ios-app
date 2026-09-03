@@ -29,7 +29,7 @@ func makeFixture(
 
 func ridingSnapshot(
     speed: Double,
-    showsTemperatures: Bool = false,
+    temperatureDisplayMode: DashboardTemperatureDisplayMode = .off,
     isCanonicalTelemetryAvailable: Bool = true
 ) -> VehicleSessionSnapshot {
     .init(
@@ -43,7 +43,7 @@ func ridingSnapshot(
         settings: .init(
             dashboardProgressBarMode: .speed,
             dashboardBatteryIndicatorMode: .estimatedRange,
-            showsDashboardTemperatures: showsTemperatures,
+            dashboardTemperatureDisplayMode: temperatureDisplayMode,
             measurementSystem: .metric
         ),
         resolvedSpeedKilometersPerHour: speed,

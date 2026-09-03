@@ -1,27 +1,32 @@
 import BikeDomain
+import SettingsDomain
 
 public struct DashboardTemperatureSummaryMapper: Sendable {
     public init() {}
 
     func map(
-        telemetry: BikeTelemetry,
-        isVisible: Bool,
-        measurementMapper: RideDashboardMeasurementMapper
+        _ telemetry: BikeTelemetry,
+        mode: DashboardTemperatureDisplayMode,
+        using measurementMapper: RideDashboardMeasurementMapper
     ) -> RideDashboardViewState.TemperatureSummary {
-        guard isVisible else { return .init() }
+        guard mode.isEnabled else { return .init() }
         let batteryTemperatures = [
             telemetry.batteryTelemetry.positiveBMS?.temperatureCelsius,
             telemetry.batteryTelemetry.negativeBMS?.temperatureCelsius
         ]
         return .init(
-            batteryTemperatureText: temperatureText(
-                batteryTemperatures.compactMap { $0 }.filter(\.isFinite).max(),
-                measurementMapper: measurementMapper
-            ),
-            inverterTemperatureText: temperatureText(
-                telemetry.inverterTemperaturesCelsius.compactMap { $0 }.filter(\.isFinite).max(),
-                measurementMapper: measurementMapper
-            )
+            batteryTemperatureText: mode.includesBattery
+                ? temperatureText(
+                    batteryTemperatures.compactMap { $0 }.filter(\.isFinite).max(),
+                    measurementMapper: measurementMapper
+                )
+                : nil,
+            inverterTemperatureText: mode.includesInverter
+                ? temperatureText(
+                    telemetry.inverterTemperaturesCelsius.compactMap { $0 }.filter(\.isFinite).max(),
+                    measurementMapper: measurementMapper
+                )
+                : nil
         )
     }
 

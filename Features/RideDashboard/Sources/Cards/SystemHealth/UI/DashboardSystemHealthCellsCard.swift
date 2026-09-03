@@ -55,10 +55,12 @@ struct DashboardSystemHealthCellsCard: View {
             .font(.caption2.weight(.bold))
             .foregroundStyle(DesignColor.secondaryText)
 
-            CellHealthDistributionBar(
-                normalCount: normalCellCount,
-                attentionCount: state.attentionCellCount,
-                criticalCount: state.criticalCellCount
+            SegmentedDistributionBar(
+                segments: [
+                    .init(value: Double(normalCellCount), color: DesignColor.positive),
+                    .init(value: Double(state.attentionCellCount), color: DesignColor.warning),
+                    .init(value: Double(state.criticalCellCount), color: DesignColor.critical)
+                ]
             )
 
             HStack(spacing: DesignSpace.extraSmall) {
@@ -189,51 +191,5 @@ struct DashboardSystemHealthCellsCard: View {
     private enum Constants {
         static let spacing: CGFloat = 10
         static let minimumTextScale = 0.75
-    }
-}
-
-private struct CellHealthDistributionBar: View {
-    let normalCount: Int
-    let attentionCount: Int
-    let criticalCount: Int
-
-    var body: some View {
-        GeometryReader { proxy in
-            let availableWidth = proxy.size.width
-                - CGFloat(max(.zero, populatedSegmentCount - 1)) * Constants.segmentSpacing
-            HStack(spacing: Constants.segmentSpacing) {
-                segment(count: normalCount, color: DesignColor.positive, availableWidth: availableWidth)
-                segment(count: attentionCount, color: DesignColor.warning, availableWidth: availableWidth)
-                segment(count: criticalCount, color: DesignColor.critical, availableWidth: availableWidth)
-            }
-            .clipShape(Capsule())
-        }
-        .frame(height: Constants.height)
-    }
-
-    @ViewBuilder
-    private func segment(count: Int, color: Color, availableWidth: CGFloat) -> some View {
-        if count > .zero {
-            color
-                .frame(width: max(Constants.minimumSegmentWidth, availableWidth * ratio(for: count)))
-        }
-    }
-
-    private var totalCount: Int {
-        max(1, normalCount + attentionCount + criticalCount)
-    }
-
-    private var populatedSegmentCount: Int {
-        [normalCount, attentionCount, criticalCount].count { $0 > .zero }
-    }
-
-    private func ratio(for count: Int) -> CGFloat {
-        CGFloat(count) / CGFloat(totalCount)
-    }
-
-    private enum Constants {
-        static let height: CGFloat = 10
-        static let segmentSpacing: CGFloat = 2
-        static let minimumSegmentWidth: CGFloat = 4
     }
 }

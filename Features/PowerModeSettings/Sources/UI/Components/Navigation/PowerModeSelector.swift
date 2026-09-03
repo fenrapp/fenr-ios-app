@@ -2,6 +2,8 @@ import DesignSystem
 import SwiftUI
 
 struct PowerModeSelector: View {
+    @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
+
     let maps: [PowerModeMapViewData]
     let select: (Int) -> Void
 
@@ -20,11 +22,14 @@ struct PowerModeSelector: View {
                             .foregroundStyle(map.isSelected ? Color.white : DesignColor.primaryText)
                             .background {
                                 Capsule()
-                                    .fill(map.isSelected ? DesignColor.accent : DesignColor.groupedSurface)
+                                    .fill(map.isSelected ? DesignColor.accent : DesignColor.controlSurface)
                             }
                             .overlay {
                                 Capsule()
-                                    .stroke(DesignColor.border, lineWidth: Constants.outlineWidth)
+                                    .stroke(
+                                        outlineColor(for: map),
+                                        lineWidth: outlineWidth(for: map)
+                                    )
                             }
                     }
                     .buttonStyle(.plain)
@@ -37,11 +42,24 @@ struct PowerModeSelector: View {
         .scrollIndicators(.hidden)
     }
 
+    private func outlineColor(for map: PowerModeMapViewData) -> Color {
+        map.isSelected && differentiateWithoutColor
+            ? DesignColor.primaryText
+            : DesignColor.border
+    }
+
+    private func outlineWidth(for map: PowerModeMapViewData) -> CGFloat {
+        map.isSelected && differentiateWithoutColor
+            ? Constants.selectedOutlineWidth
+            : Constants.outlineWidth
+    }
+
     private enum Constants {
         static let horizontalPadding: CGFloat = 14
         static let minimumWidth: CGFloat = 54
-        static let minimumHeight: CGFloat = 38
+        static let minimumHeight: CGFloat = 44
         static let outlineWidth: CGFloat = 1
+        static let selectedOutlineWidth: CGFloat = 3
         static let verticalPadding: CGFloat = 2
     }
 }

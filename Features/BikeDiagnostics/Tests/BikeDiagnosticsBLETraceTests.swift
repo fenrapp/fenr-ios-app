@@ -16,7 +16,7 @@ struct BikeDiagnosticsBLETraceTests {
             traceRepository: traceRepository
         )
         let id = UUID()
-        viewModel.startObserving()
+        viewModel.setPresentationActive(true)
         await traceRepository.send([BLETraceSessionSummary(
             id: id,
             startedAt: Date(timeIntervalSince1970: 10),
