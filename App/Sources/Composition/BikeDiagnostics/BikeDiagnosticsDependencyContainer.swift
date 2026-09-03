@@ -20,7 +20,8 @@ struct BikeDiagnosticsDependencyContainer {
                 bleTraceLogRepository: bleTraceLogRepository
             ),
             mappers: makeMappers(measurementSystem: .system),
-            makeMappers: makeMappers
+            makeMappers: makeMappers,
+            bleTraceCaptureConfirmationTimeout: .seconds(3)
         )
     }
 
@@ -34,6 +35,8 @@ struct BikeDiagnosticsDependencyContainer {
             connect: ConnectToBikeUseCase(repository: repository),
             disconnect: DisconnectBikeUseCase(repository: repository),
             retrySecurityHandshake: RetryBikeSecurityHandshakeUseCase(repository: repository),
+            startNewDiagnosticsCapture: StartNewBikeDiagnosticsCaptureUseCase(repository: repository),
+            stopDiagnosticsCapture: StopBikeDiagnosticsCaptureUseCase(repository: repository),
             observeDebugEvents: ObserveBikeDebugEventsUseCase(repository: repository),
             observeBLETraceSessions: ObserveBLETraceSessionsUseCase(repository: bleTraceLogRepository),
             prepareBLETraceExport: PrepareBLETraceExportUseCase(repository: bleTraceLogRepository),

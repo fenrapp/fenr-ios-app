@@ -12,6 +12,8 @@ final class BikeBLETraceEmitter {
     private var targetVIN = ""
     private var recordingState = RecordingState.inactive
     private var sessionGeneration = 0
+    private var closeTask: Task<Void, Never>?
+    private var closeDestination: CloseDestination?
     private var bufferedEvents: [BLETraceEvent] = []
     private var pendingReads = Set<CBUUID>()
 
@@ -27,49 +29,6 @@ final class BikeBLETraceEmitter {
         self.makeSessionID = makeSessionID
     }
 
-    func startSession(vin: String, reason: BLETraceSessionStartReason) async {
-        guard recordingState == .inactive else { return }
-        sessionGeneration += 1
-        let generation = sessionGeneration
-        recordingState = .starting
-        targetVIN = StarkPairingIdentity.normalizedVIN(vin)
-        let context = BLETraceSessionContext(
-            id: makeSessionID(),
-            startedAt: now(),
-            startUptimeNanoseconds: uptimeNanoseconds(),
-            reason: reason
-        )
-        await recorder.startSession(context)
-        guard recordingState == .starting, sessionGeneration == generation else { return }
-        await recorder.record(makeEvent(
-            timestamp: context.startedAt,
-            uptimeNanoseconds: context.startUptimeNanoseconds,
-            category: "session",
-            operation: .sessionStarted,
-            direction: .internalEvent,
-            detail: reason.rawValue
-        ))
-        while !bufferedEvents.isEmpty {
-            let events = bufferedEvents
-            bufferedEvents.removeAll(keepingCapacity: true)
-            for event in events {
-                await recorder.record(event)
-            }
-            guard recordingState == .starting, sessionGeneration == generation else { return }
-        }
-        recordingState = .active
-    }
-
-    func finishSession(reason: BLETraceSessionEndReason) async {
-        guard recordingState != .inactive else { return }
-        sessionGeneration += 1
-        recordingState = .inactive
-        bufferedEvents.removeAll(keepingCapacity: true)
-        pendingReads.removeAll()
-        await recorder.finishSession(reason: reason)
-        targetVIN = ""
-    }
-
     func record(
         category: String,
         operation: BLETraceOperation,
@@ -83,7 +42,7 @@ final class BikeBLETraceEmitter {
         detail: String? = nil,
         error: Error? = nil
     ) async {
-        guard recordingState != .inactive else { return }
+        guard recordingState == .active || recordingState == .starting else { return }
         let event = makeEvent(
             timestamp: now(),
             uptimeNanoseconds: uptimeNanoseconds(),
@@ -242,5 +201,122 @@ final class BikeBLETraceEmitter {
         case inactive
         case starting
         case active
+        case closing
+        case paused
+    }
+
+    private enum CloseDestination {
+        case inactive
+        case paused
+    }
+}
+
+extension BikeBLETraceEmitter {
+    func startSession(vin: String, reason: BLETraceSessionStartReason) async {
+        if recordingState == .closing {
+            let generation = sessionGeneration
+            await closeTask?.value
+            completeClose(generation: generation)
+        }
+        guard recordingState == .inactive || recordingState == .paused else { return }
+        sessionGeneration += 1
+        let generation = sessionGeneration
+        recordingState = .starting
+        targetVIN = StarkPairingIdentity.normalizedVIN(vin)
+        let context = BLETraceSessionContext(
+            id: makeSessionID(),
+            startedAt: now(),
+            startUptimeNanoseconds: uptimeNanoseconds(),
+            reason: reason
+        )
+        await recorder.startSession(context)
+        guard recordingState == .starting, sessionGeneration == generation else { return }
+        await recorder.record(makeEvent(
+            timestamp: context.startedAt,
+            uptimeNanoseconds: context.startUptimeNanoseconds,
+            category: "session",
+            operation: .sessionStarted,
+            direction: .internalEvent,
+            detail: reason.rawValue
+        ))
+        guard recordingState == .starting, sessionGeneration == generation else { return }
+        while !bufferedEvents.isEmpty {
+            let events = bufferedEvents
+            bufferedEvents.removeAll(keepingCapacity: true)
+            for event in events {
+                await recorder.record(event)
+            }
+            guard recordingState == .starting, sessionGeneration == generation else { return }
+        }
+        recordingState = .active
+    }
+
+    func finishSession(reason: BLETraceSessionEndReason) async {
+        switch recordingState {
+        case .inactive:
+            targetVIN = ""
+            return
+        case .paused:
+            recordingState = .inactive
+            targetVIN = ""
+            return
+        case .closing:
+            closeDestination = .inactive
+            targetVIN = ""
+            let generation = sessionGeneration
+            await closeTask?.value
+            completeClose(generation: generation)
+            return
+        case .starting, .active:
+            break
+        }
+
+        await closeSession(reason: reason, destination: .inactive)
+    }
+
+    func startNewCapture() async -> Bool {
+        guard recordingState == .paused, !targetVIN.isEmpty else { return false }
+        let vin = targetVIN
+        await startSession(vin: vin, reason: .manualRequest)
+        return recordingState == .active
+    }
+
+    func stopCapture() async -> Bool {
+        guard recordingState == .active || recordingState == .starting else { return false }
+        await closeSession(reason: .userStopped, destination: .paused)
+        return recordingState == .paused
+    }
+
+    private func closeSession(
+        reason: BLETraceSessionEndReason,
+        destination: CloseDestination
+    ) async {
+        sessionGeneration += 1
+        let generation = sessionGeneration
+        recordingState = .closing
+        closeDestination = destination
+        if destination == .inactive {
+            targetVIN = ""
+        }
+        bufferedEvents.removeAll(keepingCapacity: true)
+        pendingReads.removeAll()
+        let recorder = recorder
+        let task = Task {
+            await recorder.finishSession(reason: reason)
+        }
+        closeTask = task
+        await task.value
+        completeClose(generation: generation)
+    }
+
+    private func completeClose(generation: Int) {
+        guard recordingState == .closing, sessionGeneration == generation else { return }
+        let destination = closeDestination ?? .inactive
+        recordingState = destination == .paused ? .paused : .inactive
+        if destination == .inactive {
+            targetVIN = ""
+        }
+        closeDestination = nil
+        closeTask = nil
     }
 }

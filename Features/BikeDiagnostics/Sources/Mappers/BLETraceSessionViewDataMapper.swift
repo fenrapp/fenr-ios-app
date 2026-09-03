@@ -19,6 +19,7 @@ public struct BLETraceSessionViewDataMapper: Sendable {
             date: session.startedAt.formatted(dateFormatStyle),
             duration: durationText(session.duration),
             size: session.fileSizeBytes.formatted(byteCountFormatStyle),
+            eventCount: session.eventCount.formatted(),
             status: statusText(session.status),
             statusKind: statusKind(session.status),
             isActive: session.status == .active,

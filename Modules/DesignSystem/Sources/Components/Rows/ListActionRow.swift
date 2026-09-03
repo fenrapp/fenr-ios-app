@@ -77,7 +77,12 @@ public struct ListActionLabel: View {
 
             Spacer(minLength: .zero)
         }
-        .frame(minHeight: ListRowConstants.minimumHeight)
+        .padding(.horizontal, DesignSpace.medium)
+        .frame(
+            maxWidth: .infinity,
+            minHeight: ListRowConstants.minimumHeight,
+            alignment: .leading
+        )
         .contentShape(Rectangle())
     }
 
@@ -164,8 +169,8 @@ public struct ListActionRowButtonStyle: ButtonStyle {
 public enum ListActionRowInsets {
     public static let compact = EdgeInsets(
         top: .zero,
-        leading: DesignSpace.medium,
+        leading: .zero,
         bottom: .zero,
-        trailing: DesignSpace.medium
+        trailing: .zero
     )
 }

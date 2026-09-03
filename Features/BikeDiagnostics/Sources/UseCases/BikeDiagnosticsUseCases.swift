@@ -6,6 +6,8 @@ public struct BikeDiagnosticsUseCases: Sendable {
     let connect: ConnectToBikeUseCase
     let disconnect: DisconnectBikeUseCase
     let retrySecurityHandshake: RetryBikeSecurityHandshakeUseCase
+    let startNewDiagnosticsCapture: StartNewBikeDiagnosticsCaptureUseCase
+    let stopDiagnosticsCapture: StopBikeDiagnosticsCaptureUseCase
     let observeDebugEvents: ObserveBikeDebugEventsUseCase
     let observeBLETraceSessions: ObserveBLETraceSessionsUseCase
     let prepareBLETraceExport: PrepareBLETraceExportUseCase
@@ -17,6 +19,8 @@ public struct BikeDiagnosticsUseCases: Sendable {
         connect: ConnectToBikeUseCase,
         disconnect: DisconnectBikeUseCase,
         retrySecurityHandshake: RetryBikeSecurityHandshakeUseCase,
+        startNewDiagnosticsCapture: StartNewBikeDiagnosticsCaptureUseCase,
+        stopDiagnosticsCapture: StopBikeDiagnosticsCaptureUseCase,
         observeDebugEvents: ObserveBikeDebugEventsUseCase,
         observeBLETraceSessions: ObserveBLETraceSessionsUseCase,
         prepareBLETraceExport: PrepareBLETraceExportUseCase,
@@ -27,6 +31,8 @@ public struct BikeDiagnosticsUseCases: Sendable {
         self.connect = connect
         self.disconnect = disconnect
         self.retrySecurityHandshake = retrySecurityHandshake
+        self.startNewDiagnosticsCapture = startNewDiagnosticsCapture
+        self.stopDiagnosticsCapture = stopDiagnosticsCapture
         self.observeDebugEvents = observeDebugEvents
         self.observeBLETraceSessions = observeBLETraceSessions
         self.prepareBLETraceExport = prepareBLETraceExport

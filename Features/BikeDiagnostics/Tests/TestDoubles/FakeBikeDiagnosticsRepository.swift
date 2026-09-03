@@ -12,6 +12,8 @@ actor FakeBikeDiagnosticsRepository: BikeRepository {
     func connect(vin: String) async throws { await state.setConnectedVIN(vin) }
     func disconnect() async throws { await state.setDidDisconnect() }
     func retrySecurityHandshake() async throws { await state.setDidRetrySecurityHandshake() }
+    func startNewDiagnosticsCapture() async -> Bool { await state.startNewDiagnosticsCapture() }
+    func stopDiagnosticsCapture() async -> Bool { await state.stopDiagnosticsCapture() }
     func readTelemetrySnapshot() async throws { await state.setDidReadTelemetrySnapshot() }
 
     func observeTelemetry() async -> AsyncStream<BikeTelemetry> {
@@ -44,6 +46,8 @@ actor FakeBikeDiagnosticsRepository: BikeRepository {
     func didDisconnect() async -> Bool { await state.didDisconnect }
     func didRetrySecurityHandshake() async -> Bool { await state.didRetrySecurityHandshake }
     func didReadTelemetrySnapshot() async -> Bool { await state.didReadTelemetrySnapshot }
+    func diagnosticsCaptureStartCount() async -> Int { await state.diagnosticsCaptureStartCount }
+    func diagnosticsCaptureStopCount() async -> Int { await state.diagnosticsCaptureStopCount }
 }
 
 private actor FakeBikeDiagnosticsRepositoryState {
@@ -54,6 +58,8 @@ private actor FakeBikeDiagnosticsRepositoryState {
     private(set) var didDisconnect = false
     private(set) var didRetrySecurityHandshake = false
     private(set) var didReadTelemetrySnapshot = false
+    private(set) var diagnosticsCaptureStartCount = 0
+    private(set) var diagnosticsCaptureStopCount = 0
 
     func incrementStart() {
         startCount += 1
@@ -81,5 +87,15 @@ private actor FakeBikeDiagnosticsRepositoryState {
 
     func setDidReadTelemetrySnapshot() {
         didReadTelemetrySnapshot = true
+    }
+
+    func startNewDiagnosticsCapture() -> Bool {
+        diagnosticsCaptureStartCount += 1
+        return true
+    }
+
+    func stopDiagnosticsCapture() -> Bool {
+        diagnosticsCaptureStopCount += 1
+        return true
     }
 }

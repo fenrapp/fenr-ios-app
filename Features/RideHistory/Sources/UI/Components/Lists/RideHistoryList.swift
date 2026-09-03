@@ -74,6 +74,7 @@ struct RideHistoryList: View {
                         .foregroundStyle(.tertiary)
                         .accessibilityHidden(true)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

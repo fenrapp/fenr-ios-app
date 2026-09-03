@@ -9,8 +9,15 @@ public struct RideHistoryDetailViewState: Equatable, Sendable {
     }
 
     public struct Metric: Equatable, Identifiable, Sendable {
+        public enum IconTone: Equatable, Sendable {
+            case accent
+            case informational
+            case positive
+        }
+
         public let id: String
         public let symbolName: String
+        public let iconTone: IconTone
         public let label: String
         public let value: String
         public let detail: String?
@@ -18,12 +25,14 @@ public struct RideHistoryDetailViewState: Equatable, Sendable {
         public init(
             id: String,
             symbolName: String,
+            iconTone: IconTone = .accent,
             label: String,
             value: String,
             detail: String? = nil
         ) {
             self.id = id
             self.symbolName = symbolName
+            self.iconTone = iconTone
             self.label = label
             self.value = value
             self.detail = detail

@@ -12,6 +12,7 @@ public struct BLETraceSessionViewData: Equatable, Identifiable, Sendable {
     public let date: String
     public let duration: String
     public let size: String
+    public let eventCount: String
     public let status: String
     public let statusKind: Status
     public let isActive: Bool
@@ -22,6 +23,7 @@ public struct BLETraceSessionViewData: Equatable, Identifiable, Sendable {
         date: String,
         duration: String,
         size: String,
+        eventCount: String,
         status: String,
         statusKind: Status,
         isActive: Bool,
@@ -31,6 +33,7 @@ public struct BLETraceSessionViewData: Equatable, Identifiable, Sendable {
         self.date = date
         self.duration = duration
         self.size = size
+        self.eventCount = eventCount
         self.status = status
         self.statusKind = statusKind
         self.isActive = isActive

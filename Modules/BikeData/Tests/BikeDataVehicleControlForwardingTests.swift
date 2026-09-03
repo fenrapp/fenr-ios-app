@@ -4,6 +4,20 @@ import Testing
 
 @Suite("Bike data vehicle control forwarding")
 struct BikeDataVehicleControlForwardingTests {
+    @Test("Diagnostics capture controls forward without changing the bike session")
+    func forwardsDiagnosticsCaptureControl() async {
+        let client = FakeBikeTelemetryClient()
+        let repository = makeRepository(client: client)
+
+        #expect(await repository.stopDiagnosticsCapture())
+        #expect(await repository.startNewDiagnosticsCapture())
+
+        #expect(await client.invocations() == [
+            .stopDiagnosticsCapture,
+            .startNewDiagnosticsCapture
+        ])
+    }
+
     @Test("Bike Lock preparation and writes preserve the requested state")
     func forwardsBikeLockControl() async throws {
         let client = FakeBikeTelemetryClient()

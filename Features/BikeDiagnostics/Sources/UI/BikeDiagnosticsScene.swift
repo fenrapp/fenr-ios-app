@@ -68,6 +68,7 @@ public struct BikeDiagnosticsScene: View {
         case .bleLogs:
             DiagnosticsBLELogsView(
                 state: viewModel.viewState,
+                onToggleCapture: viewModel.toggleBLETraceCapture,
                 onExport: viewModel.exportBLETraceSession,
                 onDelete: viewModel.deleteBLETraceSession,
                 onDeleteAll: viewModel.deleteAllBLETraceSessions

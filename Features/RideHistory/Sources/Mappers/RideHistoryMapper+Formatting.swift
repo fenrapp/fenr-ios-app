@@ -45,10 +45,22 @@ extension RideHistoryMapper {
         .init(
             id: id,
             symbolName: metricSymbolName(for: id),
+            iconTone: metricIconTone(for: id),
             label: label,
             value: value,
             detail: detail
         )
+    }
+
+    func metricIconTone(for id: String) -> RideHistoryDetailViewState.Metric.IconTone {
+        switch id {
+        case "recovered", "efficiency", "recoveryShare", "peakRegen":
+            .positive
+        case "used", "net", "coverage", "batteryChange":
+            .informational
+        default:
+            .accent
+        }
     }
 
     func metricSymbolName(for id: String) -> String {
