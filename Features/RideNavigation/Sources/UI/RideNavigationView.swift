@@ -1,6 +1,7 @@
 import SwiftUI
 
 public struct RideNavigationView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @ObservedObject private var viewModel: RideNavigationViewModel
     private let mapSurfaceFactory: RideNavigationMapSurfaceFactory
     private let transitionNamespace: Namespace.ID
@@ -98,7 +99,8 @@ public struct RideNavigationView: View {
                 )
             }
         }
-        .background(Color.black)
+        .background(navigationBackground)
+        .rideNavigationFocusAppearance(usesFocusAppearance)
         .toolbar(.hidden, for: .navigationBar)
         .statusBarHidden()
         .task(id: focusAutoHideKey) {
@@ -182,6 +184,15 @@ public struct RideNavigationView: View {
     private var isFocusDriving: Bool {
         viewModel.viewState.mapScene.displayStyle == .focus
             && (viewModel.viewState.activity == .following || viewModel.viewState.activity == .navigating)
+    }
+
+    private var navigationBackground: Color {
+        guard usesFocusAppearance else { return .black }
+        return RideNavigationFocusPalette(colorScheme: colorScheme).background
+    }
+
+    private var usesFocusAppearance: Bool {
+        viewModel.viewState.mapScene.displayStyle == .focus
     }
 
     private func revealFocusControls() {

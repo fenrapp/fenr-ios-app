@@ -12,7 +12,6 @@ private struct FocusNavigationMapPreview: View {
             onIntent: { _ in },
             onInteraction: {}
         )
-        .background(Color.black)
         .ignoresSafeArea()
     }
 }
@@ -135,15 +134,33 @@ private enum FocusNavigationMapPreviewScenes {
     }
 }
 
-#Preview("Focus Map · Follow", traits: .landscapeLeft) {
+#Preview("Focus Map · Follow · Night", traits: .landscapeLeft) {
     FocusNavigationMapPreview(scene: FocusNavigationMapPreviewScenes.follow)
+        .preferredColorScheme(.dark)
 }
 
-#Preview("Focus Map · Overview", traits: .landscapeLeft) {
+#Preview("Focus Map · Follow · Day", traits: .landscapeLeft) {
+    FocusNavigationMapPreview(scene: FocusNavigationMapPreviewScenes.follow)
+        .preferredColorScheme(.light)
+}
+
+#Preview("Focus Map · Overview · Night", traits: .landscapeLeft) {
     FocusNavigationMapPreview(scene: FocusNavigationMapPreviewScenes.overview)
+        .preferredColorScheme(.dark)
 }
 
-#Preview("Focus Map · Automatic", traits: .landscapeLeft) {
+#Preview("Focus Map · Overview · Day", traits: .landscapeLeft) {
+    FocusNavigationMapPreview(scene: FocusNavigationMapPreviewScenes.overview)
+        .preferredColorScheme(.light)
+}
+
+#Preview("Focus Map · Automatic · Night", traits: .landscapeLeft) {
     FocusNavigationMapPreview(scene: FocusNavigationMapPreviewScenes.automatic)
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Focus Map · Automatic · Day", traits: .landscapeLeft) {
+    FocusNavigationMapPreview(scene: FocusNavigationMapPreviewScenes.automatic)
+        .preferredColorScheme(.light)
 }
 #endif

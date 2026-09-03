@@ -3,6 +3,7 @@ import SwiftUI
 
 struct RideNavigationGuidanceCard: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.colorScheme) private var colorScheme
     let state: RideNavigationViewState
     let isMonochrome: Bool
     let usesFullWidth: Bool
@@ -26,7 +27,7 @@ struct RideNavigationGuidanceCard: View {
                     .rotationEffect(.degrees(guidance.rotationDegrees))
                     .animation(.smooth, value: guidance.rotationDegrees)
                     .foregroundStyle(
-                        isMonochrome ? Color.white
+                        isMonochrome ? focusPalette.foreground
                             : guidance.emphasis == .warning ? DesignColor.warning : DesignColor.accent
                     )
                 VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
@@ -50,6 +51,10 @@ struct RideNavigationGuidanceCard: View {
             .rideNavigationGlassSurface(cornerRadius: Constants.radius)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    private var focusPalette: RideNavigationFocusPalette {
+        RideNavigationFocusPalette(colorScheme: colorScheme)
     }
 
     private enum Constants {
