@@ -18,8 +18,6 @@ public struct BikeModelSettingsView: View {
         }
         .navigationTitle(Text(.appSettingsBikeModelTitle))
         .navigationBarTitleDisplayMode(.inline)
-        .task { viewModel.start() }
-        .onDisappear { viewModel.stop() }
     }
 }
 #endif

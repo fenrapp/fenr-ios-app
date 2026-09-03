@@ -26,7 +26,8 @@ struct WatchAppDependencyContainer {
                 setupController.complete()
             },
             settingsViewModel: makeSettingsViewModel(),
-            setupController: setupController
+            setupController: setupController,
+            navigationCoordinator: WatchNavigationCoordinator()
         )
     }
 

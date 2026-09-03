@@ -69,6 +69,15 @@ public final class PowerModeSettingsViewModel: ObservableObject {
         }
     }
 
+    public func setPresentationActive(_ isActive: Bool) {
+        if isActive {
+            start()
+        } else {
+            observationTask?.cancel()
+            observationTask = nil
+        }
+    }
+
     public func stop() {
         isStarted = false
         observationTask?.cancel()

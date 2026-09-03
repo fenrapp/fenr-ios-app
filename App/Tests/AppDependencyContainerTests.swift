@@ -12,7 +12,7 @@ struct AppDependencyContainerTests {
     @Test("Container builds diagnostics graph without starting streams")
     func buildsBikeDiagnosticsGraph() {
         let container = ProductionAppDependencyContainerFactory.makeDefault()
-        let viewModel = container.makeRootDependencies().diagnosticsViewModel
+        let viewModel = container.makeRootDependencies().featureStore.diagnosticsViewModel
 
         #expect(viewModel.viewState.vin == "--")
         #expect(!viewModel.viewState.isReconnectEnabled)
@@ -23,12 +23,12 @@ struct AppDependencyContainerTests {
     @Test("Container assembles root dependencies before the view is created")
     func buildsRootDependencies() {
         let dependencies = ProductionAppDependencyContainerFactory.makeDefault().makeRootDependencies()
-        let rideDashboard = dependencies.rideDashboardFactory.makeFeature()
+        let rideDashboard = dependencies.featureStore.rideDashboardFactory.makeFeature()
 
         #expect(!dependencies.setupFlow.isLoaded)
         #expect(!rideDashboard.dashboardViewModel.viewState.hasTelemetry)
         #expect(!rideDashboard.chargingViewModel.viewState.control.isEnabled)
-        #expect(dependencies.rideDashboardFactory.makeFeature() !== rideDashboard)
+        #expect(dependencies.featureStore.rideDashboardFactory.makeFeature() !== rideDashboard)
     }
 
     @Test("Composable containers build independently")

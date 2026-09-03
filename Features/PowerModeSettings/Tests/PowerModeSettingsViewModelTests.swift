@@ -131,6 +131,26 @@ struct PowerModeSettingsViewModelTests {
         fixture.viewModel.stop()
         #expect(feedback(for: .regeneration, in: fixture.viewModel).state == .idle)
     }
+
+    @Test("Pausing presentation does not cancel a committed write")
+    func presentationPausePreservesCommittedWrite() async {
+        let writeOperation = ControllablePowerModeSettingsOperation()
+        let bikeRepository = PowerModeSettingsBikeRepository(baseWriteOperation: writeOperation)
+        let fixture = makeFixture(bikeRepository: bikeRepository)
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(connectedSnapshot())
+        #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
+
+        fixture.viewModel.updateAdjustment(id: .power, value: 50)
+        #expect(await waitUntil { await writeOperation.pendingCount == 1 })
+        fixture.viewModel.setPresentationActive(false)
+        await writeOperation.succeedNext()
+
+        #expect(await waitUntil {
+            feedback(for: .power, in: fixture.viewModel).state == .confirmed
+        })
+        fixture.viewModel.stop()
+    }
 }
 
 extension PowerModeSettingsViewModelTests {

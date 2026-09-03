@@ -3,12 +3,17 @@ import SwiftUI
 
 public struct RideHistoryView: View {
     @ObservedObject private var viewModel: RideHistoryViewModel
+    private let onNavigation: (RideHistoryNavigationEvent) -> Void
 
     @Environment(\.editMode) private var editMode
     @State private var selectionState = RideHistorySelectionState()
 
-    public init(viewModel: RideHistoryViewModel) {
+    public init(
+        viewModel: RideHistoryViewModel,
+        onNavigation: @escaping (RideHistoryNavigationEvent) -> Void = { _ in }
+    ) {
         self.viewModel = viewModel
+        self.onNavigation = onNavigation
     }
 
     public var body: some View {
@@ -16,9 +21,7 @@ public struct RideHistoryView: View {
             state: viewModel.viewState,
             selectedRideIDs: $selectionState.selectedRideIDs,
             isEditing: isEditing,
-            destination: { rideID in
-                RideHistoryDetailView(viewModel: viewModel, rideID: rideID)
-            },
+            onOpenRide: { onNavigation(.show(.detail(id: $0))) },
             refresh: viewModel.refresh,
             deleteRide: viewModel.deleteRide(id:)
         )
@@ -34,8 +37,6 @@ public struct RideHistoryView: View {
                     deleteSelection: requestSelectionDeletion
                 )
             }
-            .task { viewModel.start() }
-            .onDisappear { viewModel.stop() }
             .onChange(of: availableRideIDs) { _, availableIDs in
                 selectionState.reconcile(availableRideIDs: availableIDs)
             }

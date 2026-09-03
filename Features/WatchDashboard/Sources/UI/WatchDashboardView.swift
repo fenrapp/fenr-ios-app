@@ -3,17 +3,14 @@ import SwiftUI
 
 public struct WatchDashboardView: View {
     @ObservedObject private var viewModel: WatchDashboardViewModel
-    private let onChangeBike: () -> Void
-    private let onOpenSettings: () -> Void
+    private let onNavigation: (WatchDashboardNavigationEvent) -> Void
 
     public init(
         viewModel: WatchDashboardViewModel,
-        onChangeBike: @escaping () -> Void,
-        onOpenSettings: @escaping () -> Void
+        onNavigation: @escaping (WatchDashboardNavigationEvent) -> Void
     ) {
         self.viewModel = viewModel
-        self.onChangeBike = onChangeBike
-        self.onOpenSettings = onOpenSettings
+        self.onNavigation = onNavigation
     }
 
     public var body: some View {
@@ -23,20 +20,20 @@ public struct WatchDashboardView: View {
             case .ride:
                 WatchRideDashboardContent(
                     state: viewModel.viewState,
-                    onChangeBike: onChangeBike
+                    onChangeBike: { onNavigation(.changeBike) }
                 )
             case .charging:
                 WatchChargingDashboardContent(
                     state: viewModel.viewState,
-                    onChangeBike: onChangeBike
+                    onChangeBike: { onNavigation(.changeBike) }
                 )
             }
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button(action: onOpenSettings) {
+                Button(action: { onNavigation(.openSettings) }, label: {
                     Image(systemName: "gearshape")
-                }
+                })
                 .accessibilityLabel(Text(.watchDashboardSettings))
             }
         }
@@ -52,7 +49,7 @@ public struct WatchDashboardView: View {
                     systemImage: "bolt.horizontal.circle",
                     description: Text(verbatim: detail)
                 )
-                WatchChangeBikeButton(action: onChangeBike)
+                WatchChangeBikeButton(action: { onNavigation(.changeBike) })
             }
 
             if !viewModel.debugEvents.isEmpty {
@@ -80,8 +77,7 @@ public struct WatchDashboardView: View {
     NavigationStack {
         WatchDashboardView(
             viewModel: WatchDashboardPreviewFactory.ride(),
-            onChangeBike: {},
-            onOpenSettings: {}
+            onNavigation: { _ in }
         )
     }
 }

@@ -10,6 +10,7 @@ struct WatchRootDependencies {
     let onboardingViewModel: WatchOnboardingViewModel
     let settingsViewModel: AppSettingsViewModel
     let setupController: WatchSetupController
+    let navigationCoordinator: WatchNavigationCoordinator
 }
 
 @MainActor

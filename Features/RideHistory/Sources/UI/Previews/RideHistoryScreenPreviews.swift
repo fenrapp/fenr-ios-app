@@ -28,7 +28,7 @@ import SwiftUI
         state: .init(status: .empty),
         selectedRideIDs: .constant([]),
         isEditing: false,
-        destination: { _ in EmptyView() },
+        onOpenRide: { _ in },
         refresh: {},
         deleteRide: { _ in }
     )
@@ -58,9 +58,7 @@ private struct RideHistoryListPreview: View {
             state: RideHistoryPreviewData.listState,
             selectedRideIDs: $selectedRideIDs,
             isEditing: isEditing,
-            destination: { rideID in
-                Text("Ride \(rideID.uuidString.prefix(4))")
-            },
+            onOpenRide: { _ in },
             refresh: {},
             deleteRide: { _ in }
         )
