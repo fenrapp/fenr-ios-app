@@ -4,9 +4,14 @@ import SwiftUI
 public struct DashboardCardSettingsView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ObservedObject private var viewModel: DashboardCardSettingsViewModel
+    private let onNavigation: (DashboardCardSettingsNavigationEvent) -> Void
 
-    public init(viewModel: DashboardCardSettingsViewModel) {
+    public init(
+        viewModel: DashboardCardSettingsViewModel,
+        onNavigation: @escaping (DashboardCardSettingsNavigationEvent) -> Void = { _ in }
+    ) {
         self.viewModel = viewModel
+        self.onNavigation = onNavigation
     }
 
     public var body: some View {
@@ -48,8 +53,6 @@ public struct DashboardCardSettingsView: View {
                 EditButton()
             }
         }
-        .task { viewModel.start() }
-        .onDisappear { viewModel.stop() }
     }
 
     private var sectionRowsBinding: Binding<[DashboardCardSectionRowViewData]> {
@@ -111,18 +114,25 @@ public struct DashboardCardSettingsView: View {
             )
             .frame(maxWidth: .infinity, alignment: .leading)
         } else {
-            NavigationLink {
-                DashboardCardSectionDetailView(
-                    viewModel: viewModel,
-                    sectionID: section.id
-                )
+            Button {
+                onNavigation(.show(.section(id: section.id)))
             } label: {
-                DashboardCardRowLabel(
-                    title: section.title,
-                    detail: section.detail,
-                    thumbnail: section.thumbnail
-                )
+                HStack {
+                    DashboardCardRowLabel(
+                        title: section.title,
+                        detail: section.detail,
+                        thumbnail: section.thumbnail
+                    )
+                    Spacer(minLength: DesignSpace.extraSmall)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                        .accessibilityHidden(true)
+                }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(.isLink)
         }
     }
 

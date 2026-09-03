@@ -1,11 +1,16 @@
 import Foundation
 import SwiftUI
 
-struct RideHistoryDetailView: View {
-    @ObservedObject var viewModel: RideHistoryViewModel
-    let rideID: UUID
+public struct RideHistoryDetailView: View {
+    @ObservedObject private var viewModel: RideHistoryViewModel
+    private let rideID: UUID
 
-    var body: some View {
+    public init(viewModel: RideHistoryViewModel, rideID: UUID) {
+        self.viewModel = viewModel
+        self.rideID = rideID
+    }
+
+    public var body: some View {
         RideHistoryDetailContent(state: viewModel.detailViewState)
         .navigationTitle(.rideHistoryRideTitle)
         .navigationBarTitleDisplayMode(.inline)

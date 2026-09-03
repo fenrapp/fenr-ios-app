@@ -1226,6 +1226,8 @@ targets:
     deploymentTarget: "10.0"
     sources:
       - path: Features/WatchDashboard/Tests
+      - path: Watch/Tests
+      - path: Watch/Sources/Navigation
     dependencies:
       - target: WatchDashboard
       - target: BikeDomain
@@ -1358,6 +1360,7 @@ targets:
     sources:
       - path: App/Tests
       - path: App/Sources/Composition
+      - path: App/Sources/Navigation
       - path: App/Resources/Shared/Localizable.xcstrings
         buildPhase: resources
     dependencies:
@@ -1408,6 +1411,7 @@ targets:
           - BikeSDK
           - StarkProtocol
           - Production
+      - path: App/Sources/Navigation
       - path: App/Resources/Shared/Localizable.xcstrings
         buildPhase: resources
     dependencies:

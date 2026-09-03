@@ -1,10 +1,15 @@
 import SwiftUI
 
-struct DashboardCardSectionDetailView: View {
-    @ObservedObject var viewModel: DashboardCardSettingsViewModel
-    let sectionID: String
+public struct DashboardCardSectionDetailView: View {
+    @ObservedObject private var viewModel: DashboardCardSettingsViewModel
+    private let sectionID: String
 
-    var body: some View {
+    public init(viewModel: DashboardCardSettingsViewModel, sectionID: String) {
+        self.viewModel = viewModel
+        self.sectionID = sectionID
+    }
+
+    public var body: some View {
         List {
             Section {
                 ForEach(pageRowsBinding, editActions: .move) { row in
@@ -38,8 +43,6 @@ struct DashboardCardSectionDetailView: View {
                 EditButton()
             }
         }
-        .task { viewModel.start() }
-        .onDisappear { viewModel.stop() }
     }
 
     private var section: DashboardCardSectionRowViewData? {

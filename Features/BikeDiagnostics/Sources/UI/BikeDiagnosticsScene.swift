@@ -3,22 +3,19 @@ import SwiftUI
 public struct BikeDiagnosticsScene: View {
     private let destination: BikeDiagnosticsDestination
     @ObservedObject private var viewModel: BikeDiagnosticsViewModel
-    private let onNavigate: (BikeDiagnosticsDestination) -> Void
-    private let onBatteryHealth: () -> Void
-    private let onChangeBike: () -> Void
+    private let isPresentationActive: Bool
+    private let onNavigation: (BikeDiagnosticsNavigationEvent) -> Void
 
     public init(
         destination: BikeDiagnosticsDestination,
         viewModel: BikeDiagnosticsViewModel,
-        onNavigate: @escaping (BikeDiagnosticsDestination) -> Void = { _ in },
-        onBatteryHealth: @escaping () -> Void = {},
-        onChangeBike: @escaping () -> Void = {}
+        isPresentationActive: Bool,
+        onNavigation: @escaping (BikeDiagnosticsNavigationEvent) -> Void
     ) {
         self.destination = destination
         self.viewModel = viewModel
-        self.onNavigate = onNavigate
-        self.onBatteryHealth = onBatteryHealth
-        self.onChangeBike = onChangeBike
+        self.isPresentationActive = isPresentationActive
+        self.onNavigation = onNavigation
     }
 
     public var body: some View {
@@ -28,6 +25,13 @@ public struct BikeDiagnosticsScene: View {
             .sheet(item: exportBinding) { export in
                 ActivityShareSheet(itemURL: export.fileURL)
             }
+            .task { synchronizePresentation() }
+            .onChange(of: isPresentationActive) { synchronizePresentation() }
+            .onDisappear {
+                if ownsPresentationLifecycle, !isPresentationActive {
+                    viewModel.setPresentationActive(false)
+                }
+            }
     }
 
     @ViewBuilder
@@ -36,9 +40,9 @@ public struct BikeDiagnosticsScene: View {
         case .overview:
             DiagnosticsOverviewView(
                 state: viewModel.viewState,
-                onNavigate: onNavigate,
-                onBatteryHealth: onBatteryHealth,
-                onChangeBike: onChangeBike
+                onNavigate: { onNavigation(.show($0)) },
+                onBatteryHealth: { onNavigation(.openBatteryHealth) },
+                onChangeBike: { onNavigation(.changeBike) }
             )
         case .connection:
             DiagnosticsConnectionView(
@@ -46,7 +50,7 @@ public struct BikeDiagnosticsScene: View {
                 onReconnect: viewModel.reconnectTapped,
                 onRetry: viewModel.pairRetryTapped,
                 onDisconnect: viewModel.disconnectTapped,
-                onChangeBike: onChangeBike
+                onChangeBike: { onNavigation(.changeBike) }
             )
         case .telemetry:
             DiagnosticsTelemetryView(
@@ -78,5 +82,14 @@ public struct BikeDiagnosticsScene: View {
                 if value == nil { viewModel.clearBLETraceExport() }
             }
         )
+    }
+
+    private func synchronizePresentation() {
+        guard ownsPresentationLifecycle else { return }
+        viewModel.setPresentationActive(isPresentationActive)
+    }
+
+    private var ownsPresentationLifecycle: Bool {
+        destination == .overview
     }
 }

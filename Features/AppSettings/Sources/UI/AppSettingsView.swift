@@ -2,37 +2,19 @@ import SwiftUI
 
 public struct AppSettingsView: View {
     @ObservedObject private var viewModel: AppSettingsViewModel
-    private let onOpenTelemetry: () -> Void
-    private let onOpenRideDisplay: () -> Void
-    private let onOpenDashboardCards: () -> Void
-    private let onOpenPowerModes: () -> Void
-    private let onOpenBikeModel: () -> Void
-    private let onOpenRideHistory: () -> Void
     private let bikeLockModeTitle: String?
-    private let onOpenBikeLock: () -> Void
+    private let onNavigation: (AppSettingsNavigationEvent) -> Void
     private let accessory: () -> AnyView
 
     public init(
         viewModel: AppSettingsViewModel,
-        onOpenTelemetry: @escaping () -> Void = {},
-        onOpenRideDisplay: @escaping () -> Void = {},
-        onOpenDashboardCards: @escaping () -> Void = {},
-        onOpenPowerModes: @escaping () -> Void = {},
-        onOpenBikeModel: @escaping () -> Void = {},
-        onOpenRideHistory: @escaping () -> Void = {},
         bikeLockModeTitle: String? = nil,
-        onOpenBikeLock: @escaping () -> Void = {},
+        onNavigation: @escaping (AppSettingsNavigationEvent) -> Void = { _ in },
         accessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
         self.viewModel = viewModel
-        self.onOpenTelemetry = onOpenTelemetry
-        self.onOpenRideDisplay = onOpenRideDisplay
-        self.onOpenDashboardCards = onOpenDashboardCards
-        self.onOpenPowerModes = onOpenPowerModes
-        self.onOpenBikeModel = onOpenBikeModel
-        self.onOpenRideHistory = onOpenRideHistory
         self.bikeLockModeTitle = bikeLockModeTitle
-        self.onOpenBikeLock = onOpenBikeLock
+        self.onNavigation = onNavigation
         self.accessory = accessory
     }
 
@@ -51,8 +33,6 @@ public struct AppSettingsView: View {
         }
         .navigationTitle(Text(.appSettingsTitle))
         .navigationBarTitleDisplayMode(.inline)
-        .task { viewModel.start() }
-        .onDisappear { viewModel.stop() }
     }
 
     private var measurementSystemBinding: Binding<String> {
@@ -78,7 +58,7 @@ public struct AppSettingsView: View {
                 title: .appSettingsRideDisplayTitle,
                 detail: viewModel.viewState.rideDisplay.detail,
                 accessibilityIdentifier: "settings.rideDisplay",
-                action: onOpenRideDisplay
+                action: { onNavigation(.show(.rideDisplay)) }
             )
             SettingsNavigationRow(
                 icon: "rectangle.stack.fill",
@@ -86,7 +66,7 @@ public struct AppSettingsView: View {
                 title: .appSettingsDashboardCardsTitle,
                 detail: viewModel.viewState.dashboardCards.detail,
                 accessibilityIdentifier: "settings.dashboardCards",
-                action: onOpenDashboardCards
+                action: { onNavigation(.openDashboardCards) }
             )
             SettingsNavigationRow(
                 icon: "clock.arrow.circlepath",
@@ -94,7 +74,7 @@ public struct AppSettingsView: View {
                 title: .appSettingsRideHistoryTitle,
                 detail: .appSettingsRideHistoryDetail,
                 accessibilityIdentifier: "settings.rideHistory",
-                action: onOpenRideHistory
+                action: { onNavigation(.openRideHistory) }
             )
         } header: {
             Text(.appSettingsDashboardSection)
@@ -109,7 +89,7 @@ public struct AppSettingsView: View {
                 title: .appSettingsPowerModesTitle,
                 detail: viewModel.viewState.powerModes.detail,
                 accessibilityIdentifier: "settings.powerModes",
-                action: onOpenPowerModes
+                action: { onNavigation(.openPowerModes) }
             )
             if viewModel.viewState.isBikeModelSelectionVisible {
                 SettingsNavigationRow(
@@ -118,7 +98,7 @@ public struct AppSettingsView: View {
                     title: .appSettingsBikeModelTitle,
                     detail: viewModel.viewState.powerTier.navigationDetail,
                     accessibilityIdentifier: "settings.bikeModel",
-                    action: onOpenBikeModel
+                    action: { onNavigation(.show(.bikeModel)) }
                 )
             }
             SettingsNavigationRow(
@@ -127,7 +107,7 @@ public struct AppSettingsView: View {
                 title: .appSettingsBikeLockTitle,
                 verbatimDetail: bikeLockModeTitle ?? String(localized: .appSettingsUnavailable),
                 accessibilityIdentifier: "settings.bikeLock",
-                action: onOpenBikeLock
+                action: { onNavigation(.openBikeLock) }
             )
             SettingsPickerRow(
                 icon: "battery.75percent",
@@ -163,7 +143,7 @@ public struct AppSettingsView: View {
                 title: .appSettingsDiagnosticsTitle,
                 detail: .appSettingsDiagnosticsDetail,
                 accessibilityIdentifier: "settings.diagnostics",
-                action: onOpenTelemetry
+                action: { onNavigation(.openDiagnostics) }
             )
         } header: {
             Text(.appSettingsAdvancedSection)

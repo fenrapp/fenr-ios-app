@@ -26,8 +26,6 @@ public struct RideDisplaySettingsView: View {
         }
         .navigationTitle(Text(.appSettingsRideDisplayTitle))
         .navigationBarTitleDisplayMode(.inline)
-        .task { viewModel.start() }
-        .onDisappear { viewModel.stop() }
     }
 }
 #endif

@@ -3,16 +3,19 @@ import SwiftUI
 public struct BatteryHealthScene: View {
     private let destination: BatteryHealthDestination
     @ObservedObject private var viewModel: BatteryHealthViewModel
-    private let onNavigate: (BatteryHealthDestination) -> Void
+    private let isPresentationActive: Bool
+    private let onNavigation: (BatteryHealthNavigationEvent) -> Void
 
     public init(
         destination: BatteryHealthDestination,
         viewModel: BatteryHealthViewModel,
-        onNavigate: @escaping (BatteryHealthDestination) -> Void = { _ in }
+        isPresentationActive: Bool,
+        onNavigation: @escaping (BatteryHealthNavigationEvent) -> Void
     ) {
         self.destination = destination
         self.viewModel = viewModel
-        self.onNavigate = onNavigate
+        self.isPresentationActive = isPresentationActive
+        self.onNavigation = onNavigation
     }
 
     public var body: some View {
@@ -21,7 +24,7 @@ public struct BatteryHealthScene: View {
             case .overview:
                 BatteryHealthOverviewView(
                     state: viewModel.viewState.overview,
-                    onNavigate: onNavigate
+                    onNavigate: { onNavigation(.show($0)) }
                 )
             case .cells:
                 BatteryHealthCellsView(state: viewModel.viewState.cellsDetail)
@@ -42,5 +45,21 @@ public struct BatteryHealthScene: View {
         }
         .navigationTitle(destination.title)
         .navigationBarTitleDisplayMode(destination == .overview ? .large : .inline)
+        .task { synchronizePresentation() }
+        .onChange(of: isPresentationActive) { synchronizePresentation() }
+        .onDisappear {
+            if ownsPresentationLifecycle, !isPresentationActive {
+                viewModel.setPresentationActive(false)
+            }
+        }
+    }
+
+    private func synchronizePresentation() {
+        guard ownsPresentationLifecycle else { return }
+        viewModel.setPresentationActive(isPresentationActive)
+    }
+
+    private var ownsPresentationLifecycle: Bool {
+        destination == .overview
     }
 }

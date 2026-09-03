@@ -47,10 +47,6 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
             bindStreams()
         } else {
             cancelObservationTasks()
-            actionTask?.cancel()
-            actionTask = nil
-            bleTraceActionTask?.cancel()
-            bleTraceActionTask = nil
         }
     }
 

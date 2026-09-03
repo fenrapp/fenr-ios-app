@@ -109,10 +109,10 @@ struct AppDependencyContainer {
         let onboardingViewModel = makeOnboardingViewModel { vin in
             setupFlow.complete(vin: vin)
         }
-        let router = makeRootRouter(
-            setupFlow: setupFlow,
+        let navigationCoordinator = AppNavigationCoordinator(
             opensRideNavigationOnLaunch: opensRideNavigationOnLaunch
         )
+        let externalNavigationResolver = AppExternalNavigationResolver()
         let sessionController = makeSessionController()
         let bikeLiveActivityController = makeBikeLiveActivityController()
         let rideDashboardFactory = AppRideDashboardFeatureFactory(
@@ -130,31 +130,30 @@ struct AppDependencyContainer {
                 allowsExperimentalBikeLockControl: allowsExperimentalBikeLockControl
             )
         )
-        return AppRootDependencies(
-            diagnosticsViewModel: makeBikeDiagnosticsViewModel(session: session),
-            batteryHealthViewModel: makeBatteryHealthViewModel(session: session),
-            bikeLockSettingsViewModel: makeBikeLockSettingsViewModel(),
-            rideDashboardFactory: rideDashboardFactory,
+        let featureStore = makeFeatureStore(
             onboardingViewModel: onboardingViewModel,
-            appSettingsViewModel: makeAppSettingsViewModel(),
-            dashboardCardSettingsViewModel: makeDashboardCardSettingsViewModel(),
-            powerModeSettingsViewModel: makePowerModeSettingsViewModel(),
-            rideHistoryViewModel: makeRideHistoryViewModel(),
-            rideNavigationFactory: AppRideNavigationFeatureFactory(
-                vehicleSession: vehicleSession,
-                observeDeviceSpeed: ObserveDeviceSpeedUseCase(repository: deviceSpeedRepository),
-                settingsRepository: settingsRepository
-            ),
+            rideDashboardFactory: rideDashboardFactory
+        )
+        return AppRootDependencies(
+            featureStore: featureStore,
             setupFlow: setupFlow,
-            router: router,
-            lifecycleController: AppLifecycleController(
-                sessionController: sessionController,
+            navigationCoordinator: navigationCoordinator,
+            incomingMapLinkController: IncomingMapLinkController(
+                store: incomingMapLinkStore,
+                resolver: externalNavigationResolver,
+                onRequest: { [weak navigationCoordinator] request in
+                    navigationCoordinator?.open(request)
+                }
+            ),
+            externalNavigationResolver: externalNavigationResolver,
+            presentationController: AppPresentationController(
+                policy: AppPresentationPolicy(),
+                orientationController: InterfaceOrientationController.shared
+            ),
+            lifecycleController: makeLifecycleController(
                 setupFlow: setupFlow,
-                bikeLiveActivityController: bikeLiveActivityController,
-                rideSession: rideSession,
-                vehicleSession: vehicleSession,
-                bleTraceStoragePreparer: bleTraceLogRepository,
-                startupPreparer: startupPreparer
+                sessionController: sessionController,
+                bikeLiveActivityController: bikeLiveActivityController
             )
         )
     }
@@ -273,16 +272,41 @@ struct AppDependencyContainer {
 }
 
 private extension AppDependencyContainer {
-    func makeRootRouter(
+    func makeFeatureStore(
+        onboardingViewModel: BikeOnboardingViewModel,
+        rideDashboardFactory: any RideDashboardFeatureBuilding
+    ) -> AppFeatureStore {
+        AppFeatureStore(
+            diagnosticsViewModel: makeBikeDiagnosticsViewModel(session: session),
+            batteryHealthViewModel: makeBatteryHealthViewModel(session: session),
+            bikeLockSettingsViewModel: makeBikeLockSettingsViewModel(),
+            onboardingViewModel: onboardingViewModel,
+            appSettingsViewModel: makeAppSettingsViewModel(),
+            dashboardCardSettingsViewModel: makeDashboardCardSettingsViewModel(),
+            powerModeSettingsViewModel: makePowerModeSettingsViewModel(),
+            rideHistoryViewModel: makeRideHistoryViewModel(),
+            rideDashboardFactory: rideDashboardFactory,
+            rideNavigationFactory: AppRideNavigationFeatureFactory(
+                vehicleSession: vehicleSession,
+                observeDeviceSpeed: ObserveDeviceSpeedUseCase(repository: deviceSpeedRepository),
+                settingsRepository: settingsRepository
+            )
+        )
+    }
+
+    func makeLifecycleController(
         setupFlow: BikeSetupFlowController,
-        opensRideNavigationOnLaunch: Bool
-    ) -> AppRootRouter {
-        AppRootRouter(
+        sessionController: BikeSessionController,
+        bikeLiveActivityController: BikeLiveActivityController
+    ) -> AppLifecycleController {
+        AppLifecycleController(
+            sessionController: sessionController,
             setupFlow: setupFlow,
-            incomingMapLinkStore: incomingMapLinkStore,
-            interfaceOrientationController: InterfaceOrientationController.shared,
-            animator: SwiftUIAppRootAnimator(),
-            opensRideNavigationOnLaunch: opensRideNavigationOnLaunch
+            bikeLiveActivityController: bikeLiveActivityController,
+            rideSession: rideSession,
+            vehicleSession: vehicleSession,
+            bleTraceStoragePreparer: bleTraceLogRepository,
+            startupPreparer: startupPreparer
         )
     }
 

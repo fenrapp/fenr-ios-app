@@ -3,10 +3,15 @@ import SwiftUI
 
 public struct PowerModeSettingsView: View {
     @ObservedObject private var viewModel: PowerModeSettingsViewModel
+    private let isPresentationActive: Bool
     @State private var isNameEditorPresented = false
 
-    public init(viewModel: PowerModeSettingsViewModel) {
+    public init(
+        viewModel: PowerModeSettingsViewModel,
+        isPresentationActive: Bool = true
+    ) {
         self.viewModel = viewModel
+        self.isPresentationActive = isPresentationActive
     }
 
     public var body: some View {
@@ -67,8 +72,13 @@ public struct PowerModeSettingsView: View {
                 reset: viewModel.resetName
             )
         }
-        .task { viewModel.start() }
-        .onDisappear { viewModel.stop() }
+        .task { synchronizePresentation() }
+        .onChange(of: isPresentationActive) { synchronizePresentation() }
+        .onDisappear { viewModel.setPresentationActive(false) }
+    }
+
+    private func synchronizePresentation() {
+        viewModel.setPresentationActive(isPresentationActive)
     }
 
     private var mapNameButton: some View {

@@ -2,11 +2,11 @@ import DesignSystem
 import Foundation
 import SwiftUI
 
-struct RideHistoryList<Destination: View>: View {
+struct RideHistoryList: View {
     let state: RideHistoryViewState
     @Binding var selectedRideIDs: Set<UUID>
     let isEditing: Bool
-    let destination: (UUID) -> Destination
+    let onOpenRide: (UUID) -> Void
     let refresh: () -> Void
     let deleteRide: (UUID) -> Void
 
@@ -60,14 +60,24 @@ struct RideHistoryList<Destination: View>: View {
                 .tag(ride.id)
                 .disabled(state.isDeleting)
         } else {
-            NavigationLink {
-                destination(ride.id)
+            Button {
+                onOpenRide(ride.id)
             } label: {
-                RideHistoryRow(
-                    ride: ride,
-                    isDeleting: state.deletingRideIDs.contains(ride.id)
-                )
+                HStack(spacing: DesignSpace.extraSmall) {
+                    RideHistoryRow(
+                        ride: ride,
+                        isDeleting: state.deletingRideIDs.contains(ride.id)
+                    )
+                    Spacer(minLength: DesignSpace.extraSmall)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                        .accessibilityHidden(true)
+                }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(.isLink)
             .disabled(state.isDeleting)
             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                 Button(role: .destructive) {

@@ -8,26 +8,20 @@ public struct RideNavigationScene: View {
     private let presentationMode: RideNavigationPresentationMode
     private let importedURL: URL?
     private let importedURLToken: UUID?
-    private let onClose: () -> Void
-    private let onMinimize: () -> Void
-    private let onExpand: () -> Void
+    private let onNavigation: (RideNavigationPresentationEvent) -> Void
 
     public init(
         factory: any RideNavigationFeatureBuilding,
         presentationMode: RideNavigationPresentationMode = .fullScreen,
         importedURL: URL? = nil,
         importedURLToken: UUID? = nil,
-        onClose: @escaping () -> Void,
-        onMinimize: @escaping () -> Void = {},
-        onExpand: @escaping () -> Void = {}
+        onNavigation: @escaping (RideNavigationPresentationEvent) -> Void
     ) {
         _feature = StateObject(wrappedValue: factory.makeFeature())
         self.presentationMode = presentationMode
         self.importedURL = importedURL
         self.importedURLToken = importedURLToken
-        self.onClose = onClose
-        self.onMinimize = onMinimize
-        self.onExpand = onExpand
+        self.onNavigation = onNavigation
     }
 
     public var body: some View {
@@ -40,8 +34,8 @@ public struct RideNavigationScene: View {
                     viewModel: feature.viewModel,
                     mapSurfaceFactory: feature.mapSurfaceFactory,
                     transitionNamespace: navigationSurfaceNamespace,
-                    onClose: onClose,
-                    onMinimize: onMinimize
+                    onClose: { onNavigation(.close) },
+                    onMinimize: { onNavigation(.minimize) }
                 )
                 .transition(.opacity)
             case .mini:
@@ -49,7 +43,7 @@ public struct RideNavigationScene: View {
                     viewModel: feature.viewModel,
                     mapSurfaceFactory: feature.mapSurfaceFactory,
                     transitionNamespace: navigationSurfaceNamespace,
-                    onExpand: onExpand
+                    onExpand: { onNavigation(.expand) }
                 )
                 .transition(.opacity)
             }

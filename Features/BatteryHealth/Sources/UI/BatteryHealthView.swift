@@ -10,10 +10,10 @@ public struct BatteryHealthView: View {
     public var body: some View {
         BatteryHealthScene(
             destination: .overview,
-            viewModel: viewModel
+            viewModel: viewModel,
+            isPresentationActive: true,
+            onNavigation: { _ in }
         )
-        .task { viewModel.setPresentationActive(true) }
-        .onDisappear { viewModel.setPresentationActive(false) }
     }
 }
 

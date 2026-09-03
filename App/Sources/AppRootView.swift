@@ -1,221 +1,126 @@
-import AppSettings
-import BatteryHealth
-import BikeDiagnostics
-import BikeLockSettings
-import BikeOnboarding
-import DashboardCardSettings
-import PowerModeSettings
-import RideDashboard
-import RideHistory
-import RideNavigation
 import SwiftUI
 import UIKit
 
 struct AppRootView: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
-    @StateObject private var diagnosticsViewModel: BikeDiagnosticsViewModel
-    @StateObject private var batteryHealthViewModel: BatteryHealthViewModel
-    @StateObject private var bikeLockSettingsViewModel: BikeLockSettingsViewModel
-    @StateObject private var onboardingViewModel: BikeOnboardingViewModel
-    @StateObject private var appSettingsViewModel: AppSettingsViewModel
-    @StateObject private var dashboardCardSettingsViewModel: DashboardCardSettingsViewModel
-    @StateObject private var powerModeSettingsViewModel: PowerModeSettingsViewModel
-    @StateObject private var rideHistoryViewModel: RideHistoryViewModel
+    @StateObject private var featureStore: AppFeatureStore
     @StateObject private var setupFlow: BikeSetupFlowController
-    @StateObject private var router: AppRootRouter
+    @StateObject private var navigationCoordinator: AppNavigationCoordinator
+    private let incomingMapLinkController: IncomingMapLinkController
+    private let presentationController: AppPresentationController
     private let lifecycleController: AppLifecycleController
-    private let rideDashboardFactory: any RideDashboardFeatureBuilding
-    private let rideNavigationFactory: any RideNavigationFeatureBuilding
+    private let externalNavigationResolver: AppExternalNavigationResolver
     private let settingsAccessory: () -> AnyView
 
     init(
         dependencies: AppRootDependencies,
         settingsAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
-        _diagnosticsViewModel = StateObject(wrappedValue: dependencies.diagnosticsViewModel)
-        _batteryHealthViewModel = StateObject(wrappedValue: dependencies.batteryHealthViewModel)
-        _bikeLockSettingsViewModel = StateObject(wrappedValue: dependencies.bikeLockSettingsViewModel)
-        _onboardingViewModel = StateObject(wrappedValue: dependencies.onboardingViewModel)
-        _appSettingsViewModel = StateObject(wrappedValue: dependencies.appSettingsViewModel)
-        _dashboardCardSettingsViewModel = StateObject(
-            wrappedValue: dependencies.dashboardCardSettingsViewModel
-        )
-        _powerModeSettingsViewModel = StateObject(wrappedValue: dependencies.powerModeSettingsViewModel)
-        _rideHistoryViewModel = StateObject(wrappedValue: dependencies.rideHistoryViewModel)
+        _featureStore = StateObject(wrappedValue: dependencies.featureStore)
         _setupFlow = StateObject(wrappedValue: dependencies.setupFlow)
-        _router = StateObject(wrappedValue: dependencies.router)
+        _navigationCoordinator = StateObject(wrappedValue: dependencies.navigationCoordinator)
+        incomingMapLinkController = dependencies.incomingMapLinkController
+        presentationController = dependencies.presentationController
         lifecycleController = dependencies.lifecycleController
-        rideDashboardFactory = dependencies.rideDashboardFactory
-        rideNavigationFactory = dependencies.rideNavigationFactory
+        externalNavigationResolver = dependencies.externalNavigationResolver
         self.settingsAccessory = settingsAccessory
     }
 
     var body: some View {
         ZStack {
             rootContent
-
-            if router.rideNavigationPresentation != .hidden {
-                RideNavigationScene(
-                    factory: rideNavigationFactory,
-                    presentationMode: router.rideNavigationPresentation,
-                    importedURL: router.incomingNavigationResource?.url,
-                    importedURLToken: router.incomingNavigationResource?.id,
-                    onClose: { router.hideRideNavigation(reduceMotion: reduceMotion) },
-                    onMinimize: { router.minimizeRideNavigation(reduceMotion: reduceMotion) },
-                    onExpand: { router.expandRideNavigation(reduceMotion: reduceMotion) }
-                )
-                .zIndex(1)
-            }
+            AppRideNavigationHost(
+                coordinator: navigationCoordinator,
+                featureStore: featureStore
+            )
         }
-        .onOpenURL { url in
-            router.open(url, reduceMotion: reduceMotion)
-        }
-        .task {
-            await lifecycleController.start()
-            guard !Task.isCancelled else { return }
-            synchronizeAdvancedDataPresentation()
-            await router.consumeIncomingMapLink(reduceMotion: reduceMotion)
-            guard !Task.isCancelled else { return }
-            bikeLockSettingsViewModel.start()
-        }
-        .onAppear(perform: router.rootPresentationDidStart)
-        .onChange(of: setupFlow.isCompleted) {
-            lifecycleController.setIsSetupCompleted(setupFlow.isCompleted)
-            router.setupStateDidChange()
-        }
-        .onChange(of: setupFlow.isLoaded) {
-            router.setupStateDidChange()
-        }
-        .onChange(of: router.path) {
-            router.pathDidChange()
-            synchronizeAdvancedDataPresentation()
-        }
-        .onChange(of: scenePhase) {
-            lifecycleController.setCanShowLiveActivity(scenePhase != .active)
-            if scenePhase != .active {
-                lifecycleController.persistRideSession()
-            }
-        }
+        .onOpenURL(perform: openExternalURL)
+        .task { await start() }
+        .onAppear { synchronizePresentation() }
+        .onChange(of: setupFlow.isCompleted) { setupDidChange() }
+        .onChange(of: setupFlow.isLoaded) { setupDidChange() }
+        .onChange(of: navigationCoordinator.state) { synchronizePresentation() }
+        .onChange(of: scenePhase) { updateScenePhase() }
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }
-            await router.consumeIncomingMapLink(reduceMotion: reduceMotion)
+            await incomingMapLinkController.consume()
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willTerminateNotification)) { _ in
             lifecycleController.terminate()
         }
-        .onDisappear {
-            stopAdvancedDataPresentation()
-            bikeLockSettingsViewModel.stop()
-            lifecycleController.stop()
-        }
+        .onDisappear(perform: stop)
     }
 }
 
 private extension AppRootView {
-    @ViewBuilder var rootContent: some View {
-        if !setupFlow.isLoaded {
+    @ViewBuilder
+    var rootContent: some View {
+        switch navigationCoordinator.state.root {
+        case .loading:
             ProgressView()
-        } else if setupFlow.isCompleted {
-            appNavigationStack
-        } else {
-            BikeOnboardingView(viewModel: onboardingViewModel)
-        }
-    }
-
-    var appNavigationStack: some View {
-        NavigationStack(path: $router.path) {
-            RideDashboardScene(
-                factory: rideDashboardFactory,
-                onSettings: {
-                    router.navigate(to: .settings, reduceMotion: reduceMotion)
-                },
-                onNavigation: { router.showRideNavigation(reduceMotion: reduceMotion) },
-                isNavigationActive: router.rideNavigationPresentation == .mini,
-                isPresentationActive: router.isDashboardPresentationActive,
-                onDiagnostics: {
-                    router.navigate(to: .diagnostics(.overview), reduceMotion: reduceMotion)
-                }
-            )
-            .navigationDestination(for: AppRootRouter.Route.self) { route in
-                appDestination(route)
-            }
-        }
-    }
-
-    @ViewBuilder func appDestination(_ route: AppRootRouter.Route) -> some View {
-        switch route {
-        case .batteryHealth(let destination):
-            BatteryHealthScene(
-                destination: destination,
-                viewModel: batteryHealthViewModel,
-                onNavigate: { destination in
-                    router.navigate(to: .batteryHealth(destination), reduceMotion: reduceMotion)
-                }
-            )
-        case .diagnostics(let destination):
-            BikeDiagnosticsScene(
-                destination: destination,
-                viewModel: diagnosticsViewModel,
-                onNavigate: { destination in
-                    router.navigate(to: .diagnostics(destination), reduceMotion: reduceMotion)
-                },
-                onBatteryHealth: {
-                    router.navigate(to: .batteryHealth(.overview), reduceMotion: reduceMotion)
-                },
+        case .onboarding:
+            AppOnboardingHost(featureStore: featureStore)
+        case .dashboard:
+            AppMainNavigationHost(
+                coordinator: navigationCoordinator,
+                featureStore: featureStore,
+                settingsAccessory: settingsAccessory,
                 onChangeBike: changeBike
             )
-        case .settings:
-            appSettingsDestination
-        case .rideDisplaySettings:
-            RideDisplaySettingsView(viewModel: appSettingsViewModel)
-        case .bikeLockSettings:
-            BikeLockSettingsView(viewModel: bikeLockSettingsViewModel)
-        case .dashboardCards:
-            DashboardCardSettingsView(viewModel: dashboardCardSettingsViewModel)
-        case .powerModes:
-            PowerModeSettingsView(viewModel: powerModeSettingsViewModel)
-        case .bikeModelSettings:
-            BikeModelSettingsView(viewModel: appSettingsViewModel)
-        case .rideHistory:
-            RideHistoryView(viewModel: rideHistoryViewModel)
         }
     }
 
-    var appSettingsDestination: some View {
-        AppSettingsView(
-            viewModel: appSettingsViewModel,
-            onOpenTelemetry: { navigate(to: .diagnostics(.overview)) },
-            onOpenRideDisplay: { navigate(to: .rideDisplaySettings) },
-            onOpenDashboardCards: { navigate(to: .dashboardCards) },
-            onOpenPowerModes: { navigate(to: .powerModes) },
-            onOpenBikeModel: { navigate(to: .bikeModelSettings) },
-            onOpenRideHistory: { navigate(to: .rideHistory) },
-            bikeLockModeTitle: bikeLockSettingsViewModel.viewState.isAvailable
-                ? bikeLockSettingsViewModel.viewState.currentModeTitle
-                : nil,
-            onOpenBikeLock: { navigate(to: .bikeLockSettings) },
-            accessory: settingsAccessory
-        )
+    func start() async {
+        await lifecycleController.start()
+        guard !Task.isCancelled else { return }
+        setupDidChange()
+        await incomingMapLinkController.consume()
+        guard !Task.isCancelled else { return }
+        featureStore.bikeLockSettingsViewModel.start()
     }
 
-    func navigate(to route: AppRootRouter.Route) {
-        router.navigate(to: route, reduceMotion: reduceMotion)
+    func stop() {
+        featureStore.diagnosticsViewModel.setPresentationActive(false)
+        featureStore.batteryHealthViewModel.setPresentationActive(false)
+        featureStore.appSettingsViewModel.stop()
+        featureStore.dashboardCardSettingsViewModel.stop()
+        featureStore.powerModeSettingsViewModel.stop()
+        featureStore.rideHistoryViewModel.stop()
+        featureStore.bikeLockSettingsViewModel.stop()
+        incomingMapLinkController.cancel()
+        lifecycleController.stop()
+    }
+
+    func setupDidChange() {
+        lifecycleController.setIsSetupCompleted(setupFlow.isCompleted)
+        let root: AppNavigationRoot
+        if !setupFlow.isLoaded {
+            root = .loading
+        } else {
+            root = setupFlow.isCompleted ? .dashboard : .onboarding
+        }
+        navigationCoordinator.send(.setRoot(root))
+    }
+
+    func synchronizePresentation() {
+        presentationController.update(for: navigationCoordinator.state)
+    }
+
+    func updateScenePhase() {
+        lifecycleController.setCanShowLiveActivity(scenePhase != .active)
+        if scenePhase != .active {
+            lifecycleController.persistRideSession()
+        }
+    }
+
+    func openExternalURL(_ url: URL) {
+        guard let request = externalNavigationResolver.resolve(url) else { return }
+        navigationCoordinator.open(request)
     }
 
     func changeBike() {
         lifecycleController.changeBike {
-            router.changeBikeDidComplete()
+            navigationCoordinator.send(.resetSetup)
         }
-    }
-
-    func synchronizeAdvancedDataPresentation() {
-        diagnosticsViewModel.setPresentationActive(router.isDiagnosticsPresentationActive)
-        batteryHealthViewModel.setPresentationActive(router.isBatteryHealthPresentationActive)
-    }
-
-    func stopAdvancedDataPresentation() {
-        diagnosticsViewModel.setPresentationActive(false)
-        batteryHealthViewModel.setPresentationActive(false)
     }
 }
