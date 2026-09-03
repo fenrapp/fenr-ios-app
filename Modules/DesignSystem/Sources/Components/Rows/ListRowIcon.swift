@@ -1,10 +1,15 @@
 import SwiftUI
 
-struct ListRowIcon: View {
-    let systemImage: String
-    let tint: Color
+public struct ListRowIcon: View {
+    private let systemImage: String
+    private let tint: Color
 
-    var body: some View {
+    public init(systemImage: String, tint: Color) {
+        self.systemImage = systemImage
+        self.tint = tint
+    }
+
+    public var body: some View {
         Image(systemName: systemImage)
             .font(.system(size: ListRowConstants.iconGlyphSize, weight: .semibold))
             .symbolRenderingMode(.hierarchical)

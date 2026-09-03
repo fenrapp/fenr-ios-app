@@ -1,38 +1,51 @@
 import DesignSystem
 import SwiftUI
-import UIKit
 
 struct DiagnosticsBLELogsView: View {
     let state: BikeDiagnosticsViewState
+    let onToggleCapture: () -> Void
     let onExport: (UUID) -> Void
     let onDelete: (UUID) -> Void
     let onDeleteAll: () -> Void
 
     @State private var deleteRequest: DeleteRequest?
+    @State private var feedbackToken = 0
 
     var body: some View {
         List {
             if let error = state.bleTraceError {
                 Section {
                     Label(error, systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(DesignColor.critical)
                 }
             }
 
-            Section {
-                if state.bleTraceSessions.isEmpty {
-                    Text(verbatim: DiagnosticsCopy.noSessions)
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(state.bleTraceSessions) { session in
-                        sessionRow(session)
+            if let activeSession {
+                Section(DiagnosticsCopy.recordingNow) {
+                    sessionLink(activeSession)
+                }
+            }
+
+            if previousSessions.isEmpty {
+                if activeSession == nil {
+                    Section {
+                        ContentUnavailableView(
+                            DiagnosticsCopy.noSessions,
+                            systemImage: "waveform.badge.magnifyingglass"
+                        )
                     }
                 }
-            } footer: {
-                Text(verbatim: DiagnosticsCopy.traceFooter)
-            }
+            } else {
+                Section {
+                    ForEach(previousSessions) { session in
+                        sessionLink(session)
+                    }
+                } header: {
+                    Text(verbatim: DiagnosticsCopy.previousCaptures)
+                } footer: {
+                    Text(verbatim: DiagnosticsCopy.traceFooter)
+                }
 
-            if !state.bleTraceSessions.isEmpty {
                 Section {
                     ListActionButton(
                         title: DiagnosticsCopy.deleteAllSessions,
@@ -44,6 +57,8 @@ struct DiagnosticsBLELogsView: View {
                 }
             }
         }
+        .toolbar { captureToolbar }
+        .sensoryFeedback(.impact(weight: .light), trigger: feedbackToken)
         .confirmationDialog(
             deleteRequest?.title ?? DiagnosticsCopy.deleteLogPrompt,
             isPresented: deleteConfirmationBinding,
@@ -56,39 +71,100 @@ struct DiagnosticsBLELogsView: View {
         }
     }
 
-    private func sessionRow(_ session: BLETraceSessionViewData) -> some View {
-        VStack(alignment: .leading, spacing: Constants.rowSpacing) {
-            LabeledContent(DiagnosticsCopy.started, value: session.date)
-            LabeledContent(DiagnosticsCopy.status, value: session.status)
-            LabeledContent(DiagnosticsCopy.duration, value: session.duration)
-            LabeledContent(DiagnosticsCopy.size, value: session.size)
-            VStack(alignment: .leading, spacing: .zero) {
-                ListActionButton(
-                    title: DiagnosticsCopy.copyMetadata,
-                    systemImage: "doc.on.doc",
-                    tint: DesignColor.informational
-                ) {
-                    copyMetadata(session)
+    @ToolbarContentBuilder
+    private var captureToolbar: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            if state.isBLETraceCaptureControlInProgress {
+                ProgressView()
+                    .controlSize(.small)
+                    .frame(minWidth: Constants.toolbarTarget, minHeight: Constants.toolbarTarget)
+                    .accessibilityLabel(captureActionTitle)
+            } else {
+                Button {
+                    feedbackToken += 1
+                    onToggleCapture()
+                } label: {
+                    Image(systemName: isRecording ? "stop.circle.fill" : "plus.circle.fill")
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(isRecording ? DesignColor.critical : DesignColor.accent)
+                        .frame(minWidth: Constants.toolbarTarget, minHeight: Constants.toolbarTarget)
                 }
-                ListActionButton(
-                    title: DiagnosticsCopy.export,
-                    systemImage: "square.and.arrow.up",
-                    tint: .indigo
-                ) {
-                    onExport(session.id)
-                }
-                ListActionButton(
-                    title: DiagnosticsCopy.delete,
-                    systemImage: "trash",
-                    isEnabled: session.canDelete,
-                    isDestructive: true
-                ) {
+                .disabled(!captureControlIsEnabled)
+                .accessibilityLabel(captureActionTitle)
+            }
+        }
+    }
+
+    private func sessionLink(_ session: BLETraceSessionViewData) -> some View {
+        NavigationLink {
+            DiagnosticsBLETraceDetailView(
+                session: session,
+                onExport: { onExport(session.id) },
+                onDelete: { onDelete(session.id) }
+            )
+        } label: {
+            DiagnosticsBLETraceRow(session: session)
+        }
+        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+            Button {
+                feedbackToken += 1
+                onExport(session.id)
+            } label: {
+                Label(DiagnosticsCopy.export, systemImage: "square.and.arrow.up")
+            }
+            .tint(.indigo)
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            if session.canDelete {
+                Button(role: .destructive) {
                     deleteRequest = .session(session.id)
+                } label: {
+                    Label(DiagnosticsCopy.delete, systemImage: "trash")
                 }
             }
         }
-        .textSelection(.enabled)
-        .padding(.vertical, Constants.rowPadding)
+        .contextMenu {
+            Button {
+                feedbackToken += 1
+                DiagnosticsBLETraceMetadata.copy(session)
+            } label: {
+                Label(DiagnosticsCopy.copyMetadata, systemImage: "doc.on.doc")
+            }
+            Button {
+                feedbackToken += 1
+                onExport(session.id)
+            } label: {
+                Label(DiagnosticsCopy.export, systemImage: "square.and.arrow.up")
+            }
+            if session.canDelete {
+                Divider()
+                Button(role: .destructive) {
+                    deleteRequest = .session(session.id)
+                } label: {
+                    Label(DiagnosticsCopy.delete, systemImage: "trash")
+                }
+            }
+        }
+    }
+
+    private var activeSession: BLETraceSessionViewData? {
+        state.bleTraceSessions.first(where: \.isActive)
+    }
+
+    private var previousSessions: [BLETraceSessionViewData] {
+        state.bleTraceSessions.filter { !$0.isActive }
+    }
+
+    private var isRecording: Bool {
+        activeSession != nil
+    }
+
+    private var captureControlIsEnabled: Bool {
+        isRecording || state.isDisconnectEnabled
+    }
+
+    private var captureActionTitle: String {
+        isRecording ? DiagnosticsCopy.stopBLELog : DiagnosticsCopy.startNewBLELog
     }
 
     private var deleteConfirmationBinding: Binding<Bool> {
@@ -105,15 +181,6 @@ struct DiagnosticsBLELogsView: View {
         case .all: onDeleteAll()
         }
         deleteRequest = nil
-    }
-
-    private func copyMetadata(_ session: BLETraceSessionViewData) {
-        UIPasteboard.general.string = [
-            "\(DiagnosticsCopy.started): \(session.date)",
-            "\(DiagnosticsCopy.status): \(session.status)",
-            "\(DiagnosticsCopy.duration): \(session.duration)",
-            "\(DiagnosticsCopy.size): \(session.size)"
-        ].joined(separator: "\n")
     }
 
     private enum DeleteRequest {
@@ -136,7 +203,6 @@ struct DiagnosticsBLELogsView: View {
     }
 
     private enum Constants {
-        static let rowSpacing: CGFloat = 8
-        static let rowPadding: CGFloat = 4
+        static let toolbarTarget: CGFloat = 44
     }
 }

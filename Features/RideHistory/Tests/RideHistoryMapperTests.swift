@@ -81,6 +81,10 @@ struct RideHistoryMapperTests {
         #expect(batteryMetric?.detail == "6 percentage points used")
         #expect(state.distanceUnit == "km")
         #expect(state.efficiencyUnit == "Wh/km")
+        #expect(state.overviewMetrics.first { $0.id == "duration" }?.iconTone == .accent)
+        #expect(state.overviewMetrics.first { $0.id == "maximumSpeed" }?.iconTone == .accent)
+        #expect(state.energyMetrics.first { $0.id == "recovered" }?.iconTone == .positive)
+        #expect(state.energyMetrics.first { $0.id == "coverage" }?.iconTone == .informational)
     }
 
     @Test("Bounds chart marks for long rides while retaining endpoints and peaks")

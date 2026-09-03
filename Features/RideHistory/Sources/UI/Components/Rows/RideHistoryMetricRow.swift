@@ -1,3 +1,4 @@
+import DesignSystem
 import SwiftUI
 
 struct RideHistoryMetricRow: View {
@@ -26,10 +27,7 @@ struct RideHistoryMetricRow: View {
 
     private var metricLabel: some View {
         HStack(alignment: .firstTextBaseline, spacing: Constants.spacing) {
-            Image(systemName: metric.symbolName)
-                .font(.body.weight(.medium))
-                .foregroundStyle(.tint)
-                .frame(width: Constants.iconWidth)
+            ListRowIcon(systemImage: metric.symbolName, tint: iconTint)
 
             VStack(alignment: .leading, spacing: Constants.textSpacing) {
                 Text(metric.label)
@@ -46,13 +44,21 @@ struct RideHistoryMetricRow: View {
     private var metricValue: some View {
         Text(metric.value)
             .font(.body.weight(.semibold))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(.primary)
             .monospacedDigit()
             .multilineTextAlignment(.trailing)
     }
 
+    private var iconTint: Color {
+        switch metric.iconTone {
+        case .accent: DesignColor.accent
+        case .informational: DesignColor.informational
+        case .positive: DesignColor.positive
+        }
+    }
+
     private enum Constants {
-        static let iconWidth: CGFloat = 24
+        static let iconWidth: CGFloat = 32
         static let spacing: CGFloat = 10
         static let textSpacing: CGFloat = 2
         static let minimumSpacing: CGFloat = 8

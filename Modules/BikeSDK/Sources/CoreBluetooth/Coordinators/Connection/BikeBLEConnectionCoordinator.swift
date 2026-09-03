@@ -62,6 +62,14 @@ public final class BikeBLEConnectionCoordinator {
         await traceEmitter.finishSession(reason: .clientStopped)
     }
 
+    public func startNewDiagnosticsCapture() async -> Bool {
+        await traceEmitter.startNewCapture()
+    }
+
+    public func stopDiagnosticsCapture() async -> Bool {
+        await traceEmitter.stopCapture()
+    }
+
     public func connect(to vin: String) async throws {
         let targetVIN = vin.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !targetVIN.isEmpty else {

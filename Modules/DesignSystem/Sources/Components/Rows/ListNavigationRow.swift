@@ -61,7 +61,11 @@ public struct ListNavigationRow: View {
                     .foregroundStyle(.tertiary)
                     .accessibilityHidden(true)
             }
-            .frame(minHeight: ListRowConstants.minimumHeight)
+            .frame(
+                maxWidth: .infinity,
+                minHeight: ListRowConstants.minimumHeight,
+                alignment: .leading
+            )
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

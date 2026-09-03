@@ -8,7 +8,8 @@ import MeasurementPresentation
 func makeViewModel(
     repository: FakeBikeDiagnosticsRepository,
     session: FakeVehicleSession = FakeVehicleSession(),
-    traceRepository: any BLETraceLogRepository = NoOpBLETraceRepository()
+    traceRepository: any BLETraceLogRepository = NoOpBLETraceRepository(),
+    bleTraceCaptureConfirmationTimeout: Duration = .milliseconds(100)
 ) -> BikeDiagnosticsViewModel {
     BikeDiagnosticsViewModel(
         useCases: BikeDiagnosticsUseCases(
@@ -16,6 +17,8 @@ func makeViewModel(
             connect: .init(repository: repository),
             disconnect: .init(repository: repository),
             retrySecurityHandshake: .init(repository: repository),
+            startNewDiagnosticsCapture: .init(repository: repository),
+            stopDiagnosticsCapture: .init(repository: repository),
             observeDebugEvents: .init(repository: repository),
             observeBLETraceSessions: .init(repository: traceRepository),
             prepareBLETraceExport: .init(repository: traceRepository),
@@ -23,7 +26,8 @@ func makeViewModel(
             deleteAllBLETraceSessions: .init(repository: traceRepository)
         ),
         mappers: makeMappers(),
-        makeMappers: { _ in makeMappers() }
+        makeMappers: { _ in makeMappers() },
+        bleTraceCaptureConfirmationTimeout: bleTraceCaptureConfirmationTimeout
     )
 }
 

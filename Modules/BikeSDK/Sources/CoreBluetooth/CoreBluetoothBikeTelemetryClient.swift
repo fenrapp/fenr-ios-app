@@ -67,6 +67,14 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
         try await securityCoordinator.retry()
     }
 
+    public func startNewDiagnosticsCapture() async -> Bool {
+        await connectionCoordinator.startNewDiagnosticsCapture()
+    }
+
+    public func stopDiagnosticsCapture() async -> Bool {
+        await connectionCoordinator.stopDiagnosticsCapture()
+    }
+
     public func readTelemetrySnapshot() async throws {
         try await notificationCoordinator.readTelemetrySnapshot()
     }

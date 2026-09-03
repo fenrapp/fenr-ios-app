@@ -3,6 +3,7 @@ import Foundation
 public enum BLETraceSessionStartReason: String, Codable, Sendable {
     case connectionRequest = "connection_request"
     case restoration
+    case manualRequest = "manual_request"
 }
 
 public enum BLETraceSessionEndReason: String, Codable, Sendable {
@@ -13,6 +14,7 @@ public enum BLETraceSessionEndReason: String, Codable, Sendable {
     case abruptTermination = "abrupt_termination"
     case storageLimitReached = "storage_limit_reached"
     case exportSnapshot = "export_snapshot"
+    case userStopped = "user_stopped"
 }
 
 public enum BLETraceSessionStatus: String, Codable, Sendable {

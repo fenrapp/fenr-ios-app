@@ -137,4 +137,100 @@ struct BikeBLETraceEmitterTests {
         }
         #expect(events.map(\.detail) == ["connecting", "reconnecting attempt=2 maximum=5"])
     }
+
+    @Test("Stops and starts a fresh capture without changing the BLE connection")
+    func manuallyRestartsCapture() async {
+        let recorder = BLETraceRecorderSpy()
+        let emitter = makeTraceEmitter(recorder: recorder)
+        await emitter.startSession(vin: "FENRTEST000000001", reason: .connectionRequest)
+
+        #expect(await emitter.stopCapture())
+        await emitter.record(
+            category: "gatt",
+            operation: .valueUpdated,
+            direction: .inbound,
+            detail: "ignored while stopped"
+        )
+        #expect(await emitter.startNewCapture())
+
+        #expect(await recorder.contexts.map(\.reason) == [.connectionRequest, .manualRequest])
+        #expect(await recorder.endReasons == [.userStopped])
+        #expect(await recorder.recordedEvents().map(\.operation) == [.sessionStarted, .sessionStarted])
+    }
+
+    @Test("Disconnect invalidates a manual capture start in flight")
+    func disconnectInvalidatesManualStart() async {
+        let recorder = BLETraceRecorderSpy()
+        let emitter = makeTraceEmitter(recorder: recorder)
+        await emitter.startSession(vin: "FENRTEST000000001", reason: .connectionRequest)
+        #expect(await emitter.stopCapture())
+        await recorder.suspendNextStart()
+
+        let startTask = Task { @MainActor in await emitter.startNewCapture() }
+        #expect(await waitUntil { await recorder.isStartSuspended() })
+        await emitter.finishSession(reason: .userDisconnected)
+        await recorder.resumeStart()
+
+        #expect(await startTask.value == false)
+        #expect(await recorder.endReasons == [.userStopped, .userDisconnected])
+    }
+
+    @Test("A completed stop cannot be undone by a suspended session marker")
+    func suspendedSessionMarkerDoesNotRestoreRecording() async {
+        let recorder = BLETraceRecorderSpy()
+        await recorder.suspendNextRecord()
+        let emitter = makeTraceEmitter(recorder: recorder)
+
+        let startTask = Task { @MainActor in
+            await emitter.startSession(vin: "FENRTEST000000001", reason: .connectionRequest)
+        }
+        #expect(await waitUntil { await recorder.isRecordSuspended() })
+        await emitter.finishSession(reason: .userDisconnected)
+        await recorder.resumeRecord()
+        await startTask.value
+
+        #expect(await emitter.stopCapture() == false)
+        #expect(await recorder.endReasons == [.userDisconnected])
+    }
+
+    @Test("A new session waits until the previous file finishes closing")
+    func sessionStartDoesNotOverlapFinish() async {
+        let recorder = BLETraceRecorderSpy()
+        let emitter = makeTraceEmitter(recorder: recorder)
+        await emitter.startSession(vin: "FENRTEST000000001", reason: .connectionRequest)
+        await recorder.suspendNextFinish()
+
+        let finishTask = Task { @MainActor in
+            await emitter.finishSession(reason: .userDisconnected)
+        }
+        #expect(await waitUntil { await recorder.isFinishSuspended() })
+        let nextStartTask = Task { @MainActor in
+            await emitter.startSession(vin: "FENRTEST000000002", reason: .connectionRequest)
+        }
+        #expect(await recorder.contexts.count == 1)
+
+        await recorder.resumeFinish()
+        await finishTask.value
+        await nextStartTask.value
+
+        #expect(await recorder.contexts.count == 2)
+        #expect(await emitter.stopCapture())
+    }
+
+    @Test("Starting a new capture cannot overlap a suspended stop")
+    func manualStartDoesNotOverlapStop() async {
+        let recorder = BLETraceRecorderSpy()
+        let emitter = makeTraceEmitter(recorder: recorder)
+        await emitter.startSession(vin: "FENRTEST000000001", reason: .connectionRequest)
+        await recorder.suspendNextFinish()
+
+        let stopTask = Task { @MainActor in await emitter.stopCapture() }
+        #expect(await waitUntil { await recorder.isFinishSuspended() })
+        #expect(await emitter.startNewCapture() == false)
+
+        await recorder.resumeFinish()
+        #expect(await stopTask.value)
+        #expect(await emitter.startNewCapture())
+        #expect(await recorder.contexts.map(\.reason) == [.connectionRequest, .manualRequest])
+    }
 }

@@ -1,4 +1,3 @@
-import DesignSystem
 import SwiftUI
 import UIKit
 
@@ -10,38 +9,11 @@ struct DiagnosticsEventsView: View {
     let onClear: () -> Void
 
     @State private var confirmsClear = false
+    @State private var feedbackToken = 0
 
     var body: some View {
         List {
             Section {
-                ListActionButton(
-                    title: DiagnosticsCopy.completeLogCopy,
-                    systemImage: "doc.on.doc",
-                    tint: DesignColor.informational,
-                    isEnabled: state.hasDebugLog,
-                    action: copyLog
-                )
-
-                ListActionShareLink(
-                    item: logTextProvider(),
-                    title: DiagnosticsCopy.completeLogExport,
-                    systemImage: "square.and.arrow.up",
-                    tint: .indigo,
-                    isEnabled: state.hasDebugLog
-                )
-
-                ListActionButton(
-                    title: DiagnosticsCopy.clearEvents,
-                    systemImage: "trash",
-                    isEnabled: !state.debugEvents.isEmpty,
-                    isDestructive: true,
-                    action: { confirmsClear = true }
-                )
-            } footer: {
-                Text(verbatim: DiagnosticsCopy.eventsExportFooter)
-            }
-
-            Section(DiagnosticsCopy.recentEvents) {
                 if state.debugEvents.isEmpty {
                     Text(verbatim: DiagnosticsCopy.noEvents)
                         .foregroundStyle(.secondary)
@@ -57,8 +29,41 @@ struct DiagnosticsEventsView: View {
                         .padding(.vertical, Constants.eventPadding)
                     }
                 }
+            } header: {
+                Text(verbatim: DiagnosticsCopy.recentEvents)
+            } footer: {
+                Text(verbatim: DiagnosticsCopy.eventsExportFooter)
             }
         }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button(action: copyLog) {
+                        Label(DiagnosticsCopy.completeLogCopy, systemImage: "doc.on.doc")
+                    }
+                    .disabled(!state.hasDebugLog)
+
+                    ShareLink(item: logTextProvider()) {
+                        Label(DiagnosticsCopy.completeLogExport, systemImage: "square.and.arrow.up")
+                    }
+                    .disabled(!state.hasDebugLog)
+
+                    Divider()
+
+                    Button(role: .destructive) {
+                        confirmsClear = true
+                    } label: {
+                        Label(DiagnosticsCopy.clearEvents, systemImage: "trash")
+                    }
+                    .disabled(state.debugEvents.isEmpty)
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .frame(minWidth: Constants.toolbarTarget, minHeight: Constants.toolbarTarget)
+                }
+                .accessibilityLabel(DiagnosticsCopy.actions)
+            }
+        }
+        .sensoryFeedback(.impact(weight: .light), trigger: feedbackToken)
         .confirmationDialog(
             DiagnosticsCopy.clearEventsPrompt,
             isPresented: $confirmsClear,
@@ -73,6 +78,7 @@ struct DiagnosticsEventsView: View {
 
     private func copyLog() {
         UIPasteboard.general.string = logTextProvider()
+        feedbackToken += 1
     }
 
     @ViewBuilder
@@ -105,5 +111,6 @@ struct DiagnosticsEventsView: View {
     private enum Constants {
         static let eventSpacing: CGFloat = 6
         static let eventPadding: CGFloat = 4
+        static let toolbarTarget: CGFloat = 44
     }
 }

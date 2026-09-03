@@ -59,7 +59,8 @@ struct BLETraceRawValueTests {
 
     @Test("Session start raw values remain persistence-stable", arguments: [
         (BLETraceSessionStartReason.connectionRequest, "connection_request"),
-        (.restoration, "restoration")
+        (.restoration, "restoration"),
+        (.manualRequest, "manual_request")
     ])
     func sessionStartRawValues(reason: BLETraceSessionStartReason, expected: String) {
         #expect(reason.rawValue == expected)
@@ -72,7 +73,8 @@ struct BLETraceRawValueTests {
         (.pairingResetRequired, "pairing_reset_required"),
         (.abruptTermination, "abrupt_termination"),
         (.storageLimitReached, "storage_limit_reached"),
-        (.exportSnapshot, "export_snapshot")
+        (.exportSnapshot, "export_snapshot"),
+        (.userStopped, "user_stopped")
     ])
     func sessionEndRawValues(reason: BLETraceSessionEndReason, expected: String) {
         #expect(reason.rawValue == expected)

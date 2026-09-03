@@ -31,13 +31,16 @@ enum DiagnosticsCopy {
     static var statusDetail: String { text(.bikeDiagnosticsUiStatusDetail) }
     static var eventsDetail: String { text(.bikeDiagnosticsUiEventsDetail) }
     static var bleLogsDetail: String { text(.bikeDiagnosticsUiBleLogsDetail) }
+    static var bleLog: String { text(.bikeDiagnosticsUiBleLog) }
     static var disconnect: String { text(.bikeDiagnosticsDisconnect) }
     static var duration: String { text(.bikeDiagnosticsUiDuration) }
+    static var eventCount: String { text(.bikeDiagnosticsUiEventCount) }
     static var eventsExportFooter: String { text(.bikeDiagnosticsUiEventsExportFooter) }
     static var export: String { text(.bikeDiagnosticsExport) }
     static var liveSummary: String { text(.bikeDiagnosticsUiLiveSummary) }
     static var noEvents: String { text(.bikeDiagnosticsUiNoEvents) }
     static var noSessions: String { text(.bikeDiagnosticsUiNoSessions) }
+    static var previousCaptures: String { text(.bikeDiagnosticsUiPreviousCaptures) }
     static var originalBitfields: String { text(.bikeDiagnosticsUiOriginalBitfields) }
     static var peripheral: String { text(.bikeDiagnosticsUiPeripheral) }
     static var peripheralUUID: String { text(.bikeDiagnosticsUiPeripheralUUID) }
@@ -49,8 +52,11 @@ enum DiagnosticsCopy {
     static var signal: String { text(.bikeDiagnosticsUiSignal) }
     static var size: String { text(.bikeDiagnosticsUiSize) }
     static var started: String { text(.bikeDiagnosticsUiStarted) }
+    static var startNewBLELog: String { text(.bikeDiagnosticsUiStartNewBLELog) }
     static var state: String { text(.bikeDiagnosticsSectionState) }
     static var status: String { text(.bikeDiagnosticsUiStatus) }
+    static var stopBLELog: String { text(.bikeDiagnosticsUiStopBLELog) }
+    static var recordingNow: String { text(.bikeDiagnosticsUiRecordingNow) }
     static var statusFooter: String { text(.bikeDiagnosticsUiStatusFooter) }
     static var decodedStatus: String { text(.bikeDiagnosticsUiDecodedStatus) }
     static var traceFooter: String { text(.bikeDiagnosticsUiTraceFooter) }

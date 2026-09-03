@@ -11,24 +11,32 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
     @Published public private(set) var isPresentationActive = false
 
     private let useCases: BikeDiagnosticsUseCases
+    private let bleTraceCaptureConfirmationTimeout: Duration
     private var mappers: BikeDiagnosticsMappers
     private let makeMappers: (MeasurementSystem) -> BikeDiagnosticsMappers
     private var sessionSnapshot = VehicleSessionSnapshot()
     private var debugLogEvents: [BikeDebugEvent] = []
     private var bleTraceSessions: [BLETraceSessionSummary] = []
     private var bleTraceError: String?
+    private var isBLETraceCaptureControlInProgress = false
     private var observationTasks: [Task<Void, Never>] = []
     private var actionTask: Task<Void, Never>?
     private var bleTraceActionTask: Task<Void, Never>?
+    private var bleTraceActionGeneration: UInt64 = 0
+    private var bleTraceCaptureControlTask: Task<Void, Never>?
+    private var bleTraceCaptureControlGeneration: UInt64 = 0
+    private var pendingBLETraceCaptureExpectation: BLETraceCaptureExpectation?
 
     public init(
         useCases: BikeDiagnosticsUseCases,
         mappers: BikeDiagnosticsMappers,
-        makeMappers: @escaping (MeasurementSystem) -> BikeDiagnosticsMappers
+        makeMappers: @escaping (MeasurementSystem) -> BikeDiagnosticsMappers,
+        bleTraceCaptureConfirmationTimeout: Duration
     ) {
         self.useCases = useCases
         self.mappers = mappers
         self.makeMappers = makeMappers
+        self.bleTraceCaptureConfirmationTimeout = bleTraceCaptureConfirmationTimeout
         render()
     }
 
@@ -36,6 +44,7 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
         observationTasks.forEach { $0.cancel() }
         actionTask?.cancel()
         bleTraceActionTask?.cancel()
+        bleTraceCaptureControlTask?.cancel()
     }
 
     /// Controls feature observation only. The app owns the shared vehicle session lifecycle.
@@ -46,6 +55,7 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
         if active {
             bindStreams()
         } else {
+            cancelBLETraceCaptureControl()
             cancelObservationTasks()
         }
     }
@@ -81,9 +91,13 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
     }
 
     public func exportBLETraceSession(id: UUID) {
+        guard bleTraceCaptureControlTask == nil else { return }
         bleTraceActionTask?.cancel()
+        bleTraceActionGeneration &+= 1
+        let generation = bleTraceActionGeneration
         let prepareExport = useCases.prepareBLETraceExport
         bleTraceActionTask = Task { @MainActor [weak self] in
+            defer { self?.completeBLETraceAction(generation: generation) }
             do {
                 let url = try await prepareExport.execute(sessionID: id)
                 guard !Task.isCancelled else { return }
@@ -101,12 +115,14 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
     }
 
     public func deleteBLETraceSession(id: UUID) {
+        guard bleTraceCaptureControlTask == nil else { return }
         performBLETraceAction { [useCases] in
             try await useCases.deleteBLETraceSession.execute(sessionID: id)
         }
     }
 
     public func deleteAllBLETraceSessions() {
+        guard bleTraceCaptureControlTask == nil else { return }
         performBLETraceAction { [useCases] in
             try await useCases.deleteAllBLETraceSessions.execute()
         }
@@ -137,8 +153,7 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
         observationTasks.append(Task { [weak self] in
             let stream = await observeBLETraceSessions.execute()
             for await sessions in stream where !Task.isCancelled {
-                self?.bleTraceSessions = sessions
-                self?.render()
+                self?.receiveBLETraceSessions(sessions)
             }
         })
     }
@@ -189,6 +204,7 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
         )
         nextViewState.bleTraceSessions = bleTraceSessions.map(mappers.bleTraceSession.map)
         nextViewState.bleTraceError = bleTraceError
+        nextViewState.isBLETraceCaptureControlInProgress = isBLETraceCaptureControlInProgress
         guard nextViewState != viewState else { return }
         viewState = nextViewState
     }
@@ -197,7 +213,10 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
         _ operation: @escaping @MainActor @Sendable () async throws -> Void
     ) {
         bleTraceActionTask?.cancel()
+        bleTraceActionGeneration &+= 1
+        let generation = bleTraceActionGeneration
         bleTraceActionTask = Task { @MainActor [weak self] in
+            defer { self?.completeBLETraceAction(generation: generation) }
             do {
                 try await operation()
                 guard !Task.isCancelled else { return }
@@ -213,6 +232,11 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
         }
     }
 
+    private func completeBLETraceAction(generation: UInt64) {
+        guard bleTraceActionGeneration == generation else { return }
+        bleTraceActionTask = nil
+    }
+
     private func cancelObservationTasks() {
         observationTasks.forEach { $0.cancel() }
         observationTasks.removeAll()
@@ -225,5 +249,100 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
                 .filter { identifiers.insert($0.id).inserted }
                 .prefix(BikeDiagnosticsConstants.maxVisibleDebugEvents)
         )
+    }
+
+}
+
+extension BikeDiagnosticsViewModel {
+    public func toggleBLETraceCapture() {
+        guard bleTraceCaptureControlTask == nil, bleTraceActionTask == nil else { return }
+        let isRecording = bleTraceSessions.contains { $0.status == .active }
+        guard isRecording || viewState.isDisconnectEnabled else { return }
+
+        isBLETraceCaptureControlInProgress = true
+        bleTraceCaptureControlGeneration &+= 1
+        let generation = bleTraceCaptureControlGeneration
+        let expectation = BLETraceCaptureExpectation(isActive: !isRecording)
+        render()
+        let startCapture = useCases.startNewDiagnosticsCapture
+        let stopCapture = useCases.stopDiagnosticsCapture
+        bleTraceCaptureControlTask = Task { @MainActor [weak self] in
+            let succeeded = if isRecording {
+                await stopCapture.execute()
+            } else {
+                await startCapture.execute()
+            }
+            guard let self, !Task.isCancelled else { return }
+            if !succeeded {
+                completeBLETraceCaptureControl(generation: generation, didFail: true)
+                return
+            }
+            pendingBLETraceCaptureExpectation = expectation
+            if expectation.matches(bleTraceSessions) {
+                completeBLETraceCaptureControl(generation: generation, didFail: false)
+                return
+            }
+            render()
+            do {
+                try await Task.sleep(for: bleTraceCaptureConfirmationTimeout)
+            } catch {
+                return
+            }
+            guard !Task.isCancelled else { return }
+            completeBLETraceCaptureControl(generation: generation, didFail: true)
+        }
+    }
+
+    private func receiveBLETraceSessions(_ sessions: [BLETraceSessionSummary]) {
+        bleTraceSessions = sessions
+        if let expectation = pendingBLETraceCaptureExpectation,
+           expectation.matches(sessions) {
+            completeBLETraceCaptureControl(
+                generation: bleTraceCaptureControlGeneration,
+                didFail: false
+            )
+        } else {
+            render()
+        }
+    }
+
+    private func completeBLETraceCaptureControl(generation: UInt64, didFail: Bool) {
+        guard bleTraceCaptureControlGeneration == generation else { return }
+        bleTraceCaptureControlTask?.cancel()
+        bleTraceCaptureControlTask = nil
+        pendingBLETraceCaptureExpectation = nil
+        isBLETraceCaptureControlInProgress = false
+        bleTraceError = didFail
+            ? BikeDiagnosticsL10n.text(.bikeDiagnosticsBleCaptureControlError)
+            : nil
+        render()
+    }
+
+    private func cancelBLETraceCaptureControl() {
+        guard bleTraceCaptureControlTask != nil || isBLETraceCaptureControlInProgress else { return }
+        bleTraceCaptureControlGeneration &+= 1
+        bleTraceCaptureControlTask?.cancel()
+        bleTraceCaptureControlTask = nil
+        pendingBLETraceCaptureExpectation = nil
+        isBLETraceCaptureControlInProgress = false
+        bleTraceError = nil
+        render()
+    }
+
+    private enum BLETraceCaptureExpectation {
+        case active
+        case inactive
+
+        init(isActive: Bool) {
+            self = isActive ? .active : .inactive
+        }
+
+        func matches(_ sessions: [BLETraceSessionSummary]) -> Bool {
+            let hasActiveSession = sessions.contains { $0.status == .active }
+            return switch self {
+            case .active: hasActiveSession
+            case .inactive: !hasActiveSession
+            }
+        }
     }
 }

@@ -6,6 +6,8 @@ public protocol BikeRepository: BikeControlRepository {
     func connect(vin: String) async throws
     func disconnect() async throws
     func retrySecurityHandshake() async throws
+    func startNewDiagnosticsCapture() async -> Bool
+    func stopDiagnosticsCapture() async -> Bool
     func readTelemetrySnapshot() async throws
     func readBikeStatusSnapshot() async throws
     func observeTelemetry() async -> AsyncStream<BikeTelemetry>
@@ -14,5 +16,7 @@ public protocol BikeRepository: BikeControlRepository {
 }
 
 public extension BikeRepository {
+    func startNewDiagnosticsCapture() async -> Bool { false }
+    func stopDiagnosticsCapture() async -> Bool { false }
     func readBikeStatusSnapshot() async throws {}
 }

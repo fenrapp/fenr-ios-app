@@ -115,6 +115,14 @@ public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryH
             completeStop(generation: stopGeneration)
         }
     }
+
+    public func startNewDiagnosticsCapture() async -> Bool {
+        await client.startNewDiagnosticsCapture()
+    }
+
+    public func stopDiagnosticsCapture() async -> Bool {
+        await client.stopDiagnosticsCapture()
+    }
     private func completeStart(
         events: AsyncStream<BikeSDKEvent>?,
         generation startGeneration: UInt64
