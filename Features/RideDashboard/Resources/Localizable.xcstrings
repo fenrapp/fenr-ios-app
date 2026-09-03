@@ -3174,13 +3174,13 @@
         }
       }
     },
-    "rideDashboard.unavailable.diagnostics.action": {
+    "rideDashboard.unavailable.retryConnection.action": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open Diagnostics"
+            "value": "Retry connection"
           }
         }
       }

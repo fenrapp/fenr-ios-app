@@ -141,8 +141,8 @@ private extension VehicleMotionEstimator {
         profile.version > 0
             && profile.oneGRaw.isFinite
             && profile.oneGRaw > .zero
-            && profile.accelerationTransform.isBijective
-            && profile.gyroscopeTransform.isBijective
+            && profile.accelerationTransform.isRigid
+            && profile.gyroscopeTransform.isRigid
             && profile.gyroscopeDegreesPerSecondPerRawUnit.isFinite
             && profile.gyroscopeDegreesPerSecondPerRawUnit.x > .zero
             && profile.gyroscopeDegreesPerSecondPerRawUnit.y > .zero

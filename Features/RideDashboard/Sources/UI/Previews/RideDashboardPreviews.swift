@@ -19,7 +19,7 @@ private enum DashboardPreviewConstants {
                     indicators: previewIndicators(highBeam: true, brake: true)
                 )
             ),
-            onDiagnostics: {}
+            onRetryConnection: {}
         )
     }
 }
@@ -47,7 +47,7 @@ private enum DashboardPreviewConstants {
                     indicators: previewIndicators(rightTurn: true)
                 )
             ),
-            onDiagnostics: {}
+            onRetryConnection: {}
         )
     }
     .frame(width: DashboardPreviewConstants.landscapeWidth, height: DashboardPreviewConstants.landscapeHeight)
@@ -73,7 +73,7 @@ private enum DashboardPreviewConstants {
                     indicators: previewIndicators(fault: true)
                 )
             ),
-            onDiagnostics: {}
+            onRetryConnection: {}
         )
     }
     .preferredColorScheme(.dark)
@@ -83,7 +83,7 @@ private enum DashboardPreviewConstants {
     NavigationStack {
         RideDashboardView(
             feature: previewFeature(dashboardState: .init()),
-            onDiagnostics: {}
+            onRetryConnection: {}
         )
     }
 }
@@ -109,7 +109,7 @@ private enum DashboardPreviewConstants {
                 )
             )
         ),
-        onDiagnostics: {}
+        onRetryConnection: {}
     )
     .frame(width: DashboardPreviewConstants.landscapeWidth, height: DashboardPreviewConstants.landscapeHeight)
 }

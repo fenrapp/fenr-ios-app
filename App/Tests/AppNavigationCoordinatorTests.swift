@@ -253,6 +253,9 @@ struct AppNavigationEventAdapterTests {
         let rideID = UUID()
         let dashboard = AppNavigationEventAdapter.intent(for: RideDashboardNavigationEvent.openSettings)
         let settings = AppNavigationEventAdapter.intent(for: AppSettingsNavigationEvent.openDashboardCards)
+        let settingsDiagnostics = AppNavigationEventAdapter.intent(
+            for: AppSettingsNavigationEvent.openDiagnostics
+        )
         let cards = AppNavigationEventAdapter.intent(
             for: DashboardCardSettingsNavigationEvent.show(.section(id: "energy"))
         )
@@ -268,6 +271,7 @@ struct AppNavigationEventAdapterTests {
 
         #expect(dashboard == .push(.settings(.overview)))
         #expect(settings == .push(.dashboardCards(.overview)))
+        #expect(settingsDiagnostics == .push(.diagnostics(.overview)))
         #expect(cards == .push(.dashboardCards(.section(id: "energy"))))
         #expect(history == .push(.rideHistory(.detail(id: rideID))))
         #expect(diagnostics == .push(.batteryHealth(.overview)))

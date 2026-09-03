@@ -8,27 +8,49 @@ import Testing
 
 @Suite("Vehicle attitude filter")
 struct VehicleAttitudeFilterTests {
-#if DEBUG
-    @Test("Experimental hardware profile accepts its candidate gravity magnitude")
-    func experimentalHardwareProfileAcceptsCandidateGravity() {
+    @Test("Production profile maps the observed upright mounting to level")
+    func productionProfileMapsObservedMountingToLevel() {
         var filter = VehicleAttitudeFilter()
 
         let angles = filter.update(
             sample: sample(
-                acceleration: .init(x: 509, y: -1_510, z: 1_294),
-                gyroscope: .init(x: -4, y: -20, z: 0),
+                acceleration: .init(
+                    x: 0,
+                    y: -1_501.472_335_257_6,
+                    z: 1_392.797_482_188_8
+                ),
                 at: referenceDate
             ),
             calibration: nil,
-            profile: .experimentalObservedV1
+            profile: .productionV1
         )
 
-        #expect(angles != nil)
+        expect(angles?.roll, equals: 0)
+        expect(angles?.pitch, equals: 0)
     }
 
-    @Test("Experimental hardware profile applies its candidate gyroscope scale")
-    func experimentalHardwareProfileAppliesCandidateGyroscopeScale() {
-        let profile = BikeIMUProfile.experimentalObservedV1
+    @Test("Production profile maps the observed stand and left lean")
+    func productionProfileMapsObservedLean() {
+        let observations: [(acceleration: BikeIMUVector, expectedRoll: Double)] = [
+            (.init(x: 518, y: -1_502, z: 1_308), -14.6),
+            (.init(x: 602, y: -1_464, z: 1_309), -17.1)
+        ]
+
+        for observation in observations {
+            var filter = VehicleAttitudeFilter()
+            let angles = filter.update(
+                sample: sample(acceleration: observation.acceleration, at: referenceDate),
+                calibration: nil,
+                profile: .productionV1
+            )
+
+            expect(angles?.roll, equals: observation.expectedRoll, tolerance: 0.1)
+        }
+    }
+
+    @Test("Production profile applies mounting and gyroscope scale")
+    func productionProfileAppliesMountingAndGyroscopeScale() {
+        let profile = BikeIMUProfile.productionV1
         let calibration = VehicleMotionCalibration(
             vin: vin,
             gyroscopeBiasXRaw: 0,
@@ -40,7 +62,11 @@ struct VehicleAttitudeFilterTests {
         var filter = VehicleAttitudeFilter()
         _ = filter.update(
             sample: sample(
-                acceleration: .init(x: 0, y: 0, z: profile.oneGRaw),
+                acceleration: .init(
+                    x: 0,
+                    y: -1_501.472_335_257_6,
+                    z: 1_392.797_482_188_8
+                ),
                 at: referenceDate
             ),
             calibration: calibration,
@@ -50,7 +76,7 @@ struct VehicleAttitudeFilterTests {
         let angles = filter.update(
             sample: sample(
                 acceleration: .init(x: 0, y: 0, z: 0),
-                gyroscope: .init(x: 16.4, y: 0, z: 0),
+                gyroscope: .init(x: 0, y: 11.153_261, z: 12.023_509),
                 at: referenceDate.addingTimeInterval(0.1)
             ),
             calibration: calibration,
@@ -60,7 +86,6 @@ struct VehicleAttitudeFilterTests {
         expect(angles?.roll, equals: 0.1)
         expect(angles?.pitch, equals: 0)
     }
-#endif
 
     @Test("Initializes roll and pitch from trustworthy gravity")
     func gravityInitialization() {

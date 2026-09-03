@@ -95,7 +95,7 @@ struct BikeBLEVCUConfigurationResponseMatchingTests {
         }
     }
 
-    @Test("Matches only the type 8 write response envelope")
+    @Test("Matches only acknowledged write responses for ordinary configuration types")
     func matchesExpectedWriteResponse() throws {
         let expected = try BikeBLEVCUConfigurationExpectedResponse(
             writeRequest: Data([1, 8, 1, 3, 15, 120, 0, 200, 0])
@@ -105,6 +105,16 @@ struct BikeBLEVCUConfigurationResponseMatchingTests {
         #expect(expected.matches(Data([1, 8, 7])))
         #expect(!expected.matches(Data([2, 8, 0, 3, 120, 0, 200, 0])))
         #expect(!expected.matches(Data([1, 0, 0])))
+        #expect(!expected.matches(Data([2, 0, 0])))
+    }
+
+    @Test("Matches the captured Bike Lock no-op response envelope")
+    func matchesBikeLockWriteResponse() throws {
+        let expected = try BikeBLEVCUConfigurationExpectedResponse(
+            writeRequest: Data([1, 5, 0x83, 0, 1, 0, 0])
+        )
+
+        #expect(expected.matches(Data([2, 5, 0, 0, 1, 0, 0])))
     }
 
     @Test("SDK errors expose their useful message through LocalizedError")

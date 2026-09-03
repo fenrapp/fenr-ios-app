@@ -63,6 +63,17 @@ struct AppDependencyContainerTests {
         #expect(await fixture.repository.lastVIN() == "FENRTEST000000001")
     }
 
+    @Test("Lifecycle retries with the configured bike through the shared session")
+    func lifecycleRetriesConfiguredBike() async {
+        let fixture = AppLifecycleControllerFixture()
+        await fixture.lifecycleController.start()
+
+        fixture.lifecycleController.retryConnection()
+
+        #expect(await waitUntil { await fixture.repository.connectionCount() == 2 })
+        #expect(await fixture.repository.lastVIN() == "FENRTEST000000001")
+    }
+
     @Test("Lifecycle prepares traces in parallel and waits before automatic BLE start")
     func lifecycleWaitsForTracePreparationBeforeBLEStart() async {
         let tracePreparer = LifecycleBLETraceStoragePreparer()

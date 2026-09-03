@@ -5,7 +5,7 @@ public struct RideDashboardConnectionMapper: Sendable {
 
     func text(_ state: ConnectionState) -> String {
         switch state {
-        case .idle: rideDashboardLocalized(.rideDashboardConnectionRestoring)
+        case .idle: rideDashboardLocalized(.rideDashboardConnectionDisconnected)
         case .reconnecting(_, let attempt, let maximumAttempts):
             rideDashboardLocalized(.rideDashboardConnectionReconnectingAttempt(attempt, maximumAttempts))
         case .pairingResetRequired:
@@ -27,10 +27,10 @@ public struct RideDashboardConnectionMapper: Sendable {
 
     func showsProgress(_ state: ConnectionState) -> Bool {
         switch state {
-        case .idle, .scanning, .connecting, .discovering, .authenticating,
+        case .scanning, .connecting, .discovering, .authenticating,
              .authenticated, .subscribed, .receivingTelemetry, .reconnecting:
             true
-        case .bluetoothUnavailable, .bluetoothUnauthorized, .bluetoothPoweredOff,
+        case .idle, .bluetoothUnavailable, .bluetoothUnauthorized, .bluetoothPoweredOff,
              .pairingResetRequired, .disconnected, .failed:
             false
         }

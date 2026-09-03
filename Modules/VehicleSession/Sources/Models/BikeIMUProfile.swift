@@ -1,4 +1,5 @@
 import BikeDomain
+import Foundation
 
 public enum BikeIMUAxis: Equatable, Sendable {
     case positiveX
@@ -8,61 +9,77 @@ public enum BikeIMUAxis: Equatable, Sendable {
     case positiveZ
     case negativeZ
 
-    func value(from vector: BikeIMUVector) -> Double {
+    var unitVector: BikeIMUVector {
         switch self {
-        case .positiveX: vector.x
-        case .negativeX: -vector.x
-        case .positiveY: vector.y
-        case .negativeY: -vector.y
-        case .positiveZ: vector.z
-        case .negativeZ: -vector.z
-        }
-    }
-
-    var sensorAxisIndex: Int {
-        switch self {
-        case .positiveX, .negativeX: 0
-        case .positiveY, .negativeY: 1
-        case .positiveZ, .negativeZ: 2
+        case .positiveX: .init(x: 1, y: 0, z: 0)
+        case .negativeX: .init(x: -1, y: 0, z: 0)
+        case .positiveY: .init(x: 0, y: 1, z: 0)
+        case .negativeY: .init(x: 0, y: -1, z: 0)
+        case .positiveZ: .init(x: 0, y: 0, z: 1)
+        case .negativeZ: .init(x: 0, y: 0, z: -1)
         }
     }
 }
 
-public struct BikeIMUAxisTransform: Equatable, Sendable {
-    public let bikeX: BikeIMUAxis
-    public let bikeY: BikeIMUAxis
-    public let bikeZ: BikeIMUAxis
+public struct BikeIMURigidTransform: Equatable, Sendable {
+    public let bikeX: BikeIMUVector
+    public let bikeY: BikeIMUVector
+    public let bikeZ: BikeIMUVector
 
-    public init(bikeX: BikeIMUAxis, bikeY: BikeIMUAxis, bikeZ: BikeIMUAxis) {
+    public init(bikeX: BikeIMUVector, bikeY: BikeIMUVector, bikeZ: BikeIMUVector) {
         self.bikeX = bikeX
         self.bikeY = bikeY
         self.bikeZ = bikeZ
     }
 
-    func apply(to vector: BikeIMUVector) -> BikeIMUVector {
-        .init(
-            x: bikeX.value(from: vector),
-            y: bikeY.value(from: vector),
-            z: bikeZ.value(from: vector)
+    public init(bikeX: BikeIMUAxis, bikeY: BikeIMUAxis, bikeZ: BikeIMUAxis) {
+        self.init(
+            bikeX: bikeX.unitVector,
+            bikeY: bikeY.unitVector,
+            bikeZ: bikeZ.unitVector
         )
     }
 
-    var isBijective: Bool {
-        Set([bikeX.sensorAxisIndex, bikeY.sensorAxisIndex, bikeZ.sensorAxisIndex]).count == 3
+    func apply(to vector: BikeIMUVector) -> BikeIMUVector {
+        .init(
+            x: bikeX.dot(vector),
+            y: bikeY.dot(vector),
+            z: bikeZ.dot(vector)
+        )
+    }
+
+    var isRigid: Bool {
+        let determinant = bikeX.x * (bikeY.y * bikeZ.z - bikeY.z * bikeZ.y)
+            - bikeX.y * (bikeY.x * bikeZ.z - bikeY.z * bikeZ.x)
+            + bikeX.z * (bikeY.x * bikeZ.y - bikeY.y * bikeZ.x)
+        return bikeX.isFinite
+            && bikeY.isFinite
+            && bikeZ.isFinite
+            && abs(bikeX.magnitude - 1) <= Constants.validationTolerance
+            && abs(bikeY.magnitude - 1) <= Constants.validationTolerance
+            && abs(bikeZ.magnitude - 1) <= Constants.validationTolerance
+            && abs(bikeX.dot(bikeY)) <= Constants.validationTolerance
+            && abs(bikeX.dot(bikeZ)) <= Constants.validationTolerance
+            && abs(bikeY.dot(bikeZ)) <= Constants.validationTolerance
+            && abs(determinant - 1) <= Constants.validationTolerance
+    }
+
+    private enum Constants {
+        static let validationTolerance = 1e-6
     }
 }
 
 public struct BikeIMUProfile: Equatable, Sendable {
     public let version: Int
-    public let accelerationTransform: BikeIMUAxisTransform
-    public let gyroscopeTransform: BikeIMUAxisTransform
+    public let accelerationTransform: BikeIMURigidTransform
+    public let gyroscopeTransform: BikeIMURigidTransform
     public let gyroscopeDegreesPerSecondPerRawUnit: BikeIMUVector
     public let oneGRaw: Double
 
     public init(
         version: Int,
-        accelerationTransform: BikeIMUAxisTransform,
-        gyroscopeTransform: BikeIMUAxisTransform,
+        accelerationTransform: BikeIMURigidTransform,
+        gyroscopeTransform: BikeIMURigidTransform,
         gyroscopeDegreesPerSecondPerRawUnit: BikeIMUVector,
         oneGRaw: Double
     ) {
@@ -73,16 +90,11 @@ public struct BikeIMUProfile: Equatable, Sendable {
         self.oneGRaw = oneGRaw
     }
 
-    /// Set only after physical measurements validate axes, scale, and gravity magnitude.
-    public static let productionV1: Self? = nil
-
-#if DEBUG
-    /// Debug-only hardware candidate. Axis orientation and gyroscope scale still
-    /// require physical validation before this can become a production profile.
-    public static let experimentalObservedV1 = Self(
-        version: 10_001,
-        accelerationTransform: .init(bikeX: .positiveX, bikeY: .positiveY, bikeZ: .positiveZ),
-        gyroscopeTransform: .init(bikeX: .positiveX, bikeY: .positiveY, bikeZ: .positiveZ),
+    /// Physically observed sensor mounting transformed into the bike coordinate frame.
+    public static let productionV1 = Self(
+        version: 1,
+        accelerationTransform: .observedBikeMounting,
+        gyroscopeTransform: .observedBikeMounting,
         gyroscopeDegreesPerSecondPerRawUnit: .init(
             x: 1 / 16.4,
             y: 1 / 16.4,
@@ -91,6 +103,7 @@ public struct BikeIMUProfile: Equatable, Sendable {
         oneGRaw: 2_048
     )
 
+#if DEBUG
     public static let debug = Self(
         version: 1,
         accelerationTransform: .init(bikeX: .positiveX, bikeY: .positiveY, bikeZ: .positiveZ),
@@ -99,4 +112,21 @@ public struct BikeIMUProfile: Equatable, Sendable {
         oneGRaw: 1_000
     )
 #endif
+}
+
+private extension BikeIMURigidTransform {
+    static let observedBikeMounting = Self(
+        bikeX: .init(x: 0, y: 0.680_076_895_6, z: 0.733_140_788_7),
+        bikeY: .init(x: -1, y: 0, z: 0),
+        bikeZ: .init(x: 0, y: -0.733_140_788_7, z: 0.680_076_895_6)
+    )
+}
+
+private extension BikeIMUVector {
+    var isFinite: Bool { x.isFinite && y.isFinite && z.isFinite }
+    var magnitude: Double { sqrt(x * x + y * y + z * z) }
+
+    func dot(_ other: Self) -> Double {
+        x * other.x + y * other.y + z * other.z
+    }
 }
