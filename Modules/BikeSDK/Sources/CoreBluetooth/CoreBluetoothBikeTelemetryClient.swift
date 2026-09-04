@@ -113,6 +113,10 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
         try await notificationCoordinator.setChargeTarget(percent: percent)
     }
 
+    public func readBikeLockFirmwareCompatibility() async throws -> BikeSDKBikeLockFirmwareCompatibility {
+        try await notificationCoordinator.readBikeLockFirmwareCompatibility()
+    }
+
     public func prepareBikeLockControl() async throws -> BikeSDKBikeLockControlSnapshot {
         try await notificationCoordinator.prepareBikeLockControl()
     }

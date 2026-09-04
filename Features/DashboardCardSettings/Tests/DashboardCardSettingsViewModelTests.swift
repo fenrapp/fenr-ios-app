@@ -7,8 +7,8 @@ import TestSupport
 @MainActor
 @Suite("Dashboard card settings view model")
 struct DashboardCardSettingsViewModelTests {
-    @Test("Ignores attempts to hide configured Bike Lock")
-    func keepsConfiguredBikeLockVisible() async {
+    @Test("Ignores attempts to hide firmware-compatible Bike Lock")
+    func keepsCompatibleBikeLockVisible() async {
         var settings = AppSettings()
         settings.setBikeLockSettings(
             .init(securityMode: .pin),

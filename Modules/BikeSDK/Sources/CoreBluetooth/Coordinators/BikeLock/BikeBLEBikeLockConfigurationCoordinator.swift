@@ -20,9 +20,9 @@ final class BikeBLEBikeLockConfigurationCoordinator {
         try transport.ensureReady()
         preparedConfiguration = nil
         preparedFirmware = nil
-        let versionData = try await transport.readVersions()
-        guard let firmware = StarkFirmwareVersionParser.parseVCUPic(from: versionData),
-              firmware.isBikeLockControlCompatible
+        let compatibility = try await readFirmwareCompatibility()
+        guard compatibility.isCompatible,
+              let firmware = StarkFirmwareVersion(compatibility.firmware)
         else {
             throw BikeSDKError.operationFailed(
                 "Bike Lock requires VCU PIC firmware 1.6.29 or newer"
@@ -115,5 +115,19 @@ final class BikeBLEBikeLockConfigurationCoordinator {
 
     private enum Constants {
         static let writeVerificationDelay = Duration.milliseconds(150)
+    }
+}
+
+extension BikeBLEBikeLockConfigurationCoordinator {
+    func readFirmwareCompatibility() async throws -> BikeSDKBikeLockFirmwareCompatibility {
+        try transport.ensureReady()
+        let versionData = try await transport.readVersions()
+        guard let firmware = StarkFirmwareVersionParser.parseVCUPic(from: versionData) else {
+            throw BikeSDKError.operationFailed("Unable to read VCU PIC firmware")
+        }
+        return .init(
+            firmware: firmware.description,
+            isCompatible: firmware.isBikeLockControlCompatible
+        )
     }
 }

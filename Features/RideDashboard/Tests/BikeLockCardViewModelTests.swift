@@ -6,21 +6,54 @@ import TestSupport
 @Suite("Bike Lock card view model")
 @MainActor
 struct BikeLockCardViewModelTests {
-    @Test("Prepares only after stopped telemetry and becomes available")
-    func preparesWhenStopped() async {
+    @Test("Publishes firmware compatibility while moving and prepares only when stopped")
+    func publishesCompatibilityBeforePreparation() async {
         let fixture = BikeLockCardViewModelTestFactory.make()
         fixture.viewModel.start()
 
         await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot(speed: 8))
+        #expect(await waitUntil { fixture.viewModel.viewState.isAvailable })
+        #expect(!fixture.viewModel.viewState.isActionEnabled)
+        #expect(fixture.viewModel.viewState.statusText == "Status not confirmed")
+        #expect(await fixture.repository.recordedFirmwareCompatibilityRequests() == 1)
         #expect(await fixture.repository.recordedPrepareRequests() == 0)
         await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot())
 
-        #expect(await waitUntil { fixture.viewModel.viewState.isAvailable })
+        #expect(await waitUntil { fixture.viewModel.viewState.isActionEnabled })
         #expect(await fixture.repository.recordedPrepareRequests() == 1)
         #expect(fixture.capabilityStore.currentState == .init(
             vehicleIdentifier: BikeLockCardFixtures.vin,
             isAvailable: true
         ))
+    }
+
+    @Test("Hides Bike Lock only when VCU firmware is incompatible")
+    func hidesIncompatibleFirmware() async {
+        let fixture = BikeLockCardViewModelTestFactory.make(
+            firmwareCompatibility: .init(firmware: "1.6.28", isCompatible: false)
+        )
+        fixture.viewModel.start()
+
+        await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot())
+
+        #expect(await waitUntil {
+            await fixture.repository.recordedFirmwareCompatibilityRequests() == 1
+        })
+        #expect(!fixture.viewModel.viewState.isAvailable)
+        #expect(await fixture.repository.recordedPrepareRequests() == 0)
+    }
+
+    @Test("Keeps compatible Bike Lock visible when safe control preparation fails")
+    func compatibleFirmwareRemainsVisibleAfterPreparationFailure() async {
+        let fixture = BikeLockCardViewModelTestFactory.make(failsPreparation: true)
+        fixture.viewModel.start()
+
+        await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot())
+
+        #expect(await waitUntil { await fixture.repository.recordedPrepareRequests() == 1 })
+        #expect(fixture.viewModel.viewState.isAvailable)
+        #expect(!fixture.viewModel.viewState.isActionEnabled)
+        #expect(fixture.capabilityStore.currentState.isAvailable)
     }
 
     @Test("Prepares while charging but keeps lock actions disabled")
@@ -49,7 +82,8 @@ struct BikeLockCardViewModelTests {
         #expect(await waitUntil {
             await fixture.repository.recordedPreparationCancellationCount() == 1
         })
-        #expect(!fixture.viewModel.viewState.isAvailable)
+        #expect(fixture.viewModel.viewState.isAvailable)
+        #expect(!fixture.viewModel.viewState.isActionEnabled)
 
         await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot())
         #expect(await waitUntil { await fixture.repository.recordedPrepareRequests() == 2 })
@@ -151,8 +185,8 @@ struct BikeLockCardViewModelTests {
         #expect(fixture.viewModel.viewState.isLocked)
     }
 
-    @Test("No PIN protection does not force the dashboard card visible")
-    func noPINConfigurationKeepsCardHidden() async {
+    @Test("Bike Lock visibility does not rewrite the saved dashboard layout")
+    func visibilityDoesNotRewriteSavedDashboardLayout() async {
         var settings = AppSettings()
         settings.dashboardCardConfiguration.setSectionVisibility(false, id: .bikeLock)
         let fixture = BikeLockCardViewModelTestFactory.make(settings: settings)

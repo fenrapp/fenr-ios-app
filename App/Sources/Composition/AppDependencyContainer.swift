@@ -49,7 +49,6 @@ struct AppDependencyContainer {
     private let bikeLockCredentialStore: any BikeLockCredentialStoring
     private let bikeLockAuthenticator: any BikeLockAuthenticating
     private let bikeLockCapabilityStore: any BikeLockCapabilityStateStoring
-    private let allowsExperimentalBikeLockControl: Bool
     private let startupPreparer: any AppStartupPreparing
 
     init(
@@ -75,7 +74,6 @@ struct AppDependencyContainer {
         bikeLockCredentialStore: any BikeLockCredentialStoring,
         bikeLockAuthenticator: any BikeLockAuthenticating,
         bikeLockCapabilityStore: any BikeLockCapabilityStateStoring,
-        allowsExperimentalBikeLockControl: Bool,
         startupPreparer: any AppStartupPreparing,
         initialOnboardingVIN: String? = nil,
         forceOnboarding: Bool = false
@@ -105,7 +103,6 @@ struct AppDependencyContainer {
         self.bikeLockCredentialStore = bikeLockCredentialStore
         self.bikeLockAuthenticator = bikeLockAuthenticator
         self.bikeLockCapabilityStore = bikeLockCapabilityStore
-        self.allowsExperimentalBikeLockControl = allowsExperimentalBikeLockControl
         self.startupPreparer = startupPreparer
     }
 
@@ -134,8 +131,7 @@ struct AppDependencyContainer {
                 vehicleSession: vehicleSession,
                 bikeLockCredentialStore: bikeLockCredentialStore,
                 bikeLockAuthenticator: bikeLockAuthenticator,
-                bikeLockCapabilityStore: bikeLockCapabilityStore,
-                allowsExperimentalBikeLockControl: allowsExperimentalBikeLockControl
+                bikeLockCapabilityStore: bikeLockCapabilityStore
             )
         )
         let featureStore = makeFeatureStore(

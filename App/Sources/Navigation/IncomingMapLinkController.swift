@@ -34,7 +34,7 @@ final class IncomingMapLinkController {
         let task = Task { @MainActor [weak self, store, resolver, onRequest] in
             do {
                 let link = try await store.consume()
-                guard let self, !Task.isCancelled else { return }
+                guard !Task.isCancelled else { return }
                 if let link, let request = resolver.resolve(link.url) {
                     onRequest(request)
                 }

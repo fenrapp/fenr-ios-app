@@ -19,11 +19,19 @@ enum BikeLockCardViewModelTestFactory {
         settings: AppSettings = .init(),
         authenticator: any BikeLockAuthenticating = BikeLockCardAuthenticator(),
         suspendsPreparation: Bool = false,
-        allowsExperimentalControl: Bool = true
+        failsPreparation: Bool = false,
+        passesNoOpWrite: Bool = true,
+        firmwareCompatibility: BikeLockFirmwareCompatibility = .init(
+            firmware: "1.6.29",
+            isCompatible: true
+        )
     ) -> BikeLockCardViewModelTestFixture {
         let repository = BikeLockCardRepository(
             isLocked: isLocked,
-            suspendsPreparation: suspendsPreparation
+            suspendsPreparation: suspendsPreparation,
+            failsPreparation: failsPreparation,
+            passesNoOpWrite: passesNoOpWrite,
+            firmwareCompatibility: firmwareCompatibility
         )
         let settingsRepository = BikeLockCardSettingsRepository(settings: settings)
         let vehicleSession = RideDashboardVehicleSession()
@@ -32,6 +40,7 @@ enum BikeLockCardViewModelTestFactory {
         return .init(
             viewModel: BikeLockCardViewModel(
                 operationService: BikeLockCardOperationService(
+                    readFirmwareCompatibility: .init(repository: repository),
                     prepareControl: .init(repository: repository),
                     setLocked: .init(repository: repository),
                     updateSecurity: .init(
@@ -45,8 +54,7 @@ enum BikeLockCardViewModelTestFactory {
                 capabilityStore: capabilityStore,
                 mapper: BikeLockCardViewStateMapper(),
                 vehicleContextMapper: BikeLockCardVehicleContextMapper(),
-                securityOptionProvider: BikeLockSecurityOptionProvider(),
-                allowsExperimentalControl: allowsExperimentalControl
+                securityOptionProvider: BikeLockSecurityOptionProvider()
             ),
             repository: repository,
             settingsRepository: settingsRepository,

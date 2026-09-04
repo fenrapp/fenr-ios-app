@@ -19,8 +19,14 @@ enum BikeLockSheetUpdate {
 
 enum BikeLockCardOperationError: LocalizedError {
     case vehicleMustBeStationary
+    case noOpValidationFailed
 
     var errorDescription: String? {
-        rideDashboardLocalized(.rideDashboardBikeLockErrorStopBike)
+        switch self {
+        case .vehicleMustBeStationary:
+            rideDashboardLocalized(.rideDashboardBikeLockErrorStopBike)
+        case .noOpValidationFailed:
+            rideDashboardLocalized(.rideDashboardBikeLockErrorOperationFailed)
+        }
     }
 }

@@ -22,7 +22,7 @@ struct DashboardCardSettingsViewStateMapperTests {
         #expect(state.sections.first?.isVisibilityEnabled == false)
     }
 
-    @Test("Publishes compatible Bike Lock and prevents hiding configured protection")
+    @Test("Publishes compatible Bike Lock as firmware-controlled and always visible")
     func publishesBikeLockAvailability() {
         var settings = AppSettings()
         let available = BikeLockCapabilityState(
@@ -33,7 +33,8 @@ struct DashboardCardSettingsViewStateMapperTests {
 
         let unconfigured = mapper.map(settings: settings, bikeLockCapability: available)
         #expect(unconfigured.sections.first?.id == DashboardCardSectionID.bikeLock.rawValue)
-        #expect(unconfigured.sections.first?.isVisibilityEnabled == true)
+        #expect(unconfigured.sections.first?.isVisible == true)
+        #expect(unconfigured.sections.first?.isVisibilityEnabled == false)
 
         settings.setBikeLockSettings(
             .init(securityMode: .pin),

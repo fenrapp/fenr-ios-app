@@ -2,6 +2,10 @@ import BikeDomain
 import Foundation
 
 extension BikeEmulatorRepository {
+    public func readBikeLockFirmwareCompatibility() -> BikeLockFirmwareCompatibility {
+        .init(firmware: "1.6.29", isCompatible: true)
+    }
+
     public func prepareBikeLockControl() async throws -> BikeLockControlSnapshot {
         isBikeLockPrepared = true
         await publishDebugEvent(title: "Bike Lock", detail: "Debug no-op confirmed")

@@ -55,6 +55,9 @@ struct RideDashboardDependencyContainer {
             ),
             bikeLockViewModel: BikeLockCardViewModel(
                 operationService: BikeLockCardOperationService(
+                    readFirmwareCompatibility: ReadBikeLockFirmwareCompatibilityUseCase(
+                        repository: dependencies.bikeRepository
+                    ),
                     prepareControl: PrepareBikeLockControlUseCase(repository: dependencies.bikeRepository),
                     setLocked: SetBikeLockedUseCase(repository: dependencies.bikeRepository),
                     updateSecurity: UpdateBikeLockSecurityUseCase(
@@ -68,8 +71,7 @@ struct RideDashboardDependencyContainer {
                 capabilityStore: dependencies.bikeLockCapabilityStore,
                 mapper: BikeLockCardViewStateMapper(),
                 vehicleContextMapper: BikeLockCardVehicleContextMapper(),
-                securityOptionProvider: BikeLockSecurityOptionProvider(),
-                allowsExperimentalControl: dependencies.allowsExperimentalBikeLockControl
+                securityOptionProvider: BikeLockSecurityOptionProvider()
             )
         )
     }
@@ -100,5 +102,4 @@ struct RideDashboardFeatureDependencies {
     let bikeLockCredentialStore: any BikeLockCredentialStoring
     let bikeLockAuthenticator: any BikeLockAuthenticating
     let bikeLockCapabilityStore: any BikeLockCapabilityStateStoring
-    let allowsExperimentalBikeLockControl: Bool
 }

@@ -234,6 +234,10 @@ extension LiveBikeRepository {
         try await client.readBikeStatusSnapshot()
     }
 
+    public func readBikeLockFirmwareCompatibility() async throws -> BikeLockFirmwareCompatibility {
+        try await controlService.readBikeLockFirmwareCompatibility()
+    }
+
     public func prepareBikeLockControl() async throws -> BikeLockControlSnapshot {
         try await controlService.prepareBikeLockControl()
     }

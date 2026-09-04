@@ -4,10 +4,14 @@ public struct BikeLockCardViewStateMapper: Sendable {
     public init() {}
 
     func map(_ input: BikeLockCardMappingInput) -> BikeLockCardViewState {
-        let isAvailable = input.firmware != nil
-        let status = rideDashboardLocalized(
-            input.isLocked ? .rideDashboardBikeLockStatusLocked : .rideDashboardBikeLockStatusUnlocked
-        )
+        let isAvailable = input.isFirmwareCompatible
+        let status = if input.hasConfirmedLockState {
+            rideDashboardLocalized(
+                input.isLocked ? .rideDashboardBikeLockStatusLocked : .rideDashboardBikeLockStatusUnlocked
+            )
+        } else {
+            rideDashboardLocalized(.rideDashboardBikeLockStatusAwaitingConfirmation)
+        }
         let actionTitle = input.isLocked
             ? rideDashboardLocalized(.rideDashboardBikeLockActionUnlock)
             : rideDashboardLocalized(
@@ -17,9 +21,10 @@ public struct BikeLockCardViewStateMapper: Sendable {
             )
         return .init(
             isAvailable: isAvailable,
-            isLocked: input.isLocked,
+            isLocked: input.hasConfirmedLockState && input.isLocked,
             isWorking: input.isWorking,
             isActionEnabled: isAvailable
+                && input.isControlPrepared
                 && input.isReceivingTelemetry
                 && input.isVehicleStationary
                 && !input.isWorking,
@@ -37,7 +42,10 @@ public struct BikeLockCardViewStateMapper: Sendable {
 
 struct BikeLockCardMappingInput {
     let firmware: String?
+    let isFirmwareCompatible: Bool
+    let isControlPrepared: Bool
     let isLocked: Bool
+    let hasConfirmedLockState: Bool
     let isWorking: Bool
     let isReceivingTelemetry: Bool
     let isVehicleStationary: Bool

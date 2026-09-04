@@ -288,3 +288,9 @@ public struct BikeBLENotificationCoordinator {
         throw BikeSDKError.operationFailed(message)
     }
 }
+
+extension BikeBLENotificationCoordinator {
+    public func readBikeLockFirmwareCompatibility() async throws -> BikeSDKBikeLockFirmwareCompatibility {
+        try await bikeLockCoordinator.readFirmwareCompatibility()
+    }
+}

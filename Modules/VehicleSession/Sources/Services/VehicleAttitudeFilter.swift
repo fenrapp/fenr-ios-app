@@ -11,6 +11,7 @@ public struct VehicleAttitudeFilter: Sendable {
     private var filteredRollDegrees: Double?
     private var filteredPitchDegrees: Double?
     private var previousSampleDate: Date?
+    private var previousSample: BikeIMUSample?
 
     public init() {}
 
@@ -25,7 +26,7 @@ public struct VehicleAttitudeFilter: Sendable {
                 reset()
                 return nil
             }
-            return initialize(with: accelerationAngles, observedAt: sample.observedAt)
+            return initialize(with: accelerationAngles, sample: sample)
         }
 
         let biasCorrected = BikeIMUVector(
@@ -45,7 +46,7 @@ public struct VehicleAttitudeFilter: Sendable {
               let previousPitch = filteredPitchDegrees
         else {
             guard let accelerationAngles else { return nil }
-            return initialize(with: accelerationAngles, observedAt: sample.observedAt)
+            return initialize(with: accelerationAngles, sample: sample)
         }
 
         let interval = sample.observedAt.timeIntervalSince(previousSampleDate)
@@ -53,12 +54,13 @@ public struct VehicleAttitudeFilter: Sendable {
             if interval < .zero {
                 reset()
             }
-            return nil
+            guard sample == previousSample else { return nil }
+            return .init(roll: previousRoll, pitch: previousPitch)
         }
         guard interval <= Constants.maximumIntegrationInterval else {
             reset()
             guard let accelerationAngles else { return nil }
-            return initialize(with: accelerationAngles, observedAt: sample.observedAt)
+            return initialize(with: accelerationAngles, sample: sample)
         }
         var roll = previousRoll + rates.x * interval
         var pitch = previousPitch + rates.y * interval
@@ -71,6 +73,7 @@ public struct VehicleAttitudeFilter: Sendable {
         filteredRollDegrees = roll
         filteredPitchDegrees = pitch
         self.previousSampleDate = sample.observedAt
+        previousSample = sample
         return .init(roll: roll, pitch: pitch)
     }
 
@@ -78,17 +81,19 @@ public struct VehicleAttitudeFilter: Sendable {
         filteredRollDegrees = nil
         filteredPitchDegrees = nil
         previousSampleDate = nil
+        previousSample = nil
     }
 }
 
 private extension VehicleAttitudeFilter {
     mutating func initialize(
         with angles: VehicleMotionAngles,
-        observedAt: Date
+        sample: BikeIMUSample
     ) -> VehicleMotionAngles {
         filteredRollDegrees = angles.roll
         filteredPitchDegrees = angles.pitch
-        previousSampleDate = observedAt
+        previousSampleDate = sample.observedAt
+        previousSample = sample
         return angles
     }
 
