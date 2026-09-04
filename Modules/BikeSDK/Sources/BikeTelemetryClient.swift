@@ -19,6 +19,7 @@ public protocol BikeTelemetryClient: AnyObject, Sendable {
     ) async throws -> BikeSDKChargePowerControlSnapshot
     func setChargePowerLimit(watts: Int) async throws -> BikeSDKChargePowerControlSnapshot
     func setChargeTarget(percent: Int) async throws -> BikeSDKChargePowerControlSnapshot
+    func readBikeLockFirmwareCompatibility() async throws -> BikeSDKBikeLockFirmwareCompatibility
     func prepareBikeLockControl() async throws -> BikeSDKBikeLockControlSnapshot
     func setBikeLocked(_ isLocked: Bool) async throws -> BikeSDKBikeLockControlSnapshot
     func refreshPowerModeConfigurations() async throws
@@ -55,6 +56,9 @@ public extension BikeTelemetryClient {
     }
     func setChargeTarget(percent: Int) async throws -> BikeSDKChargePowerControlSnapshot {
         throw BikeSDKError.operationFailed("Charge target control is unavailable")
+    }
+    func readBikeLockFirmwareCompatibility() async throws -> BikeSDKBikeLockFirmwareCompatibility {
+        throw BikeSDKError.operationFailed("Bike Lock control is unavailable")
     }
     func prepareBikeLockControl() async throws -> BikeSDKBikeLockControlSnapshot {
         throw BikeSDKError.operationFailed("Bike Lock control is unavailable")

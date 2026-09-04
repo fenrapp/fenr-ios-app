@@ -129,7 +129,6 @@ enum DebugAppDependencyContainerFactory {
             ),
             bikeLockAuthenticator: LocalAuthenticationBikeLockAuthenticator(),
             bikeLockCapabilityStore: bikeLockCapabilityStore,
-            allowsExperimentalBikeLockControl: true,
             startupPreparer: DebugRideHistorySeeder(
                 repository: rideTripRepository,
                 now: Date.init

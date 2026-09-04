@@ -104,6 +104,20 @@ struct VehicleAttitudeFilterTests {
         expect(angles?.pitch, equals: -5)
     }
 
+    @Test("Keeps the last filtered angles when the same IMU sample is refreshed")
+    func repeatedSampleKeepsAngles() {
+        var filter = VehicleAttitudeFilter()
+        let value = sample(
+            acceleration: gravityVector(rollDegrees: 12, pitchDegrees: -5),
+            at: referenceDate
+        )
+
+        let first = filter.update(sample: value, calibration: calibration, profile: profile)
+        let repeated = filter.update(sample: value, calibration: calibration, profile: profile)
+
+        #expect(repeated == first)
+    }
+
     @Test("Gravity correction accepts exact bounds and rejects values outside them")
     func gravityCorrectionRangeBoundaries() {
         for gravityRaw in [900.0, 1_100.0] {

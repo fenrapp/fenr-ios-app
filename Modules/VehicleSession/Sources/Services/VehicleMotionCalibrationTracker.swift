@@ -11,6 +11,7 @@ public struct VehicleMotionCalibrationTracker: Sendable {
 
     private var stableSamples: [BikeIMUSample] = []
     private var stableWindowStartedAt: Date?
+    private var lastProcessedSample: BikeIMUSample?
     private var didRefreshBiasThisSession = false
     private(set) var isZeroRequested = false
 
@@ -24,6 +25,14 @@ public struct VehicleMotionCalibrationTracker: Sendable {
         profile: BikeIMUProfile
     ) -> Preparation {
         let existing = valid(calibration, for: profile, vin: vin)
+        guard sample != lastProcessedSample else {
+            return Preparation(
+                calibration: existing,
+                calibrationToPersist: nil,
+                completedStableWindow: hasCompletedStableWindow(at: sample.observedAt)
+            )
+        }
+        lastProcessedSample = sample
         updateStableWindow(
             with: sample,
             isStable: isStable(
@@ -90,6 +99,7 @@ public struct VehicleMotionCalibrationTracker: Sendable {
 
     public mutating func reset() {
         clearStableWindow()
+        lastProcessedSample = nil
         didRefreshBiasThisSession = false
         isZeroRequested = false
     }

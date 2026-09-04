@@ -5,23 +5,28 @@ import SettingsDomain
 import VehicleSession
 @MainActor
 public final class BikeLockCardViewModel: ObservableObject {
-    @Published public private(set) var viewState = BikeLockCardViewState()
+    @Published public internal(set) var viewState = BikeLockCardViewState()
     public let securityOptions: [BikeLockSecurityOptionViewData]
-    private let operationService: BikeLockCardOperationService
-    private let vehicleSession: any VehicleSessionService
-    private let capabilityStore: any BikeLockCapabilityStateStoring
-    private let mapper: BikeLockCardViewStateMapper
-    private let vehicleContextMapper: BikeLockCardVehicleContextMapper
-    private let allowsExperimentalControl: Bool
-    private var observationTask: Task<Void, Never>?
-    private var operationTask: Task<Void, Never>?
-    private var vehicleIdentifier: String?
-    private var settings = BikeLockSettings()
-    private var isLocked = false
-    private var firmware: String?
-    private var isVehicleStationary = false
-    private var hasAttemptedPreparation = false
-    private var isReceivingTelemetry = false
+    let operationService: BikeLockCardOperationService
+    let vehicleSession: any VehicleSessionService
+    let capabilityStore: any BikeLockCapabilityStateStoring
+    let mapper: BikeLockCardViewStateMapper
+    let vehicleContextMapper: BikeLockCardVehicleContextMapper
+    var observationTask: Task<Void, Never>?
+    var compatibilityTask: Task<Void, Never>?
+    var operationTask: Task<Void, Never>?
+    var vehicleIdentifier: String?
+    var settings = BikeLockSettings()
+    var isLocked = false
+    var hasConfirmedLockState = false
+    var firmware: String?
+    var isFirmwareCompatible = false
+    var isControlPrepared = false
+    var canPrepareControl = false
+    var isVehicleStationary = false
+    var hasAttemptedCompatibilityCheck = false
+    var hasAttemptedPreparation = false
+    var isReceivingTelemetry = false
 
     public init(
         operationService: BikeLockCardOperationService,
@@ -29,8 +34,7 @@ public final class BikeLockCardViewModel: ObservableObject {
         capabilityStore: any BikeLockCapabilityStateStoring,
         mapper: BikeLockCardViewStateMapper,
         vehicleContextMapper: BikeLockCardVehicleContextMapper,
-        securityOptionProvider: BikeLockSecurityOptionProvider,
-        allowsExperimentalControl: Bool
+        securityOptionProvider: BikeLockSecurityOptionProvider
     ) {
         self.operationService = operationService
         self.vehicleSession = vehicleSession
@@ -38,16 +42,16 @@ public final class BikeLockCardViewModel: ObservableObject {
         self.mapper = mapper
         self.vehicleContextMapper = vehicleContextMapper
         securityOptions = securityOptionProvider.options
-        self.allowsExperimentalControl = allowsExperimentalControl
     }
     deinit {
         observationTask?.cancel()
+        compatibilityTask?.cancel()
         operationTask?.cancel()
     }
 }
 public extension BikeLockCardViewModel {
     func start() {
-        guard allowsExperimentalControl, observationTask == nil else { return }
+        guard observationTask == nil else { return }
         observationTask = Task { [weak self, vehicleSession] in
             let stream = await vehicleSession.observe()
             for await snapshot in stream {
@@ -65,8 +69,9 @@ public extension BikeLockCardViewModel {
                     invalidateControlPreparation()
                 }
                 isReceivingTelemetry = true
+                canPrepareControl = context.canPrepareNoOp
                 isVehicleStationary = context.canPerformLockWrite
-                if !context.canPrepareNoOp, firmware == nil, hasAttemptedPreparation {
+                if !context.canPrepareNoOp, !isControlPrepared, hasAttemptedPreparation {
                     operationTask?.cancel()
                     operationTask = nil
                     hasAttemptedPreparation = false
@@ -76,21 +81,21 @@ public extension BikeLockCardViewModel {
                     operationTask = nil
                     vehicleIdentifier = vin
                     settings = context.settings
-                    firmware = nil
-                    hasAttemptedPreparation = false
+                    resetCompatibility()
                     capabilityStore.update(.init(vehicleIdentifier: vin))
-                    if context.canPrepareNoOp {
-                        prepare()
-                    } else {
-                        render()
-                    }
+                    render(sheetUpdate: .dismiss)
                 } else {
                     settings = context.settings
-                    if firmware == nil, !hasAttemptedPreparation, context.canPrepareNoOp {
-                        prepare()
-                    } else {
-                        render()
-                    }
+                }
+                if !hasAttemptedCompatibilityCheck {
+                    checkFirmwareCompatibility()
+                } else if isFirmwareCompatible,
+                          !isControlPrepared,
+                          !hasAttemptedPreparation,
+                          context.canPrepareNoOp {
+                    prepare()
+                } else {
+                    render()
                 }
             }
         }
@@ -198,153 +203,12 @@ public extension BikeLockCardViewModel {
         render(sheetUpdate: .dismiss)
     }
 }
-private extension BikeLockCardViewModel {
-    private func prepare() {
-        guard !hasAttemptedPreparation else { return }
-        hasAttemptedPreparation = true
-        operationTask?.cancel()
-        firmware = nil
-        render(isWorking: true)
-        operationTask = Task { [weak self, operationService] in
-            guard let self else { return }
-            do {
-                let snapshot = try await operationService.prepare()
-                guard !Task.isCancelled else { return }
-                firmware = snapshot.vcuFirmware
-                isLocked = snapshot.isLocked
-                capabilityStore.update(.init(
-                    vehicleIdentifier: vehicleIdentifier,
-                    isAvailable: true
-                ))
-                render()
-            } catch {
-                guard !Task.isCancelled else { return }
-                firmware = nil
-                capabilityStore.update(.init(vehicleIdentifier: vehicleIdentifier))
-                render(error: rideDashboardLocalized(.rideDashboardBikeLockErrorOperationFailed))
-            }
-        }
-    }
-    private func authenticateAndUnlock() {
-        operationTask?.cancel()
-        render(isWorking: true)
-        operationTask = Task { [weak self, operationService] in
-            guard let self else { return }
-            do {
-                let result = try await operationService.authenticateAndUnlock(
-                    authorizeWrite: authorizeBikeLockWrite
-                )
-                guard !Task.isCancelled else { return }
-                switch result {
-                case .unlocked(let snapshot): apply(snapshot)
-                case .requiresPIN: render(sheetUpdate: .present(.enterPIN))
-                case .writeFailed:
-                    render(
-                        error: rideDashboardLocalized(.rideDashboardBikeLockErrorOperationFailed),
-                        sheetUpdate: .dismiss
-                    )
-                }
-            } catch {
-                guard !Task.isCancelled else { return }
-                render(
-                    error: rideDashboardLocalized(.rideDashboardBikeLockErrorOperationFailed),
-                    sheetUpdate: .present(.enterPIN)
-                )
-            }
-        }
-    }
-    private func changeLockState(to target: Bool) {
-        guard isVehicleStationary else {
-            render(error: rideDashboardLocalized(.rideDashboardBikeLockErrorStopBike))
-            return
-        }
-        operationTask?.cancel()
-        render(isWorking: true)
-        operationTask = Task { [weak self, operationService] in
-            guard let self else { return }
-            do {
-                let snapshot = try await operationService.setLocked(
-                    target,
-                    authorizeWrite: authorizeBikeLockWrite
-                )
-                guard !Task.isCancelled else { return }
-                apply(snapshot)
-            } catch {
-                guard !Task.isCancelled else { return }
-                render(
-                    error: rideDashboardLocalized(.rideDashboardBikeLockErrorOperationFailed),
-                    sheetUpdate: .dismiss
-                )
-            }
-        }
-    }
-    private func apply(_ snapshot: BikeLockControlSnapshot) {
-        firmware = snapshot.vcuFirmware
-        isLocked = snapshot.isLocked
-        render(sheetUpdate: .dismiss)
-    }
-    private var authorizeBikeLockWrite: @MainActor @Sendable () throws -> Void {
-        { [weak self] in
-            guard let self else { throw CancellationError() }
-            guard isVehicleStationary, isReceivingTelemetry else {
-                throw BikeLockCardOperationError.vehicleMustBeStationary
-            }
-        }
-    }
-    private func invalidateControlPreparation() {
-        guard isReceivingTelemetry || firmware != nil || hasAttemptedPreparation else { return }
-        operationTask?.cancel()
-        operationTask = nil
-        isReceivingTelemetry = false
-        isVehicleStationary = false
-        firmware = nil
-        hasAttemptedPreparation = false
-    }
-    private func suspendControlPreparation() {
-        operationTask?.cancel()
-        operationTask = nil
-        isReceivingTelemetry = false
-        isVehicleStationary = false
-        hasAttemptedPreparation = false
-        render(sheetUpdate: .dismiss)
-    }
-    private func invalidateVehicle(clearsCapability: Bool = true) {
-        operationTask?.cancel()
-        operationTask = nil
-        vehicleIdentifier = nil
-        settings = .init()
-        isLocked = false
-        invalidateControlPreparation()
-        if clearsCapability {
-            capabilityStore.update(.init())
-        }
-        render(sheetUpdate: .dismiss)
-    }
-}
-extension BikeLockCardViewModel {
-    private func render(
-        isWorking: Bool = false,
-        error: String? = nil,
-        sheetUpdate: BikeLockSheetUpdate = .preserve
-    ) {
-        viewState = mapper.map(.init(
-            firmware: firmware,
-            isLocked: isLocked,
-            isWorking: isWorking,
-            isReceivingTelemetry: isReceivingTelemetry,
-            isVehicleStationary: isVehicleStationary,
-            securityMode: settings.securityMode,
-            error: error,
-            sheetUpdate: sheetUpdate,
-            currentSheet: viewState.sheet
-        ))
-    }
-
 #if DEBUG
+extension BikeLockCardViewModel {
     var isObservingForTesting: Bool { observationTask != nil }
 
     func setPreviewState(_ state: BikeLockCardViewState) {
         viewState = state
     }
-#endif
 }
+#endif

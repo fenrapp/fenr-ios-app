@@ -1,6 +1,7 @@
 import Foundation
 
 public protocol BikeControlRepository: Sendable {
+    func readBikeLockFirmwareCompatibility() async throws -> BikeLockFirmwareCompatibility
     func prepareBikeLockControl() async throws -> BikeLockControlSnapshot
     func setBikeLocked(_ isLocked: Bool) async throws -> BikeLockControlSnapshot
     func refreshPowerModeConfigurations() async throws
@@ -21,6 +22,10 @@ public protocol BikeControlRepository: Sendable {
 }
 
 public extension BikeControlRepository {
+    func readBikeLockFirmwareCompatibility() async throws -> BikeLockFirmwareCompatibility {
+        throw BikeControlRepositoryError.bikeLockControlUnavailable
+    }
+
     func prepareBikeLockControl() async throws -> BikeLockControlSnapshot {
         throw BikeControlRepositoryError.bikeLockControlUnavailable
     }

@@ -5,6 +5,19 @@ import Testing
 @Suite("BLE Bike Lock configuration coordinator")
 @MainActor
 struct BikeBLEBikeLockConfigurationCoordinatorTests {
+    @Test("Reads firmware compatibility without touching Bike Lock configuration")
+    func readsFirmwareCompatibilityWithoutWriting() async throws {
+        let transport = FakeBikeBLEBikeLockConfigurationTransport()
+        transport.versionData = Data("1.6.29".utf8)
+        let coordinator = makeCoordinator(transport: transport)
+
+        let compatibility = try await coordinator.readFirmwareCompatibility()
+
+        #expect(compatibility == .init(firmware: "1.6.29", isCompatible: true))
+        #expect(transport.requests.isEmpty)
+        #expect(transport.writePayloads.isEmpty)
+    }
+
     @Test("Requires compatible VCU firmware before writing")
     func rejectsUnsupportedFirmware() async {
         let transport = FakeBikeBLEBikeLockConfigurationTransport()

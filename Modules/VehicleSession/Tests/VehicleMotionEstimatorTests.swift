@@ -66,6 +66,35 @@ struct VehicleMotionEstimatorTests {
         #expect(latest?.calibrationToPersist?.gyroscopeBiasZRaw == 1)
     }
 
+    @Test("Repeated refreshes of the latest IMU sample do not restart calibration")
+    func repeatedSampleRefreshesDoNotRestartCalibration() {
+        var estimator = makeEstimator(maximumSampleAge: 5)
+        var storedCalibration: VehicleMotionCalibration?
+        var latest: VehicleMotionEstimation?
+
+        for index in 0 ... 20 {
+            let sample = levelSample(
+                gyroscope: .init(x: 4, y: -2, z: 1),
+                at: now.addingTimeInterval(Double(index) / 10 - 2)
+            )
+            for _ in 0 ..< 4 {
+                latest = estimator.estimate(
+                    imuSample: sample,
+                    calibration: storedCalibration,
+                    vin: vin,
+                    location: nil,
+                    bikeSpeedKilometersPerHour: 0
+                )
+                storedCalibration = latest?.calibrationToPersist ?? storedCalibration
+            }
+        }
+
+        #expect(latest?.snapshot.availability == .available)
+        #expect(storedCalibration?.gyroscopeBiasXRaw == 4)
+        #expect(storedCalibration?.gyroscopeBiasYRaw == -2)
+        #expect(storedCalibration?.gyroscopeBiasZRaw == 1)
+    }
+
     @Test("Production profile remains available through the observed lean sequence")
     func productionProfileObservedLeanSequence() {
         let productionProfile = BikeIMUProfile.productionV1

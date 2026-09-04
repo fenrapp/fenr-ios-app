@@ -25,8 +25,8 @@ struct DashboardCardLayoutMapperTests {
         #expect(layout.efficiencyPages == [.live, .trend])
     }
 
-    @Test("Keeps only the speedometer when every configurable section is hidden")
-    func mapsSingleCardLayout() {
+    @Test("Keeps Bike Lock in the layout when every optional section is hidden")
+    func keepsBikeLockInLayout() {
         var configuration = DashboardCardConfiguration()
         for sectionID in DashboardCardSectionID.allCases {
             configuration.setSectionVisibility(false, id: sectionID)
@@ -34,7 +34,7 @@ struct DashboardCardLayoutMapperTests {
 
         let layout = DashboardCardLayoutMapper().map(configuration)
 
-        #expect(layout.ridingCards == [.speedometer])
+        #expect(layout.ridingCards == [.speedometer, .bikeLock])
     }
 
     @Test("Hides ride navigation when its setting is disabled")

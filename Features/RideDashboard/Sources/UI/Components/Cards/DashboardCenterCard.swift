@@ -136,10 +136,10 @@ struct DashboardCenterCard: View {
             showsSourceIndicator: showsSpeedSourceIndicator,
             referenceSize: referenceSize
         )
-        .overlay(alignment: .bottom) {
+        .overlay(alignment: .top) {
             if bikeLock.isLocked {
                 DashboardBikeLockStatusBadge()
-                    .padding(.bottom, Constants.bikeLockBadgeBottomPadding)
+                    .padding(.top, Constants.bikeLockBadgeTopPadding)
                     .transition(.scale(scale: Constants.bikeLockBadgeTransitionScale).combined(with: .opacity))
                     .allowsHitTesting(false)
             }
@@ -167,7 +167,7 @@ struct DashboardCenterCard: View {
     }
 
     private enum Constants {
-        static let bikeLockBadgeBottomPadding: CGFloat = 28
+        static let bikeLockBadgeTopPadding: CGFloat = 8
         static let bikeLockBadgeTransitionScale = 0.94
         static let bikeLockBadgeAnimationDuration = 0.18
     }

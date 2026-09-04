@@ -7,6 +7,7 @@ enum BikeLockCardFixtures {
     static let vin = "FENRTEST000000001"
 
     static func snapshot(
+        vin: String = vin,
         connectionState: ConnectionState = .receivingTelemetry(peripheralName: "Test Bike"),
         speed: Double? = 0,
         isInGear: Bool = false,

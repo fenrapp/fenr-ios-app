@@ -679,6 +679,17 @@
         }
       }
     },
+    "rideDashboard.bikeLock.status.awaitingConfirmation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status not confirmed"
+          }
+        }
+      }
+    },
     "rideDashboard.bikeLock.status.locked": {
       "extractionState": "manual",
       "localizations": {

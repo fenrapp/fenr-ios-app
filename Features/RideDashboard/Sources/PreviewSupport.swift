@@ -154,6 +154,7 @@ enum BikeLockCardPreviewFactory {
         let credentialStore = PreviewBikeLockCredentialStore()
         let viewModel = BikeLockCardViewModel(
             operationService: BikeLockCardOperationService(
+                readFirmwareCompatibility: .init(repository: repository),
                 prepareControl: .init(repository: repository),
                 setLocked: .init(repository: repository),
                 updateSecurity: .init(
@@ -167,8 +168,7 @@ enum BikeLockCardPreviewFactory {
             capabilityStore: PreviewBikeLockCapabilityStore(),
             mapper: BikeLockCardViewStateMapper(),
             vehicleContextMapper: BikeLockCardVehicleContextMapper(),
-            securityOptionProvider: BikeLockSecurityOptionProvider(),
-            allowsExperimentalControl: false
+            securityOptionProvider: BikeLockSecurityOptionProvider()
         )
         viewModel.setPreviewState(state)
         return viewModel

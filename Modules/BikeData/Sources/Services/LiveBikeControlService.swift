@@ -16,6 +16,14 @@ public struct LiveBikeControlService: Sendable {
         self.bikeLockMapper = bikeLockMapper
     }
 
+    func readBikeLockFirmwareCompatibility() async throws -> BikeLockFirmwareCompatibility {
+        let compatibility = try await client.readBikeLockFirmwareCompatibility()
+        return .init(
+            firmware: compatibility.firmware,
+            isCompatible: compatibility.isCompatible
+        )
+    }
+
     func prepareBikeLockControl() async throws -> BikeLockControlSnapshot {
         bikeLockMapper.map(try await client.prepareBikeLockControl())
     }

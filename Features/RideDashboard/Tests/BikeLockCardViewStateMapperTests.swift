@@ -41,6 +41,21 @@ struct BikeLockCardViewStateMapperTests {
         #expect(state.detailText == "VCU PIC 1.6.29")
     }
 
+    @Test("Does not invent a lock state before control confirmation")
+    func mapsUnconfirmedLockState() {
+        let state = mapper.map(input(
+            firmware: "1.6.29",
+            isControlPrepared: false,
+            isLocked: true,
+            isReceivingTelemetry: true
+        ))
+
+        #expect(state.isAvailable)
+        #expect(!state.isLocked)
+        #expect(state.statusText == "Status not confirmed")
+        #expect(!state.isActionEnabled)
+    }
+
     @Test("Maps an available locked bike")
     func mapsLockedBike() {
         let state = mapper.map(input(
@@ -117,6 +132,8 @@ struct BikeLockCardViewStateMapperTests {
 
     private func input(
         firmware: String? = nil,
+        isFirmwareCompatible: Bool? = nil,
+        isControlPrepared: Bool? = nil,
         isLocked: Bool = false,
         isWorking: Bool = false,
         isReceivingTelemetry: Bool = false,
@@ -128,7 +145,10 @@ struct BikeLockCardViewStateMapperTests {
     ) -> BikeLockCardMappingInput {
         BikeLockCardMappingInput(
             firmware: firmware,
+            isFirmwareCompatible: isFirmwareCompatible ?? (firmware != nil),
+            isControlPrepared: isControlPrepared ?? (firmware != nil),
             isLocked: isLocked,
+            hasConfirmedLockState: isControlPrepared ?? (firmware != nil),
             isWorking: isWorking,
             isReceivingTelemetry: isReceivingTelemetry,
             isVehicleStationary: isVehicleStationary,

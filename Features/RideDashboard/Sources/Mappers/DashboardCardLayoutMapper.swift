@@ -6,7 +6,7 @@ public struct DashboardCardLayoutMapper: Sendable {
     func map(_ configuration: DashboardCardConfiguration) -> DashboardCardLayout {
         DashboardCardLayout(
             ridingCards: configuration.sections
-                .filter(\.isVisible)
+                .filter { $0.isVisible || $0.id == .bikeLock }
                 .map { ridingCard($0.id) },
             currentTripPages: visiblePages(for: .currentTrip, in: configuration).compactMap(currentTripPage),
             efficiencyPages: visiblePages(for: .efficiency, in: configuration).compactMap(efficiencyPage),

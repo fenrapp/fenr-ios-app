@@ -6,14 +6,27 @@ import SettingsDomain
 actor BikeLockCardRepository: BikeRepository {
     private var lockState: Bool
     private let suspendsPreparation: Bool
+    private let failsPreparation: Bool
+    private let passesNoOpWrite: Bool
+    private let firmwareCompatibility: BikeLockFirmwareCompatibility
+    private var firmwareCompatibilityRequests = 0
     private var prepareRequests = 0
     private var lockRequests: [Bool] = []
     private var preparationContinuation: CheckedContinuation<Void, any Error>?
     private var preparationCancellationCount = 0
 
-    init(isLocked: Bool = false, suspendsPreparation: Bool = false) {
+    init(
+        isLocked: Bool = false,
+        suspendsPreparation: Bool = false,
+        failsPreparation: Bool = false,
+        passesNoOpWrite: Bool = true,
+        firmwareCompatibility: BikeLockFirmwareCompatibility
+    ) {
         lockState = isLocked
         self.suspendsPreparation = suspendsPreparation
+        self.failsPreparation = failsPreparation
+        self.passesNoOpWrite = passesNoOpWrite
+        self.firmwareCompatibility = firmwareCompatibility
     }
 
     func start() {}
@@ -23,8 +36,16 @@ actor BikeLockCardRepository: BikeRepository {
     func retrySecurityHandshake() throws {}
     func readTelemetrySnapshot() throws {}
 
+    func readBikeLockFirmwareCompatibility() -> BikeLockFirmwareCompatibility {
+        firmwareCompatibilityRequests += 1
+        return firmwareCompatibility
+    }
+
     func prepareBikeLockControl() async throws -> BikeLockControlSnapshot {
         prepareRequests += 1
+        if failsPreparation {
+            throw BikeControlRepositoryError.bikeLockControlUnavailable
+        }
         if suspendsPreparation {
             try await withTaskCancellationHandler {
                 try await withCheckedThrowingContinuation { continuation in
@@ -48,6 +69,7 @@ actor BikeLockCardRepository: BikeRepository {
     func observeDebugEvents() -> AsyncStream<BikeDebugEvent> { .init { $0.finish() } }
 
     func recordedPrepareRequests() -> Int { prepareRequests }
+    func recordedFirmwareCompatibilityRequests() -> Int { firmwareCompatibilityRequests }
     func recordedLockRequests() -> [Bool] { lockRequests }
     func hasPendingPreparation() -> Bool { preparationContinuation != nil }
     func recordedPreparationCancellationCount() -> Int { preparationCancellationCount }
@@ -66,7 +88,7 @@ actor BikeLockCardRepository: BikeRepository {
     }
 
     private func snapshot() -> BikeLockControlSnapshot {
-        .init(vcuFirmware: "1.6.29", isLocked: lockState, didPassNoOpWrite: true)
+        .init(vcuFirmware: "1.6.29", isLocked: lockState, didPassNoOpWrite: passesNoOpWrite)
     }
 }
 

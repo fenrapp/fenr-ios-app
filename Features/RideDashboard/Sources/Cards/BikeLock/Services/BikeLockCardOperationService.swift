@@ -8,6 +8,7 @@ public struct BikeLockCardOperationService: Sendable {
         case writeFailed
     }
 
+    private let readFirmwareCompatibility: ReadBikeLockFirmwareCompatibilityUseCase
     private let prepareControl: PrepareBikeLockControlUseCase
     private let setLocked: SetBikeLockedUseCase
     private let updateSecurity: UpdateBikeLockSecurityUseCase
@@ -15,12 +16,14 @@ public struct BikeLockCardOperationService: Sendable {
     private let authenticator: any BikeLockAuthenticating
 
     public init(
+        readFirmwareCompatibility: ReadBikeLockFirmwareCompatibilityUseCase,
         prepareControl: PrepareBikeLockControlUseCase,
         setLocked: SetBikeLockedUseCase,
         updateSecurity: UpdateBikeLockSecurityUseCase,
         credentialStore: any BikeLockCredentialStoring,
         authenticator: any BikeLockAuthenticating
     ) {
+        self.readFirmwareCompatibility = readFirmwareCompatibility
         self.prepareControl = prepareControl
         self.setLocked = setLocked
         self.updateSecurity = updateSecurity
@@ -28,8 +31,12 @@ public struct BikeLockCardOperationService: Sendable {
         self.authenticator = authenticator
     }
 
+    func firmwareCompatibility() async throws -> BikeLockFirmwareCompatibility {
+        try await readFirmwareCompatibility.execute()
+    }
+
     func prepare() async throws -> BikeLockControlSnapshot {
-        try await prepareControl.execute()
+        try validated(try await prepareControl.execute())
     }
 
     func configure(
@@ -45,7 +52,7 @@ public struct BikeLockCardOperationService: Sendable {
         )
         try Task.checkCancellation()
         try await authorizeWrite()
-        return try await setLocked.execute(true)
+        return try validated(try await setLocked.execute(true))
     }
 
     func unlock(
@@ -56,7 +63,7 @@ public struct BikeLockCardOperationService: Sendable {
         guard await credentialStore.verify(pin: pin, for: vehicleIdentifier) else { return nil }
         try Task.checkCancellation()
         try await authorizeWrite()
-        return try await setLocked.execute(false)
+        return try validated(try await setLocked.execute(false))
     }
 
     func authenticateAndUnlock(
@@ -70,7 +77,7 @@ public struct BikeLockCardOperationService: Sendable {
         do {
             try Task.checkCancellation()
             try await authorizeWrite()
-            return .unlocked(try await setLocked.execute(false))
+            return .unlocked(try validated(try await setLocked.execute(false)))
         } catch is CancellationError {
             throw CancellationError()
         } catch {
@@ -83,6 +90,13 @@ public struct BikeLockCardOperationService: Sendable {
         authorizeWrite: @MainActor @Sendable () throws -> Void
     ) async throws -> BikeLockControlSnapshot {
         try await authorizeWrite()
-        return try await setLocked.execute(target)
+        return try validated(try await setLocked.execute(target))
+    }
+
+    private func validated(_ snapshot: BikeLockControlSnapshot) throws -> BikeLockControlSnapshot {
+        guard snapshot.didPassNoOpWrite else {
+            throw BikeLockCardOperationError.noOpValidationFailed
+        }
+        return snapshot
     }
 }
