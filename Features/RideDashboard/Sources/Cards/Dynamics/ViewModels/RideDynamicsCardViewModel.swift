@@ -98,6 +98,7 @@ private extension RideDynamicsCardViewModel {
 
     func receive(_ snapshot: RideSessionSnapshot) {
         guard isVisible else { return }
+        let previousIdentity = self.snapshot.vehicleIdentity
         self.snapshot = snapshot
         isCanonicalTelemetryAvailable = snapshot.isCanonicalTelemetryAvailable
         guard isCanonicalTelemetryAvailable else {
@@ -106,7 +107,12 @@ private extension RideDynamicsCardViewModel {
             viewState = next
             return
         }
-        let next = mapper.map(snapshot).withCalibrationEnabled(isCanonicalTelemetryAvailable)
+        var next = mapper.map(snapshot).withCalibrationEnabled(isCanonicalTelemetryAvailable)
+        if next.status == .unavailable,
+           viewState.status == .live,
+           snapshot.vehicleIdentity == previousIdentity {
+            next = viewState.withCalibrationEnabled(false)
+        }
         guard next != viewState else { return }
         viewState = next
     }

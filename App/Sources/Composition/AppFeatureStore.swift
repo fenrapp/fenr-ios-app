@@ -5,6 +5,7 @@ import BikeLockSettings
 import BikeOnboarding
 import Combine
 import DashboardCardSettings
+import MaintenanceLog
 import PowerModeSettings
 import RideDashboard
 import RideHistory
@@ -20,6 +21,7 @@ final class AppFeatureStore: ObservableObject {
     let dashboardCardSettingsViewModel: DashboardCardSettingsViewModel
     let powerModeSettingsViewModel: PowerModeSettingsViewModel
     let rideHistoryViewModel: RideHistoryViewModel
+    let maintenanceViewModel: MaintenanceViewModel
     let rideDashboardFactory: any RideDashboardFeatureBuilding
     let rideNavigationFactory: any RideNavigationFeatureBuilding
 
@@ -32,6 +34,7 @@ final class AppFeatureStore: ObservableObject {
         dashboardCardSettingsViewModel: DashboardCardSettingsViewModel,
         powerModeSettingsViewModel: PowerModeSettingsViewModel,
         rideHistoryViewModel: RideHistoryViewModel,
+        maintenanceViewModel: MaintenanceViewModel,
         rideDashboardFactory: any RideDashboardFeatureBuilding,
         rideNavigationFactory: any RideNavigationFeatureBuilding
     ) {
@@ -43,6 +46,7 @@ final class AppFeatureStore: ObservableObject {
         self.dashboardCardSettingsViewModel = dashboardCardSettingsViewModel
         self.powerModeSettingsViewModel = powerModeSettingsViewModel
         self.rideHistoryViewModel = rideHistoryViewModel
+        self.maintenanceViewModel = maintenanceViewModel
         self.rideDashboardFactory = rideDashboardFactory
         self.rideNavigationFactory = rideNavigationFactory
     }

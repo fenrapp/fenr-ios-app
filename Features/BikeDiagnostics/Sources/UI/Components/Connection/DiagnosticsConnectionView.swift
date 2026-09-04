@@ -6,7 +6,6 @@ struct DiagnosticsConnectionView: View {
     let onReconnect: () -> Void
     let onRetry: () -> Void
     let onDisconnect: () -> Void
-    let onChangeBike: () -> Void
 
     var body: some View {
         List {
@@ -54,14 +53,6 @@ struct DiagnosticsConnectionView: View {
                     isEnabled: state.isDisconnectEnabled,
                     isDestructive: true,
                     action: onDisconnect
-                )
-                ListActionButton(
-                    title: DiagnosticsCopy.changeBike,
-                    systemImage: "motorcycle",
-                    tint: DesignColor.warning,
-                    isEnabled: true,
-                    isDestructive: true,
-                    action: onChangeBike
                 )
             }
         }

@@ -1,6 +1,7 @@
 @testable import BatteryHealth
 import BikeDomain
 import BLETraceDomain
+import MaintenanceLog
 @testable import RideDashboard
 import SettingsDomain
 import Testing
@@ -11,7 +12,7 @@ import TestSupport
 struct AppDependencyContainerTests {
     @Test("Container builds diagnostics graph without starting streams")
     func buildsBikeDiagnosticsGraph() {
-        let container = ProductionAppDependencyContainerFactory.makeDefault()
+        let container = makeContainer()
         let viewModel = container.makeRootDependencies().featureStore.diagnosticsViewModel
 
         #expect(viewModel.viewState.vin == "--")
@@ -22,7 +23,7 @@ struct AppDependencyContainerTests {
 
     @Test("Container assembles root dependencies before the view is created")
     func buildsRootDependencies() {
-        let dependencies = ProductionAppDependencyContainerFactory.makeDefault().makeRootDependencies()
+        let dependencies = makeContainer().makeRootDependencies()
         let rideDashboard = dependencies.featureStore.rideDashboardFactory.makeFeature()
 
         #expect(!dependencies.setupFlow.isLoaded)
@@ -49,6 +50,12 @@ struct AppDependencyContainerTests {
         #expect(viewModel.viewState.connection.status == "Idle")
         #expect(viewModel.viewState.metrics.allSatisfy { $0.value == "--" })
         #expect(!viewModel.isPresentationActive)
+    }
+
+    private func makeContainer() -> AppDependencyContainer {
+        ProductionAppDependencyContainerFactory.makeDefault(
+            maintenanceReminderScheduler: NoOpMaintenanceReminderScheduler()
+        )
     }
 
     @Test("Lifecycle starts shared sessions before the BLE repository")

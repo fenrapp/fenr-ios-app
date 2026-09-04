@@ -2,6 +2,7 @@ import AppSettings
 import BatteryHealth
 import BikeDiagnostics
 import DashboardCardSettings
+import MaintenanceLog
 import RideDashboard
 import RideHistory
 
@@ -19,8 +20,17 @@ enum AppNavigationEventAdapter {
         case .openDashboardCards: .push(.dashboardCards(.overview))
         case .openPowerModes: .push(.powerModes)
         case .openRideHistory: .push(.rideHistory(.overview))
+        case .openMaintenance: .push(.maintenance(.overview))
         case .openBikeLock: .push(.bikeLockSettings)
         case .openDiagnostics: .push(.diagnostics(.overview))
+        case .changeBike: .popToRoot
+        }
+    }
+
+    static func intent(for event: MaintenanceNavigationEvent) -> AppNavigationIntent {
+        switch event {
+        case .show(let destination): .push(.maintenance(destination))
+        case .close(let destination): .pop(ifTop: .maintenance(destination))
         }
     }
 
@@ -36,11 +46,10 @@ enum AppNavigationEventAdapter {
         }
     }
 
-    static func intent(for event: BikeDiagnosticsNavigationEvent) -> AppNavigationIntent? {
+    static func intent(for event: BikeDiagnosticsNavigationEvent) -> AppNavigationIntent {
         switch event {
         case .show(let destination): .push(.diagnostics(destination))
         case .openBatteryHealth: .push(.batteryHealth(.overview))
-        case .changeBike: nil
         }
     }
 

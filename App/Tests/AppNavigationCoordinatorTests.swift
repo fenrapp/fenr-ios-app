@@ -3,6 +3,7 @@ import BatteryHealth
 import BikeDiagnostics
 import DashboardCardSettings
 import Foundation
+import MaintenanceLog
 import RideDashboard
 import RideHistory
 import RideNavigationDomain
@@ -21,7 +22,7 @@ struct AppNavigationCoordinatorTests {
         coordinator.send(.push(.settings(.rideDisplay)))
 
         #expect(coordinator.state.path == [.settings(.overview), .settings(.rideDisplay)])
-        coordinator.send(.pop)
+        coordinator.send(.pop(ifTop: nil))
         #expect(coordinator.state.path == [.settings(.overview)])
         coordinator.send(.popToRoot)
         #expect(coordinator.state.path.isEmpty)
@@ -32,6 +33,19 @@ struct AppNavigationCoordinatorTests {
         let coordinator = configuredCoordinator()
         coordinator.send(.replacePath([.diagnostics(.overview), .batteryHealth(.overview)]))
         #expect(coordinator.state.path == [.diagnostics(.overview), .batteryHealth(.overview)])
+    }
+
+    @Test("A delayed close only removes its original top destination")
+    func conditionalPopIgnoresAStaleDestination() {
+        let coordinator = configuredCoordinator()
+        let entryID = UUID()
+        let form = AppRoute.maintenance(.form(id: entryID))
+
+        coordinator.send(.push(form))
+        coordinator.send(.pop(ifTop: nil))
+        coordinator.send(.pop(ifTop: form))
+
+        #expect(coordinator.state.path == [.maintenance(.overview)])
     }
 
     @Test("Inserts a feature overview before a detail opened from another family")
@@ -268,6 +282,10 @@ struct AppNavigationEventAdapterTests {
         let battery = AppNavigationEventAdapter.intent(
             for: BatteryHealthNavigationEvent.show(.cells)
         )
+        let maintenanceID = UUID()
+        let maintenance = AppNavigationEventAdapter.intent(
+            for: MaintenanceNavigationEvent.close(.form(id: maintenanceID))
+        )
 
         #expect(dashboard == .push(.settings(.overview)))
         #expect(settings == .push(.dashboardCards(.overview)))
@@ -276,6 +294,7 @@ struct AppNavigationEventAdapterTests {
         #expect(history == .push(.rideHistory(.detail(id: rideID))))
         #expect(diagnostics == .push(.batteryHealth(.overview)))
         #expect(battery == .push(.batteryHealth(.cells)))
-        #expect(AppNavigationEventAdapter.intent(for: BikeDiagnosticsNavigationEvent.changeBike) == nil)
+        #expect(maintenance == .pop(ifTop: .maintenance(.form(id: maintenanceID))))
+        #expect(AppNavigationEventAdapter.intent(for: AppSettingsNavigationEvent.changeBike) == .popToRoot)
     }
 }

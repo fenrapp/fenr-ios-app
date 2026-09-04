@@ -309,6 +309,48 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "F497562FC9153C0D6B16015C"
+               BuildableName = "MaintenanceDataTests.xctest"
+               BlueprintName = "MaintenanceDataTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "3465483EECA2B2E99175A0F4"
+               BuildableName = "MaintenanceDomainTests.xctest"
+               BlueprintName = "MaintenanceDomainTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C3779ED242729636992E7B09"
+               BuildableName = "MaintenanceLogTests.xctest"
+               BlueprintName = "MaintenanceLogTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "6884A7C381057CB503D75197"
                BuildableName = "MeasurementPresentationTests.xctest"
                BlueprintName = "MeasurementPresentationTests"
@@ -779,6 +821,28 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "3465483EECA2B2E99175A0F4"
+               BuildableName = "MaintenanceDomainTests.xctest"
+               BlueprintName = "MaintenanceDomainTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "F497562FC9153C0D6B16015C"
+               BuildableName = "MaintenanceDataTests.xctest"
+               BlueprintName = "MaintenanceDataTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "8B64EFEC5B4B812005ECE6B9"
                BuildableName = "DesignSystemTests.xctest"
                BlueprintName = "DesignSystemTests"
@@ -892,6 +956,17 @@
                BlueprintIdentifier = "79CCE32E9EF6E96F5FB83B8E"
                BuildableName = "RideHistoryTests.xctest"
                BlueprintName = "RideHistoryTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C3779ED242729636992E7B09"
+               BuildableName = "MaintenanceLogTests.xctest"
+               BlueprintName = "MaintenanceLogTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </TestableReference>

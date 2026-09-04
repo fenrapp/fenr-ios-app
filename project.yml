@@ -189,6 +189,25 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesessiondata
+  MaintenanceDomain:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/MaintenanceDomain/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.maintenancedomain
+  MaintenanceData:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Modules/MaintenanceData/Sources
+    dependencies:
+      - target: MaintenanceDomain
+      - target: StarkProtocol
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.maintenancedata
   RideNavigationDomain:
     type: framework
     platform: iOS
@@ -406,6 +425,22 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridehistory
+  MaintenanceLog:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Features/MaintenanceLog/Sources
+      - path: Features/MaintenanceLog/Resources
+        buildPhase: resources
+    dependencies:
+      - target: MaintenanceDomain
+      - target: MeasurementPresentation
+      - target: SettingsDomain
+      - target: VehicleSession
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.maintenancelog
   RideNavigation:
     type: framework
     platform: iOS
@@ -556,6 +591,7 @@ targets:
       - target: BikeLockSettings
       - target: PowerModeSettings
       - target: RideHistory
+      - target: MaintenanceLog
       - target: RideNavigation
       - target: RideNavigationAppleMaps
       - target: RideNavigationData
@@ -567,6 +603,8 @@ targets:
       - target: VehicleSession
       - target: RideSessionDomain
       - target: RideSessionData
+      - target: MaintenanceDomain
+      - target: MaintenanceData
       - target: SettingsDomain
       - target: SettingsData
       - target: BikeDomain
@@ -695,6 +733,7 @@ targets:
       - target: BikeLockSettings
       - target: PowerModeSettings
       - target: RideHistory
+      - target: MaintenanceLog
       - target: RideNavigation
       - target: RideNavigationAppleMaps
       - target: RideNavigationData
@@ -706,6 +745,8 @@ targets:
       - target: VehicleSession
       - target: RideSessionDomain
       - target: RideSessionData
+      - target: MaintenanceDomain
+      - target: MaintenanceData
       - target: SettingsDomain
       - target: SettingsData
       - target: RuntimeConfiguration
@@ -1156,6 +1197,27 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesessiondata.tests
+  MaintenanceDomainTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/MaintenanceDomain/Tests
+    dependencies:
+      - target: MaintenanceDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.maintenancedomain.tests
+  MaintenanceDataTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Modules/MaintenanceData/Tests
+    dependencies:
+      - target: MaintenanceData
+      - target: MaintenanceDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.maintenancedata.tests
   DesignSystemTests:
     type: bundle.unit-test
     platform: iOS
@@ -1332,6 +1394,22 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridehistory.tests
+  MaintenanceLogTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Features/MaintenanceLog/Tests
+    dependencies:
+      - target: MaintenanceLog
+      - target: MaintenanceDomain
+      - target: MeasurementPresentation
+      - target: SettingsDomain
+      - target: TestSupport
+      - target: VehicleSession
+      - target: BikeDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.maintenancelog.tests
   TestSupportTests:
     type: bundle.unit-test
     platform: auto
@@ -1376,6 +1454,7 @@ targets:
       - target: BikeLockSettings
       - target: PowerModeSettings
       - target: RideHistory
+      - target: MaintenanceLog
       - target: RideNavigation
       - target: RideNavigationAppleMaps
       - target: RideNavigationData
@@ -1387,6 +1466,8 @@ targets:
       - target: VehicleSession
       - target: RideSessionDomain
       - target: RideSessionData
+      - target: MaintenanceDomain
+      - target: MaintenanceData
       - target: SettingsDomain
       - target: SettingsData
       - target: BikeDomain
@@ -1422,6 +1503,7 @@ targets:
       - target: BikeLockSettings
       - target: PowerModeSettings
       - target: RideHistory
+      - target: MaintenanceLog
       - target: RideNavigation
       - target: RideNavigationAppleMaps
       - target: RideNavigationData
@@ -1438,6 +1520,8 @@ targets:
       - target: VehicleSession
       - target: RideSessionDomain
       - target: RideSessionData
+      - target: MaintenanceDomain
+      - target: MaintenanceData
       - target: SettingsDomain
       - target: SettingsData
       - target: RuntimeConfiguration
@@ -1474,6 +1558,8 @@ schemes:
         RideSessionTests: [test]
         VehicleSessionTests: [test]
         RideSessionDataTests: [test]
+        MaintenanceDomainTests: [test]
+        MaintenanceDataTests: [test]
         DesignSystemTests: [test]
         MeasurementPresentationTests: [test]
         BikeDiagnosticsTests: [test]
@@ -1485,6 +1571,7 @@ schemes:
         BikeLockSettingsTests: [test]
         PowerModeSettingsTests: [test]
         RideHistoryTests: [test]
+        MaintenanceLogTests: [test]
         FENRShareExtensionTests: [test]
         TestSupportTests: [test]
         FENRTests: [test]
@@ -1512,6 +1599,8 @@ schemes:
         - RideSessionTests
         - VehicleSessionTests
         - RideSessionDataTests
+        - MaintenanceDomainTests
+        - MaintenanceDataTests
         - DesignSystemTests
         - MeasurementPresentationTests
         - BikeDiagnosticsTests
@@ -1523,6 +1612,7 @@ schemes:
         - BikeLockSettingsTests
         - PowerModeSettingsTests
         - RideHistoryTests
+        - MaintenanceLogTests
         - FENRShareExtensionTests
         - TestSupportTests
         - FENRTests

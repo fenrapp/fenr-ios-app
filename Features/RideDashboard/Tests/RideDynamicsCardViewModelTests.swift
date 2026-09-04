@@ -137,6 +137,35 @@ struct RideDynamicsCardViewModelTests {
         })
     }
 
+    @Test("Keeps the last live instrument through a transient missing IMU sample")
+    func preservesLiveInstrumentDuringTransientUnavailableMotion() async {
+        let fixture = makeFixture()
+        fixture.viewModel.setIsVisible(true)
+        #expect(await fixture.rideSession.waitForSubscriber())
+        await fixture.rideSession.send(.init(
+            vehicleIdentity: .vin("FENRTEST000000001"),
+            motion: .init(
+                rollDegrees: 12,
+                pitchDegrees: -3,
+                availability: .available,
+                observedAt: .init(timeIntervalSinceReferenceDate: 1)
+            ),
+            isCanonicalTelemetryAvailable: true
+        ))
+        #expect(await waitUntil { fixture.viewModel.viewState.status == .live })
+
+        await fixture.rideSession.send(.init(
+            vehicleIdentity: .vin("FENRTEST000000001"),
+            motion: .init(availability: .unavailable),
+            isCanonicalTelemetryAvailable: true
+        ))
+
+        #expect(await waitUntil { !fixture.viewModel.viewState.canCalibrate })
+        #expect(fixture.viewModel.viewState.status == .live)
+        #expect(fixture.viewModel.viewState.leanDegrees == 12)
+        #expect(fixture.viewModel.viewState.pitchDegrees == -3)
+    }
+
     private func makeFixture() -> Fixture {
         let rideSession = RideDynamicsTestRideSession()
         let vehicleSession = RideDynamicsTestVehicleSession()

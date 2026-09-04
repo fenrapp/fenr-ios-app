@@ -7,7 +7,6 @@ enum DiagnosticsCopy {
     static var batteryHealthDetail: String { text(.bikeDiagnosticsUiBatteryHealthDetail) }
     static var batteryUnavailable: String { text(.bikeDiagnosticsUiBatteryUnavailable) }
     static var cancel: String { text(.bikeDiagnosticsUiCancel) }
-    static var changeBike: String { text(.bikeDiagnosticsChangeBike) }
     static var clearEvents: String { text(.bikeDiagnosticsUiClearEvents) }
     static var clearEventsPrompt: String { text(.bikeDiagnosticsUiClearEventsPrompt) }
     static var clearEventsMessage: String { text(.bikeDiagnosticsUiClearEventsMessage) }

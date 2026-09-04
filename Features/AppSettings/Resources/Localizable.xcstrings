@@ -1,6 +1,26 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "app.settings.change.bike" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Change Bike" } } }
+    },
+    "app.settings.change.bike.footer" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Disconnect this bike and return to setup." } } }
+    },
+    "app.settings.maintenance.detail" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Service history and reminders" } } }
+    },
+    "app.settings.maintenance.title" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Maintenance" } } }
+    },
+    "app.settings.riding.section" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Riding" } } }
+    },
     "app.settings.advanced.section" : {
       "extractionState" : "manual",
       "localizations" : {

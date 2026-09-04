@@ -1,5 +1,7 @@
 import Foundation
+import MaintenanceLog
 import SwiftUI
+import UserNotifications
 
 @main
 struct FENRDebugApp: App {
@@ -8,7 +10,13 @@ struct FENRDebugApp: App {
     @StateObject private var scenarioController: DebugScenarioController
 
     init() {
-        let context = DebugAppDependencyContainerFactory.makeDefault()
+        let scheduler = SystemMaintenanceReminderScheduler(
+            center: .current(),
+            calendar: .autoupdatingCurrent
+        )
+        let context = DebugAppDependencyContainerFactory.makeDefault(
+            maintenanceReminderScheduler: scheduler
+        )
         dependencies = context.container.makeRootDependencies(
             opensRideNavigationOnLaunch: ProcessInfo.processInfo.arguments.contains(
                 "-openRideNavigation"

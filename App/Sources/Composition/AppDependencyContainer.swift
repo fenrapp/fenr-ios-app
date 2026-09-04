@@ -9,6 +9,8 @@ import ChargeControl
 import DashboardCardSettings
 import EnvironmentDomain
 import Foundation
+import MaintenanceDomain
+import MaintenanceLog
 import PowerModeSettings
 import RideDashboard
 import RideHistory
@@ -30,12 +32,14 @@ struct AppDependencyContainer {
     private let dashboardCardSettingsContainer: DashboardCardSettingsDependencyContainer
     private let powerModeSettingsContainer: PowerModeSettingsDependencyContainer
     private let rideHistoryContainer: RideHistoryDependencyContainer
+    private let maintenanceContainer: MaintenanceDependencyContainer
     private let session: BikeSession
     private let chargeControlSession: ChargeControlSession
     private let profileRepository: any BikeProfileRepository
     private let settingsRepository: any AppSettingsRepository
     private let deviceSpeedRepository: any DeviceSpeedRepository
     private let rideTripRepository: any RideTripRepository
+    private let maintenanceRepository: any MaintenanceRepository
     private let rideSession: any RideSessionService
     private let vehicleSession: any VehicleSessionService
     private let initialOnboardingVIN: String?
@@ -57,6 +61,7 @@ struct AppDependencyContainer {
         settingsRepository: any AppSettingsRepository,
         deviceSpeedRepository: any DeviceSpeedRepository,
         rideTripRepository: any RideTripRepository,
+        maintenanceRepository: any MaintenanceRepository,
         sessionServices: AppSessionServices,
         onboardingContainer: BikeOnboardingDependencyContainer,
         dashboardContainer: RideDashboardDependencyContainer,
@@ -64,6 +69,7 @@ struct AppDependencyContainer {
         dashboardCardSettingsContainer: DashboardCardSettingsDependencyContainer,
         powerModeSettingsContainer: PowerModeSettingsDependencyContainer,
         rideHistoryContainer: RideHistoryDependencyContainer,
+        maintenanceContainer: MaintenanceDependencyContainer,
         bleTraceLogRepository: any BLETraceLogRepository,
         incomingMapLinkStore: any IncomingMapLinkStoring,
         bikeLockCredentialStore: any BikeLockCredentialStoring,
@@ -82,12 +88,14 @@ struct AppDependencyContainer {
         self.dashboardCardSettingsContainer = dashboardCardSettingsContainer
         self.powerModeSettingsContainer = powerModeSettingsContainer
         self.rideHistoryContainer = rideHistoryContainer
+        self.maintenanceContainer = maintenanceContainer
         self.session = session
         self.chargeControlSession = chargeControlSession
         self.profileRepository = profileRepository
         self.settingsRepository = settingsRepository
         self.deviceSpeedRepository = deviceSpeedRepository
         self.rideTripRepository = rideTripRepository
+        self.maintenanceRepository = maintenanceRepository
         vehicleSession = sessionServices.vehicle
         rideSession = sessionServices.ride
         self.initialOnboardingVIN = initialOnboardingVIN
@@ -238,6 +246,13 @@ struct AppDependencyContainer {
         )
     }
 
+    func makeMaintenanceViewModel() -> MaintenanceViewModel {
+        maintenanceContainer.makeViewModel(
+            repository: maintenanceRepository,
+            vehicleSession: vehicleSession
+        )
+    }
+
     func makeBikeLiveActivityController() -> BikeLiveActivityController {
         let activityClient = ActivityKitBikeLiveActivityClient()
         let locale = Locale.autoupdatingCurrent
@@ -285,6 +300,7 @@ private extension AppDependencyContainer {
             dashboardCardSettingsViewModel: makeDashboardCardSettingsViewModel(),
             powerModeSettingsViewModel: makePowerModeSettingsViewModel(),
             rideHistoryViewModel: makeRideHistoryViewModel(),
+            maintenanceViewModel: makeMaintenanceViewModel(),
             rideDashboardFactory: rideDashboardFactory,
             rideNavigationFactory: AppRideNavigationFeatureFactory(
                 vehicleSession: vehicleSession,
