@@ -16,18 +16,7 @@ public struct AppSettingsViewStateMapper: Sendable {
         verificationMessageIsError: Bool = false
     ) -> AppSettingsViewState {
         return .init(
-            speedSource: .init(
-                selection: .init(
-                    selectedID: settings.speedSource.rawValue,
-                    options: SpeedSource.allCases.map {
-                        .init(id: $0.rawValue, title: speedSourceTitle($0))
-                    }
-                ),
-                description: speedSourceDescription(settings.speedSource),
-                locationPermission: settings.speedSource.usesDeviceLocation
-                    ? locationPermission(locationAuthorizationStatus)
-                    : nil
-            ),
+            speedSource: speedSource(settings.speedSource, locationAuthorizationStatus),
             dashboardProgressBarMode: .init(
                 selection: .init(
                     selectedID: settings.dashboardProgressBarMode.rawValue,
@@ -72,7 +61,9 @@ public struct AppSettingsViewStateMapper: Sendable {
             isBikeModelSelectionVisible: profile?.alphaEvidence.isEmpty != false,
             rideDisplay: .init(detail: rideDisplayDetail(settings: settings)),
             dashboardCards: .init(detail: dashboardCardsDetail(settings.dashboardCardConfiguration)),
-            powerModes: powerModes(settings: settings, profile: profile)
+            powerModes: powerModes(settings: settings, profile: profile),
+            navigation: .init(detail: .appSettingsNavigationDetail),
+            navigationSettings: navigationSettings(settings.rideNavigation)
         )
     }
 
@@ -176,7 +167,7 @@ public struct AppSettingsViewStateMapper: Sendable {
         }
     }
 
-    private func speedSourceTitle(_ source: SpeedSource) -> LocalizedStringResource {
+    func speedSourceTitle(_ source: SpeedSource) -> LocalizedStringResource {
         switch source {
         case .motorcycle: .appSettingsSpeedSourceBike
         case .gps: .appSettingsSpeedSourceGps
@@ -240,7 +231,7 @@ public struct AppSettingsViewStateMapper: Sendable {
         )
     }
 
-    private func speedSourceDescription(_ source: SpeedSource) -> LocalizedStringResource {
+    func speedSourceDescription(_ source: SpeedSource) -> LocalizedStringResource {
         switch source {
         case .motorcycle: .appSettingsSpeedSourceBikeDescription
         case .gps: .appSettingsSpeedSourceGpsDescription
@@ -263,7 +254,7 @@ public struct AppSettingsViewStateMapper: Sendable {
         }
     }
 
-    private func locationPermission(_ status: LocationAuthorizationStatus) -> LocationPermissionViewState {
+    func locationPermission(_ status: LocationAuthorizationStatus) -> LocationPermissionViewState {
         switch status {
         case .authorized: .authorized
         case .notDetermined: .notDetermined

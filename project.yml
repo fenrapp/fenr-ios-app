@@ -449,6 +449,7 @@ targets:
       - path: Features/RideNavigation/Resources
         buildPhase: resources
     dependencies:
+      - target: BikeDomain
       - target: EnvironmentDomain
       - target: RideNavigationDomain
       - target: SettingsDomain
@@ -520,6 +521,11 @@ targets:
             LSHandlerRank: Owner
             LSItemContentTypes:
               - com.topografix.gpx
+          - CFBundleTypeName: XML GPX route
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - public.xml
           - CFBundleTypeName: Apple Maps directions request
             CFBundleTypeRole: Viewer
             LSHandlerRank: Alternate
@@ -652,6 +658,11 @@ targets:
             LSHandlerRank: Owner
             LSItemContentTypes:
               - com.topografix.gpx
+          - CFBundleTypeName: XML GPX route
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - public.xml
           - CFBundleTypeName: Apple Maps directions request
             CFBundleTypeRole: Viewer
             LSHandlerRank: Alternate

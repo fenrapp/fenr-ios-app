@@ -59,7 +59,7 @@ struct TrailMapPresentationMapperTests {
         #expect(overlay.markers.map(\.id) == ["start", "finish"])
         #expect(overlay.markers.map(\.role) == [.start, .finish])
         #expect(!overlay.directionalIndicators.isEmpty)
-        #expect(overlay.directionalIndicators.count <= 200)
+        #expect(overlay.directionalIndicators.count <= 24)
         #expect(abs((overlay.directionalIndicators.first?.rotationDegrees ?? 0) - 180) < 1)
     }
 

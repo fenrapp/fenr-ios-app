@@ -8,7 +8,7 @@ enum AppInterfaceOrientation: Equatable {
 struct AppPresentationPolicy {
     func orientation(for state: AppNavigationState) -> AppInterfaceOrientation {
         guard state.root == .dashboard else { return .portrait }
-        if state.rideNavigationMode != .hidden { return .landscape }
+        if state.rideNavigationMode == .fullScreen { return .landscape }
         return state.path.isEmpty ? .landscape : .portrait
     }
 }

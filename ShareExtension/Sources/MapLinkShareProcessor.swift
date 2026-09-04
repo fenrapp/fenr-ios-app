@@ -56,10 +56,21 @@ struct MapLinkShareProcessor: MapLinkShareProcessing {
 
     func process(inputItems: [NSExtensionItem]) async throws {
         try Task.checkCancellation()
-        guard let provider = inputItems
+        let providers = inputItems
             .compactMap(\.attachments)
             .flatMap({ $0 })
-            .first(where: Self.canLoadURL) else {
+
+        if let provider = providers.first(where: { Self.gpxTypeIdentifier(for: $0) != nil }),
+           let typeIdentifier = Self.gpxTypeIdentifier(for: provider) {
+            let data = try await loadDataRepresentation(
+                from: provider,
+                typeIdentifier: typeIdentifier
+            )
+            try await persistGPX(data: data)
+            return
+        }
+
+        guard let provider = providers.first(where: Self.canLoadURL) else {
             throw MapLinkShareError.missingURL
         }
         let typeIdentifier = provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier)
@@ -80,15 +91,30 @@ struct MapLinkShareProcessor: MapLinkShareProcessing {
             removeManagedCopies()
             return
         }
+        let pathExtension = url.pathExtension.lowercased()
         guard url.isFileURL,
-              url.pathExtension.lowercased() == Constants.directionsRequestExtension else {
+              Constants.supportedFileExtensions.contains(pathExtension) else {
             throw MapLinkShareError.unsupportedURL
         }
-        try await copyAndPersistDirectionsRequest(at: url)
+        try await copyAndPersistFile(at: url, pathExtension: pathExtension)
     }
 }
 
 private extension MapLinkShareProcessor {
+    static func gpxTypeIdentifier(for provider: NSItemProvider) -> String? {
+        if provider.hasItemConformingToTypeIdentifier(Constants.gpxTypeIdentifier) {
+            return Constants.gpxTypeIdentifier
+        }
+        guard provider.suggestedName?.lowercased().hasSuffix(".gpx") == true else {
+            return nil
+        }
+        return provider.registeredTypeIdentifiers.first { identifier in
+            identifier == UTType.xml.identifier
+                || identifier == UTType.data.identifier
+                || UTType(identifier)?.conforms(to: .xml) == true
+        }
+    }
+
     static func canLoadURL(_ provider: NSItemProvider) -> Bool {
         provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier)
             || provider.hasItemConformingToTypeIdentifier(UTType.url.identifier)
@@ -105,39 +131,84 @@ private extension MapLinkShareProcessor {
         try await store.save(IncomingMapLink(url: url, receivedAt: now()))
     }
 
-    func copyAndPersistDirectionsRequest(at sourceURL: URL) async throws {
+    func loadDataRepresentation(
+        from provider: NSItemProvider,
+        typeIdentifier: String
+    ) async throws -> Data {
+        try await withCheckedThrowingContinuation { continuation in
+            provider.loadDataRepresentation(forTypeIdentifier: typeIdentifier) { data, error in
+                if let data {
+                    continuation.resume(returning: data)
+                } else {
+                    continuation.resume(throwing: error ?? MapLinkShareError.unsupportedURL)
+                }
+            }
+        }
+    }
+
+    func persistGPX(data: Data) async throws {
+        guard data.count <= Constants.maximumGPXFileSizeBytes else {
+            throw MapLinkShareError.unsupportedURL
+        }
+        let destinationURL = try managedDestinationURL(pathExtension: Constants.gpxFileExtension)
+        let temporaryURL = temporaryURL(for: destinationURL)
+        do {
+            try data.write(to: temporaryURL, options: .atomic)
+            try Task.checkCancellation()
+            try fileManager.moveItem(at: temporaryURL, to: destinationURL)
+            try await persistManagedFile(destinationURL)
+        } catch {
+            try? fileManager.removeItem(at: temporaryURL)
+            try? fileManager.removeItem(at: destinationURL)
+            throw error
+        }
+    }
+
+    func copyAndPersistFile(at sourceURL: URL, pathExtension: String) async throws {
         let accessedResource = startAccessingSecurityScopedResource(sourceURL)
         defer {
             if accessedResource {
                 stopAccessingSecurityScopedResource(sourceURL)
             }
         }
-        let directory = sharedContainerURL.appendingPathComponent(
-            Constants.importDirectoryName,
-            isDirectory: true
-        )
-        try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
-        let destinationURL = directory.appendingPathComponent(
-            Constants.managedFilePrefix
-                + makeIdentifier().uuidString
-                + "."
-                + Constants.directionsRequestExtension
-        )
-        let temporaryURL = directory.appendingPathComponent(
-            ".\(destinationURL.lastPathComponent).temporary"
-        )
+        let destinationURL = try managedDestinationURL(pathExtension: pathExtension)
+        let temporaryURL = temporaryURL(for: destinationURL)
         do {
             try fileManager.copyItem(at: sourceURL, to: temporaryURL)
             try Task.checkCancellation()
             try fileManager.moveItem(at: temporaryURL, to: destinationURL)
-            try Task.checkCancellation()
-            try await persist(url: destinationURL)
-            removeManagedCopies(except: destinationURL)
+            try await persistManagedFile(destinationURL)
         } catch {
             try? fileManager.removeItem(at: temporaryURL)
             try? fileManager.removeItem(at: destinationURL)
             throw error
         }
+    }
+
+    func managedDestinationURL(pathExtension: String) throws -> URL {
+        let directory = sharedContainerURL.appendingPathComponent(
+            Constants.importDirectoryName,
+            isDirectory: true
+        )
+        try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory.appendingPathComponent(
+            Constants.managedFilePrefix
+                + makeIdentifier().uuidString
+                + "."
+                + pathExtension
+        )
+    }
+
+    func temporaryURL(for destinationURL: URL) -> URL {
+        destinationURL.deletingLastPathComponent().appendingPathComponent(
+            ".\(destinationURL.lastPathComponent).temporary"
+        )
+    }
+
+    func persistManagedFile(_ destinationURL: URL) async throws {
+        try Task.checkCancellation()
+        try await persist(url: destinationURL)
+        removeManagedCopies(except: destinationURL)
     }
 
     func removeManagedCopies(except retainedURL: URL? = nil) {
@@ -157,7 +228,7 @@ private extension MapLinkShareProcessor {
 
     static func isManagedCopy(_ url: URL) -> Bool {
         url.lastPathComponent.hasPrefix(Constants.managedFilePrefix)
-            && url.pathExtension.lowercased() == Constants.directionsRequestExtension
+            && Constants.supportedFileExtensions.contains(url.pathExtension.lowercased())
     }
 
     enum Constants {
@@ -165,6 +236,13 @@ private extension MapLinkShareProcessor {
         static let importDirectoryName = "IncomingMapLinks"
         static let managedFilePrefix = "FENRIncoming-"
         static let directionsRequestExtension = "directionsrequest"
+        static let gpxFileExtension = "gpx"
+        static let gpxTypeIdentifier = "com.topografix.gpx"
+        static let supportedFileExtensions: Set<String> = [
+            directionsRequestExtension,
+            gpxFileExtension
+        ]
+        static let maximumGPXFileSizeBytes = 25 * 1_024 * 1_024
         static let allowedHosts: Set<String> = [
             "maps.app.goo.gl",
             "goo.gl",

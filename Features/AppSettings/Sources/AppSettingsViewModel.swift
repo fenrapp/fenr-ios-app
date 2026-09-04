@@ -219,6 +219,17 @@ public final class AppSettingsViewModel: ObservableObject {
         }
     }
 
+    func updateNavigationSettings(
+        _ update: (inout RideNavigationSettings) -> Void
+    ) {
+        var updated = settings
+        update(&updated.rideNavigation)
+        guard updated != settings else { return }
+        settings = updated
+        render()
+        save(updated)
+    }
+
     private func observeProfile() {
         guard let observe = useCases.profile?.observe else { return }
         profileTask?.cancel()

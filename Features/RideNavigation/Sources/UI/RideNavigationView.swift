@@ -197,10 +197,10 @@ public struct RideNavigationView: View {
 
     private func revealFocusControls() {
         guard isFocusDriving else { return }
+        focusInteractionGeneration += 1
         withAnimation(.smooth(duration: Constants.focusTransitionDuration)) {
             showsFocusControls = true
         }
-        focusInteractionGeneration += 1
     }
 
     private struct FocusAutoHideKey: Hashable {
@@ -212,10 +212,12 @@ public struct RideNavigationView: View {
     private struct MapSurfaceIdentity: Hashable {
         let displayStyle: NavigationMapDisplayStyle
         let sourceID: String
+        let showsRoadsInFocus: Bool
 
         init(scene: NavigationMapScene) {
             displayStyle = scene.displayStyle
             sourceID = scene.source.id
+            showsRoadsInFocus = scene.showsRoadsInFocus
         }
     }
 

@@ -1,6 +1,7 @@
 import Foundation
 import RideNavigationDomain
 import Testing
+import UniformTypeIdentifiers
 
 @MainActor
 @Suite("Map link share processor")
@@ -63,6 +64,72 @@ struct MapLinkShareProcessorTests {
         #expect(try Data(contentsOf: savedURL) == contents)
         #expect(fixture.securityScope.startedURLs == [sourceURL])
         #expect(fixture.securityScope.stoppedURLs == [sourceURL])
+    }
+
+    @Test("Copies a security-scoped GPX file into the shared container")
+    func copiesSecurityScopedGPX() async throws {
+        let fixture = try MapLinkShareTestFixture()
+        defer { fixture.removeTemporaryFiles() }
+        let sourceURL = fixture.rootURL.appendingPathComponent("wikiloc-route.gpx")
+        let contents = Data("<gpx><trk/></gpx>".utf8)
+        try contents.write(to: sourceURL)
+
+        try await fixture.processor.process(url: sourceURL)
+
+        let savedURL = try #require(await fixture.store.saved().first?.url)
+        #expect(savedURL != sourceURL)
+        #expect(savedURL.pathExtension == "gpx")
+        #expect(try Data(contentsOf: savedURL) == contents)
+        #expect(fixture.securityScope.startedURLs == [sourceURL])
+        #expect(fixture.securityScope.stoppedURLs == [sourceURL])
+    }
+
+    @Test("Accepts a GPX data attachment from a share provider")
+    func acceptsGPXDataAttachment() async throws {
+        let fixture = try MapLinkShareTestFixture()
+        defer { fixture.removeTemporaryFiles() }
+        let contents = Data("<gpx><trk/></gpx>".utf8)
+        let provider = NSItemProvider()
+        provider.suggestedName = "wikiloc-route.gpx"
+        provider.registerDataRepresentation(
+            forTypeIdentifier: "com.topografix.gpx",
+            visibility: .all
+        ) { completion in
+            completion(contents, nil)
+            return nil
+        }
+        let item = NSExtensionItem()
+        item.attachments = [provider]
+
+        try await fixture.processor.process(inputItems: [item])
+
+        let savedURL = try #require(await fixture.store.saved().first?.url)
+        #expect(savedURL.pathExtension == "gpx")
+        #expect(try Data(contentsOf: savedURL) == contents)
+    }
+
+    @Test("Accepts a GPX attachment advertised as generic XML")
+    func acceptsGPXGenericXMLAttachment() async throws {
+        let fixture = try MapLinkShareTestFixture()
+        defer { fixture.removeTemporaryFiles() }
+        let contents = Data("<gpx><trk/></gpx>".utf8)
+        let provider = NSItemProvider()
+        provider.suggestedName = "wikiloc-route.gpx"
+        provider.registerDataRepresentation(
+            forTypeIdentifier: UTType.xml.identifier,
+            visibility: .all
+        ) { completion in
+            completion(contents, nil)
+            return nil
+        }
+        let item = NSExtensionItem()
+        item.attachments = [provider]
+
+        try await fixture.processor.process(inputItems: [item])
+
+        let savedURL = try #require(await fixture.store.saved().first?.url)
+        #expect(savedURL.pathExtension == "gpx")
+        #expect(try Data(contentsOf: savedURL) == contents)
     }
 
     @Test("Removes a copied directions request when persistence fails")

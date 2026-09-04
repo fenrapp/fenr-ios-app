@@ -59,7 +59,7 @@ struct AppNavigationState: Equatable {
         case .fullScreen:
             return [.rideNavigation]
         case .mini:
-            return [.dashboard, .rideNavigation]
+            return [path.last?.family ?? .dashboard, .rideNavigation]
         case .hidden:
             return [path.last?.family ?? .dashboard]
         }

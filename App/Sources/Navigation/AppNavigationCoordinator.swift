@@ -18,10 +18,6 @@ final class AppNavigationCoordinator: ObservableObject {
         switch intent {
         case .push(let route):
             guard state.root == .dashboard else { return }
-            guard state.rideNavigationMode != .mini else {
-                state.presentRideNavigation(.fullScreen)
-                return
-            }
             pushCanonical(route)
         case .replacePath(let path):
             state.replacePath(state.root == .dashboard ? canonicalized(path) : [])

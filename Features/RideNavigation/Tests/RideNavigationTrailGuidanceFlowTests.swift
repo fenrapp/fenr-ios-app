@@ -29,6 +29,38 @@ struct RideNavigationTrailGuidanceFlowTests {
 
         #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
         #expect(fixture.viewModel.selectedDirection == .reverse)
+        #expect(fixture.viewModel.viewState.gpxProgressText == "50%")
+        fixture.viewModel.stop()
+    }
+
+    @Test("GPX progress follows the route projection and remains bounded off route")
+    func gpxProgressTracksForwardRoute() async {
+        let route = makeRoute(finishLatitude: 41.001)
+        let fixture = RideNavigationViewModelFixture(routes: [route])
+        await start(route, fixture: fixture)
+        #expect(fixture.viewModel.viewState.gpxProgressText == "0%")
+
+        await fixture.deviceSpeedRepository.send(
+            sample(coordinate(latitude: 41.0005), seconds: 20, courseDegrees: 0)
+        )
+        #expect(await waitUntil { fixture.viewModel.viewState.gpxProgressText == "50%" })
+
+        await fixture.deviceSpeedRepository.send(
+            sample(
+                coordinate(latitude: 41.0005, longitude: 2.0007),
+                seconds: 30,
+                courseDegrees: 0
+            )
+        )
+        #expect(fixture.viewModel.viewState.gpxProgressText == "50%")
+
+        await fixture.deviceSpeedRepository.send(
+            sample(coordinate(latitude: 41.001), seconds: 40, courseDegrees: 0)
+        )
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.gpxProgressText == "100%"
+                && fixture.viewModel.viewState.arrivalPrompt != nil
+        })
         fixture.viewModel.stop()
     }
 

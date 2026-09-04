@@ -5,6 +5,9 @@ final class AppleNavigationMapCoordinator: NSObject, MKMapViewDelegate {
     var onIntent: (NavigationMapIntent) -> Void
     var onInteraction: () -> Void
     var renderedSource: MapSourceDescriptor?
+    var renderedDisplayStyle: NavigationMapDisplayStyle?
+    var usesFocusAppearance = false
+    var showsCompassRing = false
     var renderedPolylineSignatures: [String: NavigationPolylineRenderSignature] = [:]
     var renderedPolylineOverlays: [String: NavigationPolyline] = [:]
     var renderedMarkers: [NavigationMapMarker] = []
@@ -25,10 +28,35 @@ final class AppleNavigationMapCoordinator: NSObject, MKMapViewDelegate {
     }
 
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+        if let dimmer = overlay as? FocusBasemapDimOverlay {
+            return FocusBasemapDimRenderer(
+                overlay: dimmer,
+                color: UIColor.systemBackground
+                    .resolvedColor(with: mapView.traitCollection)
+                    .withAlphaComponent(MapRenderConstants.focusBasemapDimmingOpacity)
+            )
+        }
         guard let line = overlay as? NavigationPolyline else { return MKOverlayRenderer(overlay: overlay) }
         let renderer = MKPolylineRenderer(polyline: line)
         renderer.lineCap = .round
         renderer.lineJoin = .round
+        if usesFocusAppearance {
+            configureFocusRenderer(renderer, for: line.role)
+            return renderer
+        }
+        if let appearance = line.appearance {
+            renderer.strokeColor = UIColor(
+                red: appearance.red,
+                green: appearance.green,
+                blue: appearance.blue,
+                alpha: line.role == .trailFuture ? MapRenderConstants.trailFutureOpacity : 1
+            )
+            renderer.lineWidth = appearance.lineWidth
+            if line.role == .rejoinGuide {
+                renderer.lineDashPattern = MapRenderConstants.rejoinDash
+            }
+            return renderer
+        }
         switch line.role {
         case .planned:
             renderer.strokeColor = .systemBlue
@@ -57,6 +85,35 @@ final class AppleNavigationMapCoordinator: NSObject, MKMapViewDelegate {
             renderer.lineDashPattern = MapRenderConstants.rejoinDash
         }
         return renderer
+    }
+
+    private func configureFocusRenderer(
+        _ renderer: MKPolylineRenderer,
+        for role: NavigationMapPolylineRole
+    ) {
+        switch role {
+        case .planned, .trailActive, .approach, .rejoinGuide:
+            renderer.strokeColor = .label
+        case .trailFuture, .recorded:
+            renderer.strokeColor = .secondaryLabel
+        case .trailCompleted, .completed:
+            renderer.strokeColor = .tertiaryLabel
+        }
+        switch role {
+        case .completed, .trailCompleted:
+            renderer.lineWidth = MapRenderConstants.trailCompletedLineWidth
+        case .trailActive:
+            renderer.lineWidth = MapRenderConstants.activeLineWidth
+        case .trailFuture:
+            renderer.lineWidth = MapRenderConstants.trailFutureLineWidth
+        case .planned, .approach:
+            renderer.lineWidth = MapRenderConstants.plannedLineWidth
+        case .recorded:
+            renderer.lineWidth = MapRenderConstants.recordedLineWidth
+        case .rejoinGuide:
+            renderer.lineWidth = MapRenderConstants.rejoinLineWidth
+            renderer.lineDashPattern = MapRenderConstants.rejoinDash
+        }
     }
 
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
@@ -88,7 +145,9 @@ final class AppleNavigationMapCoordinator: NSObject, MKMapViewDelegate {
            let view = mapView.view(for: riderAnnotation) as? RiderAnnotationView {
             view.update(
                 headingDegrees: riderAnnotation.headingDegrees,
-                mapHeadingDegrees: mapView.camera.heading
+                mapHeadingDegrees: mapView.camera.heading,
+                showsCompassRing: showsCompassRing,
+                usesFocusAppearance: usesFocusAppearance
             )
         }
         for annotation in mapView.annotations.compactMap({ $0 as? DirectionalAnnotation }) {
@@ -123,7 +182,9 @@ final class AppleNavigationMapCoordinator: NSObject, MKMapViewDelegate {
         annotation.headingDegrees = headingDegrees
         (mapView.view(for: annotation) as? RiderAnnotationView)?.update(
             headingDegrees: headingDegrees,
-            mapHeadingDegrees: mapView.camera.heading
+            mapHeadingDegrees: mapView.camera.heading,
+            showsCompassRing: showsCompassRing,
+            usesFocusAppearance: usesFocusAppearance
         )
     }
 
@@ -134,7 +195,9 @@ final class AppleNavigationMapCoordinator: NSObject, MKMapViewDelegate {
         ) as? RiderAnnotationView
         view?.update(
             headingDegrees: rider.headingDegrees,
-            mapHeadingDegrees: mapView.camera.heading
+            mapHeadingDegrees: mapView.camera.heading,
+            showsCompassRing: showsCompassRing,
+            usesFocusAppearance: usesFocusAppearance
         )
         return view
     }
@@ -183,9 +246,25 @@ final class AppleNavigationMapCoordinator: NSObject, MKMapViewDelegate {
     }
 }
 
+final class FocusBasemapDimRenderer: MKOverlayRenderer {
+    let color: UIColor
+
+    init(overlay: MKOverlay, color: UIColor) {
+        self.color = color
+        super.init(overlay: overlay)
+    }
+
+    override func draw(_ mapRect: MKMapRect, zoomScale: MKZoomScale, in context: CGContext) {
+        context.setFillColor(color.cgColor)
+        context.fill(rect(for: mapRect))
+    }
+}
+
 struct NavigationPolylineRenderSignature: Equatable {
     let role: NavigationMapPolylineRole
     let revision: Int
+    let appearance: NavigationMapLineAppearance?
+    let usesFocusAppearance: Bool
 }
 
 enum MapRenderConstants {
@@ -201,4 +280,5 @@ enum MapRenderConstants {
     static let recordedLineWidth: CGFloat = 6
     static let rejoinLineWidth: CGFloat = 4
     static let rejoinDash: [NSNumber] = [2, 8]
+    static let focusBasemapDimmingOpacity: CGFloat = 0.82
 }

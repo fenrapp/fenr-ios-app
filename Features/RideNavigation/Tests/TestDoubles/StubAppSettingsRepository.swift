@@ -1,6 +1,8 @@
 import SettingsDomain
+import TestSupport
 
 actor StubAppSettingsRepository: AppSettingsRepository {
+    private let settingsHub = TestEventHub<AppSettings>(bufferingPolicy: .bufferingNewest(1))
     private var settings: AppSettings
     private var saves: [AppSettings] = []
     private var saveInvocations = 0
@@ -36,13 +38,20 @@ actor StubAppSettingsRepository: AppSettingsRepository {
         }
         self.settings = settings
         saves.append(settings)
+        await settingsHub.send(settings)
     }
 
-    func observe() -> AsyncStream<AppSettings> {
-        AsyncStream { continuation in
-            continuation.yield(settings)
-            continuation.finish()
-        }
+    func observe() async -> AsyncStream<AppSettings> {
+        await settingsHub.stream(replay: settings)
+    }
+
+    func publish(_ settings: AppSettings) async {
+        self.settings = settings
+        await settingsHub.send(settings)
+    }
+
+    func waitForSubscriber() async -> Bool {
+        await settingsHub.waitForSubscriber()
     }
 
     func suspendNextSave() {

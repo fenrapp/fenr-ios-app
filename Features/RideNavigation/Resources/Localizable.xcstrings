@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "rideNavigationBikeDisconnected": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Bike disconnected" } } }
+    },
+    "rideNavigationBikeReconnecting": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Reconnecting to bike" } } }
+    },
+    "rideNavigationMetricAltitude": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Altitude" } } }
+    },
+    "rideNavigationMetricGpxProgress": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "GPX" } } }
+    },
     "rideNavigationDefaultExportFilename": {
       "extractionState": "manual",
       "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Ride.gpx" } } }

@@ -8,7 +8,7 @@ public struct AppleNavigationMapSurfaceFactory {
 
     public func makeFactory() -> RideNavigationMapSurfaceFactory {
         RideNavigationMapSurfaceFactory { scene, onIntent, onInteraction in
-            if scene.displayStyle == .focus {
+            if scene.displayStyle == .focus, !scene.showsRoadsInFocus {
                 return AnyView(
                     FocusNavigationMapView(
                         scene: scene,
@@ -69,6 +69,8 @@ private struct AppleNavigationMapView: UIViewRepresentable {
     func updateUIView(_ map: MKMapView, context: Context) {
         context.coordinator.onIntent = onIntent
         context.coordinator.onInteraction = onInteraction
+        context.coordinator.usesFocusAppearance = scene.displayStyle == .focus
+        context.coordinator.showsCompassRing = scene.showsCompassRing
         updateSource(on: map, coordinator: context.coordinator)
         updatePolylines(on: map, coordinator: context.coordinator)
         updateMarkers(on: map, coordinator: context.coordinator)
@@ -82,14 +84,21 @@ private struct AppleNavigationMapView: UIViewRepresentable {
     }
 
     private func updateSource(on map: MKMapView, coordinator: AppleNavigationMapCoordinator) {
-        guard coordinator.renderedSource != scene.source else { return }
-        configure(map, for: scene.source)
+        guard coordinator.renderedSource != scene.source
+            || coordinator.renderedDisplayStyle != scene.displayStyle else { return }
+        configure(map, for: scene.source, displayStyle: scene.displayStyle)
         coordinator.renderedSource = scene.source
+        coordinator.renderedDisplayStyle = scene.displayStyle
     }
 
     private func updatePolylines(on map: MKMapView, coordinator: AppleNavigationMapCoordinator) {
         let incoming = Dictionary(uniqueKeysWithValues: scene.polylines.map {
-            ($0.id, NavigationPolylineRenderSignature(role: $0.role, revision: $0.revision))
+            ($0.id, NavigationPolylineRenderSignature(
+                role: $0.role,
+                revision: $0.revision,
+                appearance: $0.appearance,
+                usesFocusAppearance: scene.displayStyle == .focus
+            ))
         })
         let removedOrChanged = coordinator.renderedPolylineSignatures.compactMap { id, signature in
             incoming[id] == signature ? nil : id
@@ -108,19 +117,28 @@ private struct AppleNavigationMapView: UIViewRepresentable {
             let polyline = NavigationPolyline(coordinates: coordinates, count: coordinates.count)
             polyline.id = line.id
             polyline.role = line.role
-            insert(polyline, on: map)
+            polyline.appearance = line.appearance
+            insert(
+                polyline,
+                on: map,
+                level: scene.displayStyle == .focus ? .aboveLabels : .aboveRoads
+            )
             coordinator.renderedPolylineOverlays[line.id] = polyline
             coordinator.renderedPolylineSignatures[line.id] = incoming[line.id]
         }
     }
 
-    private func insert(_ polyline: NavigationPolyline, on map: MKMapView) {
+    private func insert(
+        _ polyline: NavigationPolyline,
+        on map: MKMapView,
+        level: MKOverlayLevel
+    ) {
         if let higherOverlay = map.overlays.compactMap({ $0 as? NavigationPolyline }).first(
             where: { $0.role.renderPriority > polyline.role.renderPriority }
         ) {
             map.insertOverlay(polyline, below: higherOverlay)
         } else {
-            map.addOverlay(polyline)
+            map.addOverlay(polyline, level: level)
         }
     }
 
@@ -192,7 +210,24 @@ private struct AppleNavigationMapView: UIViewRepresentable {
         }
     }
 
-    private func configure(_ map: MKMapView, for source: MapSourceDescriptor) {
+    private func configure(
+        _ map: MKMapView,
+        for source: MapSourceDescriptor,
+        displayStyle: NavigationMapDisplayStyle
+    ) {
+        map.removeOverlays(map.overlays.compactMap { $0 as? FocusBasemapDimOverlay })
+        if displayStyle == .focus {
+            let configuration = MKStandardMapConfiguration(
+                elevationStyle: .flat,
+                emphasisStyle: .muted
+            )
+            configuration.pointOfInterestFilter = .excludingAll
+            configuration.showsTraffic = false
+            map.preferredConfiguration = configuration
+            let dimmer = FocusBasemapDimOverlay()
+            map.addOverlay(dimmer, level: .aboveLabels)
+            return
+        }
         if source.id == MapSourceDescriptor.appleHybrid.id {
             let configuration = MKHybridMapConfiguration(elevationStyle: .flat)
             configuration.pointOfInterestFilter = .excludingAll

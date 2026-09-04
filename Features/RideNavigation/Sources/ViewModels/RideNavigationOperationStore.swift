@@ -12,6 +12,7 @@ final class RideNavigationOperationStore: @unchecked Sendable {
         case draftSave
         case initialRoutes
         case initialSettings
+        case settingsObservation
         case settingsSave
         case routeSave
         case trailPreparation

@@ -1,3 +1,4 @@
+import BikeDomain
 import EnvironmentDomain
 import Foundation
 import RideNavigationDomain
@@ -7,6 +8,7 @@ import VehicleSession
 extension RideNavigationViewModel {
     func receiveVehicleSnapshot(_ snapshot: VehicleSessionSnapshot) {
         vehicleSnapshot = snapshot
+        updateVehicleMetricCache(from: snapshot)
         render()
     }
 
@@ -18,6 +20,7 @@ extension RideNavigationViewModel {
             courseDegrees: sample.courseDegrees,
             courseAccuracyDegrees: sample.courseAccuracyDegrees,
             altitudeMeters: sample.altitudeMeters,
+            verticalAccuracyMeters: sample.verticalAccuracyMeters,
             observedAt: sample.observedAt
         )
         processLocationUpdate()
@@ -296,6 +299,26 @@ extension RideNavigationViewModel {
                       ),
                       isStarted else { return }
                 receiveVehicleSnapshot(snapshot)
+            }
+        }
+    }
+
+    func startSettingsObservation(lifecycle: UInt) {
+        guard settingsObservationTask == nil else { return }
+        let observeSettings = observeSettings
+        let generation = operations.begin(.settingsObservation)
+        settingsObservationTask = Task { [weak self] in
+            let stream = await observeSettings.execute()
+            for await settings in stream where !Task.isCancelled {
+                guard let self,
+                      operations.isCurrent(
+                          .settingsObservation,
+                          generation: generation,
+                          lifecycle: lifecycle
+                      ),
+                      isStarted else { return }
+                guard appSettings != settings else { continue }
+                receiveLoadedSettings(settings)
             }
         }
     }

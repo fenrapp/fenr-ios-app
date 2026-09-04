@@ -47,6 +47,30 @@ public struct RideNavigationPresentationMapper: Sendable {
         return duration.formatted(value >= Constants.secondsPerHour ? hourMinuteSecondStyle : minuteSecondStyle)
     }
 
+    func altitude(
+        meters: Double?,
+        verticalAccuracyMeters: Double?,
+        measurementSystem: MeasurementSystem
+    ) -> (String, String)? {
+        guard let meters,
+              let verticalAccuracyMeters,
+              meters.isFinite,
+              verticalAccuracyMeters.isFinite,
+              verticalAccuracyMeters >= .zero else { return nil }
+        let metric = Measurement(value: meters, unit: UnitLength.meters)
+        let measurement = measurementSystem.resolved(for: locale) == .us
+            ? metric.converted(to: .feet)
+            : metric
+        return (format(measurement.value, fractionDigits: 0), measurement.unit.symbol)
+    }
+
+    func progress(_ fraction: Double?) -> String? {
+        guard let fraction, fraction.isFinite else { return nil }
+        return min(max(fraction, .zero), 1).formatted(
+            .percent.locale(locale).precision(.fractionLength(0))
+        )
+    }
+
     func routeDetail(_ route: RideRoute, measurementSystem: MeasurementSystem) -> String {
         let routeDistance = distance(
             meters: route.distanceMeters,

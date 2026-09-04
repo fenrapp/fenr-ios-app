@@ -68,6 +68,7 @@ struct RideNavigationViewModelFixture {
                 trailMap: RideNavigationTrailMapController(),
                 guidance: guidance,
                 loadSettings: LoadAppSettingsUseCase(repository: settingsRepository),
+                observeSettings: ObserveAppSettingsUseCase(repository: settingsRepository),
                 saveSettings: SaveAppSettingsUseCase(repository: settingsRepository),
                 presentationMapper: RideNavigationPresentationMapper(locale: Locale(identifier: "en_US")),
                 mapPresentationMapper: mapPresentationMapper,

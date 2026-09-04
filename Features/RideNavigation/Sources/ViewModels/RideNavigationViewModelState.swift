@@ -10,6 +10,8 @@ final class RideNavigationViewModelState {
     var presentationMode = RideNavigationPresentationMode.fullScreen
     var vehicleSnapshot = VehicleSessionSnapshot()
     var locationSnapshot = RideNavigationLocationSnapshot()
+    var lastValidBatteryText: String?
+    var lastValidModeText: String?
     var latestDeviceSpeedKilometersPerHour: Double?
     var frozenMiniMapScene: NavigationMapScene?
     var miniCompletionTitle: String?
@@ -65,6 +67,7 @@ struct RideNavigationLocationSnapshot {
     let courseDegrees: Double?
     let courseAccuracyDegrees: Double?
     let altitudeMeters: Double?
+    let verticalAccuracyMeters: Double?
     let observedAt: Date?
 
     init(
@@ -73,6 +76,7 @@ struct RideNavigationLocationSnapshot {
         courseDegrees: Double? = nil,
         courseAccuracyDegrees: Double? = nil,
         altitudeMeters: Double? = nil,
+        verticalAccuracyMeters: Double? = nil,
         observedAt: Date? = nil
     ) {
         self.coordinate = coordinate
@@ -80,6 +84,7 @@ struct RideNavigationLocationSnapshot {
         self.courseDegrees = courseDegrees
         self.courseAccuracyDegrees = courseAccuracyDegrees
         self.altitudeMeters = altitudeMeters
+        self.verticalAccuracyMeters = verticalAccuracyMeters
         self.observedAt = observedAt
     }
 }

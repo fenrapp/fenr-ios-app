@@ -46,10 +46,14 @@ public struct AppSettingsScene: View {
         #if os(iOS)
         case .rideDisplay:
             RideDisplaySettingsView(viewModel: viewModel)
+        case .navigation:
+            NavigationSettingsView(viewModel: viewModel, onNavigation: onNavigation)
+        case .navigationAppearance:
+            NavigationAppearanceSettingsView(viewModel: viewModel)
         case .bikeModel:
             BikeModelSettingsView(viewModel: viewModel)
         #else
-        case .rideDisplay, .bikeModel:
+        case .rideDisplay, .navigation, .navigationAppearance, .bikeModel:
             EmptyView()
         #endif
         }

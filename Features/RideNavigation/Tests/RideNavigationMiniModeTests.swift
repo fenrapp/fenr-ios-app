@@ -2,11 +2,36 @@ import EnvironmentDomain
 import Foundation
 @testable import RideNavigation
 import RideNavigationDomain
+import SettingsDomain
 import Testing
 import TestSupport
 
 @MainActor
 struct RideNavigationMiniModeTests {
+    @Test("mini navigation applies shared settings updates live")
+    func miniNavigationObservesSharedSettings() async {
+        let fixture = RideNavigationViewModelFixture()
+        fixture.viewModel.start()
+        fixture.viewModel.setPresentationMode(.mini)
+        #expect(await waitUntil { await fixture.settingsRepository.waitForSubscriber() })
+
+        await fixture.settingsRepository.publish(
+            AppSettings(
+                rideNavigation: RideNavigationSettings(
+                    showsGuidanceInFocus: true,
+                    showsCompassRing: true,
+                    showsRoadsInFocus: true
+                )
+            )
+        )
+
+        #expect(await waitUntil {
+            fixture.viewModel.miniViewState.mapScene.showsCompassRing
+                && fixture.viewModel.miniViewState.mapScene.showsRoadsInFocus
+        })
+        fixture.viewModel.stop()
+    }
+
     @Test("mini GPX keeps route progress without motorcycle metrics")
     func miniGPXUsesTheLocationStream() async {
         let context = makeRoute(name: "Mini trail", finishLatitude: 41.01)

@@ -1,6 +1,90 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "app.settings.navigation.appearance.detail" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Colors and line thickness" } } }
+    },
+    "app.settings.navigation.appearance.title" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Route Appearance" } } }
+    },
+    "app.settings.navigation.color" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Color" } } }
+    },
+    "app.settings.navigation.compass.footer" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Shows cardinal directions around your position arrow." } } }
+    },
+    "app.settings.navigation.detail" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Focus, compass, and route appearance" } } }
+    },
+    "app.settings.navigation.focus.footer" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Critical off-route, rerouting, and arrival notices remain visible when guidance is hidden. Road context uses a muted Apple map." } } }
+    },
+    "app.settings.navigation.focus.section" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Focus Mode" } } }
+    },
+    "app.settings.navigation.line.active" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Active Section" } } }
+    },
+    "app.settings.navigation.line.completed" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Completed Route" } } }
+    },
+    "app.settings.navigation.line.connector" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Approach and Rejoin" } } }
+    },
+    "app.settings.navigation.line.pending" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Pending Route" } } }
+    },
+    "app.settings.navigation.line.recording" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Recording" } } }
+    },
+    "app.settings.navigation.map.section" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Map" } } }
+    },
+    "app.settings.navigation.show.compass" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Show Compass Ring" } } }
+    },
+    "app.settings.navigation.show.guidance" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Show Guidance" } } }
+    },
+    "app.settings.navigation.show.roads" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Show Roads" } } }
+    },
+    "app.settings.navigation.thickness" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Thickness" } } }
+    },
+    "app.settings.navigation.thickness.regular" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Regular" } } }
+    },
+    "app.settings.navigation.thickness.thick" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Thick" } } }
+    },
+    "app.settings.navigation.thickness.thin" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Thin" } } }
+    },
+    "app.settings.navigation.title" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Navigation" } } }
+    },
     "app.settings.change.bike" : {
       "extractionState" : "manual",
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Change Bike" } } }

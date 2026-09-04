@@ -2,22 +2,18 @@ import DesignSystem
 import SwiftUI
 
 struct RideNavigationFinishConfirmationOverlay: View {
-    @Environment(\.colorScheme) private var colorScheme
     let activity: RideNavigationViewState.Activity
-    let isMonochrome: Bool
     let arrivalPrompt: RideNavigationArrivalPrompt?
     let onCancel: () -> Void
     let onConfirm: () -> Void
 
     init(
         activity: RideNavigationViewState.Activity,
-        isMonochrome: Bool,
         arrivalPrompt: RideNavigationArrivalPrompt? = nil,
         onCancel: @escaping () -> Void,
         onConfirm: @escaping () -> Void
     ) {
         self.activity = activity
-        self.isMonochrome = isMonochrome
         self.arrivalPrompt = arrivalPrompt
         self.onCancel = onCancel
         self.onConfirm = onConfirm
@@ -65,7 +61,8 @@ struct RideNavigationFinishConfirmationOverlay: View {
             .rideNavigationSecondaryButton()
         Button(confirmTitle, action: onConfirm)
             .controlSize(.large)
-            .tint(confirmTint)
+            .tint(DesignColor.critical)
+            .foregroundStyle(.white)
             .rideNavigationPrimaryButton()
     }
 
@@ -94,20 +91,9 @@ struct RideNavigationFinishConfirmationOverlay: View {
             : .rideNavigationEndRoute)
     }
 
-    private var confirmTint: Color {
-        isMonochrome
-            ? focusPalette.foreground.opacity(Constants.focusActionOpacity)
-            : DesignColor.critical
-    }
-
-    private var focusPalette: RideNavigationFocusPalette {
-        RideNavigationFocusPalette(colorScheme: colorScheme)
-    }
-
     private enum Constants {
         static let width: CGFloat = 360
         static let cornerRadius: CGFloat = 24
         static let backdropOpacity = 0.18
-        static let focusActionOpacity = 0.88
     }
 }
