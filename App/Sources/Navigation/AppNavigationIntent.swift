@@ -3,7 +3,7 @@ import Foundation
 enum AppNavigationIntent: Equatable {
     case push(AppRoute)
     case replacePath([AppRoute])
-    case pop
+    case pop(ifTop: AppRoute?)
     case popToRoot
     case showRideNavigation(AppExternalNavigationRequest?)
     case minimizeRideNavigation

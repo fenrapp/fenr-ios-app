@@ -4,6 +4,7 @@ import BikeDiagnostics
 import BikeLockSettings
 import BikeOnboarding
 import DashboardCardSettings
+import MaintenanceLog
 import PowerModeSettings
 import RideHistory
 import SwiftUI
@@ -42,6 +43,13 @@ struct AppDestinationView: View {
                 isPresentationActive: activeSurfaces.contains(.rideHistory),
                 onNavigation: handleRideHistoryEvent
             )
+        case .maintenance(let destination):
+            MaintenanceScene(
+                destination: destination,
+                viewModel: featureStore.maintenanceViewModel,
+                isPresentationActive: activeSurfaces.contains(.maintenance),
+                onNavigation: handleMaintenanceEvent
+            )
         case .diagnostics(let destination):
             BikeDiagnosticsScene(
                 destination: destination,
@@ -72,7 +80,11 @@ struct AppDestinationView: View {
     }
 
     private func handleSettingsEvent(_ event: AppSettingsNavigationEvent) {
-        onIntent(AppNavigationEventAdapter.intent(for: event))
+        if event == .changeBike {
+            onChangeBike()
+        } else {
+            onIntent(AppNavigationEventAdapter.intent(for: event))
+        }
     }
 
     private func handleDashboardCardsEvent(_ event: DashboardCardSettingsNavigationEvent) {
@@ -83,12 +95,12 @@ struct AppDestinationView: View {
         onIntent(AppNavigationEventAdapter.intent(for: event))
     }
 
+    private func handleMaintenanceEvent(_ event: MaintenanceNavigationEvent) {
+        onIntent(AppNavigationEventAdapter.intent(for: event))
+    }
+
     private func handleDiagnosticsEvent(_ event: BikeDiagnosticsNavigationEvent) {
-        if event == .changeBike {
-            onChangeBike()
-        } else if let intent = AppNavigationEventAdapter.intent(for: event) {
-            onIntent(intent)
-        }
+        onIntent(AppNavigationEventAdapter.intent(for: event))
     }
 
     private func handleBatteryHealthEvent(_ event: BatteryHealthNavigationEvent) {

@@ -12,7 +12,6 @@
     "bikeDiagnostics.ble.captureControlError" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The BLE recording couldn't be updated. Try again while the bike is connected." } } } },
     "bikeDiagnostics.bleLog.operationError" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The BLE log operation couldn't be completed. Try again." } } } },
     "bikeDiagnostics.bleLog.prepareError" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The BLE log couldn't be prepared. Try again." } } } },
-    "bikeDiagnostics.changeBike" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Change Bike" } } } },
     "bikeDiagnostics.connect" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connect" } } } },
     "bikeDiagnostics.connection.authenticated" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Authenticated" } } } },
     "bikeDiagnostics.connection.authenticating" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Authenticating" } } } },

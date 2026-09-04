@@ -87,6 +87,7 @@ private extension AppRootView {
         featureStore.dashboardCardSettingsViewModel.stop()
         featureStore.powerModeSettingsViewModel.stop()
         featureStore.rideHistoryViewModel.stop()
+        featureStore.maintenanceViewModel.stop()
         featureStore.bikeLockSettingsViewModel.stop()
         incomingMapLinkController.cancel()
         lifecycleController.stop()

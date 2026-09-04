@@ -5,7 +5,6 @@ struct DiagnosticsOverviewView: View {
     let state: BikeDiagnosticsViewState
     let onNavigate: (BikeDiagnosticsDestination) -> Void
     let onBatteryHealth: () -> Void
-    let onChangeBike: () -> Void
 
     var body: some View {
         List {
@@ -76,11 +75,6 @@ struct DiagnosticsOverviewView: View {
                     image: "dot.radiowaves.left.and.right",
                     tint: .indigo
                 )
-            }
-        }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(DiagnosticsCopy.changeBike, role: .destructive, action: onChangeBike)
             }
         }
     }

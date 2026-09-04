@@ -6,6 +6,8 @@ import CoreLocation
 import EnvironmentData
 import EnvironmentDomain
 import Foundation
+import MaintenanceData
+import MaintenanceLog
 import RideNavigationData
 import RideSessionData
 import SettingsData
@@ -13,7 +15,9 @@ import VehicleSession
 
 @MainActor
 enum ProductionAppDependencyContainerFactory {
-    static func makeDefault() -> AppDependencyContainer {
+    static func makeDefault(
+        maintenanceReminderScheduler: any MaintenanceReminderScheduling
+    ) -> AppDependencyContainer {
         let bikeSDKContainer = BikeSDKDependencyContainer()
         let bikeDataContainer = BikeDataDependencyContainer()
         let bleTraceRepository = BLETraceDependencyContainer().makeRepository()
@@ -34,6 +38,7 @@ enum ProductionAppDependencyContainerFactory {
         )
         let motionCalibrationRepository = makeMotionCalibrationRepository()
         let rideTripRepository = makeRideTripRepository()
+        let maintenanceRepository = makeMaintenanceRepository()
         let bikeLockCapabilityStore = BikeLockCapabilityStateStore()
         let sessionServices = AppSessionDependencyContainer.makeServices(
             dependencies: .init(
@@ -55,6 +60,7 @@ enum ProductionAppDependencyContainerFactory {
             settingsRepository: settingsRepository,
             deviceSpeedRepository: deviceSpeedRepository,
             rideTripRepository: rideTripRepository,
+            maintenanceRepository: maintenanceRepository,
             sessionServices: sessionServices,
             onboardingContainer: BikeOnboardingDependencyContainer(),
             dashboardContainer: RideDashboardDependencyContainer(),
@@ -62,6 +68,7 @@ enum ProductionAppDependencyContainerFactory {
             dashboardCardSettingsContainer: DashboardCardSettingsDependencyContainer(),
             powerModeSettingsContainer: PowerModeSettingsDependencyContainer(),
             rideHistoryContainer: RideHistoryDependencyContainer(),
+            maintenanceContainer: MaintenanceDependencyContainer(reminderScheduler: maintenanceReminderScheduler),
             bleTraceLogRepository: bleTraceRepository,
             incomingMapLinkStore: makeIncomingMapLinkStore(),
             bikeLockCredentialStore: makeBikeLockCredentialStore(),
@@ -99,6 +106,14 @@ enum ProductionAppDependencyContainerFactory {
             )
         } catch {
             preconditionFailure("Unable to create the ride trip store: \(error)")
+        }
+    }
+
+    private static func makeMaintenanceRepository() -> SwiftDataMaintenanceRepository {
+        do {
+            return try MaintenanceRepositoryFactory.make()
+        } catch {
+            preconditionFailure("Unable to create the maintenance store: \(error)")
         }
     }
 

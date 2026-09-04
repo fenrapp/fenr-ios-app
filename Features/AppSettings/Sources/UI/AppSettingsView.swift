@@ -22,6 +22,7 @@ public struct AppSettingsView: View {
         Form {
             #if os(iOS)
             dashboardSection
+            ridingSection
             bikeSection
             appSection
             advancedSection
@@ -30,6 +31,10 @@ public struct AppSettingsView: View {
             #endif
 
             accessory()
+
+            #if os(iOS)
+            bikeManagementSection
+            #endif
         }
         .navigationTitle(Text(.appSettingsTitle))
         .navigationBarTitleDisplayMode(.inline)
@@ -68,6 +73,13 @@ public struct AppSettingsView: View {
                 accessibilityIdentifier: "settings.dashboardCards",
                 action: { onNavigation(.openDashboardCards) }
             )
+        } header: {
+            Text(.appSettingsDashboardSection)
+        }
+    }
+
+    private var ridingSection: some View {
+        Section {
             SettingsNavigationRow(
                 icon: "clock.arrow.circlepath",
                 iconTint: .cyan,
@@ -77,7 +89,7 @@ public struct AppSettingsView: View {
                 action: { onNavigation(.openRideHistory) }
             )
         } header: {
-            Text(.appSettingsDashboardSection)
+            Text(.appSettingsRidingSection)
         }
     }
 
@@ -108,6 +120,14 @@ public struct AppSettingsView: View {
                 verbatimDetail: bikeLockModeTitle ?? String(localized: .appSettingsUnavailable),
                 accessibilityIdentifier: "settings.bikeLock",
                 action: { onNavigation(.openBikeLock) }
+            )
+            SettingsNavigationRow(
+                icon: "wrench.and.screwdriver.fill",
+                iconTint: .blue,
+                title: .appSettingsMaintenanceTitle,
+                detail: .appSettingsMaintenanceDetail,
+                accessibilityIdentifier: "settings.maintenance",
+                action: { onNavigation(.openMaintenance) }
             )
             SettingsPickerRow(
                 icon: "battery.75percent",
@@ -147,6 +167,19 @@ public struct AppSettingsView: View {
             )
         } header: {
             Text(.appSettingsAdvancedSection)
+        }
+    }
+
+    private var bikeManagementSection: some View {
+        Section {
+            Button(role: .destructive) {
+                onNavigation(.changeBike)
+            } label: {
+                Label(.appSettingsChangeBike, systemImage: "motorcycle")
+            }
+            .accessibilityIdentifier("settings.changeBike")
+        } footer: {
+            Text(.appSettingsChangeBikeFooter)
         }
     }
     #else

@@ -17,6 +17,7 @@ enum AppNavigationSurface: Hashable {
     case settings
     case dashboardCards
     case rideHistory
+    case maintenance
     case diagnostics
     case batteryHealth
     case powerModes

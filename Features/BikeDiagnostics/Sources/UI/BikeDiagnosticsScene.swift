@@ -41,16 +41,14 @@ public struct BikeDiagnosticsScene: View {
             DiagnosticsOverviewView(
                 state: viewModel.viewState,
                 onNavigate: { onNavigation(.show($0)) },
-                onBatteryHealth: { onNavigation(.openBatteryHealth) },
-                onChangeBike: { onNavigation(.changeBike) }
+                onBatteryHealth: { onNavigation(.openBatteryHealth) }
             )
         case .connection:
             DiagnosticsConnectionView(
                 state: viewModel.viewState,
                 onReconnect: viewModel.reconnectTapped,
                 onRetry: viewModel.pairRetryTapped,
-                onDisconnect: viewModel.disconnectTapped,
-                onChangeBike: { onNavigation(.changeBike) }
+                onDisconnect: viewModel.disconnectTapped
             )
         case .telemetry:
             DiagnosticsTelemetryView(

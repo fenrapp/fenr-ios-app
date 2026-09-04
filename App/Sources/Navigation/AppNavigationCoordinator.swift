@@ -25,7 +25,8 @@ final class AppNavigationCoordinator: ObservableObject {
             pushCanonical(route)
         case .replacePath(let path):
             state.replacePath(state.root == .dashboard ? canonicalized(path) : [])
-        case .pop:
+        case .pop(let expectedTop):
+            guard expectedTop == nil || state.path.last == expectedTop else { return }
             state.pop()
         case .popToRoot:
             state.popToRoot()

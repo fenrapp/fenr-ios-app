@@ -84,9 +84,10 @@ struct DiagnosticsBLELogsView: View {
                     feedbackToken += 1
                     onToggleCapture()
                 } label: {
-                    Image(systemName: isRecording ? "stop.circle.fill" : "plus.circle.fill")
+                    Image(systemName: isRecording ? "stop.circle.fill" : "record.circle")
+                        .font(.title2)
                         .symbolRenderingMode(.hierarchical)
-                        .foregroundStyle(isRecording ? DesignColor.critical : DesignColor.accent)
+                        .foregroundStyle(DesignColor.critical)
                         .frame(minWidth: Constants.toolbarTarget, minHeight: Constants.toolbarTarget)
                 }
                 .disabled(!captureControlIsEnabled)

@@ -4,19 +4,28 @@ import BLETraceDomain
 import EnvironmentData
 import EnvironmentDomain
 import Foundation
+import MaintenanceData
+import MaintenanceLog
 import RideNavigationData
 import RideSessionData
 import SettingsData
 
 @MainActor
 enum DebugAppDependencyContainerFactory {
-    static func makeDefault() -> DebugAppContext {
-        make(userDefaults: .standard)
+    static func makeDefault(
+        maintenanceReminderScheduler: any MaintenanceReminderScheduling
+    ) -> DebugAppContext {
+        make(
+            userDefaults: .standard,
+            arguments: ProcessInfo.processInfo.arguments,
+            maintenanceReminderScheduler: maintenanceReminderScheduler
+        )
     }
 
     static func make(
         userDefaults: UserDefaults,
-        arguments: [String] = ProcessInfo.processInfo.arguments
+        arguments: [String],
+        maintenanceReminderScheduler: any MaintenanceReminderScheduling
     ) -> DebugAppContext {
         let skipsOnboarding = arguments.contains(Constants.skipOnboardingArgument)
         let store = DebugScenarioStore(userDefaults: userDefaults)
@@ -35,7 +44,8 @@ enum DebugAppDependencyContainerFactory {
             container: makeContainer(
                 repository: repository,
                 profileRepository: profileRepository,
-                forceOnboarding: !skipsOnboarding
+                forceOnboarding: !skipsOnboarding,
+                maintenanceReminderScheduler: maintenanceReminderScheduler
             ),
             scenarioController: DebugScenarioController(
                 repository: repository,
@@ -65,7 +75,8 @@ enum DebugAppDependencyContainerFactory {
     private static func makeContainer(
         repository: BikeEmulatorRepository,
         profileRepository: DebugBikeProfileRepository,
-        forceOnboarding: Bool
+        forceOnboarding: Bool,
+        maintenanceReminderScheduler: any MaintenanceReminderScheduling
     ) -> AppDependencyContainer {
         let settingsRepository = UserDefaultsAppSettingsRepository(userDefaults: .standard)
         let deviceSpeedRepository = DebugDeviceSpeedRepository()
@@ -80,6 +91,7 @@ enum DebugAppDependencyContainerFactory {
             )
         ])
         let rideTripRepository = makeRideTripRepository()
+        let maintenanceRepository = makeMaintenanceRepository()
         let sessionServices = AppSessionDependencyContainer.makeServices(
             dependencies: .init(
                 repository: repository,
@@ -101,6 +113,7 @@ enum DebugAppDependencyContainerFactory {
             settingsRepository: settingsRepository,
             deviceSpeedRepository: deviceSpeedRepository,
             rideTripRepository: rideTripRepository,
+            maintenanceRepository: maintenanceRepository,
             sessionServices: sessionServices,
             onboardingContainer: BikeOnboardingDependencyContainer(),
             dashboardContainer: RideDashboardDependencyContainer(),
@@ -108,6 +121,7 @@ enum DebugAppDependencyContainerFactory {
             dashboardCardSettingsContainer: DashboardCardSettingsDependencyContainer(),
             powerModeSettingsContainer: PowerModeSettingsDependencyContainer(),
             rideHistoryContainer: RideHistoryDependencyContainer(),
+            maintenanceContainer: MaintenanceDependencyContainer(reminderScheduler: maintenanceReminderScheduler),
             bleTraceLogRepository: NoOpBLETraceRepository(),
             incomingMapLinkStore: makeIncomingMapLinkStore(),
             bikeLockCredentialStore: KeychainBikeLockCredentialStore(
@@ -165,6 +179,14 @@ enum DebugAppDependencyContainerFactory {
             return repository
         } catch {
             preconditionFailure("Unable to create the debug ride trip store: \(error)")
+        }
+    }
+
+    private static func makeMaintenanceRepository() -> SwiftDataMaintenanceRepository {
+        do {
+            return try MaintenanceRepositoryFactory.make()
+        } catch {
+            preconditionFailure("Unable to create the debug maintenance store: \(error)")
         }
     }
 

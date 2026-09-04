@@ -30,6 +30,7 @@ struct DiagnosticsBLETraceRow: View {
             }
         }
         .frame(maxWidth: .infinity, minHeight: Constants.minimumHeight, alignment: .leading)
+        .padding(.vertical, Constants.verticalPadding)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
@@ -38,22 +39,30 @@ struct DiagnosticsBLETraceRow: View {
     private var metadataSummary: some View {
         if dynamicTypeSize.isAccessibilitySize {
             VStack(alignment: .leading, spacing: Constants.textSpacing) {
-                summaryLabel(session.duration, systemImage: "timer")
-                summaryLabel(session.size, systemImage: "externaldrive")
-                summaryLabel(session.eventCount, systemImage: "waveform.path.ecg")
+                metadataItem(session.duration, systemImage: "timer")
+                metadataItem(session.size, systemImage: "externaldrive")
+                metadataItem(session.eventCount, systemImage: "waveform.path.ecg")
             }
         } else {
             HStack(spacing: DesignSpace.small) {
-                summaryLabel(session.duration, systemImage: "timer")
-                summaryLabel(session.eventCount, systemImage: "waveform.path.ecg")
+                metadataItem(session.duration, systemImage: "timer")
+                metadataItem(session.eventCount, systemImage: "waveform.path.ecg")
             }
         }
     }
 
-    private func summaryLabel(_ text: String, systemImage: String) -> some View {
-        Label(text, systemImage: systemImage)
-            .font(.caption.monospacedDigit())
-            .foregroundStyle(.secondary)
+    private func metadataItem(_ text: String, systemImage: String) -> some View {
+        HStack(spacing: Constants.metadataSpacing) {
+            Text(text)
+            Image(systemName: systemImage)
+                .accessibilityHidden(true)
+        }
+        .font(.caption.monospacedDigit())
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, Constants.metadataHorizontalPadding)
+        .padding(.vertical, Constants.metadataVerticalPadding)
+        .background(.secondary.opacity(Constants.metadataBackgroundOpacity), in: Capsule())
+        .fixedSize()
     }
 
     private var statusSymbol: String {
@@ -75,8 +84,13 @@ struct DiagnosticsBLETraceRow: View {
     }
 
     private enum Constants {
-        static let textSpacing: CGFloat = 2
-        static let summaryTopPadding: CGFloat = 2
-        static let minimumHeight: CGFloat = 60
+        static let textSpacing: CGFloat = 4
+        static let summaryTopPadding: CGFloat = 4
+        static let minimumHeight: CGFloat = 68
+        static let verticalPadding: CGFloat = 4
+        static let metadataSpacing: CGFloat = 4
+        static let metadataHorizontalPadding: CGFloat = 7
+        static let metadataVerticalPadding: CGFloat = 3
+        static let metadataBackgroundOpacity = 0.08
     }
 }
