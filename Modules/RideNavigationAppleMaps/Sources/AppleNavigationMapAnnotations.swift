@@ -4,6 +4,12 @@ import RideNavigation
 final class NavigationPolyline: MKPolyline {
     var id = ""
     var role = NavigationMapPolylineRole.planned
+    var appearance: NavigationMapLineAppearance?
+}
+
+final class FocusBasemapDimOverlay: NSObject, MKOverlay {
+    let coordinate = CLLocationCoordinate2D(latitude: .zero, longitude: .zero)
+    let boundingMapRect = MKMapRect.world
 }
 
 final class NavigationAnnotation: NSObject, MKAnnotation {
@@ -40,6 +46,9 @@ final class RiderAnnotation: NSObject, MKAnnotation {
 }
 
 final class RiderAnnotationView: MKAnnotationView {
+    private let arrowView = UIImageView()
+    private let compassRingView = CompassRingView()
+
     override var annotation: MKAnnotation? {
         didSet { configure() }
     }
@@ -54,18 +63,49 @@ final class RiderAnnotationView: MKAnnotationView {
         configure()
     }
 
-    func update(headingDegrees: Double?, mapHeadingDegrees: Double) {
+    func update(
+        headingDegrees: Double?,
+        mapHeadingDegrees: Double,
+        showsCompassRing: Bool,
+        usesFocusAppearance: Bool
+    ) {
         let relativeHeading = (headingDegrees ?? mapHeadingDegrees) - mapHeadingDegrees
-        transform = CGAffineTransform(
+        arrowView.transform = CGAffineTransform(
             rotationAngle: relativeHeading * .pi / Constants.halfCircleDegrees
+        )
+        arrowView.tintColor = usesFocusAppearance ? .label : .systemBlue
+        compassRingView.isHidden = !showsCompassRing
+        compassRingView.update(
+            mapHeadingDegrees: mapHeadingDegrees,
+            usesFocusAppearance: usesFocusAppearance
         )
     }
 
     private func configure() {
-        image = UIImage(
-            systemName: "location.north.circle.fill",
+        guard compassRingView.superview == nil else { return }
+        image = nil
+        bounds = CGRect(
+            x: .zero,
+            y: .zero,
+            width: Constants.annotationSize,
+            height: Constants.annotationSize
+        )
+        compassRingView.frame = bounds
+        compassRingView.backgroundColor = .clear
+        addSubview(compassRingView)
+        arrowView.image = UIImage(
+            systemName: "location.north.fill",
             withConfiguration: UIImage.SymbolConfiguration(pointSize: Constants.symbolSize)
-        )?.withTintColor(.systemBlue, renderingMode: .alwaysOriginal)
+        )?.withRenderingMode(.alwaysTemplate)
+        arrowView.tintColor = .systemBlue
+        arrowView.contentMode = .center
+        arrowView.frame = CGRect(
+            x: (bounds.width - Constants.arrowSize) / 2,
+            y: (bounds.height - Constants.arrowSize) / 2,
+            width: Constants.arrowSize,
+            height: Constants.arrowSize
+        )
+        addSubview(arrowView)
         displayPriority = .required
         collisionMode = .circle
         centerOffset = CGPoint(x: .zero, y: -Constants.centerOffset)
@@ -77,10 +117,106 @@ final class RiderAnnotationView: MKAnnotationView {
 
     private enum Constants {
         static let symbolSize: CGFloat = 34
+        static let arrowSize: CGFloat = 38
+        static let annotationSize: CGFloat = 104
         static let centerOffset: CGFloat = 8
         static let shadowOpacity: Float = 0.28
         static let shadowRadius: CGFloat = 3
         static let shadowOffset = CGSize(width: .zero, height: 2)
+        static let halfCircleDegrees = 180.0
+    }
+}
+
+private final class CompassRingView: UIView {
+    private var mapHeadingDegrees = 0.0
+    private var usesFocusAppearance = false
+
+    func update(mapHeadingDegrees: Double, usesFocusAppearance: Bool) {
+        guard self.mapHeadingDegrees != mapHeadingDegrees
+            || self.usesFocusAppearance != usesFocusAppearance else { return }
+        self.mapHeadingDegrees = mapHeadingDegrees
+        self.usesFocusAppearance = usesFocusAppearance
+        setNeedsDisplay()
+    }
+
+    override func draw(_ rect: CGRect) {
+        guard let context = UIGraphicsGetCurrentContext() else { return }
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        context.setStrokeColor(secondaryColor.cgColor)
+        context.setLineWidth(Constants.ringWidth)
+        let ringRect = CGRect(
+            x: center.x - Constants.ringRadius,
+            y: center.y - Constants.ringRadius,
+            width: Constants.ringRadius * 2,
+            height: Constants.ringRadius * 2
+        )
+        context.strokeEllipse(in: ringRect)
+
+        for cardinal in NavigationCardinal.allCases {
+            let text = String(localized: cardinal.resource)
+            let angle = (cardinal.bearingDegrees - mapHeadingDegrees)
+                * .pi / Constants.halfCircleDegrees
+            let font = UIFont.systemFont(
+                ofSize: Constants.fontSize,
+                weight: cardinal.isNorth ? .bold : .medium
+            )
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: secondaryColor
+            ]
+            let size = text.size(withAttributes: attributes)
+            let radialHalfExtent = abs(sin(angle)) * size.width / 2
+                + abs(cos(angle)) * size.height / 2
+            let labelRadius = Constants.ringRadius + Constants.labelMargin + radialHalfExtent
+            let point = CGPoint(
+                x: center.x + sin(angle) * labelRadius,
+                y: center.y - cos(angle) * labelRadius
+            )
+            let origin = CGPoint(x: point.x - size.width / 2, y: point.y - size.height / 2)
+            if cardinal.isNorth {
+                drawNorth(text, font: font, size: size, at: origin)
+            } else {
+                text.draw(at: origin, withAttributes: attributes)
+            }
+        }
+    }
+
+    private func drawNorth(_ text: String, font: UIFont, size: CGSize, at origin: CGPoint) {
+        let format = UIGraphicsImageRendererFormat.preferred()
+        let image = UIGraphicsImageRenderer(size: size, format: format).image { rendererContext in
+            text.draw(
+                at: .zero,
+                withAttributes: [.font: font, .foregroundColor: UIColor.white]
+            )
+            rendererContext.cgContext.setBlendMode(.sourceIn)
+            guard let gradient = CGGradient(
+                colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                colors: [
+                    UIColor.systemRed.resolvedColor(with: traitCollection).cgColor,
+                    UIColor.systemOrange.resolvedColor(with: traitCollection).cgColor
+                ] as CFArray,
+                locations: [0, 1]
+            ) else { return }
+            rendererContext.cgContext.drawLinearGradient(
+                gradient,
+                start: .zero,
+                end: CGPoint(x: CGFloat.zero, y: size.height),
+                options: []
+            )
+        }
+        image.draw(at: origin)
+    }
+
+    private var secondaryColor: UIColor {
+        usesFocusAppearance ? .secondaryLabel : .label.withAlphaComponent(Constants.secondaryOpacity)
+    }
+
+    private enum Constants {
+        static let ringRadius: CGFloat = 38
+        static let ringWidth: CGFloat = 1.5
+        static let labelMargin: CGFloat = 2
+        static let fontSize: CGFloat = 9
+        static let secondaryOpacity: CGFloat = 0.7
         static let halfCircleDegrees = 180.0
     }
 }

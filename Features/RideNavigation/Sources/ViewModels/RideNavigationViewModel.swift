@@ -42,6 +42,7 @@ public final class RideNavigationViewModel: ObservableObject {
     var trailMap: RideNavigationTrailMapController { dependencies.trailMap }
     var guidance: any NavigationGuidanceClient { dependencies.guidance }
     var loadSettings: LoadAppSettingsUseCase { dependencies.loadSettings }
+    var observeSettings: ObserveAppSettingsUseCase { dependencies.observeSettings }
     var saveSettings: SaveAppSettingsUseCase { dependencies.saveSettings }
     var mapper: RideNavigationPresentationMapper { dependencies.presentationMapper }
     var mapMapper: RideNavigationMapPresentationMapper { dependencies.mapPresentationMapper }
@@ -90,6 +91,10 @@ public final class RideNavigationViewModel: ObservableObject {
     var settingsLoadingTask: Task<Void, Never>? {
         get { operations[.initialSettings] }
         set { operations[.initialSettings] = newValue }
+    }
+    var settingsObservationTask: Task<Void, Never>? {
+        get { operations[.settingsObservation] }
+        set { operations[.settingsObservation] = newValue }
     }
     var settingsSaveTask: Task<Void, Never>? {
         get { operations[.settingsSave] }

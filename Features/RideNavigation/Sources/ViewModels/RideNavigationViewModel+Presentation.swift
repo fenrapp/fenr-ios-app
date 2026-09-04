@@ -1,3 +1,4 @@
+import BikeDomain
 import EnvironmentDomain
 import Foundation
 import RideNavigationDomain
@@ -12,24 +13,26 @@ extension RideNavigationViewModel {
             return
         }
         let speed = presentedSpeed
-        let mapScene = makeMapScene()
-        let elapsed = elapsedText(at: now())
-        let modeText = resolvedModeText
-        let batteryText = vehicleSnapshot.telemetry.batteryLevel.percent.map { "\($0)%" } ?? "--%"
+        let altitude = presentedAltitude
         let trailGuidanceSnapshot = trailGuidance.snapshot
         viewState = RideNavigationViewState(
             screen: screen,
             activity: activity,
-            mapScene: mapScene,
+            mapScene: makeMapScene(),
             selectedMapStyleID: selectedMapStyleID,
             allowsFocusMapStyle: allowsFocusMapStyle,
             isHeadingUp: isHeadingUp,
             speedText: speed.0,
             speedUnit: speed.1,
-            modeText: modeText,
-            batteryText: batteryText,
-            elapsedText: elapsed,
+            modeText: presentedModeText,
+            batteryText: presentedBatteryText,
+            elapsedText: elapsedText(at: now()),
             distanceText: currentDistanceText,
+            altitudeText: altitude?.0,
+            altitudeUnit: altitude?.1 ?? "",
+            gpxProgressText: presentedGPXProgress,
+            connectionNoticeText: presentedConnectionNotice,
+            showsGuidanceInFocus: appSettings.rideNavigation.showsGuidanceInFocus,
             guidance: currentGuidance,
             routeTitle: selectedRoute?.name ?? selectedDestination?.name,
             savedRoutes: routeRows,
@@ -73,6 +76,54 @@ extension RideNavigationViewModel {
                 ?? latestDeviceSpeedKilometersPerHour,
             measurementSystem: measurementSystem
         )
+    }
+
+    private var presentedAltitude: (String, String)? {
+        mapper.altitude(
+            meters: locationSnapshot.altitudeMeters,
+            verticalAccuracyMeters: locationSnapshot.verticalAccuracyMeters,
+            measurementSystem: measurementSystem
+        )
+    }
+
+    private var presentedBatteryText: String {
+        if vehicleSnapshot.isCanonicalTelemetryAvailable,
+           let percentage = vehicleSnapshot.telemetry.batteryLevel.percent {
+            return "\(percentage)%"
+        }
+        return state.lastValidBatteryText ?? "--%"
+    }
+
+    private var presentedModeText: String {
+        if vehicleSnapshot.isCanonicalTelemetryAvailable,
+           vehicleSnapshot.telemetry.mode.displayIndex != nil {
+            return resolvedModeText
+        }
+        return state.lastValidModeText ?? String(localized: .rideNavigationModeUnavailable)
+    }
+
+    private var presentedGPXProgress: String? {
+        guard activity == .following, let trailProgress else { return nil }
+        let totalDistance = trailProgress.distanceAlongRouteMeters
+            + trailProgress.remainingDistanceMeters
+        guard totalDistance > .zero else { return mapper.progress(1) }
+        return mapper.progress(trailProgress.distanceAlongRouteMeters / totalDistance)
+    }
+
+    private var presentedConnectionNotice: String? {
+        guard !vehicleSnapshot.isCanonicalTelemetryAvailable else { return nil }
+        switch vehicleSnapshot.connection.state {
+        case .scanning, .connecting, .discovering, .authenticating, .authenticated,
+             .subscribed, .receivingTelemetry, .reconnecting:
+            return state.lastValidBatteryText != nil || state.lastValidModeText != nil
+                ? String(localized: .rideNavigationBikeReconnecting)
+                : nil
+        case .bluetoothUnavailable, .bluetoothUnauthorized, .bluetoothPoweredOff,
+             .pairingResetRequired, .disconnected, .failed:
+            return String(localized: .rideNavigationBikeDisconnected)
+        case .idle:
+            return nil
+        }
     }
 
     var routeRows: [RideNavigationRouteRow] {
@@ -197,7 +248,10 @@ extension RideNavigationViewModel {
                 trailExit: trailExitPreview,
                 trailExitRevision: state.trailExitPreviewRevision,
                 rejoinGuide: rejoinGuide(inFocusModeOnly: true),
-                traces: routeTraces
+                traces: routeTraces,
+                lineAppearances: appSettings.rideNavigation.lineAppearances,
+                showsCompassRing: appSettings.rideNavigation.showsCompassRing,
+                showsRoadsInFocus: appSettings.rideNavigation.showsRoadsInFocus
             )
         )
     }

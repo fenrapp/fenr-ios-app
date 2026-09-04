@@ -8,7 +8,6 @@ final class IncomingMapLinkController {
     private let onRequest: @MainActor (AppExternalNavigationRequest) -> Void
     private var consumeTask: Task<Void, Never>?
     private var consumeID: UUID?
-    private var didConsume = false
 
     init(
         store: any IncomingMapLinkStoring,
@@ -25,7 +24,6 @@ final class IncomingMapLinkController {
     }
 
     func consume() async {
-        guard !didConsume else { return }
         if let consumeTask {
             await consumeTask.value
             return
@@ -37,7 +35,6 @@ final class IncomingMapLinkController {
             do {
                 let link = try await store.consume()
                 guard let self, !Task.isCancelled else { return }
-                didConsume = true
                 if let link, let request = resolver.resolve(link.url) {
                     onRequest(request)
                 }

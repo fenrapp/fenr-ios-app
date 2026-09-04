@@ -1,5 +1,6 @@
 import EnvironmentDomain
 import RideNavigationDomain
+import SettingsDomain
 
 public struct RideNavigationMapSceneBuilder: Sendable {
     struct RouteTrace: Sendable {
@@ -22,6 +23,9 @@ public struct RideNavigationMapSceneBuilder: Sendable {
         let trailExitRevision: Int
         let rejoinGuide: [GeographicCoordinate]?
         let traces: [RouteTrace]
+        let lineAppearances: RideNavigationLineAppearances
+        let showsCompassRing: Bool
+        let showsRoadsInFocus: Bool
     }
 
     private let mapper: RideNavigationMapPresentationMapper
@@ -38,6 +42,9 @@ public struct RideNavigationMapSceneBuilder: Sendable {
         appendTrailExit(input, to: &polylines, markers: &markers)
         appendRejoinGuide(input.rejoinGuide, to: &polylines)
         input.traces.forEach { appendTrace($0, to: &polylines) }
+        polylines = polylines.map {
+            $0.withAppearance(lineAppearance(for: $0.role, settings: input.lineAppearances))
+        }
         return NavigationMapScene(
             source: input.source,
             displayStyle: input.displayStyle,
@@ -46,7 +53,9 @@ public struct RideNavigationMapSceneBuilder: Sendable {
             userHeadingDegrees: input.userHeadingDegrees,
             polylines: polylines,
             markers: markers,
-            directionalIndicators: overlay.directionalIndicators
+            directionalIndicators: overlay.directionalIndicators,
+            showsCompassRing: input.showsCompassRing,
+            showsRoadsInFocus: input.showsRoadsInFocus
         )
     }
 
@@ -67,8 +76,38 @@ public struct RideNavigationMapSceneBuilder: Sendable {
             userHeadingDegrees: scene.userHeadingDegrees,
             polylines: polylines,
             markers: [],
-            directionalIndicators: scene.directionalIndicators
+            directionalIndicators: scene.directionalIndicators,
+            showsCompassRing: scene.showsCompassRing,
+            showsRoadsInFocus: scene.showsRoadsInFocus
         )
+    }
+
+    private func lineAppearance(
+        for role: NavigationMapPolylineRole,
+        settings: RideNavigationLineAppearances
+    ) -> NavigationMapLineAppearance {
+        let group: RideNavigationLineGroup = switch role {
+        case .planned, .trailFuture: .pendingRoute
+        case .trailActive: .activeSection
+        case .trailCompleted, .completed: .completedRoute
+        case .recorded: .recording
+        case .approach, .rejoinGuide: .connector
+        }
+        let appearance = settings[group]
+        return NavigationMapLineAppearance(
+            red: appearance.color.red,
+            green: appearance.color.green,
+            blue: appearance.color.blue,
+            lineWidth: lineWidth(for: appearance.thickness)
+        )
+    }
+
+    private func lineWidth(for thickness: RideNavigationLineThickness) -> Double {
+        switch thickness {
+        case .thin: Constants.thinLineWidth
+        case .regular: Constants.regularLineWidth
+        case .thick: Constants.thickLineWidth
+        }
     }
 
     private func appendRoadRoute(
@@ -137,5 +176,11 @@ public struct RideNavigationMapSceneBuilder: Sendable {
                 revision: segment.points.count
             ))
         }
+    }
+
+    private enum Constants {
+        static let thinLineWidth = 4.0
+        static let regularLineWidth = 7.0
+        static let thickLineWidth = 10.0
     }
 }

@@ -68,6 +68,44 @@ struct RideNavigationPresentationMapperTests {
         #expect(hour.detail.hasPrefix("1 hr"))
     }
 
+    @Test("altitude respects units and rejects unavailable GPS samples")
+    func altitudeRespectsUnitsAndValidity() {
+        let mapper = RideNavigationPresentationMapper(locale: Locale(identifier: "en_US"))
+        let metric = mapper.altitude(
+            meters: 1_000,
+            verticalAccuracyMeters: 8,
+            measurementSystem: .metric
+        )
+        let imperial = mapper.altitude(
+            meters: 1_000,
+            verticalAccuracyMeters: 8,
+            measurementSystem: .imperial
+        )
+
+        #expect(metric?.0 == "1,000")
+        #expect(metric?.1 == "m")
+        #expect(imperial?.0 == "3,281")
+        #expect(imperial?.1 == "ft")
+        #expect(mapper.altitude(meters: nil, verticalAccuracyMeters: 8, measurementSystem: .metric) == nil)
+        #expect(
+            mapper.altitude(
+                meters: 1_000,
+                verticalAccuracyMeters: -1,
+                measurementSystem: .metric
+            ) == nil
+        )
+    }
+
+    @Test("GPX progress clamps to a localized whole percentage")
+    func progressClampsToPercentageRange() {
+        let mapper = RideNavigationPresentationMapper(locale: Locale(identifier: "en_US"))
+
+        #expect(mapper.progress(-0.2) == "0%")
+        #expect(mapper.progress(0.5) == "50%")
+        #expect(mapper.progress(1.4) == "100%")
+        #expect(mapper.progress(.nan) == nil)
+    }
+
     @Test("route detail uses injected locale and the system date style")
     func routeDetailUsesInjectedLocaleAndSystemDateStyle() {
         let locale = Locale(identifier: "es_ES")

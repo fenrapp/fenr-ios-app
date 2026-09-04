@@ -28,6 +28,9 @@ struct FocusNavigationPalette {
     var rider: Color { Color(white: riderWhiteLevel) }
     var riderOutline: Color { Color(white: riderOutlineWhiteLevel) }
     var directionalIndicator: Color { Color(white: directionalIndicatorWhiteLevel) }
+    var compassRing: Color { Color(white: riderWhiteLevel) }
+    var compassSecondary: Color { Color(white: neutralMarkerWhiteLevel) }
+    var compassNorthGradient: Gradient { Gradient(colors: [.red, .orange]) }
 
     func polylineColor(for role: NavigationMapPolylineRole) -> Color {
         switch role {

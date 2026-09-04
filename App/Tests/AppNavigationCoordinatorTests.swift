@@ -73,12 +73,31 @@ struct AppNavigationCoordinatorTests {
         #expect(coordinator.state.activeSurfaces == [.dashboard, .rideNavigation])
 
         coordinator.send(.push(.settings(.overview)))
-        #expect(coordinator.state.rideNavigationMode == .fullScreen)
-        #expect(coordinator.state.path.isEmpty)
+        #expect(coordinator.state.rideNavigationMode == .mini)
+        #expect(coordinator.state.path == [.settings(.overview)])
+        #expect(coordinator.state.activeSurfaces == [.settings, .rideNavigation])
 
         coordinator.send(.closeRideNavigation)
-        #expect(coordinator.state.activeSurfaces == [.dashboard])
+        #expect(coordinator.state.activeSurfaces == [.settings])
         #expect(coordinator.state.rideNavigationResource == nil)
+    }
+
+    @Test("Mini navigation remains active while browsing nested app destinations")
+    func miniNavigationAllowsAppNavigation() {
+        let coordinator = configuredCoordinator()
+        coordinator.send(.showRideNavigation(nil))
+        coordinator.send(.minimizeRideNavigation)
+
+        coordinator.send(.push(.settings(.navigation)))
+        coordinator.send(.push(.settings(.navigationAppearance)))
+
+        #expect(coordinator.state.rideNavigationMode == .mini)
+        #expect(coordinator.state.path == [
+            .settings(.overview),
+            .settings(.navigation),
+            .settings(.navigationAppearance)
+        ])
+        #expect(coordinator.state.activeSurfaces == [.settings, .rideNavigation])
     }
 
     @Test("Setup reset clears every navigation surface and pending request")
@@ -165,8 +184,8 @@ struct AppExternalNavigationTests {
         #expect(resolver.resolve(URL(string: "fenr-app://settings")!) == nil)
     }
 
-    @Test("Concurrent consumption is single-flight and delivers once")
-    func consumesOnceConcurrently() async {
+    @Test("Concurrent consumption is single-flight and sequential activations retry")
+    func concurrentConsumptionIsSingleFlight() async {
         let url = URL(string: "https://maps.apple.com/?daddr=40,-3")!
         let store = AppNavigationIncomingMapLinkStore(
             links: [.init(url: url, receivedAt: .distantPast)],
@@ -187,7 +206,26 @@ struct AppExternalNavigationTests {
         await second.value
         await controller.consume()
 
-        #expect(await store.consumeCount() == 1)
+        #expect(await store.consumeCount() == 2)
+        #expect(requests == [.rideNavigation(resourceURL: url)])
+    }
+
+    @Test("A link received after an empty activation is consumed on the next activation")
+    func consumesLinkReceivedAfterEmptyActivation() async {
+        let url = URL(fileURLWithPath: "/tmp/shared-route.gpx")
+        let store = AppNavigationIncomingMapLinkStore()
+        var requests: [AppExternalNavigationRequest] = []
+        let controller = IncomingMapLinkController(
+            store: store,
+            resolver: AppExternalNavigationResolver(),
+            onRequest: { requests.append($0) }
+        )
+
+        await controller.consume()
+        await store.save(.init(url: url, receivedAt: .now))
+        await controller.consume()
+
+        #expect(await store.consumeCount() == 2)
         #expect(requests == [.rideNavigation(resourceURL: url)])
     }
 
@@ -256,7 +294,14 @@ struct AppPresentationPolicyTests {
         controller.update(for: navigation.state)
         controller.update(for: navigation.state)
 
-        #expect(spy.requests == [.portrait, .landscape, .portrait])
+        navigation.send(.popToRoot)
+        navigation.send(.showRideNavigation(nil))
+        navigation.send(.minimizeRideNavigation)
+        controller.update(for: navigation.state)
+        navigation.send(.push(.settings(.overview)))
+        controller.update(for: navigation.state)
+
+        #expect(spy.requests == [.portrait, .landscape, .portrait, .landscape, .portrait])
     }
 }
 

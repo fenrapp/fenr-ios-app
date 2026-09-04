@@ -37,7 +37,16 @@ struct UserDefaultsAppSettingsRepositoryTests {
                 mapOrientation: .northUp,
                 miniMapPosition: MiniMapPosition(horizontalFraction: 0.28, verticalFraction: 0.73),
                 miniMapScale: MiniMapScale(1.3),
-                miniMapLayoutOrientation: .landscape
+                miniMapLayoutOrientation: .landscape,
+                showsGuidanceInFocus: true,
+                showsCompassRing: true,
+                showsRoadsInFocus: true,
+                lineAppearances: RideNavigationLineAppearances(
+                    pendingRoute: .init(
+                        color: .init(red: 0.1, green: 0.2, blue: 0.3),
+                        thickness: .thick
+                    )
+                )
             ),
             measurementSystem: .imperial,
             batteryPackCapacity: .sixPointEightKilowattHours

@@ -1,6 +1,22 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "rideNavigationAppleMapsCardinalEast" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "E" } } }
+    },
+    "rideNavigationAppleMapsCardinalNorth" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "N" } } }
+    },
+    "rideNavigationAppleMapsCardinalSouth" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "S" } } }
+    },
+    "rideNavigationAppleMapsCardinalWest" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "W" } } }
+    },
     "rideNavigationAppleMapsDestination" : {
       "extractionState" : "manual",
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Destination" } } }

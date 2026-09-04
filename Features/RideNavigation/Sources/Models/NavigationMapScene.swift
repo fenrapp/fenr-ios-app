@@ -7,6 +7,8 @@ public struct NavigationMapScene: Equatable, Sendable {
     public let polylines: [NavigationMapPolyline]
     public let markers: [NavigationMapMarker]
     public let directionalIndicators: [NavigationMapDirectionalIndicator]
+    public let showsCompassRing: Bool
+    public let showsRoadsInFocus: Bool
 
     public init(
         source: MapSourceDescriptor = .appleStandard,
@@ -16,7 +18,9 @@ public struct NavigationMapScene: Equatable, Sendable {
         userHeadingDegrees: Double? = nil,
         polylines: [NavigationMapPolyline] = [],
         markers: [NavigationMapMarker] = [],
-        directionalIndicators: [NavigationMapDirectionalIndicator] = []
+        directionalIndicators: [NavigationMapDirectionalIndicator] = [],
+        showsCompassRing: Bool = false,
+        showsRoadsInFocus: Bool = false
     ) {
         self.source = source
         self.displayStyle = displayStyle
@@ -26,5 +30,7 @@ public struct NavigationMapScene: Equatable, Sendable {
         self.polylines = polylines
         self.markers = markers
         self.directionalIndicators = directionalIndicators
+        self.showsCompassRing = showsCompassRing
+        self.showsRoadsInFocus = showsRoadsInFocus
     }
 }

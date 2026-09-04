@@ -28,6 +28,11 @@ public struct RideNavigationViewState: Equatable, Sendable {
     public let batteryText: String
     public let elapsedText: String
     public let distanceText: String
+    public let altitudeText: String?
+    public let altitudeUnit: String
+    public let gpxProgressText: String?
+    public let connectionNoticeText: String?
+    public let showsGuidanceInFocus: Bool
     public let guidance: RideNavigationGuidance?
     public let routeTitle: String?
     public let savedRoutes: [RideNavigationRouteRow]
@@ -74,6 +79,11 @@ public struct RideNavigationViewState: Equatable, Sendable {
         batteryText: String = "--%",
         elapsedText: String = "00:00",
         distanceText: String = "-- km",
+        altitudeText: String? = nil,
+        altitudeUnit: String = "",
+        gpxProgressText: String? = nil,
+        connectionNoticeText: String? = nil,
+        showsGuidanceInFocus: Bool = false,
         guidance: RideNavigationGuidance? = nil,
         routeTitle: String? = nil,
         savedRoutes: [RideNavigationRouteRow] = [],
@@ -119,6 +129,11 @@ public struct RideNavigationViewState: Equatable, Sendable {
         self.batteryText = batteryText
         self.elapsedText = elapsedText
         self.distanceText = distanceText
+        self.altitudeText = altitudeText
+        self.altitudeUnit = altitudeUnit
+        self.gpxProgressText = gpxProgressText
+        self.connectionNoticeText = connectionNoticeText
+        self.showsGuidanceInFocus = showsGuidanceInFocus
         self.guidance = guidance
         self.routeTitle = routeTitle
         self.savedRoutes = savedRoutes

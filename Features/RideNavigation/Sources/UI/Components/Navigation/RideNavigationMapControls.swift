@@ -3,7 +3,6 @@ import SwiftUI
 
 enum RideNavigationMapSelector {
     case source
-    case orientation
 }
 
 struct RideNavigationMapControls: View {
@@ -11,6 +10,7 @@ struct RideNavigationMapControls: View {
     let onToggleVoice: () -> Void
     let onOverview: () -> Void
     let onRecenter: () -> Void
+    let onMapHeadingUp: (Bool) -> Void
     @Binding var activeSelector: RideNavigationMapSelector?
 
     var body: some View {
@@ -23,10 +23,9 @@ struct RideNavigationMapControls: View {
                     isPresented: activeSelector == .source,
                     onPresentationChange: { activeSelector = $0 ? .source : nil }
                 )
-                RideNavigationMapOrientationMenu(
+                RideNavigationMapOrientationButton(
                     isHeadingUp: state.isHeadingUp,
-                    isPresented: activeSelector == .orientation,
-                    onPresentationChange: { activeSelector = $0 ? .orientation : nil }
+                    onToggle: { onMapHeadingUp(!state.isHeadingUp) }
                 )
                 controlButton(
                     systemImage: state.isVoiceMuted ? "speaker.slash.fill" : "speaker.wave.2.fill",
@@ -67,7 +66,6 @@ struct RideNavigationMapControls: View {
 struct RideNavigationMapSelectorPanel: View {
     let state: RideNavigationViewState
     let onMapStyle: (String) -> Void
-    let onMapHeadingUp: (Bool) -> Void
     @Binding var activeSelector: RideNavigationMapSelector?
 
     @ViewBuilder
@@ -80,11 +78,6 @@ struct RideNavigationMapSelectorPanel: View {
                 allowsFocus: state.allowsFocusMapStyle
             ) { styleID in
                 onMapStyle(styleID)
-                activeSelector = nil
-            }
-        case .orientation:
-            RideNavigationMapOrientationPicker(isHeadingUp: state.isHeadingUp) { isHeadingUp in
-                onMapHeadingUp(isHeadingUp)
                 activeSelector = nil
             }
         case nil:

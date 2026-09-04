@@ -11,6 +11,8 @@ public struct AppSettingsViewState: Equatable, Sendable {
     public let rideDisplay: SettingsNavigationSummaryViewData
     public let dashboardCards: SettingsNavigationSummaryViewData
     public let powerModes: SettingsNavigationSummaryViewData
+    public let navigation: SettingsNavigationSummaryViewData
+    public let navigationSettings: NavigationSettingsViewState
 
     public init(
         speedSource: SpeedSourceSettingsViewState,
@@ -33,7 +35,9 @@ public struct AppSettingsViewState: Equatable, Sendable {
         isBikeModelSelectionVisible: Bool = true,
         rideDisplay: SettingsNavigationSummaryViewData? = nil,
         dashboardCards: SettingsNavigationSummaryViewData? = nil,
-        powerModes: SettingsNavigationSummaryViewData? = nil
+        powerModes: SettingsNavigationSummaryViewData? = nil,
+        navigation: SettingsNavigationSummaryViewData? = nil,
+        navigationSettings: NavigationSettingsViewState = .init()
     ) {
         self.speedSource = speedSource
         self.dashboardProgressBarMode = dashboardProgressBarMode ?? .init(
@@ -53,5 +57,7 @@ public struct AppSettingsViewState: Equatable, Sendable {
         self.rideDisplay = rideDisplay ?? .init(detail: .appSettingsRideDisplayDefaultSummary)
         self.dashboardCards = dashboardCards ?? .init(detail: .appSettingsDashboardCardsDefaultSummary)
         self.powerModes = powerModes ?? .init(detail: .appSettingsPowerModesConfigured)
+        self.navigation = navigation ?? .init(detail: .appSettingsNavigationDetail)
+        self.navigationSettings = navigationSettings
     }
 }

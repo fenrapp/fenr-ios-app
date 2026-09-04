@@ -1,10 +1,17 @@
 import Foundation
 import VehicleSession
 
+struct VehicleSessionLifecycleCallCounts: Equatable {
+    let starts: Int
+    let stops: Int
+}
+
 actor TestVehicleSessionService: VehicleSessionService {
     private var continuations: [UUID: AsyncStream<VehicleSessionSnapshot>.Continuation] = [:]
     private var subscriberWaiters: [CheckedContinuation<Void, Never>] = []
     private var locationMonitoringRequests: [Bool] = []
+    private var startCallCount = 0
+    private var stopCallCount = 0
 
     func observe() -> AsyncStream<VehicleSessionSnapshot> {
         let id = UUID()
@@ -19,8 +26,8 @@ actor TestVehicleSessionService: VehicleSessionService {
         return stream
     }
 
-    func start() async {}
-    func stop() async {}
+    func start() async { startCallCount += 1 }
+    func stop() async { stopCallCount += 1 }
     func refreshBikeStatus() async {}
     func zeroBikeAttitude() async {}
     func setBatteryHealthMonitoringRequired(_: Bool, consumerID _: UUID) async {}
@@ -44,6 +51,10 @@ actor TestVehicleSessionService: VehicleSessionService {
 
     func activeObserverCount() -> Int {
         continuations.count
+    }
+
+    func lifecycleCallCounts() -> VehicleSessionLifecycleCallCounts {
+        VehicleSessionLifecycleCallCounts(starts: startCallCount, stops: stopCallCount)
     }
 
     private func removeObserver(_ id: UUID) {

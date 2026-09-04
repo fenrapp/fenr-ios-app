@@ -32,6 +32,7 @@ struct RideNavigationMapOverlay: View {
     let onKeepRidingWithIncomingDestination: () -> Void
     let onEndRideAndOpenIncomingDestination: () -> Void
     @State private var showsFinishConfirmation = false
+    private let guidanceVisibilityPolicy = RideNavigationGuidanceVisibilityPolicy()
     @State private var showsTrailExitConfirmation = false
     var body: some View {
         ZStack {
@@ -39,7 +40,6 @@ struct RideNavigationMapOverlay: View {
             if showsFinishConfirmation {
                 RideNavigationFinishConfirmationOverlay(
                     activity: state.activity,
-                    isMonochrome: isFocus,
                     onCancel: dismissFinishConfirmation,
                     onConfirm: confirmFinish
                 )
@@ -50,7 +50,6 @@ struct RideNavigationMapOverlay: View {
             if let arrivalPrompt = state.arrivalPrompt {
                 RideNavigationFinishConfirmationOverlay(
                     activity: state.activity,
-                    isMonochrome: isFocus,
                     arrivalPrompt: arrivalPrompt,
                     onCancel: onKeepRidingAfterArrival,
                     onConfirm: onFinishAfterArrival
@@ -124,10 +123,7 @@ private extension RideNavigationMapOverlay {
                         planningOptions
                             .transition(.opacity)
                     }
-                    guidance
-                    forkGuidance
-                    trailExitPreview
-                    Spacer(minLength: DesignSpace.medium)
+                    standardMiddle
                 }
                 if !usesCompactAccessibilityLayout { bottomContent }
             }
@@ -141,34 +137,49 @@ private extension RideNavigationMapOverlay {
         }
         .padding(DesignSpace.medium)
     }
-    @ViewBuilder
-    private var accessibilityMiddle: some View {
-        if hasAccessibilityMiddleContent || usesCompactAccessibilityLayout {
-            ScrollView(.vertical) {
-                VStack(alignment: .leading, spacing: DesignSpace.small) {
-                    if activeMapSelector != nil {
-                        mapSelectorPanel
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                    }
-                    if showsControls {
-                        planningOptions
-                            .transition(.opacity)
-                    }
-                    guidance
-                    forkGuidance
-                    trailExitPreview
-                    if usesCompactAccessibilityLayout { compactBottomContent }
-                }
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .top)
-            }
-            .scrollIndicators(.visible)
-            .id(usesCompactAccessibilityLayout && state.activity == .paused)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .contentShape(Rectangle())
-        } else {
-            Spacer(minLength: DesignSpace.medium)
+    private var standardMiddle: some View {
+        RideNavigationMapMiddleRegion(
+            hasContent: hasStandardMiddleContent,
+            showsScrollIndicators: false
+        ) {
+            standardMiddleContent
         }
+    }
+
+    private var standardMiddleContent: some View {
+        VStack(alignment: .leading, spacing: DesignSpace.small) {
+            guidance
+            forkGuidance
+            trailExitPreview
+        }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+    }
+    private var accessibilityMiddle: some View {
+        RideNavigationMapMiddleRegion(
+            hasContent: hasAccessibilityMiddleContent || usesCompactAccessibilityLayout,
+            showsScrollIndicators: true
+        ) {
+            accessibilityMiddleContent
+        }
+        .id(usesCompactAccessibilityLayout && state.activity == .paused)
+    }
+
+    private var accessibilityMiddleContent: some View {
+        VStack(alignment: .leading, spacing: DesignSpace.small) {
+            if activeMapSelector != nil {
+                mapSelectorPanel
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            if showsControls {
+                planningOptions
+                    .transition(.opacity)
+            }
+            guidance
+            forkGuidance
+            trailExitPreview
+            if usesCompactAccessibilityLayout { compactBottomContent }
+        }
+        .frame(maxWidth: .infinity, alignment: .top)
     }
     private var topControls: some View {
         RideNavigationTopControls(
@@ -177,7 +188,8 @@ private extension RideNavigationMapOverlay {
             onClose: { perform(handleClose) },
             onToggleVoice: { perform(onToggleVoice) },
             onOverview: { perform(onOverview) },
-            onRecenter: { perform(onRecenter) }
+            onRecenter: { perform(onRecenter) },
+            onMapHeadingUp: { isHeadingUp in perform { onMapHeadingUp(isHeadingUp) } }
         )
     }
     private var planningOptions: some View {
@@ -192,7 +204,6 @@ private extension RideNavigationMapOverlay {
         RideNavigationMapSelectorPanel(
             state: state,
             onMapStyle: { styleID in perform { onMapStyle(styleID) } },
-            onMapHeadingUp: { isHeadingUp in perform { onMapHeadingUp(isHeadingUp) } },
             activeSelector: $activeMapSelector
         )
         .transition(.scale(scale: Constants.mapSelectorTransitionScale, anchor: .topTrailing)
@@ -205,31 +216,42 @@ private extension RideNavigationMapOverlay {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         } else {
             RideNavigationCompactDashboard(state: state)
+                .allowsHitTesting(false)
                 .transition(.scale(scale: Constants.compactTransitionScale).combined(with: .opacity))
         }
     }
     private var hasAccessibilityMiddleContent: Bool { activeMapSelector != nil
         || (showsControls && hasPlanningOptions) || state.isRerouting
         || state.guidance != nil || state.forkGuidance != nil || state.trailExitPreview != nil }
+    private var hasStandardMiddleContent: Bool {
+        if shouldShowGuidance || state.trailExitPreview != nil { return true }
+        guard let forkGuidance = state.forkGuidance else { return false }
+        return shouldShowForkGuidance(forkGuidance)
+    }
     private var usesCompactAccessibilityLayout: Bool { dynamicTypeSize.isAccessibilitySize
         && verticalSizeClass == .compact }
     private var hasPlanningOptions: Bool { (state.activity == .preview
         && state.roadRouteOptions.count > 1) || state.showsRoadRoutePreferences }
+    @ViewBuilder
     private var guidance: some View {
-        RideNavigationGuidanceCard(
-            state: state,
-            isMonochrome: isFocus,
-            usesFullWidth: usesCompactAccessibilityLayout
-        )
+        if shouldShowGuidance {
+            RideNavigationGuidanceCard(
+                state: state,
+                isMonochrome: isFocus
+            )
+            .allowsHitTesting(false)
+        }
     }
     @ViewBuilder
     private var forkGuidance: some View {
-        if let forkGuidance = state.forkGuidance {
+        if let forkGuidance = state.forkGuidance,
+           shouldShowForkGuidance(forkGuidance) {
             RideNavigationForkGuidanceCard(
                 guidance: forkGuidance,
                 isMonochrome: isFocus
             )
             .frame(maxWidth: .infinity, alignment: .leading)
+            .allowsHitTesting(false)
         }
     }
     private var bottomDashboard: some View {
@@ -251,6 +273,7 @@ private extension RideNavigationMapOverlay {
             bottomDashboard
         } else {
             RideNavigationCompactDashboard(state: state)
+                .allowsHitTesting(false)
         }
     }
     @ViewBuilder
@@ -274,6 +297,21 @@ private extension RideNavigationMapOverlay {
         )
     }
     private var isFocus: Bool { state.mapScene.displayStyle == .focus }
+    private var shouldShowGuidance: Bool {
+        guidanceVisibilityPolicy.showsGuidance(
+            isFocus: isFocus,
+            showsGuidanceInFocus: state.showsGuidanceInFocus,
+            isRerouting: state.isRerouting,
+            guidance: state.guidance
+        )
+    }
+    private func shouldShowForkGuidance(_ guidance: RideNavigationForkGuidance) -> Bool {
+        guidanceVisibilityPolicy.showsForkGuidance(
+            isFocus: isFocus,
+            showsGuidanceInFocus: state.showsGuidanceInFocus,
+            guidance: guidance
+        )
+    }
     private func dismissFinishConfirmation() { perform { showsFinishConfirmation = false } }
     private func confirmFinish() {
         perform {

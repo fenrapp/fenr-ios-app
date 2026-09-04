@@ -20,6 +20,53 @@ struct RideNavigationSettingsTests {
         #expect(settings.miniMapPosition == .topTrailing)
         #expect(settings.miniMapScale == .initial)
         #expect(settings.miniMapLayoutOrientation == .portrait)
+        #expect(!settings.showsGuidanceInFocus)
+        #expect(!settings.showsCompassRing)
+        #expect(!settings.showsRoadsInFocus)
+        #expect(settings.lineAppearances == RideNavigationLineAppearances())
+    }
+
+    @Test("Round trips navigation visibility and route appearances")
+    func roundTripsNavigationAppearanceSettings() throws {
+        var appearances = RideNavigationLineAppearances()
+        appearances[.pendingRoute] = RideNavigationLineAppearance(
+            color: RideNavigationLineColor(red: 0.15, green: 0.45, blue: 0.75),
+            thickness: .thin
+        )
+        appearances[.connector] = RideNavigationLineAppearance(
+            color: RideNavigationLineColor(red: 0.8, green: 0.2, blue: 0.1),
+            thickness: .thick
+        )
+        let settings = RideNavigationSettings(
+            showsGuidanceInFocus: true,
+            showsCompassRing: true,
+            showsRoadsInFocus: true,
+            lineAppearances: appearances
+        )
+
+        let data = try JSONEncoder().encode(settings)
+        let decoded = try JSONDecoder().decode(RideNavigationSettings.self, from: data)
+
+        #expect(decoded == settings)
+    }
+
+    @Test("Normalizes opaque sRGB route colors")
+    func normalizesRouteColors() throws {
+        let color = RideNavigationLineColor(
+            red: -.infinity,
+            green: 1.5,
+            blue: .nan
+        )
+
+        #expect(color.red == 0)
+        #expect(color.green == 1)
+        #expect(color.blue == 0)
+
+        let decoded = try JSONDecoder().decode(
+            RideNavigationLineColor.self,
+            from: Data(#"{"red":-2,"green":0.5,"blue":8}"#.utf8)
+        )
+        #expect(decoded == RideNavigationLineColor(red: 0, green: 0.5, blue: 1))
     }
 
     @Test("Migrates a saved mini map corner to its normalized position")

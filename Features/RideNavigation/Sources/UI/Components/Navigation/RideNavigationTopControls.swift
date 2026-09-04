@@ -10,18 +10,24 @@ struct RideNavigationTopControls: View {
     let onToggleVoice: () -> Void
     let onOverview: () -> Void
     let onRecenter: () -> Void
+    let onMapHeadingUp: (Bool) -> Void
 
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(alignment: .top, spacing: DesignSpace.small) {
-                routeHeader
-                Spacer(minLength: DesignSpace.medium)
-                mapControls
-            }
-            VStack(alignment: .leading, spacing: DesignSpace.small) {
-                routeHeader
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                mapControls
+        HStack(alignment: .top, spacing: DesignSpace.small) {
+            routeHeader
+            Spacer(minLength: DesignSpace.medium)
+            rightControls
+        }
+    }
+
+    private var rightControls: some View {
+        HStack(spacing: DesignSpace.small) {
+            mapControls
+            if let altitudeText = state.altitudeText {
+                RideNavigationAltitudeChip(
+                    value: altitudeText,
+                    unit: state.altitudeUnit
+                )
             }
         }
     }
@@ -32,6 +38,7 @@ struct RideNavigationTopControls: View {
             onToggleVoice: onToggleVoice,
             onOverview: onOverview,
             onRecenter: onRecenter,
+            onMapHeadingUp: onMapHeadingUp,
             activeSelector: $activeMapSelector
         )
     }

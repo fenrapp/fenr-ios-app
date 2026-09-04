@@ -99,6 +99,46 @@ struct AppSettingsViewModelTests {
         viewModel.stop()
     }
 
+    @Test("Saves navigation toggles, colors, and thickness")
+    func savesNavigationSettings() async {
+        let fixture = AppSettingsViewModelFixture()
+        let viewModel = fixture.viewModel
+
+        await fixture.start()
+        viewModel.setShowsGuidanceInFocus(true)
+        viewModel.setShowsCompassRing(true)
+        viewModel.setShowsRoadsInFocus(true)
+        viewModel.setNavigationLineColor(
+            groupID: RideNavigationLineGroup.activeSection.rawValue,
+            red: 0.2,
+            green: 0.4,
+            blue: 0.6
+        )
+        viewModel.selectNavigationLineThickness(
+            groupID: RideNavigationLineGroup.activeSection.rawValue,
+            thicknessID: RideNavigationLineThickness.thin.rawValue
+        )
+
+        #expect(viewModel.viewState.navigationSettings.showsGuidanceInFocus)
+        #expect(viewModel.viewState.navigationSettings.showsCompassRing)
+        #expect(viewModel.viewState.navigationSettings.showsRoadsInFocus)
+        let activeStyle = viewModel.viewState.navigationSettings.lineStyles.first {
+            $0.id == RideNavigationLineGroup.activeSection.rawValue
+        }
+        #expect(activeStyle?.color == NavigationColorComponents(red: 0.2, green: 0.4, blue: 0.6))
+        #expect(activeStyle?.thickness.selectedID == RideNavigationLineThickness.thin.rawValue)
+        #expect(await waitUntil {
+            let settings = await fixture.settingsRepository.settings.rideNavigation
+            return settings.showsGuidanceInFocus
+                && settings.showsCompassRing
+                && settings.showsRoadsInFocus
+                && settings.lineAppearances.activeSection.thickness == .thin
+                && settings.lineAppearances.activeSection.color
+                    == RideNavigationLineColor(red: 0.2, green: 0.4, blue: 0.6)
+        })
+        viewModel.stop()
+    }
+
     @Test("Serializes declared power tier saves")
     func serializesDeclaredPowerTierSaves() async {
         let fixture = AppSettingsViewModelFixture(

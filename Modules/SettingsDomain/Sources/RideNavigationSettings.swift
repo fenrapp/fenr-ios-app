@@ -6,6 +6,10 @@ public struct RideNavigationSettings: Codable, Equatable, Sendable {
     public var miniMapPosition: MiniMapPosition
     public var miniMapScale: MiniMapScale
     public var miniMapLayoutOrientation: MiniMapLayoutOrientation
+    public var showsGuidanceInFocus: Bool
+    public var showsCompassRing: Bool
+    public var showsRoadsInFocus: Bool
+    public var lineAppearances: RideNavigationLineAppearances
 
     public init(
         avoidsTolls: Bool = false,
@@ -14,7 +18,11 @@ public struct RideNavigationSettings: Codable, Equatable, Sendable {
         mapOrientation: RideNavigationMapOrientationPreference = .headingUp,
         miniMapPosition: MiniMapPosition = .topTrailing,
         miniMapScale: MiniMapScale = .initial,
-        miniMapLayoutOrientation: MiniMapLayoutOrientation = .portrait
+        miniMapLayoutOrientation: MiniMapLayoutOrientation = .portrait,
+        showsGuidanceInFocus: Bool = false,
+        showsCompassRing: Bool = false,
+        showsRoadsInFocus: Bool = false,
+        lineAppearances: RideNavigationLineAppearances = .init()
     ) {
         self.avoidsTolls = avoidsTolls
         self.avoidsHighways = avoidsHighways
@@ -23,6 +31,10 @@ public struct RideNavigationSettings: Codable, Equatable, Sendable {
         self.miniMapPosition = miniMapPosition
         self.miniMapScale = miniMapScale
         self.miniMapLayoutOrientation = miniMapLayoutOrientation
+        self.showsGuidanceInFocus = showsGuidanceInFocus
+        self.showsCompassRing = showsCompassRing
+        self.showsRoadsInFocus = showsRoadsInFocus
+        self.lineAppearances = lineAppearances
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -33,6 +45,10 @@ public struct RideNavigationSettings: Codable, Equatable, Sendable {
         case miniMapPosition
         case miniMapScale
         case miniMapLayoutOrientation
+        case showsGuidanceInFocus
+        case showsCompassRing
+        case showsRoadsInFocus
+        case lineAppearances
         case miniMapCorner
     }
 
@@ -59,6 +75,22 @@ public struct RideNavigationSettings: Codable, Equatable, Sendable {
             MiniMapLayoutOrientation.self,
             forKey: .miniMapLayoutOrientation
         ) ?? .portrait
+        showsGuidanceInFocus = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .showsGuidanceInFocus
+        ) ?? false
+        showsCompassRing = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .showsCompassRing
+        ) ?? false
+        showsRoadsInFocus = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .showsRoadsInFocus
+        ) ?? false
+        lineAppearances = try container.decodeIfPresent(
+            RideNavigationLineAppearances.self,
+            forKey: .lineAppearances
+        ) ?? .init()
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -70,6 +102,10 @@ public struct RideNavigationSettings: Codable, Equatable, Sendable {
         try container.encode(miniMapPosition, forKey: .miniMapPosition)
         try container.encode(miniMapScale, forKey: .miniMapScale)
         try container.encode(miniMapLayoutOrientation, forKey: .miniMapLayoutOrientation)
+        try container.encode(showsGuidanceInFocus, forKey: .showsGuidanceInFocus)
+        try container.encode(showsCompassRing, forKey: .showsCompassRing)
+        try container.encode(showsRoadsInFocus, forKey: .showsRoadsInFocus)
+        try container.encode(lineAppearances, forKey: .lineAppearances)
     }
 }
 

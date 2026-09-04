@@ -6,7 +6,6 @@ struct RideNavigationGuidanceCard: View {
     @Environment(\.colorScheme) private var colorScheme
     let state: RideNavigationViewState
     let isMonochrome: Bool
-    let usesFullWidth: Bool
 
     @ViewBuilder
     var body: some View {
@@ -33,12 +32,12 @@ struct RideNavigationGuidanceCard: View {
                 VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
                     Text(guidance.text)
                         .font(.headline.weight(.semibold))
-                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                        .fixedSize(horizontal: false, vertical: true)
                     if let detail = guidance.detail {
                         Text(detail)
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
@@ -46,7 +45,7 @@ struct RideNavigationGuidanceCard: View {
             }
             .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
             .padding(.horizontal, DesignSpace.medium)
-            .frame(maxWidth: usesFullWidth ? .infinity : Constants.width)
+            .frame(maxWidth: .infinity)
             .frame(minHeight: Constants.height)
             .rideNavigationGlassSurface(cornerRadius: Constants.radius)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -58,7 +57,6 @@ struct RideNavigationGuidanceCard: View {
     }
 
     private enum Constants {
-        static let width: CGFloat = 360
         static let height: CGFloat = 52
         static let radius: CGFloat = 18
     }

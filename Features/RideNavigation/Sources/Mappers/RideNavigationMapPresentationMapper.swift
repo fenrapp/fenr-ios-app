@@ -183,8 +183,8 @@ public struct RideNavigationMapPresentationMapper: Sendable {
     }
 
     private enum Constants {
-        static let maximumPreviewIndicators = 200
-        static let previewMinimumIndicatorSpacingMeters = 40.0
+        static let maximumPreviewIndicators = 24
+        static let previewMinimumIndicatorSpacingMeters = 250.0
         static let indicatorBearingLookAheadMeters = 5.0
     }
 }

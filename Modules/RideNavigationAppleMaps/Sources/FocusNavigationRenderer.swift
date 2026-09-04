@@ -18,7 +18,62 @@ final class FocusNavigationRenderer {
         drawPolylines(scene: scene, in: &context, viewport: viewport, palette: palette)
         drawDirectionalIndicators(scene: scene, in: &context, viewport: viewport, palette: palette)
         drawMarkers(scene: scene, in: &context, viewport: viewport, palette: palette)
+        drawCompassRing(scene: scene, in: &context, viewport: viewport, palette: palette)
         drawRider(scene: scene, in: &context, viewport: viewport, palette: palette)
+    }
+
+    private func drawCompassRing(
+        scene: NavigationMapScene,
+        in context: inout GraphicsContext,
+        viewport: FocusNavigationViewport,
+        palette: FocusNavigationPalette
+    ) {
+        guard scene.showsCompassRing, let coordinate = scene.userCoordinate else { return }
+        let center = viewport.point(for: coordinate)
+        let diameter = Constants.compassRadius * 2
+        let ringRect = CGRect(
+            x: center.x - Constants.compassRadius,
+            y: center.y - Constants.compassRadius,
+            width: diameter,
+            height: diameter
+        )
+        context.stroke(
+            Path(ellipseIn: ringRect),
+            with: .color(palette.compassRing),
+            lineWidth: Constants.compassRingWidth
+        )
+        for cardinal in NavigationCardinal.allCases {
+            let angle = (cardinal.bearingDegrees - viewport.rotationDegrees)
+                * .pi / Constants.halfCircleDegrees
+            var label = context.resolve(
+                Text(cardinal.resource).font(
+                    .system(
+                        size: Constants.compassFontSize,
+                        weight: cardinal.isNorth ? .bold : .medium
+                    )
+                )
+            )
+            let size = label.measure(in: Constants.compassLabelMeasurementSize)
+            let radialHalfExtent = abs(sin(angle)) * size.width / 2
+                + abs(cos(angle)) * size.height / 2
+            let labelRadius = Constants.compassRadius
+                + Constants.compassLabelMargin
+                + radialHalfExtent
+            let point = CGPoint(
+                x: center.x + sin(angle) * labelRadius,
+                y: center.y - cos(angle) * labelRadius
+            )
+            if cardinal.isNorth {
+                label.shading = .linearGradient(
+                    palette.compassNorthGradient,
+                    startPoint: CGPoint(x: point.x, y: point.y - size.height / 2),
+                    endPoint: CGPoint(x: point.x, y: point.y + size.height / 2)
+                )
+            } else {
+                label.shading = .color(palette.compassSecondary)
+            }
+            context.draw(label, at: point, anchor: .center)
+        }
     }
 
     private func drawPolylines(
@@ -150,6 +205,11 @@ final class FocusNavigationRenderer {
         static let chevronHalfWidth: CGFloat = 7
         static let chevronHalfHeight: CGFloat = 5
         static let chevronLineWidth: CGFloat = 4
+        static let compassRadius: CGFloat = 38
+        static let compassLabelMargin: CGFloat = 2
+        static let compassLabelMeasurementSize = CGSize(width: 100, height: 100)
+        static let compassRingWidth: CGFloat = 1.5
+        static let compassFontSize: CGFloat = 9
         static let halfCircleDegrees = 180.0
     }
 }

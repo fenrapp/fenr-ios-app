@@ -56,6 +56,7 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
                         notificationGenerator: UINotificationFeedbackGenerator()
                     ),
                     loadSettings: LoadAppSettingsUseCase(repository: settingsRepository),
+                    observeSettings: ObserveAppSettingsUseCase(repository: settingsRepository),
                     saveSettings: SaveAppSettingsUseCase(repository: settingsRepository),
                     presentationMapper: RideNavigationPresentationMapper(locale: .autoupdatingCurrent),
                     mapPresentationMapper: mapPresentationMapper,

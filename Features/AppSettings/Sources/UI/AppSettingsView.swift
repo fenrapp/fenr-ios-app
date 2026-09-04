@@ -81,6 +81,14 @@ public struct AppSettingsView: View {
     private var ridingSection: some View {
         Section {
             SettingsNavigationRow(
+                icon: "location.north.line.fill",
+                iconTint: .blue,
+                title: .appSettingsNavigationTitle,
+                detail: viewModel.viewState.navigation.detail,
+                accessibilityIdentifier: "settings.navigation",
+                action: { onNavigation(.show(.navigation)) }
+            )
+            SettingsNavigationRow(
                 icon: "clock.arrow.circlepath",
                 iconTint: .cyan,
                 title: .appSettingsRideHistoryTitle,

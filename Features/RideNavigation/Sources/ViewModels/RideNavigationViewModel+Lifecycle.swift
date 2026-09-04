@@ -40,6 +40,7 @@ extension RideNavigationViewModel {
                   ),
                   isStarted else { return }
             receiveLoadedSettings(settings)
+            startSettingsObservation(lifecycle: lifecycle)
         }
     }
 
@@ -71,6 +72,8 @@ extension RideNavigationViewModel {
         loadingTask = nil
         settingsLoadingTask?.cancel()
         settingsLoadingTask = nil
+        settingsObservationTask?.cancel()
+        settingsObservationTask = nil
         settingsSaveTask?.cancel()
         settingsSaveTask = nil
         routeSaveTask?.cancel()
