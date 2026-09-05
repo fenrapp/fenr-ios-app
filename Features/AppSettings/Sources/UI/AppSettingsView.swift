@@ -25,6 +25,7 @@ public struct AppSettingsView: View {
             ridingSection
             bikeSection
             appSection
+            LegalSettingsSection(onNavigation: onNavigation)
             advancedSection
             #else
             watchSettings
@@ -164,6 +165,22 @@ public struct AppSettingsView: View {
                 title: .appSettingsMeasurementUnitsTitle,
                 selection: measurementSystemBinding,
                 options: viewModel.viewState.measurementSystem.options
+            )
+            SettingsNavigationRow(
+                icon: "questionmark.circle",
+                iconTint: .blue,
+                title: .appSettingsSupportTitle,
+                detail: .appSettingsSupportDetail,
+                accessibilityIdentifier: "settings.support",
+                action: { onNavigation(.openSupport) }
+            )
+            SettingsNavigationRow(
+                icon: "heart.text.clipboard",
+                iconTint: .pink,
+                title: .appSettingsAcknowledgmentsTitle,
+                detail: .appSettingsAcknowledgmentsDetail,
+                accessibilityIdentifier: "settings.acknowledgments",
+                action: { onNavigation(.show(.acknowledgments)) }
             )
         } header: {
             Text(.appSettingsAppSection)

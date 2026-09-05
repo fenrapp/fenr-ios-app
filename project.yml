@@ -3,9 +3,12 @@ options:
   minimumXcodeGenVersion: 2.42.0
   createIntermediateGroups: true
   developmentLanguage: en
+  postGenCommand: python3 scripts/configure-routing-coverage.py
   deploymentTarget:
     iOS: "17.0"
     watchOS: "10.0"
+fileGroups:
+  - docs/app-store
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -95,6 +98,9 @@ targets:
     supportedDestinations: [iOS, watchOS]
     sources:
       - path: Modules/BikeData/Sources
+      - path: Modules/BikeData/Resources/iOS/PrivacyInfo.xcprivacy
+        buildPhase: resources
+        destinationFilters: [iOS]
     dependencies:
       - target: AsyncSupport
       - target: BikeDomain
@@ -236,6 +242,8 @@ targets:
     platform: iOS
     sources:
       - path: Modules/RideNavigationData/Sources
+      - path: Modules/RideNavigationData/Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
     dependencies:
       - target: EnvironmentDomain
       - target: RideNavigationDomain
@@ -257,6 +265,9 @@ targets:
     supportedDestinations: [iOS, watchOS]
     sources:
       - path: Modules/SettingsData/Sources
+      - path: Modules/SettingsData/Resources/iOS/PrivacyInfo.xcprivacy
+        buildPhase: resources
+        destinationFilters: [iOS]
     dependencies:
       - target: SettingsDomain
       - target: BikeDomain
@@ -574,6 +585,8 @@ targets:
       - path: App/Resources/Assets.xcassets
       - path: App/Resources/Shared/Localizable.xcstrings
         buildPhase: resources
+      - path: App/Resources/Shared/PrivacyInfo.xcprivacy
+        buildPhase: resources
       - path: App/Resources/Production/InfoPlist.xcstrings
         buildPhase: resources
     preBuildScripts:
@@ -720,6 +733,8 @@ targets:
       - path: App/DebugSources
       - path: App/Resources/Assets.xcassets
       - path: App/Resources/Shared/Localizable.xcstrings
+        buildPhase: resources
+      - path: App/Resources/Shared/PrivacyInfo.xcprivacy
         buildPhase: resources
       - path: App/Resources/Debug/InfoPlist.xcstrings
         buildPhase: resources

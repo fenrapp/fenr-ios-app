@@ -10,6 +10,7 @@ import RideHistory
 import SwiftUI
 
 struct AppDestinationView: View {
+    @Environment(\.openURL) private var openURL
     let route: AppRoute
     let activeSurfaces: Set<AppNavigationSurface>
     let featureStore: AppFeatureStore
@@ -82,8 +83,10 @@ struct AppDestinationView: View {
     private func handleSettingsEvent(_ event: AppSettingsNavigationEvent) {
         if event == .changeBike {
             onChangeBike()
-        } else {
-            onIntent(AppNavigationEventAdapter.intent(for: event))
+        } else if let url = AppNavigationEventAdapter.externalURL(for: event) {
+            openURL(url)
+        } else if let intent = AppNavigationEventAdapter.intent(for: event) {
+            onIntent(intent)
         }
     }
 

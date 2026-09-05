@@ -1,6 +1,44 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "appSettingsLegalSection" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Legal" } } }
+    },
+    "appSettingsPrivacyPolicyTitle" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Privacy Policy" } } }
+    },
+    "appSettingsTermsTitle" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Terms of Use" } } }
+    },
+    "appSettingsAcknowledgmentsTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Acknowledgments"}}}},
+    "appSettingsAcknowledgmentsDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Open source"}}}},
+    "appSettingsAcknowledgmentsCommunity" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Community Projects"}}}},
+    "appSettingsAcknowledgmentsCommunityDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Thank you to the people sharing their work with the riding community. These projects informed our research; their code is not bundled with FENR."}}}},
+    "appSettingsAcknowledgmentsTools" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Development Tools"}}}},
+    "appSettingsAcknowledgmentsToolsDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "These open-source tools help us build and maintain FENR."}}}},
+    "appSettingsCreditSvagMiniTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Svag Mini"}}}},
+    "appSettingsCreditSvagMiniDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Early community work on motorcycle Bluetooth telemetry."}}}},
+    "appSettingsCreditSvagTelemetryTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Svag Telemetry Format"}}}},
+    "appSettingsCreditSvagTelemetryDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "A shared vocabulary and recording format for ride data."}}}},
+    "appSettingsCreditStarkBridgeTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Stark Varg Garmin Bridge"}}}},
+    "appSettingsCreditStarkBridgeDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "A community example of connected riding displays."}}}},
+    "appSettingsCreditBoschBridgeTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Bosch Garmin Bridge"}}}},
+    "appSettingsCreditBoschBridgeDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Ideas that influenced the community bridge projects."}}}},
+    "appSettingsCreditXcodeGenTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "XcodeGen"}}}},
+    "appSettingsCreditXcodeGenDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Reproducible Xcode project generation."}}}},
+    "appSettingsCreditSwiftLintTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "SwiftLint"}}}},
+    "appSettingsCreditSwiftLintDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Consistent Swift code and automated quality checks."}}}},
+    "appSettingsSupportTitle" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Help & Support" } } }
+    },
+    "appSettingsSupportDetail" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Visit website" } } }
+    },
     "appSettingsLiveActivitiesTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Live Activities"}}}},
     "appSettingsLiveActivitiesSummary" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Riding, charging, and presentation"}}}},
     "appSettingsLiveActivitiesOff" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Hidden"}}}},

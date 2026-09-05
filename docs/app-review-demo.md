@@ -38,6 +38,18 @@ Navigation uses the iPhone's actual location if permission is granted. Map conte
 and place searches may require Internet. The demo does not simulate GPS travel.
 Denial of location permission does not prevent reviewing the motorcycle features.
 
+Settings > **Help & Support** opens https://fenr.to in the system browser in both
+the real and demo experiences. Returning to FENR retains the Settings screen.
+Settings > **Legal** links to Privacy Policy and Terms of Use. Settings >
+**Acknowledgments** lists the community projects and development tools that
+helped make FENR possible, with links to their public repositories.
+
+The iPhone app accepts Apple Maps direction requests, shared map links, and GPX
+routes. Road directions require Internet and depend on Apple Maps availability;
+worldwide geographic coverage does not guarantee a road route for every location
+or offline maps. The iOS submission coverage file and remaining publication
+checks are described in [the App Store checklist](app-store/README.md).
+
 ## Exit
 
 Open Settings and choose **Change bike**. This ends the demo and cancels its active
