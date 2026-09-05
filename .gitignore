@@ -55,3 +55,10 @@ archive/
 # Tooling
 .swiftpm/
 .xcodegen/
+
+# App Store Connect credentials, local configuration, and generated artifacts
+.asc/
+store/private/
+store/artifacts/
+*.xcarchive/
+__pycache__/

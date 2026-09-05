@@ -29,6 +29,8 @@
     "appSettingsCreditBoschBridgeDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Ideas that influenced the community bridge projects."}}}},
     "appSettingsCreditXcodeGenTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "XcodeGen"}}}},
     "appSettingsCreditXcodeGenDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Reproducible Xcode project generation."}}}},
+    "appSettingsCreditASCTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "App Store Connect CLI"}}}},
+    "appSettingsCreditASCDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Reproducible App Store metadata, screenshots, and uploads."}}}},
     "appSettingsCreditSwiftLintTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "SwiftLint"}}}},
     "appSettingsCreditSwiftLintDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Consistent Swift code and automated quality checks."}}}},
     "appSettingsSupportTitle" : {

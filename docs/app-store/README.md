@@ -7,6 +7,14 @@ this preparation. Local validation does not establish App Review approval.
 See [the dated local validation report](validation.md) for completed checks and
 the remaining manual and App Store Connect verification.
 
+## ASC workflow
+
+Use [store/README.md](../../store/README.md) for direct ASC commands, TestFlight,
+public metadata and owner-supplied final screenshots. Review notes and the PDF
+attachment are generated from [the canonical demo guide](../app-review-demo.md).
+The review path requires no physical motorcycle. Preparation, submission and
+manual public release are separate commands; this checklist remains applicable.
+
 ## Privacy manifests
 
 The following bundles declare `NSPrivacyAccessedAPICategoryUserDefaults`:
@@ -37,6 +45,17 @@ of collection by the developer.
 
 Apple references: [required-reason APIs](https://developer.apple.com/documentation/bundleresources/describing-use-of-required-reason-api),
 [API categories and reasons](https://developer.apple.com/documentation/bundleresources/app-privacy-configuration/nsprivacyaccessedapitypes/nsprivacyaccessedapitype).
+
+## Encryption declaration
+
+The FENR and FENRDebug iPhone targets declare `ITSAppUsesNonExemptEncryption: false`
+in `project.yml`. XcodeGen writes the boolean into their generated Info.plist files.
+The current authentication uses SHA-256 through Apple's CryptoKit; no independent
+cipher implementation is bundled. Reassess this declaration if cryptographic
+functionality or dependencies change. The declaration applies to newly built apps;
+it does not modify an existing archive or uploaded build.
+
+Apple reference: [non-exempt encryption declaration](https://developer.apple.com/documentation/bundleresources/information-property-list/itsappusesnonexemptencryption).
 
 ## Routing coverage
 
@@ -76,7 +95,7 @@ applies its standard EULA unless a custom license is supplied in App Store Conne
 
 Settings > **Acknowledgments** credits Svag Mini, Svag Telemetry Format,
 Stark Varg Garmin Bridge, and Bosch Garmin Bridge for the community reference
-work already acknowledged by FENR's research project. XcodeGen and SwiftLint are
+work already acknowledged by FENR's research project. XcodeGen, SwiftLint and App Store Connect CLI are
 listed separately as development tools. These credits do not claim that the
 community projects' code is bundled with the app or replace license notices for
 any future vendored dependencies.

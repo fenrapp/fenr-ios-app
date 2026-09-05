@@ -22612,7 +22612,7 @@
 				PRODUCT_NAME = "Open in FENR";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -22816,7 +22816,7 @@
 				PRODUCT_NAME = "Open in FENR Debug";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -23986,7 +23986,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "in.fenr.app.charging-live-activity";
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -24296,7 +24296,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.fenr.app.debug.charging-live-activity";
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -24377,7 +24377,7 @@
 				PRODUCT_NAME = "Open in FENR";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -24815,7 +24815,7 @@
 				PRODUCT_NAME = "Open in FENR Debug";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -25437,7 +25437,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.fenr.app.debug.charging-live-activity";
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -25576,12 +25576,6 @@
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "FENR uses Face ID to authorize unlocking your motorcycle.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "FENR uses your location for GPS speed, ride recording, and route navigation.";
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = (
-					UIInterfaceOrientationPortrait,
-					UIInterfaceOrientationPortraitUpsideDown,
-					UIInterfaceOrientationLandscapeLeft,
-					UIInterfaceOrientationLandscapeRight,
-				);
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = (
 					UIInterfaceOrientationPortrait,
 					UIInterfaceOrientationLandscapeLeft,
@@ -25593,7 +25587,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.fenr.app.debug;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -25680,12 +25674,6 @@
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "FENR uses Face ID to authorize unlocking your motorcycle.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "FENR uses your location for GPS speed, ride recording, and route navigation.";
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = (
-					UIInterfaceOrientationPortrait,
-					UIInterfaceOrientationPortraitUpsideDown,
-					UIInterfaceOrientationLandscapeLeft,
-					UIInterfaceOrientationLandscapeRight,
-				);
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = (
 					UIInterfaceOrientationPortrait,
 					UIInterfaceOrientationLandscapeLeft,
@@ -25697,7 +25685,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.fenr.app.debug;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -25714,7 +25702,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "in.fenr.app.charging-live-activity";
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -25987,12 +25975,6 @@
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "FENR uses Face ID to authorize unlocking your motorcycle.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "FENR uses your location for GPS speed, ride recording, and route navigation.";
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = (
-					UIInterfaceOrientationPortrait,
-					UIInterfaceOrientationPortraitUpsideDown,
-					UIInterfaceOrientationLandscapeLeft,
-					UIInterfaceOrientationLandscapeRight,
-				);
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = (
 					UIInterfaceOrientationPortrait,
 					UIInterfaceOrientationLandscapeLeft,
@@ -26004,7 +25986,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = in.fenr.app;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -26092,12 +26074,6 @@
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "FENR uses Face ID to authorize unlocking your motorcycle.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "FENR uses your location for GPS speed, ride recording, and route navigation.";
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = (
-					UIInterfaceOrientationPortrait,
-					UIInterfaceOrientationPortraitUpsideDown,
-					UIInterfaceOrientationLandscapeLeft,
-					UIInterfaceOrientationLandscapeRight,
-				);
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = (
 					UIInterfaceOrientationPortrait,
 					UIInterfaceOrientationLandscapeLeft,
@@ -26109,7 +26085,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = in.fenr.app;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};

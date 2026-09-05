@@ -81,6 +81,7 @@ def validate_archive(archive):
     app = archive / "Products/Applications/FENR.app"
     info = read_plist(app / "Info.plist")
     require(info.get("CFBundleIdentifier") == "in.fenr.app", "Archive is not the production iOS app")
+    require(info.get("UIDeviceFamily") == [1], "FENR must support iPhone only")
     for key in ("NSBluetoothAlwaysUsageDescription", "NSLocationWhenInUseUsageDescription",
                 "NSFaceIDUsageDescription"):
         require(bool(info.get(key)), f"Missing purpose string: {key}")
@@ -92,7 +93,10 @@ def validate_archive(archive):
         validate_manifest(packaged, reasons)
         require(read_plist(packaged) == read_plist(ROOT / source), f"Stale manifest in {bundle or 'FENR'}")
     for name in ("Open in FENR", "ChargingLiveActivityExtension"):
-        require((app / "PlugIns" / f"{name}.appex/Info.plist").is_file(), f"Missing extension: {name}")
+        extension = app / "PlugIns" / f"{name}.appex/Info.plist"
+        require(extension.is_file(), f"Missing extension: {name}")
+        require(read_plist(extension).get("UIDeviceFamily") == [1],
+                f"{name} must support iPhone only")
     print("Archive resources passed (distribution signing and Apple processing are separate).")
 
 

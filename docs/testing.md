@@ -77,3 +77,16 @@ xcodebuild -project FENR.xcodeproj -scheme FENRWatch -configuration Release \
   -destination "platform=watchOS Simulator,name=$FENR_WATCH_SIMULATOR,OS=26.5" \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
 ```
+
+## App Store materials
+
+Use the setup instructions in [store/README.md](../store/README.md), then run:
+
+```sh
+asc metadata validate --dir store/metadata
+.asc/venv/bin/python3 -m unittest discover -s scripts/tests -p 'test_review_document.py'
+```
+
+The PDF tests are local and exclude the engineering appendix from reviewer output.
+Use `asc metadata push --dry-run` to compare the files with Apple without writes.
+Screenshots are supplied by the owner.

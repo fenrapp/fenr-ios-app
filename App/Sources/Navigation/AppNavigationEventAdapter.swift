@@ -47,6 +47,7 @@ enum AppNavigationEventAdapter {
         case .boschGarminBridge: "https://github.com/Soarcer/bosch-garmin-bridge"
         case .xcodeGen: "https://github.com/yonaskolb/XcodeGen"
         case .swiftLint: "https://github.com/realm/SwiftLint"
+        case .appStoreConnectCLI: "https://github.com/rorkai/App-Store-Connect-CLI"
         }
         return URL(string: address)
     }
