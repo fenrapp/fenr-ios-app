@@ -44,6 +44,7 @@ struct PowerModeNameEditor: View {
                         .submitLabel(.done)
                         .onSubmit(submit)
                         .disabled(!isEnabled)
+                        .accessibilityIdentifier("powerModes.name")
 
                     nameGuidance
                         .font(.caption)

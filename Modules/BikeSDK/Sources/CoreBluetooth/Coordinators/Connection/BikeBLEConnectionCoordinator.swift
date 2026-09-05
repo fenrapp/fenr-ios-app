@@ -62,8 +62,8 @@ public final class BikeBLEConnectionCoordinator {
         await traceEmitter.finishSession(reason: .clientStopped)
     }
 
-    public func startNewDiagnosticsCapture() async -> Bool {
-        await traceEmitter.startNewCapture()
+    public func startNewDiagnosticsCapture(vin: String) async -> Bool {
+        await traceEmitter.startNewCapture(vin: vin)
     }
 
     public func stopDiagnosticsCapture() async -> Bool {
@@ -80,7 +80,7 @@ public final class BikeBLEConnectionCoordinator {
             try await eventEmitter.fail(.operationFailed(BikeSDKText.connectionAlreadyActive))
             return
         }
-        await traceEmitter.startSession(vin: targetVIN, reason: .connectionRequest)
+        await traceEmitter.selectBike(vin: targetVIN)
         await traceEmitter.record(
             category: "link",
             operation: .connectRequested,
@@ -91,7 +91,7 @@ public final class BikeBLEConnectionCoordinator {
         reconnectController.reset()
         isDiscoveringBikes = false
         sessionStore.setReconnectIntent(true)
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: "BLE",
             detail: "connect requested; target=\(maskedVIN(targetVIN)) state=\(scanner.centralStateDescription)"
         )))
@@ -101,7 +101,7 @@ public final class BikeBLEConnectionCoordinator {
     public func startBikeDiscovery() async {
         guard !sessionStore.shouldConnectWhenPoweredOn, sessionStore.peripheral == nil else { return }
         isDiscoveringBikes = true
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: "BLE",
             detail: "discovery requested; state=\(scanner.centralStateDescription)"
         )))
@@ -134,11 +134,10 @@ public final class BikeBLEConnectionCoordinator {
         }
         resetSession()
         await eventEmitter.send(.connection(.disconnected(reason: BikeSDKText.disconnectedByUser)))
-        await traceEmitter.finishSession(reason: .userDisconnected)
     }
 
     public func centralDidUpdateState() async {
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: "BLE",
             detail: "central state \(scanner.centralStateDescription)"
         )))
@@ -168,7 +167,7 @@ public final class BikeBLEConnectionCoordinator {
     }
 
     public func didDiscover(peripheral: CBPeripheral, name: String?, rssi: Int) async {
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: "Scan",
             detail: "\(name ?? "Unknown") \(rssi) dBm"
         )))
@@ -279,7 +278,6 @@ private extension BikeBLEConnectionCoordinator {
             await eventEmitter.send(.connection(.failed(
                 message: "Reconnect attempts exhausted"
             )))
-            await traceEmitter.finishSession(reason: .reconnectExhausted)
             return
         }
     }
@@ -335,7 +333,7 @@ extension BikeBLEConnectionCoordinator {
         reconnectController.reset()
         sessionStore.setReconnectIntent(false)
         await stopScan(reason: "pairing_reset_required")
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.pairingTitle,
             detail: "Pairing reset required; automatic reconnect stopped; "
                 + connectionErrorClassifier.diagnosticDetail(error)
@@ -344,6 +342,5 @@ extension BikeBLEConnectionCoordinator {
         await eventEmitter.send(.connection(.pairingResetRequired(
             message: BikeSDKText.pairingResetRequired
         )))
-        await traceEmitter.finishSession(reason: .pairingResetRequired)
     }
 }

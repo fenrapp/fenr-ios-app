@@ -16,6 +16,7 @@ struct DiagnosticsBLELogsView: View {
             if let error = state.bleTraceError {
                 Section {
                     Label(error, systemImage: "exclamationmark.triangle.fill")
+                        .accessibilityIdentifier("diagnostics.bleLogs.error")
                         .foregroundStyle(DesignColor.critical)
                 }
             }
@@ -23,6 +24,7 @@ struct DiagnosticsBLELogsView: View {
             if let activeSession {
                 Section(DiagnosticsCopy.recordingNow) {
                     sessionLink(activeSession)
+                        .accessibilityIdentifier("diagnostics.bleLogs.recording")
                 }
             }
 
@@ -90,6 +92,7 @@ struct DiagnosticsBLELogsView: View {
                         .foregroundStyle(DesignColor.critical)
                         .frame(minWidth: Constants.toolbarTarget, minHeight: Constants.toolbarTarget)
                 }
+                .accessibilityIdentifier(isRecording ? "diagnostics.bleLogs.stop" : "diagnostics.bleLogs.start")
                 .disabled(!captureControlIsEnabled)
                 .accessibilityLabel(captureActionTitle)
             }
@@ -106,6 +109,7 @@ struct DiagnosticsBLELogsView: View {
         } label: {
             DiagnosticsBLETraceRow(session: session)
         }
+        .accessibilityIdentifier("diagnostics.bleLogs.session")
         .swipeActions(edge: .leading, allowsFullSwipe: false) {
             Button {
                 feedbackToken += 1
@@ -161,7 +165,7 @@ struct DiagnosticsBLELogsView: View {
     }
 
     private var captureControlIsEnabled: Bool {
-        isRecording || state.isDisconnectEnabled
+        isRecording || state.isBLETraceCaptureAvailable
     }
 
     private var captureActionTitle: String {

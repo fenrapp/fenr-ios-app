@@ -62,6 +62,7 @@ struct BikeBLEPairingRetryControllerTests {
         BikeBLEPairingRetryController(
             eventEmitter: BikeBLEEventEmitter(
                 eventHub: AsyncEventHub<BikeSDKEvent>(bufferingPolicy: .unbounded),
+                captureState: makeEnabledCaptureState(),
                 connectionStatusObserver: { _ in }
             ),
             recoveryHandler: recoveryHandler,

@@ -37,7 +37,7 @@ public final class BikeBLESecurityWatchdog {
 
     public func handle(error: Error, characteristicUUID: String) async {
         let detail = "\(BikeSDKText.securityChallenge) \(characteristicUUID): \(error.localizedDescription)"
-        await eventEmitter.send(.debug(.init(title: BikeSDKText.pairingTitle, detail: detail)))
+        await eventEmitter.sendDiagnostic(.debug(.init(title: BikeSDKText.pairingTitle, detail: detail)))
         await fail(error.requiresPairingOrEncryption ? BikeSDKText.securityChallengeGuidance : detail)
     }
 

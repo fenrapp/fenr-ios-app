@@ -224,7 +224,7 @@ struct DemoExperienceControllerTests {
             selectionStore: selection,
             makeReal: {
                 recorder.record("build-real")
-                let root = ProductionAppDependencyContainerFactory.makeDefault(
+                let root = try ProductionAppDependencyContainerFactory.makeDefault(
                     maintenanceReminderScheduler: NoOpMaintenanceReminderScheduler()
                 ).makeRootDependencies()
                 return AppExperience(id: UUID(), root: root, demoViewModel: nil, close: {}, discard: {})

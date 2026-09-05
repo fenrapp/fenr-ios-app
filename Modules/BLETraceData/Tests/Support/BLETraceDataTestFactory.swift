@@ -4,6 +4,7 @@ import BLETraceDomain
 import Foundation
 
 struct BLETraceDataTestContext {
+    let captureState: BLETraceCaptureState
     let repository: FileBLETraceLogRepository
     let directory: URL
     let exportDirectory: URL
@@ -16,12 +17,13 @@ func makeBLETraceDataTestContext(
     now: @escaping @Sendable () -> Date = { Date(timeIntervalSince1970: 100) },
     fileManager: sending FileManager = .default,
     writerTaskStarter: any BLETraceWriterTaskStarter = LiveBLETraceWriterTaskStarter()
-) throws -> BLETraceDataTestContext {
+) -> BLETraceDataTestContext {
+    let captureState = BLETraceCaptureState()
     let root = root ?? FileManager.default.temporaryDirectory
         .appendingPathComponent(UUID().uuidString, isDirectory: true)
     let directory = root.appendingPathComponent("logs", isDirectory: true)
     let exportDirectory = root.appendingPathComponent("exports", isDirectory: true)
-    let repository = try FileBLETraceLogRepository.make(
+    let repository = FileBLETraceLogRepository.make(
         directory: directory,
         exportDirectory: exportDirectory,
         environment: BLETraceEnvironment(
@@ -36,18 +38,21 @@ func makeBLETraceDataTestContext(
             terminalRecordReserveBytes: 256
         ),
         dependencies: BLETraceFileStoreDependencies(
+            captureState: captureState,
             fileManager: fileManager,
             lineEncoder: BLETraceJSONLineEncoder(),
             sessionHub: AsyncEventHub(
                 bufferingPolicy: .bufferingNewest(1),
                 replaysLatestValue: true
             ),
+            failureHub: AsyncEventHub(bufferingPolicy: .bufferingNewest(1), replaysLatestValue: true),
             now: now,
             uptimeNanoseconds: { 200_000_000_000 },
             writerTaskStarter: writerTaskStarter
         )
     )
     return BLETraceDataTestContext(
+        captureState: captureState,
         repository: repository,
         directory: directory,
         exportDirectory: exportDirectory

@@ -7,14 +7,16 @@ func makeRepository(
     client: BikeTelemetryClient,
     profileRepository: (any BikeProfileRepository)? = nil,
     imuMinimumInterval: TimeInterval = .zero,
-    now: @escaping @Sendable () -> Date = Date.init
+    now: @escaping @Sendable () -> Date = Date.init,
+    diagnosticsEnabled: @escaping @Sendable () -> Bool = { true }
 ) -> LiveBikeRepository {
     LiveBikeRepository(
         client: client,
         eventHandler: makeEventHandler(
             profileRepository: profileRepository,
             imuMinimumInterval: imuMinimumInterval,
-            now: now
+            now: now,
+            diagnosticsEnabled: diagnosticsEnabled
         ),
         stateStore: .init(),
         telemetryHub: .init(bufferingPolicy: .unbounded),
@@ -36,7 +38,8 @@ func makeRepository(
 private func makeEventHandler(
     profileRepository: (any BikeProfileRepository)?,
     imuMinimumInterval: TimeInterval,
-    now: @escaping @Sendable () -> Date
+    now: @escaping @Sendable () -> Date,
+    diagnosticsEnabled: @escaping @Sendable () -> Bool
 ) -> LiveBikeRepositoryEventHandler {
     LiveBikeRepositoryEventHandler(
         telemetryMapper: .init(powerCalculator: .init(), maximumPowerInputSkew: 2),
@@ -51,6 +54,7 @@ private func makeEventHandler(
         batteryDatasetMapper: .init(),
         connectionSessionPolicy: .init(),
         alphaEvidencePersistence: .init(profileRepository: profileRepository),
-        now: now
+        now: now,
+        diagnosticsEnabled: diagnosticsEnabled
     )
 }

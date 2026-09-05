@@ -6,7 +6,7 @@ import UIKit
 
 @MainActor
 struct BLETraceDependencyContainer {
-    func makeRepository() -> any BLETraceRecording & BLETraceLogRepository {
+    func makeRepository(captureState: BLETraceCaptureState) -> any BLETraceRecording & BLETraceLogRepository {
         let fileManager = FileManager.default
         guard let applicationSupport = fileManager.urls(
             for: .applicationSupportDirectory,
@@ -16,27 +16,25 @@ struct BLETraceDependencyContainer {
         else {
             return NoOpBLETraceRepository()
         }
-        do {
-            return try FileBLETraceLogRepository.make(
-                directory: applicationSupport.appendingPathComponent("BLELogs", isDirectory: true),
-                exportDirectory: caches.appendingPathComponent("BLELogExports", isDirectory: true),
-                environment: makeEnvironment(),
-                configuration: BLETraceFileStoreConfiguration(),
-                dependencies: BLETraceFileStoreDependencies(
-                    fileManager: fileManager,
-                    lineEncoder: BLETraceJSONLineEncoder(),
-                    sessionHub: AsyncEventHub(
-                        bufferingPolicy: .bufferingNewest(1),
-                        replaysLatestValue: true
-                    ),
-                    now: Date.init,
-                    uptimeNanoseconds: { DispatchTime.now().uptimeNanoseconds },
-                    writerTaskStarter: LiveBLETraceWriterTaskStarter()
-                )
+        return FileBLETraceLogRepository.make(
+            directory: applicationSupport.appendingPathComponent("BLELogs", isDirectory: true),
+            exportDirectory: caches.appendingPathComponent("BLELogExports", isDirectory: true),
+            environment: makeEnvironment(),
+            configuration: BLETraceFileStoreConfiguration(),
+            dependencies: BLETraceFileStoreDependencies(
+                captureState: captureState,
+                fileManager: fileManager,
+                lineEncoder: BLETraceJSONLineEncoder(),
+                sessionHub: AsyncEventHub(
+                    bufferingPolicy: .bufferingNewest(1),
+                    replaysLatestValue: true
+                ),
+                failureHub: AsyncEventHub(bufferingPolicy: .bufferingNewest(1), replaysLatestValue: true),
+                now: Date.init,
+                uptimeNanoseconds: { DispatchTime.now().uptimeNanoseconds },
+                writerTaskStarter: LiveBLETraceWriterTaskStarter()
             )
-        } catch {
-            return NoOpBLETraceRepository()
-        }
+        )
     }
 
     private func makeEnvironment() -> BLETraceEnvironment {

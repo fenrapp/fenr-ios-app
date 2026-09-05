@@ -9,7 +9,7 @@ struct BikeBLEAuthenticationLinkRecovery {
     let traceEmitter: BikeBLETraceEmitter
 
     func restart() async {
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.pairingTitle,
             detail: "Restarting BLE link for normal authentication"
         )))

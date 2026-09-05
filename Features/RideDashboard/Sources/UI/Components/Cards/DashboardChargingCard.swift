@@ -34,6 +34,7 @@ struct DashboardChargingCard: View {
                 ),
                 commit: setPowerLimit
             )
+            .accessibilityIdentifier("dashboard.charging.power")
             chargeControl(
                 configuration: .init(
                     title: rideDashboardLocalized(.rideDashboardChargingChargeLimit),
@@ -46,6 +47,7 @@ struct DashboardChargingCard: View {
                     setChargeTarget(value)
                 }
             )
+            .accessibilityIdentifier("dashboard.charging.target")
             DashboardChargingMetricsRow(
                 power: viewState.chargingPower,
                 current: viewState.reportedCurrent,

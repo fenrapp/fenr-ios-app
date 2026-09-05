@@ -45,5 +45,7 @@ struct RideNavigationMetricsRow: View {
             }
         }
         .fixedSize(horizontal: true, vertical: true)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("rideNavigation.metrics")
     }
 }

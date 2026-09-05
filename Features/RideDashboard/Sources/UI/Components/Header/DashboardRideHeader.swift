@@ -7,6 +7,16 @@ struct DashboardRideHeader: View {
     let toggleDeviceBatteryDisplayMode: () -> Void
 
     var body: some View {
+        ViewThatFits(in: .horizontal) {
+            horizontalHeader
+                .fixedSize(horizontal: true, vertical: true)
+            verticalHeader
+        }
+        .font(.system(size: Constants.fontSize, weight: .semibold, design: .rounded))
+        .monospacedDigit()
+    }
+
+    private var horizontalHeader: some View {
         HStack(spacing: Constants.itemSpacing) {
             clock
             if deviceBattery.isVisible {
@@ -18,8 +28,15 @@ struct DashboardRideHeader: View {
                 reconnectingChip(connectionNotice)
             }
         }
-        .font(.system(size: Constants.fontSize, weight: .semibold, design: .rounded))
-        .monospacedDigit()
+    }
+
+    private var verticalHeader: some View {
+        VStack(alignment: .leading, spacing: Constants.compactSpacing) {
+            clock
+            if deviceBattery.isVisible { phoneBattery }
+            if let connectionNotice { reconnectingChip(connectionNotice) }
+        }
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private func reconnectingChip(_ notice: DashboardConnectionNoticeViewData) -> some View {
@@ -45,15 +62,19 @@ struct DashboardRideHeader: View {
 
     private var phoneBattery: some View {
         Button(action: toggleDeviceBatteryDisplayMode) {
-            if deviceBattery.showsIcon, deviceBattery.showsPercentage {
-                Label(deviceBattery.percentageText, systemImage: deviceBattery.systemImage)
-            } else if deviceBattery.showsPercentage {
-                Text(deviceBattery.percentageText)
-            } else if deviceBattery.showsIcon {
-                Image(systemName: deviceBattery.systemImage)
-            } else {
-                EmptyView()
+            Group {
+                if deviceBattery.showsIcon, deviceBattery.showsPercentage {
+                    Label(deviceBattery.percentageText, systemImage: deviceBattery.systemImage)
+                } else if deviceBattery.showsPercentage {
+                    Text(deviceBattery.percentageText)
+                } else if deviceBattery.showsIcon {
+                    Image(systemName: deviceBattery.systemImage)
+                } else {
+                    EmptyView()
+                }
             }
+            .frame(minWidth: Constants.minimumTouchTarget, minHeight: Constants.minimumTouchTarget, alignment: .leading)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .foregroundStyle(phoneBatteryColor)
@@ -87,6 +108,8 @@ struct DashboardRideHeader: View {
     private enum Constants {
         static let fontSize: CGFloat = 18
         static let itemSpacing: CGFloat = 10
+        static let compactSpacing: CGFloat = 2
+        static let minimumTouchTarget: CGFloat = 44
         static let separatorWidth: CGFloat = 1
         static let separatorHeight: CGFloat = 17
         static let minuteInterval: TimeInterval = 60

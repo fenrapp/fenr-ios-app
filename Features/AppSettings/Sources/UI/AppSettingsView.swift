@@ -166,6 +166,7 @@ public struct AppSettingsView: View {
                 selection: measurementSystemBinding,
                 options: viewModel.viewState.measurementSystem.options
             )
+            .accessibilityIdentifier("settings.measurementUnits")
             SettingsNavigationRow(
                 icon: "questionmark.circle",
                 iconTint: .blue,

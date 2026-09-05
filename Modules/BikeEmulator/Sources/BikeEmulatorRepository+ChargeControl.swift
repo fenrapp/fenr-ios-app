@@ -29,6 +29,7 @@ extension BikeEmulatorRepository {
         else {
             throw BikeEmulatorChargeControlError.invalidPower
         }
+        try Task.checkCancellation()
         chargePowerLimitWatts = watts
         persistState()
         await publishCurrentState()
@@ -52,6 +53,7 @@ extension BikeEmulatorRepository {
         else {
             throw BikeEmulatorChargeControlError.invalidTarget
         }
+        try Task.checkCancellation()
         chargeTargetPercent = percent
         persistState()
         await publishCurrentState()

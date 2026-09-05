@@ -25,7 +25,7 @@ final class BikeBLESubscriptionQueue {
     func processNext(peripheral: CBPeripheral) async {
         if let characteristic = sessionStore.startNextUnsubscriptionCharacteristic() {
             scheduleTimeout(for: characteristic, isUnsubscription: true)
-            await eventEmitter.send(.debug(.init(
+            await eventEmitter.sendDiagnostic(.debug(.init(
                 title: BikeSDKText.subscriptionTitle,
                 detail: "Disabling \(characteristic.uuid.uuidString)"
             )))
@@ -38,7 +38,7 @@ final class BikeBLESubscriptionQueue {
         }
         guard let characteristic = sessionStore.startNextNotificationCharacteristic() else { return }
         scheduleTimeout(for: characteristic, isUnsubscription: false)
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.subscriptionTitle,
             detail: "Enabling \(characteristic.uuid.uuidString)"
         )))

@@ -27,6 +27,7 @@ public final class BikeLockCardViewModel: ObservableObject {
     var hasAttemptedCompatibilityCheck = false
     var hasAttemptedPreparation = false
     var isReceivingTelemetry = false
+    var operationError: String?
 
     public init(
         operationService: BikeLockCardOperationService,
@@ -75,15 +76,17 @@ public extension BikeLockCardViewModel {
                     operationTask?.cancel()
                     operationTask = nil
                     hasAttemptedPreparation = false
+                    render(isWorking: false)
                 }
                 if vehicleIdentifier != vin {
+                    operationError = nil
                     operationTask?.cancel()
                     operationTask = nil
                     vehicleIdentifier = vin
                     settings = context.settings
                     resetCompatibility()
                     capabilityStore.update(.init(vehicleIdentifier: vin))
-                    render(sheetUpdate: .dismiss)
+                    render(isWorking: false, sheetUpdate: .dismiss)
                 } else {
                     settings = context.settings
                 }
@@ -112,6 +115,7 @@ public extension BikeLockCardViewModel {
     }
     func performPrimaryAction() {
         guard viewState.isActionEnabled else { return }
+        operationError = nil
         guard isVehicleStationary else {
             render(error: rideDashboardLocalized(.rideDashboardBikeLockErrorStopBike))
             return
@@ -136,7 +140,12 @@ public extension BikeLockCardViewModel {
         }
     }
     func configure(securityOptionID: String, pin: String) {
-        guard isReceivingTelemetry, isVehicleStationary else { return }
+        guard !viewState.isWorking else { return }
+        guard isReceivingTelemetry, isVehicleStationary else {
+            render(error: rideDashboardLocalized(.rideDashboardBikeLockErrorStopBike))
+            return
+        }
+        operationError = nil
         guard let mode = BikeLockSecurityMode(rawValue: securityOptionID), mode.isConfigured,
               let vehicleIdentifier else { return }
         guard !mode.requiresPIN || UpdateBikeLockSecurityUseCase.isValidPIN(pin) else {
@@ -145,7 +154,7 @@ public extension BikeLockCardViewModel {
         }
         let normalizedPIN = mode.requiresPIN ? pin : ""
         operationTask?.cancel()
-        render(isWorking: true, sheetUpdate: .dismiss)
+        render(isWorking: true)
         operationTask = Task { [weak self, operationService] in
             guard let self else { return }
             do {
@@ -168,38 +177,47 @@ public extension BikeLockCardViewModel {
         }
     }
     func submitPIN(_ pin: String) {
-        guard isReceivingTelemetry, isVehicleStationary else { return }
+        guard !viewState.isWorking else { return }
+        guard isReceivingTelemetry, isVehicleStationary else {
+            render(error: rideDashboardLocalized(.rideDashboardBikeLockErrorStopBike))
+            return
+        }
+        operationError = nil
         guard let vehicleIdentifier, UpdateBikeLockSecurityUseCase.isValidPIN(pin) else {
             render(error: rideDashboardLocalized(.rideDashboardBikeLockErrorEnterPIN), sheetUpdate: .present(.enterPIN))
             return
         }
         operationTask?.cancel()
+        render(isWorking: true)
         operationTask = Task { [weak self, operationService] in
             guard let self else { return }
             do {
-                guard let snapshot = try await operationService.unlock(
+                let snapshot = try await operationService.unlock(
                     pin: pin,
                     vehicleIdentifier: vehicleIdentifier,
                     authorizeWrite: authorizeBikeLockWrite
-                ) else {
+                )
+                guard !Task.isCancelled else { return }
+                guard let snapshot else {
                     render(
                         error: rideDashboardLocalized(.rideDashboardBikeLockErrorIncorrectPIN),
                         sheetUpdate: .present(.enterPIN)
                     )
                     return
                 }
-                guard !Task.isCancelled else { return }
                 apply(snapshot)
             } catch {
                 guard !Task.isCancelled else { return }
                 render(
                     error: rideDashboardLocalized(.rideDashboardBikeLockErrorOperationFailed),
-                    sheetUpdate: .dismiss
+                    sheetUpdate: .present(.enterPIN)
                 )
             }
         }
     }
     func dismissSheet() {
+        guard !viewState.isWorking else { return }
+        operationError = nil
         render(sheetUpdate: .dismiss)
     }
 }

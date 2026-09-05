@@ -4,9 +4,25 @@ import Testing
 
 @Suite("Charge control logs")
 struct ChargeControlLogStoreTests {
+    @Test("Disabled diagnostics do not evaluate messages or retain telemetry")
+    func disabledCaptureDoesNotBuildLogs() {
+        var store = ChargeControlLogStore(isRecording: { false })
+        var evaluations = 0
+        func message() -> String {
+            evaluations += 1
+            return "manual-only"
+        }
+        store.append(message())
+        if let charging = ChargeControlFixtures.chargingHealth().chargingStatus {
+            store.appendTelemetry(charging: charging)
+        }
+        #expect(evaluations == 0)
+        #expect(store.lines.isEmpty)
+    }
+
     @Test("Telemetry duplicates are suppressed and the log remains bounded")
     func telemetryLogIsDeduplicatedAndBounded() {
-        var store = ChargeControlLogStore()
+        var store = ChargeControlLogStore(isRecording: { true })
         let charging = ChargeControlFixtures.chargingHealth().chargingStatus
 
         if let charging {
@@ -29,7 +45,7 @@ struct ChargeControlLogStoreTests {
         (BikeChargerType.unknown(91), "Unknown (91) raw=91")
     ])
     func chargerTypeLog(charger: BikeChargerType, expectedType: String) {
-        var store = ChargeControlLogStore()
+        var store = ChargeControlLogStore(isRecording: { true })
         let charging = ChargeControlFixtures.chargingHealth(chargerType: charger).chargingStatus
 
         if let charging {

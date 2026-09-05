@@ -105,6 +105,7 @@ public struct PowerModeSettingsView: View {
         }
         .disabled(!viewModel.viewState.canEditName)
         .accessibilityHint(.powerModeSettingsEditNameHint)
+        .accessibilityIdentifier("powerModes.editName")
     }
 
     private var selectedMapTitle: String {

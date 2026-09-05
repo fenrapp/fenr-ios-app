@@ -54,6 +54,7 @@ extension BikeEmulatorRepository {
         else {
             throw BikeEmulatorPowerModeError.invalidConfiguration
         }
+        try Task.checkCancellation()
         configuration.horsepower = horsepower
         configuration.regenerativeBrakingPercent = Double(regenerativeBrakingPercent)
         powerModeOverrides[mapIndex] = configuration
@@ -99,6 +100,7 @@ extension BikeEmulatorRepository {
         else {
             throw BikeEmulatorPowerModeError.invalidConfiguration
         }
+        try Task.checkCancellation()
         configuration.powerTractionPercent = powerTractionPercent
         configuration.brakingTractionPercent = brakingTractionPercent
         powerModeOverrides[mapIndex] = configuration

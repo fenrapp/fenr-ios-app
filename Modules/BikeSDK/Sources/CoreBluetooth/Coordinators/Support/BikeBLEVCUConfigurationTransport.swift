@@ -167,9 +167,9 @@ extension BikeBLEVCUConfigurationTransport {
     }
 
     func emitConfigurationDebug(prefix: String, data: Data) async {
-        guard BikePowerModeDebugLog.isEnabled else { return }
+        guard eventEmitter.isRecordingDiagnostics || BikePowerModeDebugLog.isEnabled else { return }
         BikePowerModeDebugLog.log("4005 \(prefix) \(data.count)b \(data.bikeSDKHexString)")
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: "VCU 4005",
             detail: "\(prefix) \(data.count)b \(data.bikeSDKHexString)"
         )))

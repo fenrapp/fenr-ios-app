@@ -38,13 +38,22 @@ struct RideNavigationMiniView: View {
             ZStack {
                 miniMap
                     .frame(width: layout.cardSize.width, height: layout.cardSize.height)
+                    .overlay {
+                        Color.clear
+                            .contentShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
+                            .gesture(dragGesture(layout: layout).exclusively(before: TapGesture().onEnded(onExpand)))
+                            .simultaneousGesture(magnifyGesture(baseScale: baseScale))
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(state.accessibilityLabel)
+                            .accessibilityHint(.rideNavigationMiniMapHint)
+                            .accessibilityAddTraits(.isButton)
+                            .accessibilityAction(.default, onExpand)
+                            .accessibilityIdentifier("rideNavigation.miniMap")
+                    }
                     .matchedGeometryEffect(
                         id: Constants.navigationSurfaceID,
                         in: transitionNamespace
                     )
-                    .gesture(dragGesture(layout: layout))
-                    .simultaneousGesture(magnifyGesture(baseScale: baseScale))
-                    .onTapGesture(perform: onExpand)
                     .position(cardPosition)
 
                 orientationButton
@@ -83,10 +92,14 @@ struct RideNavigationMiniView: View {
                     width: Constants.orientationControlSize,
                     height: Constants.orientationControlSize
                 )
+                .rideNavigationGlassControl()
+                .frame(
+                    width: RideNavigationMiniMapLayout.orientationControlHitSize,
+                    height: RideNavigationMiniMapLayout.orientationControlHitSize
+                )
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .rideNavigationGlassControl()
         .accessibilityLabel(state.isLandscape
             ? .rideNavigationUseVerticalMiniMap
             : .rideNavigationUseHorizontalMiniMap)
@@ -128,12 +141,7 @@ struct RideNavigationMiniView: View {
         }
         .shadow(color: .black.opacity(Constants.shadowOpacity), radius: Constants.shadowRadius, y: DesignSpace.small)
         .contentShape(RoundedRectangle(cornerRadius: Constants.cornerRadius, style: .continuous))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(state.accessibilityLabel)
-        .accessibilityHint(.rideNavigationMiniMapHint)
-        .accessibilityAddTraits(.isButton)
-        .accessibilityAction(named: Text(.rideNavigationExpandNavigation), onExpand)
-        .accessibilityIdentifier("rideNavigation.miniMap")
+        .accessibilityHidden(true)
     }
 
     private var miniStatusText: String? {

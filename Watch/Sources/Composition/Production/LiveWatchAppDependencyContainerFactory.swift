@@ -10,6 +10,7 @@ enum LiveWatchAppDependencyContainerFactory {
     static func makeDefault() -> WatchAppDependencyContainer {
         let client = BikeTelemetryClientFactory.makeDefault(
             traceRecorder: NoOpBLETraceRepository(),
+            captureState: BLETraceCaptureState(),
             centralRestorationIdentifier: nil,
             automaticallyRetryPairing: true,
             authenticationLinkRecoveryEnabled: true

@@ -20,6 +20,10 @@ public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatt
     let discoveredBikesHub: AsyncEventHub<[DiscoveredBike]>
     let powerCalculator: BikePowerTelemetryCalculator
     let runtime: BikeEmulatorRuntime
+    let diagnostics: BikeEmulatorDiagnostics
+    var diagnosticsStopTask: Task<Bool, Never>?
+    var diagnosticsGeneration: UInt64 = 0
+    var diagnosticsStartTask: Task<Bool, Never>?
     let configuration: BikeEmulatorConfiguration
     var distanceKilometers: Double
 
@@ -43,6 +47,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatt
 
     private(set) var lifecycleState: BikeEmulatorLifecycleState = .stopped
     var generation: UInt64 = 0
+    var controlGeneration: UInt64 = 0
     var startupTask: Task<Void, Never>?
     var updateTask: Task<Void, Never>?
     var imuUpdateTask: Task<Void, Never>?
@@ -67,6 +72,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatt
         batteryHealthHub = channels.batteryHealth
         captureHub = channels.capture
         discoveredBikesHub = channels.discoveredBikes
+        diagnostics = channels.diagnostics
         self.powerCalculator = powerCalculator
         self.runtime = runtime
         self.configuration = configuration
@@ -83,6 +89,8 @@ public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatt
         updateTask?.cancel()
         imuUpdateTask?.cancel()
         shutdownTask?.cancel()
+        diagnosticsStartTask?.cancel()
+        diagnosticsStopTask?.cancel()
     }
 
     public func start() async {
@@ -156,6 +164,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatt
     }
 
     func invalidateControlPreparations() {
+        controlGeneration &+= 1
         preparedPowerModeIndexes.removeAll()
         preparedTractionControlIndexes.removeAll()
         isChargePowerPrepared = false
@@ -186,6 +195,8 @@ public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatt
     }
 
     private func beginStop() {
+        diagnosticsGeneration &+= 1
+        diagnostics.captureState.setRecording(false)
         generation &+= 1
         let stopGeneration = generation
         lifecycleState = .stopping
@@ -212,6 +223,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatt
               generation == stopGeneration
         else { return }
 
+        _ = await stopDiagnosticsCapture()
         batteryHealthMonitoringLeaseCount = 0
         imuMonitoringLeaseCount = 0
         isDiscovering = false

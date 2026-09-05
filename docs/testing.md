@@ -78,6 +78,35 @@ xcodebuild -project FENR.xcodeproj -scheme FENRWatch -configuration Release \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
 ```
 
+## iPhone end-to-end QA
+
+Use three independently controlled iOS 26.5 simulators: iPhone 17, iPhone 17 Pro,
+and iPhone SE (3rd generation). Keep each clean installation's default text size
+unchanged. Repeat light and dark appearance and the app's supported orientations;
+the dashboard selects landscape while Settings uses portrait. Do not infer
+Dynamic Type coverage from these runs.
+
+The temporary UI-test targets, schemes and injected QA scenarios were removed
+at the owner's request. Future end-to-end acceptance is manual: build `FENRDebug`
+for the existing emulator and `FENR` in Release for public onboarding and demo,
+then navigate and operate their real controls. The normal unit suites remain.
+
+Use dedicated simulators and synthetic data. Record the candidate's source and
+executable hashes, device, runtime, appearance, orientation, steps and screenshots.
+Keep captures, videos, logs and historical `.xcresult` bundles outside Git.
+Historical UI-test results describe their original builds only; their removed
+schemes are not current runnable instructions.
+
+Use Xcode's ad hoc simulator signing when checking Keychain-backed PIN behavior:
+`CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=-`.
+No distribution profile is required. Exercise production demo from clean app
+storage. Mark unavailable failure/recovery states as unverified; unit coverage
+does not replace a manual end-to-end reproduction.
+
+See [the QA matrix](app-store/qa-iphone.md) for required states, evidence and the
+independent design review. A successful test run alone does not certify visual
+correctness or physical motorcycle behavior.
+
 ## App Store materials
 
 Use the setup instructions in [store/README.md](../store/README.md), then run:

@@ -14,7 +14,7 @@ struct BikeBLENotificationProcessorTests {
             eventEmitter: makeEventEmitter(eventHub: eventHub),
             notificationMapper: makeNotificationMapper(),
             debugSampler: BikeNotificationDebugSampler(minimumInterval: 1),
-            traceEmitter: makeTraceEmitter()
+            traceEmitter: makeTraceEmitter(captureState: makeEnabledCaptureState())
         )
 
         let result = await processor.process(
@@ -47,7 +47,7 @@ struct BikeBLENotificationProcessorTests {
             eventEmitter: makeEventEmitter(eventHub: eventHub),
             notificationMapper: makeNotificationMapper(),
             debugSampler: BikeNotificationDebugSampler(minimumInterval: 1),
-            traceEmitter: makeTraceEmitter()
+            traceEmitter: makeTraceEmitter(captureState: makeEnabledCaptureState())
         )
 
         _ = await processor.process(
@@ -79,7 +79,7 @@ struct BikeBLENotificationProcessorTests {
             eventEmitter: makeEventEmitter(eventHub: eventHub),
             notificationMapper: makeNotificationMapper(),
             debugSampler: BikeNotificationDebugSampler(minimumInterval: 1),
-            traceEmitter: makeTraceEmitter()
+            traceEmitter: makeTraceEmitter(captureState: makeEnabledCaptureState())
         )
 
         let didDecode = await processor.process(
@@ -113,7 +113,7 @@ struct BikeBLENotificationProcessorTests {
             eventEmitter: makeEventEmitter(eventHub: eventHub),
             notificationMapper: makeNotificationMapper(),
             debugSampler: BikeNotificationDebugSampler(minimumInterval: 1),
-            traceEmitter: makeTraceEmitter()
+            traceEmitter: makeTraceEmitter(captureState: makeEnabledCaptureState())
         )
 
         let didDecode = await processor.process(

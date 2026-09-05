@@ -116,8 +116,8 @@ public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryH
         }
     }
 
-    public func startNewDiagnosticsCapture() async -> Bool {
-        await client.startNewDiagnosticsCapture()
+    public func startNewDiagnosticsCapture(vin: String) async -> Bool {
+        await client.startNewDiagnosticsCapture(vin: vin)
     }
 
     public func stopDiagnosticsCapture() async -> Bool {

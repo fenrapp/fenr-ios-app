@@ -109,8 +109,8 @@ final class BikeBLEBikeLockConfigurationCoordinator {
         )
     }
 
-    private func report(_ detail: String) async {
-        await eventEmitter.send(.debug(.init(title: "Bike Lock", detail: detail)))
+    private func report(_ detail: @autoclosure () -> String) async {
+        await eventEmitter.sendDiagnostic(.debug(.init(title: "Bike Lock", detail: detail())))
     }
 
     private enum Constants {

@@ -1,6 +1,5 @@
 import EnvironmentDomain
 import Foundation
-import OSLog
 import SwiftData
 
 @ModelActor
@@ -9,7 +8,6 @@ actor VehicleMotionCalibrationStore {
         do {
             return try fetch(vin: vin).map(mapper.mapToDomain)
         } catch {
-            report(error)
             return nil
         }
     }
@@ -23,7 +21,6 @@ actor VehicleMotionCalibrationStore {
             }
             try modelContext.save()
         } catch {
-            report(error)
         }
     }
 
@@ -35,11 +32,4 @@ actor VehicleMotionCalibrationStore {
         return try modelContext.fetch(descriptor).first
     }
 
-    func report(_ error: Error) {
-        Constants.logger.error("Motion calibration persistence failed: \(String(describing: error), privacy: .private)")
-    }
-
-    enum Constants {
-        static let logger = Logger(subsystem: "com.fenr.app", category: "VehicleMotionCalibrationStore")
-    }
 }

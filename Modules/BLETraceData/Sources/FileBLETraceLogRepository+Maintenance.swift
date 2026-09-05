@@ -22,6 +22,7 @@ extension FileBLETraceLogRepository {
             sourceURL = session.url
             exportName = session.url.deletingPathExtension().lastPathComponent + ".jsonl"
         } else if let stored = completedSessions.first(where: { $0.summary.id == sessionID }) {
+            guard stored.url.pathExtension == "jsonl" else { throw BLETraceRepositoryError.unableToExport }
             sourceURL = stored.url
             exportName = stored.summary.fileName
         } else {

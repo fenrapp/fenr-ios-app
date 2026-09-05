@@ -7,11 +7,12 @@ import StarkProtocol
 public enum BikeTelemetryClientFactory {
     public static func makeDefault(
         traceRecorder: any BLETraceRecording,
+        captureState: BLETraceCaptureState,
         centralRestorationIdentifier: String?,
         automaticallyRetryPairing: Bool = false,
         authenticationLinkRecoveryEnabled: Bool = false
     ) -> BikeTelemetryClient {
-        let context = makeContext(traceRecorder: traceRecorder)
+        let context = makeContext(traceRecorder: traceRecorder, captureState: captureState)
         let notificationCoordinator = makeNotificationCoordinator(context)
         let pairingRetryController = makePairingRetryController(
             context,
@@ -76,6 +77,7 @@ public enum BikeTelemetryClientFactory {
 
 private extension BikeTelemetryClientFactory {
     struct FactoryContext {
+        let captureState: BLETraceCaptureState
         let runtimeConfiguration: BikeSDKRuntimeConfiguration
         let eventHub: AsyncEventHub<BikeSDKEvent>
         let eventEmitter: BikeBLEEventEmitter
@@ -87,11 +89,15 @@ private extension BikeTelemetryClientFactory {
         let peripheralOperations: BikeBLEPeripheralOperations
     }
 
-    static func makeContext(traceRecorder: any BLETraceRecording) -> FactoryContext {
+    static func makeContext(
+        traceRecorder: any BLETraceRecording,
+        captureState: BLETraceCaptureState
+    ) -> FactoryContext {
         let runtimeConfiguration = BikeSDKRuntimeConfiguration()
         let eventHub = makeEventHub(runtimeConfiguration: runtimeConfiguration)
         let traceEmitter = BikeBLETraceEmitter(
             recorder: traceRecorder,
+            captureState: captureState,
             now: Date.init,
             uptimeNanoseconds: { DispatchTime.now().uptimeNanoseconds },
             makeSessionID: UUID.init
@@ -102,10 +108,12 @@ private extension BikeTelemetryClientFactory {
             connectionStabilityPeriod: runtimeConfiguration.connectionStabilityPeriod
         )
         return FactoryContext(
+            captureState: captureState,
             runtimeConfiguration: runtimeConfiguration,
             eventHub: eventHub,
             eventEmitter: BikeBLEEventEmitter(
                 eventHub: eventHub,
+                captureState: captureState,
                 connectionStatusObserver: { [traceEmitter] status in
                     await traceEmitter.recordConnectionState(status)
                 }
@@ -266,6 +274,7 @@ private extension BikeTelemetryClientFactory {
             decoderRegistry: BikeTelemetryDecoderRegistryFactory.make()
         )
         return BikeBLECoordinatorAssembly.makeNotificationCoordinator(dependencies: .init(
+            captureState: context.captureState,
             sessionStore: context.sessionStore,
             eventEmitter: context.eventEmitter,
             notificationProcessor: BikeBLENotificationProcessor(

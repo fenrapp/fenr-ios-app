@@ -130,8 +130,13 @@ extension FileBLETraceLogRepository {
         codec: BLETraceRecordCodec
     ) throws -> [StoredSession] {
         let urls = try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
-            .filter { $0.pathExtension == "jsonl" }
+            .filter { $0.pathExtension == "jsonl" || $0.pathExtension == "partial" }
         return urls.compactMap { url in
+            if url.pathExtension == "partial" {
+                let finalURL = url.deletingPathExtension().appendingPathExtension("jsonl")
+                guard !fileManager.fileExists(atPath: finalURL.path) else { return nil }
+                return incompleteSession(at: url, fileManager: fileManager, codec: codec)
+            }
             guard let first = try? firstJSONLine(at: url),
                   let last = try? lastJSONLine(at: url),
                   let boundary = codec.decodeSessionBoundary(headerData: first, footerData: last)

@@ -4,6 +4,7 @@ actor SessionSpyRepository: BikeRepository {
     private var starts = 0
     private var stops = 0
     private var connections = 0
+    private var captureStops = 0
     private var vin: String?
     private var shouldBlockStart = false
     private var startContinuation: CheckedContinuation<Void, Never>?
@@ -27,6 +28,11 @@ actor SessionSpyRepository: BikeRepository {
         }
     }
     func disconnect() async throws {}
+    func stopDiagnosticsCapture() async -> Bool {
+        captureStops += 1
+        return true
+    }
+    func captureStopCount() -> Int { captureStops }
     func retrySecurityHandshake() async throws {}
     func readTelemetrySnapshot() async throws {}
     func observeTelemetry() async -> AsyncStream<BikeTelemetry> { .init { _ in } }

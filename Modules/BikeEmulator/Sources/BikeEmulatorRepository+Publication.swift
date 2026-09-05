@@ -47,7 +47,7 @@ extension BikeEmulatorRepository {
               canPublish(expectedGeneration: expectedGeneration)
         else { return }
         await publishBatteryHealth(date: date)
-        guard canPublish(expectedGeneration: expectedGeneration) else { return }
+        guard canPublish(expectedGeneration: expectedGeneration), diagnostics.captureState.isRecording else { return }
         await captureHub.replace(with: makeCaptures(date: date))
     }
 
@@ -169,6 +169,7 @@ extension BikeEmulatorRepository {
     }
 
     func makeCaptures(date: Date) -> [BatteryDatasetCapture] {
+        guard diagnostics.captureState.isRecording else { return [] }
         let captures = BikeEmulatorBatteryPayloadFactory.makeCaptures(
             scenario: scenario,
             tick: tick,

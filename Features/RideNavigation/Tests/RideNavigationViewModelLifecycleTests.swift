@@ -136,6 +136,22 @@ struct RideNavigationViewModelLifecycleTests {
         fixture.viewModel.stop()
     }
 
+    @Test("empty recording completion offers neither save nor export nor success presentation")
+    func emptyRecordingSummary() async {
+        let fixture = RideNavigationViewModelFixture()
+        fixture.viewModel.start()
+        fixture.viewModel.startRecording()
+        fixture.viewModel.finishActivity()
+        let state = fixture.viewModel.viewState
+        #expect(state.screen == .summary)
+        #expect(state.summaryTitle == "Recording ended")
+        #expect(!state.summaryIsSuccessful)
+        #expect(!state.canSaveCompletedRoute)
+        #expect(!state.canExportCompletedRoute)
+        #expect(await fixture.guidance.recordedSuccessCount() == 0)
+        fixture.viewModel.stop()
+    }
+
     @Test("saving and closing a recording summary refreshes the home library")
     func savingAndClosingRecordingSummaryRefreshesSavedRoutes() async {
         let repository = ControllableRecordedRouteRepository()
@@ -146,9 +162,13 @@ struct RideNavigationViewModelLifecycleTests {
         fixture.viewModel.startRecording()
         await fixture.deviceSpeedRepository.send(sample(at: first, seconds: 0))
         await fixture.deviceSpeedRepository.send(sample(at: second, seconds: 5))
-        #expect(await waitUntil { fixture.viewModel.viewState.distanceText != "0 ft" })
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.mapScene.polylines.contains { $0.points.count == 2 }
+        })
         fixture.viewModel.finishActivity()
 
+        #expect(fixture.viewModel.viewState.summaryIsSuccessful)
+        #expect(fixture.viewModel.viewState.canExportCompletedRoute)
         fixture.viewModel.saveCompletedRouteAndClose(name: "Saved recording")
         #expect(await waitUntil { await repository.hasPendingSave })
 

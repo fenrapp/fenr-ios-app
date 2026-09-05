@@ -21,6 +21,7 @@ func makeViewModel(
             stopDiagnosticsCapture: .init(repository: repository),
             observeDebugEvents: .init(repository: repository),
             observeBLETraceSessions: .init(repository: traceRepository),
+            observeBLETraceRecordingFailures: .init(repository: traceRepository),
             prepareBLETraceExport: .init(repository: traceRepository),
             deleteBLETraceSession: .init(repository: traceRepository),
             deleteAllBLETraceSessions: .init(repository: traceRepository)
@@ -66,6 +67,7 @@ func makeMappers() -> BikeDiagnosticsMappers {
         bleTraceSession: .init(
             dateFormatStyle: Date.FormatStyle(date: .abbreviated, time: .standard),
             byteCountFormatStyle: ByteCountFormatStyle(style: .file)
-        )
+        ),
+        bleTraceFailure: BLETraceFailureViewDataMapper()
     )
 }

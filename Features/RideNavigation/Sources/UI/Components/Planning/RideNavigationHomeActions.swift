@@ -23,6 +23,7 @@ struct RideNavigationHomeActions: View {
                 color: DesignColor.accent,
                 action: onImport
             )
+            .accessibilityIdentifier("rideNavigation.import")
             RideNavigationQuickAction(
                 title: String(localized: .rideNavigationRecordRide),
                 subtitle: String(localized: .rideNavigationTrackAsYouGo),
@@ -30,6 +31,7 @@ struct RideNavigationHomeActions: View {
                 color: DesignColor.critical,
                 action: onRecord
             )
+            .accessibilityIdentifier("rideNavigation.record")
         }
     }
 }

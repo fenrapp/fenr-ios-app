@@ -36,7 +36,7 @@ final class BikeBLESecurityHandshake {
     ) async {
         sessionStore.setAuthenticationState(.enablingNotifications)
         watchdog.watch(expectedState: .enablingNotifications, operation: "security subscription")
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.subscriptionTitle,
             detail: "Enabling \(characteristic.uuid.uuidString)"
         )))
@@ -51,7 +51,7 @@ final class BikeBLESecurityHandshake {
         sessionStore.setAuthenticationState(.readingNonce)
         watchdog.watch(expectedState: .readingNonce, operation: "nonce read")
         await eventEmitter.send(.connection(.authenticating(peripheralName: peripheral.name)))
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.securityTitle,
             detail: BikeSDKText.securityNonceRead
         )))
@@ -70,7 +70,7 @@ final class BikeBLESecurityHandshake {
             )
             return
         }
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.securityTitle,
             detail: BikeSDKText.securityNonceReceived
         )))
@@ -82,7 +82,7 @@ final class BikeBLESecurityHandshake {
             )
             sessionStore.setAuthenticationState(.writingResponse)
             watchdog.watch(expectedState: .writingResponse, operation: "security response write")
-            await eventEmitter.send(.debug(.init(
+            await eventEmitter.sendDiagnostic(.debug(.init(
                 title: BikeSDKText.securityTitle,
                 detail: "Writing V2 response: \(payload.count) bytes"
             )))
@@ -113,7 +113,7 @@ final class BikeBLESecurityHandshake {
         watchdog.cancel()
         sessionStore.setAuthenticationState(.authenticated)
         BikePowerModeDebugLog.log("Stark authentication succeeded")
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.securityTitle,
             detail: BikeSDKText.securityAuthenticated
         )))

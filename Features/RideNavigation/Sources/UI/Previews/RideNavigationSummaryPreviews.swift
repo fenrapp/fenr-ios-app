@@ -9,6 +9,7 @@ private struct RideNavigationSummaryPreview: View {
                 screen: .summary,
                 errorText: "The route could not be saved. You can still export the GPX file.",
                 canSaveCompletedRoute: true,
+                canExportCompletedRoute: true,
                 summaryTitle: "Trail complete",
                 summaryDetail: "128.4 km · 4:12:08"
             ),

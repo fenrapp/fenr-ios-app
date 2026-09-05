@@ -60,6 +60,11 @@ public extension RideDashboardView {
 extension RideDashboardView {
     public var body: some View {
         GeometryReader { proxy in
+            let layout = DashboardLayoutMetrics(
+                size: proxy.size,
+                safeAreaInsets: proxy.safeAreaInsets,
+                speedometerTypeScale: speedometerTypeScale
+            )
             DashboardRideChrome(
                 state: viewModel.viewState,
                 deviceBattery: deviceBatteryViewModel.viewState,
@@ -68,17 +73,15 @@ extension RideDashboardView {
                 showsSettingsShortcut: !viewModel.viewState.hasTelemetry
                     || viewModel.viewState.centerMode == .charging
                     || proxy.size.width <= proxy.size.height,
+                headerColumnWidth: viewModel.viewState.hasTelemetry && proxy.size.width > proxy.size.height
+                    ? layout.sideColumnWidth
+                    : nil,
                 bottomLeadingAccessory: bottomLeadingAccessory
             ) {
                 Group {
                 if proxy.size.width <= proxy.size.height {
                     DashboardUnavailableState.rotationRequired
                 } else if viewModel.viewState.hasTelemetry {
-                    let layout = DashboardLayoutMetrics(
-                        size: proxy.size,
-                        safeAreaInsets: proxy.safeAreaInsets,
-                        speedometerTypeScale: speedometerTypeScale
-                    )
                     ZStack {
                         DashboardAmbientLighting(indicators: viewModel.viewState.indicators)
                             .ignoresSafeArea()

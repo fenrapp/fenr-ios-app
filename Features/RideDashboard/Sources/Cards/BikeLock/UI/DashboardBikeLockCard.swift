@@ -52,6 +52,8 @@ struct DashboardBikeLockCard: View {
         .sheet(isPresented: setupBinding) {
             BikeLockSetupView(
                 options: securityOptions,
+                errorText: viewState.errorText,
+                isWorking: viewState.isWorking,
                 configure: configure,
                 cancel: dismissSheet
             )
@@ -59,6 +61,8 @@ struct DashboardBikeLockCard: View {
         .sheet(isPresented: pinBinding) {
             BikeLockPINEntryView(
                 title: rideDashboardLocalized(.rideDashboardBikeLockPinEntryTitle),
+                errorText: viewState.errorText,
+                isWorking: viewState.isWorking,
                 submit: submitPIN,
                 cancel: dismissSheet
             )

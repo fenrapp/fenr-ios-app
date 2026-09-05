@@ -7,7 +7,7 @@ import Testing
 struct FileBLETraceLogRepositoryPrivacyTests {
     @Test("Redaction always removes payload while preserving opaque UUID fields")
     func enforcesContradictoryPayloadRedaction() async throws {
-        let context = try makeBLETraceDataTestContext()
+        let context = makeBLETraceDataTestContext()
         defer { try? FileManager.default.removeItem(at: context.directory.deletingLastPathComponent()) }
         let session = BLETraceDataFixtures.session()
         let serviceUUID = "11111111-2222-3333-4444-555555555555"

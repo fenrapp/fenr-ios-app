@@ -8,7 +8,7 @@ import TestSupport
 struct BikeEmulatorObservationTests {
     @Test("One controlled tick shares one timestamp across published payloads")
     func controlledTickUsesOneTimestamp() async throws {
-        let fixture = await makeBikeEmulatorTestFixture(scenario: .riding)
+        let fixture = await makeBikeEmulatorTestFixture(scenario: .riding, capturesDiagnostics: true)
         try await fixture.repository.startBatteryHealthMonitoring()
         await fixture.repository.start()
         var telemetryIterator = (await fixture.repository.observeTelemetry()).makeAsyncIterator()
@@ -45,7 +45,7 @@ struct BikeEmulatorObservationTests {
 
     @Test("Capture buffering keeps one complete latest dataset batch")
     func captureBufferKeepsLatestBatch() async throws {
-        let fixture = await makeBikeEmulatorTestFixture(scenario: .charging)
+        let fixture = await makeBikeEmulatorTestFixture(scenario: .charging, capturesDiagnostics: true)
         try await fixture.repository.startBatteryHealthMonitoring()
         await fixture.repository.start()
         let stream = await fixture.repository.observeBatteryDatasetCaptures()

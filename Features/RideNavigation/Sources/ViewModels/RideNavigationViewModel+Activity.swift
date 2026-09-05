@@ -65,7 +65,9 @@ extension RideNavigationViewModel {
             finishedActivity: finishedActivity,
             at: date
         )
-        summaryTitle = reason.title
+        let emptyRecording = reason == .rideRecorded && completedRecording == nil
+        state.summaryIsSuccessful = !emptyRecording
+        summaryTitle = emptyRecording ? String(localized: .rideNavigationRecordingEnded) : reason.title
         if finishedActivity == .navigating {
             _ = breadcrumbRecorder.finish(at: date)
         }
@@ -83,61 +85,13 @@ extension RideNavigationViewModel {
             locationObservationTask?.cancel()
             locationObservationTask = nil
         }
-        if reason.emitsSuccessFeedback {
+        if reason.emitsSuccessFeedback, !emptyRecording {
             replaceFeedbackTask { [guidance] in await guidance.notifySuccess() }
         }
         if let completedTrailRouteToSave {
             beginCompletedRouteSave(completedTrailRouteToSave)
         }
     }
-    private func prepareCompletionSummary(
-        reason: CompletionReason,
-        finishedActivity: RideNavigationViewState.Activity,
-        at date: Date
-    ) -> RideRoute? {
-        if reason == .rideRecorded {
-            completedRecording = recorder.finish(at: date)
-            summaryDetail = completedRecording.map { route in
-                let distance = mapper.distance(
-                    meters: route.distanceMeters,
-                    measurementSystem: measurementSystem
-                )
-                return "\(distance) · \(elapsedText(at: date))"
-            } ?? String(localized: .rideNavigationNoValidGPSPoints)
-            replaceDraftPersistenceTask { [routeLibrary = dependencies.routeLibrary] in
-                try? await routeLibrary.saveDraft(nil)
-            }
-            return nil
-        }
-        guard finishedActivity == .following else {
-            summaryDetail = "\(elapsedText(at: date)) · \(currentDistanceText)"
-            return nil
-        }
-        guard let breadcrumb = breadcrumbRecorder.finish(at: date) else {
-            completedRecording = nil
-            state.routePersistence.reset()
-            summaryDetail = String(localized: .rideNavigationNoValidGPSPoints)
-            return nil
-        }
-        let route = RideRoute(
-            id: UUID(),
-            name: String(localized: .rideNavigationRideWithTrailName(
-                selectedRoute?.name ?? String(localized: .rideNavigationTrailName)
-            )),
-            createdAt: breadcrumb.createdAt,
-            updatedAt: date,
-            segments: breadcrumb.segments
-        )
-        completedRecording = route
-        state.routePersistence.beginCompletedRouteSave()
-        let distance = mapper.distance(
-            meters: route.distanceMeters,
-            measurementSystem: measurementSystem
-        )
-        summaryDetail = "\(distance) · \(elapsedText(at: date))"
-        return route
-    }
-
     var currentGuidance: RideNavigationGuidance? {
         if activity == .following, let trailProgress {
             let remainingDistance = mapper.distance(

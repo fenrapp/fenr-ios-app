@@ -171,6 +171,7 @@ struct RideNavigationHomePanel: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(.rideNavigationClose)
+            .accessibilityIdentifier("rideNavigation.close")
         }
     }
 
@@ -195,6 +196,7 @@ struct RideNavigationHomePanel: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
             TextField(String(localized: .rideNavigationSearchDestination), text: $query)
+                .accessibilityIdentifier("rideNavigation.search")
                 .focused($isSearchFieldFocused)
                 .textInputAutocapitalization(.words)
                 .autocorrectionDisabled(false)

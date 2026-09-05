@@ -10,11 +10,11 @@ struct BikeDataVehicleControlForwardingTests {
         let repository = makeRepository(client: client)
 
         #expect(await repository.stopDiagnosticsCapture())
-        #expect(await repository.startNewDiagnosticsCapture())
+        #expect(await repository.startNewDiagnosticsCapture(vin: "FENRTEST000000001"))
 
         #expect(await client.invocations() == [
             .stopDiagnosticsCapture,
-            .startNewDiagnosticsCapture
+            .startNewDiagnosticsCapture("FENRTEST000000001")
         ])
     }
 

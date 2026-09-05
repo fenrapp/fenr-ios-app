@@ -6,10 +6,8 @@ import CoreLocation
 import EnvironmentData
 import EnvironmentDomain
 import Foundation
-import MaintenanceData
 import MaintenanceLog
 import RideNavigationData
-import RideSessionData
 import SettingsData
 import SettingsDomain
 import VehicleSession
@@ -17,41 +15,40 @@ import VehicleSession
 @MainActor
 enum ProductionAppDependencyContainerFactory {
     static func makeDefault(
-        maintenanceReminderScheduler: any MaintenanceReminderScheduling
-    ) -> AppDependencyContainer {
+        maintenanceReminderScheduler: any MaintenanceReminderScheduling,
+        storageFactory: ProductionAppStorageFactory = .live
+    ) throws -> AppDependencyContainer {
+        let storage = try storageFactory.make()
         let bikeSDKContainer = BikeSDKDependencyContainer()
         let bikeDataContainer = BikeDataDependencyContainer()
-        let bleTraceRepository = BLETraceDependencyContainer().makeRepository()
-        let client = bikeSDKContainer.makeBikeTelemetryClient(traceRecorder: bleTraceRepository)
+        let captureState = BLETraceCaptureState()
+        let bleTraceRepository = BLETraceDependencyContainer().makeRepository(captureState: captureState)
+        let client = bikeSDKContainer.makeBikeTelemetryClient(
+            traceRecorder: bleTraceRepository, captureState: captureState
+        )
         let profileRepository = UserDefaultsBikeProfileRepository(userDefaults: .standard)
         let repository = bikeDataContainer.makeBikeRepository(
             client: client,
-            profileRepository: profileRepository
+            profileRepository: profileRepository,
+            captureState: captureState
         )
         let session = BikeSession(
             repository: repository,
             pinDeriver: bikeDataContainer.makeBikePinDeriver()
         )
-        let chargeControl = ChargeControlDependencyContainer().makeSession(repository: repository)
+        let chargeControl = ChargeControlDependencyContainer().makeSession(
+            repository: repository, captureState: captureState
+        )
         let settingsRepository = makeSettingsRepository(profile: profileRepository)
         let deviceSpeedRepository = CoreLocationDeviceSpeedRepository(
             locationManager: CLLocationManager()
         )
-        let motionCalibrationRepository = makeMotionCalibrationRepository()
-        let rideTripRepository = makeRideTripRepository()
-        let maintenanceRepository = makeMaintenanceRepository()
+        let rideTripRepository = storage.rides
+        let maintenanceRepository = storage.maintenance
         let bikeLockCapabilityStore = BikeLockCapabilityStateStore()
-        let sessionServices = AppSessionDependencyContainer.makeServices(
-            dependencies: .init(
-                repository: repository,
-                profileRepository: profileRepository,
-                settingsRepository: settingsRepository,
-                deviceSpeedRepository: deviceSpeedRepository,
-                deviceHeadingRepository: DeviceHeadingDependencyContainer.makeRepository(),
-                motionCalibrationRepository: motionCalibrationRepository,
-                imuProfile: makeIMUProfile(),
-                rideTripRepository: rideTripRepository
-            )
+        let sessionServices = makeSessionServices(
+            repository: repository, profile: profileRepository, settings: settingsRepository,
+            speed: deviceSpeedRepository, storage: storage
         )
         return AppDependencyContainer(
             diagnosticsContainer: BikeDiagnosticsDependencyContainer(),
@@ -80,6 +77,25 @@ enum ProductionAppDependencyContainerFactory {
         )
     }
 
+    private static func makeSessionServices(
+        repository: LiveBikeRepository,
+        profile: any BikeProfileRepository,
+        settings: any AppSettingsRepository,
+        speed: any DeviceSpeedRepository,
+        storage: ProductionAppStorage
+    ) -> AppSessionServices {
+        AppSessionDependencyContainer.makeServices(dependencies: .init(
+            repository: repository,
+            profileRepository: profile,
+            settingsRepository: settings,
+            deviceSpeedRepository: speed,
+            deviceHeadingRepository: DeviceHeadingDependencyContainer.makeRepository(),
+            motionCalibrationRepository: storage.calibration,
+            imuProfile: makeIMUProfile(),
+            rideTripRepository: storage.rides
+        ))
+    }
+
     private static func makeSettingsRepository(profile: any BikeProfileRepository) -> any AppSettingsRepository {
         AppSettingsRepositoryFactory.make(userDefaults: .standard, profileRepository: profile)
     }
@@ -99,37 +115,6 @@ enum ProductionAppDependencyContainerFactory {
                 encoder: JSONEncoder(),
                 decoder: JSONDecoder()
             )
-    }
-
-    private static func makeRideTripRepository() -> SwiftDataRideTripRepository {
-        do {
-            let modelContainer = try SwiftDataRideTripRepository.makeModelContainer()
-            return SwiftDataRideTripRepository(
-                modelContainer: modelContainer,
-                mapper: RideTripRecordMapper(),
-                energyBucketMapper: RideEnergyBucketRecordMapper()
-            )
-        } catch {
-            preconditionFailure("Unable to create the ride trip store: \(error)")
-        }
-    }
-
-    private static func makeMaintenanceRepository() -> SwiftDataMaintenanceRepository {
-        do {
-            return try MaintenanceRepositoryFactory.make()
-        } catch {
-            preconditionFailure("Unable to create the maintenance store: \(error)")
-        }
-    }
-
-    private static func makeMotionCalibrationRepository() -> SwiftDataVehicleMotionCalibrationRepository {
-        do {
-            return try SwiftDataVehicleMotionCalibrationRepository(
-                mapper: VehicleMotionCalibrationRecordMapper()
-            )
-        } catch {
-            preconditionFailure("Unable to create the motion calibration store: \(error)")
-        }
     }
 
 }

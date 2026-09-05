@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- A recent Xcode version with iOS 16+ and watchOS 10+ runtimes.
+- A recent Xcode version with iOS 17+ and watchOS 10+ runtimes.
 - XcodeGen: `brew install xcodegen`
 - SwiftLint: `brew install swiftlint`
 
@@ -44,4 +44,10 @@ List available simulators with `xcrun simctl list devices available` and assign 
 
 ## Safety boundary
 
-The app is predominantly read-only. Its authenticated VCU write paths cover verified charging-power and charge-target configuration plus guarded base-map horsepower, regenerative braking, TC, and TC Regen. Any vehicle-facing write must preserve every unrelated value, be firmware- and capability-gated, pass a safe no-op guard, run serially with timeout recovery, and be confirmed by telemetry or a fresh read. Base-map responses may expose curve selector `0` or `mapIndex + 1`; reject all other selectors and normalize outgoing base-map writes to `mapIndex + 1`. Type `8` TC writes require VCU PIC firmware 1.10.1 or newer, whole percentages from 0 through 100 encoded as signed 16-bit tenths, write mode `0x0F`, a successful write status, and preservation of the sibling value. Base writes have physical write/read-back evidence; TC writes remain implementation-backed but physically unvalidated. Never accept an acknowledgement alone or hide a mismatched read-back. Do not add arbitrary configuration, custom curves, lock, ownership, safety-control, or firmware writes.
+The app is predominantly read-only. Its authenticated VCU write paths cover verified charging-power and charge-target configuration plus guarded base-map horsepower, regenerative braking, TC, TC Regen, and bike lock. Any vehicle-facing write must preserve every unrelated value, be firmware- and capability-gated, pass a safe no-op guard, run serially with timeout recovery, and be confirmed by telemetry or a fresh read. Base-map responses may expose curve selector `0` or `mapIndex + 1`; reject all other selectors and normalize outgoing base-map writes to `mapIndex + 1`. Type `8` TC writes require VCU PIC firmware 1.10.1 or newer, whole percentages from 0 through 100 encoded as signed 16-bit tenths, write mode `0x0F`, a successful write status, and preservation of the sibling value. Base writes have physical write/read-back evidence. The owner reported physical TC and bike-lock testing on 2026-09-05; firmware inventory and new instrumented captures were not supplied for this release pass. Never accept an acknowledgement alone or hide a mismatched read-back. Do not add arbitrary configuration, custom curves, ownership, safety-control, or firmware writes.
+
+## First TestFlight release
+
+Ship iPhone with Share and Live Activity extensions; retain Watch code for later distribution. Diagnostic capture is manual and off at process launch. Verify disconnected Start, reconnect continuity, Stop and relaunch without recording. Technical logging must not be needed for telemetry, persistence or vehicle confirmations.
+
+Run future end-to-end checks manually with the native Debug emulator and public production demo; the temporary automated UI-test harness and injected scenarios were removed. Use [the iPhone QA matrix](app-store/qa-iphone.md) for the required iPhone 17 reference, iPhone 17 Pro and iPhone SE 3 checks at default text size. Keep screenshots and result bundles in ignored build output. Existing validation reports do not pass the new candidate automatically.

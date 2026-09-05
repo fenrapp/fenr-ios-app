@@ -1,6 +1,7 @@
 import BikeData
 import BikeDomain
 import BikeSDK
+import BLETraceDomain
 
 struct BikeDataDependencyContainer {
     func makeBikePinDeriver() -> any BikePinDeriving {
@@ -9,8 +10,13 @@ struct BikeDataDependencyContainer {
 
     func makeBikeRepository(
         client: BikeTelemetryClient,
-        profileRepository: (any BikeProfileRepository)? = nil
+        profileRepository: (any BikeProfileRepository)? = nil,
+        captureState: BLETraceCaptureState? = nil
     ) -> LiveBikeRepository {
-        LiveBikeRepositoryFactory.makeDefault(client: client, profileRepository: profileRepository)
+        LiveBikeRepositoryFactory.makeDefault(
+            client: client,
+            profileRepository: profileRepository,
+            diagnosticsEnabled: { captureState?.isRecording ?? false }
+        )
     }
 }

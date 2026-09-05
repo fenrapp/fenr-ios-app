@@ -1,6 +1,10 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "rideNavigationRecordingEnded": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Recording ended" } } }
+    },
     "rideNavigationBikeDisconnected": {
       "extractionState": "manual",
       "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Bike disconnected" } } }

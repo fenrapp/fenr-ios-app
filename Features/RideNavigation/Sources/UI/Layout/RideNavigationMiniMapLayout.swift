@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct RideNavigationMiniMapLayout {
+    static let orientationControlHitSize: CGFloat = 44
     let cardSize: CGSize
     private let containerSize: CGSize
 
@@ -11,7 +12,7 @@ struct RideNavigationMiniMapLayout {
     init(containerSize: CGSize, scale: Double, isLandscape: Bool) {
         let availableWidth = max(containerSize.width - Constants.edgeMargin * 2, 0)
         let availableHeight = max(
-            containerSize.height - Constants.edgeMargin * 2 - Constants.orientationControlOverflow,
+            containerSize.height - Constants.edgeMargin * 2 - Constants.dashboardHeaderClearance,
             0
         )
         let baseLongEdge = min(
@@ -50,7 +51,7 @@ struct RideNavigationMiniMapLayout {
             ),
             y: constrained(
                 proposedPosition.y,
-                minimum: Constants.edgeMargin + Constants.orientationControlOverflow + cardSize.height / 2,
+                minimum: Constants.edgeMargin + Constants.dashboardHeaderClearance + cardSize.height / 2,
                 maximum: containerSize.height - Constants.edgeMargin - cardSize.height / 2
             )
         )
@@ -65,11 +66,9 @@ struct RideNavigationMiniMapLayout {
 
     func orientationControlPosition(for cardPosition: CGPoint) -> CGPoint {
         CGPoint(
-            x: cardPosition.x,
+            x: cardPosition.x + cardSize.width / 2
+                - Constants.orientationControlInset - Self.orientationControlHitSize / 2,
             y: cardPosition.y
-                - cardSize.height / 2
-                - Constants.orientationControlGap
-                - Constants.orientationControlSize / 2
         )
     }
 
@@ -97,8 +96,7 @@ struct RideNavigationMiniMapLayout {
         static let relativeLongEdge: CGFloat = 0.28
         static let aspectRatio: CGFloat = 2 / 3
         static let edgeMargin: CGFloat = 16
-        static let orientationControlSize: CGFloat = 36
-        static let orientationControlGap: CGFloat = 8
-        static let orientationControlOverflow = orientationControlSize + orientationControlGap
+        static let dashboardHeaderClearance: CGFloat = 44
+        static let orientationControlInset: CGFloat = 8
     }
 }

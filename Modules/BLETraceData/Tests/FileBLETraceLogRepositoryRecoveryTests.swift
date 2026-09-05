@@ -15,7 +15,7 @@ struct FileBLETraceLogRepositoryRecoveryTests {
         let partial = logs.appendingPathComponent("interrupted.partial")
         try partialTrace(id: id).write(to: partial)
 
-        let context = try makeBLETraceDataTestContext(root: root)
+        let context = makeBLETraceDataTestContext(root: root)
         let sessions = await context.repository.observeSessions().first { !$0.isEmpty } ?? []
 
         #expect(sessions.first?.id == id)
@@ -36,7 +36,7 @@ struct FileBLETraceLogRepositoryRecoveryTests {
         let partial = logs.appendingPathComponent("lazy.partial")
         try partialTrace(id: id).write(to: partial)
 
-        let context = try makeBLETraceDataTestContext(root: root)
+        let context = makeBLETraceDataTestContext(root: root)
         #expect(FileManager.default.fileExists(atPath: partial.path))
 
         await context.repository.prepareStorage()
@@ -62,7 +62,7 @@ struct FileBLETraceLogRepositoryRecoveryTests {
         try handle.write(contentsOf: jsonLine(BLETraceDataFixtures.footer(id: id, eventCount: 123)))
         try handle.close()
 
-        let context = try makeBLETraceDataTestContext(
+        let context = makeBLETraceDataTestContext(
             maximumTotalBytes: 512 * 1_024 * 1_024,
             root: root
         )
@@ -87,7 +87,7 @@ struct FileBLETraceLogRepositoryRecoveryTests {
             try completedTrace(header: boundary.header, footer: boundary.footer).write(to: url)
         }
 
-        let context = try makeBLETraceDataTestContext(root: root)
+        let context = makeBLETraceDataTestContext(root: root)
         let stream = await context.repository.observeSessions()
         var iterator = stream.makeAsyncIterator()
         let firstSnapshot = await iterator.next()
@@ -111,17 +111,20 @@ struct FileBLETraceLogRepositoryRecoveryTests {
         try partialTrace(id: BLETraceDataFixtures.secondSessionID).write(to: validPartial)
         let controller = FileOperationFailureController()
         let fileManager = ControlledFileManager(controller: controller)
-        let context = try makeBLETraceDataTestContext(root: root, fileManager: fileManager)
+        let context = makeBLETraceDataTestContext(root: root, fileManager: fileManager)
         controller.failNextMove(from: failedPartial)
 
         let sessions = await context.repository.observeSessions().first { !$0.isEmpty } ?? []
 
-        #expect(sessions.map(\.id) == [BLETraceDataFixtures.secondSessionID])
+        #expect(Set(sessions.map(\.id)) == Set([
+            BLETraceDataFixtures.firstSessionID, BLETraceDataFixtures.secondSessionID
+        ]))
+        #expect(sessions.first { $0.id == BLETraceDataFixtures.firstSessionID }?.status == .incomplete)
         #expect(FileManager.default.fileExists(atPath: failedPartial.path))
         let recovered = validPartial.deletingPathExtension().appendingPathExtension("jsonl")
         try assertStorageProtection(at: recovered)
 
-        let retryContext = try makeBLETraceDataTestContext(root: root)
+        let retryContext = makeBLETraceDataTestContext(root: root)
         let retried = await retryContext.repository.observeSessions().first { $0.count == 2 } ?? []
         let failedSession = retried.first { $0.id == BLETraceDataFixtures.firstSessionID }
         #expect(failedSession?.status == .incomplete)
@@ -138,7 +141,7 @@ struct FileBLETraceLogRepositoryRecoveryTests {
         let partial = logs.appendingPathComponent("retry.partial")
         try partialTrace(id: BLETraceDataFixtures.firstSessionID).write(to: partial)
         let controller = FileOperationFailureController()
-        let context = try makeBLETraceDataTestContext(
+        let context = makeBLETraceDataTestContext(
             root: root,
             fileManager: ControlledFileManager(controller: controller)
         )

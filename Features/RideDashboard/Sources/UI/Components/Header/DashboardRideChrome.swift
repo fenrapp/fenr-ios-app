@@ -7,6 +7,7 @@ struct DashboardRideChrome<Content: View>: View {
     let toggleDeviceBatteryDisplayMode: () -> Void
     let onSettings: () -> Void
     let showsSettingsShortcut: Bool
+    let headerColumnWidth: CGFloat?
     var bottomLeadingAccessory: () -> AnyView = { AnyView(EmptyView()) }
     @ViewBuilder let content: () -> Content
 
@@ -18,6 +19,7 @@ struct DashboardRideChrome<Content: View>: View {
                     connectionNotice: state.connectionNotice,
                     toggleDeviceBatteryDisplayMode: toggleDeviceBatteryDisplayMode
                 )
+                .frame(width: headerContentWidth, alignment: .leading)
                 .padding(DashboardRideChromeConstants.edgePadding)
             }
             .overlay(alignment: .topTrailing) {
@@ -46,6 +48,10 @@ struct DashboardRideChrome<Content: View>: View {
                     .accessibilityIdentifier("dashboard.settings")
                 }
             }
+    }
+
+    private var headerContentWidth: CGFloat? {
+        headerColumnWidth.map { max(.zero, $0 - DashboardRideChromeConstants.edgePadding * 2) }
     }
 }
 

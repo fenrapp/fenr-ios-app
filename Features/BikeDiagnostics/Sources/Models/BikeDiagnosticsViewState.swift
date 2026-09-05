@@ -14,6 +14,7 @@ public struct BikeDiagnosticsViewState: Equatable, Sendable {
     public var hasDebugLog: Bool
     public var bleTraceSessions: [BLETraceSessionViewData]
     public var bleTraceError: String?
+    public var isBLETraceCaptureAvailable: Bool
     public var isBLETraceCaptureControlInProgress: Bool
     public var isReconnectEnabled: Bool
     public var isDisconnectEnabled: Bool
@@ -48,6 +49,7 @@ public struct BikeDiagnosticsViewState: Equatable, Sendable {
         hasDebugLog: Bool = false,
         bleTraceSessions: [BLETraceSessionViewData] = [],
         bleTraceError: String? = nil,
+        isBLETraceCaptureAvailable: Bool = false,
         isBLETraceCaptureControlInProgress: Bool = false,
         isReconnectEnabled: Bool = false,
         isDisconnectEnabled: Bool = false,
@@ -70,6 +72,7 @@ public struct BikeDiagnosticsViewState: Equatable, Sendable {
         self.hasDebugLog = hasDebugLog
         self.bleTraceSessions = bleTraceSessions
         self.bleTraceError = bleTraceError
+        self.isBLETraceCaptureAvailable = isBLETraceCaptureAvailable
         self.isBLETraceCaptureControlInProgress = isBLETraceCaptureControlInProgress
         self.isReconnectEnabled = isReconnectEnabled
         self.isDisconnectEnabled = isDisconnectEnabled

@@ -66,7 +66,7 @@ extension BikeLockCardViewModel {
                     vehicleIdentifier: vehicleIdentifier,
                     isAvailable: true
                 ))
-                render()
+                render(isWorking: false)
             } catch {
                 guard !Task.isCancelled else { return }
                 isControlPrepared = false
@@ -87,7 +87,7 @@ extension BikeLockCardViewModel {
                 guard !Task.isCancelled else { return }
                 switch result {
                 case .unlocked(let snapshot): apply(snapshot)
-                case .requiresPIN: render(sheetUpdate: .present(.enterPIN))
+                case .requiresPIN: render(isWorking: false, sheetUpdate: .present(.enterPIN))
                 case .writeFailed:
                     render(
                         error: rideDashboardLocalized(.rideDashboardBikeLockErrorOperationFailed),
@@ -131,12 +131,13 @@ extension BikeLockCardViewModel {
     }
 
     func apply(_ snapshot: BikeLockControlSnapshot) {
+        operationError = nil
         firmware = snapshot.vcuFirmware
         isFirmwareCompatible = true
         isControlPrepared = true
         isLocked = snapshot.isLocked
         hasConfirmedLockState = true
-        render(sheetUpdate: .dismiss)
+        render(isWorking: false, sheetUpdate: .dismiss)
     }
 
     var authorizeBikeLockWrite: @MainActor @Sendable () throws -> Void {
@@ -157,9 +158,11 @@ extension BikeLockCardViewModel {
         isVehicleStationary = false
         isControlPrepared = false
         hasAttemptedPreparation = false
+        render(isWorking: false)
     }
 
     func suspendControlPreparation() {
+        operationError = nil
         operationTask?.cancel()
         operationTask = nil
         compatibilityTask?.cancel()
@@ -170,10 +173,11 @@ extension BikeLockCardViewModel {
         isControlPrepared = false
         hasAttemptedCompatibilityCheck = false
         hasAttemptedPreparation = false
-        render(sheetUpdate: .dismiss)
+        render(isWorking: false, sheetUpdate: .dismiss)
     }
 
     func invalidateVehicle(clearsCapability: Bool = true) {
+        operationError = nil
         operationTask?.cancel()
         operationTask = nil
         vehicleIdentifier = nil
@@ -184,7 +188,7 @@ extension BikeLockCardViewModel {
         if clearsCapability {
             capabilityStore.update(.init())
         }
-        render(sheetUpdate: .dismiss)
+        render(isWorking: false, sheetUpdate: .dismiss)
     }
 
     func resetCompatibility() {
@@ -200,21 +204,22 @@ extension BikeLockCardViewModel {
     }
 
     func render(
-        isWorking: Bool = false,
+        isWorking: Bool? = nil,
         error: String? = nil,
         sheetUpdate: BikeLockSheetUpdate = .preserve
     ) {
+        if let error { operationError = error }
         viewState = mapper.map(.init(
             firmware: firmware,
             isFirmwareCompatible: isFirmwareCompatible,
             isControlPrepared: isControlPrepared,
             isLocked: isLocked,
             hasConfirmedLockState: hasConfirmedLockState,
-            isWorking: isWorking,
+            isWorking: error == nil ? (isWorking ?? viewState.isWorking) : false,
             isReceivingTelemetry: isReceivingTelemetry,
             isVehicleStationary: isVehicleStationary,
             securityMode: settings.securityMode,
-            error: error,
+            error: operationError,
             sheetUpdate: sheetUpdate,
             currentSheet: viewState.sheet
         ))

@@ -61,6 +61,8 @@ public struct RideNavigationViewState: Equatable, Sendable {
     public let forkGuidance: RideNavigationForkGuidance?
     public let routePersistence: RideNavigationRoutePersistenceState
     public let canSaveCompletedRoute: Bool
+    public let canExportCompletedRoute: Bool
+    public let summaryIsSuccessful: Bool
     public let completedRouteName: String?
     public let summaryTitle: String
     public let summaryDetail: String
@@ -112,6 +114,8 @@ public struct RideNavigationViewState: Equatable, Sendable {
         forkGuidance: RideNavigationForkGuidance? = nil,
         routePersistence: RideNavigationRoutePersistenceState = .idle,
         canSaveCompletedRoute: Bool = false,
+        canExportCompletedRoute: Bool = false,
+        summaryIsSuccessful: Bool = true,
         completedRouteName: String? = nil,
         summaryTitle: String? = nil,
         summaryDetail: String = ""
@@ -162,6 +166,8 @@ public struct RideNavigationViewState: Equatable, Sendable {
         self.forkGuidance = forkGuidance
         self.routePersistence = routePersistence
         self.canSaveCompletedRoute = canSaveCompletedRoute
+        self.canExportCompletedRoute = canExportCompletedRoute
+        self.summaryIsSuccessful = summaryIsSuccessful
         self.completedRouteName = completedRouteName
         self.summaryTitle = summaryTitle ?? String(localized: .rideNavigationSummaryRideComplete)
         self.summaryDetail = summaryDetail

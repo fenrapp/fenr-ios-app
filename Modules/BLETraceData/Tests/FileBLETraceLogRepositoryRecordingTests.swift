@@ -5,9 +5,41 @@ import Testing
 
 @Suite("BLE trace recording")
 struct FileBLETraceLogRepositoryRecordingTests {
+    @Test("Releasing the file writer disables its shared diagnostic gate")
+    func releasingWriterDisablesCapture() async throws {
+        var context: BLETraceDataTestContext? = makeBLETraceDataTestContext()
+        let state = try #require(context?.captureState)
+        let directory = try #require(context?.directory)
+        defer { try? FileManager.default.removeItem(at: directory.deletingLastPathComponent()) }
+
+        #expect(await context?.repository.startSession(BLETraceDataFixtures.session()) == true)
+        #expect(state.isRecording)
+        context = nil
+        #expect(!state.isRecording)
+    }
+
+    @Test("Construction and ignored events do not touch the filesystem")
+    func remainsLazyUntilExplicitCapture() async throws {
+        let context = makeBLETraceDataTestContext()
+        let state = context.captureState
+        defer { try? FileManager.default.removeItem(at: context.directory.deletingLastPathComponent()) }
+        #expect(!state.isRecording)
+        await context.repository.record(BLETraceDataFixtures.event(index: 1))
+        #expect(!FileManager.default.fileExists(atPath: context.directory.path))
+        #expect(!FileManager.default.fileExists(atPath: context.exportDirectory.path))
+
+        #expect(await context.repository.startSession(BLETraceDataFixtures.session()))
+        #expect(state.isRecording)
+        await context.repository.finishSession(reason: .userStopped)
+        #expect(!state.isRecording)
+        await context.repository.record(BLETraceDataFixtures.event(index: 2))
+        let export = try await context.repository.prepareExport(sessionID: BLETraceDataFixtures.session().id)
+        #expect(try !traceRecords(at: export).contains { $0["record_type"] as? String == "event" })
+    }
+
     @Test("Writes ordered NDJSON and exports active and completed sessions")
     func writesAndExportsSessions() async throws {
-        let context = try makeBLETraceDataTestContext()
+        let context = makeBLETraceDataTestContext()
         defer { try? FileManager.default.removeItem(at: context.directory.deletingLastPathComponent()) }
         let session = BLETraceDataFixtures.session()
 
@@ -40,7 +72,7 @@ struct FileBLETraceLogRepositoryRecordingTests {
 
     @Test("Marks a session truncated when the storage limit is reached")
     func truncatesAtStorageLimit() async throws {
-        let context = try makeBLETraceDataTestContext(maximumTotalBytes: 1_200)
+        let context = makeBLETraceDataTestContext(maximumTotalBytes: 1_200)
         defer { try? FileManager.default.removeItem(at: context.directory.deletingLastPathComponent()) }
         let session = BLETraceDataFixtures.session()
 
@@ -58,7 +90,7 @@ struct FileBLETraceLogRepositoryRecordingTests {
 
     @Test("Protects the active session from deletion")
     func protectsActiveSession() async throws {
-        let context = try makeBLETraceDataTestContext()
+        let context = makeBLETraceDataTestContext()
         defer { try? FileManager.default.removeItem(at: context.directory.deletingLastPathComponent()) }
         let session = BLETraceDataFixtures.session()
         await context.repository.startSession(session)
@@ -71,7 +103,7 @@ struct FileBLETraceLogRepositoryRecordingTests {
     @Test("A canceled finish drains a blocked writer and closes a complete session")
     func canceledFinishDrainsBlockedWriter() async throws {
         let starter = ControllableBLETraceWriterTaskStarter()
-        let context = try makeBLETraceDataTestContext(writerTaskStarter: starter)
+        let context = makeBLETraceDataTestContext(writerTaskStarter: starter)
         defer { try? FileManager.default.removeItem(at: context.directory.deletingLastPathComponent()) }
         let session = BLETraceDataFixtures.session()
         await context.repository.startSession(session)
@@ -98,7 +130,7 @@ struct FileBLETraceLogRepositoryRecordingTests {
     @Test("Starting B drains and closes A before recording B")
     func startsSessionsInOrder() async throws {
         let starter = ControllableBLETraceWriterTaskStarter()
-        let context = try makeBLETraceDataTestContext(writerTaskStarter: starter)
+        let context = makeBLETraceDataTestContext(writerTaskStarter: starter)
         defer { try? FileManager.default.removeItem(at: context.directory.deletingLastPathComponent()) }
         let first = BLETraceDataFixtures.session(id: BLETraceDataFixtures.firstSessionID)
         let second = BLETraceDataFixtures.session(
@@ -127,7 +159,7 @@ struct FileBLETraceLogRepositoryRecordingTests {
 
     @Test("Multiple observers receive the same replay and session updates")
     func broadcastsSessionsToMultipleObservers() async throws {
-        let context = try makeBLETraceDataTestContext()
+        let context = makeBLETraceDataTestContext()
         defer { try? FileManager.default.removeItem(at: context.directory.deletingLastPathComponent()) }
         let firstStream = await context.repository.observeSessions()
         let secondStream = await context.repository.observeSessions()

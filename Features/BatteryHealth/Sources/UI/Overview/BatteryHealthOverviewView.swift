@@ -111,6 +111,7 @@ struct BatteryHealthOverviewView: View {
             tint: tint,
             action: { onNavigate(destination) }
         )
+        .accessibilityIdentifier("batteryHealth.\(destination.rawValue)")
     }
 
     private var statusImage: String {

@@ -5,11 +5,12 @@ import Foundation
 final class AppExperienceController: ObservableObject {
     @Published private(set) var experience: AppExperience?
     @Published private(set) var isBusy = false
-    @Published private(set) var hasError = false
+    @Published private(set) var failure: AppExperienceFailure?
+    var hasError: Bool { failure != nil }
     @Published var showsIntroduction = false
 
     private let selectionStore: DemoSelectionStore
-    private let makeReal: @MainActor () -> AppExperience
+    private let makeReal: @MainActor () throws -> AppExperience
     private let makeDemo: @MainActor (DemoIdentity) async throws -> AppExperience
     private let discardDemo: @MainActor (DemoIdentity) async throws -> Void
     private var transitionTask: Task<Void, Never>?
@@ -17,7 +18,7 @@ final class AppExperienceController: ObservableObject {
 
     init(
         selectionStore: DemoSelectionStore,
-        makeReal: @escaping @MainActor () -> AppExperience,
+        makeReal: @escaping @MainActor () throws -> AppExperience,
         makeDemo: @escaping @MainActor (DemoIdentity) async throws -> AppExperience,
         discardDemo: @escaping @MainActor (DemoIdentity) async throws -> Void
     ) {
@@ -34,16 +35,17 @@ final class AppExperienceController: ObservableObject {
         transition { controller in
             if let identity = try controller.selectionStore.load() {
                 controller.pendingIdentity = identity
-                controller.experience = try await controller.makeDemo(identity)
+                let demo = try await controller.makeDemo(identity)
+                try await controller.install(demo)
             } else {
-                controller.experience = controller.makeReal()
+                controller.experience = try controller.buildReal()
             }
         }
     }
 
     func exploreDemo() {
         guard !isBusy else { return }
-        hasError = false
+        failure = nil
         showsIntroduction = true
     }
 
@@ -68,9 +70,16 @@ final class AppExperienceController: ObservableObject {
             let previous = controller.experience
             controller.experience = nil
             await previous?.close()
+            try Task.checkCancellation()
             let demo = try await controller.makeDemo(identity)
-            try controller.selectionStore.save(identity)
-            controller.experience = demo
+            do {
+                try Task.checkCancellation()
+                try controller.selectionStore.save(identity)
+            } catch {
+                await demo.close()
+                throw error
+            }
+            try await controller.install(demo)
             controller.showsIntroduction = false
         }
     }
@@ -80,22 +89,40 @@ final class AppExperienceController: ObservableObject {
             let previous = controller.experience
             controller.experience = nil
             await previous?.close()
+            try Task.checkCancellation()
             if previous?.demoViewModel == nil,
                let identity = controller.pendingIdentity,
                try controller.selectionStore.loadSavedIdentity()?.id != identity.id {
                 try await controller.discardDemo(identity)
             }
+            try Task.checkCancellation()
             try controller.selectionStore.deactivate()
             controller.pendingIdentity = nil
             controller.showsIntroduction = false
-            controller.experience = controller.makeReal()
+            controller.experience = try controller.buildReal()
         }
+    }
+
+    private func buildReal() throws -> AppExperience {
+        do {
+            return try makeReal()
+        } catch {
+            throw AppExperienceFailure.storage
+        }
+    }
+
+    private func install(_ newExperience: AppExperience) async throws {
+        guard !Task.isCancelled else {
+            await newExperience.close()
+            throw CancellationError()
+        }
+        experience = newExperience
     }
 
     private func transition(_ operation: @escaping @MainActor (AppExperienceController) async throws -> Void) {
         guard transitionTask == nil else { return }
         isBusy = true
-        hasError = false
+        failure = nil
         transitionTask = Task { [weak self] in
             guard let self else { return }
             defer {
@@ -103,9 +130,12 @@ final class AppExperienceController: ObservableObject {
                 self.transitionTask = nil
             }
             do {
+                try Task.checkCancellation()
                 try await operation(self)
+            } catch is CancellationError {
+                return
             } catch {
-                self.hasError = true
+                self.failure = (error as? AppExperienceFailure) ?? .demo
             }
         }
     }

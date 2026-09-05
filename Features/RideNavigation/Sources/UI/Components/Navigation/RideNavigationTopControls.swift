@@ -17,7 +17,10 @@ struct RideNavigationTopControls: View {
             routeHeader
             Spacer(minLength: DesignSpace.medium)
             rightControls
+                .fixedSize(horizontal: true, vertical: false)
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("rideNavigation.topControls")
     }
 
     private var rightControls: some View {
@@ -66,9 +69,9 @@ struct RideNavigationTopControls: View {
                     .foregroundStyle(.secondary)
             }
             .padding(.trailing, DesignSpace.medium)
-            .frame(minWidth: Constants.routeHeaderMinimumWidth, alignment: .leading)
             .fixedSize(horizontal: false, vertical: true)
         }
+        .padding(DesignSpace.extraExtraSmall)
         .frame(minHeight: Self.height)
         .rideNavigationGlassSurface(cornerRadius: Constants.controlRadius)
     }
@@ -94,6 +97,5 @@ struct RideNavigationTopControls: View {
     private enum Constants {
         static let controlRadius: CGFloat = 24
         static let recordingIndicatorSize: CGFloat = 8
-        static let routeHeaderMinimumWidth: CGFloat = 220
     }
 }

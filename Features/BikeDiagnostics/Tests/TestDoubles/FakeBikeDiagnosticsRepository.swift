@@ -12,7 +12,7 @@ actor FakeBikeDiagnosticsRepository: BikeRepository {
     func connect(vin: String) async throws { await state.setConnectedVIN(vin) }
     func disconnect() async throws { await state.setDidDisconnect() }
     func retrySecurityHandshake() async throws { await state.setDidRetrySecurityHandshake() }
-    func startNewDiagnosticsCapture() async -> Bool { await state.startNewDiagnosticsCapture() }
+    func startNewDiagnosticsCapture(vin: String) async -> Bool { await state.startNewDiagnosticsCapture() }
     func stopDiagnosticsCapture() async -> Bool { await state.stopDiagnosticsCapture() }
     func readTelemetrySnapshot() async throws { await state.setDidReadTelemetrySnapshot() }
 

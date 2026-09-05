@@ -48,11 +48,15 @@ public enum BikePowerModeDebugLog {
     public static let launchArgument = "-debugPowerModeLogs"
 
     public static var isEnabled: Bool {
+        #if DEBUG
         ProcessInfo.processInfo.arguments.contains(launchArgument)
             || ProcessInfo.processInfo.environment["FENR_POWER_MODE_LOGS"] == "1"
+        #else
+        false
+        #endif
     }
 
-    public static func log(_ message: String) {
+    public static func log(_ message: @autoclosure () -> String) {
         guard isEnabled else { return }
         let timestamp = Date().formatted(
             .dateTime
@@ -62,6 +66,6 @@ public enum BikePowerModeDebugLog {
                 .second(.twoDigits)
                 .secondFraction(.fractional(3))
         )
-        print("[PowerModes][\(timestamp)] \(message)")
+        print("[PowerModes][\(timestamp)] \(message())")
     }
 }

@@ -9,15 +9,17 @@ actor BLETraceRecorderSpy: BLETraceRecording {
     private var shouldSuspendNextRecord = false
     private var recordContinuation: CheckedContinuation<Void, Never>?
     private var shouldSuspendNextFinish = false
+    private var shouldFailFinish = false
     private var finishContinuation: CheckedContinuation<Void, Never>?
 
-    func startSession(_ context: BLETraceSessionContext) async {
+    func startSession(_ context: BLETraceSessionContext) async -> Bool {
         contexts.append(context)
-        guard shouldSuspendNextStart else { return }
+        guard shouldSuspendNextStart else { return true }
         shouldSuspendNextStart = false
         await withCheckedContinuation { continuation in
             startContinuation = continuation
         }
+        return true
     }
 
     func record(_ event: BLETraceEvent) async {
@@ -29,13 +31,14 @@ actor BLETraceRecorderSpy: BLETraceRecording {
         }
     }
 
-    func finishSession(reason: BLETraceSessionEndReason) async {
+    func finishSession(reason: BLETraceSessionEndReason) async -> Bool {
         endReasons.append(reason)
-        guard shouldSuspendNextFinish else { return }
+        guard shouldSuspendNextFinish else { return !shouldFailFinish }
         shouldSuspendNextFinish = false
         await withCheckedContinuation { continuation in
             finishContinuation = continuation
         }
+        return !shouldFailFinish
     }
 
     func recordedEvents() -> [BLETraceEvent] {
@@ -66,6 +69,10 @@ actor BLETraceRecorderSpy: BLETraceRecording {
     func resumeRecord() {
         recordContinuation?.resume()
         recordContinuation = nil
+    }
+
+    func failFinish() {
+        shouldFailFinish = true
     }
 
     func suspendNextFinish() {

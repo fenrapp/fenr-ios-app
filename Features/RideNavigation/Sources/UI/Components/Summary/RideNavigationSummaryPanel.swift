@@ -12,18 +12,17 @@ struct RideNavigationSummaryPanel: View {
 
     var body: some View {
         GeometryReader { proxy in
-            ViewThatFits(in: .vertical) {
+            ScrollView {
                 panel
-
-                ScrollView {
-                    panel
-                }
-                .scrollIndicators(.hidden)
-                .frame(height: max(.zero, proxy.size.height - Constants.minimumVerticalMargin * 2))
+                    .frame(
+                        maxWidth: .infinity,
+                        minHeight: max(.zero, proxy.size.height - Constants.minimumVerticalMargin * 2)
+                    )
+                    .padding(.horizontal, DesignSpace.medium)
+                    .padding(.vertical, Constants.minimumVerticalMargin)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            .padding(.horizontal, DesignSpace.medium)
-            .padding(.vertical, Constants.minimumVerticalMargin)
+            .scrollIndicators(.hidden)
+            .scrollBounceBehavior(.basedOnSize)
         }
     }
 
@@ -67,19 +66,24 @@ struct RideNavigationSummaryPanel: View {
         .buttonStyle(.plain)
         .disabled(state.routePersistence.isSaving)
         .accessibilityLabel(.rideNavigationCloseSummary)
+        .accessibilityIdentifier("rideNavigation.summary.close")
     }
 
     private var completionIcon: some View {
-        Image(systemName: "checkmark")
+        Image(systemName: state.summaryIsSuccessful ? "checkmark" : "exclamationmark")
             .font(.title2.weight(.bold))
             .foregroundStyle(.white)
             .frame(width: Constants.iconSize, height: Constants.iconSize)
-            .background(DesignColor.positive.gradient, in: Circle())
+            .background(completionColor.gradient, in: Circle())
             .shadow(
-                color: DesignColor.positive.opacity(Constants.iconShadowOpacity),
+                color: completionColor.opacity(Constants.iconShadowOpacity),
                 radius: Constants.iconShadowRadius
             )
             .accessibilityHidden(true)
+    }
+
+    private var completionColor: Color {
+        state.summaryIsSuccessful ? DesignColor.positive : DesignColor.warning
     }
 
     private var summaryHeader: some View {
@@ -103,6 +107,7 @@ struct RideNavigationSummaryPanel: View {
                 Image(systemName: "pencil")
                     .foregroundStyle(.secondary)
                 TextField(String(localized: .rideNavigationRecordedRidePlaceholder), text: $routeName)
+                    .accessibilityIdentifier("rideNavigation.summary.name")
                     .submitLabel(.done)
                     .disabled(state.routePersistence.isSaving)
             }
@@ -145,12 +150,14 @@ struct RideNavigationSummaryPanel: View {
             }
             .controlSize(.large)
             .rideNavigationPrimaryButton()
+            .accessibilityIdentifier("rideNavigation.summary.retrySave")
 
             Button(role: .destructive, action: onDiscardUnsaved) {
                 Label(.rideNavigationDiscardRide, systemImage: "trash")
             }
             .controlSize(.large)
             .rideNavigationSecondaryButton()
+            .accessibilityIdentifier("rideNavigation.summary.discard")
         } else {
             if state.canSaveCompletedRoute {
                 Button(action: onSave) {
@@ -158,15 +165,19 @@ struct RideNavigationSummaryPanel: View {
                 }
                 .controlSize(.large)
                 .rideNavigationPrimaryButton()
+                .accessibilityIdentifier("rideNavigation.summary.save")
             }
         }
 
-        Button(action: onExport) {
+        if state.canExportCompletedRoute {
+            Button(action: onExport) {
                 Label(.rideNavigationExportGPX, systemImage: "square.and.arrow.up")
+            }
+            .controlSize(.large)
+            .rideNavigationSecondaryButton()
+            .disabled(state.routePersistence.isSaving)
+            .accessibilityIdentifier("rideNavigation.summary.export")
         }
-        .controlSize(.large)
-        .rideNavigationSecondaryButton()
-        .disabled(state.routePersistence.isSaving)
     }
 
     private var persistenceErrorText: String? {

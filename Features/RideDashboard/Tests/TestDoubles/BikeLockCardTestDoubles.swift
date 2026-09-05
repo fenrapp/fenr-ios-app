@@ -106,8 +106,10 @@ actor BikeLockCardSettingsRepository: AppSettingsRepository {
 
 actor BikeLockCardCredentialStore: BikeLockCredentialStoring {
     private var pins: [String: String] = [:]
+    private var failsSaving = false
 
-    func save(pin: String, for vehicleIdentifier: String) {
+    func save(pin: String, for vehicleIdentifier: String) throws {
+        if failsSaving { throw BikeLockCardCredentialFailure.unavailable }
         pins[vehicleIdentifier] = pin
     }
 
@@ -122,6 +124,8 @@ actor BikeLockCardCredentialStore: BikeLockCredentialStoring {
     func removePIN(for vehicleIdentifier: String) {
         pins[vehicleIdentifier] = nil
     }
+
+    func setFailsSaving(_ failsSaving: Bool) { self.failsSaving = failsSaving }
 
     func storedPIN(for vehicleIdentifier: String) -> String? {
         pins[vehicleIdentifier]
@@ -212,4 +216,8 @@ final class BikeLockCardCapabilityStore: BikeLockCapabilityStateStoring {
             continuation.finish()
         }
     }
+}
+
+enum BikeLockCardCredentialFailure: Error {
+    case unavailable
 }

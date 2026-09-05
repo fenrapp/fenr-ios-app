@@ -18,6 +18,7 @@ extension BikeEmulatorRepository {
         guard isBikeLockPrepared else {
             throw BikeEmulatorBikeLockError.controlNotPrepared
         }
+        try Task.checkCancellation()
         isBikeLocked = isLocked
         persistState()
         await publishDebugEvent(

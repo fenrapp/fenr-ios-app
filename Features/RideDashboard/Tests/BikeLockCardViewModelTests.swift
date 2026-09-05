@@ -234,7 +234,7 @@ struct BikeLockCardViewModelTests {
             pin: "123456"
         )
 
-        #expect(fixture.viewModel.viewState.sheet == nil)
+        #expect(fixture.viewModel.viewState.sheet == .setup)
         #expect(fixture.viewModel.viewState.isWorking)
         #expect(await waitUntil { await fixture.repository.recordedLockRequests() == [true] })
         #expect(await fixture.credentialStore.storedPIN(for: BikeLockCardFixtures.vin) == "123456")
@@ -275,11 +275,11 @@ struct BikeLockCardViewModelTests {
     }
 
     @Test("PIN mode requires the stored PIN before unlocking")
-    func verifiesPINBeforeUnlocking() async {
+    func verifiesPINBeforeUnlocking() async throws {
         var settings = AppSettings()
         settings.setBikeLockSettings(.init(securityMode: .pin), forVIN: BikeLockCardFixtures.vin)
         let fixture = BikeLockCardViewModelTestFactory.make(isLocked: true, settings: settings)
-        await fixture.credentialStore.save(pin: "123456", for: BikeLockCardFixtures.vin)
+        try await fixture.credentialStore.save(pin: "123456", for: BikeLockCardFixtures.vin)
         fixture.viewModel.start()
         await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot(settings: settings))
         #expect(await waitUntil { fixture.viewModel.viewState.isAvailable })

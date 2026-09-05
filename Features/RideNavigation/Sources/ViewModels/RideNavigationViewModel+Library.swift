@@ -97,7 +97,7 @@ extension RideNavigationViewModel {
     }
 
     public func exportCompletedRoute() {
-        guard let route = completedRecording ?? selectedRoute ?? roadRouteForExport else {
+        guard canExportCompletedRoute, let route = completedRecording ?? selectedRoute ?? roadRouteForExport else {
             errorText = String(localized: .rideNavigationNoRouteToExport)
             render()
             return

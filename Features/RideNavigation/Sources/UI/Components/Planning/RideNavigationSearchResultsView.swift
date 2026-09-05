@@ -51,6 +51,7 @@ struct RideNavigationSearchResultsView: View {
                             )
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("rideNavigation.search.result")
                         if index < results.count - 1 {
                             Divider().padding(.leading, Constants.rowDividerInset)
                         }

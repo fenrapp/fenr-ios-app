@@ -51,6 +51,7 @@ final class RideNavigationViewModelState {
     var lastRoadRerouteAt: Date?
     var summaryTitle = String(localized: .rideNavigationSummaryRideComplete)
     var summaryDetail = ""
+    var summaryIsSuccessful = true
     var appSettings = AppSettings()
     var screen = RideNavigationViewState.Screen.home
     var activity = RideNavigationViewState.Activity.preview

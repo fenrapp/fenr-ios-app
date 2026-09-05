@@ -55,7 +55,9 @@ extension BikeEmulatorRepository {
         batteryHealthMonitoringLeaseCount += 1
         let date = await runtime.now()
         await publishBatteryHealth(date: date)
-        await captureHub.replace(with: makeCaptures(date: date))
+        if diagnostics.captureState.isRecording {
+            await captureHub.replace(with: makeCaptures(date: date))
+        }
     }
 
     public func stopBatteryHealthMonitoring() {
