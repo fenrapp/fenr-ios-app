@@ -288,7 +288,8 @@ private extension RideDashboardViewModel {
     private func livePresentation(from mappedViewState: RideDashboardViewState) -> RideDashboardViewState {
         let modeIndex = snapshot.telemetry.mode.displayIndex
         let preservedPowerMode: DashboardPowerModeViewData?
-        if modeIndex == lastLivePowerModeIndex,
+        if snapshot.telemetry.runState == .on,
+           modeIndex == lastLivePowerModeIndex,
            !mappedViewState.powerMode.isVisible,
            lastLiveViewState?.powerMode.isVisible == true {
             preservedPowerMode = lastLiveViewState?.powerMode
