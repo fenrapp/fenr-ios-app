@@ -35,6 +35,7 @@ struct DiagnosticsBLETraceDetailView: View {
                     tint: .indigo,
                     action: onExport
                 )
+                .accessibilityIdentifier("diagnostics.bleLogs.export")
                 if session.canDelete {
                     ListActionButton(
                         title: DiagnosticsCopy.delete,
@@ -43,6 +44,7 @@ struct DiagnosticsBLETraceDetailView: View {
                     ) {
                         confirmsDelete = true
                     }
+                    .accessibilityIdentifier("diagnostics.bleLogs.delete")
                 }
             }
         }

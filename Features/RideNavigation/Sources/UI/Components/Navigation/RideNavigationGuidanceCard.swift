@@ -18,6 +18,8 @@ struct RideNavigationGuidanceCard: View {
             .padding(.horizontal, DesignSpace.medium)
             .frame(minHeight: Constants.height)
             .rideNavigationGlassSurface(cornerRadius: Constants.radius)
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("rideNavigation.guidance")
             .frame(maxWidth: .infinity, alignment: .leading)
         } else if let guidance = state.guidance {
             HStack(spacing: DesignSpace.small) {
@@ -48,6 +50,8 @@ struct RideNavigationGuidanceCard: View {
             .frame(maxWidth: .infinity)
             .frame(minHeight: Constants.height)
             .rideNavigationGlassSurface(cornerRadius: Constants.radius)
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("rideNavigation.guidance")
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }

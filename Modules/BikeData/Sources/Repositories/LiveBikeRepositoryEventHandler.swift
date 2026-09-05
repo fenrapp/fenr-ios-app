@@ -12,6 +12,7 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
     private let connectionSessionPolicy: BikeConnectionSessionPolicy
     private let alphaEvidencePersistence: BikeAlphaEvidencePersistence
     private let now: @Sendable () -> Date
+    private let diagnosticsEnabled: @Sendable () -> Bool
 
     init(
         telemetryMapper: BikeSDKTelemetryPayloadToDomainMapper,
@@ -22,7 +23,8 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
         batteryDatasetMapper: BikeSDKBatteryDatasetToDomainMapper,
         connectionSessionPolicy: BikeConnectionSessionPolicy,
         alphaEvidencePersistence: BikeAlphaEvidencePersistence,
-        now: @escaping @Sendable () -> Date
+        now: @escaping @Sendable () -> Date,
+        diagnosticsEnabled: @escaping @Sendable () -> Bool
     ) {
         self.telemetryMapper = telemetryMapper
         self.eventMapper = eventMapper
@@ -33,6 +35,7 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
         self.connectionSessionPolicy = connectionSessionPolicy
         self.alphaEvidencePersistence = alphaEvidencePersistence
         self.now = now
+        self.diagnosticsEnabled = diagnosticsEnabled
     }
 
     func resetSession() async {
@@ -55,6 +58,7 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
                 await targets.imuHub.send(imuMapper.map(sample))
             }
         case .batteryDatasetCapture(let capture):
+            guard diagnosticsEnabled() else { return }
             let mappedCapture = BatteryDatasetCapture(
                 dataset: batteryDatasetMapper.map(capture.dataset),
                 byteCount: capture.byteCount,
@@ -67,7 +71,7 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
             if let connection = await targets.stateStore.updateConnectionIfChanged({ $0.rssi = rssi }) {
                 await targets.connectionHub.send(connection)
             }
-            await targets.debugHub.send(eventMapper.rssiDebug(rssi))
+            await sendDiagnostic(eventMapper.rssiDebug(rssi), to: targets)
         case .peripheral(let name, let identifier):
             let connection = await targets.stateStore.updateConnectionIfChanged {
                 $0.peripheralName = name
@@ -76,14 +80,22 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
             if let connection {
                 await targets.connectionHub.send(connection)
             }
-            await targets.debugHub.send(eventMapper.peripheralDebug(name: name, identifier: identifier))
+            await sendDiagnostic(eventMapper.peripheralDebug(name: name, identifier: identifier), to: targets)
         case .notification(let notification):
-            await targets.debugHub.send(eventMapper.notificationDebug(notification))
+            await sendDiagnostic(eventMapper.notificationDebug(notification), to: targets)
         case .debug(let event):
-            await targets.debugHub.send(eventMapper.sdkDebug(event))
+            await sendDiagnostic(eventMapper.sdkDebug(event), to: targets)
         case .error(let error):
-            await targets.debugHub.send(eventMapper.errorDebug(error))
+            await sendDiagnostic(eventMapper.errorDebug(error), to: targets)
         }
+    }
+
+    private func sendDiagnostic(
+        _ event: @autoclosure () -> BikeDebugEvent,
+        to targets: LiveBikeRepositoryEventTargets
+    ) async {
+        guard diagnosticsEnabled() else { return }
+        await targets.debugHub.send(event())
     }
 
     private func handleConnection(
@@ -106,7 +118,7 @@ public struct LiveBikeRepositoryEventHandler: Sendable {
                 await targets.connectionHub.send(connection)
             }
         }
-        await targets.debugHub.send(eventMapper.connectionDebug(from: status))
+        await sendDiagnostic(eventMapper.connectionDebug(from: status), to: targets)
     }
 
     private func handleTelemetry(

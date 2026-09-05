@@ -73,6 +73,7 @@ public struct MaintenanceFormView: View {
             Section(.maintenanceAdditionalSection) {
                 TextField(String(localized: .maintenanceFieldWorkshop), text: $draft.workshop)
                     .focused($focusedField, equals: .workshop)
+                    .accessibilityIdentifier("maintenance.workshop")
                 LabeledContent {
                     TextField(String(), text: $draft.costText)
                         .multilineTextAlignment(.trailing)
@@ -100,6 +101,7 @@ public struct MaintenanceFormView: View {
                 TextField(String(localized: .maintenanceFieldNotes), text: $draft.notes, axis: .vertical)
                     .lineLimit(Constants.notesLineRange)
                     .focused($focusedField, equals: .notes)
+                    .accessibilityIdentifier("maintenance.notes")
             }
 
             Section {
@@ -182,6 +184,7 @@ public struct MaintenanceFormView: View {
                     }
                 }
                 .disabled(viewModel.isMutating)
+                .accessibilityIdentifier("maintenance.save")
             }
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()

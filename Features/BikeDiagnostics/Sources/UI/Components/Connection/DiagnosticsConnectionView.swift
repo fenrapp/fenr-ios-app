@@ -40,6 +40,7 @@ struct DiagnosticsConnectionView: View {
                     isEnabled: state.isReconnectEnabled,
                     action: onReconnect
                 )
+                .accessibilityIdentifier("diagnostics.connection.reconnect")
                 ListActionButton(
                     title: DiagnosticsCopy.retryHandshake,
                     systemImage: "key.fill",
@@ -54,6 +55,7 @@ struct DiagnosticsConnectionView: View {
                     isDestructive: true,
                     action: onDisconnect
                 )
+                .accessibilityIdentifier("diagnostics.connection.disconnect")
             }
         }
     }

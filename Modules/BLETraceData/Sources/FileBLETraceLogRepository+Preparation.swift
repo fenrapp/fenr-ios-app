@@ -28,9 +28,16 @@ extension FileBLETraceLogRepository {
                 exportDirectory: exportDirectory
             )
             hasPreparedStorage = true
+            if recordingFailure?.phase == .preparing {
+                recordingFailure = nil
+                await failureHub.send(nil)
+            }
         } catch {
             reconcileCompletedSessionsFromDisk()
             hasPreparedStorage = false
+            if recordingFailure == nil || recordingFailure?.phase == .preparing {
+                await reportRecordingFailure(sessionID: nil, phase: .preparing)
+            }
         }
     }
 }

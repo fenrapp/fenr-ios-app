@@ -42,7 +42,7 @@ public final class BikeBLESecurityCoordinator {
 
     public func discovered(characteristic: CBCharacteristic, peripheral: CBPeripheral) async {
         sessionStore.setCharacteristic(characteristic)
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.characteristicTitle,
             detail: "\(characteristic.uuid.uuidString) \(characteristic.properties.protocolDescription)"
         )))
@@ -72,7 +72,7 @@ public final class BikeBLESecurityCoordinator {
         }
 
         let descriptorUUIDs = characteristic.descriptors?.map(\.uuid.uuidString).joined(separator: ",")
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.descriptorTitle,
             detail: "\(characteristicUUID) \(descriptorUUIDs ?? BikeSDKText.noDescriptors)"
         )))
@@ -92,7 +92,7 @@ public final class BikeBLESecurityCoordinator {
     ) async {
         if sessionStore.authenticationState == .authenticated {
             let detail = error?.localizedDescription ?? BikeSDKText.securityNotificationsDisabled
-            await eventEmitter.send(.debug(.init(
+            await eventEmitter.sendDiagnostic(.debug(.init(
                 title: BikeSDKText.securityTitle,
                 detail: detail
             )))
@@ -115,7 +115,7 @@ public final class BikeBLESecurityCoordinator {
         }
 
         sessionStore.setSubscribed(characteristic.uuid)
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.securityTitle,
             detail: BikeSDKText.securityNotificationsEnabled
         )))
@@ -144,7 +144,7 @@ public final class BikeBLESecurityCoordinator {
             cancelPendingRetry()
             await handshake.handleAuthenticationResult(data, peripheral: peripheral, characteristic: characteristic)
         case .idle, .enablingNotifications, .authenticated, .failed:
-            await eventEmitter.send(.debug(.init(
+            await eventEmitter.sendDiagnostic(.debug(.init(
                 title: BikeSDKText.securityTitle,
                 detail: BikeSDKText.securityUpdateIgnored
             )))
@@ -165,7 +165,7 @@ public final class BikeBLESecurityCoordinator {
 
         sessionStore.setAuthenticationState(.waitingForResult)
         watchdog.watch(expectedState: .waitingForResult, operation: "authentication result")
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.securityTitle,
             detail: BikeSDKText.securityPayloadWritten
         )))
@@ -186,13 +186,13 @@ public final class BikeBLESecurityCoordinator {
         switch sessionStore.authenticationState {
         case .authenticated:
             cancelPendingRetry()
-            await eventEmitter.send(.debug(.init(
+            await eventEmitter.sendDiagnostic(.debug(.init(
                 title: BikeSDKText.securityTitle,
                 detail: BikeSDKText.securityAlreadyAuthenticated
             )))
             return
         case .enablingNotifications, .readingNonce, .writingResponse, .waitingForResult:
-            await eventEmitter.send(.debug(.init(
+            await eventEmitter.sendDiagnostic(.debug(.init(
                 title: BikeSDKText.securityTitle,
                 detail: BikeSDKText.securityAlreadyRunning
             )))
@@ -201,7 +201,7 @@ public final class BikeBLESecurityCoordinator {
             pairingRetryController?.cancelScheduledRetry()
         }
 
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.pairingTitle,
             detail: "\(BikeSDKText.manualSecurityRetry) \(characteristic.uuid.uuidString)"
         )))
@@ -229,7 +229,7 @@ public final class BikeBLESecurityCoordinator {
               let peripheral = sessionStore.peripheral
         else { return }
         pairingRetryController?.cancelScheduledRetry()
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.pairingTitle,
             detail: "Automatic security retry \(attempt) running"
         )))

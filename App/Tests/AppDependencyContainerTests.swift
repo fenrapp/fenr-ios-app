@@ -11,8 +11,8 @@ import TestSupport
 @Suite("App dependency container")
 struct AppDependencyContainerTests {
     @Test("Container builds diagnostics graph without starting streams")
-    func buildsBikeDiagnosticsGraph() {
-        let container = makeContainer()
+    func buildsBikeDiagnosticsGraph() throws {
+        let container = try makeContainer()
         let viewModel = container.makeRootDependencies().featureStore.diagnosticsViewModel
 
         #expect(viewModel.viewState.vin == "--")
@@ -22,8 +22,8 @@ struct AppDependencyContainerTests {
     }
 
     @Test("Container assembles root dependencies before the view is created")
-    func buildsRootDependencies() {
-        let dependencies = makeContainer().makeRootDependencies()
+    func buildsRootDependencies() throws {
+        let dependencies = try makeContainer().makeRootDependencies()
         let rideDashboard = dependencies.featureStore.rideDashboardFactory.makeFeature()
 
         #expect(!dependencies.setupFlow.isLoaded)
@@ -39,7 +39,9 @@ struct AppDependencyContainerTests {
         let diagnosticsContainer = BikeDiagnosticsDependencyContainer()
         let traceRepository = NoOpBLETraceRepository()
 
-        let client = bikeSDKContainer.makeBikeTelemetryClient(traceRecorder: traceRepository)
+        let client = bikeSDKContainer.makeBikeTelemetryClient(
+            traceRecorder: traceRepository, captureState: BLETraceCaptureState()
+        )
         let repository = bikeDataContainer.makeBikeRepository(client: client)
         let viewModel = diagnosticsContainer.makeBikeDiagnosticsViewModel(
             repository: repository,
@@ -52,8 +54,8 @@ struct AppDependencyContainerTests {
         #expect(!viewModel.isPresentationActive)
     }
 
-    private func makeContainer() -> AppDependencyContainer {
-        ProductionAppDependencyContainerFactory.makeDefault(
+    private func makeContainer() throws -> AppDependencyContainer {
+        try ProductionAppDependencyContainerFactory.makeDefault(
             maintenanceReminderScheduler: NoOpMaintenanceReminderScheduler()
         )
     }
@@ -81,21 +83,12 @@ struct AppDependencyContainerTests {
         #expect(await fixture.repository.lastVIN() == "FENRTEST000000001")
     }
 
-    @Test("Lifecycle prepares traces in parallel and waits before automatic BLE start")
-    func lifecycleWaitsForTracePreparationBeforeBLEStart() async {
-        let tracePreparer = LifecycleBLETraceStoragePreparer()
-        let fixture = AppLifecycleControllerFixture(
-            bleTraceStoragePreparer: tracePreparer
-        )
-        let startTask = Task { await fixture.lifecycleController.start() }
-
-        #expect(await waitUntil { await tracePreparer.preparationHasStarted() })
-        #expect(await fixture.vehicleSession.startCount() == 1)
-        #expect(await fixture.repository.startCount() == 0)
-
-        await tracePreparer.finishPreparation()
-        await startTask.value
+    @Test("Lifecycle starts BLE without preparing diagnostics storage")
+    func lifecycleStartsWithoutDiagnosticsPreparation() async {
+        let fixture = AppLifecycleControllerFixture()
+        await fixture.lifecycleController.start()
         #expect(await fixture.repository.startCount() == 1)
+        #expect(await fixture.repository.captureStopCount() == 0)
     }
 
     @Test("Lifecycle waits for pending persistence before shutdown barriers")
@@ -148,26 +141,25 @@ struct AppDependencyContainerTests {
         #expect(await vehicleSession.startCount() == 1)
         #expect(await fixture.repository.startCount() == 1)
         #expect(completionCount == 1)
+        #expect(await fixture.repository.captureStopCount() == 1)
     }
 
-    @Test("Stopping during startup rolls back started services")
+    @Test("Stopping during repository startup rolls back started services")
     func lifecycleStopDuringStartupRollsBackInReverseOrder() async {
-        let tracePreparer = LifecycleBLETraceStoragePreparer()
-        let fixture = AppLifecycleControllerFixture(bleTraceStoragePreparer: tracePreparer)
+        let fixture = AppLifecycleControllerFixture()
+        await fixture.repository.blockNextStart()
         let startTask = Task { await fixture.lifecycleController.start() }
-
-        #expect(await waitUntil { await tracePreparer.preparationHasStarted() })
+        #expect(await waitUntil { await fixture.repository.hasPendingStart() })
         fixture.lifecycleController.stop()
-        await tracePreparer.finishPreparation()
+        await fixture.repository.resumeStart()
         await startTask.value
-
         #expect(await waitUntil {
             let rideEvents = await fixture.rideSession.recordedEvents()
             let vehicleStopCount = await fixture.vehicleSession.stopCount()
             return rideEvents == ["start", "stop"] && vehicleStopCount == 1
         })
-        #expect(await fixture.repository.startCount() == 0)
-        #expect(await fixture.repository.stopCount() == 0)
+        #expect(await fixture.repository.startCount() == 1)
+        #expect(await fixture.repository.stopCount() == 1)
     }
 
     @Test("Lifecycle restarts after shutdown completes")

@@ -40,7 +40,7 @@ public struct BikeBLENotificationCoordinator {
 
     public func discovered(characteristic: CBCharacteristic, peripheral: CBPeripheral) async {
         sessionStore.setCharacteristic(characteristic)
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.characteristicTitle,
             detail: "\(characteristic.uuid.uuidString) \(characteristic.properties.protocolDescription)"
         )))
@@ -89,7 +89,7 @@ public struct BikeBLENotificationCoordinator {
         let date = Date()
         if sessionStore.isBatteryHealthMonitoringActive(),
            let dataset = BikeSDKConstants.batteryDataset(for: characteristic.uuid) {
-            await eventEmitter.send(.batteryDatasetCapture(.init(
+            await eventEmitter.sendDiagnostic(.batteryDatasetCapture(.init(
                 dataset: dataset,
                 byteCount: data.count,
                 hex: data.bikeSDKHexString,
@@ -240,7 +240,7 @@ public struct BikeBLENotificationCoordinator {
         }.filter { $0.properties.contains(.read) }
 
         for characteristic in characteristics {
-            await eventEmitter.send(.debug(.init(
+            await eventEmitter.sendDiagnostic(.debug(.init(
                 title: BikeSDKText.readTitle,
                 detail: "Battery health snapshot \(characteristic.uuid.uuidString)"
             )))
@@ -259,7 +259,7 @@ public struct BikeBLENotificationCoordinator {
         guard !characteristics.isEmpty else { return false }
         for characteristic in characteristics {
             if logsEveryRead || characteristic.uuid == BikeSDKConstants.batterySOCCharacteristicUUID {
-                await eventEmitter.send(.debug(.init(
+                await eventEmitter.sendDiagnostic(.debug(.init(
                     title: BikeSDKText.readTitle,
                     detail: "Telemetry snapshot \(characteristic.uuid.uuidString)"
                 )))

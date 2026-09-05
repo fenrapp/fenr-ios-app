@@ -39,7 +39,7 @@ enum BatteryHealthPreviewFactory {
                     setPowerLimit: .init(repository: repository),
                     setTarget: .init(repository: repository)
                 ),
-                logger: ChargeControlLogStore(),
+                logger: ChargeControlLogStore(isRecording: { true }),
                 stateUpdater: ChargeControlStateUpdater(normalizer: ChargeControlNormalizer()),
                 taskScheduler: ChargeControlTaskScheduler()
             ),

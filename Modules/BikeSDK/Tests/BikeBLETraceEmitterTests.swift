@@ -9,7 +9,7 @@ import TestSupport
 @MainActor
 @Suite("BLE trace emission")
 struct BikeBLETraceEmitterTests {
-    @Test("Keeps the session marker ahead of callbacks received while the file opens")
+    @Test("Ignores diagnostic callbacks until the file has opened successfully")
     func recordsSessionStartFirst() async {
         let recorder = BLETraceRecorderSpy()
         await recorder.suspendNextStart()
@@ -28,7 +28,7 @@ struct BikeBLETraceEmitterTests {
         await recorder.resumeStart()
         await startTask.value
 
-        #expect(await recorder.recordedEvents().map(\.operation) == [.sessionStarted, .restoration])
+        #expect(await recorder.recordedEvents().map(\.operation) == [.sessionStarted])
     }
 
     @Test("Redacts identity and authentication while preserving ordinary payloads")
@@ -151,7 +151,7 @@ struct BikeBLETraceEmitterTests {
             direction: .inbound,
             detail: "ignored while stopped"
         )
-        #expect(await emitter.startNewCapture())
+        #expect(await emitter.startNewCapture(vin: "FENRTEST000000001"))
 
         #expect(await recorder.contexts.map(\.reason) == [.connectionRequest, .manualRequest])
         #expect(await recorder.endReasons == [.userStopped])
@@ -166,7 +166,7 @@ struct BikeBLETraceEmitterTests {
         #expect(await emitter.stopCapture())
         await recorder.suspendNextStart()
 
-        let startTask = Task { @MainActor in await emitter.startNewCapture() }
+        let startTask = Task { @MainActor in await emitter.startNewCapture(vin: "FENRTEST000000001") }
         #expect(await waitUntil { await recorder.isStartSuspended() })
         await emitter.finishSession(reason: .userDisconnected)
         await recorder.resumeStart()
@@ -226,11 +226,11 @@ struct BikeBLETraceEmitterTests {
 
         let stopTask = Task { @MainActor in await emitter.stopCapture() }
         #expect(await waitUntil { await recorder.isFinishSuspended() })
-        #expect(await emitter.startNewCapture() == false)
+        #expect(await emitter.startNewCapture(vin: "FENRTEST000000001") == false)
 
         await recorder.resumeFinish()
         #expect(await stopTask.value)
-        #expect(await emitter.startNewCapture())
+        #expect(await emitter.startNewCapture(vin: "FENRTEST000000001"))
         #expect(await recorder.contexts.map(\.reason) == [.connectionRequest, .manualRequest])
     }
 }

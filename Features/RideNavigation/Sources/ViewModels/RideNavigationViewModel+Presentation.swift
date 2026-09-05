@@ -62,10 +62,10 @@ extension RideNavigationViewModel {
             arrivalPrompt: trailGuidanceSnapshot.arrivalPrompt,
             forkGuidance: presentedForkGuidance,
             routePersistence: state.routePersistence.status,
-            canSaveCompletedRoute: completedRecording != nil,
+            canSaveCompletedRoute: completedRecording != nil, canExportCompletedRoute: canExportCompletedRoute,
+            summaryIsSuccessful: state.summaryIsSuccessful,
             completedRouteName: completedRecording?.name,
-            summaryTitle: summaryTitle,
-            summaryDetail: summaryDetail
+            summaryTitle: summaryTitle, summaryDetail: summaryDetail
         )
         renderMiniViewState()
     }

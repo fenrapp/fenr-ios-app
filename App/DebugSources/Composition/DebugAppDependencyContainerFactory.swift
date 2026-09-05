@@ -27,13 +27,19 @@ enum DebugAppDependencyContainerFactory {
         arguments: [String],
         maintenanceReminderScheduler: any MaintenanceReminderScheduling
     ) -> DebugAppContext {
+        let captureState = BLETraceCaptureState()
+        let traceRepository = NoOpBLETraceRepository()
         let skipsOnboarding = arguments.contains(Constants.skipOnboardingArgument)
         let store = DebugScenarioStore(userDefaults: userDefaults)
         let launchConfiguration = makeLaunchConfiguration(arguments: arguments, store: store)
         let repository = BikeEmulatorRepositoryFactory.make(
             scenario: store.load(),
             powerModePreset: launchConfiguration.powerModePreset,
-            activeMap: launchConfiguration.activeMap
+            activeMap: launchConfiguration.activeMap,
+            diagnostics: BikeEmulatorDiagnostics(
+                recorder: traceRepository, captureState: captureState,
+                uptimeNanoseconds: { DispatchTime.now().uptimeNanoseconds }
+            )
         )
         let profileRepository = DebugBikeProfileRepository(
             initialProfile: skipsOnboarding
@@ -45,7 +51,8 @@ enum DebugAppDependencyContainerFactory {
                 repository: repository,
                 profileRepository: profileRepository,
                 forceOnboarding: !skipsOnboarding,
-                maintenanceReminderScheduler: maintenanceReminderScheduler
+                maintenanceReminderScheduler: maintenanceReminderScheduler,
+                diagnostics: DebugDiagnosticsContext(traceRepository: traceRepository, captureState: captureState)
             ),
             scenarioController: DebugScenarioController(
                 repository: repository,
@@ -76,22 +83,14 @@ enum DebugAppDependencyContainerFactory {
         repository: BikeEmulatorRepository,
         profileRepository: DebugBikeProfileRepository,
         forceOnboarding: Bool,
-        maintenanceReminderScheduler: any MaintenanceReminderScheduling
+        maintenanceReminderScheduler: any MaintenanceReminderScheduling,
+        diagnostics: DebugDiagnosticsContext
     ) -> AppDependencyContainer {
         let settingsRepository = AppSettingsRepositoryFactory.make(
             userDefaults: .standard, profileRepository: profileRepository
         )
         let deviceSpeedRepository = DebugDeviceSpeedRepository()
-        let motionCalibrationRepository = DebugVehicleMotionCalibrationRepository(calibrations: [
-            BikeEmulatorIdentity.vin: .init(
-                vin: BikeEmulatorIdentity.vin,
-                gyroscopeBiasXRaw: .zero,
-                gyroscopeBiasYRaw: .zero,
-                gyroscopeBiasZRaw: .zero,
-                profileVersion: 1,
-                calibratedAt: Date()
-            )
-        ])
+        let motionCalibrationRepository = makeMotionCalibrationRepository()
         let rideTripRepository = makeRideTripRepository()
         let maintenanceRepository = makeMaintenanceRepository()
         let sessionServices = AppSessionDependencyContainer.makeServices(
@@ -110,7 +109,9 @@ enum DebugAppDependencyContainerFactory {
             diagnosticsContainer: BikeDiagnosticsDependencyContainer(),
             batteryHealthContainer: BatteryHealthDependencyContainer(),
             session: BikeSession(repository: repository, pinDeriver: DebugBikePinDeriver()),
-            chargeControlSession: ChargeControlDependencyContainer().makeSession(repository: repository),
+            chargeControlSession: ChargeControlDependencyContainer().makeSession(
+                repository: repository, captureState: diagnostics.captureState
+            ),
             profileRepository: profileRepository,
             settingsRepository: settingsRepository,
             deviceSpeedRepository: deviceSpeedRepository,
@@ -124,7 +125,7 @@ enum DebugAppDependencyContainerFactory {
             powerModeSettingsContainer: PowerModeSettingsDependencyContainer(),
             rideHistoryContainer: RideHistoryDependencyContainer(),
             maintenanceContainer: MaintenanceDependencyContainer(reminderScheduler: maintenanceReminderScheduler),
-            bleTraceLogRepository: NoOpBLETraceRepository(),
+            bleTraceLogRepository: diagnostics.traceRepository,
             incomingMapLinkStore: makeIncomingMapLinkStore(),
             bikeLockCredentialStore: KeychainBikeLockCredentialStore(
                 service: "com.fenr.app.debug.bike-lock"
@@ -141,7 +142,7 @@ enum DebugAppDependencyContainerFactory {
     }
 
     private static func makeIncomingMapLinkStore() -> UserDefaultsIncomingMapLinkStore {
-        (try? UserDefaultsIncomingMapLinkStore.shared())
+        return (try? UserDefaultsIncomingMapLinkStore.shared())
             ?? UserDefaultsIncomingMapLinkStore(
                 userDefaults: .standard,
                 encoder: JSONEncoder(),
@@ -167,6 +168,16 @@ enum DebugAppDependencyContainerFactory {
             alphaEvidence: evidence,
             alphaDetectedAt: evidence.isEmpty ? nil : Date()
         )
+    }
+
+    private static func makeMotionCalibrationRepository() -> DebugVehicleMotionCalibrationRepository {
+        DebugVehicleMotionCalibrationRepository(calibrations: [
+            BikeEmulatorIdentity.vin: .init(
+                vin: BikeEmulatorIdentity.vin,
+                gyroscopeBiasXRaw: .zero, gyroscopeBiasYRaw: .zero, gyroscopeBiasZRaw: .zero,
+                profileVersion: 1, calibratedAt: Date()
+            )
+        ])
     }
 
     private static func makeRideTripRepository() -> SwiftDataRideTripRepository {
@@ -214,4 +225,9 @@ private struct DebugBikePinDeriver: BikePinDeriving {
     func derivePin(vin: String) -> String {
         "000000"
     }
+}
+
+private struct DebugDiagnosticsContext {
+    let traceRepository: any BLETraceRecording & BLETraceLogRepository
+    let captureState: BLETraceCaptureState
 }

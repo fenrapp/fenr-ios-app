@@ -118,6 +118,7 @@ targets:
     dependencies:
       - target: AsyncSupport
       - target: BikeDomain
+      - target: BLETraceDomain
       - target: RuntimeConfiguration
     settings:
       base:
@@ -1065,6 +1066,7 @@ targets:
     sources:
       - path: Modules/BikeEmulator/Tests
     dependencies:
+      - target: BLETraceDomain
       - target: BikeEmulator
       - target: BikeDomain
       - target: TestSupport
@@ -1535,6 +1537,7 @@ targets:
       - path: App/Resources/Shared/Localizable.xcstrings
         buildPhase: resources
     dependencies:
+      - target: AsyncSupport
       - target: BLETraceData
       - target: BLETraceDomain
       - target: AppSettings

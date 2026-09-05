@@ -6,7 +6,8 @@ import Foundation
 public enum LiveBikeRepositoryFactory {
     public static func makeDefault(
         client: BikeTelemetryClient,
-        profileRepository: (any BikeProfileRepository)? = nil
+        profileRepository: (any BikeProfileRepository)? = nil,
+        diagnosticsEnabled: @escaping @Sendable () -> Bool = { false }
     ) -> LiveBikeRepository {
         let configuration = BikeRepositoryStreamConfiguration()
         return LiveBikeRepository(
@@ -31,7 +32,8 @@ public enum LiveBikeRepositoryFactory {
                 alphaEvidencePersistence: BikeAlphaEvidencePersistence(
                     profileRepository: profileRepository
                 ),
-                now: Date.init
+                now: Date.init,
+                diagnosticsEnabled: diagnosticsEnabled
             ),
             stateStore: BikeRepositoryStateStore(),
             telemetryHub: AsyncEventHub(

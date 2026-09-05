@@ -19,6 +19,7 @@ struct PowerModeAdjustmentRow: View {
                     isEnabled: state.isEnabled,
                     accessibilityLabel: state.title,
                     accessibilityValue: valueText,
+                    accessibilityIdentifier: "powerModes.control." + state.id.rawValue,
                     onCommit: commit,
                     header: { displayedValue in
                         adjustmentHeader(displayedValue)
@@ -36,6 +37,7 @@ struct PowerModeAdjustmentRow: View {
             }
         }
         .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("powerModes.adjustment." + state.id.rawValue)
     }
 
     @ViewBuilder

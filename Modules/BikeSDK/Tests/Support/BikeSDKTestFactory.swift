@@ -9,10 +9,11 @@ import StarkProtocol
 func makeConnectionCoordinator(
     adapter: CoreBluetoothAdapter,
     eventHub: AsyncEventHub<BikeSDKEvent>,
+    traceRecorder: any BLETraceRecording = NoOpBLETraceRepository(),
     connectionTimeoutScheduler: any BikeBLETimeoutScheduling = FakeBikeBLETimeoutScheduler(),
     sessionResetHandler: @escaping @MainActor () -> Void = {}
 ) -> BikeBLEConnectionCoordinator {
-    let traceEmitter = makeTraceEmitter()
+    let traceEmitter = makeTraceEmitter(recorder: traceRecorder)
     let reconnectController = BikeBLEReconnectController(
         delay: BikeBLEReconnectDelay(),
         policy: .init(delays: [.zero]),
@@ -40,10 +41,14 @@ func makeNotificationMapper() -> StarkNotificationToSDKEventMapper {
 }
 
 @MainActor
-func makeTraceEmitter(recorder: any BLETraceRecording = NoOpBLETraceRepository())
+func makeTraceEmitter(
+    recorder: any BLETraceRecording = NoOpBLETraceRepository(),
+    captureState: BLETraceCaptureState = BLETraceCaptureState()
+)
     -> BikeBLETraceEmitter {
     BikeBLETraceEmitter(
         recorder: recorder,
+        captureState: captureState,
         now: Date.init,
         uptimeNanoseconds: { DispatchTime.now().uptimeNanoseconds },
         makeSessionID: UUID.init
@@ -51,7 +56,11 @@ func makeTraceEmitter(recorder: any BLETraceRecording = NoOpBLETraceRepository()
 }
 
 func makeEventEmitter(eventHub: AsyncEventHub<BikeSDKEvent>) -> BikeBLEEventEmitter {
-    BikeBLEEventEmitter(eventHub: eventHub, connectionStatusObserver: { _ in })
+    BikeBLEEventEmitter(
+        eventHub: eventHub,
+        captureState: makeEnabledCaptureState(),
+        connectionStatusObserver: { _ in }
+    )
 }
 
 func makeMutableCharacteristic(uuid: UUID) -> CBMutableCharacteristic {
@@ -87,6 +96,7 @@ private func makeNotificationCoordinator(
     let eventEmitter = makeEventEmitter(eventHub: eventHub)
     let traceEmitter = makeTraceEmitter()
     return BikeBLECoordinatorAssembly.makeNotificationCoordinator(dependencies: .init(
+        captureState: BLETraceCaptureState(),
         sessionStore: sessionStore,
         eventEmitter: eventEmitter,
         notificationProcessor: BikeBLENotificationProcessor(
@@ -206,4 +216,10 @@ private func makeSecurityCoordinator(
         pairingRetryController: nil,
         peripheralOperations: peripheralOperations
     )
+}
+
+func makeEnabledCaptureState() -> BLETraceCaptureState {
+    let state = BLETraceCaptureState()
+    state.setRecording(true)
+    return state
 }

@@ -2,6 +2,7 @@ import AsyncSupport
 import BLETraceDomain
 import Foundation
 public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository {
+    let captureState: BLETraceCaptureState
     let directory: URL
     let exportDirectory: URL
     private let environment: BLETraceEnvironment
@@ -9,6 +10,8 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
     let fileManager: FileManager
     let recordCodec: BLETraceRecordCodec
     let writerTaskStarter: any BLETraceWriterTaskStarter
+    let failureHub: AsyncEventHub<BLETraceRecordingFailure?>
+    var recordingFailure: BLETraceRecordingFailure?
     private let sessionHub: AsyncEventHub<[BLETraceSessionSummary]>
     let now: @Sendable () -> Date
     private let uptimeNanoseconds: @Sendable () -> UInt64
@@ -27,17 +30,9 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
         environment: BLETraceEnvironment,
         configuration: BLETraceFileStoreConfiguration,
         dependencies: sending BLETraceFileStoreDependencies
-    ) throws -> FileBLETraceLogRepository {
-        do {
-            try prepareDirectories(
-                directory: directory,
-                exportDirectory: exportDirectory,
-                fileManager: dependencies.fileManager
-            )
-        } catch {
-            throw BLETraceRepositoryError.unableToCreateStorage
-        }
-        return FileBLETraceLogRepository(
+    ) -> FileBLETraceLogRepository {
+        FileBLETraceLogRepository(
+            captureState: dependencies.captureState,
             directory: directory,
             exportDirectory: exportDirectory,
             environment: environment,
@@ -48,6 +43,7 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
                 boundaryDecoder: .init()
             ),
             sessionHub: dependencies.sessionHub,
+            failureHub: dependencies.failureHub,
             now: dependencies.now,
             uptimeNanoseconds: dependencies.uptimeNanoseconds,
             writerTaskStarter: dependencies.writerTaskStarter
@@ -55,6 +51,7 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
     }
 
     init(
+        captureState: BLETraceCaptureState,
         directory: URL,
         exportDirectory: URL,
         environment: BLETraceEnvironment,
@@ -62,10 +59,12 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
         fileManager: FileManager,
         recordCodec: BLETraceRecordCodec,
         sessionHub: AsyncEventHub<[BLETraceSessionSummary]>,
+        failureHub: AsyncEventHub<BLETraceRecordingFailure?>,
         now: @escaping @Sendable () -> Date,
         uptimeNanoseconds: @escaping @Sendable () -> UInt64,
         writerTaskStarter: any BLETraceWriterTaskStarter
     ) {
+        self.captureState = captureState
         self.directory = directory
         self.exportDirectory = exportDirectory
         self.environment = environment
@@ -73,21 +72,27 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
         self.fileManager = fileManager
         self.recordCodec = recordCodec
         self.sessionHub = sessionHub
+        self.failureHub = failureHub
         self.now = now
         self.uptimeNanoseconds = uptimeNanoseconds
         self.writerTaskStarter = writerTaskStarter
         completedSessions = []
     }
     deinit {
+        captureState.setRecording(false)
         writerTask?.cancel()
         try? activeSession?.fileHandle.close()
     }
 
-    public func startSession(_ context: BLETraceSessionContext) async {
+    @discardableResult
+    public func startSession(_ context: BLETraceSessionContext) async -> Bool {
         await prepareStorage()
-        guard hasPreparedStorage else { return }
+        guard hasPreparedStorage else {
+            await reportRecordingFailure(sessionID: context.id, phase: .opening)
+            return false
+        }
         if activeSession != nil {
-            await finishSession(reason: .clientStopped)
+            guard await finishSession(reason: .clientStopped) else { return false }
         }
         do {
             try pruneBeforeStartingSession()
@@ -95,7 +100,7 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
             let fileName = Self.partialFileName(for: context)
             let url = directory.appendingPathComponent(fileName)
             guard fileManager.createFile(atPath: url.path, contents: nil) else {
-                return
+                throw BLETraceRepositoryError.unableToCreateStorage
             }
             try Self.configureLogFile(url, fileManager: fileManager)
             let handle = try FileHandle(forWritingTo: url)
@@ -108,18 +113,23 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
                 bytesWritten: 0,
                 isTruncated: false
             )
-            enqueue(
-                try recordCodec.encodeHeader(context: context, environment: environment),
-                sessionID: context.id
-            )
+            let header = try recordCodec.encodeHeader(context: context, environment: environment)
+            try handle.write(contentsOf: header)
+            try handle.synchronize()
+            activeSession?.bytesWritten = Int64(header.count)
+            captureState.setRecording(true)
+            recordingFailure = nil
+            await failureHub.send(nil)
             await publishSessions()
+            return activeSession?.context.id == context.id
         } catch {
-            closeActiveSessionAfterFailure()
+            await closeActiveSessionAfterFailure(sessionID: context.id, phase: .opening)
+            return false
         }
     }
 
     public func record(_ event: BLETraceEvent) async {
-        guard var session = activeSession, !session.isTruncated else { return }
+        guard captureState.isRecording, var session = activeSession, !session.isTruncated else { return }
         do {
             let line = try recordCodec.encodeEvent(
                 event,
@@ -139,16 +149,19 @@ public actor FileBLETraceLogRepository: BLETraceRecording, BLETraceLogRepository
             activeSession = session
             enqueue(line, sessionID: session.context.id)
         } catch {
-            closeActiveSessionAfterFailure()
+            await closeActiveSessionAfterFailure(phase: .writing)
         }
     }
 
-    public func finishSession(reason: BLETraceSessionEndReason) async {
-        guard let session = activeSession else { return }
+    @discardableResult
+    public func finishSession(reason: BLETraceSessionEndReason) async -> Bool {
+        captureState.setRecording(false)
+        guard let session = activeSession else { return recordingFailure == nil }
         await drainPendingLines()
+        guard activeSession?.context.id == session.context.id else { return false }
         let endedAt = now()
         let status: BLETraceSessionStatus = session.isTruncated ? .truncated : .complete
-        await closeSession(session, endedAt: endedAt, reason: reason, status: status)
+        return await closeSession(session, endedAt: endedAt, reason: reason, status: status)
     }
 
     public func observeSessions() async -> AsyncStream<[BLETraceSessionSummary]> {
@@ -197,7 +210,7 @@ extension FileBLETraceLogRepository {
                 session.bytesWritten += Int64(pending.data.count)
                 activeSession = session
             } catch {
-                closeActiveSessionAfterFailure()
+                await closeActiveSessionAfterFailure(phase: .writing)
                 break
             }
             await Task.yield()
@@ -234,60 +247,12 @@ extension FileBLETraceLogRepository {
         )
     }
 
-    func closeSession(
-        _ originalSession: ActiveSession,
-        endedAt: Date,
-        reason: BLETraceSessionEndReason,
-        status: BLETraceSessionStatus
+    func closeActiveSessionAfterFailure(
+        sessionID: UUID? = nil,
+        phase: BLETraceRecordingFailure.Phase
     ) async {
-        guard var session = activeSession, session.context.id == originalSession.context.id else { return }
-        let durationMilliseconds = max(
-            0,
-            Int64(endedAt.timeIntervalSince(session.context.startedAt) * 1_000)
-        )
-        let footerInput = BLETraceRecordCodec.FooterInput(
-            sessionID: session.context.id,
-            endedAt: endedAt,
-            durationMilliseconds: durationMilliseconds,
-            eventCount: session.eventCount,
-            baseBytes: session.bytesWritten,
-            status: status,
-            reason: reason
-        )
-        let finalURL = session.url.deletingPathExtension().appendingPathExtension("jsonl")
-        do {
-            let data = try recordCodec.encodeFooter(footerInput)
-            try session.fileHandle.write(contentsOf: data)
-            session.bytesWritten += Int64(data.count)
-            try session.fileHandle.synchronize()
-            try session.fileHandle.close()
-            try Self.configureLogFile(session.url, fileManager: fileManager)
-            if fileManager.fileExists(atPath: finalURL.path) {
-                try fileManager.removeItem(at: finalURL)
-            }
-            try fileManager.moveItem(at: session.url, to: finalURL)
-            try Self.configureLogFile(finalURL, fileManager: fileManager)
-            completedSessions = try Self.loadStoredSessions(
-                in: directory,
-                fileManager: fileManager,
-                codec: recordCodec
-            )
-            completedSessions = try Self.prune(
-                completedSessions,
-                configuration: configuration,
-                fileManager: fileManager,
-                exportDirectory: exportDirectory
-            )
-        } catch {
-            try? session.fileHandle.close()
-            // The partial file remains recoverable on the next launch.
-            reconcileCompletedSessionsFromDisk()
-        }
-        activeSession = nil
-        await publishSessions()
-    }
-
-    func closeActiveSessionAfterFailure() {
+        let failedID = sessionID ?? activeSession?.context.id
+        captureState.setRecording(false)
         writerTask?.cancel()
         writerTask = nil
         writerTaskID = nil
@@ -296,6 +261,10 @@ extension FileBLETraceLogRepository {
         pendingByteCount = 0
         try? activeSession?.fileHandle.close()
         activeSession = nil
+        hasPreparedStorage = false
+        reconcileCompletedSessionsFromDisk()
+        if let failedID { await reportRecordingFailure(sessionID: failedID, phase: phase) }
+        await publishSessions()
     }
 
     func currentSummaries() -> [BLETraceSessionSummary] {

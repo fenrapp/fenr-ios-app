@@ -20,7 +20,7 @@ enum AppExperienceFactory {
                 makeDigits: { (0 ..< 9).map { _ in String(Int.random(in: 0 ... 9)) }.joined() }, now: Date.init
             ),
             makeReal: {
-                let root = ProductionAppDependencyContainerFactory.makeDefault(
+                let root = try ProductionAppDependencyContainerFactory.makeDefault(
                     maintenanceReminderScheduler: scheduler
                 ).makeRootDependencies()
                 return AppExperience(

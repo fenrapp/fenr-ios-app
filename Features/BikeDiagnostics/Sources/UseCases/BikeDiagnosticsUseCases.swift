@@ -10,6 +10,7 @@ public struct BikeDiagnosticsUseCases: Sendable {
     let stopDiagnosticsCapture: StopBikeDiagnosticsCaptureUseCase
     let observeDebugEvents: ObserveBikeDebugEventsUseCase
     let observeBLETraceSessions: ObserveBLETraceSessionsUseCase
+    let observeBLETraceRecordingFailures: ObserveBLETraceRecordingFailuresUseCase
     let prepareBLETraceExport: PrepareBLETraceExportUseCase
     let deleteBLETraceSession: DeleteBLETraceSessionUseCase
     let deleteAllBLETraceSessions: DeleteAllBLETraceSessionsUseCase
@@ -23,6 +24,7 @@ public struct BikeDiagnosticsUseCases: Sendable {
         stopDiagnosticsCapture: StopBikeDiagnosticsCaptureUseCase,
         observeDebugEvents: ObserveBikeDebugEventsUseCase,
         observeBLETraceSessions: ObserveBLETraceSessionsUseCase,
+        observeBLETraceRecordingFailures: ObserveBLETraceRecordingFailuresUseCase,
         prepareBLETraceExport: PrepareBLETraceExportUseCase,
         deleteBLETraceSession: DeleteBLETraceSessionUseCase,
         deleteAllBLETraceSessions: DeleteAllBLETraceSessionsUseCase
@@ -35,6 +37,7 @@ public struct BikeDiagnosticsUseCases: Sendable {
         self.stopDiagnosticsCapture = stopDiagnosticsCapture
         self.observeDebugEvents = observeDebugEvents
         self.observeBLETraceSessions = observeBLETraceSessions
+        self.observeBLETraceRecordingFailures = observeBLETraceRecordingFailures
         self.prepareBLETraceExport = prepareBLETraceExport
         self.deleteBLETraceSession = deleteBLETraceSession
         self.deleteAllBLETraceSessions = deleteAllBLETraceSessions

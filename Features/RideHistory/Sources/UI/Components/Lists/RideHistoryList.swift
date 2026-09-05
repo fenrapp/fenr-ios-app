@@ -79,6 +79,7 @@ struct RideHistoryList: View {
             }
             .buttonStyle(.plain)
             .accessibilityAddTraits(.isLink)
+            .accessibilityIdentifier("rideHistory.row")
             .disabled(state.isDeleting)
             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                 Button(role: .destructive) {

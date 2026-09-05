@@ -43,7 +43,8 @@ struct BikeEmulatorRepositoryTests {
 
     @Test("New observers receive the latest capture for every dataset")
     func newObserversReceiveLatestCaptures() async throws {
-        let repository = BikeEmulatorRepositoryFactory.make()
+        let fixture = await makeBikeEmulatorTestFixture(capturesDiagnostics: true)
+        let repository = fixture.repository
         try await repository.startBatteryHealthMonitoring()
 
         let stream = await repository.observeBatteryDatasetCaptures()

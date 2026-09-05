@@ -59,7 +59,7 @@ final class BikeBLEConnectionScanner {
                 return
             }
             await eventEmitter.send(.connection(.scanning(vin: sessionStore.targetVIN)))
-            await eventEmitter.send(.debug(.init(
+            await eventEmitter.sendDiagnostic(.debug(.init(
                 title: "BLE",
                 detail: "scan started for \(maskedVIN(sessionStore.targetVIN))"
             )))
@@ -84,7 +84,7 @@ final class BikeBLEConnectionScanner {
     func scanForDiscovery() async {
         switch adapter.state {
         case .poweredOn:
-            await eventEmitter.send(.debug(.init(
+            await eventEmitter.sendDiagnostic(.debug(.init(
                 title: "BLE",
                 detail: "discovery scan started"
             )))
@@ -108,17 +108,13 @@ final class BikeBLEConnectionScanner {
         pendingRestoredPeripherals.removeAll()
         guard sessionStore.peripheral == nil else { return }
         guard let peripheral = restoredPeripheral(from: peripherals) else { return }
-        await traceEmitter.startSession(
-            vin: sessionStore.targetVIN.isEmpty ? (peripheral.name ?? "") : sessionStore.targetVIN,
-            reason: .restoration
-        )
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: "BLE",
             detail: "restored \(peripherals.count) peripheral(s)"
         )))
         let hasConnectionIntent = sessionStore.shouldConnectWhenPoweredOn || !sessionStore.targetVIN.isEmpty
         guard hasConnectionIntent || peripheral.state != .disconnected else {
-            await eventEmitter.send(.debug(.init(
+            await eventEmitter.sendDiagnostic(.debug(.init(
                 title: "BLE",
                 detail: "restored peripheral waiting for explicit connect"
             )))
@@ -162,7 +158,7 @@ final class BikeBLEConnectionScanner {
         connect: @escaping @MainActor (CBPeripheral) async -> Void
     ) async -> Bool {
         let peripherals = adapter.retrieveConnectedPeripherals(withServices: BikeSDKConstants.serviceUUIDs)
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: "BLE",
             detail: "retrieved connected peripherals: \(peripherals.count)"
         )))

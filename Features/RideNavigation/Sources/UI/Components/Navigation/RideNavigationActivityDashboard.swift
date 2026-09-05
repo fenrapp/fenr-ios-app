@@ -23,16 +23,31 @@ struct RideNavigationActivityDashboard: View {
     }
 
     private var standardDashboard: some View {
-        HStack(alignment: .center, spacing: DesignSpace.medium) {
-            metricsGrid
-            Spacer(minLength: DesignSpace.medium)
-            actionsContainer(maxWidth: Constants.standardActionsWidth)
+        ViewThatFits(in: .horizontal) {
+            dashboardRow(usesCompactControls: false)
+                .frame(minWidth: Constants.fullControlsMinimumWidth)
+            dashboardRow(usesCompactControls: true)
+            VStack(alignment: .leading, spacing: DesignSpace.small) {
+                metricsGrid
+                actionsContainer(maxWidth: Constants.standardActionsWidth)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
         }
         .padding(.horizontal, DesignSpace.medium)
         .padding(.vertical, DesignSpace.small)
         .frame(minHeight: Constants.dashboardHeight)
         .fixedSize(horizontal: false, vertical: true)
         .rideNavigationGlassSurface(cornerRadius: Constants.dashboardRadius)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("rideNavigation.activityDashboard")
+    }
+
+    private func dashboardRow(usesCompactControls: Bool) -> some View {
+        HStack(spacing: .zero) {
+            metricsGrid
+            Spacer(minLength: DesignSpace.medium)
+            activityActions(usesCompactControls: usesCompactControls)
+        }
     }
 
     private var focusDashboard: some View {
@@ -51,7 +66,7 @@ struct RideNavigationActivityDashboard: View {
     }
 
     @ViewBuilder
-    private var activityActions: some View {
+    private func activityActions(usesCompactControls: Bool = false) -> some View {
         switch state.activity {
         case .preview:
             RideNavigationHorizontalLayout(spacing: DesignSpace.extraSmall) {
@@ -69,6 +84,7 @@ struct RideNavigationActivityDashboard: View {
                     action: onStart
                 )
                 .rideNavigationPrimaryButton()
+                .accessibilityIdentifier("rideNavigation.preview.start")
                 .disabled(
                     state.isCalculatingRoadRoutes
                         || state.isPreparingTrail
@@ -77,18 +93,19 @@ struct RideNavigationActivityDashboard: View {
             }
         case .recording, .paused:
             RideNavigationHorizontalLayout(spacing: DesignSpace.extraSmall) {
-                minimizeButton
+                minimizeButton(usesCompactControls: usesCompactControls)
                 actionButton(
                     state.activity == .paused ? .rideNavigationResume : .rideNavigationPause,
                     systemImage: state.activity == .paused ? "play.fill" : "pause.fill",
                     action: onTogglePause
                 )
                 .rideNavigationSecondaryButton()
+                .accessibilityIdentifier(state.activity == .paused ? "rideNavigation.resume" : "rideNavigation.pause")
                 finishButton
             }
         case .following, .navigating:
             RideNavigationHorizontalLayout(spacing: DesignSpace.extraSmall) {
-                minimizeButton
+                minimizeButton(usesCompactControls: usesCompactControls)
                 if state.canFindTrailExit {
                     actionButton(
                         state.isFindingTrailExit ? .rideNavigationFindingExit : .rideNavigationGetMeOut,
@@ -115,13 +132,13 @@ struct RideNavigationActivityDashboard: View {
     private func actionsContainer(maxWidth: CGFloat) -> some View {
         if dynamicTypeSize.isAccessibilitySize {
             ScrollView(.horizontal) {
-                activityActions
+                activityActions()
             }
             .scrollIndicators(.visible)
             .frame(maxWidth: maxWidth)
             .fixedSize(horizontal: false, vertical: true)
         } else {
-            activityActions
+            activityActions()
                 .frame(maxWidth: maxWidth, alignment: .trailing)
         }
     }
@@ -148,13 +165,15 @@ struct RideNavigationActivityDashboard: View {
             .tint(DesignColor.critical)
             .foregroundStyle(.white)
             .rideNavigationPrimaryButton()
+            .accessibilityIdentifier("rideNavigation.finish")
     }
 
-    private var minimizeButton: some View {
+    private func minimizeButton(usesCompactControls: Bool) -> some View {
         actionButton(
             .rideNavigationMini,
             systemImage: "arrow.down.right.and.arrow.up.left",
             iconSpacing: Constants.primaryActionIconSpacing,
+            showsTitle: !usesCompactControls,
             action: onMinimize
         )
         .rideNavigationSecondaryButton()
@@ -167,11 +186,14 @@ struct RideNavigationActivityDashboard: View {
         _ title: LocalizedStringResource,
         systemImage: String,
         iconSpacing: CGFloat? = nil,
+        showsTitle: Bool = true,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             Group {
-                if let iconSpacing {
+                if !showsTitle {
+                    Image(systemName: systemImage)
+                } else if let iconSpacing {
                     HStack(spacing: iconSpacing) {
                         Image(systemName: systemImage)
                         Text(title)
@@ -184,6 +206,7 @@ struct RideNavigationActivityDashboard: View {
                 .fixedSize(horizontal: true, vertical: false)
         }
         .controlSize(.large)
+        .accessibilityLabel(title)
     }
 
     private var isFocusDriving: Bool {
@@ -194,6 +217,7 @@ struct RideNavigationActivityDashboard: View {
         static let dashboardHeight: CGFloat = 76
         static let dashboardRadius: CGFloat = 24
         static let standardActionsWidth: CGFloat = 440
+        static let fullControlsMinimumWidth: CGFloat = 660
         static let focusCardRadius: CGFloat = 20
         static let focusActionsWidth: CGFloat = 360
         static let primaryActionIconSpacing: CGFloat = 4

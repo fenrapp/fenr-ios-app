@@ -48,7 +48,7 @@ struct BikeBLESubscriptionCoordinator {
         }
 
         let descriptorUUIDs = characteristic.descriptors?.map(\.uuid.uuidString).joined(separator: ",")
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.descriptorTitle,
             detail: "\(characteristicUUID) \(descriptorUUIDs ?? BikeSDKText.noDescriptors)"
         )))
@@ -64,7 +64,7 @@ struct BikeBLESubscriptionCoordinator {
         }
         sessionStore.enqueueNotificationCharacteristic(characteristic)
         guard sessionStore.authenticationState == .authenticated else {
-            await eventEmitter.send(.debug(.init(
+            await eventEmitter.sendDiagnostic(.debug(.init(
                 title: BikeSDKText.subscriptionTitle,
                 detail: BikeSDKText.telemetryQueued
             )))
@@ -87,7 +87,7 @@ struct BikeBLESubscriptionCoordinator {
                 )))
             } else {
                 sessionStore.removeSubscribed(characteristic.uuid)
-                await eventEmitter.send(.debug(.init(
+                await eventEmitter.sendDiagnostic(.debug(.init(
                     title: BikeSDKText.subscriptionTitle,
                     detail: "Disabled \(characteristicUUID)"
                 )))
@@ -96,7 +96,7 @@ struct BikeBLESubscriptionCoordinator {
             return
         }
         guard sessionStore.completeActiveNotificationCharacteristic(matching: characteristic.uuid) else {
-            await eventEmitter.send(.debug(.init(
+            await eventEmitter.sendDiagnostic(.debug(.init(
                 title: BikeSDKText.subscriptionTitle,
                 detail: "\(BikeSDKText.unexpectedNotificationState): \(characteristicUUID)"
             )))
@@ -112,7 +112,7 @@ struct BikeBLESubscriptionCoordinator {
             return
         }
         guard characteristic.isNotifying else {
-            await eventEmitter.send(.debug(.init(
+            await eventEmitter.sendDiagnostic(.debug(.init(
                 title: BikeSDKText.subscriptionTitle,
                 detail: "Not notifying \(characteristicUUID)"
             )))
@@ -162,7 +162,7 @@ struct BikeBLESubscriptionCoordinator {
 
         for uuid in BikeSDKConstants.batteryHealthMonitoringUUIDs {
             guard let characteristic = sessionStore.discoveredCharacteristics[uuid] else {
-                await eventEmitter.send(.debug(.init(
+                await eventEmitter.sendDiagnostic(.debug(.init(
                     title: BikeSDKText.subscriptionTitle,
                     detail: "Battery dataset unavailable \(uuid.uuidString)"
                 )))
@@ -226,7 +226,7 @@ struct BikeBLESubscriptionCoordinator {
 private extension BikeBLESubscriptionCoordinator {
     func completeSubscription(characteristic: CBCharacteristic, restored: Bool) async {
         sessionStore.setSubscribed(characteristic.uuid)
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.subscriptionTitle,
             detail: "Enabled \(characteristic.uuid.uuidString)\(restored ? " (restored)" : "")"
         )))

@@ -18,6 +18,7 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
     private var debugLogEvents: [BikeDebugEvent] = []
     private var bleTraceSessions: [BLETraceSessionSummary] = []
     private var bleTraceError: String?
+    private var bleTraceRecordingError: String?
     private var isBLETraceCaptureControlInProgress = false
     private var observationTasks: [Task<Void, Never>] = []
     private var actionTask: Task<Void, Never>?
@@ -163,6 +164,14 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
                 self?.receiveBLETraceSessions(sessions)
             }
         })
+        let observeBLETraceRecordingFailures = useCases.observeBLETraceRecordingFailures
+        observationTasks.append(Task { [weak self] in
+            let stream = await observeBLETraceRecordingFailures.execute()
+            for await failure in stream where !Task.isCancelled {
+                self?.bleTraceRecordingError = self?.mappers.bleTraceFailure.map(failure)
+                self?.render()
+            }
+        })
     }
 
     private func receive(_ snapshot: VehicleSessionSnapshot) {
@@ -210,7 +219,8 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
             debugEvents: visibleDebugEvents()
         )
         nextViewState.bleTraceSessions = bleTraceSessions.map(mappers.bleTraceSession.map)
-        nextViewState.bleTraceError = bleTraceError
+        nextViewState.bleTraceError = bleTraceRecordingError ?? bleTraceError
+        nextViewState.isBLETraceCaptureAvailable = sessionSnapshot.profile != nil
         nextViewState.isBLETraceCaptureControlInProgress = isBLETraceCaptureControlInProgress
         guard nextViewState != viewState else { return }
         viewState = nextViewState
@@ -257,14 +267,13 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
                 .prefix(BikeDiagnosticsConstants.maxVisibleDebugEvents)
         )
     }
-
 }
-
 extension BikeDiagnosticsViewModel {
     public func toggleBLETraceCapture() {
         guard bleTraceCaptureControlTask == nil, bleTraceActionTask == nil else { return }
         let isRecording = bleTraceSessions.contains { $0.status == .active }
-        guard isRecording || viewState.isDisconnectEnabled else { return }
+        let vin = sessionSnapshot.profile?.vin ?? ""
+        guard isRecording || !vin.isEmpty else { return }
 
         isBLETraceCaptureControlInProgress = true
         bleTraceCaptureControlGeneration &+= 1
@@ -277,7 +286,7 @@ extension BikeDiagnosticsViewModel {
             let succeeded = if isRecording {
                 await stopCapture.execute()
             } else {
-                await startCapture.execute()
+                await startCapture.execute(vin: vin)
             }
             guard let self, !Task.isCancelled else { return }
             if !succeeded {
@@ -335,5 +344,4 @@ extension BikeDiagnosticsViewModel {
         bleTraceError = nil
         render()
     }
-
 }

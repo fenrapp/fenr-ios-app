@@ -1,3 +1,4 @@
+import BLETraceDomain
 import CoreBluetooth
 
 @MainActor
@@ -14,6 +15,7 @@ enum BikeBLECoordinatorAssembly {
     }
 
     struct NotificationDependencies {
+        let captureState: BLETraceCaptureState
         let sessionStore: BLESessionStore
         let eventEmitter: BikeBLEEventEmitter
         let notificationProcessor: BikeBLENotificationProcessor
@@ -70,7 +72,8 @@ enum BikeBLECoordinatorAssembly {
         )
         let chargePowerCoordinator = BikeBLEChargePowerCoordinator(
             transport: configurationTransport,
-            verificationWaiter: BikeBLEChargePowerVerificationWaiter()
+            verificationWaiter: BikeBLEChargePowerVerificationWaiter(),
+            captureState: dependencies.captureState
         )
         return BikeBLENotificationCoordinator(
             sessionStore: dependencies.sessionStore,

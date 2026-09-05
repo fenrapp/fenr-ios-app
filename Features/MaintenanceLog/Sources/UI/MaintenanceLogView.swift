@@ -24,6 +24,7 @@ public struct MaintenanceLogView: View {
                     } label: {
                         Label(.maintenanceAdd, systemImage: "plus")
                     }
+                    .accessibilityIdentifier("maintenance.add")
                     .disabled(viewModel.viewState.status != .loaded || viewModel.isMutating)
                 }
             }
@@ -97,6 +98,7 @@ public struct MaintenanceLogView: View {
             }
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("maintenance.row")
         .swipeActions {
             Button(role: .destructive) { viewModel.delete(id: row.id) } label: {
                 Label(.maintenanceDelete, systemImage: "trash")

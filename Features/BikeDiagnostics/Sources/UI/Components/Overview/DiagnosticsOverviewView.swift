@@ -37,6 +37,7 @@ struct DiagnosticsOverviewView: View {
                     tint: DesignColor.positive,
                     action: onBatteryHealth
                 )
+                .accessibilityIdentifier("diagnostics.batteryHealth.open")
                 .disabled(!state.isBatteryHealthEnabled)
             } footer: {
                 if !state.isBatteryHealthEnabled {
@@ -75,6 +76,7 @@ struct DiagnosticsOverviewView: View {
                     image: "dot.radiowaves.left.and.right",
                     tint: .indigo
                 )
+                .accessibilityIdentifier("diagnostics.bleLogs.open")
             }
         }
     }
@@ -92,6 +94,14 @@ struct DiagnosticsOverviewView: View {
             tint: tint,
             action: { onNavigate(destination) }
         )
+        .accessibilityIdentifier(destinationIdentifier(destination))
+    }
+
+    private func destinationIdentifier(_ destination: BikeDiagnosticsDestination) -> String {
+        switch destination {
+        case .connection: "diagnostics.connection.open"
+        default: "diagnostics.destination.\(destination.rawValue)"
+        }
     }
 
     private var statusImage: String {

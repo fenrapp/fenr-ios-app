@@ -37,12 +37,12 @@ public struct BikeBLENotificationProcessor {
                     await eventEmitter.send(.telemetry(payload))
                 }
                 decodeStatus = .decoded
-                decodeDetail = notificationMapper.debug(
+                decodeDetail = traceEmitter.isRecording ? notificationMapper.debug(
                     characteristic: characteristic,
                     data: data,
                     payload: payload,
                     date: date
-                ).decodedDetail
+                ).decodedDetail : nil
             } else {
                 decodeStatus = .unmapped
                 decodeDetail = nil
@@ -64,14 +64,14 @@ public struct BikeBLENotificationProcessor {
             decodeStatus: decodeStatus,
             detail: decodeDetail
         )
-        if debugSampler.shouldEmit(characteristic: characteristic, date: date) {
+        if traceEmitter.isRecording, debugSampler.shouldEmit(characteristic: characteristic, date: date) {
             let debug = notificationMapper.debug(
                 characteristic: characteristic,
                 data: data,
                 payload: payload,
                 date: date
             )
-            await eventEmitter.send(.notification(debug))
+            await eventEmitter.sendDiagnostic(.notification(debug))
         }
         return payload != nil
     }

@@ -1,7 +1,8 @@
 # iOS App Store submission
 
 This checklist covers the iPhone app and its Share and Live Activity extensions.
-Watch, vehicle-control changes, and authoring the legal documents are outside
+The first TestFlight release is iPhone-only. Watch implementation is retained for
+a later release; deploying or authoring the website legal documents is outside
 this preparation. Local validation does not establish App Review approval.
 
 See [the dated local validation report](validation.md) for completed checks and
@@ -88,8 +89,9 @@ address from both the real and demo experiences.
 
 Settings > Legal contains **Privacy Policy** (`https://fenr.to/privacy`) and
 **Terms of Use** (`https://fenr.to/terms`). Both open in the system browser.
-The website owner must publish their content before submission. Use the privacy
-URL in App Store Connect as well: guideline 5.1.1(i) requires access both in the
+Both pages were reachable and contained legal text in the 2026-09-05 HTTP check.
+Review their content against the final release behavior. Use the privacy URL in
+App Store Connect as well: guideline 5.1.1(i) requires access both in the
 app and in its metadata. The terms link is provided for convenience; Apple
 applies its standard EULA unless a custom license is supplied in App Store Connect.
 
@@ -100,12 +102,25 @@ listed separately as development tools. These credits do not claim that the
 community projects' code is bundled with the app or replace license notices for
 any future vendored dependencies.
 
-Before submission, the website owner must add an accessible, working contact
-method and replace or remove provisional TestFlight links. An HTTP 200 response
-alone does not establish that a page provides support. This repository does not
-deploy or change the website.
+Before submission, the website owner must replace or remove the observed
+`https://testflight.apple.com/join/FENRTEST` placeholder. The homepage has no direct
+contact link; the published legal pages do expose contact links. Make support
+easily discoverable from the Support URL and verify the contact channel works.
+Update the privacy page's diagnostic-log section to describe manual Start/Stop,
+disconnected Start and capture disabled after relaunch. Clarify that Watch is not
+included in the first iPhone beta. HTTP 200 confirms retrieval, not legal approval
+or that a contact channel accepts messages. This repository does not deploy or
+change the website.
 
 ## Validation and submission sequence
+
+Apple's requirements checked on 2026-09-05 require the iOS 26 SDK or later for
+uploads since 2026-04-28. This preparation uses the iOS 26.5 SDK. External beta
+testing also needs test information, a feedback address and potentially Beta App
+Review. These are separate from passing local build and UI checks.
+Sources: [SDK requirements](https://developer.apple.com/news/?id=ueeok6yw),
+[TestFlight overview](https://developer.apple.com/help/app-store-connect/test-a-beta-version/testflight-overview),
+[App Privacy definitions](https://developer.apple.com/app-store/app-privacy-details/).
 
 1. Run `.xcodegen/generate-local.sh` and the applicable commands in
    [testing.md](../testing.md). Keep signing data and build outputs untracked.
@@ -119,7 +134,9 @@ deploy or change the website.
    python3 scripts/validate-app-store-resources.py --archive /tmp/FENR-AppStore.xcarchive
    ```
 
-4. In Simulator, inspect the support row in portrait and landscape, open the
+4. Complete [the iPhone QA matrix](qa-iphone.md) on iPhone 17, iPhone 17 Pro and
+   iPhone SE 3 at default text size, with independent visual review of each fix.
+   In Simulator, inspect the support row in portrait and landscape, open the
    link, return to Settings, and verify demo entry without location access.
    Exercise navigation in Madrid, New York, and Tokyo or Sydney. Check existing
    no-location, offline, and unavailable-route states. Use synthetic locations.
@@ -129,9 +146,18 @@ deploy or change the website.
    is only a local packaging check and cannot be uploaded as-is.
 6. Supply the coverage file, Support URL, review notes, contact details,
    screenshots, accurate hardware/firmware compatibility, and App Privacy
-   answers. Complete the separately pending legal documents before submission.
+   answers. Resolve the website copy/contact and placeholder-link findings before submission.
 7. Check processing messages for missing API declarations and metadata errors.
    Submit for review only once the website and remaining metadata are complete.
 
-Vehicle controls are unchanged by this work. Do not convert demo verification
-into a claim of physical traction-control or bike-lock validation.
+The owner reported physical traction-control and bike-lock testing on 2026-09-05.
+No tested-firmware inventory or new instrumented captures accompany that report.
+Keep the vehicle gates and exact confirmation rules unchanged. Simulator/demo
+verification remains separate from this owner report and cannot extend it to
+other hardware or firmware.
+
+Local metadata validation covers file format and field constraints only. It does
+not validate remote App Privacy answers, review contacts, agreements, distribution
+eligibility or beta-review approval. The current local source manifests describe
+UserDefaults reasons; assess developer data collection separately, including
+user-submitted support material and Apple's TestFlight diagnostics.

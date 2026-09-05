@@ -11,6 +11,21 @@ struct AppExperienceView: View {
                 AppExperienceContent(experience: experience, controller: controller)
                     .id(experience.id)
                     .disabled(controller.isBusy)
+            } else if controller.failure == .storage {
+                ContentUnavailableView {
+                    Label(.appStorageRecoveryTitle, systemImage: "externaldrive.badge.exclamationmark")
+                } description: {
+                    Text(.appStorageRecoveryDetail)
+                } actions: {
+                    Button(action: controller.restore) {
+                        Text(.appStorageRetry)
+                            .frame(minWidth: Constants.minimumTouchTarget, minHeight: Constants.minimumTouchTarget)
+                            .contentShape(Rectangle())
+                    }
+                    .accessibilityIdentifier("app.storageRecovery.retry")
+                }
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("app.storageRecovery")
             } else if controller.hasError {
                 ContentUnavailableView {
                     Label(.appDemoRecoveryTitle, systemImage: "exclamationmark.triangle")
@@ -42,6 +57,10 @@ struct AppExperienceView: View {
             )
         }
         .task { controller.restore() }
+    }
+
+    private enum Constants {
+        static let minimumTouchTarget: CGFloat = 44
     }
 }
 

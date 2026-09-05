@@ -7,8 +7,8 @@ public struct StartNewBikeDiagnosticsCaptureUseCase: Sendable {
         self.repository = repository
     }
 
-    public func execute() async -> Bool {
-        await repository.startNewDiagnosticsCapture()
+    public func execute(vin: String) async -> Bool {
+        await repository.startNewDiagnosticsCapture(vin: vin)
     }
 }
 

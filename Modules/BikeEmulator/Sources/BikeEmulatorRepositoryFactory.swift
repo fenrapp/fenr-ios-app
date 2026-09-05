@@ -1,18 +1,22 @@
 import AsyncSupport
 import BikeDomain
+import BLETraceDomain
 import Foundation
 
 public enum BikeEmulatorRepositoryFactory {
     public static func make(
         scenario: BikeEmulatorScenario = .charging,
         powerModePreset: BikeEmulatorPowerModePreset = .standard,
-        activeMap: Int = 4
+        activeMap: Int = 4,
+        diagnostics: BikeEmulatorDiagnostics? = nil
     ) -> BikeEmulatorRepository {
         make(
             scenario: scenario,
             powerModePreset: powerModePreset,
             activeMap: activeMap,
-            runtime: .live
+            runtime: .live,
+            configuration: nil,
+            diagnostics: diagnostics
         )
     }
 
@@ -31,7 +35,8 @@ public enum BikeEmulatorRepositoryFactory {
         powerModePreset: BikeEmulatorPowerModePreset,
         activeMap: Int,
         runtime: BikeEmulatorRuntime,
-        configuration: BikeEmulatorConfiguration? = nil
+        configuration: BikeEmulatorConfiguration? = nil,
+        diagnostics: BikeEmulatorDiagnostics? = nil
     ) -> BikeEmulatorRepository {
         BikeEmulatorRepository(
             scenario: scenario,
@@ -47,7 +52,11 @@ public enum BikeEmulatorRepositoryFactory {
                 ),
                 batteryHealth: makeStateEventHub(),
                 capture: BikeEmulatorCaptureHub(),
-                discoveredBikes: makeStateEventHub()
+                discoveredBikes: makeStateEventHub(),
+                diagnostics: diagnostics ?? BikeEmulatorDiagnostics(
+                    recorder: NoOpBLETraceRepository(), captureState: BLETraceCaptureState(),
+                    uptimeNanoseconds: { DispatchTime.now().uptimeNanoseconds }
+                )
             ),
             powerCalculator: BikePowerTelemetryCalculator(),
             runtime: runtime,
@@ -84,4 +93,5 @@ struct BikeEmulatorChannels {
     let batteryHealth: AsyncEventHub<BikeBatteryHealth>
     let capture: BikeEmulatorCaptureHub
     let discoveredBikes: AsyncEventHub<[DiscoveredBike]>
+    let diagnostics: BikeEmulatorDiagnostics
 }

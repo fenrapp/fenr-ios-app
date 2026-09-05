@@ -1,8 +1,10 @@
 import BikeDomain
 
 extension BikeEmulatorRepository {
-    func publishDebugEvent(title: String, detail: String) async {
+    func publishDebugEvent(title: @autoclosure () -> String, detail: @autoclosure () -> String) async {
+        guard diagnostics.captureState.isRecording else { return }
         let date = await runtime.now()
-        await debugEventHub.send(BikeDebugEvent(date: date, title: title, detail: detail))
+        guard diagnostics.captureState.isRecording else { return }
+        await debugEventHub.send(BikeDebugEvent(date: date, title: title(), detail: detail()))
     }
 }

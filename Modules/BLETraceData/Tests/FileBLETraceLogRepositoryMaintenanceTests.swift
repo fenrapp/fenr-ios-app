@@ -7,7 +7,7 @@ import Testing
 struct FileBLETraceLogRepositoryMaintenanceTests {
     @Test("Retains only the configured newest sessions")
     func prunesOldSessionsAndTheirExport() async throws {
-        let context = try makeBLETraceDataTestContext(maximumSessionCount: 2)
+        let context = makeBLETraceDataTestContext(maximumSessionCount: 2)
         defer { try? FileManager.default.removeItem(at: context.directory.deletingLastPathComponent()) }
         var firstExport: URL?
 
@@ -46,7 +46,7 @@ struct FileBLETraceLogRepositoryMaintenanceTests {
             paddingBytes: 4_096
         )
 
-        let context = try makeBLETraceDataTestContext(maximumTotalBytes: 1_024, root: root)
+        let context = makeBLETraceDataTestContext(maximumTotalBytes: 1_024, root: root)
         let stream = await context.repository.observeSessions()
         var iterator = stream.makeAsyncIterator()
         let snapshot = await iterator.next()
@@ -65,7 +65,7 @@ struct FileBLETraceLogRepositoryMaintenanceTests {
         try writeCompletedTrace(to: logs.appendingPathComponent("second.jsonl"), id: second)
         try writeCompletedTrace(to: logs.appendingPathComponent("first.jsonl"), id: first)
 
-        let context = try makeBLETraceDataTestContext(root: root)
+        let context = makeBLETraceDataTestContext(root: root)
         let sessions = await context.repository.observeSessions().first { !$0.isEmpty } ?? []
         #expect(sessions.map(\.id) == [first, second])
     }
@@ -73,7 +73,7 @@ struct FileBLETraceLogRepositoryMaintenanceTests {
     @Test("A failed delete reconciles the on-disk session and removes its export")
     func reconcilesAfterDeleteFailure() async throws {
         let controller = FileOperationFailureController()
-        let context = try makeBLETraceDataTestContext(
+        let context = makeBLETraceDataTestContext(
             fileManager: ControlledFileManager(controller: controller)
         )
         defer { try? FileManager.default.removeItem(at: context.directory.deletingLastPathComponent()) }
@@ -95,7 +95,7 @@ struct FileBLETraceLogRepositoryMaintenanceTests {
     @Test("A partial bulk delete reconciles storage and cleans exact exports")
     func reconcilesAfterPartialBulkDelete() async throws {
         let controller = FileOperationFailureController()
-        let context = try makeBLETraceDataTestContext(
+        let context = makeBLETraceDataTestContext(
             fileManager: ControlledFileManager(controller: controller)
         )
         defer { try? FileManager.default.removeItem(at: context.directory.deletingLastPathComponent()) }
@@ -131,7 +131,7 @@ struct FileBLETraceLogRepositoryMaintenanceTests {
         try FileManager.default.createDirectory(at: exports, withIntermediateDirectories: true)
         let legacy = exports.appendingPathComponent("legacy.txt")
         try Data("legacy".utf8).write(to: legacy)
-        let context = try makeBLETraceDataTestContext(root: root)
+        let context = makeBLETraceDataTestContext(root: root)
         let session = BLETraceDataFixtures.session()
         await context.repository.startSession(session)
         await context.repository.finishSession(reason: .userDisconnected)
@@ -146,7 +146,7 @@ struct FileBLETraceLogRepositoryMaintenanceTests {
 
     @Test("Canceled maintenance operations do not mutate storage")
     func canceledMaintenanceDoesNotMutate() async throws {
-        let context = try makeBLETraceDataTestContext()
+        let context = makeBLETraceDataTestContext()
         defer { try? FileManager.default.removeItem(at: context.directory.deletingLastPathComponent()) }
         let session = BLETraceDataFixtures.session()
         await context.repository.startSession(session)
@@ -182,7 +182,7 @@ struct FileBLETraceLogRepositoryMaintenanceTests {
     @Test("An export failure removes the copied destination")
     func removesDestinationAfterExportFailure() async throws {
         let controller = FileOperationFailureController()
-        let context = try makeBLETraceDataTestContext(
+        let context = makeBLETraceDataTestContext(
             fileManager: ControlledFileManager(controller: controller)
         )
         defer { try? FileManager.default.removeItem(at: context.directory.deletingLastPathComponent()) }
@@ -200,20 +200,19 @@ struct FileBLETraceLogRepositoryMaintenanceTests {
         #expect(!FileManager.default.fileExists(atPath: destination.path))
     }
 
-    @Test("Storage creation failures map to the repository error")
-    func reportsStorageInitializationFailure() throws {
+    @Test("Storage failure is deferred until Start and reports failure")
+    func reportsStorageInitializationFailure() async throws {
         let root = temporaryBLETraceRoot()
         defer { try? FileManager.default.removeItem(at: root) }
         try Data([0x01]).write(to: root)
 
-        #expect(throws: BLETraceRepositoryError.unableToCreateStorage) {
-            _ = try makeBLETraceDataTestContext(root: root)
-        }
+        let context = makeBLETraceDataTestContext(root: root)
+        #expect(await context.repository.startSession(BLETraceDataFixtures.session()) == false)
     }
 
     @Test("Directories, logs, and exports use protected storage")
     func configuresProtectedStorage() async throws {
-        let context = try makeBLETraceDataTestContext()
+        let context = makeBLETraceDataTestContext()
         defer { try? FileManager.default.removeItem(at: context.directory.deletingLastPathComponent()) }
         let session = BLETraceDataFixtures.session()
         await context.repository.startSession(session)

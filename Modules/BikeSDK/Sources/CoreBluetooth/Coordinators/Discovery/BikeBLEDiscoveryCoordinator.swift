@@ -28,7 +28,7 @@ public struct BikeBLEDiscoveryCoordinator {
         }
         let services = peripheral.services ?? []
         for service in services {
-            await eventEmitter.send(.debug(.init(
+            await eventEmitter.sendDiagnostic(.debug(.init(
                 title: BikeSDKText.serviceTitle,
                 detail: service.uuid.uuidString
             )))

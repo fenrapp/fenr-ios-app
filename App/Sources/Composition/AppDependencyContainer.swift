@@ -325,7 +325,9 @@ private extension AppDependencyContainer {
             bikeLiveActivityController: bikeLiveActivityController,
             rideSession: rideSession,
             vehicleSession: vehicleSession,
-            bleTraceStoragePreparer: bleTraceLogRepository,
+            stopDiagnosticsCapture: { [repository = session.repository] in
+                _ = await repository.stopDiagnosticsCapture()
+            },
             startupPreparer: startupPreparer
         )
     }

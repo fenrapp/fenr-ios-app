@@ -55,12 +55,14 @@ public struct MaintenanceDetailView: View {
                             confirmsDeletion = true
                         }
                         .disabled(viewModel.isMutating)
+                        .accessibilityIdentifier("maintenance.delete.open")
                     }
                 }
                 .navigationTitle(.maintenanceDetailTitle)
                 .toolbar {
                     Button(.maintenanceEdit) { onNavigation(.show(.form(id: entryID))) }
                         .disabled(viewModel.isMutating)
+                        .accessibilityIdentifier("maintenance.edit")
                 }
             } else {
                 ContentUnavailableView(.maintenanceNotFound, systemImage: "wrench.and.screwdriver")
@@ -73,7 +75,9 @@ public struct MaintenanceDetailView: View {
                     onNavigation(.close(.detail(id: entryID)))
                 }
             }
+            .accessibilityIdentifier("maintenance.delete.confirm")
             Button(.maintenanceCancel, role: .cancel) {}
+                .accessibilityIdentifier("maintenance.delete.cancel")
         }
     }
 }

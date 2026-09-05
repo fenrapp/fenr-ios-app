@@ -57,9 +57,11 @@ struct RideNavigationFinishConfirmationOverlay: View {
     @ViewBuilder
     private var actionButtons: some View {
         Button(.rideNavigationKeepRiding, action: onCancel)
+            .accessibilityIdentifier("rideNavigation.finish.cancel")
             .controlSize(.large)
             .rideNavigationSecondaryButton()
         Button(confirmTitle, action: onConfirm)
+            .accessibilityIdentifier("rideNavigation.finish.confirm")
             .controlSize(.large)
             .tint(DesignColor.critical)
             .foregroundStyle(.white)

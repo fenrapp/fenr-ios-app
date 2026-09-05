@@ -41,6 +41,9 @@ struct BikeDiagnosticsDependencyContainer {
             stopDiagnosticsCapture: StopBikeDiagnosticsCaptureUseCase(repository: repository),
             observeDebugEvents: ObserveBikeDebugEventsUseCase(repository: repository),
             observeBLETraceSessions: ObserveBLETraceSessionsUseCase(repository: bleTraceLogRepository),
+            observeBLETraceRecordingFailures: ObserveBLETraceRecordingFailuresUseCase(
+                repository: bleTraceLogRepository
+            ),
             prepareBLETraceExport: PrepareBLETraceExportUseCase(repository: bleTraceLogRepository),
             deleteBLETraceSession: DeleteBLETraceSessionUseCase(repository: bleTraceLogRepository),
             deleteAllBLETraceSessions: DeleteAllBLETraceSessionsUseCase(repository: bleTraceLogRepository)
@@ -90,7 +93,8 @@ struct BikeDiagnosticsDependencyContainer {
             bleTraceSession: BLETraceSessionViewDataMapper(
                 dateFormatStyle: Date.FormatStyle(date: .abbreviated, time: .standard),
                 byteCountFormatStyle: ByteCountFormatStyle(style: .file)
-            )
+            ),
+            bleTraceFailure: BLETraceFailureViewDataMapper()
         )
     }
 

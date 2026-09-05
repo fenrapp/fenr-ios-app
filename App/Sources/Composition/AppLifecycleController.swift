@@ -1,4 +1,3 @@
-import BLETraceDomain
 import RideSession
 import VehicleSession
 
@@ -16,7 +15,7 @@ final class AppLifecycleController {
     private let bikeLiveActivityController: BikeLiveActivityController
     private let rideSession: any RideSessionService
     private let vehicleSession: any VehicleSessionService
-    private let bleTraceStoragePreparer: any BLETraceStoragePreparing
+    private let stopDiagnosticsCapture: @Sendable () async -> Void
     private let startupPreparer: any AppStartupPreparing
     private var changeBikeTask: Task<Void, Never>?
     private var persistenceTask: Task<Void, Never>?
@@ -34,7 +33,7 @@ final class AppLifecycleController {
         bikeLiveActivityController: BikeLiveActivityController,
         rideSession: any RideSessionService,
         vehicleSession: any VehicleSessionService,
-        bleTraceStoragePreparer: any BLETraceStoragePreparing,
+        stopDiagnosticsCapture: @escaping @Sendable () async -> Void,
         startupPreparer: any AppStartupPreparing
     ) {
         self.sessionController = sessionController
@@ -42,7 +41,7 @@ final class AppLifecycleController {
         self.bikeLiveActivityController = bikeLiveActivityController
         self.rideSession = rideSession
         self.vehicleSession = vehicleSession
-        self.bleTraceStoragePreparer = bleTraceStoragePreparer
+        self.stopDiagnosticsCapture = stopDiagnosticsCapture
         self.startupPreparer = startupPreparer
     }
 
@@ -164,11 +163,14 @@ final class AppLifecycleController {
         let bikeLiveActivityController = bikeLiveActivityController
         let rideSession = rideSession
         let pendingPersistence = persistenceTask
+        let stopDiagnosticsCapture = stopDiagnosticsCapture
         changeBikeTask = Task { [weak self] in
             defer { self?.changeBikeTask = nil }
             await pendingPersistence?.value
             guard !Task.isCancelled else { return }
             await rideSession.stop()
+            guard !Task.isCancelled else { return }
+            await stopDiagnosticsCapture()
             guard !Task.isCancelled else { return }
             await sessionController.disconnect()
             guard !Task.isCancelled else { return }
@@ -205,9 +207,6 @@ private extension AppLifecycleController {
             completeStartWithoutRepository()
             return
         }
-
-        await bleTraceStoragePreparer.prepareStorage()
-        guard canContinueStarting else { return }
 
         await sessionController.start()
         didStartBikeRepository = true

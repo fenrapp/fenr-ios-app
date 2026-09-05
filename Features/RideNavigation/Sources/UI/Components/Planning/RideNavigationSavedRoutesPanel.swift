@@ -64,6 +64,7 @@ struct RideNavigationSavedRoutesPanel: View {
                 savedRouteRow(route)
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("rideNavigation.savedRoute")
             .listRowInsets(EdgeInsets(top: .zero, leading: .zero, bottom: DesignSpace.extraSmall, trailing: .zero))
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
@@ -72,6 +73,7 @@ struct RideNavigationSavedRoutesPanel: View {
                     Label(.rideNavigationShare, systemImage: "square.and.arrow.up")
                 }
                 .tint(DesignColor.accent)
+                .accessibilityIdentifier("rideNavigation.savedRoute.share")
             }
             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                 Button(role: .destructive) { onDeleteRoute(route.id) } label: {

@@ -263,3 +263,35 @@ struct RideNavigationMiniModeTests {
         static let referenceTime: TimeInterval = 1_700_000_000
     }
 }
+
+extension RideNavigationMiniModeTests {
+    @Test("mini orientation control stays inside the card and below the dashboard header",
+          arguments: [0.5, 1.0, 1.5], [false, true])
+    func miniOrientationControlStaysInsideCard(scale: Double, isLandscape: Bool) {
+        for size in [CGSize(width: 667, height: 375), CGSize(width: 874, height: 402)] {
+            let layout = RideNavigationMiniMapLayout(
+                containerSize: size, scale: scale, isLandscape: isLandscape
+            )
+            for fraction in [0.0, 1.0] {
+                let center = layout.position(for: .init(horizontalFraction: fraction, verticalFraction: fraction))
+                let card = CGRect(
+                    x: center.x - layout.cardSize.width / 2,
+                    y: center.y - layout.cardSize.height / 2,
+                    width: layout.cardSize.width, height: layout.cardSize.height
+                )
+                let controlCenter = layout.orientationControlPosition(for: center)
+                let hitSize = RideNavigationMiniMapLayout.orientationControlHitSize
+                let control = CGRect(
+                    x: controlCenter.x - hitSize / 2, y: controlCenter.y - hitSize / 2,
+                    width: hitSize, height: hitSize
+                )
+
+                #expect(card.contains(control))
+                #expect(control.minY > card.minY)
+                #expect(control.maxY < card.maxY)
+                #expect(control.maxX < card.maxX)
+                #expect(card.minY >= 60 - 0.001)
+            }
+        }
+    }
+}

@@ -10,22 +10,21 @@ struct RideNavigationAltitudeChip: View {
             Text(verbatim: "\(value) \(unit)")
                 .font(.subheadline.weight(.semibold))
                 .monospacedDigit()
-                .minimumScaleFactor(Constants.minimumScaleFactor)
-                .allowsTightening(true)
         } icon: {
             Image(systemName: "mountain.2.fill")
         }
         .lineLimit(1)
+        .fixedSize(horizontal: true, vertical: false)
         .padding(.horizontal, DesignSpace.small)
         .frame(minHeight: Constants.minimumHeight)
         .rideNavigationGlassChip()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(.rideNavigationMetricAltitude)
         .accessibilityValue(Text(verbatim: "\(value) \(unit)"))
+        .accessibilityIdentifier("rideNavigation.altitude")
     }
 
     private enum Constants {
         static let minimumHeight: CGFloat = 44
-        static let minimumScaleFactor = 0.65
     }
 }

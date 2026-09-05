@@ -3,6 +3,8 @@ import SwiftUI
 
 struct BikeLockSetupView: View {
     let options: [BikeLockSecurityOptionViewData]
+    let errorText: String?
+    let isWorking: Bool
     let configure: (String, String) -> Void
     let cancel: () -> Void
 
@@ -40,10 +42,17 @@ struct BikeLockSetupView: View {
                         .navigationBarBackButtonHidden(false)
                 }
         }
+        .disabled(isWorking)
+        .interactiveDismissDisabled(isWorking)
     }
 
     private var protectionOptions: some View {
         Form {
+            if let errorText {
+                Text(verbatim: errorText)
+                    .foregroundStyle(DesignColor.critical)
+                    .accessibilityIdentifier("bikeLock.setup.error")
+            }
             Section(.rideDashboardBikeLockSetupSectionProtection) {
                 ForEach(options) { option in
                     Button {
@@ -65,6 +74,7 @@ struct BikeLockSetupView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("bikeLock.setup.option.\(option.id)")
                 }
             }
         }
@@ -101,11 +111,12 @@ struct BikeLockSetupView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
-            if let pinError {
-                Text(pinError)
+            if let error = pinError ?? errorText {
+                Text(verbatim: error)
                     .font(.footnote.weight(.medium))
                     .foregroundStyle(.red)
                     .multilineTextAlignment(.center)
+                    .accessibilityIdentifier("bikeLock.setup.error")
             }
         }
     }

@@ -5,6 +5,7 @@ import StarkProtocol
 
 @MainActor
 final class BikeBLETraceEmitter {
+    private let captureState: BLETraceCaptureState
     private let recorder: any BLETraceRecording
     private let now: @Sendable () -> Date
     private let uptimeNanoseconds: @Sendable () -> UInt64
@@ -12,22 +13,26 @@ final class BikeBLETraceEmitter {
     private var targetVIN = ""
     private var recordingState = RecordingState.inactive
     private var sessionGeneration = 0
-    private var closeTask: Task<Void, Never>?
+    private var closeTask: Task<Bool, Never>?
     private var closeDestination: CloseDestination?
     private var bufferedEvents: [BLETraceEvent] = []
     private var pendingReads = Set<CBUUID>()
 
     init(
         recorder: any BLETraceRecording,
+        captureState: BLETraceCaptureState,
         now: @escaping @Sendable () -> Date,
         uptimeNanoseconds: @escaping @Sendable () -> UInt64,
         makeSessionID: @escaping @Sendable () -> UUID
     ) {
         self.recorder = recorder
+        self.captureState = captureState
         self.now = now
         self.uptimeNanoseconds = uptimeNanoseconds
         self.makeSessionID = makeSessionID
     }
+
+    var isRecording: Bool { captureState.isRecording }
 
     func record(
         category: String,
@@ -42,7 +47,8 @@ final class BikeBLETraceEmitter {
         detail: String? = nil,
         error: Error? = nil
     ) async {
-        guard recordingState == .active || recordingState == .starting else { return }
+        guard captureState.isRecording,
+              recordingState == .active || recordingState == .starting else { return }
         let event = makeEvent(
             timestamp: now(),
             uptimeNanoseconds: uptimeNanoseconds(),
@@ -66,6 +72,7 @@ final class BikeBLETraceEmitter {
     }
 
     func recordConnectionState(_ status: BikeSDKConnectionStatus) async {
+        guard isRecording else { return }
         await record(
             category: "connection_state",
             operation: .connectionStateChanged,
@@ -139,6 +146,7 @@ final class BikeBLETraceEmitter {
     }
 
     func recordReadRequested(characteristic: CBCharacteristic) async {
+        guard isRecording else { return }
         pendingReads.insert(characteristic.uuid)
         await record(
             category: "gatt",
@@ -151,6 +159,7 @@ final class BikeBLETraceEmitter {
     }
 
     func recordValueUpdate(characteristic: CBCharacteristic, error: Error?) async {
+        guard isRecording else { return }
         let wasReadPending = pendingReads.remove(characteristic.uuid) != nil
         await record(
             category: "gatt",
@@ -164,10 +173,6 @@ final class BikeBLETraceEmitter {
             detail: wasReadPending ? "A read was pending; CoreBluetooth does not identify callback origin" : nil,
             error: error
         )
-    }
-
-    func redactedText(_ value: String) -> String {
-        redact(value)
     }
 
     private func isSensitiveCharacteristic(_ uuid: CBUUID) -> Bool {
@@ -215,13 +220,15 @@ extension BikeBLETraceEmitter {
     func startSession(vin: String, reason: BLETraceSessionStartReason) async {
         if recordingState == .closing {
             let generation = sessionGeneration
-            await closeTask?.value
+            _ = await closeTask?.value
             completeClose(generation: generation)
         }
         guard recordingState == .inactive || recordingState == .paused else { return }
         sessionGeneration += 1
         let generation = sessionGeneration
         recordingState = .starting
+        bufferedEvents.removeAll(keepingCapacity: true)
+        pendingReads.removeAll()
         targetVIN = StarkPairingIdentity.normalizedVIN(vin)
         let context = BLETraceSessionContext(
             id: makeSessionID(),
@@ -229,8 +236,15 @@ extension BikeBLETraceEmitter {
             startUptimeNanoseconds: uptimeNanoseconds(),
             reason: reason
         )
-        await recorder.startSession(context)
+        let didStart = await recorder.startSession(context)
         guard recordingState == .starting, sessionGeneration == generation else { return }
+        guard didStart else {
+            captureState.setRecording(false)
+            recordingState = .inactive
+            bufferedEvents.removeAll()
+            return
+        }
+        captureState.setRecording(true)
         await recorder.record(makeEvent(
             timestamp: context.startedAt,
             uptimeNanoseconds: context.startUptimeNanoseconds,
@@ -264,33 +278,44 @@ extension BikeBLETraceEmitter {
             closeDestination = .inactive
             targetVIN = ""
             let generation = sessionGeneration
-            await closeTask?.value
+            _ = await closeTask?.value
             completeClose(generation: generation)
             return
         case .starting, .active:
             break
         }
 
-        await closeSession(reason: reason, destination: .inactive)
+        _ = await closeSession(reason: reason, destination: .inactive)
     }
 
-    func startNewCapture() async -> Bool {
-        guard recordingState == .paused, !targetVIN.isEmpty else { return false }
-        let vin = targetVIN
+    func selectBike(vin: String) async {
+        let normalized = StarkPairingIdentity.normalizedVIN(vin)
+        if !targetVIN.isEmpty, targetVIN != normalized {
+            await finishSession(reason: .clientStopped)
+        }
+    }
+
+    func startNewCapture(vin: String) async -> Bool {
+        if recordingState == .active, !captureState.isRecording {
+            recordingState = .inactive
+        }
+        guard recordingState == .inactive || recordingState == .paused,
+              StarkPairingIdentity.isValidVIN(vin) else { return false }
         await startSession(vin: vin, reason: .manualRequest)
-        return recordingState == .active
+        return recordingState == .active && captureState.isRecording
     }
 
     func stopCapture() async -> Bool {
         guard recordingState == .active || recordingState == .starting else { return false }
-        await closeSession(reason: .userStopped, destination: .paused)
-        return recordingState == .paused
+        let didFinish = await closeSession(reason: .userStopped, destination: .paused)
+        return didFinish && recordingState == .paused
     }
 
     private func closeSession(
         reason: BLETraceSessionEndReason,
         destination: CloseDestination
-    ) async {
+    ) async -> Bool {
+        captureState.setRecording(false)
         sessionGeneration += 1
         let generation = sessionGeneration
         recordingState = .closing
@@ -305,8 +330,9 @@ extension BikeBLETraceEmitter {
             await recorder.finishSession(reason: reason)
         }
         closeTask = task
-        await task.value
+        let didFinish = await task.value
         completeClose(generation: generation)
+        return didFinish
     }
 
     private func completeClose(generation: Int) {

@@ -9,6 +9,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
     private let rendering: CommitSliderRendering
     private let isEnabled: Bool
     private let accessibilityLabel: String?
+    private let accessibilityIdentifier: String?
     private let accessibilityValue: (Double) -> String
     private let onCommit: (Double) -> Void
     private let header: (Double) -> Header
@@ -23,6 +24,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
         step: Double,
         tint: Color = DesignColor.accent,
         isEnabled: Bool = true,
+        accessibilityIdentifier: String? = nil,
         onCommit: @escaping (Double) -> Void,
         @ViewBuilder header: @escaping (Double) -> Header,
         @ViewBuilder footer: () -> Footer
@@ -33,6 +35,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
         rendering = .system(tint)
         self.isEnabled = isEnabled
         accessibilityLabel = nil
+        self.accessibilityIdentifier = accessibilityIdentifier
         accessibilityValue = { $0.formatted() }
         self.onCommit = onCommit
         self.header = header
@@ -48,6 +51,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
         isEnabled: Bool = true,
         accessibilityLabel: String? = nil,
         accessibilityValue: @escaping (Double) -> String = { $0.formatted() },
+        accessibilityIdentifier: String? = nil,
         onCommit: @escaping (Double) -> Void,
         @ViewBuilder header: @escaping (Double) -> Header,
         @ViewBuilder footer: () -> Footer
@@ -58,6 +62,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
         rendering = .gradient(appearance)
         self.isEnabled = isEnabled
         self.accessibilityLabel = accessibilityLabel
+        self.accessibilityIdentifier = accessibilityIdentifier
         self.accessibilityValue = accessibilityValue
         self.onCommit = onCommit
         self.header = header
@@ -68,7 +73,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
     public var body: some View {
         VStack(spacing: DesignSpace.extraExtraSmall) {
             header(interaction.displayedValue)
-            control
+            identifiedControl
             footer
         }
         .sensoryFeedback(.selection, trigger: commitFeedbackToken)
@@ -80,6 +85,15 @@ public struct CommitSlider<Header: View, Footer: View>: View {
         .onChange(of: effectiveIsEnabled) { _, enabled in
             guard !enabled else { return }
             interaction.cancelEditing(externalValue: value, bounds: bounds)
+        }
+    }
+
+    @ViewBuilder
+    private var identifiedControl: some View {
+        if let accessibilityIdentifier {
+            control.accessibilityIdentifier(accessibilityIdentifier)
+        } else {
+            control
         }
     }
 

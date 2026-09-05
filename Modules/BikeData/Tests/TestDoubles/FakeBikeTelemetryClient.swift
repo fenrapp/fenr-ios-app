@@ -2,7 +2,7 @@ import BikeSDK
 import TestSupport
 
 enum FakeBikeTelemetryClientInvocation: Equatable, Sendable {
-    case startNewDiagnosticsCapture
+    case startNewDiagnosticsCapture(String)
     case stopDiagnosticsCapture
     case prepareChargePower(BikeSDKChargePowerTelemetryContext)
     case setChargePowerLimit(Int)
@@ -47,8 +47,8 @@ actor FakeBikeTelemetryClient: BikeTelemetryClient {
     func stopBikeDiscovery() async {}
     func disconnect() async throws {}
     func retrySecurityHandshake() async throws {}
-    func startNewDiagnosticsCapture() async -> Bool {
-        await state.record(.startNewDiagnosticsCapture)
+    func startNewDiagnosticsCapture(vin: String) async -> Bool {
+        await state.record(.startNewDiagnosticsCapture(vin))
         return true
     }
 

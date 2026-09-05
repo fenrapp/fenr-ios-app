@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 import RideSessionDomain
 import SwiftData
 
@@ -22,9 +21,6 @@ extension RideTripStore {
 
     func handlePersistenceError(_ error: Error) {
         modelContext.rollback()
-        Constants.logger.error(
-            "Ride trip persistence failed: \(String(describing: error), privacy: .private)"
-        )
     }
 
     private func fetchRecord(id: UUID) throws -> RideTripRecord? {
@@ -33,7 +29,4 @@ extension RideTripStore {
         return try modelContext.fetch(descriptor).first
     }
 
-    private enum Constants {
-        static let logger = Logger(subsystem: "com.fenr.app", category: "RideTripStore")
-    }
 }

@@ -54,11 +54,28 @@ struct BikeDiagnosticsBLETraceTests {
         #expect(await waitUntil { await traceRepository.deleteAllCount == 1 })
     }
 
+    @Test("A configured disconnected bike can start its first manual capture")
+    func startsFirstCaptureWithoutConnection() async {
+        let repository = FakeBikeDiagnosticsRepository()
+        let vehicleSession = FakeVehicleSession(snapshot: .init(
+            profile: BikeProfile(vin: "FENRTEST000000001")
+        ))
+        let viewModel = makeViewModel(repository: repository, session: vehicleSession)
+        viewModel.setPresentationActive(true)
+        #expect(await waitUntil { viewModel.viewState.isBLETraceCaptureAvailable })
+        #expect(!viewModel.viewState.isDisconnectEnabled)
+        #expect(await repository.diagnosticsCaptureStartCount() == 0)
+        viewModel.toggleBLETraceCapture()
+        #expect(await waitUntil { await repository.diagnosticsCaptureStartCount() == 1 })
+        await viewModel.stopAndWait()
+    }
+
     @Test("Starts and stops captures only when the session allows it")
     func controlsCapture() async {
         let repository = FakeBikeDiagnosticsRepository()
         let vehicleSession = FakeVehicleSession(snapshot: .init(
-            connection: BikeConnection(state: .receivingTelemetry(peripheralName: "FENR Test"))
+            connection: BikeConnection(state: .receivingTelemetry(peripheralName: "FENR Test")),
+            profile: BikeProfile(vin: "FENRTEST000000001")
         ))
         let traceRepository = FakeBLETraceLogRepository()
         let viewModel = makeViewModel(
@@ -113,7 +130,8 @@ struct BikeDiagnosticsBLETraceTests {
     func captureControlTimesOutWithoutConfirmation() async {
         let repository = FakeBikeDiagnosticsRepository()
         let vehicleSession = FakeVehicleSession(snapshot: .init(
-            connection: BikeConnection(state: .receivingTelemetry(peripheralName: "FENR Test"))
+            connection: BikeConnection(state: .receivingTelemetry(peripheralName: "FENR Test")),
+            profile: BikeProfile(vin: "FENRTEST000000001")
         ))
         let viewModel = makeViewModel(
             repository: repository,
@@ -133,7 +151,8 @@ struct BikeDiagnosticsBLETraceTests {
     func leavingDiagnosticsCancelsCaptureConfirmation() async {
         let repository = FakeBikeDiagnosticsRepository()
         let vehicleSession = FakeVehicleSession(snapshot: .init(
-            connection: BikeConnection(state: .receivingTelemetry(peripheralName: "FENR Test"))
+            connection: BikeConnection(state: .receivingTelemetry(peripheralName: "FENR Test")),
+            profile: BikeProfile(vin: "FENRTEST000000001")
         ))
         let traceRepository = FakeBLETraceLogRepository()
         let viewModel = makeViewModel(

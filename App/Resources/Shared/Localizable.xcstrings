@@ -1,6 +1,39 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "appStorageRecoveryTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to open your data"
+          }
+        }
+      }
+    },
+    "appStorageRecoveryDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FENR could not open its local storage. Your saved data has not been deleted. Retry to open the app."
+          }
+        }
+      }
+    },
+    "appStorageRetry": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        }
+      }
+    },
     "appDemoLabel": {
         "extractionState": "manual",
         "localizations": {

@@ -1,4 +1,5 @@
 @testable import BikeSDK
+import BLETraceDomain
 import Foundation
 import StarkProtocol
 import Testing
@@ -11,7 +12,8 @@ struct BikeBLEChargePowerCoordinatorTests {
         let transport = FakeBikeBLEChargePowerConfigurationTransport()
         let coordinator = BikeBLEChargePowerCoordinator(
             transport: transport,
-            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter()
+            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter(),
+            captureState: BLETraceCaptureState()
         )
 
         _ = try await coordinator.prepareChargePowerControl(context: telemetryContext)
@@ -46,7 +48,8 @@ struct BikeBLEChargePowerCoordinatorTests {
         ])
         let coordinator = BikeBLEChargePowerCoordinator(
             transport: transport,
-            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter()
+            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter(),
+            captureState: BLETraceCaptureState()
         )
 
         _ = try await coordinator.prepareChargePowerControl(context: telemetryContext)
@@ -81,7 +84,8 @@ struct BikeBLEChargePowerCoordinatorTests {
         ])
         let coordinator = BikeBLEChargePowerCoordinator(
             transport: transport,
-            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter()
+            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter(),
+            captureState: BLETraceCaptureState()
         )
 
         _ = try await coordinator.prepareChargePowerControl(context: fastTelemetryContext)
@@ -106,7 +110,8 @@ struct BikeBLEChargePowerCoordinatorTests {
         let transport = FakeBikeBLEChargePowerConfigurationTransport()
         let coordinator = BikeBLEChargePowerCoordinator(
             transport: transport,
-            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter()
+            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter(),
+            captureState: BLETraceCaptureState()
         )
         _ = try await coordinator.prepareChargePowerControl(context: telemetryContext)
         transport.ignoresWrites = true
@@ -121,7 +126,8 @@ struct BikeBLEChargePowerCoordinatorTests {
         let transport = FakeBikeBLEChargePowerConfigurationTransport()
         let coordinator = BikeBLEChargePowerCoordinator(
             transport: transport,
-            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter()
+            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter(),
+            captureState: BLETraceCaptureState()
         )
         _ = try await coordinator.prepareChargePowerControl(context: telemetryContext)
         transport.staleReadCountAfterWrite = 1
@@ -141,7 +147,8 @@ struct BikeBLEChargePowerCoordinatorTests {
         let powerTransport = FakeBikeBLEChargePowerConfigurationTransport()
         let powerCoordinator = BikeBLEChargePowerCoordinator(
             transport: powerTransport,
-            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter()
+            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter(),
+            captureState: BLETraceCaptureState()
         )
         _ = try await powerCoordinator.prepareChargePowerControl(context: telemetryContext)
         powerTransport.writeError = .operationFailed("Synthetic write failure")
@@ -157,7 +164,8 @@ struct BikeBLEChargePowerCoordinatorTests {
         let targetTransport = FakeBikeBLEChargePowerConfigurationTransport()
         let targetCoordinator = BikeBLEChargePowerCoordinator(
             transport: targetTransport,
-            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter()
+            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter(),
+            captureState: BLETraceCaptureState()
         )
         _ = try await targetCoordinator.prepareChargePowerControl(context: telemetryContext)
         targetTransport.writeError = .operationFailed("Synthetic write failure")
@@ -189,5 +197,89 @@ struct BikeBLEChargePowerCoordinatorTests {
             maximumStateOfChargePercent: 100,
             chargerTypeRaw: 2
         )
+    }
+}
+
+extension BikeBLEChargePowerCoordinatorTests {
+    @Test("Charging preparation and confirmed writes omit diagnostics while capture is disabled")
+    func disabledCaptureOmitsTechnicalSnapshots() async throws {
+        let transport = FakeBikeBLEChargePowerConfigurationTransport()
+        let coordinator = BikeBLEChargePowerCoordinator(
+            transport: transport,
+            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter(),
+            captureState: BLETraceCaptureState()
+        )
+        let prepared = try await coordinator.prepareChargePowerControl(context: telemetryContext)
+        let power = try await coordinator.setChargePowerLimit(watts: 1_500)
+        let target = try await coordinator.setChargeTarget(percent: 80)
+
+        for snapshot in [prepared, power, target] {
+            #expect(snapshot.readRequestHex.isEmpty)
+            #expect(snapshot.readResponseHex.isEmpty)
+            #expect(snapshot.lastWriteHex == nil)
+            #expect(snapshot.logLines.isEmpty)
+            #expect(snapshot.didPassNoOpWrite)
+            #expect(snapshot.isFirmwareCompatible)
+            #expect(snapshot.vcuFirmware == "1.12.0")
+        }
+        #expect(power.parsedConfig.chargePowerWatts == 1_500)
+        #expect(target.parsedConfig.maximumStateOfChargeDeciPercent == 800)
+        #expect(target.parsedConfig.chargePowerWatts == 1_500)
+        #expect(transport.writePayloads.count == 3)
+        #expect(transport.requests.count == 4)
+    }
+
+    @Test("Manual Start and Stop affect the existing charging coordinator without losing write guards")
+    func captureChangesApplyToExistingCoordinator() async throws {
+        let transport = FakeBikeBLEChargePowerConfigurationTransport()
+        let state = BLETraceCaptureState()
+        let coordinator = BikeBLEChargePowerCoordinator(
+            transport: transport,
+            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter(),
+            captureState: state
+        )
+        state.setRecording(true)
+        let prepared = try await coordinator.prepareChargePowerControl(context: telemetryContext)
+        let power = try await coordinator.setChargePowerLimit(watts: 1_500)
+        let target = try await coordinator.setChargeTarget(percent: 80)
+        for snapshot in [prepared, power, target] {
+            #expect(snapshot.readRequestHex == StarkChargerConfigurationCommand.readPacket.bikeSDKHexString)
+            #expect(!snapshot.readResponseHex.isEmpty)
+            #expect(snapshot.lastWriteHex?.isEmpty == false)
+            #expect(!snapshot.logLines.isEmpty)
+        }
+        state.setRecording(false)
+        let stopped = try await coordinator.setChargeTarget(percent: 90)
+        #expect(stopped.readRequestHex.isEmpty)
+        #expect(stopped.readResponseHex.isEmpty)
+        #expect(stopped.lastWriteHex == nil)
+        #expect(stopped.logLines.isEmpty)
+        #expect(stopped.parsedConfig.maximumStateOfChargeDeciPercent == 900)
+        #expect(stopped.parsedConfig.chargePowerWatts == 1_500)
+        #expect(stopped.didPassNoOpWrite)
+
+        state.setRecording(true)
+        let restarted = try await coordinator.setChargePowerLimit(watts: 2_000)
+        #expect(!restarted.logLines.isEmpty)
+        #expect(restarted.parsedConfig.maximumStateOfChargeDeciPercent == 900)
+        #expect(restarted.parsedConfig.chargePowerWatts == 2_000)
+    }
+
+    @Test("Manual diagnostics never bypass the charging firmware gate", arguments: [false, true])
+    func firmwareGateDoesNotDependOnCapture(isRecording: Bool) async throws {
+        let transport = FakeBikeBLEChargePowerConfigurationTransport()
+        transport.versionData = Data("1.8.0".utf8)
+        let state = BLETraceCaptureState()
+        state.setRecording(isRecording)
+        let coordinator = BikeBLEChargePowerCoordinator(
+            transport: transport,
+            verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter(),
+            captureState: state
+        )
+        await #expect(throws: BikeSDKError.self) {
+            _ = try await coordinator.prepareChargePowerControl(context: telemetryContext)
+        }
+        #expect(transport.requests.isEmpty)
+        #expect(transport.writePayloads.isEmpty)
     }
 }

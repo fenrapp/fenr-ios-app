@@ -22,7 +22,7 @@ struct BikeBLEExperimentalCaptureCoordinator {
         else {
             return
         }
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.subscriptionTitle,
             detail: "Starting experimental capture after baseline telemetry"
         )))
@@ -40,7 +40,7 @@ struct BikeBLEExperimentalCaptureCoordinator {
 
     private func processNext(peripheral: CBPeripheral) async {
         guard let characteristic = sessionStore.startNextExperimentalCaptureCharacteristic() else { return }
-        await eventEmitter.send(.debug(.init(
+        await eventEmitter.sendDiagnostic(.debug(.init(
             title: BikeSDKText.subscriptionTitle,
             detail: "Preparing experimental capture " + characteristic.uuid.uuidString
         )))

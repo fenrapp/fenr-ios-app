@@ -1,9 +1,11 @@
 import Foundation
 
 public protocol BLETraceRecording: Sendable {
-    func startSession(_ context: BLETraceSessionContext) async
+    @discardableResult
+    func startSession(_ context: BLETraceSessionContext) async -> Bool
     func record(_ event: BLETraceEvent) async
-    func finishSession(reason: BLETraceSessionEndReason) async
+    @discardableResult
+    func finishSession(reason: BLETraceSessionEndReason) async -> Bool
 }
 
 public protocol BLETraceStoragePreparing: Sendable {
@@ -11,6 +13,7 @@ public protocol BLETraceStoragePreparing: Sendable {
 }
 
 public protocol BLETraceLogRepository: BLETraceStoragePreparing, Sendable {
+    func observeRecordingFailures() async -> AsyncStream<BLETraceRecordingFailure?>
     func observeSessions() async -> AsyncStream<[BLETraceSessionSummary]>
     func prepareExport(sessionID: UUID) async throws -> URL
     func deleteSession(id: UUID) async throws
@@ -27,9 +30,11 @@ public enum BLETraceRepositoryError: Error, Equatable, Sendable {
 public struct NoOpBLETraceRepository: BLETraceRecording, BLETraceLogRepository, Sendable {
     public init() {}
 
-    public func startSession(_ context: BLETraceSessionContext) async {}
+    @discardableResult
+    public func startSession(_ context: BLETraceSessionContext) async -> Bool { false }
     public func record(_ event: BLETraceEvent) async {}
-    public func finishSession(reason: BLETraceSessionEndReason) async {}
+    @discardableResult
+    public func finishSession(reason: BLETraceSessionEndReason) async -> Bool { false }
     public func prepareStorage() async {}
 
     public func observeSessions() async -> AsyncStream<[BLETraceSessionSummary]> {
@@ -45,4 +50,13 @@ public struct NoOpBLETraceRepository: BLETraceRecording, BLETraceLogRepository, 
 
     public func deleteSession(id: UUID) async throws {}
     public func deleteAllSessions() async throws {}
+}
+
+extension BLETraceLogRepository {
+    public func observeRecordingFailures() async -> AsyncStream<BLETraceRecordingFailure?> {
+        AsyncStream { continuation in
+            continuation.yield(nil)
+            continuation.finish()
+        }
+    }
 }

@@ -128,7 +128,7 @@ final class BikeBLEPowerModeConfigurationCoordinator {
     func reset() {
         preparedConfigurations.removeAll()
         preparedTractionConfigurations.removeAll()
-        console("session reset")
+        BikePowerModeDebugLog.log("session reset")
     }
 
     private func readPowerModeConfigurations() async throws {
@@ -157,7 +157,7 @@ final class BikeBLEPowerModeConfigurationCoordinator {
                 "No power mode configuration was received from 4005.\(detail)"
             )
         }
-        console(
+        BikePowerModeDebugLog.log(
             "power configurations received \(receivedMapCount)/"
                 + "\(StarkPowerModeConfigurationCommand.mapIndexes.count)"
         )
@@ -178,7 +178,7 @@ final class BikeBLEPowerModeConfigurationCoordinator {
                 await emitMapFailure(kind: "TC", mapIndex: mapIndex, error: error)
             }
         }
-        console(
+        BikePowerModeDebugLog.log(
             "TC configurations received \(receivedMapCount)/"
                 + "\(StarkPowerModeConfigurationCommand.mapIndexes.count)"
         )
@@ -243,17 +243,11 @@ final class BikeBLEPowerModeConfigurationCoordinator {
             && lhs.regenerationRaw == rhs.regenerationRaw
     }
 
-    func report(_ detail: String) async {
-        console(detail)
-        await emitDebug(detail)
-    }
-
-    private func emitDebug(_ detail: String) async {
-        await eventEmitter.send(.debug(.init(title: "Power modes", detail: detail)))
-    }
-
-    private func console(_ message: String) {
+    func report(_ detail: @autoclosure () -> String) async {
+        guard eventEmitter.isRecordingDiagnostics || BikePowerModeDebugLog.isEnabled else { return }
+        let message = detail()
         BikePowerModeDebugLog.log(message)
+        await eventEmitter.sendDiagnostic(.debug(.init(title: "Power modes", detail: message)))
     }
 
     enum Constants {

@@ -46,7 +46,7 @@ final class BikeBLEPairingRetryController {
         retryTask?.cancel()
         retryTask = nil
         guard retryAttempt < policy.maximumAttempts else {
-            await eventEmitter.send(.debug(.init(
+            await eventEmitter.sendDiagnostic(.debug(.init(
                 title: BikeSDKText.pairingTitle,
                 detail: "Automatic security retry limit reached"
             )))
@@ -56,7 +56,7 @@ final class BikeBLEPairingRetryController {
         retryAttempt += 1
         let attempt = retryAttempt
         retryTask = Task { @MainActor [weak self, eventEmitter, policy] in
-            await eventEmitter.send(.debug(.init(
+            await eventEmitter.sendDiagnostic(.debug(.init(
                 title: BikeSDKText.pairingTitle,
                 detail: "Automatic security retry \(attempt)/\(policy.maximumAttempts) scheduled"
             )))

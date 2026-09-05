@@ -11,7 +11,6 @@ final class AppLifecycleControllerFixture {
     let lifecycleController: AppLifecycleController
 
     init(
-        bleTraceStoragePreparer: any BLETraceStoragePreparing = NoOpBLETraceRepository(),
         startupPreparer: ControllableAppStartupPreparer = .init()
     ) {
         repository = SessionSpyRepository()
@@ -67,7 +66,9 @@ final class AppLifecycleControllerFixture {
             bikeLiveActivityController: liveActivityController,
             rideSession: rideSession,
             vehicleSession: vehicleSession,
-            bleTraceStoragePreparer: bleTraceStoragePreparer,
+            stopDiagnosticsCapture: { [repository] in
+                _ = await repository.stopDiagnosticsCapture()
+            },
             startupPreparer: startupPreparer
         )
     }
