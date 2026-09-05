@@ -55,7 +55,8 @@ func ridingSnapshot(
 
 func powerModeSnapshot(
     mode: Int,
-    includesConfiguration: Bool
+    includesConfiguration: Bool,
+    statusFlags: BikeStatusFlags = .init(isOn: true, isInGear: true)
 ) -> VehicleSessionSnapshot {
     let configuration = BikePowerModeConfiguration(
         mapIndex: mode - 1,
@@ -69,7 +70,7 @@ func powerModeSnapshot(
             batteryLevel: .known(percent: 64),
             mode: .index(mode),
             speed: .known(kmh: 20, kmhX10: 200),
-            statusFlags: .init(isOn: true, isInGear: true),
+            statusFlags: statusFlags,
             powerModeConfigurations: includesConfiguration ? [mode - 1: configuration] : [:],
             lastUpdated: .init(timeIntervalSinceReferenceDate: 1)
         ),

@@ -317,6 +317,38 @@ extension RideDashboardViewModelTests {
         fixture.viewModel.stopObserving()
     }
 
+    @Test("Clears cached power chips when leaving an active riding mode", arguments: [
+        BikeStatusFlags(isOn: true),
+        BikeStatusFlags(),
+        BikeStatusFlags(isOn: true, isCharging: true),
+        BikeStatusFlags(isOn: true, crawlState: .forward),
+        BikeStatusFlags(isOn: true, crawlState: .reverse),
+        BikeStatusFlags.unknown
+    ])
+    func hidesCachedPowerModeOutsideRiding(statusFlags: BikeStatusFlags) async {
+        let fixture = makeFixture()
+        fixture.viewModel.startObserving()
+        defer { fixture.viewModel.stopObserving() }
+        await fixture.vehicleSession.send(powerModeSnapshot(mode: 1, includesConfiguration: true))
+        #expect(await waitUntil { fixture.viewModel.viewState.powerMode.isVisible })
+        let ridingGear = fixture.viewModel.viewState.gear
+
+        await fixture.vehicleSession.send(powerModeSnapshot(
+            mode: 1, includesConfiguration: true, statusFlags: statusFlags
+        ))
+        #expect(await waitUntil { fixture.viewModel.viewState.powerMode == .init() })
+
+        // Re-entering the same map must wait for fresh configuration instead of reviving stale chips.
+        await fixture.vehicleSession.send(powerModeSnapshot(mode: 1, includesConfiguration: false))
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.gear == ridingGear
+                && fixture.viewModel.viewState.powerMode == .init()
+        })
+
+        await fixture.vehicleSession.send(powerModeSnapshot(mode: 1, includesConfiguration: true))
+        #expect(await waitUntil { fixture.viewModel.viewState.powerMode.isVisible })
+    }
+
     @Test("Presents active connection phases as progress instead of disconnection")
     func mapsConnectionProgress() {
         let mapper = RideDashboardMapperFactory.makeRideMapper(locale: Locale(identifier: "en_US"))
