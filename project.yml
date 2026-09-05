@@ -535,6 +535,7 @@ targets:
     info:
       path: App/Generated/FENR-Info.plist
       properties:
+        ITSAppUsesNonExemptEncryption: false
         NSSupportsLiveActivities: true
         LSSupportsOpeningDocumentsInPlace: true
         CFBundleURLTypes:
@@ -573,11 +574,6 @@ targets:
           - bluetooth-central
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
-        UISupportedInterfaceOrientations~ipad:
-          - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
     sources:
@@ -655,6 +651,7 @@ targets:
       base:
         INFOPLIST_KEY_NSFaceIDUsageDescription: "FENR uses Face ID to authorize unlocking your motorcycle."
         PRODUCT_BUNDLE_IDENTIFIER: in.fenr.app
+        TARGETED_DEVICE_FAMILY: "1"
         ENABLE_USER_SCRIPT_SANDBOXING: NO
         INFOPLIST_KEY_CFBundleDisplayName: FENR
         INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
@@ -665,17 +662,13 @@ targets:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad:
-          - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationPortraitUpsideDown
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
   FENRDebug:
     type: application
     platform: iOS
     info:
       path: App/Generated/FENRDebug-Info.plist
       properties:
+        ITSAppUsesNonExemptEncryption: false
         NSSupportsLiveActivities: true
         LSSupportsOpeningDocumentsInPlace: true
         CFBundleURLTypes:
@@ -714,11 +707,6 @@ targets:
           - bluetooth-central
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
-        UISupportedInterfaceOrientations~ipad:
-          - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
     sources:
@@ -804,6 +792,7 @@ targets:
       base:
         INFOPLIST_KEY_NSFaceIDUsageDescription: "FENR uses Face ID to authorize unlocking your motorcycle."
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug
+        TARGETED_DEVICE_FAMILY: "1"
         ENABLE_USER_SCRIPT_SANDBOXING: NO
         INFOPLIST_KEY_CFBundleDisplayName: FENR Debug
         INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
@@ -812,11 +801,6 @@ targets:
         CODE_SIGN_ENTITLEMENTS: App/FENRDebug.entitlements
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone:
           - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
-        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad:
-          - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
   ChargingLiveActivityExtension:
@@ -833,6 +817,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: in.fenr.app.charging-live-activity
+        TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: LiveActivityExtension/Info.plist
   ChargingLiveActivityDebugExtension:
@@ -849,6 +834,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug.charging-live-activity
+        TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: LiveActivityExtension/Info.plist
   FENRShareExtension:
@@ -865,6 +851,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: in.fenr.app.share
+        TARGETED_DEVICE_FAMILY: "1"
         PRODUCT_NAME: Open in FENR
         PRODUCT_MODULE_NAME: FENRShareExtension
         GENERATE_INFOPLIST_FILE: NO
@@ -885,6 +872,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug.share
+        TARGETED_DEVICE_FAMILY: "1"
         PRODUCT_NAME: Open in FENR Debug
         PRODUCT_MODULE_NAME: FENRDebugShareExtension
         GENERATE_INFOPLIST_FILE: NO

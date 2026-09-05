@@ -1,76 +1,90 @@
-# App Review: iPhone demo mode
+# FENR - Reviewer Guide
 
-FENR works with compatible electric motorcycles. Reviewers can explore the iPhone
-app without a motorcycle, account, Bluetooth connection, or location permission.
+Thank you for reviewing FENR - Unleash your varg. FENR is an independent,
+open-source iPhone app for Stark Varg riders, providing a riding dashboard,
+charging information, battery diagnostics, ride history and maintenance records.
+
+Please use **Explore demo > Start demo** to review the app. No motorcycle,
+account or sign-in is required. The demo is built into the submitted application
+and gives access to the main screens and interactions.
 
 ## Access
 
-1. Launch FENR and tap **Explore demo** on the welcome screen.
-2. Read the introduction and tap **Start demo**.
-3. Tap the **Demo** button to choose **Parked**, **Riding**, **Charging**, or
-   **Battery issue**. The same controls are available in Settings.
+1. Launch FENR and select **Explore demo** on the welcome screen.
+2. On the introduction screen, select **Start demo**.
+3. The dashboard opens with a **Demo** control. Tap it to switch between
+   **Parked**, **Riding**, **Charging** and **Battery issue**.
 
-The demo creates a synthetic motorcycle identity. Its scenario, confirmed bike
-settings, map names, ride history, and maintenance records survive app relaunches.
-All app preferences are stored per VIN, including dashboard layout, units and
-navigation appearance. Existing preferences migrate to the selected VIN; a new
-motorcycle starts with defaults. The simulation state also records its VIN.
-The initial data includes three sample rides and two sample maintenance entries.
-Deleting a sample does not recreate it on the next launch.
+To open Settings, swipe up through the dashboard's central cards and tap
+**Open Settings**. On the Charging dashboard, use the **Settings** button.
+The demo controls are also available in Settings.
 
 ## Suggested review
 
-- **Parked:** explore the dashboard, customize cards, edit power modes, and try
-  Bike Lock using the normal local authentication options.
-- **Riding:** observe simulated speed, power, odometer, and ride statistics.
-- **Charging:** adjust maximum charging power and the battery charge limit.
-- **Battery issue:** open Settings, Diagnostics, then Battery Health to inspect
-  the simulated cell anomaly.
-- Open Ride History and Maintenance from Settings to inspect or edit the sample
-  records. Live Activities and supported exports identify the demo context.
-- Close and relaunch the app to verify that the same demo bike and settings return.
+- **Riding:** select Riding in the Demo control. The dashboard displays sample
+  speed, battery, power and riding-mode information. Explore the dashboard cards
+  and their expanded views.
+- **Charging:** select Charging. The dashboard displays sample charging progress,
+  power and remaining time. Adjust the charging-power and battery-target controls
+  to see their behavior in the demo.
+- **Battery issue:** select Battery issue, then open Settings > Diagnostics >
+  Battery Health. The battery screen shows a sample cell anomaly and detailed
+  battery readings.
+- **Parked:** select Parked. Open Settings to explore dashboard customization,
+  measurement units and power-mode settings. Bike Lock can be explored using
+  the authentication options available on the review device.
+- **Ride History and Maintenance:** open these screens from Settings. The demo
+  starts with three sample rides and two maintenance entries. Open a record and
+  try the available editing actions.
+- **Persistence:** close and reopen FENR. The demo motorcycle, selected scenario
+  and saved changes remain available. Deleted sample records are not recreated
+  when the app is relaunched.
 
-The dashboard compass uses the iPhone magnetometer while stationary and a reliable
-GPS course when moving. Compass readings are real, including during the demo;
-opening the compass does not require a simulated route.
+## Demo behavior
 
-Navigation uses the iPhone's actual location if permission is granted. Map content
-and place searches may require Internet. The demo does not simulate GPS travel.
-Denial of location permission does not prevent reviewing the motorcycle features.
+Motorcycle readings and responses to motorcycle controls are simulated in demo
+mode. The demo does not connect to or make changes to a real motorcycle.
 
-Settings > **Help & Support** opens https://fenr.to in the system browser in both
-the real and demo experiences. Returning to FENR retains the Settings screen.
-Settings > **Legal** links to Privacy Policy and Terms of Use. Settings >
-**Acknowledgments** lists the community projects and development tools that
-helped make FENR possible, with links to their public repositories.
+Navigation and the compass use the iPhone's actual location or sensors when
+available. Place searches and road directions use Apple Maps and may require
+Internet access. The demo does not simulate GPS travel. You can review the
+motorcycle dashboard and battery features without enabling location access.
 
-The iPhone app accepts Apple Maps direction requests, shared map links, and GPX
-routes. Road directions require Internet and depend on Apple Maps availability;
-worldwide geographic coverage does not guarantee a road route for every location
-or offline maps. The iOS submission coverage file and remaining publication
-checks are described in [the App Store checklist](app-store/README.md).
+## Permissions and external services
+
+- **Bluetooth:** used when an owner connects a real motorcycle. It is not needed
+  for the demo walkthrough.
+- **Location:** used for GPS speed, ride recording and navigation when permitted.
+  Declining location access does not prevent using the motorcycle demo.
+- **Local authentication:** used by Bike Lock. Follow the options shown on the
+  device; cancelling authentication returns to the app without completing the
+  protected action.
 
 ## Exit
 
-Open Settings and choose **Change bike**. This ends the demo and cancels its active
-Live Activities and reminders. The demo identity, isolated data, settings, and
-credentials stay saved. Choose **Explore demo** again to resume the same demo bike,
-including changes to or deletions of sample records. Real motorcycle data remains
-separate. Leaving the demo does not automatically select it on the next launch.
+Open Settings and select **Change Bike** to return to the welcome screen.
+Select **Explore demo > Start demo** again to resume the saved demo experience.
+The demo's saved preferences and records remain separate from real motorcycle data.
 
-## Review boundaries
+## About the motorcycle connection
 
-The demo is available to all users in the production iPhone app. It does not
-contact, authenticate with, or write to a physical motorcycle. Diagnostic values
-and write confirmations in demo mode are simulated; they do not establish physical
-validation of traction-control or bike-lock writes. Raw BLE capture requires real
-hardware and is unavailable in the demo.
+For owners, FENR connects directly to a compatible Stark Varg over Bluetooth.
+The owner selects their motorcycle and completes the pairing flow on the iPhone.
+Available readings and controls depend on the motorcycle's firmware.
+The built-in demo provides the review experience described above without this
+connection or any additional hardware.
 
-The Apple Watch app continues to connect directly to a motorcycle and does not
-include this demo. Provide a separate video showing the real hardware and Watch
-flows if requested by App Review. The demo does not guarantee approval.
+FENR is an independent project and is not affiliated with or endorsed by Stark
+Future.
 
-Apple guidance: https://developer.apple.com/app-store/review/
+## Support and policies
+
+Settings includes **Help & Support**, **Privacy Policy** and **Terms of Use**.
+These open the following pages in the system browser:
+
+- [Support](https://fenr.to)
+- [Privacy Policy](https://fenr.to/privacy)
+- [Terms of Use](https://fenr.to/terms)
 
 ## Engineering validation
 

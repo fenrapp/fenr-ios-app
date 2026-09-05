@@ -79,6 +79,13 @@ xcodebuild -project FENR.xcodeproj -scheme FENRDebug \
   -destination "platform=iOS Simulator,name=$FENR_SIMULATOR" build
 ```
 
+## App Store and TestFlight
+
+Public metadata, user-supplied screenshots and direct ASC commands live in
+[store/](store/README.md). The [App Review guide](docs/app-review-demo.md) leads
+reviewers through the built-in demo without requiring a motorcycle. Credentials,
+private review contacts and generated build artifacts stay outside Git.
+
 ## Contributing 🤝
 
 Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), follow the [Code of Conduct](CODE_OF_CONDUCT.md), and report security concerns through [SECURITY.md](SECURITY.md).

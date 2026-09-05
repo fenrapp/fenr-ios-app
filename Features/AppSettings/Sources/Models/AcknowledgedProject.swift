@@ -7,11 +7,12 @@ public enum AcknowledgedProject: String, CaseIterable, Identifiable, Sendable {
     case boschGarminBridge
     case xcodeGen
     case swiftLint
+    case appStoreConnectCLI
 
     public var id: String { rawValue }
 
     static let community: [Self] = [.svagMini, .svagTelemetryFormat, .starkVargGarminBridge, .boschGarminBridge]
-    static let developmentTools: [Self] = [.xcodeGen, .swiftLint]
+    static let developmentTools: [Self] = [.xcodeGen, .swiftLint, .appStoreConnectCLI]
 
     var title: LocalizedStringResource {
         switch self {
@@ -21,6 +22,7 @@ public enum AcknowledgedProject: String, CaseIterable, Identifiable, Sendable {
         case .boschGarminBridge: .appSettingsCreditBoschBridgeTitle
         case .xcodeGen: .appSettingsCreditXcodeGenTitle
         case .swiftLint: .appSettingsCreditSwiftLintTitle
+        case .appStoreConnectCLI: .appSettingsCreditASCTitle
         }
     }
 
@@ -32,6 +34,7 @@ public enum AcknowledgedProject: String, CaseIterable, Identifiable, Sendable {
         case .boschGarminBridge: .appSettingsCreditBoschBridgeDetail
         case .xcodeGen: .appSettingsCreditXcodeGenDetail
         case .swiftLint: .appSettingsCreditSwiftLintDetail
+        case .appStoreConnectCLI: .appSettingsCreditASCDetail
         }
     }
 }
