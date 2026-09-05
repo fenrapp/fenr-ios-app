@@ -72,8 +72,7 @@ versions match before building. Use a unique build number for each new binary.
 ## Reviewer PDF and notes
 
 The reviewer uses **Explore demo > Start demo**, without a motorcycle or account.
-The generator exports the reviewer instructions and excludes the engineering
-appendix. Python 3.9+ is required; install the PDF dependencies locally once:
+The generator exports the canonical reviewer instructions. Python 3.9+ is required; install the PDF dependencies locally once:
 
 ```sh
 python3 -m venv .asc/venv
