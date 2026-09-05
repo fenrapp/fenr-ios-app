@@ -5,6 +5,7 @@ public enum AppSettingsDestination: Hashable, Sendable {
     case navigationAppearance
     case bikeModel
     case liveActivities
+    case acknowledgments
 }
 
 public enum AppSettingsNavigationEvent: Equatable, Sendable {
@@ -15,5 +16,9 @@ public enum AppSettingsNavigationEvent: Equatable, Sendable {
     case openMaintenance
     case openBikeLock
     case openDiagnostics
+    case openSupport
+    case openPrivacyPolicy
+    case openTerms
+    case openAcknowledgedProject(AcknowledgedProject)
     case changeBike
 }

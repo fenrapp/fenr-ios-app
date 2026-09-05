@@ -1038,6 +1038,9 @@
             ReferencedContainer = "container:FENR.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <RoutingCoverageFileReference
+         identifier = "../../docs/app-store/routing-coverage.geojson">
+      </RoutingCoverageFileReference>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

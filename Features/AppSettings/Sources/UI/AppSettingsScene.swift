@@ -54,8 +54,10 @@ public struct AppSettingsScene: View {
             LiveActivitySettingsView(viewModel: viewModel)
         case .bikeModel:
             BikeModelSettingsView(viewModel: viewModel)
+        case .acknowledgments:
+            AcknowledgmentsSettingsView(onNavigation: onNavigation)
         #else
-        case .rideDisplay, .navigation, .navigationAppearance, .bikeModel, .liveActivities:
+        case .rideDisplay, .navigation, .navigationAppearance, .bikeModel, .liveActivities, .acknowledgments:
             EmptyView()
         #endif
         }

@@ -94,6 +94,9 @@
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
+      <RoutingCoverageFileReference
+         identifier = "../../docs/app-store/routing-coverage.geojson">
+      </RoutingCoverageFileReference>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

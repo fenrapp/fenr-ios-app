@@ -40,7 +40,7 @@ actor ControllableRoadRouteCalculator: RoadRouteCalculating {
         continuations.remove(at: index).resume(returning: routes)
     }
 
-    func fail(request index: Int) {
-        continuations.remove(at: index).resume(throwing: Failure.unavailable)
+    func fail(request index: Int, error: any Error = Failure.unavailable) {
+        continuations.remove(at: index).resume(throwing: error)
     }
 }
