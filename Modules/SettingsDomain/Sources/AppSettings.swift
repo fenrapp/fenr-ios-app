@@ -9,6 +9,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var dashboardTemperatureDisplayMode: DashboardTemperatureDisplayMode
     public var dashboardCardConfiguration: DashboardCardConfiguration
     public var rideNavigation: RideNavigationSettings
+    public var liveActivities: LiveActivitySettings
     public var measurementSystem: MeasurementSystem
     public var defaultBatteryPackCapacity: BatteryPackCapacity
     public private(set) var batteryPackCapacitiesByVIN: [String: BatteryPackCapacity]
@@ -27,6 +28,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         dashboardTemperatureDisplayMode: DashboardTemperatureDisplayMode = .off,
         dashboardCardConfiguration: DashboardCardConfiguration = .init(),
         rideNavigation: RideNavigationSettings = .init(),
+        liveActivities: LiveActivitySettings = .init(),
         measurementSystem: MeasurementSystem = .system,
         batteryPackCapacity: BatteryPackCapacity = .sevenPointTwoKilowattHours,
         batteryPackCapacitiesByVIN: [String: BatteryPackCapacity] = [:],
@@ -41,6 +43,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.dashboardTemperatureDisplayMode = dashboardTemperatureDisplayMode
         self.dashboardCardConfiguration = dashboardCardConfiguration
         self.rideNavigation = rideNavigation
+        self.liveActivities = liveActivities
         self.measurementSystem = measurementSystem
         defaultBatteryPackCapacity = batteryPackCapacity
         self.batteryPackCapacitiesByVIN = batteryPackCapacitiesByVIN
@@ -57,6 +60,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         showsDashboardTemperatures: Bool,
         dashboardCardConfiguration: DashboardCardConfiguration = .init(),
         rideNavigation: RideNavigationSettings = .init(),
+        liveActivities: LiveActivitySettings = .init(),
         measurementSystem: MeasurementSystem = .system,
         batteryPackCapacity: BatteryPackCapacity = .sevenPointTwoKilowattHours,
         batteryPackCapacitiesByVIN: [String: BatteryPackCapacity] = [:],
@@ -71,6 +75,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
             dashboardTemperatureDisplayMode: showsDashboardTemperatures ? .both : .off,
             dashboardCardConfiguration: dashboardCardConfiguration,
             rideNavigation: rideNavigation,
+            liveActivities: liveActivities,
             measurementSystem: measurementSystem,
             batteryPackCapacity: batteryPackCapacity,
             batteryPackCapacitiesByVIN: batteryPackCapacitiesByVIN,
@@ -88,6 +93,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case dashboardTemperatureDisplayMode
         case dashboardCardConfiguration
         case rideNavigation
+        case liveActivities
         case measurementSystem
         case defaultBatteryPackCapacity
         case batteryPackCapacitiesByVIN
@@ -130,6 +136,9 @@ public struct AppSettings: Codable, Equatable, Sendable {
         rideNavigation = try container.decodeIfPresent(
             RideNavigationSettings.self,
             forKey: .rideNavigation
+        ) ?? .init()
+        liveActivities = try container.decodeIfPresent(
+            LiveActivitySettings.self, forKey: .liveActivities
         ) ?? .init()
         measurementSystem = try container.decodeIfPresent(MeasurementSystem.self, forKey: .measurementSystem) ?? .system
         defaultBatteryPackCapacity = try container.decodeIfPresent(

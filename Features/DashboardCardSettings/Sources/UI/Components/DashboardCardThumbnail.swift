@@ -81,7 +81,18 @@ struct DashboardCardThumbnail: View {
                 Image(systemName: state.systemImage)
                     .font(.caption.weight(.bold))
             }
-        case .lock:
+        case .altitude:
+            HStack(spacing: Constants.smallSpacing) {
+                VStack(alignment: .leading, spacing: Constants.smallSpacing) {
+                    ForEach(0 ..< Constants.altitudeTickCount, id: \.self) { index in
+                        metricBar(width: index.isMultiple(of: Constants.altitudeMajorTickFrequency)
+                            ? Constants.shortBarWidth : Constants.altitudeMinorWidth)
+                    }
+                }
+                Image(systemName: state.systemImage)
+                    .font(.caption.weight(.semibold))
+            }
+        case .lock, .settings:
             Image(systemName: state.systemImage)
                 .font(.title3.weight(.semibold))
         }
@@ -107,6 +118,9 @@ struct DashboardCardThumbnail: View {
     }
 
     private enum Constants {
+        static let altitudeTickCount = 5
+        static let altitudeMajorTickFrequency = 2
+        static let altitudeMinorWidth: CGFloat = 6
         static let width: CGFloat = 62
         static let height: CGFloat = 44
         static let borderWidth: CGFloat = 1

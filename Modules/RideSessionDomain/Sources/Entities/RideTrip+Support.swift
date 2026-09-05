@@ -65,6 +65,8 @@ extension RideTrip {
         maximumRightLeanDegrees: Double? = nil,
         maximumUphillPitchDegrees: Double? = nil,
         maximumDownhillPitchDegrees: Double? = nil,
+        minimumAltitudeMeters: Double? = nil,
+        maximumAltitudeMeters: Double? = nil,
         attitudeSource: RideAttitudeSource? = nil,
         energyBuckets: [RideEnergyBucket]? = nil
     ) -> Self {
@@ -101,6 +103,8 @@ extension RideTrip {
             maximumRightLeanDegrees: maximumRightLeanDegrees ?? self.maximumRightLeanDegrees,
             maximumUphillPitchDegrees: maximumUphillPitchDegrees ?? self.maximumUphillPitchDegrees,
             maximumDownhillPitchDegrees: maximumDownhillPitchDegrees ?? self.maximumDownhillPitchDegrees,
+            minimumAltitudeMeters: minimumAltitudeMeters ?? self.minimumAltitudeMeters,
+            maximumAltitudeMeters: maximumAltitudeMeters ?? self.maximumAltitudeMeters,
             attitudeSource: attitudeSource ?? self.attitudeSource,
             energyBuckets: energyBuckets ?? self.energyBuckets
         )

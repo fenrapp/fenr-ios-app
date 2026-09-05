@@ -7,6 +7,7 @@ public enum RidingDashboardCard: Int, CaseIterable, Hashable, Sendable {
     case range
     case systemHealth
     case dynamics
+    case settings
 
     var accessibilityLabel: String {
         switch self {
@@ -17,6 +18,7 @@ public enum RidingDashboardCard: Int, CaseIterable, Hashable, Sendable {
         case .efficiency: rideDashboardLocalized(.rideDashboardCardEfficiencyAccessibility)
         case .range: rideDashboardLocalized(.rideDashboardCardRangeAccessibility)
         case .systemHealth: rideDashboardLocalized(.rideDashboardCardSystemHealthAccessibility)
+        case .settings: rideDashboardLocalized(.rideDashboardHeaderSettings)
         case .dynamics: rideDashboardLocalized(.rideDashboardCardDynamicsAccessibility)
         }
     }

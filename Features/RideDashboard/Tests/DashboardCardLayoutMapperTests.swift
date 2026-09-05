@@ -18,10 +18,10 @@ struct DashboardCardLayoutMapperTests {
         let layout = DashboardCardLayoutMapper().map(configuration)
 
         #expect(layout.ridingCards == [
-            .speedometer, .bikeLock, .navigation, .range, .dynamics, .currentTrip, .systemHealth
+            .speedometer, .bikeLock, .navigation, .range, .dynamics, .currentTrip, .systemHealth, .settings
         ])
         #expect(layout.rangePages == [.battery])
-        #expect(layout.dynamicsPages == [.course, .lean, .pitch])
+        #expect(layout.dynamicsPages == [.course, .lean, .pitch, .altitude])
         #expect(layout.efficiencyPages == [.live, .trend])
     }
 
@@ -34,7 +34,7 @@ struct DashboardCardLayoutMapperTests {
 
         let layout = DashboardCardLayoutMapper().map(configuration)
 
-        #expect(layout.ridingCards == [.speedometer, .bikeLock])
+        #expect(layout.ridingCards == [.speedometer, .bikeLock, .settings])
     }
 
     @Test("Hides ride navigation when its setting is disabled")

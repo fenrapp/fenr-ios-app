@@ -1,9 +1,22 @@
 import Foundation
 import RideDashboard
+import SettingsDomain
 import VehicleSession
 
 struct BikeLiveActivityUpdatePolicy {
     let updateInterval: TimeInterval
+
+    func allowsActivity(
+        settings: LiveActivitySettings,
+        state: BikeLiveActivityContentState,
+        previousStableState: BikeLiveActivityContentState?
+    ) -> Bool {
+        guard settings.isEnabled else { return false }
+        let mode = state.mode == .stale || state.mode == .connectionLost
+            ? previousStableState?.mode ?? state.mode : state.mode
+        let isCharging = mode == .charging || state.runState == .charging
+        return isCharging ? settings.showsCharging : settings.showsRiding
+    }
 
     func canStart(
         mapped: BikeLiveActivitySnapshot,
@@ -30,6 +43,7 @@ struct BikeLiveActivityUpdatePolicy {
         guard let previous, let previousUpdateDate else { return true }
         guard state != previous else { return false }
         if state.phase != previous.phase { return true }
+        if state.showsDetails != previous.showsDetails { return true }
         if state.mode != previous.mode
             || state.runState != previous.runState
             || state.modeIndex != previous.modeIndex

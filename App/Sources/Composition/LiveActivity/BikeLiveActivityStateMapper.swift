@@ -65,7 +65,10 @@ struct BikeLiveActivityStateMapper {
             mode: liveActivityMode(phase: phase, runState: runState),
             phase: phase,
             isFaultActive: telemetry.statusFlags.isFaultActive,
-            isConnectionLost: isConnectionLost
+            isConnectionLost: isConnectionLost,
+            showsDetails: (runState == .charging
+                ? settings.liveActivities.chargingDetailLevel
+                : settings.liveActivities.ridingDetailLevel) == .detailed
         )
         return BikeLiveActivitySnapshot(
             contentState: contentState,

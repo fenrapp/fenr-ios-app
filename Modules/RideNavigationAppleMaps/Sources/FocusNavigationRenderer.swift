@@ -30,39 +30,29 @@ final class FocusNavigationRenderer {
     ) {
         guard scene.showsCompassRing, let coordinate = scene.userCoordinate else { return }
         let center = viewport.point(for: coordinate)
-        let diameter = Constants.compassRadius * 2
-        let ringRect = CGRect(
-            x: center.x - Constants.compassRadius,
-            y: center.y - Constants.compassRadius,
-            width: diameter,
-            height: diameter
+        let cardinals = NavigationCardinal.allCases
+        let labels = cardinals.map { cardinal in
+            context.resolve(Text(cardinal.resource).font(
+                .system(size: Constants.compassFontSize, weight: cardinal.isNorth ? .bold : .medium)
+            ))
+        }
+        let sizes = labels.map { $0.measure(in: Constants.compassLabelMeasurementSize) }
+        let geometry = CompassRingGeometry(
+            center: center,
+            radius: Constants.compassRadius,
+            headingDegrees: viewport.rotationDegrees,
+            labelSizes: sizes,
+            padding: Constants.compassLabelMargin
         )
         context.stroke(
-            Path(ellipseIn: ringRect),
+            Path(geometry.path),
             with: .color(palette.compassRing),
             lineWidth: Constants.compassRingWidth
         )
-        for cardinal in NavigationCardinal.allCases {
-            let angle = (cardinal.bearingDegrees - viewport.rotationDegrees)
-                * .pi / Constants.halfCircleDegrees
-            var label = context.resolve(
-                Text(cardinal.resource).font(
-                    .system(
-                        size: Constants.compassFontSize,
-                        weight: cardinal.isNorth ? .bold : .medium
-                    )
-                )
-            )
-            let size = label.measure(in: Constants.compassLabelMeasurementSize)
-            let radialHalfExtent = abs(sin(angle)) * size.width / 2
-                + abs(cos(angle)) * size.height / 2
-            let labelRadius = Constants.compassRadius
-                + Constants.compassLabelMargin
-                + radialHalfExtent
-            let point = CGPoint(
-                x: center.x + sin(angle) * labelRadius,
-                y: center.y - cos(angle) * labelRadius
-            )
+        for (index, cardinal) in cardinals.enumerated() {
+            var label = labels[index]
+            let size = sizes[index]
+            let point = geometry.labels[index].center
             if cardinal.isNorth {
                 label.shading = .linearGradient(
                     palette.compassNorthGradient,

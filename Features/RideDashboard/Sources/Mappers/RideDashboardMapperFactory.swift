@@ -76,7 +76,7 @@ public enum RideDashboardMapperFactory {
     }
 
     public static func makeRideDynamicsMapper(locale: Locale) -> RideDynamicsCardMapper {
-        RideDynamicsCardMapper(locale: locale)
+        RideDynamicsCardMapper(locale: locale, altitudeMapper: DashboardAltitudeMapper(locale: locale))
     }
 
     public static func makeSystemHealthMapper(locale: Locale) -> SystemHealthCardMapper {

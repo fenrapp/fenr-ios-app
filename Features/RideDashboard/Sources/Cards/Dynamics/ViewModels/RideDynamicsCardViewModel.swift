@@ -101,17 +101,18 @@ private extension RideDynamicsCardViewModel {
         let previousIdentity = self.snapshot.vehicleIdentity
         self.snapshot = snapshot
         isCanonicalTelemetryAvailable = snapshot.isCanonicalTelemetryAvailable
+        let mapped = mapper.map(snapshot)
         guard isCanonicalTelemetryAvailable else {
-            let next = viewState.withCalibrationEnabled(false)
+            let next = viewState.withCalibrationEnabled(false, altimeter: mapped.altimeter)
             guard next != viewState else { return }
             viewState = next
             return
         }
-        var next = mapper.map(snapshot).withCalibrationEnabled(isCanonicalTelemetryAvailable)
+        var next = mapped.withCalibrationEnabled(isCanonicalTelemetryAvailable)
         if next.status == .unavailable,
            viewState.status == .live,
            snapshot.vehicleIdentity == previousIdentity {
-            next = viewState.withCalibrationEnabled(false)
+            next = viewState.withCalibrationEnabled(false, altimeter: mapped.altimeter)
         }
         guard next != viewState else { return }
         viewState = next

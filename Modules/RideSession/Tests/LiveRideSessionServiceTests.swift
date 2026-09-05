@@ -344,11 +344,34 @@ extension LiveRideSessionServiceTests {
         )
     }
 
+    @Test("Keeps GPS and altitude extremes through a BLE reconnect while the trip stays active")
+    func keepsAltitudeDuringReconnect() async {
+        let vehicleSession = SessionVehicleSessionService()
+        let fixture = makeLiveRideSessionServiceFixture(rideVehicleSession: vehicleSession)
+        await fixture.service.start()
+        #expect(await waitUntil { await vehicleSession.subscriptionCounts().active == 1 })
+        await vehicleSession.send(driveSnapshot(altitudeMeters: 100))
+        #expect(await waitUntil { await fixture.latestSnapshot().trip?.minimumAltitudeMeters == 100 })
+        #expect(await waitUntil { await vehicleSession.locationConsumerCount() == 1 })
+        await vehicleSession.send(driveSnapshot(
+            altitudeMeters: 120,
+            connection: .init(state: .reconnecting(
+                vin: "FENRTEST000000001", attempt: 1, maximumAttempts: 5
+            ))
+        ))
+        #expect(await waitUntil { await fixture.latestSnapshot().trip?.maximumAltitudeMeters == 120 })
+        #expect(await vehicleSession.locationConsumerCount() == 1)
+        await fixture.service.stop()
+        #expect(await vehicleSession.locationConsumerCount() == 0)
+    }
+
     private func driveSnapshot(
         odometerKilometers: Double = 100,
-        hasReceivedProfile: Bool = true
+        hasReceivedProfile: Bool = true,
+        altitudeMeters: Double? = nil,
+        vin: String = "FENRTEST000000001",
+        connection: BikeConnection = .init(state: .receivingTelemetry(peripheralName: "TEST"))
     ) -> VehicleSessionSnapshot {
-        let vin = "FENRTEST000000001"
         return VehicleSessionSnapshot(
             telemetry: BikeTelemetry(
                 vin: vin,
@@ -359,12 +382,109 @@ extension LiveRideSessionServiceTests {
                 ),
                 statusFlags: .init(isOn: true, isInGear: true)
             ),
-            connection: .init(state: .receivingTelemetry(peripheralName: "TEST")),
+            connection: connection,
             profile: hasReceivedProfile ? .init(vin: vin) : nil,
             resolvedSpeedKilometersPerHour: 42,
+            motion: .init(altitudeMeters: altitudeMeters, altitudeObservedAt: Date()),
             hasReceivedSettings: true,
             hasReceivedProfile: hasReceivedProfile
         )
     }
 
+}
+
+extension LiveRideSessionServiceTests {
+    @Test("Altitude records without a visible card and location leases respect pause, reset and stop")
+    func recordsAltitudeAndOwnsLocation() async throws {
+        let vehicleSession = SessionVehicleSessionService()
+        let fixture = makeLiveRideSessionServiceFixture(rideVehicleSession: vehicleSession)
+        let otherConsumer = UUID()
+        await vehicleSession.setLocationMonitoringRequired(true, consumerID: otherConsumer)
+        await fixture.start()
+        #expect(await waitUntil { await vehicleSession.subscriptionCounts().active == 1 })
+        await vehicleSession.send(driveSnapshot(altitudeMeters: -20))
+        #expect(await waitUntil { await fixture.latestSnapshot().trip?.minimumAltitudeMeters == -20 })
+        #expect(await waitUntil { await vehicleSession.locationConsumerCount() == 2 })
+        await vehicleSession.send(driveSnapshot(altitudeMeters: 100))
+        #expect(await waitUntil { await fixture.latestSnapshot().trip?.maximumAltitudeMeters == 100 })
+        await vehicleSession.send(driveSnapshot(altitudeMeters: nil))
+        #expect(await waitUntil { await fixture.latestSnapshot().motion.altitudeMeters == nil })
+        #expect(await fixture.latestSnapshot().trip?.minimumAltitudeMeters == -20)
+        await fixture.service.togglePauseCurrentTrip()
+        #expect(await waitUntil { await vehicleSession.locationConsumerCount() == 1 })
+        let pausedSnapshot = driveSnapshot(altitudeMeters: 900)
+        await vehicleSession.send(pausedSnapshot)
+        #expect(await waitUntil { await fixture.latestSnapshot().motion.altitudeMeters == 900 })
+        #expect(await fixture.latestSnapshot().trip?.maximumAltitudeMeters == 100)
+        await fixture.service.togglePauseCurrentTrip()
+        #expect(await waitUntil { await vehicleSession.locationConsumerCount() == 2 })
+        await vehicleSession.send(pausedSnapshot)
+        #expect(await fixture.latestSnapshot().trip?.maximumAltitudeMeters == 100)
+        await vehicleSession.send(driveSnapshot(altitudeMeters: 120))
+        #expect(await waitUntil { await fixture.latestSnapshot().trip?.maximumAltitudeMeters == 120 })
+        await fixture.service.persistCurrentTrip()
+        #expect(await fixture.tripRepository.activeTrip()?.minimumAltitudeMeters == -20)
+        let oldID = await fixture.latestSnapshot().trip?.id
+        await fixture.service.resetCurrentTrip()
+        #expect(await fixture.latestSnapshot().trip?.id != oldID)
+        #expect(await fixture.latestSnapshot().trip?.minimumAltitudeMeters == nil)
+        await vehicleSession.send(driveSnapshot(altitudeMeters: 50))
+        #expect(await waitUntil { await fixture.latestSnapshot().trip?.minimumAltitudeMeters == 50 })
+        #expect(await fixture.latestSnapshot().trip?.maximumAltitudeMeters == 50)
+        await fixture.stop()
+        #expect(await vehicleSession.locationConsumerCount() == 1)
+        #expect(await vehicleSession.recordedLocationRequests() == [true, true, false, true, false])
+        await vehicleSession.setLocationMonitoringRequired(false, consumerID: otherConsumer)
+    }
+}
+
+extension LiveRideSessionServiceTests {
+    @Test("Changing bikes starts separate altitude extrema")
+    func altitudeDoesNotCrossVehicleIdentity() async {
+        let vehicleSession = SessionVehicleSessionService()
+        let fixture = makeLiveRideSessionServiceFixture(rideVehicleSession: vehicleSession)
+        await fixture.start()
+        #expect(await waitUntil { await vehicleSession.subscriptionCounts().active == 1 })
+        await vehicleSession.send(driveSnapshot(altitudeMeters: -20))
+        #expect(await waitUntil { await fixture.latestSnapshot().trip?.minimumAltitudeMeters == -20 })
+        await vehicleSession.send(driveSnapshot(altitudeMeters: 500, vin: "FENRTEST000000002"))
+        #expect(await waitUntil { await fixture.latestSnapshot().trip?.minimumAltitudeMeters == 500 })
+        #expect(await fixture.latestSnapshot().trip?.maximumAltitudeMeters == 500)
+        #expect(await fixture.tripRepository.completedTrips().first?.minimumAltitudeMeters == -20)
+        await fixture.stop()
+    }
+
+    @Test("Stop drains a pending location acquisition before releasing its lease")
+    func stopDrainsLocationRequest() async {
+        let vehicleSession = SessionVehicleSessionService()
+        let fixture = makeLiveRideSessionServiceFixture(rideVehicleSession: vehicleSession)
+        await vehicleSession.blockNextLocationAcquisition()
+        await fixture.start()
+        #expect(await waitUntil { await vehicleSession.subscriptionCounts().active == 1 })
+        await vehicleSession.send(driveSnapshot(altitudeMeters: 20))
+        #expect(await waitUntil { await vehicleSession.hasBlockedLocationRequest() })
+        let stopTask = Task { await fixture.stop() }
+        #expect(await waitUntil { await fixture.service.stopTask != nil })
+        #expect(await vehicleSession.recordedLocationRequests() == [true])
+        await vehicleSession.releaseLocationAcquisition()
+        await stopTask.value
+        #expect(await vehicleSession.recordedLocationRequests() == [true, false])
+        #expect(await vehicleSession.locationConsumerCount() == 0)
+    }
+}
+
+extension LiveRideSessionServiceTests {
+    @Test("Frequent power updates retain one sample per half-second instead of replacing the entire history")
+    func accumulatesFrequentPowerSamples() async {
+        let fixture = makeLiveRideSessionServiceFixture()
+        for index in 0 ..< 200 {
+            await fixture.service.appendLivePowerSample(
+                date: fixture.date.addingTimeInterval(Double(index) / 10), powerWatts: Double(index)
+            )
+        }
+        let samples = await fixture.latestSnapshot().livePowerSamples
+        #expect(samples.count == 40)
+        #expect(samples.first?.powerWatts == 4)
+        #expect(samples.last?.powerWatts == 199)
+    }
 }

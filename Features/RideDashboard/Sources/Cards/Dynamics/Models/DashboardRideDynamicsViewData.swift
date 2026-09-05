@@ -33,6 +33,7 @@ public struct DashboardRideDynamicsViewData: Equatable, Sendable {
     public let headingText: String
     public let cardinalDirectionText: String
     public let headingSourceText: String
+    public let altimeter: DashboardAltitudeViewData
     public let altitudeText: String?
     public let latitudeText: String?
     public let longitudeText: String?
@@ -56,6 +57,7 @@ public struct DashboardRideDynamicsViewData: Equatable, Sendable {
         cardinalDirectionText: String = "—",
         headingSourceText: String? = nil,
         altitudeText: String? = nil,
+        altimeter: DashboardAltitudeViewData = .init(),
         latitudeText: String? = nil,
         longitudeText: String? = nil,
         canCalibrate: Bool = false
@@ -80,6 +82,7 @@ public struct DashboardRideDynamicsViewData: Equatable, Sendable {
         self.headingSourceText = headingSourceText
             ?? rideDashboardLocalized(.rideDashboardDynamicsCourseUnavailable)
         self.altitudeText = altitudeText
+        self.altimeter = altimeter
         self.latitudeText = latitudeText
         self.longitudeText = longitudeText
         self.canCalibrate = canCalibrate
@@ -87,7 +90,7 @@ public struct DashboardRideDynamicsViewData: Equatable, Sendable {
 }
 
 extension DashboardRideDynamicsViewData {
-    func withCalibrationEnabled(_ isEnabled: Bool) -> Self {
+    func withCalibrationEnabled(_ isEnabled: Bool, altimeter: DashboardAltitudeViewData? = nil) -> Self {
         .init(
             status: status,
             leanDegrees: leanDegrees,
@@ -106,6 +109,7 @@ extension DashboardRideDynamicsViewData {
             cardinalDirectionText: cardinalDirectionText,
             headingSourceText: headingSourceText,
             altitudeText: altitudeText,
+            altimeter: altimeter ?? self.altimeter,
             latitudeText: latitudeText,
             longitudeText: longitudeText,
             canCalibrate: canCalibrate && isEnabled

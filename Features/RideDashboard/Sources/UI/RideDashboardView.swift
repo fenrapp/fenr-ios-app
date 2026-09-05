@@ -65,6 +65,9 @@ extension RideDashboardView {
                 deviceBattery: deviceBatteryViewModel.viewState,
                 toggleDeviceBatteryDisplayMode: deviceBatteryViewModel.toggleDisplayMode,
                 onSettings: onSettings,
+                showsSettingsShortcut: !viewModel.viewState.hasTelemetry
+                    || viewModel.viewState.centerMode == .charging
+                    || proxy.size.width <= proxy.size.height,
                 bottomLeadingAccessory: bottomLeadingAccessory
             ) {
                 Group {
@@ -127,6 +130,7 @@ extension RideDashboardView {
                                     setChargePowerLimit: chargingViewModel.setChargePowerLimit(watts:),
                                     setChargeTarget: chargingViewModel.setChargeTarget(percent:),
                                     openNavigation: onNavigation,
+                                    openSettings: onSettings,
                                     isNavigationActive: isNavigationActive,
                                     performBikeLockAction: bikeLockViewModel.performPrimaryAction,
                                     configureBikeLock: bikeLockViewModel.configure(securityOptionID:pin:),

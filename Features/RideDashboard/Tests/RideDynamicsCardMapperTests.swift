@@ -38,7 +38,7 @@ struct RideDynamicsCardMapperTests {
             )
         )
 
-        let state = RideDynamicsCardMapper(locale: .init(identifier: "en_GB")).map(snapshot)
+        let state = RideDashboardMapperFactory.makeRideDynamicsMapper(locale: .init(identifier: "en_GB")).map(snapshot)
 
         #expect(state.status == .live)
         #expect(state.leanText == "18°")
@@ -66,7 +66,7 @@ struct RideDynamicsCardMapperTests {
             )
         )
 
-        let state = RideDynamicsCardMapper(locale: .init(identifier: "en_GB")).map(snapshot)
+        let state = RideDashboardMapperFactory.makeRideDynamicsMapper(locale: .init(identifier: "en_GB")).map(snapshot)
 
         #expect(state.latitudeText == "34°0′0″ S")
         #expect(state.longitudeText == "151°12′33″ E")
@@ -86,7 +86,7 @@ struct RideDynamicsCardMapperTests {
             )
         )
 
-        let state = RideDynamicsCardMapper(locale: .init(identifier: "en_GB")).map(snapshot)
+        let state = RideDashboardMapperFactory.makeRideDynamicsMapper(locale: .init(identifier: "en_GB")).map(snapshot)
 
         #expect(state.status == .calibrating)
         #expect(!state.canCalibrate)
@@ -94,7 +94,7 @@ struct RideDynamicsCardMapperTests {
 
     @Test("Maps every motion availability to a distinct instrument state")
     func mapsMotionAvailabilityStates() {
-        let mapper = RideDynamicsCardMapper(locale: .init(identifier: "en_GB"))
+        let mapper = RideDashboardMapperFactory.makeRideDynamicsMapper(locale: .init(identifier: "en_GB"))
         let cases: [(VehicleMotionAvailability, DashboardRideDynamicsViewData.Status)] = [
             (.unavailable, .unavailable),
             (.calibrating, .calibrating),

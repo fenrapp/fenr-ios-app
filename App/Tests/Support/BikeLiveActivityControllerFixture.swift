@@ -1,5 +1,4 @@
 import BikeDomain
-import EnvironmentDomain
 import Foundation
 import RideDashboard
 import RuntimeConfiguration
@@ -50,6 +49,11 @@ final class BikeLiveActivityControllerFixture {
                 completeBatteryPercent: FENRRuntimeConstants.LiveActivity.completeBatteryPercent
             )
         )
+    }
+
+    func currentSnapshot() async -> VehicleSessionSnapshot {
+        var iterator = await vehicleSession.observe().makeAsyncIterator()
+        return await iterator.next() ?? .init()
     }
 
     func start() async {
@@ -108,27 +112,4 @@ private func makeBikeLiveActivityVehicleSession(
         ),
         sleep: { duration in try await Task.sleep(for: duration) }
     )
-}
-
-private actor BikeLiveActivityDeviceSpeedRepository: DeviceSpeedRepository {
-    func observeDeviceSpeed() -> AsyncStream<DeviceSpeedSample> { .init { _ in } }
-    func locationAuthorizationStatus() -> LocationAuthorizationStatus { .denied }
-    func requestLocationAuthorization() {}
-}
-
-private actor BikeLiveActivityProfileRepository: BikeProfileRepository {
-    func loadProfile() -> BikeProfile? { nil }
-    func saveProfile(_: BikeProfile) {}
-    func clearProfile() {}
-}
-
-private actor BikeLiveActivityIMURepository: BikeIMURepository {
-    func observeIMU() -> AsyncStream<BikeIMUSample> { .init { _ in } }
-    func startIMUMonitoring() throws {}
-    func stopIMUMonitoring() {}
-}
-
-private actor BikeLiveActivityMotionCalibrationRepository: VehicleMotionCalibrationRepository {
-    func load(vin _: String) -> VehicleMotionCalibration? { nil }
-    func save(_: VehicleMotionCalibration) {}
 }

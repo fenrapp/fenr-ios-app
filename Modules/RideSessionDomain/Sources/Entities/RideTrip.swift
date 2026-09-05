@@ -31,6 +31,8 @@ public struct RideTrip: Equatable, Identifiable, Sendable {
     public let maximumRightLeanDegrees: Double
     public let maximumUphillPitchDegrees: Double
     public let maximumDownhillPitchDegrees: Double
+    public let minimumAltitudeMeters: Double?
+    public let maximumAltitudeMeters: Double?
     public let attitudeSource: RideAttitudeSource
     public let energyBuckets: [RideEnergyBucket]
 
@@ -90,6 +92,8 @@ public struct RideTrip: Equatable, Identifiable, Sendable {
         maximumRightLeanDegrees: Double = .zero,
         maximumUphillPitchDegrees: Double = .zero,
         maximumDownhillPitchDegrees: Double = .zero,
+        minimumAltitudeMeters: Double? = nil,
+        maximumAltitudeMeters: Double? = nil,
         attitudeSource: RideAttitudeSource = .bikeIMUBetaV1,
         energyBuckets: [RideEnergyBucket] = []
     ) {
@@ -123,6 +127,8 @@ public struct RideTrip: Equatable, Identifiable, Sendable {
         self.maximumRightLeanDegrees = maximumRightLeanDegrees
         self.maximumUphillPitchDegrees = maximumUphillPitchDegrees
         self.maximumDownhillPitchDegrees = maximumDownhillPitchDegrees
+        self.minimumAltitudeMeters = minimumAltitudeMeters
+        self.maximumAltitudeMeters = maximumAltitudeMeters
         self.attitudeSource = attitudeSource
         self.energyBuckets = energyBuckets
     }

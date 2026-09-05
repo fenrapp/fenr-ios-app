@@ -18,7 +18,8 @@ struct RideHistoryDependencyContainer {
             session: session,
             mapper: RideHistoryMapper(
                 locale: locale,
-                measurementMapperFactory: RideHistoryMeasurementMapperFactory()
+                measurementMapperFactory: RideHistoryMeasurementMapperFactory(),
+                statisticsAggregator: RideTripStatisticsAggregator()
             )
         )
     }

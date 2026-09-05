@@ -6,13 +6,16 @@ public struct RideHistoryMapper: Sendable {
     let locale: Locale
     let durationStyle: Duration.TimeFormatStyle
     let measurementMapperFactory: RideHistoryMeasurementMapperFactory
+    let statisticsAggregator: RideTripStatisticsAggregator
 
     public init(
         locale: Locale,
-        measurementMapperFactory: RideHistoryMeasurementMapperFactory
+        measurementMapperFactory: RideHistoryMeasurementMapperFactory,
+        statisticsAggregator: RideTripStatisticsAggregator
     ) {
         self.locale = locale
         self.measurementMapperFactory = measurementMapperFactory
+        self.statisticsAggregator = statisticsAggregator
         durationStyle = Duration.TimeFormatStyle(
             pattern: .hourMinute(padHourToLength: 2, roundSeconds: .towardZero)
         ).locale(locale)
@@ -28,9 +31,8 @@ public struct RideHistoryMapper: Sendable {
             return .init(status: .empty, errorMessage: errorMessage)
         }
         let measurementMapper = makeMeasurementMapper(measurementSystem)
-        let totalDistance = trips.reduce(.zero) { $0 + max($1.distanceKilometers, .zero) }
-        let totalDuration = trips.reduce(.zero) { $0 + max($1.elapsedSeconds, .zero) }
-        let distance = measurementMapper.distance(kilometers: totalDistance)
+        let statistics = statisticsAggregator.aggregate(trips)
+        let distance = measurementMapper.distance(kilometers: statistics.totalDistanceKilometers)
         let rideCountText = String(localized: .rideHistoryRideCount(rideCount: trips.count))
         let rows = trips.map {
             row($0, measurementMapper: measurementMapper, measurementSystem: measurementSystem)
@@ -41,7 +43,15 @@ public struct RideHistoryMapper: Sendable {
                 rideCountText: rideCountText,
                 distanceText: format(distance.value, fractionDigits: distance.value < 100 ? 1 : 0)
                     + " \(distance.unit)",
-                durationText: formatDuration(totalDuration)
+                durationText: Duration.seconds(statistics.totalElapsedSeconds).formatted(
+                    .units(allowed: [.hours, .minutes], width: .abbreviated).locale(locale)
+                ),
+                averageSpeedText: speedText(measurementMapper.speed(
+                    kilometersPerHour: statistics.averageSpeedKilometersPerHour
+                )),
+                maximumSpeedText: speedText(measurementMapper.speed(
+                    kilometersPerHour: statistics.maximumSpeedKilometersPerHour
+                ))
             ),
             daySections: daySections(from: rows),
             deletingRideIDs: deletingRideIDs,

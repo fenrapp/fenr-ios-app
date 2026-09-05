@@ -28,6 +28,7 @@ struct DashboardCenterCard: View {
     let setChargePowerLimit: (Double) -> Void
     let setChargeTarget: (Double) -> Void
     let openNavigation: () -> Void
+    let openSettings: () -> Void
     let isNavigationActive: Bool
     let performBikeLockAction: () -> Void
     let configureBikeLock: (String, String) -> Void
@@ -73,6 +74,7 @@ struct DashboardCenterCard: View {
         case .bikeLock:
             bikeLockCard
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+        case .settings: settingsCard
         case .navigation:
             DashboardNavigationCard(
                 isNavigationActive: isNavigationActive,
@@ -124,6 +126,11 @@ struct DashboardCenterCard: View {
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+    }
+
+    private var settingsCard: some View {
+        DashboardSettingsCard(openSettings: openSettings)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var visibleRidingCards: [RidingDashboardCard] {

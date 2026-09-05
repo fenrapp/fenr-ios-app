@@ -17,8 +17,10 @@ public struct DashboardCardThumbnailViewData: Equatable, Sendable {
         case battery
         case grid
         case attitude
+        case altitude
         case compass
         case lock
+        case settings
     }
 
     public enum Accent: Equatable, Sendable {

@@ -1,6 +1,20 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "rideDashboard.settings.tagline" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Make it yours"}}}},
+    "rideDashboard.settings.detail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Customize your dashboard, bike, and app preferences."}}}},
+    "rideDashboard.settings.open" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Open Settings"}}}},
+    "rideDashboard.altitude.title": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Altitude"}}}},
+    "rideDashboard.altitude.minimum": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Lowest"}}}},
+    "rideDashboard.altitude.maximum": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Highest"}}}},
+    "rideDashboard.altitude.trip": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "This trip"}}}},
+    "rideDashboard.altitude.waiting": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Waiting for GPS"}}}},
+    "rideDashboard.altitude.source": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "GPS"}}}},
+    "rideDashboard.altitude.unit.meters": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "m"}}}},
+    "rideDashboard.altitude.unit.feet": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "ft"}}}},
+    "rideDashboard.efficiency.window": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Last 60 seconds"}}}},
+    "rideDashboard.efficiency.average": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Trip average"}}}},
+    "rideDashboard.efficiency.power.unit": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "kW"}}}},
     "rideDashboard.connection.failed": {
       "extractionState": "manual",
       "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Unable to connect. Try again." } } }

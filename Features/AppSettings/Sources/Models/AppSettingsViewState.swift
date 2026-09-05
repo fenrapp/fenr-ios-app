@@ -12,6 +12,7 @@ public struct AppSettingsViewState: Equatable, Sendable {
     public let dashboardCards: SettingsNavigationSummaryViewData
     public let powerModes: SettingsNavigationSummaryViewData
     public let navigation: SettingsNavigationSummaryViewData
+    public let liveActivities: LiveActivitySettingsViewState
     public let navigationSettings: NavigationSettingsViewState
 
     public init(
@@ -37,7 +38,8 @@ public struct AppSettingsViewState: Equatable, Sendable {
         dashboardCards: SettingsNavigationSummaryViewData? = nil,
         powerModes: SettingsNavigationSummaryViewData? = nil,
         navigation: SettingsNavigationSummaryViewData? = nil,
-        navigationSettings: NavigationSettingsViewState = .init()
+        navigationSettings: NavigationSettingsViewState = .init(),
+        liveActivities: LiveActivitySettingsViewState = .init()
     ) {
         self.speedSource = speedSource
         self.dashboardProgressBarMode = dashboardProgressBarMode ?? .init(
@@ -59,5 +61,6 @@ public struct AppSettingsViewState: Equatable, Sendable {
         self.powerModes = powerModes ?? .init(detail: .appSettingsPowerModesConfigured)
         self.navigation = navigation ?? .init(detail: .appSettingsNavigationDetail)
         self.navigationSettings = navigationSettings
+        self.liveActivities = liveActivities
     }
 }

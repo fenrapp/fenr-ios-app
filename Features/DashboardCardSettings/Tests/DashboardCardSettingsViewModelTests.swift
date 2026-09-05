@@ -43,7 +43,7 @@ struct DashboardCardSettingsViewModelTests {
         let fixture = DashboardCardSettingsViewModelFixture(repository: repository)
         let viewModel = fixture.viewModel
         viewModel.start()
-        #expect(await waitUntil { viewModel.viewState.sections.count == 7 })
+        #expect(await waitUntil { viewModel.viewState.sections.count == DashboardCardSectionID.allCases.count })
 
         viewModel.setSectionOrder(ids: [
             DashboardCardSectionID.range.rawValue,
@@ -79,7 +79,7 @@ struct DashboardCardSettingsViewModelTests {
         let repository = fixture.repository
         let viewModel = fixture.viewModel
         viewModel.start()
-        #expect(await waitUntil { viewModel.viewState.sections.count == 7 })
+        #expect(await waitUntil { viewModel.viewState.sections.count == DashboardCardSectionID.allCases.count })
 
         viewModel.setPageOrder(
             ids: [DashboardCardPageID.efficiencyTrend.rawValue, DashboardCardPageID.efficiencyLive.rawValue],
@@ -170,7 +170,7 @@ struct DashboardCardSettingsViewModelTests {
         let fixture = DashboardCardSettingsViewModelFixture(repository: repository)
         let viewModel = fixture.viewModel
         viewModel.start()
-        #expect(await waitUntil { viewModel.viewState.sections.count == 7 })
+        #expect(await waitUntil { viewModel.viewState.sections.count == DashboardCardSectionID.allCases.count })
 
         viewModel.setSectionVisibility(false, id: DashboardCardSectionID.range.rawValue)
         await repository.waitForBlockedSave()
@@ -182,5 +182,24 @@ struct DashboardCardSettingsViewModelTests {
             await repository.settings.dashboardCardConfiguration.section(id: .range).isVisible == false
         })
         #expect(await repository.savedSettings.count == 1)
+    }
+}
+
+extension DashboardCardSettingsViewModelTests {
+    @Test("Settings can be reordered but hiding it never saves a configuration")
+    func settingsCanMoveButCannotHide() async {
+        let fixture = DashboardCardSettingsViewModelFixture()
+        let viewModel = fixture.viewModel
+        viewModel.start()
+        #expect(await waitUntil { viewModel.viewState.sections.last?.id == "settings" })
+        viewModel.setSectionVisibility(false, id: "settings")
+        #expect(await fixture.repository.saveCallCount == 0)
+        #expect(viewModel.viewState.section(id: "settings")?.isVisible == true)
+        viewModel.setSectionOrder(ids: ["settings"])
+        #expect(await waitUntil {
+            let configuration = await fixture.repository.settings.dashboardCardConfiguration
+            return configuration.sections.first { $0.id != .bikeLock }?.id == .settings
+        })
+        viewModel.stop()
     }
 }

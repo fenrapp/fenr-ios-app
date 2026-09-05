@@ -95,7 +95,7 @@ public final class DashboardCardSettingsViewModel: ObservableObject {
 
     public func setSectionVisibility(_ isVisible: Bool, id: String) {
         guard let id = DashboardCardSectionID(rawValue: id) else { return }
-        if id == .bikeLock {
+        if id == .bikeLock || id == .settings {
             return
         }
         var configuration = settings.dashboardCardConfiguration
