@@ -14,9 +14,11 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
     let vehicleSession: any VehicleSessionService
     let observeDeviceSpeed: ObserveDeviceSpeedUseCase
     let settingsRepository: any AppSettingsRepository
+    var routeDirectory: URL?
+    var isDemo = false
 
     func makeFeature() -> RideNavigationFeatureModel {
-        let repository = Self.makeRecordedRouteRepository()
+        let repository = Self.makeRecordedRouteRepository(directory: routeDirectory)
         let iso8601 = Date.ISO8601FormatStyle(includingFractionalSeconds: true)
         let placeSearch = ApplePlaceSearchService()
         let roadRouteCalculator = AppleRoadRouteCalculator()
@@ -34,7 +36,8 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
                     observeDeviceSpeed: observeDeviceSpeed,
                     routeLibrary: Self.makeRouteLibrary(
                         repository: repository,
-                        dateFormat: iso8601
+                        dateFormat: iso8601,
+                        isDemo: isDemo
                     ),
                     planning: RideNavigationPlanningService(
                         roadRouteCalculator: roadRouteCalculator,
@@ -77,7 +80,8 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
 
     nonisolated private static func makeRouteLibrary(
         repository: FileRecordedRouteRepository,
-        dateFormat: Date.ISO8601FormatStyle
+        dateFormat: Date.ISO8601FormatStyle,
+        isDemo: Bool
     ) -> RideNavigationRouteLibraryService {
         RideNavigationRouteLibraryService(
             repository: repository,
@@ -90,17 +94,17 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
                     maximumPointCount: Constants.maximumGPXPointCount
                 )
             ),
-            exporter: GPXRouteExporter(dateFormat: dateFormat)
+            exporter: GPXRouteExporter(dateFormat: dateFormat, isDemo: isDemo)
         )
     }
 
-    nonisolated private static func makeRecordedRouteRepository() -> FileRecordedRouteRepository {
+    nonisolated private static func makeRecordedRouteRepository(directory: URL?) -> FileRecordedRouteRepository {
         let fileManager = FileManager()
         let base = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? fileManager.temporaryDirectory
         return FileRecordedRouteRepository(
             fileManager: fileManager,
-            directoryURL: base.appendingPathComponent("RideNavigation", isDirectory: true),
+            directoryURL: directory ?? base.appendingPathComponent("RideNavigation", isDirectory: true),
             codec: StoredRideRouteCodec()
         )
     }

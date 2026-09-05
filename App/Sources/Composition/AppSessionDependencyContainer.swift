@@ -16,6 +16,7 @@ struct AppSessionDependencies {
     let profileRepository: any BikeProfileRepository
     let settingsRepository: any AppSettingsRepository
     let deviceSpeedRepository: any DeviceSpeedRepository
+    var deviceHeadingRepository: (any DeviceHeadingRepository)?
     let motionCalibrationRepository: any VehicleMotionCalibrationRepository
     let imuProfile: BikeIMUProfile?
     let rideTripRepository: any RideTripRepository
@@ -32,6 +33,7 @@ enum AppSessionDependencyContainer {
                 profileRepository: dependencies.profileRepository,
                 settingsRepository: dependencies.settingsRepository,
                 deviceSpeedRepository: dependencies.deviceSpeedRepository,
+                deviceHeadingRepository: dependencies.deviceHeadingRepository,
                 imuRepository: dependencies.repository,
                 motionCalibrationRepository: dependencies.motionCalibrationRepository,
                 imuProfile: dependencies.imuProfile

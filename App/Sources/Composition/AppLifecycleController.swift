@@ -118,6 +118,13 @@ final class AppLifecycleController {
         }
     }
 
+    func stopAndWait() async {
+        stop()
+        await stopTask?.value
+        await sessionController.stopIncludingOnboarding()
+        await bikeLiveActivityController.endForExperienceChange()
+    }
+
     func persistRideSession() {
         guard state == .started else { return }
         let precedingPersistence = persistenceTask

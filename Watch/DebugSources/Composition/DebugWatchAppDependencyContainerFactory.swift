@@ -11,10 +11,13 @@ enum DebugWatchAppDependencyContainerFactory {
         let repository = BikeEmulatorRepositoryFactory.make(
             scenario: scenario(from: arguments)
         )
+        let profileRepository = WatchDebugProfileRepository()
         return WatchAppDependencyContainer(
             repository: repository,
-            profileRepository: WatchDebugProfileRepository(),
-            settingsRepository: UserDefaultsAppSettingsRepository(userDefaults: .standard),
+            profileRepository: profileRepository,
+            settingsRepository: AppSettingsRepositoryFactory.make(
+                userDefaults: .standard, profileRepository: profileRepository
+            ),
             initialProfile: BikeProfile(vin: BikeEmulatorIdentity.vin)
         )
     }

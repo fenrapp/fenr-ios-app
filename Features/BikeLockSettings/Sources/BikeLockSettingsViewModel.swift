@@ -63,6 +63,15 @@ public final class BikeLockSettingsViewModel: ObservableObject {
         }
     }
 
+    public func stopAndWait() async {
+        let tasks = [
+            observationTask, capabilityTask, operationTask
+        ]
+        tasks.forEach { $0?.cancel() }
+        stop()
+        for task in tasks { await task?.value }
+    }
+
     public func stop() {
         observationTask?.cancel()
         observationTask = nil

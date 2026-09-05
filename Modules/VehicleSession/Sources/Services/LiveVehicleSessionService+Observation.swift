@@ -133,62 +133,6 @@ extension LiveVehicleSessionService {
         publish()
     }
 
-    func updateDeviceSpeedObservation() async {
-        guard settings.speedSource.usesDeviceLocation || !locationConsumers.isEmpty else {
-            deviceSpeedTask?.cancel()
-            deviceSpeedTask = nil
-            deviceSpeedExpiryTask?.cancel()
-            deviceSpeedExpiryTask = nil
-            let hadDeviceSpeedSample = deviceSpeedSample != nil
-            deviceSpeedSample = nil
-            if hadDeviceSpeedSample {
-                await refreshMotion()
-            }
-            return
-        }
-        guard deviceSpeedTask == nil else { return }
-        let useCase = useCases.observeDeviceSpeed
-        deviceSpeedTask = Task { [weak self] in
-            let stream = await useCase.execute()
-            for await value in stream where !Task.isCancelled {
-                await self?.receive(value)
-            }
-        }
-    }
-
-    private func receive(_ value: DeviceSpeedSample) async {
-        deviceSpeedSample = value
-        scheduleDeviceSpeedExpiry(for: value)
-        await refreshMotion()
-        publish()
-    }
-
-    private func scheduleDeviceSpeedExpiry(for sample: DeviceSpeedSample) {
-        deviceSpeedExpiryTask?.cancel()
-        guard let remainingValidity = speedResolver.remainingValidity(of: sample) else {
-            deviceSpeedExpiryTask = nil
-            return
-        }
-        let sleep = sleep
-        deviceSpeedExpiryTask = Task { [weak self] in
-            do {
-                try await sleep(.seconds(remainingValidity))
-            } catch {
-                return
-            }
-            guard !Task.isCancelled else { return }
-            await self?.expireDeviceSpeedSample(sample)
-        }
-    }
-
-    private func expireDeviceSpeedSample(_ sample: DeviceSpeedSample) async {
-        deviceSpeedExpiryTask = nil
-        guard deviceSpeedSample == sample else { return }
-        deviceSpeedSample = nil
-        await refreshMotion()
-        publish()
-    }
-
     private func updateIMUMonitoring() async {
         guard isReceivingTelemetry, !isStopping else {
             imuMonitoringGeneration &+= 1
@@ -323,7 +267,9 @@ extension LiveVehicleSessionService {
             calibration: motionCalibration,
             vin: hasLoadedMotionCalibration ? profile?.vin : nil,
             location: deviceSpeedSample,
-            bikeSpeedKilometersPerHour: telemetry.speed.kmh
+            bikeSpeedKilometersPerHour: telemetry.speed.kmh,
+            heading: deviceHeadingSample,
+            position: devicePositionSample
         )
         motion = estimation.snapshot
         guard let calibration = estimation.calibrationToPersist else { return }

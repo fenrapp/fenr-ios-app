@@ -1,6 +1,7 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "bikeDiagnostics.demoBikeName" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Demo bike" } } } },
     "bikeDiagnostics.batteryHealth" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery Health" } } } },
     "bikeDiagnostics.bikeFallback" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "bike" } } } },
     "bikeDiagnostics.ble.duration.minutes" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%lldm %llds" } } } },
@@ -62,7 +63,7 @@
     "bikeDiagnostics.metric.batteryDcBus" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery DC bus" } } } },
     "bikeDiagnostics.metric.batterySignalsUpdated" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery signals updated" } } } },
     "bikeDiagnostics.metric.batteryStateUpdated" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery state updated" } } } },
-    "bikeDiagnostics.metric.electricalPower" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Estimated electrical power" } } } },
+    "bikeDiagnostics.metric.electricalPower" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Est. power" } } } },
     "bikeDiagnostics.metric.mode" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Mode" } } } },
     "bikeDiagnostics.metric.motorRpm" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Motor RPM" } } } },
     "bikeDiagnostics.metric.negativeBmsHumidity" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Negative BMS humidity candidate" } } } },

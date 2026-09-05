@@ -12,7 +12,7 @@ import TestSupport
 struct LiveVehicleSessionServiceTests {
     @Test("Drains all source observations before a clean restart")
     func drainsObservationsBeforeRestart() async {
-        let fixture = makeFixture(speedSource: .hybrid)
+        let fixture = makeVehicleSessionFixture(speedSource: .hybrid)
         await fixture.service.start()
         await fixture.service.start()
         _ = await fixture.service.observe()
@@ -64,7 +64,7 @@ struct LiveVehicleSessionServiceTests {
 
     @Test("Slow observers retain only the newest vehicle snapshot")
     func boundsObserverBuffer() async {
-        let fixture = makeFixture()
+        let fixture = makeVehicleSessionFixture()
         await fixture.service.start()
         #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
         let stream = await fixture.service.observe()
@@ -84,7 +84,7 @@ struct LiveVehicleSessionServiceTests {
 
     @Test("Three BMS consumers share one start and the last release performs one stop")
     func referenceCountsBatteryHealthConsumers() async {
-        let fixture = makeFixture()
+        let fixture = makeVehicleSessionFixture()
         await fixture.service.start()
         #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
         await fixture.repository.sendConnection(.init(
@@ -105,7 +105,7 @@ struct LiveVehicleSessionServiceTests {
 
     @Test("A release during a pending BMS start stops it after startup finishes")
     func releaseDuringPendingStart() async {
-        let fixture = makeFixture()
+        let fixture = makeVehicleSessionFixture()
         await fixture.service.start()
         #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
         await fixture.repository.sendConnection(.init(
@@ -127,7 +127,7 @@ struct LiveVehicleSessionServiceTests {
 
     @Test("A failed BMS start can be retried")
     func retriesAfterFailure() async {
-        let fixture = makeFixture()
+        let fixture = makeVehicleSessionFixture()
         await fixture.service.start()
         #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
         await fixture.repository.sendConnection(.init(
@@ -149,7 +149,7 @@ struct LiveVehicleSessionServiceTests {
 
     @Test("Rearms BMS monitoring once after reconnect while consumers remain")
     func rearmsBatteryHealthMonitoringAfterReconnect() async {
-        let fixture = makeFixture()
+        let fixture = makeVehicleSessionFixture()
         await fixture.service.start()
         #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
         let consumers = [UUID(), UUID()]
@@ -184,7 +184,7 @@ struct LiveVehicleSessionServiceTests {
 
     @Test("Does not rearm BMS monitoring after consumers are released")
     func doesNotRearmBatteryHealthMonitoringWithoutConsumers() async {
-        let fixture = makeFixture()
+        let fixture = makeVehicleSessionFixture()
         await fixture.service.start()
         #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
         await fixture.repository.sendConnection(.init(
@@ -211,7 +211,7 @@ struct LiveVehicleSessionServiceTests {
 
     @Test("Requires a fresh telemetry sample after reconnect")
     func requiresFreshTelemetryAfterReconnect() async {
-        let fixture = makeFixture()
+        let fixture = makeVehicleSessionFixture()
         await fixture.service.start()
         #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
         await fixture.repository.sendConnection(.init(
@@ -242,7 +242,7 @@ struct LiveVehicleSessionServiceTests {
 
     @Test("Balances a stale successful BMS start before rearming")
     func balancesStaleBatteryHealthStartAcrossReconnect() async {
-        let fixture = makeFixture()
+        let fixture = makeVehicleSessionFixture()
         await fixture.service.start()
         #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
         await fixture.repository.sendConnection(.init(
@@ -289,7 +289,7 @@ struct LiveVehicleSessionServiceTests {
 extension LiveVehicleSessionServiceTests {
     @Test("Releasing the service balances active BMS monitoring")
     func deinitBalancesBatteryHealthMonitoring() async {
-        var fixture: Fixture? = makeFixture()
+        var fixture: VehicleSessionFixture? = makeVehicleSessionFixture()
         guard let repository = fixture?.repository else { return }
         await fixture?.service.start()
         #expect(await waitUntil { await repository.sourceSubscriptionCounts() == (1, 1) })
@@ -312,7 +312,7 @@ extension LiveVehicleSessionServiceTests {
     func expiresDeviceSpeedSample() async {
         let sleepRecorder = VehicleSessionTestSleepRecorder()
         let now = Date(timeIntervalSince1970: 1_000)
-        let fixture = makeFixture(
+        let fixture = makeVehicleSessionFixture(
             speedSource: .gps,
             now: { now },
             maximumSampleAge: 0.75,
@@ -336,7 +336,7 @@ extension LiveVehicleSessionServiceTests {
 extension LiveVehicleSessionServiceTests {
     @Test("Dynamics location consumer activates GPS with bike speed selected")
     func dynamicsLocationConsumer() async {
-        let fixture = makeFixture(speedSource: .motorcycle)
+        let fixture = makeVehicleSessionFixture(speedSource: .motorcycle)
         await fixture.service.start()
         #expect(await fixture.deviceSpeed.subscriptionCount() == 0)
         let consumerID = UUID()
@@ -362,7 +362,7 @@ extension LiveVehicleSessionServiceTests {
 
     @Test("Refreshes missing base and optional traction once per mode visit")
     func refreshesPowerModeOnVisit() async {
-        let fixture = makeFixture()
+        let fixture = makeVehicleSessionFixture()
         await fixture.service.start()
         #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
         await fixture.repository.sendConnection(.init(
@@ -403,7 +403,7 @@ extension LiveVehicleSessionServiceTests {
 
     @Test("Refreshes the initial map when telemetry arrives before the session is ready")
     func refreshesInitialPowerModeAfterConnectionBecomesReady() async {
-        let fixture = makeFixture()
+        let fixture = makeVehicleSessionFixture()
         await fixture.service.start()
         #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
         let tractionOnly = BikePowerModeConfiguration(
@@ -429,7 +429,7 @@ extension LiveVehicleSessionServiceTests {
 
     @Test("A stale power mode refresh cannot finish the current generation")
     func stalePowerModeRefreshDoesNotDrainCurrentGeneration() async {
-        let fixture = makeFixture()
+        let fixture = makeVehicleSessionFixture()
         await fixture.service.start()
         #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
         await fixture.repository.sendConnection(.init(
@@ -459,7 +459,7 @@ extension LiveVehicleSessionServiceTests {
         #expect(await waitUntil { await fixture.repository.powerModeRefreshes() == (base: [0, 1], traction: [1]) })
         await fixture.service.stop()
 
-        let restoredFixture = makeFixture()
+        let restoredFixture = makeVehicleSessionFixture()
         await restoredFixture.service.start()
         #expect(await waitUntil { await restoredFixture.repository.sourceSubscriptionCounts() == (1, 1) })
         let completeConfiguration = BikePowerModeConfiguration(
@@ -486,7 +486,7 @@ extension LiveVehicleSessionServiceTests {
 
     @Test("Starts bike IMU monitoring and auto-calibrates a stable sample window")
     func autoCalibratesBikeIMU() async {
-        let fixture = makeFixture()
+        let fixture = makeVehicleSessionFixture()
         await fixture.service.start()
         #expect(await waitUntil { await fixture.repository.sourceSubscriptionCounts() == (1, 1) })
         await fixture.repository.sendConnection(.init(
@@ -511,7 +511,7 @@ extension LiveVehicleSessionServiceTests {
     @Test("Balances a stale successful IMU start before reconnecting")
     func balancesStaleIMUMonitoringStartAcrossReconnect() async {
         let sleepRecorder = VehicleSessionTestSleepRecorder()
-        let fixture = makeFixture(
+        let fixture = makeVehicleSessionFixture(
             maximumSampleAge: 0.75,
             sleep: { duration in await sleepRecorder.sleep(for: duration) }
         )
@@ -543,7 +543,7 @@ extension LiveVehicleSessionServiceTests {
 
     @Test("Does not persist a zero before a bike IMU sample exists")
     func ignoresCalibrationWithoutSample() async {
-        let fixture = makeFixture()
+        let fixture = makeVehicleSessionFixture()
         await fixture.service.start()
 
         await fixture.service.zeroBikeAttitude()
@@ -552,124 +552,4 @@ extension LiveVehicleSessionServiceTests {
         await fixture.service.stop()
     }
 
-    // The fixture intentionally spells out the complete production dependency graph.
-    // swiftlint:disable:next function_body_length
-    private func makeFixture(
-        speedSource: SpeedSource = .motorcycle,
-        now: @escaping @Sendable () -> Date = { Date(timeIntervalSince1970: 1_000) },
-        maximumSampleAge: TimeInterval = 5,
-        sleep: @escaping @Sendable (Duration) async throws -> Void = {
-            try await Task.sleep(for: $0)
-        }
-    ) -> Fixture {
-        let repository = VehicleSessionTestRepository()
-        let settings = VehicleSessionTestSettingsRepository(speedSource: speedSource)
-        let profile = VehicleSessionTestProfileRepository()
-        let deviceSpeed = VehicleSessionTestDeviceSpeedRepository()
-        let imu = VehicleSessionTestIMURepository()
-        let motionCalibration = VehicleSessionTestMotionCalibrationRepository()
-        let fixtureDate = now()
-        let refreshPowerModeConfiguration = RefreshBikePowerModeConfigurationUseCase(
-            repository: repository
-        )
-        let refreshTractionControlConfiguration = RefreshBikeTractionControlConfigurationUseCase(
-            repository: repository
-        )
-        let observeBatteryHealth = ObserveBikeBatteryHealthUseCase(repository: repository)
-        let startBatteryHealthMonitoring = StartBatteryHealthMonitoringUseCase(
-            repository: repository
-        )
-        let stopBatteryHealthMonitoring = StopBatteryHealthMonitoringUseCase(
-            repository: repository
-        )
-        let service = LiveVehicleSessionService(
-            useCases: .init(
-                observeTelemetry: .init(repository: repository),
-                observeConnection: .init(repository: repository),
-                observeSettings: .init(repository: settings),
-                observeDeviceSpeed: .init(repository: deviceSpeed),
-                observeIMU: .init(repository: imu),
-                startIMUMonitoring: .init(repository: imu),
-                stopIMUMonitoring: .init(repository: imu),
-                loadMotionCalibration: .init(repository: motionCalibration),
-                saveMotionCalibration: .init(repository: motionCalibration),
-                observeBikeProfile: .init(repository: profile),
-                observeBatteryHealth: observeBatteryHealth,
-                startBatteryHealthMonitoring: startBatteryHealthMonitoring,
-                stopBatteryHealthMonitoring: stopBatteryHealthMonitoring,
-                readBikeStatusSnapshot: .init(repository: repository),
-                refreshPowerModeConfiguration: refreshPowerModeConfiguration,
-                refreshTractionControlConfiguration: refreshTractionControlConfiguration
-            ),
-            powerModeRefreshCoordinator: .init(
-                refreshPowerModeConfiguration: refreshPowerModeConfiguration,
-                refreshTractionControlConfiguration: refreshTractionControlConfiguration
-            ),
-            batteryHealthMonitoringCoordinator: .init(
-                observeBatteryHealth: observeBatteryHealth,
-                startBatteryHealthMonitoring: startBatteryHealthMonitoring,
-                stopBatteryHealthMonitoring: stopBatteryHealthMonitoring
-            ),
-            speedResolver: .init(
-                now: now,
-                maximumAccuracyMetersPerSecond: 5,
-                maximumSampleAge: maximumSampleAge
-            ),
-            motionEstimator: .init(
-                profile: .init(
-                    version: 1,
-                    accelerationTransform: .init(
-                        bikeX: .positiveX,
-                        bikeY: .positiveY,
-                        bikeZ: .positiveZ
-                    ),
-                    gyroscopeTransform: .init(
-                        bikeX: .positiveX,
-                        bikeY: .positiveY,
-                        bikeZ: .positiveZ
-                    ),
-                    gyroscopeDegreesPerSecondPerRawUnit: .init(x: 0.01, y: 0.01, z: 0.01),
-                    oneGRaw: 1_000
-                ),
-                now: now,
-                maximumSampleAge: maximumSampleAge,
-                attitudeFilter: .init(),
-                calibrationTracker: .init(),
-                locationResolver: .init(
-                    now: now,
-                    maximumSampleAge: maximumSampleAge,
-                    minimumCourseSpeedKilometersPerHour: 5,
-                    maximumCourseAccuracyDegrees: 35
-                )
-            ),
-            sleep: sleep
-        )
-        return Fixture(
-            service: service,
-            repository: repository,
-            settings: settings,
-            profile: profile,
-            deviceSpeed: deviceSpeed,
-            imu: imu,
-            motionCalibration: motionCalibration,
-            now: fixtureDate
-        )
-    }
-
-    private struct Fixture {
-        let service: LiveVehicleSessionService
-        let repository: VehicleSessionTestRepository
-        let settings: VehicleSessionTestSettingsRepository
-        let profile: VehicleSessionTestProfileRepository
-        let deviceSpeed: VehicleSessionTestDeviceSpeedRepository
-        let imu: VehicleSessionTestIMURepository
-        let motionCalibration: VehicleSessionTestMotionCalibrationRepository
-        let now: Date
-
-        func latestSnapshot() async -> VehicleSessionSnapshot {
-            let stream = await service.observe()
-            for await snapshot in stream { return snapshot }
-            fatalError("Vehicle session stream finished unexpectedly")
-        }
-    }
 }

@@ -2,11 +2,14 @@ import BikeDomain
 import Foundation
 
 enum BikeEmulatorPayloadFactory {
-    static func makeConnection() -> BikeConnection {
+    static func makeConnection(
+        vin: String = BikeEmulatorIdentity.vin,
+        identifier: UUID? = Constants.peripheralIdentifier
+    ) -> BikeConnection {
         BikeConnection(
-            state: .receivingTelemetry(peripheralName: Constants.peripheralName),
-            peripheralName: Constants.peripheralName,
-            peripheralIdentifier: Constants.peripheralIdentifier,
+            state: .receivingTelemetry(peripheralName: vin),
+            peripheralName: vin,
+            peripheralIdentifier: identifier,
             rssi: Constants.rssi
         )
     }
@@ -28,26 +31,22 @@ enum BikeEmulatorPayloadFactory {
         )
         let isRiding = scenario.isRiding
         let speed = isRiding ? ridingSpeed(for: tick) : .zero
-        let ridingGear = ridingGearState(for: tick, fallbackMapNumber: context.activeMapNumber)
-        let indicators = indicatorState(for: scenario, tick: tick)
-        let electricalTelemetry = BikeEmulatorElectricalTelemetryFactory.make(
-            context: .init(
-                batteryPercent: batteryPercent,
-                isCharging: isCharging,
-                isRiding: isRiding,
-                tick: tick,
-                date: context.date
-            ),
-            powerCalculator: powerCalculator
+        let ridingGear = context.isDemo
+            ? RidingGearState(mapNumber: context.activeMapNumber, isInGear: isRiding, crawlState: .inactive)
+            : ridingGearState(for: tick, fallbackMapNumber: context.activeMapNumber)
+        let indicators = indicatorState(for: scenario, tick: tick, isDemo: context.isDemo)
+        let electricalTelemetry = electricalTelemetry(
+            context: context, batteryPercent: batteryPercent, isCharging: isCharging,
+            motion: (scenario, tick), powerCalculator: powerCalculator
         )
         return BikeTelemetry(
-            vin: BikeEmulatorIdentity.vin,
+            vin: context.vin,
             batteryLevel: .known(percent: batteryPercent),
             healthLevel: .known(percent: Constants.healthPercent),
             mode: .index(isRiding ? ridingGear.mapNumber : context.activeMapNumber),
             speed: .known(kmh: speed, kmhX10: Int(speed * Constants.speedScale)),
             motorRPM: .known(isRiding ? Int(speed * Constants.rpmPerKmh) : .zero),
-            odometer: odometer(for: scenario, tick: tick),
+            odometer: odometer(context: context, scenario: scenario, tick: tick),
             inverterTemperaturesCelsius: inverterTemperatures(for: tick),
             statusFlags: BikeStatusFlags(
                 isOn: !scenario.isChargerConnected,
@@ -77,7 +76,29 @@ enum BikeEmulatorPayloadFactory {
         )
     }
 
-    private static func ridingSpeed(for tick: Int) -> Double {
+    private static func electricalTelemetry(
+        context: BikeEmulatorTelemetryContext,
+        batteryPercent: Int,
+        isCharging: Bool,
+        motion: (scenario: BikeEmulatorScenario, tick: Int),
+        powerCalculator: BikePowerTelemetryCalculator
+    ) -> BikeEmulatorElectricalTelemetry {
+        BikeEmulatorElectricalTelemetryFactory.make(
+            context: .init(batteryPercent: batteryPercent, isCharging: isCharging, isRiding: motion.scenario.isRiding,
+                           tick: motion.tick, date: context.date, chargePowerWatts: context.chargePowerWatts),
+            powerCalculator: powerCalculator
+        )
+    }
+
+    private static func odometer(
+        context: BikeEmulatorTelemetryContext, scenario: BikeEmulatorScenario, tick: Int
+    ) -> BikeOdometer {
+        guard let distance = context.distanceKilometers else { return odometer(for: scenario, tick: tick) }
+        let kilometers = Constants.odometerKilometers + distance
+        return .known(kilometers: kilometers, centiKilometers: UInt32((kilometers * 100).rounded()))
+    }
+
+    static func ridingSpeed(for tick: Int) -> Double {
         let ascentTickCount = Int(Constants.ridingSpeedMaximum / Constants.ridingSpeedStep)
         let cycleTick = tick % (ascentTickCount * 2)
         let distanceFromZero = min(cycleTick, (ascentTickCount * 2) - cycleTick)
@@ -132,11 +153,17 @@ private struct RidingGearState {
 private extension BikeEmulatorPayloadFactory {
     static func indicatorState(
         for scenario: BikeEmulatorScenario,
-        tick: Int
+        tick: Int,
+        isDemo: Bool
     ) -> BikeIndicatorState {
         let isBlinking = tick.isMultiple(of: Constants.blinkIntervalTicks)
         switch scenario {
         case .riding:
+            if isDemo {
+                return BikeIndicatorState(
+                    isHighBeamOn: tick % Constants.highBeamCycleTicks < Constants.highBeamOnTicks
+                )
+            }
             switch (tick / Constants.indicatorCycleTicks) % Constants.indicatorCycleCount {
             case .zero:
                 return BikeIndicatorState(
@@ -161,7 +188,7 @@ private extension BikeEmulatorPayloadFactory {
                 isLeftBlinkerOn: isBlinking,
                 isCheckEngineLightOn: true
             )
-        case .charging, .cellBalancing, .chargerIdle, .chargingDataUnavailable:
+        case .parked, .charging, .cellBalancing, .chargerIdle, .chargingDataUnavailable:
             return .init()
         }
     }
@@ -174,7 +201,6 @@ private extension BikeEmulatorPayloadFactory {
 
 private extension BikeEmulatorPayloadFactory {
     enum Constants {
-        static let peripheralName = BikeEmulatorIdentity.vin
         static let peripheralIdentifier = UUID(uuidString: "00000000-0000-0000-0000-000000000001")
         static let rssi = -48
         static let healthPercent = 94

@@ -7,6 +7,7 @@ struct DiagnosticsMetricRow: View {
         LabeledContent {
             VStack(alignment: .trailing, spacing: Constants.spacing) {
                 Text(metric.value)
+                    .monospacedDigit()
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.trailing)
                     .textSelection(.enabled)

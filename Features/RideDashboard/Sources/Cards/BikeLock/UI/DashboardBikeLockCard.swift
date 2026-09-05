@@ -11,7 +11,7 @@ struct DashboardBikeLockCard: View {
 
     var body: some View {
         DashboardAdaptiveCardSurface {
-            VStack(alignment: .leading, spacing: Constants.contentSpacing) {
+            VStack(alignment: .leading, spacing: DesignSpace.medium) {
                 header
 
                 Text(statusDetail)
@@ -40,10 +40,11 @@ struct DashboardBikeLockCard: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
+                .dashboardPagingButton()
                 .disabled(!viewState.isActionEnabled)
                 .accessibilityIdentifier("dashboard.bike-lock.action")
             }
-            .padding(Constants.cardPadding)
+            .padding(DesignSpace.medium)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .dynamicTypeSize(...DynamicTypeSize.large)
         }
@@ -65,42 +66,42 @@ struct DashboardBikeLockCard: View {
     }
 
     private var header: some View {
-        HStack(spacing: DesignSpace.medium) {
-            Image(systemName: statusSystemImage)
-                .font(.system(size: Constants.iconSize, weight: .semibold))
-                .foregroundStyle(statusColor)
-                .frame(width: Constants.iconContainerSize, height: Constants.iconContainerSize)
-                .background(statusColor.opacity(Constants.iconBackgroundOpacity), in: RoundedRectangle(
-                    cornerRadius: Constants.iconCornerRadius,
-                    style: .continuous
-                ))
-                .accessibilityHidden(true)
+        VStack(alignment: .leading, spacing: DesignSpace.small) {
+            HStack(spacing: DesignSpace.small) {
+                Image(systemName: statusSystemImage)
+                    .font(.system(size: Constants.iconSize, weight: .semibold))
+                    .foregroundStyle(statusColor)
+                    .frame(width: Constants.iconContainerSize, height: Constants.iconContainerSize)
+                    .background(statusColor.opacity(Constants.iconBackgroundOpacity), in: RoundedRectangle(
+                        cornerRadius: DesignRadius.small,
+                        style: .continuous
+                    ))
+                    .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
                 Text(viewState.title.uppercased())
                     .font(.caption.weight(.bold))
                     .foregroundStyle(DesignColor.secondaryText)
                     .tracking(Constants.titleTracking)
-                Text(viewState.statusText)
-                    .font(.system(size: Constants.statusFontSize, weight: .semibold, design: .rounded))
-                    .lineLimit(1)
-                    .minimumScaleFactor(Constants.minimumTextScale)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: Constants.statusDotSize, height: Constants.statusDotSize)
+                    .overlay {
+                        Circle()
+                            .stroke(
+                                statusColor.opacity(Constants.statusRingOpacity),
+                                lineWidth: Constants.statusRingWidth
+                            )
+                            .scaleEffect(Constants.statusRingScale)
+                    }
+                    .accessibilityHidden(true)
             }
 
-            Spacer(minLength: DesignSpace.extraSmall)
-
-            Circle()
-                .fill(statusColor)
-                .frame(width: Constants.statusDotSize, height: Constants.statusDotSize)
-                .overlay {
-                    Circle()
-                        .stroke(
-                            statusColor.opacity(Constants.statusRingOpacity),
-                            lineWidth: Constants.statusRingWidth
-                        )
-                        .scaleEffect(Constants.statusRingScale)
-                }
-                .accessibilityHidden(true)
+            Text(viewState.statusText)
+                .font(.system(.title2, design: .rounded, weight: .semibold))
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -147,15 +148,10 @@ struct DashboardBikeLockCard: View {
     }
 
     private enum Constants {
-        static let cardPadding: CGFloat = 24
-        static let contentSpacing: CGFloat = 20
-        static let iconSize: CGFloat = 28
-        static let iconContainerSize: CGFloat = 64
-        static let iconCornerRadius: CGFloat = 18
+        static let iconSize: CGFloat = 26.4
+        static let iconContainerSize: CGFloat = 48
         static let iconBackgroundOpacity = 0.14
-        static let statusFontSize: CGFloat = 30
         static let titleTracking: CGFloat = 1.1
-        static let minimumTextScale = 0.75
         static let statusDotSize: CGFloat = 10
         static let statusRingOpacity = 0.18
         static let statusRingWidth: CGFloat = 5

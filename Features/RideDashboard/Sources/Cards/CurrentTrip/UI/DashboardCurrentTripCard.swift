@@ -74,6 +74,7 @@ struct DashboardCurrentTripCard: View {
                         .background(Circle().fill(DesignColor.controlSurface))
                     }
                     .buttonStyle(.plain)
+                    .dashboardPagingButton()
                     .accessibilityLabel(
                         state.isPaused
                             ? .rideDashboardCurrentTripAccessibilityResume
@@ -93,6 +94,7 @@ struct DashboardCurrentTripCard: View {
                             .background(Circle().fill(DesignColor.controlSurface))
                     }
                     .buttonStyle(.plain)
+                    .dashboardPagingButton()
                     .accessibilityLabel(.rideDashboardCurrentTripAccessibilityReset)
                 }
             }

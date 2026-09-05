@@ -59,6 +59,13 @@ public final class MaintenanceViewModel: ObservableObject {
         }
     }
 
+    public func stopAndWait() async {
+        let tasks = [observationTask, loadTask, mutationTask]
+        tasks.forEach { $0?.cancel() }
+        stop()
+        for task in tasks { await task?.value }
+    }
+
     public func stop() {
         observationTask?.cancel()
         observationTask = nil

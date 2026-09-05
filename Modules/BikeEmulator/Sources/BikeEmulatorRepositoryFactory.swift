@@ -1,5 +1,6 @@
 import AsyncSupport
 import BikeDomain
+import Foundation
 
 public enum BikeEmulatorRepositoryFactory {
     public static func make(
@@ -15,11 +16,22 @@ public enum BikeEmulatorRepositoryFactory {
         )
     }
 
+    public static func make(configuration: BikeEmulatorConfiguration) -> BikeEmulatorRepository {
+        make(
+            scenario: configuration.initialState.scenario,
+            powerModePreset: configuration.initialState.powerModePreset,
+            activeMap: configuration.initialState.activeMap,
+            runtime: .live,
+            configuration: configuration
+        )
+    }
+
     static func make(
         scenario: BikeEmulatorScenario,
         powerModePreset: BikeEmulatorPowerModePreset,
         activeMap: Int,
-        runtime: BikeEmulatorRuntime
+        runtime: BikeEmulatorRuntime,
+        configuration: BikeEmulatorConfiguration? = nil
     ) -> BikeEmulatorRepository {
         BikeEmulatorRepository(
             scenario: scenario,
@@ -38,7 +50,14 @@ public enum BikeEmulatorRepositoryFactory {
                 discoveredBikes: makeStateEventHub()
             ),
             powerCalculator: BikePowerTelemetryCalculator(),
-            runtime: runtime
+            runtime: runtime,
+            configuration: configuration ?? BikeEmulatorConfiguration(
+                vin: BikeEmulatorIdentity.vin,
+                peripheralIdentifier: UUID(uuid: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)),
+                initialState: .init(scenario: scenario, powerModePreset: powerModePreset, activeMap: activeMap),
+                isDemo: false,
+                persist: { _ in }
+            )
         )
     }
 

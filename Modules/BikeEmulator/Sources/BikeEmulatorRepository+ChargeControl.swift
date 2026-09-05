@@ -4,6 +4,7 @@ extension BikeEmulatorRepository {
     public func prepareChargePowerControl(
         chargingStatus: BikeChargingStatus
     ) async throws -> BikeChargePowerControlSnapshot {
+        try validateDemoConnection()
         guard scenario.supportsChargeControl else {
             throw BikeEmulatorChargeControlError.chargerUnavailable
         }
@@ -16,6 +17,7 @@ extension BikeEmulatorRepository {
     }
 
     public func setChargePowerLimit(watts: Int) async throws -> BikeChargePowerControlSnapshot {
+        try validateDemoConnection()
         guard scenario.supportsChargeControl else {
             throw BikeEmulatorChargeControlError.chargerUnavailable
         }
@@ -28,7 +30,8 @@ extension BikeEmulatorRepository {
             throw BikeEmulatorChargeControlError.invalidPower
         }
         chargePowerLimitWatts = watts
-        await publishBatteryHealth()
+        persistState()
+        await publishCurrentState()
         return makeChargeControlSnapshot(
             watts: watts,
             targetPercent: chargeTargetPercent,
@@ -37,6 +40,7 @@ extension BikeEmulatorRepository {
     }
 
     public func setChargeTarget(percent: Int) async throws -> BikeChargePowerControlSnapshot {
+        try validateDemoConnection()
         guard scenario.supportsChargeControl else {
             throw BikeEmulatorChargeControlError.chargerUnavailable
         }
@@ -49,6 +53,7 @@ extension BikeEmulatorRepository {
             throw BikeEmulatorChargeControlError.invalidTarget
         }
         chargeTargetPercent = percent
+        persistState()
         await publishCurrentState()
         return makeChargeControlSnapshot(
             watts: chargePowerLimitWatts,

@@ -1,6 +1,72 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "appDemoLabel": {
+        "extractionState": "manual",
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Demo"
+            }
+          }
+        }
+      },
+      "appDemoRecoveryTitle": {
+        "extractionState": "manual",
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Unable to open demo"
+            }
+          }
+        }
+      },
+      "appDemoRecoveryDetail": {
+        "extractionState": "manual",
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Your demo could not be restored. Retry, or return to setup to start again."
+            }
+          }
+        }
+      },
+      "appDemoRetry": {
+        "extractionState": "manual",
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Retry"
+            }
+          }
+        }
+      },
+      "appDemoBackToSetup": {
+        "extractionState": "manual",
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Return to setup"
+            }
+          }
+        }
+      },
+      "debugScenarioParked": {
+        "extractionState": "manual",
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Parked"
+            }
+          }
+        }
+      },
     "appDefaultBikeName" : { "comment" : "Fallback bike name shown in Live Activities when no VIN is available.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Stark Varg" } } } },
     "appBikeLockEnterPIN" : { "comment" : "Fallback action title shown by LocalAuthentication for Bike Lock.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter PIN" } } } },
     "appBikeLockKeychainUnavailable" : { "comment" : "Fallback error when the Bike Lock PIN cannot be read from Keychain.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unable to access the Bike Lock PIN" } } } },

@@ -17,6 +17,7 @@ public enum FENRRuntimeConstants {
 
     public enum VehicleSession {
         public static let locationSampleMaximumAge: TimeInterval = 3
+        public static let positionSampleMaximumAge: TimeInterval = 30
     }
 
     public enum BatteryHealth {

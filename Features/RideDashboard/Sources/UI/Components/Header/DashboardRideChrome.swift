@@ -1,3 +1,4 @@
+import DesignSystem
 import SwiftUI
 
 struct DashboardRideChrome<Content: View>: View {
@@ -5,6 +6,7 @@ struct DashboardRideChrome<Content: View>: View {
     let deviceBattery: DashboardDeviceBatteryViewData
     let toggleDeviceBatteryDisplayMode: () -> Void
     let onSettings: () -> Void
+    var bottomLeadingAccessory: () -> AnyView = { AnyView(EmptyView()) }
     @ViewBuilder let content: () -> Content
 
     var body: some View {
@@ -24,10 +26,13 @@ struct DashboardRideChrome<Content: View>: View {
                 }
             }
             .overlay(alignment: .bottomLeading) {
-                if state.temperatureSummary.hasValues {
-                    DashboardRideTemperatureSummary(state: state.temperatureSummary)
-                        .padding(DashboardRideChromeConstants.edgePadding)
+                VStack(alignment: .leading, spacing: DesignSpace.small) {
+                    bottomLeadingAccessory()
+                    if state.temperatureSummary.hasValues {
+                        DashboardRideTemperatureSummary(state: state.temperatureSummary)
+                    }
                 }
+                .padding(DashboardRideChromeConstants.edgePadding)
             }
             .overlay(alignment: .bottomTrailing) {
                 Button(action: onSettings) {

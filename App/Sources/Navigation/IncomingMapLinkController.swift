@@ -55,4 +55,10 @@ final class IncomingMapLinkController {
         consumeTask = nil
         consumeID = nil
     }
+
+    func cancelAndWait() async {
+        let pendingConsumption = consumeTask
+        cancel()
+        await pendingConsumption?.value
+    }
 }

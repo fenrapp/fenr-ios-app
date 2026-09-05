@@ -64,6 +64,10 @@ public final class BikeOnboardingConnectionCoordinator {
         observationTask = nil
     }
 
+    func waitForRepositoryStart() async {
+        await repositoryStarter.cancelAndWait()
+    }
+
     func prepareRepository() -> Task<Void, Never> {
         repositoryStarter.start()
     }
@@ -89,6 +93,7 @@ public final class BikeOnboardingConnectionCoordinator {
 
     @discardableResult
     func disconnect(after pendingOperation: Task<Void, Never>? = nil) -> Task<Void, Never> {
+        let previousConnection = connectionTask
         connectionTask?.cancel()
         connectionTask = nil
         let previousDisconnection = disconnectionTask
@@ -97,6 +102,7 @@ public final class BikeOnboardingConnectionCoordinator {
             await pendingOperation?.value
             await previousDisconnection?.value
             guard !Task.isCancelled else { return }
+            await previousConnection?.value
             try? await disconnectBike.execute()
         }
         disconnectionTask = task

@@ -1,8 +1,12 @@
+import Foundation
 import SwiftData
 
 public enum MaintenanceRepositoryFactory {
-    public static func make(isStoredInMemoryOnly: Bool = false) throws -> SwiftDataMaintenanceRepository {
-        let configuration = ModelConfiguration(
+    public static func make(
+        isStoredInMemoryOnly: Bool = false,
+        storeURL: URL? = nil
+    ) throws -> SwiftDataMaintenanceRepository {
+        let configuration = storeURL.map { ModelConfiguration(Constants.storeName, url: $0) } ?? ModelConfiguration(
             Constants.storeName,
             isStoredInMemoryOnly: isStoredInMemoryOnly
         )

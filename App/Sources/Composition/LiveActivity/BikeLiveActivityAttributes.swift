@@ -20,6 +20,7 @@ struct BikeLiveActivityContentState: Codable, Hashable {
     var phase: BikeLiveActivityPhase
     var isFaultActive: Bool
     var isConnectionLost: Bool
+    var isDemo: Bool?
 }
 
 enum BikeLiveActivityMode: String, Codable, Hashable {

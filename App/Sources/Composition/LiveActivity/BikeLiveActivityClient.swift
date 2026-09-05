@@ -12,6 +12,11 @@ protocol BikeLiveActivityClient: AnyObject {
 @MainActor
 final class ActivityKitBikeLiveActivityClient: BikeLiveActivityClient {
     private var activity: Activity<BikeLiveActivityAttributes>?
+    private let isDemo: Bool
+
+    init(isDemo: Bool = false) {
+        self.isDemo = isDemo
+    }
 
     var isActive: Bool {
         activity != nil || !Activity<BikeLiveActivityAttributes>.activities.isEmpty
@@ -40,7 +45,7 @@ final class ActivityKitBikeLiveActivityClient: BikeLiveActivityClient {
 
     func end(state: BikeLiveActivityContentState) async {
         guard let activity = currentActivity() else { return }
-        await activity.end(activityContent(for: state), dismissalPolicy: .default)
+        await activity.end(activityContent(for: state), dismissalPolicy: isDemo ? .immediate : .default)
         self.activity = nil
     }
 
@@ -53,7 +58,9 @@ final class ActivityKitBikeLiveActivityClient: BikeLiveActivityClient {
     private func activityContent(
         for state: BikeLiveActivityContentState
     ) -> ActivityContent<BikeLiveActivityContentState> {
-        ActivityContent(state: state, staleDate: nil)
+        var labeledState = state
+        labeledState.isDemo = isDemo
+        return ActivityContent(state: labeledState, staleDate: nil)
     }
 }
 

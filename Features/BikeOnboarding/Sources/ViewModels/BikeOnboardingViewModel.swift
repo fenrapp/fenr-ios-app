@@ -70,6 +70,17 @@ public final class BikeOnboardingViewModel: ObservableObject {
         connectionCoordinator.disconnect(after: pendingDiscoveryStop)
     }
 
+    public func stopAndWait() async {
+        let pendingEvents = eventTask
+        let pendingTransition = transitionTask
+        stopObserving()
+        await pendingEvents?.value
+        await pendingTransition?.value
+        await completionCoordinator.cancelAndWait()
+        await connectionCoordinator.waitForRepositoryStart()
+        await connectionCoordinator.disconnect(after: discoveryCoordinator.stop()).value
+    }
+
     public func getStarted() {
         startEventObservation()
         routeBluetoothAuthorization(requestWhenUndetermined: false)

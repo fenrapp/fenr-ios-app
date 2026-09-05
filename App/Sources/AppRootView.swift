@@ -10,10 +10,18 @@ struct AppRootView: View {
     private let presentationController: AppPresentationController
     private let lifecycleController: AppLifecycleController
     private let externalNavigationResolver: AppExternalNavigationResolver
+    private let onExploreDemo: (() -> Void)?
+    private let onExitDemo: (() -> Void)?
+    private let dashboardAccessory: () -> AnyView
     private let settingsAccessory: () -> AnyView
+    private let destinationBottomInset: CGFloat
 
     init(
         dependencies: AppRootDependencies,
+        onExploreDemo: (() -> Void)? = nil,
+        onExitDemo: (() -> Void)? = nil,
+        destinationBottomInset: CGFloat = .zero,
+        dashboardAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) },
         settingsAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
         _featureStore = StateObject(wrappedValue: dependencies.featureStore)
@@ -23,7 +31,11 @@ struct AppRootView: View {
         presentationController = dependencies.presentationController
         lifecycleController = dependencies.lifecycleController
         externalNavigationResolver = dependencies.externalNavigationResolver
+        self.dashboardAccessory = dashboardAccessory
         self.settingsAccessory = settingsAccessory
+        self.onExploreDemo = onExploreDemo
+        self.onExitDemo = onExitDemo
+        self.destinationBottomInset = destinationBottomInset
     }
 
     var body: some View {
@@ -59,12 +71,14 @@ private extension AppRootView {
         case .loading:
             ProgressView()
         case .onboarding:
-            AppOnboardingHost(featureStore: featureStore)
+            AppOnboardingHost(featureStore: featureStore, onExploreDemo: onExploreDemo)
         case .dashboard:
             AppMainNavigationHost(
                 coordinator: navigationCoordinator,
                 featureStore: featureStore,
                 settingsAccessory: settingsAccessory,
+                dashboardAccessory: dashboardAccessory,
+                destinationBottomInset: destinationBottomInset,
                 onRetryConnection: lifecycleController.retryConnection,
                 onChangeBike: changeBike
             )
@@ -121,6 +135,10 @@ private extension AppRootView {
     }
 
     func changeBike() {
+        if let onExitDemo {
+            onExitDemo()
+            return
+        }
         lifecycleController.changeBike {
             navigationCoordinator.send(.resetSetup)
         }

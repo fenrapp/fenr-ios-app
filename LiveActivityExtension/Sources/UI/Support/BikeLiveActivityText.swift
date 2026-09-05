@@ -19,6 +19,11 @@ enum BikeLiveActivityText {
     }
 
     static func status(_ state: BikeLiveActivityAttributes.ContentState) -> String {
+        let status = statusValue(state)
+        return state.isDemo == true ? String(localized: .liveActivityDemoStatus(status)) : status
+    }
+
+    private static func statusValue(_ state: BikeLiveActivityAttributes.ContentState) -> String {
         if state.phase == .complete {
             return ready
         }

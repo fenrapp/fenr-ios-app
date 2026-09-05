@@ -110,8 +110,9 @@ struct AppDestinationView: View {
 
 struct AppOnboardingHost: View {
     let featureStore: AppFeatureStore
+    var onExploreDemo: (() -> Void)?
 
     var body: some View {
-        BikeOnboardingView(viewModel: featureStore.onboardingViewModel)
+        BikeOnboardingView(viewModel: featureStore.onboardingViewModel, onExploreDemo: onExploreDemo)
     }
 }

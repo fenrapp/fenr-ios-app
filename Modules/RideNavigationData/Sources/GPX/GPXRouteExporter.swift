@@ -3,17 +3,20 @@ import RideNavigationDomain
 
 public struct GPXRouteExporter: GPXRouteExporting, Sendable {
     private let dateFormat: Date.ISO8601FormatStyle
+    private let isDemo: Bool
 
-    public init(dateFormat: Date.ISO8601FormatStyle) {
+    public init(dateFormat: Date.ISO8601FormatStyle, isDemo: Bool = false) {
         self.dateFormat = dateFormat
+        self.isDemo = isDemo
     }
 
     public func export(_ route: RideRoute) throws -> Data {
         var xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
         xml += "<gpx version=\"1.1\" creator=\"FENR\" xmlns=\"http://www.topografix.com/GPX/1/1\">\n"
         let timestamp = route.createdAt.formatted(dateFormat)
-        xml += "  <metadata><name>\(escape(route.name))</name><time>\(timestamp)</time></metadata>\n"
-        xml += "  <trk>\n    <name>\(escape(route.name))</name>\n"
+        let name = isDemo ? "Demo - " + route.name : route.name
+        xml += "  <metadata><name>\(escape(name))</name><time>\(timestamp)</time></metadata>\n"
+        xml += "  <trk>\n    <name>\(escape(name))</name>\n"
         for segment in route.segments where !segment.points.isEmpty {
             xml += "    <trkseg>\n"
             for point in segment.points {

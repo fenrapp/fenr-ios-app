@@ -80,6 +80,16 @@ public final class BatteryHealthViewModel: ObservableObject {
         setPresentationActive(false)
     }
 
+    public func stopAndWait() async {
+        let pendingStreams = streamTasks
+        let pendingRender = renderTask
+        stop()
+        for task in pendingStreams { await task.value }
+        await pendingRender?.value
+        await monitoringRequestTask?.value
+        monitoringRequestTask = nil
+    }
+
     public func setChargePowerLimit(watts: Double) {
         chargeControl.setPowerLimit(watts: watts)
     }

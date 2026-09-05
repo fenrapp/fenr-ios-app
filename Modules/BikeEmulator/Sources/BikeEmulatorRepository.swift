@@ -20,6 +20,8 @@ public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatt
     let discoveredBikesHub: AsyncEventHub<[DiscoveredBike]>
     let powerCalculator: BikePowerTelemetryCalculator
     let runtime: BikeEmulatorRuntime
+    let configuration: BikeEmulatorConfiguration
+    var distanceKilometers: Double
 
     var scenario: BikeEmulatorScenario
     var powerModePreset: BikeEmulatorPowerModePreset
@@ -52,7 +54,8 @@ public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatt
         activeMapNumber: Int,
         channels: BikeEmulatorChannels,
         powerCalculator: BikePowerTelemetryCalculator,
-        runtime: BikeEmulatorRuntime
+        runtime: BikeEmulatorRuntime,
+        configuration: BikeEmulatorConfiguration
     ) {
         self.scenario = scenario
         self.powerModePreset = powerModePreset
@@ -66,6 +69,13 @@ public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatt
         discoveredBikesHub = channels.discoveredBikes
         self.powerCalculator = powerCalculator
         self.runtime = runtime
+        self.configuration = configuration
+        let saved = configuration.initialState
+        distanceKilometers = saved.distanceKilometers
+        chargePowerLimitWatts = saved.chargePowerWatts
+        chargeTargetPercent = saved.chargeTargetPercent
+        isBikeLocked = saved.isBikeLocked
+        powerModeOverrides = Dictionary(uniqueKeysWithValues: saved.maps.map { ($0.index, $0.configuration) })
     }
 
     deinit {
@@ -112,7 +122,11 @@ public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatt
         }
     }
 
-    public func connect(vin _: String) async throws {
+    public func connect(vin: String) async throws {
+        try Task.checkCancellation()
+        if configuration.isDemo, vin != configuration.vin || lifecycleState != .started {
+            throw BikeEmulatorPowerModeError.controlNotPrepared
+        }
         isConnected = true
         await publishCurrentState()
         await publishDebugEvent(title: "Emulator", detail: "Connected to \(scenario.displayName)")
@@ -128,6 +142,10 @@ public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatt
     }
 
     public func retrySecurityHandshake() async throws {
+        try Task.checkCancellation()
+        if configuration.isDemo, lifecycleState != .started {
+            throw BikeEmulatorPowerModeError.controlNotPrepared
+        }
         isConnected = true
         await publishCurrentState()
         await publishDebugEvent(title: "Emulator", detail: "Security handshake simulated")

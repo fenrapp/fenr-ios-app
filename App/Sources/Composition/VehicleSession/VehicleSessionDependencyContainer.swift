@@ -40,7 +40,8 @@ enum VehicleSessionDependencyContainer {
                 stopBatteryHealthMonitoring: stopBatteryHealthMonitoring,
                 readBikeStatusSnapshot: .init(repository: repository),
                 refreshPowerModeConfiguration: refreshPowerModeConfiguration,
-                refreshTractionControlConfiguration: refreshTractionControlConfiguration
+                refreshTractionControlConfiguration: refreshTractionControlConfiguration,
+                observeDeviceHeading: dependencies.deviceHeadingRepository.map { .init(repository: $0) }
             ),
             powerModeRefreshCoordinator: .init(
                 refreshPowerModeConfiguration: refreshPowerModeConfiguration,
@@ -74,7 +75,8 @@ enum VehicleSessionDependencyContainer {
                 now: Date.init,
                 maximumSampleAge: FENRRuntimeConstants.VehicleSession.locationSampleMaximumAge,
                 minimumCourseSpeedKilometersPerHour: Constants.minimumGPSCourseSpeedKilometersPerHour,
-                maximumCourseAccuracyDegrees: Constants.maximumGPSCourseAccuracyDegrees
+                maximumCourseAccuracyDegrees: Constants.maximumGPSCourseAccuracyDegrees,
+                maximumPositionSampleAge: FENRRuntimeConstants.VehicleSession.positionSampleMaximumAge
             )
         )
     }
@@ -92,6 +94,7 @@ struct VehicleSessionDependencies {
     let profileRepository: any BikeProfileRepository
     let settingsRepository: any AppSettingsRepository
     let deviceSpeedRepository: any DeviceSpeedRepository
+    var deviceHeadingRepository: (any DeviceHeadingRepository)?
     let imuRepository: any BikeIMURepository
     let motionCalibrationRepository: any VehicleMotionCalibrationRepository
     let imuProfile: BikeIMUProfile?

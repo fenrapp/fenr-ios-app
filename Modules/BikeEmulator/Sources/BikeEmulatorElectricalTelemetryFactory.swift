@@ -12,6 +12,7 @@ struct BikeEmulatorElectricalTelemetryContext {
     let isRiding: Bool
     let tick: Int
     let date: Date
+    var chargePowerWatts: Int?
 }
 
 enum BikeEmulatorElectricalTelemetryFactory {
@@ -20,7 +21,10 @@ enum BikeEmulatorElectricalTelemetryFactory {
         powerCalculator: BikePowerTelemetryCalculator
     ) -> BikeEmulatorElectricalTelemetry {
         let currentRaw = context.isRiding ? ridingCurrentRaw(at: context.tick) : (
-            context.isCharging ? Constants.chargingCurrentRaw : .zero
+            context.isCharging
+                ? context.chargePowerWatts.map { -Int((Double($0) / Constants.dcBusVolts).rounded()) }
+                    ?? Constants.chargingCurrentRaw
+                : .zero
         )
         let calculation = powerCalculator.calculate(
             dcBusVolts: Constants.dcBusVolts,

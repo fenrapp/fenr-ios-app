@@ -6,6 +6,7 @@ struct OnboardingDiscoveryView: View {
     let viewState: BikeOnboardingViewState
     let onSelectBike: (BikeDiscoveryViewData) -> Void
     let onRetry: () -> Void
+    var onExploreDemo: (() -> Void)?
 
     @State private var rowsVisible = false
 
@@ -30,6 +31,9 @@ struct OnboardingDiscoveryView: View {
                     systemImage: "arrow.clockwise",
                     action: onRetry
                 )
+                if let onExploreDemo {
+                    OnboardingDemoButton(action: onExploreDemo)
+                }
             }
         }
         .id(viewState.discoveryState)

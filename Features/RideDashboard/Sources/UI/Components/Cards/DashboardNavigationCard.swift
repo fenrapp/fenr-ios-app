@@ -47,6 +47,7 @@ struct DashboardNavigationCard: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
+            .dashboardPagingButton()
             .frame(maxWidth: Constants.buttonWidth)
             .accessibilityIdentifier("dashboard.navigation.open")
         }

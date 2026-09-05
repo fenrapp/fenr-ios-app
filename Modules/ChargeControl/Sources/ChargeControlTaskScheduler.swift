@@ -22,6 +22,12 @@ public final class ChargeControlTaskScheduler {
         targetConfirmationTask?.cancel()
     }
 
+    func cancelAndWait() async {
+        let tasks = [powerDebounceTask, powerConfirmationTask, targetDebounceTask, targetConfirmationTask]
+        cancelAll()
+        for task in tasks { await task?.value }
+    }
+
     func cancelAll() {
         cancelPowerDebounce()
         cancelPowerConfirmation()

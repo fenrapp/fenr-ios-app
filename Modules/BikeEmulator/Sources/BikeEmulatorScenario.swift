@@ -1,4 +1,5 @@
-public enum BikeEmulatorScenario: String, CaseIterable, Equatable, Sendable, Identifiable {
+public enum BikeEmulatorScenario: String, Codable, CaseIterable, Equatable, Sendable, Identifiable {
+    case parked
     case riding
     case ridingClean
     case charging
@@ -11,6 +12,7 @@ public enum BikeEmulatorScenario: String, CaseIterable, Equatable, Sendable, Ide
 
     public var displayName: String {
         switch self {
+        case .parked: "Parked"
         case .riding: "Riding"
         case .ridingClean: "Riding (no indicators)"
         case .charging: "Normal charging"
@@ -24,28 +26,28 @@ public enum BikeEmulatorScenario: String, CaseIterable, Equatable, Sendable, Ide
     public var isCharging: Bool {
         switch self {
         case .charging, .cellBalancing, .chargingDataUnavailable: true
-        case .riding, .ridingClean, .chargerIdle, .cellAnomaly: false
+        case .parked, .riding, .ridingClean, .chargerIdle, .cellAnomaly: false
         }
     }
 
     public var isRiding: Bool {
         switch self {
         case .riding, .ridingClean: true
-        case .charging, .cellBalancing, .chargerIdle, .chargingDataUnavailable, .cellAnomaly: false
+        case .parked, .charging, .cellBalancing, .chargerIdle, .chargingDataUnavailable, .cellAnomaly: false
         }
     }
 
     public var isChargerConnected: Bool {
         switch self {
         case .charging, .cellBalancing, .chargerIdle, .chargingDataUnavailable: true
-        case .riding, .ridingClean, .cellAnomaly: false
+        case .parked, .riding, .ridingClean, .cellAnomaly: false
         }
     }
 
     public var supportsChargeControl: Bool {
         switch self {
         case .charging, .cellBalancing, .chargerIdle: true
-        case .riding, .ridingClean, .chargingDataUnavailable, .cellAnomaly: false
+        case .parked, .riding, .ridingClean, .chargingDataUnavailable, .cellAnomaly: false
         }
     }
 }

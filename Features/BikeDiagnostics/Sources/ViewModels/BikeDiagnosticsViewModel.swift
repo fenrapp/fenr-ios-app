@@ -60,6 +60,13 @@ public final class BikeDiagnosticsViewModel: ObservableObject {
         }
     }
 
+    public func stopAndWait() async {
+        let tasks = observationTasks + [actionTask, bleTraceActionTask, bleTraceCaptureControlTask].compactMap { $0 }
+        tasks.forEach { $0.cancel() }
+        setPresentationActive(false)
+        for task in tasks { await task.value }
+    }
+
     public func reconnectTapped() {
         guard let vin = sessionSnapshot.profile?.vin, !vin.isEmpty else { return }
         let connect = useCases.connect
@@ -329,20 +336,4 @@ extension BikeDiagnosticsViewModel {
         render()
     }
 
-    private enum BLETraceCaptureExpectation {
-        case active
-        case inactive
-
-        init(isActive: Bool) {
-            self = isActive ? .active : .inactive
-        }
-
-        func matches(_ sessions: [BLETraceSessionSummary]) -> Bool {
-            let hasActiveSession = sessions.contains { $0.status == .active }
-            return switch self {
-            case .active: hasActiveSession
-            case .inactive: !hasActiveSession
-            }
-        }
-    }
 }

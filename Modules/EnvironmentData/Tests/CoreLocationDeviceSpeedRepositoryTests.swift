@@ -8,6 +8,19 @@ import TestSupport
 @MainActor
 @Suite("Core Location device speed repository")
 struct CoreLocationDeviceSpeedRepositoryTests {
+    @Test("Demo observation does not request location; an explicit request still works")
+    func demoLocationIsOptional() {
+        let manager = TestLocationManager()
+        let repository = CoreLocationDeviceSpeedRepository(
+            locationManager: manager, requestsAuthorizationOnObservation: false
+        )
+        let stream = repository.observeDeviceSpeed()
+        #expect(manager.authorizationRequestCount == 0)
+        repository.requestLocationAuthorization()
+        #expect(manager.authorizationRequestCount == 1)
+        withExtendedLifetime(stream) {}
+    }
+
     @Test("Configures Core Location for automotive speed updates")
     func configuresLocationManager() {
         let manager = TestLocationManager()

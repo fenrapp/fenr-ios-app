@@ -14,10 +14,13 @@ enum LiveWatchAppDependencyContainerFactory {
             automaticallyRetryPairing: true,
             authenticationLinkRecoveryEnabled: true
         )
+        let profileRepository = UserDefaultsBikeProfileRepository(userDefaults: .standard)
         return WatchAppDependencyContainer(
             repository: LiveBikeRepositoryFactory.makeDefault(client: client),
-            profileRepository: UserDefaultsBikeProfileRepository(userDefaults: .standard),
-            settingsRepository: UserDefaultsAppSettingsRepository(userDefaults: .standard),
+            profileRepository: profileRepository,
+            settingsRepository: AppSettingsRepositoryFactory.make(
+                userDefaults: .standard, profileRepository: profileRepository
+            ),
             initialProfile: nil
         )
     }

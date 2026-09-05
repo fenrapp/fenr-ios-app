@@ -1,6 +1,7 @@
 import Foundation
 
 public struct AppSettings: Codable, Equatable, Sendable {
+    public private(set) var vin: String?
     public var speedSource: SpeedSource
     public var dashboardProgressBarMode: DashboardProgressBarMode
     public var dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode
@@ -32,6 +33,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         powerModeNamesByVIN: [String: [Int: PowerModeName]] = [:],
         bikeLockSettingsByVIN: [String: BikeLockSettings] = [:]
     ) {
+        vin = nil
         self.speedSource = speedSource
         self.dashboardProgressBarMode = dashboardProgressBarMode
         self.dashboardBatteryIndicatorMode = dashboardBatteryIndicatorMode
@@ -78,6 +80,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
+        case vin
         case speedSource
         case dashboardProgressBarMode
         case dashboardBatteryIndicatorMode
@@ -98,6 +101,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        vin = try container.decodeIfPresent(String.self, forKey: .vin)
         speedSource = try container.decodeIfPresent(SpeedSource.self, forKey: .speedSource) ?? .motorcycle
         dashboardProgressBarMode = try container.decodeIfPresent(
             DashboardProgressBarMode.self,
@@ -229,5 +233,16 @@ public struct AppSettings: Codable, Equatable, Sendable {
                 result[entry.key] = sanitized
             }
         }
+    }
+}
+
+public extension AppSettings {
+    func scoped(toVIN vin: String) -> AppSettings {
+        var settings = self
+        settings.vin = vin
+        settings.batteryPackCapacitiesByVIN = batteryPackCapacitiesByVIN.filter { $0.key == vin }
+        settings.powerModeNamesByVIN = powerModeNamesByVIN.filter { $0.key == vin }
+        settings.bikeLockSettingsByVIN = bikeLockSettingsByVIN.filter { $0.key == vin }
+        return settings
     }
 }

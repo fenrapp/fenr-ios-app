@@ -16,7 +16,14 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     var connection = BikeConnection()
     var settings = AppSettings()
     var profile: BikeProfile?
+    var deviceHeadingSample: DeviceHeadingSample?
+    var deviceHeadingTask: Task<Void, Never>?
+    var deviceHeadingExpiryTask: Task<Void, Never>?
+    var deviceHeadingGeneration = 0
     var deviceSpeedSample: DeviceSpeedSample?
+    var devicePositionSample: DeviceSpeedSample?
+    var devicePositionExpiryTask: Task<Void, Never>?
+    var deviceLocationGeneration = 0
     var imuSample: BikeIMUSample?
     var motionCalibration: VehicleMotionCalibration?
     var hasLoadedMotionCalibration = false
@@ -61,8 +68,11 @@ public actor LiveVehicleSessionService: VehicleSessionService {
         let batteryHealthMonitoringCoordinator = batteryHealthMonitoringCoordinator
         Task { await batteryHealthMonitoringCoordinator.stop() }
         observationTasks.forEach { $0.cancel() }
+        deviceHeadingTask?.cancel()
+        deviceHeadingExpiryTask?.cancel()
         deviceSpeedTask?.cancel()
         deviceSpeedExpiryTask?.cancel()
+        devicePositionExpiryTask?.cancel()
         imuExpiryTask?.cancel()
         imuMonitoringStartTask?.cancel()
         motionCalibrationTask?.cancel()
@@ -102,11 +112,8 @@ public actor LiveVehicleSessionService: VehicleSessionService {
             await task.value
         }
         observationTasks.removeAll()
-        deviceSpeedTask?.cancel()
-        deviceSpeedTask = nil
-        deviceSpeedExpiryTask?.cancel()
-        deviceSpeedExpiryTask = nil
-        deviceSpeedSample = nil
+        await stopDeviceHeadingObservation()
+        await stopDeviceLocationObservation()
         locationConsumers.removeAll()
         imuExpiryTask?.cancel()
         imuExpiryTask = nil

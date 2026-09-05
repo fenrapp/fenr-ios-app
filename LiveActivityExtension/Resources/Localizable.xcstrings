@@ -1,6 +1,17 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "liveActivityDemoStatus %@": {
+        "extractionState": "manual",
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Demo - %@"
+            }
+          }
+        }
+      },
     "liveActivityAccessibilityBattery" : {
       "comment" : "VoiceOver description of the motorcycle battery value.",
       "extractionState" : "manual",

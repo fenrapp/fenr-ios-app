@@ -1,6 +1,17 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "bikeOnboardingExploreDemo": {
+        "extractionState": "manual",
+        "localizations": {
+          "en": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Explore demo"
+            }
+          }
+        }
+      },
     "bikeOnboarding.accessibility.bike" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%@. VIN %@. %@, %@." } } } },
     "bikeOnboarding.accessibility.bikeIdentity" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%@. VIN %@." } } } },
     "bikeOnboarding.accessibility.confirmingHint" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Confirming automatically" } } } },
