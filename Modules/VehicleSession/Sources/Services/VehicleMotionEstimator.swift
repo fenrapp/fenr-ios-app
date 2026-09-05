@@ -31,9 +31,11 @@ public struct VehicleMotionEstimator: Sendable {
         calibration: VehicleMotionCalibration?,
         vin: String?,
         location: DeviceSpeedSample?,
-        bikeSpeedKilometersPerHour: Double?
+        bikeSpeedKilometersPerHour: Double?,
+        heading: DeviceHeadingSample? = nil,
+        position: DeviceSpeedSample? = nil
     ) -> VehicleMotionEstimation {
-        let context = locationResolver.resolve(location)
+        let context = locationResolver.resolve(location, compass: heading, position: position)
         guard let profile, isValid(profile) else {
             resetTracking()
             return result(availability: .unavailable, context: context)
@@ -113,6 +115,14 @@ public struct VehicleMotionEstimator: Sendable {
         resetTracking()
         calibrationTracker.reset()
         locationResolver.reset()
+    }
+
+    func remainingPositionValidity(of sample: DeviceSpeedSample) -> TimeInterval? {
+        locationResolver.remainingPositionValidity(of: sample)
+    }
+
+    func remainingHeadingValidity(of sample: DeviceHeadingSample) -> TimeInterval? {
+        locationResolver.remainingValidity(of: sample)
     }
 
     func remainingFreshnessDuration(for date: Date) -> Duration? {

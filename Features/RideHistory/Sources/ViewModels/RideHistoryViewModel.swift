@@ -56,6 +56,13 @@ public final class RideHistoryViewModel: ObservableObject {
         }
     }
 
+    public func stopAndWait() async {
+        let tasks = [observationTask, historyLoadTask, detailLoadTask, deleteTask]
+        tasks.forEach { $0?.cancel() }
+        stop()
+        for task in tasks { await task?.value }
+    }
+
     public func stop() {
         observationTask?.cancel()
         observationTask = nil

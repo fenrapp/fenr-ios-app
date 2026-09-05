@@ -18,9 +18,10 @@ public final class SwiftDataRideTripRepository: RideTripRepository, Sendable {
     }
 
     public static func makeModelContainer(
-        isStoredInMemoryOnly: Bool = false
+        isStoredInMemoryOnly: Bool = false,
+        storeURL: URL? = nil
     ) throws -> ModelContainer {
-        let configuration = ModelConfiguration(
+        let configuration = storeURL.map { ModelConfiguration(Constants.storeName, url: $0) } ?? ModelConfiguration(
             Constants.storeName,
             isStoredInMemoryOnly: isStoredInMemoryOnly
         )

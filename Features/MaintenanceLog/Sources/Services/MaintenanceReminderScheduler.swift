@@ -29,10 +29,14 @@ public actor NoOpMaintenanceReminderScheduler: MaintenanceReminderScheduling {
 public final class SystemMaintenanceReminderScheduler: MaintenanceReminderScheduling, @unchecked Sendable {
     private let center: UNUserNotificationCenter
     private let calendar: Calendar
+    private let identifierPrefix: String
 
-    public init(center: UNUserNotificationCenter, calendar: Calendar) {
+    public init(
+        center: UNUserNotificationCenter, calendar: Calendar, identifierPrefix: String = "maintenance."
+    ) {
         self.center = center
         self.calendar = calendar
+        self.identifierPrefix = identifierPrefix
     }
 
     public func schedule(
@@ -63,6 +67,6 @@ public final class SystemMaintenanceReminderScheduler: MaintenanceReminderSchedu
     }
 
     private func identifier(for id: UUID) -> String {
-        "maintenance.\(id.uuidString)"
+        "\(identifierPrefix)\(id.uuidString)"
     }
 }

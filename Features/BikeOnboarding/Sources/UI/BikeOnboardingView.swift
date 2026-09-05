@@ -5,11 +5,13 @@ public struct BikeOnboardingView: View {
     @Environment(\.openURL) private var openURL
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
     @ObservedObject private var viewModel: BikeOnboardingViewModel
+    private let onExploreDemo: (() -> Void)?
     @State private var navigationPath: [BikeOnboardingRoute] = []
     @State private var navigationSynchronizationTask: Task<Void, Never>?
 
-    public init(viewModel: BikeOnboardingViewModel) {
+    public init(viewModel: BikeOnboardingViewModel, onExploreDemo: (() -> Void)? = nil) {
         self.viewModel = viewModel
+        self.onExploreDemo = onExploreDemo
     }
 
     public var body: some View {
@@ -57,7 +59,7 @@ public struct BikeOnboardingView: View {
                 onContinue: viewModel.continueFromSuccess
             )
         } else {
-            OnboardingHeroView(onContinue: viewModel.getStarted)
+            OnboardingHeroView(onContinue: viewModel.getStarted, onExploreDemo: demoAction)
         }
     }
 
@@ -67,19 +69,22 @@ public struct BikeOnboardingView: View {
             OnboardingBluetoothView(
                 viewState: viewModel.viewState,
                 onContinue: viewModel.continueBluetooth,
-                onOpenSettings: openAppSettings
+                onOpenSettings: openAppSettings,
+                onExploreDemo: demoAction
             )
         case .discovery:
             OnboardingDiscoveryView(
                 viewState: viewModel.viewState,
                 onSelectBike: viewModel.selectDiscoveredBike,
-                onRetry: viewModel.retryDiscovery
+                onRetry: viewModel.retryDiscovery,
+                onExploreDemo: demoAction
             )
         default:
             OnboardingDiscoveryView(
                 viewState: viewModel.viewState,
                 onSelectBike: viewModel.selectDiscoveredBike,
-                onRetry: viewModel.retryDiscovery
+                onRetry: viewModel.retryDiscovery,
+                onExploreDemo: demoAction
             )
         }
     }
@@ -106,6 +111,14 @@ public struct BikeOnboardingView: View {
         ZStack {
             OnboardingObsidianBackground()
             content()
+        }
+    }
+
+    private var demoAction: (() -> Void)? {
+        guard let onExploreDemo else { return nil }
+        return {
+            viewModel.stopObserving()
+            onExploreDemo()
         }
     }
 

@@ -72,7 +72,7 @@ enum BikeEmulatorBatteryPayloadFactory {
             return Constants.stationaryBatteryPercent
         case .riding, .ridingClean:
             return ridingBatteryPercent(for: tick)
-        case .cellAnomaly:
+        case .parked, .cellAnomaly:
             return Constants.stationaryBatteryPercent
         }
     }

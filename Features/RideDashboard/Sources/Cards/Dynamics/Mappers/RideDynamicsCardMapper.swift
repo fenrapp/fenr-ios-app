@@ -94,6 +94,7 @@ private extension RideDynamicsCardMapper {
         switch source {
         case .unavailable: rideDashboardLocalized(.rideDashboardDynamicsCourseUnavailable)
         case .gpsCourse: rideDashboardLocalized(.rideDashboardDynamicsCourseSourceGPS)
+        case .compass: rideDashboardLocalized(.rideDashboardDynamicsCourseSourceCompass)
         }
     }
 

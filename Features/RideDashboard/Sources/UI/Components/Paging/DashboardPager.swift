@@ -166,7 +166,7 @@ struct DashboardPager<Page: Hashable, Content: View>: View {
     }
 }
 
-private enum DashboardPagerConstants {
+enum DashboardPagerConstants {
     static let minimumDragDistance: CGFloat = 12
     static let pageChangeThresholdRatio: CGFloat = 0.16
     static let edgeResistance: CGFloat = 0.2

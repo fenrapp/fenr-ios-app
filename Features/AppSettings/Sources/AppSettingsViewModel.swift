@@ -270,3 +270,16 @@ public final class AppSettingsViewModel: ObservableObject {
         viewState = nextViewState
     }
 }
+
+extension AppSettingsViewModel {
+    public func stopAndWait() async {
+        let tasks = [
+            observationTask, settingsSaveTask, locationAuthorizationTask,
+            profileTask, profileSaveTask, connectionTask, powerTierTask
+        ]
+        tasks.forEach { $0?.cancel() }
+        stop()
+        for task in tasks { await task?.value }
+    }
+
+}

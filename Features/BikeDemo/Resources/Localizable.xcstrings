@@ -1,0 +1,248 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "bikeDemoParked": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parked"
+          }
+        }
+      }
+    },
+    "bikeDemoParkedDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explore your dashboard and configure the bike."
+          }
+        }
+      }
+    },
+    "bikeDemoRiding": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Riding"
+          }
+        }
+      }
+    },
+    "bikeDemoRidingDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See live speed, power and ride statistics."
+          }
+        }
+      }
+    },
+    "bikeDemoCharging": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charging"
+          }
+        }
+      }
+    },
+    "bikeDemoChargingDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try charging power and battery target controls."
+          }
+        }
+      }
+    },
+    "bikeDemoBatteryIssue": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Battery issue"
+          }
+        }
+      }
+    },
+    "bikeDemoBatteryIssueDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inspect a simulated cell anomaly in Battery Health."
+          }
+        }
+      }
+    },
+    "bikeDemoScenarioHeading": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bike state"
+          }
+        }
+      }
+    },
+    "bikeDemoPersistence": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your demo bike, settings and records are saved between visits."
+          }
+        }
+      }
+    },
+    "bikeDemoGPSDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Navigation uses your iPhone location when permitted. Maps and searches may need Internet."
+          }
+        }
+      }
+    },
+    "bikeDemoExitDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use Change bike in Settings to leave the demo. Your demo bike and changes stay saved for your next visit."
+          }
+        }
+      }
+    },
+    "bikeDemoTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo bike"
+          }
+        }
+      }
+    },
+    "bikeDemoDone": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "bikeDemoBadge": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo"
+          }
+        }
+      }
+    },
+    "bikeDemoOpenControls": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open demo controls"
+          }
+        }
+      }
+    },
+    "bikeDemoIntroHeading": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meet your demo bike"
+          }
+        }
+      }
+    },
+    "bikeDemoIntroDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explore FENR with a simulated motorcycle. Try the controls, inspect the battery and browse sample rides and maintenance."
+          }
+        }
+      }
+    },
+    "bikeDemoIntroOffline": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No motorcycle or Bluetooth connection needed."
+          }
+        }
+      }
+    },
+    "bikeDemoPreparationError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The demo could not be prepared. Please try again."
+          }
+        }
+      }
+    },
+    "bikeDemoStart": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start demo"
+          }
+        }
+      }
+    },
+    "bikeDemoCancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

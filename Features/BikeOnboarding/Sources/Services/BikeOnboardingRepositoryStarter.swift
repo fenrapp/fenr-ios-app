@@ -13,6 +13,12 @@ public final class BikeOnboardingRepositoryStarter {
         startTask?.cancel()
     }
 
+    func cancelAndWait() async {
+        startTask?.cancel()
+        await startTask?.value
+        startTask = nil
+    }
+
     func start() -> Task<Void, Never> {
         if let startTask { return startTask }
         let startRepository = startRepository

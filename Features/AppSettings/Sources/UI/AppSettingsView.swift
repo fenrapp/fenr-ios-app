@@ -183,7 +183,9 @@ public struct AppSettingsView: View {
             Button(role: .destructive) {
                 onNavigation(.changeBike)
             } label: {
-                Label(.appSettingsChangeBike, systemImage: "motorcycle")
+                Text(.appSettingsChangeBike)
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
             }
             .accessibilityIdentifier("settings.changeBike")
         } footer: {

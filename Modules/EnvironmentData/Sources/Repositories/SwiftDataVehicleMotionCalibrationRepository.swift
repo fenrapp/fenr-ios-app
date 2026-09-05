@@ -1,4 +1,5 @@
 import EnvironmentDomain
+import Foundation
 import SwiftData
 
 public final class SwiftDataVehicleMotionCalibrationRepository: VehicleMotionCalibrationRepository, Sendable {
@@ -7,9 +8,10 @@ public final class SwiftDataVehicleMotionCalibrationRepository: VehicleMotionCal
 
     public convenience init(
         mapper: VehicleMotionCalibrationRecordMapper,
-        isStoredInMemoryOnly: Bool = false
+        isStoredInMemoryOnly: Bool = false,
+        storeURL: URL? = nil
     ) throws {
-        let configuration = ModelConfiguration(
+        let configuration = storeURL.map { ModelConfiguration(Constants.storeName, url: $0) } ?? ModelConfiguration(
             Constants.storeName,
             isStoredInMemoryOnly: isStoredInMemoryOnly
         )

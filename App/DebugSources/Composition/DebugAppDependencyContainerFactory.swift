@@ -78,7 +78,9 @@ enum DebugAppDependencyContainerFactory {
         forceOnboarding: Bool,
         maintenanceReminderScheduler: any MaintenanceReminderScheduling
     ) -> AppDependencyContainer {
-        let settingsRepository = UserDefaultsAppSettingsRepository(userDefaults: .standard)
+        let settingsRepository = AppSettingsRepositoryFactory.make(
+            userDefaults: .standard, profileRepository: profileRepository
+        )
         let deviceSpeedRepository = DebugDeviceSpeedRepository()
         let motionCalibrationRepository = DebugVehicleMotionCalibrationRepository(calibrations: [
             BikeEmulatorIdentity.vin: .init(

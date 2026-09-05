@@ -1597,6 +1597,7 @@
       "extractionState": "manual",
       "localizations": {"en": {"stringUnit": {"state": "translated", "value": "%@, %@, %@, %@, %@"}}}
     },
+    "rideDashboard.dynamics.course.sourceCompass": { "extractionState": "manual", "localizations": { "en": { "stringUnit": { "state": "translated", "value": "COMPASS" } } } },
     "rideDashboard.dynamics.course.sourceGPS": {
       "extractionState": "manual",
       "localizations": {

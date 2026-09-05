@@ -82,6 +82,12 @@ extension BikeEmulatorRepository {
               isConnected
         else { return }
         tick += 1
+        if scenario.isRiding {
+            let interval = runtime.telemetryInterval.components
+            let seconds = Double(interval.seconds) + Double(interval.attoseconds) / 1e18
+            distanceKilometers += BikeEmulatorPayloadFactory.ridingSpeed(for: tick) * seconds / 3_600
+            persistState()
+        }
         await publishCurrentState(expectedGeneration: updateGeneration)
     }
 
@@ -127,7 +133,9 @@ extension BikeEmulatorRepository {
     }
 
     private func makeConnection() -> BikeConnection {
-        BikeEmulatorPayloadFactory.makeConnection()
+        BikeEmulatorPayloadFactory.makeConnection(
+            vin: configuration.vin, identifier: configuration.peripheralIdentifier
+        )
     }
 
     private func makeTelemetry(date: Date) -> BikeTelemetry {
@@ -138,7 +146,11 @@ extension BikeEmulatorRepository {
                 powerModePreset: powerModePreset,
                 activeMapNumber: activeMapNumber,
                 chargeTargetPercent: chargeTargetPercent,
-                date: date
+                date: date,
+                vin: configuration.vin,
+                distanceKilometers: configuration.isDemo ? distanceKilometers : nil,
+                chargePowerWatts: configuration.isDemo ? chargePowerLimitWatts : nil,
+                isDemo: configuration.isDemo
             ),
             powerCalculator: powerCalculator
         )
@@ -157,10 +169,15 @@ extension BikeEmulatorRepository {
     }
 
     func makeCaptures(date: Date) -> [BatteryDatasetCapture] {
-        BikeEmulatorBatteryPayloadFactory.makeCaptures(
+        let captures = BikeEmulatorBatteryPayloadFactory.makeCaptures(
             scenario: scenario,
             tick: tick,
             date: date
         )
+        guard configuration.isDemo else { return captures }
+        return captures.map {
+            BatteryDatasetCapture(dataset: $0.dataset, byteCount: $0.byteCount,
+                                  hex: "DEMO SIMULATED " + $0.hex, date: $0.date)
+        }
     }
 }

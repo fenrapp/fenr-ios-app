@@ -23,6 +23,7 @@ public struct RideDashboardView: View {
     private let onNavigation: () -> Void
     private let isNavigationActive: Bool
     private let isPresentationActive: Bool
+    private let bottomLeadingAccessory: () -> AnyView
 }
 
 public extension RideDashboardView {
@@ -32,7 +33,8 @@ public extension RideDashboardView {
         onNavigation: @escaping () -> Void = {},
         isNavigationActive: Bool = false,
         isPresentationActive: Bool = true,
-        onRetryConnection: @escaping () -> Void
+        onRetryConnection: @escaping () -> Void,
+        bottomLeadingAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
         self.feature = feature
         _viewModel = ObservedObject(wrappedValue: feature.dashboardViewModel)
@@ -51,6 +53,7 @@ public extension RideDashboardView {
         self.isNavigationActive = isNavigationActive
         self.isPresentationActive = isPresentationActive
         self.onRetryConnection = onRetryConnection
+        self.bottomLeadingAccessory = bottomLeadingAccessory
     }
 }
 
@@ -61,7 +64,8 @@ extension RideDashboardView {
                 state: viewModel.viewState,
                 deviceBattery: deviceBatteryViewModel.viewState,
                 toggleDeviceBatteryDisplayMode: deviceBatteryViewModel.toggleDisplayMode,
-                onSettings: onSettings
+                onSettings: onSettings,
+                bottomLeadingAccessory: bottomLeadingAccessory
             ) {
                 Group {
                 if proxy.size.width <= proxy.size.height {

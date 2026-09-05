@@ -1,6 +1,6 @@
 import BikeDomain
 
-public enum BikeEmulatorPowerModePreset: String, CaseIterable, Equatable, Sendable, Identifiable {
+public enum BikeEmulatorPowerModePreset: String, Codable, CaseIterable, Equatable, Sendable, Identifiable {
     case standard
     case alpha
     case claimedAlpha

@@ -278,3 +278,17 @@ public final class ChargeControlSession: ObservableObject {
         state.failure = failure
     }
 }
+
+extension ChargeControlSession {
+    public func stopAndWait() async {
+        let pendingPreparation = preparationTask
+        let pendingWrite = queuedWriteTask
+        pendingPreparation?.cancel()
+        pendingWrite?.cancel()
+        await taskScheduler.cancelAndWait()
+        await pendingPreparation?.value
+        await pendingWrite?.value
+        resetAfterDisconnect()
+    }
+
+}

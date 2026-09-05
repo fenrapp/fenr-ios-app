@@ -184,12 +184,14 @@ public final class BikeOnboardingDiscoveryCoordinator {
             cancelTimeout()
         }
         cancelSelection()
+        let previousScan = scanTask
         scanTask?.cancel()
         scanTask = nil
         let previousStop = stopTask
         let stopDiscovery = stopDiscovery
         let task = Task {
             await previousStop?.value
+            await previousScan?.value
             guard !Task.isCancelled else { return }
             await stopDiscovery.execute()
         }

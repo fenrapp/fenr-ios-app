@@ -1,3 +1,4 @@
+import DesignSystem
 import SwiftUI
 
 struct OnboardingHeroView: View {
@@ -11,6 +12,7 @@ struct OnboardingHeroView: View {
     @State private var ambientProgress = 0.0
 
     let onContinue: () -> Void
+    var onExploreDemo: (() -> Void)?
 
     var body: some View {
         GeometryReader { proxy in
@@ -64,7 +66,12 @@ struct OnboardingHeroView: View {
             heroCopy
                 .frame(width: contentWidth, alignment: .center)
 
-            continueButton
+            VStack(spacing: DesignSpace.extraSmall) {
+                continueButton
+                if let onExploreDemo {
+                    OnboardingDemoButton(action: onExploreDemo)
+                }
+            }
                 .frame(width: contentWidth)
                 .frame(maxHeight: .infinity, alignment: .bottom)
                 .padding(.bottom, Constants.buttonBottomPadding)

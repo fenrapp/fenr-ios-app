@@ -8,6 +8,8 @@ import VehicleSession
 
 @MainActor
 struct BatteryHealthDependencyContainer {
+    var isDemo = false
+
     func makeBatteryHealthViewModel(
         repository: any BikeBatteryHealthRepository,
         vehicleSession: any VehicleSessionService,
@@ -16,7 +18,7 @@ struct BatteryHealthDependencyContainer {
         let locale = Locale.autoupdatingCurrent
         let analyzer = BatteryHealthAnalyzer()
         let captureFormatter = BatteryHealthCaptureFormatter(
-            dateFormatStyle: Date.FormatStyle(date: .omitted, time: .standard)
+            dateFormatStyle: Date.FormatStyle(date: .omitted, time: .standard), isDemo: isDemo
         )
         return BatteryHealthViewModel(
             useCases: .init(

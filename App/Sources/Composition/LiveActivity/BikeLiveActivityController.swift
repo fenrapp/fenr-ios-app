@@ -87,6 +87,13 @@ final class BikeLiveActivityController {
         await setBatteryHealthRequired(false)
     }
 
+    func endForExperienceChange() async {
+        await stop()
+        guard activityClient.isActive else { return }
+        let state = lastContentState ?? stateMapper.map(snapshot: snapshot, now: clock.now).contentState
+        await activityClient.end(state: state)
+    }
+
     func setCanShowLiveActivity(_ canShow: Bool) {
         canShowLiveActivity = canShow
         scheduleEvaluation()

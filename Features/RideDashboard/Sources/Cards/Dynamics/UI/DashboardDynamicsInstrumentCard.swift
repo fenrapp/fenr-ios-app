@@ -62,6 +62,7 @@ struct DashboardDynamicsInstrumentCard: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .dashboardPagingButton()
         .foregroundStyle(DesignColor.informational)
         .disabled(!canCalibrate)
         .opacity(canCalibrate ? 1 : Constants.disabledOpacity)

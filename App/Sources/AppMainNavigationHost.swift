@@ -6,6 +6,8 @@ struct AppMainNavigationHost: View {
     @ObservedObject var coordinator: AppNavigationCoordinator
     let featureStore: AppFeatureStore
     let settingsAccessory: () -> AnyView
+    var dashboardAccessory: () -> AnyView = { AnyView(EmptyView()) }
+    var destinationBottomInset: CGFloat = .zero
     let onRetryConnection: () -> Void
     let onChangeBike: () -> Void
 
@@ -16,7 +18,8 @@ struct AppMainNavigationHost: View {
                 onNavigation: handleDashboardEvent,
                 onRetryConnection: onRetryConnection,
                 isNavigationActive: coordinator.state.rideNavigationMode == .mini,
-                isPresentationActive: coordinator.state.activeSurfaces.contains(.dashboard)
+                isPresentationActive: coordinator.state.activeSurfaces.contains(.dashboard),
+                bottomLeadingAccessory: dashboardAccessory
             )
             .navigationDestination(for: AppRoute.self) { route in
                 AppDestinationView(
@@ -27,6 +30,7 @@ struct AppMainNavigationHost: View {
                     onIntent: coordinator.send,
                     onChangeBike: onChangeBike
                 )
+                .safeAreaPadding(.bottom, destinationBottomInset)
             }
         }
         .animation(navigationAnimation, value: coordinator.state.path)

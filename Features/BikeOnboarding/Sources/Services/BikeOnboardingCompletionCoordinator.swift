@@ -34,6 +34,15 @@ public final class BikeOnboardingCompletionCoordinator {
         eventContinuation.finish()
     }
 
+    func cancelAndWait() async {
+        persistenceTask?.cancel()
+        transitionTask?.cancel()
+        await persistenceTask?.value
+        await transitionTask?.value
+        persistenceTask = nil
+        transitionTask = nil
+    }
+
     func start(vin: String) {
         guard completedVIN == nil else { return }
         completedVIN = vin

@@ -12,6 +12,7 @@ public enum VehicleMotionAvailability: Equatable, Sendable {
 public enum VehicleMotionHeadingSource: Equatable, Sendable {
     case unavailable
     case gpsCourse
+    case compass
 }
 
 public struct VehicleMotionSnapshot: Equatable, Sendable {

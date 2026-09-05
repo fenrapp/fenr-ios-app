@@ -5,11 +5,13 @@ import EnvironmentDomain
 public final class CoreLocationDeviceSpeedRepository: NSObject, DeviceSpeedRepository,
     @preconcurrency CLLocationManagerDelegate {
     private let locationManager: CLLocationManager
+    private let requestsAuthorizationOnObservation: Bool
     private var continuations: [UUID: AsyncStream<DeviceSpeedSample>.Continuation] = [:]
     private var isUpdatingLocation = false
 
-    public init(locationManager: CLLocationManager) {
+    public init(locationManager: CLLocationManager, requestsAuthorizationOnObservation: Bool = true) {
         self.locationManager = locationManager
+        self.requestsAuthorizationOnObservation = requestsAuthorizationOnObservation
         super.init()
         locationManager.delegate = self
         locationManager.activityType = .automotiveNavigation
@@ -60,7 +62,7 @@ public final class CoreLocationDeviceSpeedRepository: NSObject, DeviceSpeedRepos
             startUpdatingLocationIfNeeded()
         case .notDetermined:
             stopUpdatingLocationIfNeeded()
-            locationManager.requestWhenInUseAuthorization()
+            if requestsAuthorizationOnObservation { locationManager.requestWhenInUseAuthorization() }
         case .denied, .restricted:
             stopUpdatingLocationIfNeeded()
         @unknown default:

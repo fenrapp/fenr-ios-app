@@ -12,6 +12,7 @@ public struct BikeTelemetryToBikeDiagnosticsViewStateMapper {
     private let rawFlagsMapper: BikeTelemetryToRawFlagsMapper
     private let debugEventMapper: BikeDebugEventToDebugEventViewDataMapper
     private let speedFormatter: BikeDiagnosticsSpeedFormatter
+    private let isDemo: Bool
 
     public init(
         connectionMapper: BikeConnectionToConnectionPanelMapper,
@@ -21,7 +22,8 @@ public struct BikeTelemetryToBikeDiagnosticsViewStateMapper {
         badgesMapper: BikeTelemetryToBadgesMapper,
         rawFlagsMapper: BikeTelemetryToRawFlagsMapper,
         debugEventMapper: BikeDebugEventToDebugEventViewDataMapper,
-        speedFormatter: BikeDiagnosticsSpeedFormatter
+        speedFormatter: BikeDiagnosticsSpeedFormatter,
+        isDemo: Bool = false
     ) {
         self.connectionMapper = connectionMapper
         self.metricsMapper = metricsMapper
@@ -31,6 +33,7 @@ public struct BikeTelemetryToBikeDiagnosticsViewStateMapper {
         self.rawFlagsMapper = rawFlagsMapper
         self.debugEventMapper = debugEventMapper
         self.speedFormatter = speedFormatter
+        self.isDemo = isDemo
     }
 
     public func map(
@@ -49,7 +52,10 @@ public struct BikeTelemetryToBikeDiagnosticsViewStateMapper {
 
         return BikeDiagnosticsViewState(
             vin: profileVIN ?? BikeDiagnosticsText.placeholder,
-            connection: connectionMapper.map(snapshot.connection, configuredVIN: profileVIN),
+            connection: connectionMapper.map(
+                snapshot.connection, configuredVIN: profileVIN,
+                presentationName: isDemo ? String(localized: .bikeDiagnosticsDemoBikeName) : nil
+            ),
             overviewMetrics: overviewMetrics(telemetry),
             metrics: metrics,
             powerMetrics: powerMetrics,
@@ -83,7 +89,8 @@ public struct BikeTelemetryToBikeDiagnosticsViewStateMapper {
             + decodedStatus(snapshot.telemetry.statusFlags).map(exportMetric)
         let rawLines = ["[Raw Status]"] + rawFlagsMapper.map(snapshot.telemetry).map(exportMetric)
         let eventLines = ["[Events]"] + events.map(debugEventMapper.exportLine)
-        return (sectionLines + statusLines + rawLines + eventLines)
+        let header = isDemo ? ["FENR DEMO - Simulated motorcycle data"] : []
+        return (header + sectionLines + statusLines + rawLines + eventLines)
             .joined(separator: BikeDiagnosticsConstants.debugLogLineSeparator)
     }
 

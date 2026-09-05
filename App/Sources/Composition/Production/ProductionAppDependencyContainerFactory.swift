@@ -11,6 +11,7 @@ import MaintenanceLog
 import RideNavigationData
 import RideSessionData
 import SettingsData
+import SettingsDomain
 import VehicleSession
 
 @MainActor
@@ -32,7 +33,7 @@ enum ProductionAppDependencyContainerFactory {
             pinDeriver: bikeDataContainer.makeBikePinDeriver()
         )
         let chargeControl = ChargeControlDependencyContainer().makeSession(repository: repository)
-        let settingsRepository = UserDefaultsAppSettingsRepository(userDefaults: .standard)
+        let settingsRepository = makeSettingsRepository(profile: profileRepository)
         let deviceSpeedRepository = CoreLocationDeviceSpeedRepository(
             locationManager: CLLocationManager()
         )
@@ -46,6 +47,7 @@ enum ProductionAppDependencyContainerFactory {
                 profileRepository: profileRepository,
                 settingsRepository: settingsRepository,
                 deviceSpeedRepository: deviceSpeedRepository,
+                deviceHeadingRepository: DeviceHeadingDependencyContainer.makeRepository(),
                 motionCalibrationRepository: motionCalibrationRepository,
                 imuProfile: makeIMUProfile(),
                 rideTripRepository: rideTripRepository
@@ -76,6 +78,10 @@ enum ProductionAppDependencyContainerFactory {
             bikeLockCapabilityStore: bikeLockCapabilityStore,
             startupPreparer: NoOpAppStartupPreparer()
         )
+    }
+
+    private static func makeSettingsRepository(profile: any BikeProfileRepository) -> any AppSettingsRepository {
+        AppSettingsRepositoryFactory.make(userDefaults: .standard, profileRepository: profile)
     }
 
     private static func makeBikeLockCredentialStore() -> KeychainBikeLockCredentialStore {

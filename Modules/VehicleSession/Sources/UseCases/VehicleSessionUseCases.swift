@@ -7,6 +7,7 @@ public struct VehicleSessionUseCases: Sendable {
     let observeConnection: ObserveBikeConnectionUseCase
     let observeSettings: ObserveAppSettingsUseCase
     let observeDeviceSpeed: ObserveDeviceSpeedUseCase
+    let observeDeviceHeading: ObserveDeviceHeadingUseCase?
     let observeIMU: ObserveBikeIMUUseCase
     let startIMUMonitoring: StartBikeIMUMonitoringUseCase
     let stopIMUMonitoring: StopBikeIMUMonitoringUseCase
@@ -36,12 +37,14 @@ public struct VehicleSessionUseCases: Sendable {
         stopBatteryHealthMonitoring: StopBatteryHealthMonitoringUseCase,
         readBikeStatusSnapshot: ReadBikeStatusSnapshotUseCase,
         refreshPowerModeConfiguration: RefreshBikePowerModeConfigurationUseCase? = nil,
-        refreshTractionControlConfiguration: RefreshBikeTractionControlConfigurationUseCase? = nil
+        refreshTractionControlConfiguration: RefreshBikeTractionControlConfigurationUseCase? = nil,
+        observeDeviceHeading: ObserveDeviceHeadingUseCase? = nil
     ) {
         self.observeTelemetry = observeTelemetry
         self.observeConnection = observeConnection
         self.observeSettings = observeSettings
         self.observeDeviceSpeed = observeDeviceSpeed
+        self.observeDeviceHeading = observeDeviceHeading
         self.observeIMU = observeIMU
         self.startIMUMonitoring = startIMUMonitoring
         self.stopIMUMonitoring = stopIMUMonitoring

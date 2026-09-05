@@ -116,6 +116,19 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikeemulator
+  BikeDemo:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Features/BikeDemo/Sources
+      - path: Features/BikeDemo/Resources
+        buildPhase: resources
+    dependencies:
+      - target: DesignSystem
+      - target: BikeEmulator
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikedemo
   ChargeControl:
     type: framework
     platform: iOS
@@ -246,6 +259,8 @@ targets:
       - path: Modules/SettingsData/Sources
     dependencies:
       - target: SettingsDomain
+      - target: BikeDomain
+      - target: StarkProtocol
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.settingsdata
@@ -587,6 +602,8 @@ targets:
         embed: true
       - target: BikeDiagnostics
       - target: BikeOnboarding
+      - target: BikeDemo
+      - target: BikeEmulator
       - target: RideDashboard
       - target: MeasurementPresentation
         embed: true
@@ -699,6 +716,7 @@ targets:
           - Composition/BikeSDK
           - Composition/StarkProtocol
           - Composition/Production
+          - ProductionUI
       - path: App/DebugSources
       - path: App/Resources/Assets.xcassets
       - path: App/Resources/Shared/Localizable.xcstrings
@@ -734,6 +752,7 @@ targets:
         embed: true
       - target: BikeDiagnostics
       - target: BikeOnboarding
+      - target: BikeDemo
       - target: RideDashboard
       - target: MeasurementPresentation
         embed: true
@@ -937,6 +956,8 @@ targets:
         embed: true
       - target: SettingsData
         embed: true
+      - target: StarkProtocol
+        embed: true
       - target: EnvironmentDomain
         embed: true
       - target: DesignSystem
@@ -1079,6 +1100,8 @@ targets:
     dependencies:
       - target: SettingsData
       - target: SettingsDomain
+      - target: BikeDomain
+      - target: TestSupport
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.settingsdata.tests
@@ -1458,6 +1481,8 @@ targets:
       - target: BLETraceDomain
       - target: BikeDiagnostics
       - target: BikeOnboarding
+      - target: BikeDemo
+      - target: BikeEmulator
       - target: RideDashboard
       - target: MeasurementPresentation
       - target: AppSettings

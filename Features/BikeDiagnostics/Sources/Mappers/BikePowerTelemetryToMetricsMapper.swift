@@ -20,7 +20,7 @@ public struct BikePowerTelemetryToMetricsMapper {
             metric(
                 "electricalPower",
                 BikeDiagnosticsL10n.text(.bikeDiagnosticsMetricElectricalPower),
-                power(watts: telemetry.electricalPowerWatts, kilowatts: telemetry.electricalPowerKilowatts)
+                power(kilowatts: telemetry.electricalPowerKilowatts)
             ),
             metric(
                 "starkHorsepower",
@@ -39,11 +39,10 @@ public struct BikePowerTelemetryToMetricsMapper {
         .init(id: id, title: title, value: value)
     }
 
-    private func power(watts value: Double?, kilowatts: Double?) -> String {
-        guard let value, let kilowatts else { return BikeDiagnosticsText.placeholder }
-        let watts = measurementTextFormatter.number(value, fractionDigits: 1)
+    private func power(kilowatts: Double?) -> String {
+        guard let kilowatts else { return BikeDiagnosticsText.placeholder }
         let kilowattsText = measurementTextFormatter.number(kilowatts, fractionDigits: 3)
-        return "\(watts) W / \(kilowattsText) kW"
+        return "\(kilowattsText) kW"
     }
 
     private func horsepower(_ value: Double?) -> String {

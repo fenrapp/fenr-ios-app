@@ -2,6 +2,8 @@
 
 final class TestLocationManager: CLLocationManager {
     var simulatedAuthorizationStatus: CLAuthorizationStatus
+    private(set) var startUpdatingHeadingCount = 0
+    private(set) var stopUpdatingHeadingCount = 0
     private(set) var authorizationRequestCount = 0
     private(set) var startUpdatingLocationCount = 0
     private(set) var stopUpdatingLocationCount = 0
@@ -18,6 +20,9 @@ final class TestLocationManager: CLLocationManager {
     override func requestWhenInUseAuthorization() {
         authorizationRequestCount += 1
     }
+
+    override func startUpdatingHeading() { startUpdatingHeadingCount += 1 }
+    override func stopUpdatingHeading() { stopUpdatingHeadingCount += 1 }
 
     override func startUpdatingLocation() {
         startUpdatingLocationCount += 1

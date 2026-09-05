@@ -81,6 +81,12 @@ final class BikeSessionController: ObservableObject {
         }
     }
 
+    func stopIncludingOnboarding() async {
+        await stop()
+        // Onboarding can start the same repository before this controller starts.
+        await useCases.stopRepository.execute()
+    }
+
     func connectAutomatically(vin: String) async {
         guard let task = startConnectionIfNeeded(vin: vin) else { return }
         await withTaskCancellationHandler {

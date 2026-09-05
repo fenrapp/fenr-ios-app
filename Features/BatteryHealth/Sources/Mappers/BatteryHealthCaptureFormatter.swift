@@ -3,9 +3,11 @@ import Foundation
 
 public struct BatteryHealthCaptureFormatter: Sendable {
     private let dateFormatStyle: Date.FormatStyle
+    private let isDemo: Bool
 
-    public init(dateFormatStyle: Date.FormatStyle) {
+    public init(dateFormatStyle: Date.FormatStyle, isDemo: Bool = false) {
         self.dateFormatStyle = dateFormatStyle
+        self.isDemo = isDemo
     }
 
     public func timestamp(_ date: Date?) -> String? {
@@ -23,6 +25,7 @@ public struct BatteryHealthCaptureFormatter: Sendable {
                     + "\(capture.dataset.displayName) | \(capture.byteCount) B | \(capture.hex)"
             }
         let chargeLines = chargeAuditLines.map { "ChargeControl | \($0)" }
-        return (chargeLines + captureLines).joined(separator: "\n")
+        let header = isDemo ? ["FENR DEMO - Simulated motorcycle data"] : []
+        return (header + chargeLines + captureLines).joined(separator: "\n")
     }
 }

@@ -7,19 +7,22 @@ public struct RideDashboardScene: View {
     private let onRetryConnection: () -> Void
     private let isNavigationActive: Bool
     private let isPresentationActive: Bool
+    private let bottomLeadingAccessory: () -> AnyView
 
     public init(
         factory: any RideDashboardFeatureBuilding,
         onNavigation: @escaping (RideDashboardNavigationEvent) -> Void,
         onRetryConnection: @escaping () -> Void,
         isNavigationActive: Bool = false,
-        isPresentationActive: Bool = true
+        isPresentationActive: Bool = true,
+        bottomLeadingAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
         _feature = StateObject(wrappedValue: factory.makeFeature())
         self.onNavigation = onNavigation
         self.onRetryConnection = onRetryConnection
         self.isNavigationActive = isNavigationActive
         self.isPresentationActive = isPresentationActive
+        self.bottomLeadingAccessory = bottomLeadingAccessory
     }
 
     public var body: some View {
@@ -29,7 +32,8 @@ public struct RideDashboardScene: View {
             onNavigation: { onNavigation(.openRideNavigation) },
             isNavigationActive: isNavigationActive,
             isPresentationActive: isPresentationActive,
-            onRetryConnection: onRetryConnection
+            onRetryConnection: onRetryConnection,
+            bottomLeadingAccessory: bottomLeadingAccessory
         )
     }
 }

@@ -8,6 +8,8 @@ import VehicleSession
 
 @MainActor
 struct BikeDiagnosticsDependencyContainer {
+    var isDemo = false
+
     func makeBikeDiagnosticsViewModel(
         repository: BikeRepository,
         vehicleSession: any VehicleSessionService,
@@ -82,7 +84,8 @@ struct BikeDiagnosticsDependencyContainer {
                 debugEventMapper: BikeDebugEventToDebugEventViewDataMapper(
                     dateFormatStyle: dateFormatStyle
                 ),
-                speedFormatter: speedFormatter
+                speedFormatter: speedFormatter,
+                isDemo: isDemo
             ),
             bleTraceSession: BLETraceSessionViewDataMapper(
                 dateFormatStyle: Date.FormatStyle(date: .abbreviated, time: .standard),

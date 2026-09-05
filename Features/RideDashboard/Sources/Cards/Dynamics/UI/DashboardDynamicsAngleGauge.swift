@@ -194,8 +194,8 @@ struct DashboardDynamicsAngleGauge: View {
 
         var size: CGSize {
             switch self {
-            case .rear: CGSize(width: 50, height: 58)
-            case .side: CGSize(width: 62, height: 40)
+            case .rear: CGSize(width: 60, height: 69)
+            case .side: CGSize(width: 80, height: 56)
             }
         }
     }

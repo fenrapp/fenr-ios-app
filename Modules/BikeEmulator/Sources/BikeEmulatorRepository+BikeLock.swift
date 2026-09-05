@@ -7,16 +7,19 @@ extension BikeEmulatorRepository {
     }
 
     public func prepareBikeLockControl() async throws -> BikeLockControlSnapshot {
+        try validateDemoConnection()
         isBikeLockPrepared = true
         await publishDebugEvent(title: "Bike Lock", detail: "Debug no-op confirmed")
         return bikeLockSnapshot()
     }
 
     public func setBikeLocked(_ isLocked: Bool) async throws -> BikeLockControlSnapshot {
+        try validateDemoConnection()
         guard isBikeLockPrepared else {
             throw BikeEmulatorBikeLockError.controlNotPrepared
         }
         isBikeLocked = isLocked
+        persistState()
         await publishDebugEvent(
             title: "Bike Lock",
             detail: "Debug write confirmed state=\(isLocked)"

@@ -3,7 +3,7 @@ import BikeDomain
 extension BikeEmulatorRepository {
     public func startBikeDiscovery() async {
         isDiscovering = true
-        await discoveredBikesHub.send([.init(vin: BikeEmulatorIdentity.vin, rssi: -45)])
+        await discoveredBikesHub.send([.init(vin: configuration.vin, rssi: -45)])
     }
 
     public func stopBikeDiscovery() async {

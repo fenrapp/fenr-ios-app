@@ -63,6 +63,15 @@ public final class DashboardCardSettingsViewModel: ObservableObject {
         }
     }
 
+    public func stopAndWait() async {
+        let tasks = [
+            observationTask, bikeLockCapabilityTask, saveTask
+        ]
+        tasks.forEach { $0?.cancel() }
+        stop()
+        for task in tasks { await task?.value }
+    }
+
     public func stop() {
         guard observationRequestCount > 0 else { return }
         observationRequestCount -= 1

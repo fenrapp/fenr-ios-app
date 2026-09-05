@@ -59,6 +59,7 @@ struct DebugPowerModeControls: View {
 private extension BikeEmulatorScenario {
     var localizedTitle: LocalizedStringResource {
         switch self {
+        case .parked: .debugScenarioParked
         case .riding: .debugScenarioRiding
         case .ridingClean: .debugScenarioRidingClean
         case .charging: .debugScenarioCharging

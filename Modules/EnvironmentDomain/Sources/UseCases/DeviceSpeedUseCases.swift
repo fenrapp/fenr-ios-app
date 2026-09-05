@@ -1,12 +1,15 @@
 public struct ObserveDeviceSpeedUseCase: Sendable {
     private let repository: DeviceSpeedRepository
+    private let requestsAuthorization: Bool
 
-    public init(repository: DeviceSpeedRepository) {
+    public init(repository: DeviceSpeedRepository, requestsAuthorization: Bool = false) {
         self.repository = repository
+        self.requestsAuthorization = requestsAuthorization
     }
 
     public func execute() async -> AsyncStream<DeviceSpeedSample> {
-        await repository.observeDeviceSpeed()
+        if requestsAuthorization { await repository.requestLocationAuthorization() }
+        return await repository.observeDeviceSpeed()
     }
 }
 

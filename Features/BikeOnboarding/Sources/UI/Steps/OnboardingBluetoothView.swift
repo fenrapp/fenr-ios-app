@@ -6,6 +6,7 @@ struct OnboardingBluetoothView: View {
     let viewState: BikeOnboardingViewState
     let onContinue: () -> Void
     let onOpenSettings: () -> Void
+    var onExploreDemo: (() -> Void)?
 
     @State private var rowsVisible = false
 
@@ -56,6 +57,9 @@ struct OnboardingBluetoothView: View {
                     isBusy: viewState.isRequestingBluetoothAccess,
                     action: onContinue
                 )
+            }
+            if let onExploreDemo {
+                OnboardingDemoButton(action: onExploreDemo)
             }
         }
         .task(id: viewState.bluetoothState) {

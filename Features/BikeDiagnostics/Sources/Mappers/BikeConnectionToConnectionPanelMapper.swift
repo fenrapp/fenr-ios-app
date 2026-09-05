@@ -7,13 +7,17 @@ public struct BikeConnectionToConnectionPanelMapper: Sendable {
         self.stateMapper = stateMapper
     }
 
-    public func map(_ connection: BikeConnection, configuredVIN: String?) -> ConnectionPanelViewData {
+    public func map(
+        _ connection: BikeConnection,
+        configuredVIN: String?,
+        presentationName: String? = nil
+    ) -> ConnectionPanelViewData {
         ConnectionPanelViewData(
             status: stateMapper.title(for: connection.state),
-            detail: stateMapper.detail(for: connection.state),
+            detail: presentationName ?? stateMapper.detail(for: connection.state),
             rssi: connection.rssi.map { "\($0) dBm" } ?? BikeDiagnosticsText.emptyRSSI,
             configuredVIN: configuredVIN ?? BikeDiagnosticsText.placeholder,
-            peripheralName: connection.peripheralName ?? BikeDiagnosticsText.noPeripheral,
+            peripheralName: presentationName ?? connection.peripheralName ?? BikeDiagnosticsText.noPeripheral,
             peripheralIdentifier: connection.peripheralIdentifier?.uuidString
                 ?? BikeDiagnosticsText.placeholder,
             emphasis: stateMapper.emphasis(for: connection.state)

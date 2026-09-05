@@ -78,6 +78,13 @@ public final class PowerModeSettingsViewModel: ObservableObject {
         }
     }
 
+    public func stopAndWait() async {
+        let tasks = [observationTask, refreshTask, settingsSaveTask, controlTask]
+        tasks.forEach { $0?.cancel() }
+        stop()
+        for task in tasks { await task?.value }
+    }
+
     public func stop() {
         isStarted = false
         observationTask?.cancel()
