@@ -20,19 +20,26 @@ FENR is structured as a modular Swift application. The goal is to keep vehicle t
 
 ## Session ownership
 
-`AppRootView` owns the iPhone `BikeSessionController`. It starts and stops the repository once for the application lifecycle. Feature modules observe streams through use cases, so moving from the dashboard to settings or diagnostics does not create a second Bluetooth session.
+`AppLifecycleController` owns the iPhone `BikeSessionController` and coordinates startup, shutdown, ride services and Live Activities. `AppRootView` receives that lifecycle controller through `AppRootDependencies`. Feature modules observe streams through use cases, so moving from the dashboard to settings or diagnostics does not create a second Bluetooth session.
 
-`WatchRootView` owns an independent `WatchBikeSessionController`. It connects directly through the Watch's Bluetooth stack, without requiring the paired iPhone at runtime, and declares the Bluetooth central background mode. watchOS still controls suspension and screen wake behaviour, so background support preserves the session when execution is available rather than guaranteeing continuous execution. Battery-health monitoring starts only while the bike reports charging.
+`WatchSetupController` owns an independent `WatchBikeSessionController` and is supplied to `WatchRootView` through its dependencies. It connects directly through the Watch's Bluetooth stack, without requiring the paired iPhone at runtime, and declares the Bluetooth central background mode. watchOS still controls suspension and screen wake behaviour, so background support preserves the session when execution is available rather than guaranteeing continuous execution. Battery-health monitoring starts only while the bike reports charging.
 
 ## Main features
 
-- `BikeOnboarding`: discovers/selects a motorcycle, validates its identity, and completes setup only after telemetry is received.
-- `RideDashboard`: presents live riding and charging states. It displays confirmed telemetry only.
-- `BikeDiagnostics`: exposes advanced connection status and raw diagnostic context as a secondary destination.
-- `BatteryHealth`: presents battery and cell measurements and owns the guarded iPhone UI flow for charging-power and charge-target writes.
-- `AppSettings`: stores speed-source, measurement-system, and battery-capacity preferences.
-- `PowerModeSettings`: presents confirmed map values and owns the guarded flow for base-map horsepower, regenerative braking, TC, and TC Regen changes.
-- `WatchDashboard`: presents a native, compact Watch ride/charge surface with battery, gear/map, odometer, charging power/current, pack temperature, and charge ETA when available.
+- `BikeOnboarding` and `BikeDemo`: real-bike setup and an isolated, persistent public demo.
+- `RideDashboard` and `DashboardCardSettings`: live ride/charge presentation and card customization.
+- `BikeDiagnostics` and `BatteryHealth`: opt-in technical capture, saved logs, battery and cell measurements.
+- `PowerModeSettings` and `BikeLockSettings`: guarded settings for supported vehicle controls.
+- `AppSettings`: preferences and navigation to settings, history, maintenance and diagnostics.
+- `RideNavigation`: Apple Maps directions, imported GPX trails, recording and incoming shared destinations.
+- `RideHistory` and `MaintenanceLog`: locally stored rides and maintenance records.
+- `WatchOnboarding` and `WatchDashboard`: direct-bike setup and a telemetry-only Watch dashboard.
+
+`ChargeControl` coordinates charging settings, `VehicleSession` shares vehicle
+presentation across iPhone features, and `RideSession` coordinates location,
+recording and navigation. Their composition reuses the same bike repository.
+`ShareExtension` accepts destinations; `LiveActivityExtension` presents charging
+updates without owning a Bluetooth connection.
 
 ## Dependency direction
 
@@ -40,11 +47,21 @@ Dependencies point inward: features consume domain contracts and use cases; data
 
 ## Vehicle writes
 
-Vehicle writes are explicit use cases rather than generic BLE access. Battery Health requests a charge-control preparation through the domain repository; `BikeData` maps it to `BikeSDK`, and the SDK serializes writes to the VCU charger configuration characteristic. `StarkProtocol` owns the immutable configuration payload and encoder.
+Vehicle writes are explicit use cases rather than generic BLE access. Features
+request them through domain contracts; `BikeData` maps to `BikeSDK`, whose shared
+VCU transport serializes operations. `StarkProtocol` owns payloads and encoders.
 
-The charge-control flow requires compatible VCU PIC firmware, an authenticated session, a connected charger, the required characteristic, and a successful unchanged no-op write. Power and target changes preserve every unrelated field and are accepted only after the charger telemetry reports the requested value. A timeout desynchronizes the transport until the BLE session reconnects, preventing a late response from confirming a newer operation.
+Each supported record has firmware/capability gates, preparation, a safe no-op,
+sibling-value preservation and fresh confirmation. Charging power and target
+changes are confirmed by charger telemetry. Base-map, traction and lock changes
+require matching configuration reads. A transport timeout invalidates the
+transaction stream until reconnection so a late reply cannot confirm a new write.
 
-Power Mode Settings reads base-map type `0` and traction-control type `8` for all five maps. Type `0` accepts curve selector `0` or `mapIndex + 1`, rejects other selectors, and normalizes every write to `mapIndex + 1`. Type `8` is independently gated at VCU PIC firmware 1.10.1 and writes TC and TC Regen as whole percentages from 0 through 100, encoded as signed 16-bit tenths with mode `0x0F`. Each record has a separate preparation state, exact no-op, sibling-value preservation, successful write-status requirement, and fresh matching response, so unavailable TC does not disable horsepower and regen. The shared serialized `4005` transport prevents competing operations, and acknowledgement alone is never success. Base-map writes have physical write/read-back evidence. The owner reported physical TC and bike-lock testing on 2026-09-05; this report does not provide a new firmware inventory or instrumented capture set. The existing runtime gates and exact confirmations remain mandatory.
+Charging controls and base-map changes have physical evidence. Instrumented
+traction-control and lock write/read-back evidence remains incomplete. Packet
+layouts, firmware thresholds and confidence levels belong in the
+[protocol research repository](https://github.com/fenrapp/bike-protocol-research);
+implementation constraints remain in [AGENTS.md](../AGENTS.md).
 
 ## Startup and diagnostic capture
 

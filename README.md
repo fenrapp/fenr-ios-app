@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="App/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-Light.png" width="112" alt="FENR app icon">
+  <img src="docs/assets/fenr-icon-rounded.png" width="64" alt="FENR app icon">
 </p>
 
 <h1 align="center">FENR</h1>
@@ -12,6 +12,7 @@ FENR is independent and unofficial. It is not affiliated with or endorsed by Sta
 <p align="center">
   <img src="store/screenshots/1.0/en-US/iphone69/01-dashboard.png" width="250" alt="FENR riding dashboard">
   <img src="store/screenshots/1.0/en-US/iphone69/03-charging.png" width="250" alt="FENR charging controls">
+  <img src="store/screenshots/1.0/en-US/iphone69/09-gpx-routes.png" width="250" alt="FENR GPX import and ride navigation">
 </p>
 
 ## Features
@@ -29,7 +30,9 @@ The first release is for iPhone. A separate, telemetry-only Apple Watch app rema
 
 ## Getting started
 
-The app targets iOS 17 or later. The local development baseline is Xcode 26.6 with the iOS 26.5 simulator; see [Testing](docs/testing.md) for validation commands.
+The iPhone app targets **iOS 17 or later**. Liquid Glass is used on **iOS 26 or later**, with standard materials and controls on earlier versions. The separate Watch app targets watchOS 10 or later.
+
+Build with **Xcode 26 or later** for the SwiftUI APIs and generated String Catalog symbols. See [Development](docs/development.md) for setup and [Testing](docs/testing.md) for validation commands.
 
 ```sh
 brew install xcodegen swiftlint
@@ -41,12 +44,14 @@ fi
 open FENR.xcodeproj
 ```
 
-Select **FENR** for the main app, or **FENRDebug** to use the development emulator without a motorcycle. Configure your own signing team when running on a physical device.
+Select **FENR** for the main app, including its built-in demo, or **FENRDebug** for the development emulator. Configure your own signing team when running on a physical device.
+
+For a real motorcycle, disconnect other Bluetooth clients, including the Arkenstone phone, before pairing. The observed VCU accepts one active client. Available telemetry and controls depend on the motorcycle and firmware; the demo simulates vehicle responses.
 
 ## Documentation
 
 - [Development](docs/development.md) and [architecture](docs/architecture.md)
-- [Testing](docs/testing.md) and [demo walkthrough](docs/app-review-demo.md)
+- [Testing](docs/testing.md), [localization](docs/localization.md) and [demo walkthrough](docs/app-review-demo.md)
 - [App Store materials](store/README.md)
 - [Protocol research](https://github.com/fenrapp/bike-protocol-research)
 
