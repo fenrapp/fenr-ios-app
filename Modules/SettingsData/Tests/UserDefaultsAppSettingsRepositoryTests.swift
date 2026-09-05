@@ -48,6 +48,7 @@ struct UserDefaultsAppSettingsRepositoryTests {
                     )
                 )
             ),
+            liveActivities: .init(isEnabled: false, showsRiding: false, chargingDetailLevel: .summary),
             measurementSystem: .imperial,
             batteryPackCapacity: .sixPointEightKilowattHours
         )

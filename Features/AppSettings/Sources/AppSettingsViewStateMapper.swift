@@ -63,7 +63,8 @@ public struct AppSettingsViewStateMapper: Sendable {
             dashboardCards: .init(detail: dashboardCardsDetail(settings.dashboardCardConfiguration)),
             powerModes: powerModes(settings: settings, profile: profile),
             navigation: .init(detail: .appSettingsNavigationDetail),
-            navigationSettings: navigationSettings(settings.rideNavigation)
+            navigationSettings: navigationSettings(settings.rideNavigation),
+            liveActivities: liveActivities(settings.liveActivities)
         )
     }
 

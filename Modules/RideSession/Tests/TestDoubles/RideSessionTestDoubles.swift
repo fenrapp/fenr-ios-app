@@ -286,6 +286,10 @@ actor SessionVehicleSessionService: VehicleSessionService {
     private var subscriptions = 0
     private var starts = 0
     private var stops = 0
+    private var locationConsumers: Set<UUID> = []
+    private var locationRequests: [Bool] = []
+    private var blocksNextLocationAcquisition = false
+    private var locationContinuation: CheckedContinuation<Void, Never>?
 
     func observe() -> AsyncStream<VehicleSessionSnapshot> {
         subscriptions += 1
@@ -304,7 +308,24 @@ actor SessionVehicleSessionService: VehicleSessionService {
     func refreshBikeStatus() {}
     func zeroBikeAttitude() {}
     func setBatteryHealthMonitoringRequired(_: Bool, consumerID _: UUID) {}
-    func setLocationMonitoringRequired(_: Bool, consumerID _: UUID) {}
+    func setLocationMonitoringRequired(_ required: Bool, consumerID: UUID) async {
+        locationRequests.append(required)
+        if required { locationConsumers.insert(consumerID) } else { locationConsumers.remove(consumerID) }
+        if required, blocksNextLocationAcquisition {
+            blocksNextLocationAcquisition = false
+            await withCheckedContinuation { locationContinuation = $0 }
+        }
+    }
+
+    func blockNextLocationAcquisition() { blocksNextLocationAcquisition = true }
+    func hasBlockedLocationRequest() -> Bool { locationContinuation != nil }
+    func releaseLocationAcquisition() {
+        locationContinuation?.resume()
+        locationContinuation = nil
+    }
+
+    func locationConsumerCount() -> Int { locationConsumers.count }
+    func recordedLocationRequests() -> [Bool] { locationRequests }
 
     func send(_ snapshot: VehicleSessionSnapshot) {
         self.snapshot = snapshot

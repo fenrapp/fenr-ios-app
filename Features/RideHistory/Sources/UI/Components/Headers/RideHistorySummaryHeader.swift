@@ -1,3 +1,4 @@
+import DesignSystem
 import SwiftUI
 
 struct RideHistorySummaryHeader: View {
@@ -6,82 +7,60 @@ struct RideHistorySummaryHeader: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Constants.sectionSpacing) {
-            identityHeader
-
-            Divider()
-
-            if dynamicTypeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: Constants.iconSpacing) {
-                    summaryValue(summary.distanceText, label: .rideHistoryMetricDistance)
-                    Divider()
-                    summaryValue(summary.durationText, label: .rideHistoryMetricRideTime)
-                }
-            } else {
-                HStack(spacing: .zero) {
-                    summaryValue(summary.distanceText, label: .rideHistoryMetricDistance)
-                    Divider()
-                        .padding(.horizontal, Constants.dividerPadding)
-                    summaryValue(summary.durationText, label: .rideHistoryMetricRideTime)
-                }
-            }
+        VStack(alignment: .leading, spacing: DesignSpace.large) {
+            distanceSummary
+            Divider().overlay(DesignColor.border)
+            metrics
         }
-        .accessibilityElement(children: .combine)
+        .padding(.vertical, DesignSpace.extraSmall)
+        .accessibilityElement(children: .contain)
     }
 
-    @ViewBuilder
-    private var identityHeader: some View {
-        if dynamicTypeSize.isAccessibilitySize {
-            VStack(alignment: .leading, spacing: Constants.iconSpacing) {
-                identityIcon
-                identityText
+    private var distanceSummary: some View {
+        VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
+            let layout = dynamicTypeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: DesignSpace.small))
+                : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: DesignSpace.small))
+            layout {
+                Text(verbatim: summary.distanceText)
+                    .font(.system(.largeTitle, design: .rounded).weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(DesignColor.primaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                rideCount
             }
-        } else {
-            HStack(spacing: Constants.iconSpacing) {
-                identityIcon
-                identityText
-            }
-        }
-    }
-
-    private var identityIcon: some View {
-        Image(systemName: "motorcycle.fill")
-            .font(.title2)
-            .foregroundStyle(.tint)
-            .frame(width: Constants.iconSize, height: Constants.iconSize)
-            .background(.tint.opacity(Constants.iconBackgroundOpacity), in: Circle())
-    }
-
-    private var identityText: some View {
-        VStack(alignment: .leading, spacing: Constants.textSpacing) {
-            Text(summary.rideCountText)
-                .font(.title2.weight(.bold))
-            Text(.rideHistorySavedRideHistory)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .fixedSize(horizontal: false, vertical: true)
-    }
-
-    private func summaryValue(_ value: String, label: LocalizedStringResource) -> some View {
-        VStack(alignment: .leading, spacing: Constants.textSpacing) {
-            Text(value)
-                .font(.system(.headline, design: .rounded).weight(.semibold))
-                .monospacedDigit()
-            Text(label)
+            Text(.rideHistorySummaryTotalDistance)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignColor.secondaryText)
         }
-        .fixedSize(horizontal: false, vertical: true)
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private enum Constants {
-        static let iconSize: CGFloat = 44
-        static let iconBackgroundOpacity = 0.12
-        static let iconSpacing: CGFloat = 12
-        static let sectionSpacing: CGFloat = 16
-        static let textSpacing: CGFloat = 2
-        static let dividerPadding: CGFloat = 16
+    private var rideCount: some View {
+        Text(verbatim: summary.rideCountText)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(DesignColor.primaryText)
+            .padding(.horizontal, DesignSpace.small)
+            .padding(.vertical, DesignSpace.extraSmall)
+            .background(DesignColor.elevatedSurface, in: Capsule())
+            .fixedSize(horizontal: true, vertical: false)
+    }
+
+    private var metrics: some View {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: DesignSpace.medium))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: DesignSpace.small))
+        return layout {
+            RideHistorySummaryMetric(
+                label: .rideHistoryMetricRideTime, symbolName: "clock", value: summary.durationText
+            )
+            RideHistorySummaryMetric(
+                label: .rideHistoryMetricAverageSpeed, symbolName: "gauge.with.dots.needle.33percent",
+                value: summary.averageSpeedText
+            )
+            RideHistorySummaryMetric(
+                label: .rideHistoryMetricMaximumSpeed, symbolName: "gauge.with.dots.needle.67percent",
+                value: summary.maximumSpeedText
+            )
+        }
     }
 }

@@ -230,6 +230,15 @@ public final class AppSettingsViewModel: ObservableObject {
         save(updated)
     }
 
+    func updateLiveActivitySettings(_ update: (inout LiveActivitySettings) -> Void) {
+        var updated = settings
+        update(&updated.liveActivities)
+        guard updated != settings else { return }
+        settings = updated
+        render()
+        save(updated)
+    }
+
     private func observeProfile() {
         guard let observe = useCases.profile?.observe else { return }
         profileTask?.cancel()

@@ -1,6 +1,9 @@
 import BikeDomain
+import EnvironmentDomain
 import Foundation
 import SettingsDomain
+import TestSupport
+import VehicleSession
 
 actor BikeLiveActivityRepository: BikeRepository, BikeBatteryHealthRepository {
     private let telemetrySource = AsyncSource<BikeTelemetry>()
@@ -74,13 +77,17 @@ actor BikeLiveActivityRepository: BikeRepository, BikeBatteryHealthRepository {
 }
 
 actor BikeLiveActivitySettingsRepository: AppSettingsRepository {
-    func load() async -> AppSettings { .init() }
-    func save(_: AppSettings) async {}
+    private var settings = AppSettings()
+    private let hub = TestEventHub<AppSettings>(bufferingPolicy: .bufferingNewest(1))
+
+    func load() async -> AppSettings { settings }
+    func save(_ settings: AppSettings) async {
+        self.settings = settings
+        await hub.send(settings)
+    }
 
     func observe() async -> AsyncStream<AppSettings> {
-        AsyncStream { continuation in
-            continuation.yield(.init())
-        }
+        await hub.stream(replay: settings)
     }
 }
 
@@ -89,6 +96,7 @@ final class FakeBikeLiveActivityClient: BikeLiveActivityClient {
     private(set) var startCount = 0
     private(set) var updateCount = 0
     private(set) var endCount = 0
+    private(set) var dismissCount = 0
     private(set) var lastStartedVIN: String?
     private(set) var lastStartedState: BikeLiveActivityContentState?
     private(set) var updatedStates: [BikeLiveActivityContentState] = []
@@ -126,6 +134,11 @@ final class FakeBikeLiveActivityClient: BikeLiveActivityClient {
         endCount += 1
         endedStates.append(state)
         active = false
+    }
+
+    func dismiss(state: BikeLiveActivityContentState) async {
+        dismissCount += 1
+        await end(state: state)
     }
 
     func delayNextStart() {
@@ -239,4 +252,27 @@ private actor AsyncSource<Element: Sendable> {
     private func remove(_ id: UUID) {
         continuations[id] = nil
     }
+}
+
+actor BikeLiveActivityDeviceSpeedRepository: DeviceSpeedRepository {
+    func observeDeviceSpeed() -> AsyncStream<DeviceSpeedSample> { .init { _ in } }
+    func locationAuthorizationStatus() -> LocationAuthorizationStatus { .denied }
+    func requestLocationAuthorization() {}
+}
+
+actor BikeLiveActivityProfileRepository: BikeProfileRepository {
+    func loadProfile() -> BikeProfile? { nil }
+    func saveProfile(_: BikeProfile) {}
+    func clearProfile() {}
+}
+
+actor BikeLiveActivityIMURepository: BikeIMURepository {
+    func observeIMU() -> AsyncStream<BikeIMUSample> { .init { _ in } }
+    func startIMUMonitoring() throws {}
+    func stopIMUMonitoring() {}
+}
+
+actor BikeLiveActivityMotionCalibrationRepository: VehicleMotionCalibrationRepository {
+    func load(vin _: String) -> VehicleMotionCalibration? { nil }
+    func save(_: VehicleMotionCalibration) {}
 }

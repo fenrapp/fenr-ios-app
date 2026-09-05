@@ -8,18 +8,19 @@ public enum DashboardCardSectionID: String, Codable, CaseIterable, Hashable, Sen
     case range
     case systemHealth
     case rideDynamics
+    case settings
 
     public static let defaultOrder: [Self] = allCases
 
     public var defaultPageOrder: [DashboardCardPageID] {
         switch self {
         case .bikeLock: []
-        case .navigation: []
+        case .navigation, .settings: []
         case .currentTrip: [.currentTrip, .rideStatistics]
         case .efficiency: [.efficiencyLive, .efficiencyTrend]
         case .range: [.range, .batteryTrip]
         case .systemHealth: [.systemHealth, .batteryCells, .thermal]
-        case .rideDynamics: [.lean, .pitch, .course]
+        case .rideDynamics: [.lean, .pitch, .altitude, .course]
         }
     }
 }
@@ -36,6 +37,7 @@ public enum DashboardCardPageID: String, Codable, CaseIterable, Hashable, Sendab
     case thermal
     case lean
     case pitch
+    case altitude
     case course
 
     public var sectionID: DashboardCardSectionID {
@@ -44,7 +46,7 @@ public enum DashboardCardPageID: String, Codable, CaseIterable, Hashable, Sendab
         case .efficiencyLive, .efficiencyTrend: .efficiency
         case .range, .batteryTrip: .range
         case .systemHealth, .batteryCells, .thermal: .systemHealth
-        case .lean, .pitch, .course: .rideDynamics
+        case .lean, .pitch, .course, .altitude: .rideDynamics
         }
     }
 }
@@ -110,6 +112,7 @@ public struct DashboardCardConfiguration: Codable, Equatable, Sendable {
     }
 
     public mutating func setSectionVisibility(_ isVisible: Bool, id: DashboardCardSectionID) {
+        guard id != .settings else { return }
         guard let index = sections.firstIndex(where: { $0.id == id }) else { return }
         sections[index].isVisible = isVisible
     }
@@ -178,14 +181,20 @@ public struct DashboardCardConfiguration: Codable, Equatable, Sendable {
                 $0.id.sectionID == sectionID && seenPages.insert($0.id).inserted
             }
             let pagesByID = Dictionary(uniqueKeysWithValues: knownPages.map { ($0.id, $0) })
-            let pageIDs = completeOrder(knownPages.map(\.id), defaults: sectionID.defaultPageOrder)
+            var savedPageOrder = knownPages.map(\.id)
+            if sectionID == .rideDynamics,
+               !savedPageOrder.contains(.altitude),
+               let compassIndex = savedPageOrder.firstIndex(of: .course) {
+                savedPageOrder.insert(.altitude, at: compassIndex)
+            }
+            let pageIDs = completeOrder(savedPageOrder, defaults: sectionID.defaultPageOrder)
             var pages = pageIDs.map { pagesByID[$0] ?? DashboardCardPageConfiguration(id: $0) }
             if !pages.contains(where: \.isVisible), !pages.isEmpty {
                 pages[0].isVisible = true
             }
             return DashboardCardSectionConfiguration(
                 id: sectionID,
-                isVisible: saved.isVisible,
+                isVisible: sectionID == .settings || saved.isVisible,
                 pages: pages
             )
         }

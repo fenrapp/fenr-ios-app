@@ -16,12 +16,16 @@ struct BikeLiveActivityDynamicIsland {
                 BikeLiveActivityStatusView(state: context.state)
             }
             DynamicIslandExpandedRegion(.trailing) {
-                BikeLiveActivityMetricStack(state: context.state, mode: .compact)
-                    .padding(.trailing, DesignSpace.small)
+                if context.state.usesDetailedPresentation {
+                    BikeLiveActivityMetricStack(state: context.state, mode: .compact)
+                        .padding(.trailing, DesignSpace.small)
+                }
             }
             DynamicIslandExpandedRegion(.bottom) {
-                BikeLiveActivityProgressView(state: context.state)
-                    .padding(.horizontal, DesignSpace.small)
+                if context.state.usesDetailedPresentation {
+                    BikeLiveActivityProgressView(state: context.state)
+                        .padding(.horizontal, DesignSpace.small)
+                }
             }
         } compactLeading: {
             Text(BikeLiveActivityFormatter.batteryText(context.state.batteryPercent))

@@ -36,7 +36,7 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
     ) -> DashboardCardSectionRowViewData {
         let bikeLockIsUnavailable = configuration.id == .bikeLock && !bikeLockCapability.isAvailable
         let pages = configuration.pages.map { page($0, in: configuration) }
-        let isBikeLock = configuration.id == .bikeLock
+        let isRequired = configuration.id == .bikeLock || configuration.id == .settings
         let visibleCount = pages.filter(\.isVisible).count
         let detail = sectionDetail(
             configuration.id,
@@ -48,10 +48,10 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
             id: configuration.id.rawValue,
             title: sectionTitle(configuration.id),
             detail: detail,
-            isVisible: !bikeLockIsUnavailable && (configuration.isVisible || isBikeLock),
-            isVisibilityEnabled: !isBikeLock && !bikeLockIsUnavailable,
-            disabledVisibilityHint: bikeLockDisabledHint(
-                isBikeLock: isBikeLock,
+            isVisible: !bikeLockIsUnavailable && (configuration.isVisible || isRequired),
+            isVisibilityEnabled: !isRequired && !bikeLockIsUnavailable,
+            disabledVisibilityHint: visibilityDisabledHint(
+                isRequired: isRequired,
                 isUnavailable: bikeLockIsUnavailable
             ),
             thumbnail: sectionThumbnail(configuration.id),
@@ -77,6 +77,8 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
             }
         case .navigation:
             .dashboardCardSettingsNavigationDetail
+        case .settings:
+            .dashboardCardSettingsSettingsDetail
         default:
             .dashboardCardSettingsSectionVisibleSummary(
                 visibleCount,
@@ -86,12 +88,12 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
         }
     }
 
-    private func bikeLockDisabledHint(
-        isBikeLock: Bool,
+    private func visibilityDisabledHint(
+        isRequired: Bool,
         isUnavailable: Bool
     ) -> LocalizedStringResource? {
         if isUnavailable { return .dashboardCardSettingsBikeLockUnavailableDetail }
-        if isBikeLock { return .dashboardCardSettingsCannotHideHint }
+        if isRequired { return .dashboardCardSettingsCannotHideHint }
         return nil
     }
 
@@ -117,6 +119,7 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
         case .range: .dashboardCardSettingsSectionRange
         case .systemHealth: .dashboardCardSettingsSectionSystemHealth
         case .rideDynamics: .dashboardCardSettingsSectionRideDynamics
+        case .settings: .dashboardCardSettingsSectionSettings
         }
     }
 
@@ -134,6 +137,7 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
         case .lean: .dashboardCardSettingsPageLean
         case .pitch: .dashboardCardSettingsPagePitch
         case .course: .dashboardCardSettingsPageCourse
+        case .altitude: .dashboardCardSettingsPageAltitude
         }
     }
 
@@ -146,6 +150,7 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
         case .range: .init(style: .battery, systemImage: "road.lanes", accent: .informational)
         case .systemHealth: .init(style: .grid, systemImage: "heart.text.square.fill", accent: .critical)
         case .rideDynamics: .init(style: .attitude, systemImage: "gyroscope", accent: .accent)
+        case .settings: .init(style: .settings, systemImage: "gearshape.fill", accent: .accent)
         }
     }
 
@@ -162,6 +167,7 @@ public struct DashboardCardSettingsViewStateMapper: Sendable {
         case .thermal: .init(style: .chart, systemImage: "thermometer.medium", accent: .warning)
         case .lean: .init(style: .attitude, systemImage: "angle", accent: .accent)
         case .pitch: .init(style: .attitude, systemImage: "arrow.up.and.down", accent: .accent)
+        case .altitude: .init(style: .altitude, systemImage: "mountain.2.fill", accent: .informational)
         case .course: .init(style: .compass, systemImage: "location.north.fill", accent: .accent)
         }
     }

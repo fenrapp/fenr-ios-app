@@ -20,6 +20,7 @@ public struct VehicleMotionSnapshot: Equatable, Sendable {
     public let pitchDegrees: Double?
     public let headingDegrees: Double?
     public let altitudeMeters: Double?
+    public let altitudeObservedAt: Date?
     public let coordinate: GeographicCoordinate?
     public let headingSource: VehicleMotionHeadingSource
     public let availability: VehicleMotionAvailability
@@ -30,6 +31,7 @@ public struct VehicleMotionSnapshot: Equatable, Sendable {
         pitchDegrees: Double? = nil,
         headingDegrees: Double? = nil,
         altitudeMeters: Double? = nil,
+        altitudeObservedAt: Date? = nil,
         coordinate: GeographicCoordinate? = nil,
         headingSource: VehicleMotionHeadingSource = .unavailable,
         availability: VehicleMotionAvailability = .unavailable,
@@ -39,6 +41,7 @@ public struct VehicleMotionSnapshot: Equatable, Sendable {
         self.pitchDegrees = pitchDegrees
         self.headingDegrees = headingDegrees
         self.altitudeMeters = altitudeMeters
+        self.altitudeObservedAt = altitudeObservedAt
         self.coordinate = coordinate
         self.headingSource = headingSource
         self.availability = availability

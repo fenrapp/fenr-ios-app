@@ -7,6 +7,7 @@ protocol BikeLiveActivityClient: AnyObject {
     func start(vin: String, state: BikeLiveActivityContentState) async throws
     func update(state: BikeLiveActivityContentState) async
     func end(state: BikeLiveActivityContentState) async
+    func dismiss(state: BikeLiveActivityContentState) async
 }
 
 @MainActor
@@ -53,6 +54,13 @@ final class ActivityKitBikeLiveActivityClient: BikeLiveActivityClient {
         if let activity { return activity }
         activity = Activity<BikeLiveActivityAttributes>.activities.first
         return activity
+    }
+
+    func dismiss(state: BikeLiveActivityContentState) async {
+        for activity in Activity<BikeLiveActivityAttributes>.activities {
+            await activity.end(activityContent(for: state), dismissalPolicy: .immediate)
+        }
+        activity = nil
     }
 
     private func activityContent(

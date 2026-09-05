@@ -11,8 +11,10 @@ struct BikeLiveActivityLockScreenView: View {
         VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
             header
             summary
-            BikeLiveActivityProgressView(state: context.state)
-            BikeLiveActivityMetricStack(state: context.state, mode: .regular)
+            if context.state.usesDetailedPresentation {
+                BikeLiveActivityProgressView(state: context.state)
+                BikeLiveActivityMetricStack(state: context.state, mode: .regular)
+            }
         }
         .padding(.horizontal, DesignSpace.medium)
         .padding(.vertical, DesignSpace.small)

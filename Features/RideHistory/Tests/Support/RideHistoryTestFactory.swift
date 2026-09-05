@@ -25,7 +25,8 @@ enum RideHistoryTestFactory {
             session: session,
             mapper: RideHistoryMapper(
                 locale: Locale(identifier: "en_US"),
-                measurementMapperFactory: RideHistoryMeasurementMapperFactory()
+                measurementMapperFactory: RideHistoryMeasurementMapperFactory(),
+                statisticsAggregator: RideTripStatisticsAggregator()
             )
         )
         return Fixture(

@@ -1,6 +1,7 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "rideHistorySummaryTotalDistance" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Total distance"}}}},
     "rideHistoryBatteryNoRecordedChange" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No recorded change" } } } },
     "rideHistoryBatteryPointsGained" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld percentage points gained" } } } },
     "rideHistoryBatteryPointsUsed" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld percentage points used" } } } },

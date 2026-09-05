@@ -5,6 +5,7 @@ struct VehicleMotionLocationContext {
     let heading: Double?
     let headingSource: VehicleMotionHeadingSource
     let altitude: Double?
+    let altitudeObservedAt: Date?
     let coordinate: GeographicCoordinate?
 }
 
@@ -45,10 +46,12 @@ public struct VehicleMotionLocationResolver: Sendable {
         } else {
             filteredHeadingDegrees = nil
         }
+        let altitude = validAltitude(position ?? location)
         return .init(
             heading: filteredHeadingDegrees,
             headingSource: source,
-            altitude: validAltitude(position ?? location),
+            altitude: altitude,
+            altitudeObservedAt: altitude == nil ? nil : (position ?? location)?.observedAt,
             coordinate: validCoordinate(position ?? location)
         )
     }

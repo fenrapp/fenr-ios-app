@@ -6,6 +6,7 @@ struct DashboardRideChrome<Content: View>: View {
     let deviceBattery: DashboardDeviceBatteryViewData
     let toggleDeviceBatteryDisplayMode: () -> Void
     let onSettings: () -> Void
+    let showsSettingsShortcut: Bool
     var bottomLeadingAccessory: () -> AnyView = { AnyView(EmptyView()) }
     @ViewBuilder let content: () -> Content
 
@@ -35,13 +36,15 @@ struct DashboardRideChrome<Content: View>: View {
                 .padding(DashboardRideChromeConstants.edgePadding)
             }
             .overlay(alignment: .bottomTrailing) {
-                Button(action: onSettings) {
-                    Label(.rideDashboardHeaderSettings, systemImage: "gearshape.fill")
+                if showsSettingsShortcut {
+                    Button(action: onSettings) {
+                        Label(.rideDashboardHeaderSettings, systemImage: "gearshape.fill")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                    .padding(DashboardRideChromeConstants.edgePadding)
+                    .accessibilityIdentifier("dashboard.settings")
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-                .padding(DashboardRideChromeConstants.edgePadding)
-                .accessibilityIdentifier("dashboard.settings")
             }
     }
 }

@@ -20,6 +20,7 @@ struct DashboardRideDynamicsPager: View {
                 switch page {
                 case .lean: DashboardLeanCard(state: state, reduceMotion: reduceMotion, calibrate: calibrate)
                 case .pitch: DashboardPitchCard(state: state, reduceMotion: reduceMotion, calibrate: calibrate)
+                case .altitude: DashboardAltitudeCard(state: state.altimeter, reduceMotion: reduceMotion)
                 case .course: DashboardCourseCard(state: state, reduceMotion: reduceMotion)
                 }
             }

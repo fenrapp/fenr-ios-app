@@ -198,3 +198,25 @@ struct RideDynamicsCardViewModelTests {
         let rideSession: RideDynamicsTestRideSession
     }
 }
+
+extension RideDynamicsCardViewModelTests {
+    @Test("Altitude remains independent of IMU and clears when GPS expires during telemetry recovery")
+    func altitudeDoesNotFreezeDuringRecovery() async {
+        let fixture = makeFixture()
+        fixture.viewModel.setIsVisible(true)
+        #expect(await fixture.rideSession.waitForSubscriber())
+        await fixture.rideSession.send(.init(
+            vehicleIdentity: .vin("FENRTEST000000001"),
+            motion: .init(altitudeMeters: 420, availability: .unavailable),
+            isCanonicalTelemetryAvailable: false
+        ))
+        #expect(await waitUntil { fixture.viewModel.viewState.altimeter.valueText == "420" })
+        #expect(fixture.viewModel.viewState.altimeter.isAvailable)
+        await fixture.rideSession.send(.init(
+            vehicleIdentity: .vin("FENRTEST000000001"), isCanonicalTelemetryAvailable: false
+        ))
+        #expect(await waitUntil { !fixture.viewModel.viewState.altimeter.isAvailable })
+        #expect(fixture.viewModel.viewState.altimeter.ticks.isEmpty)
+        fixture.viewModel.setIsVisible(false)
+    }
+}

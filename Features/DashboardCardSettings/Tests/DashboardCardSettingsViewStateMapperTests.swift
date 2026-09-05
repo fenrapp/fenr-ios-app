@@ -14,7 +14,8 @@ struct DashboardCardSettingsViewStateMapperTests {
 
         #expect(state.fixedCards.map { String(localized: $0.title) } == ["Speedometer", "Charging"])
         #expect(state.sections.map { String(localized: $0.title) } == [
-            "Bike Lock", "Ride Navigation", "Current Trip", "Efficiency", "Range", "System Health", "Ride Dynamics"
+            "Bike Lock", "Ride Navigation", "Current Trip", "Efficiency", "Range",
+            "System Health", "Ride Dynamics", "Settings"
         ])
         #expect(state.sections.first.map { String(localized: $0.detail) }
             == "Connect a supported bike to enable this card")
@@ -64,5 +65,32 @@ struct DashboardCardSettingsViewStateMapperTests {
 
         #expect(efficiency.map { String(localized: $0.detail) }
             == "1 of 2 card visible · Live Efficiency first")
+    }
+}
+
+extension DashboardCardSettingsViewStateMapperTests {
+    @Test("Altitude appears with its thumbnail and can be hidden")
+    func exposesAltitude() throws {
+        let state = DashboardCardSettingsViewStateMapper().map(settings: .init(), bikeLockCapability: .init())
+        let page = try #require(state.section(id: "rideDynamics")?.pages.first { $0.id == "altitude" })
+        #expect(page.id == "altitude")
+        #expect(String(localized: page.title) == "Altitude")
+        #expect(page.isVisible)
+        #expect(page.canHide)
+        #expect(page.thumbnail.style == .altitude)
+    }
+}
+
+extension DashboardCardSettingsViewStateMapperTests {
+    @Test("Settings is a mandatory last section with no subpages")
+    func exposesMandatorySettings() throws {
+        let state = DashboardCardSettingsViewStateMapper().map(settings: .init(), bikeLockCapability: .init())
+        let section = try #require(state.sections.last)
+        #expect(section.id == "settings")
+        #expect(String(localized: section.title) == "Settings")
+        #expect(section.isVisible)
+        #expect(!section.isVisibilityEnabled)
+        #expect(section.disabledVisibilityHint != nil)
+        #expect(section.pages.isEmpty)
     }
 }

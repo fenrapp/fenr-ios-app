@@ -75,7 +75,7 @@ struct AppSettingsPowerModesMapperTests {
             locationAuthorizationStatus: .notDetermined
         )
 
-        #expect(String(localized: state.dashboardCards.detail) == "6 visible")
+        #expect(String(localized: state.dashboardCards.detail) == "7 visible")
     }
 
     @Test("Hides the manual bike model fallback after confirmed Alpha detection")

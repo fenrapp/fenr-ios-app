@@ -181,6 +181,7 @@ private extension VehicleMotionEstimator {
                 pitchDegrees: pitchDegrees,
                 headingDegrees: context.heading,
                 altitudeMeters: context.altitude,
+                altitudeObservedAt: context.altitudeObservedAt,
                 coordinate: context.coordinate,
                 headingSource: context.headingSource,
                 availability: availability,

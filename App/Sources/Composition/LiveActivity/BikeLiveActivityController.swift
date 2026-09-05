@@ -134,6 +134,15 @@ private extension BikeLiveActivityController {
         )
         let state = snapshot.contentState
 
+        guard updatePolicy.allowsActivity(
+            settings: self.snapshot.settings.liveActivities,
+            state: state,
+            previousStableState: lastStableContentState
+        ) else {
+            await dismissDisabledActivity(state: state)
+            return
+        }
+
         let continuityPhase = continuityPolicy.phase(
             connectionState: self.snapshot.connection.state,
             hasLiveTelemetry: snapshot.hasRecentTelemetry
@@ -151,18 +160,7 @@ private extension BikeLiveActivityController {
         cancelReconnectionNotice()
 
         if !activityClient.isActive {
-            guard canShowLiveActivity else { return }
-            guard canStartActivity(with: snapshot) else { return }
-            do {
-                try await activityClient.start(vin: activityVIN, state: state)
-                guard isStarted, !Task.isCancelled else { return }
-                lastContentState = state
-                lastStableContentState = state
-                lastUpdateDate = clock.now
-                await updateBatteryHealthMonitoring(for: state)
-            } catch {
-                await setBatteryHealthRequired(false)
-            }
+            await startActivity(with: snapshot)
             return
         }
 
@@ -187,6 +185,35 @@ private extension BikeLiveActivityController {
             lastStableContentState = state
         }
         lastUpdateDate = clock.now
+    }
+
+    private func startActivity(with snapshot: BikeLiveActivitySnapshot) async {
+        let state = snapshot.contentState
+        guard canShowLiveActivity else { return }
+        guard canStartActivity(with: snapshot) else { return }
+        do {
+            try await activityClient.start(vin: activityVIN, state: state)
+            guard isStarted, !Task.isCancelled else { return }
+            lastContentState = state
+            lastStableContentState = state
+            lastUpdateDate = clock.now
+            await updateBatteryHealthMonitoring(for: state)
+        } catch {
+            await setBatteryHealthRequired(false)
+        }
+    }
+
+    private func dismissDisabledActivity(state: BikeLiveActivityContentState) async {
+        cancelReconnectionNotice()
+        requiresImmediateRecoveryUpdate = false
+        if activityClient.isActive {
+            await activityClient.dismiss(state: lastContentState ?? state)
+            guard isStarted, !Task.isCancelled else { return }
+        }
+        await setBatteryHealthRequired(false)
+        lastContentState = nil
+        lastStableContentState = nil
+        lastUpdateDate = nil
     }
 
     private func canStartActivity(with mapped: BikeLiveActivitySnapshot) -> Bool {
@@ -224,8 +251,17 @@ private extension BikeLiveActivityController {
     }
 
     private func preserveActivityDuringRecovery() async {
-        guard let stableState = lastStableContentState else { return }
+        guard var stableState = lastStableContentState else { return }
+        let preferences = snapshot.settings.liveActivities
+        stableState.showsDetails = (stableState.mode == .charging
+            ? preferences.chargingDetailLevel : preferences.ridingDetailLevel) == .detailed
         await updateBatteryHealthMonitoring(for: stableState)
+        if stableState.showsDetails != lastContentState?.showsDetails, !isShowingReconnectionNotice {
+            await activityClient.update(state: stableState)
+            guard isStarted, !Task.isCancelled else { return }
+            lastContentState = stableState
+            lastUpdateDate = clock.now
+        }
         if isShowingReconnectionNotice {
             var reconnectingState = stableState
             reconnectingState.phase = .reconnecting

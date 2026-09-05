@@ -1,6 +1,19 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "appSettingsLiveActivitiesTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Live Activities"}}}},
+    "appSettingsLiveActivitiesSummary" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Riding, charging, and presentation"}}}},
+    "appSettingsLiveActivitiesOff" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Hidden"}}}},
+    "appSettingsLiveActivitiesEnabled" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Allow Live Activities"}}}},
+    "appSettingsLiveActivitiesEnabledDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Show bike updates on the Lock Screen and Dynamic Island while FENR is in the background. Turning this off removes the current activity and prevents new ones."}}}},
+    "appSettingsLiveActivitiesRiding" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Riding"}}}},
+    "appSettingsLiveActivitiesCharging" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Charging"}}}},
+    "appSettingsLiveActivitiesShow" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Show Live Activity"}}}},
+    "appSettingsLiveActivitiesPresentation" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Presentation"}}}},
+    "appSettingsLiveActivitiesViewSummary" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Summary"}}}},
+    "appSettingsLiveActivitiesViewDetailed" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Detailed"}}}},
+    "appSettingsLiveActivitiesRidingDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Summary shows battery, riding mode, and connection status. Detailed also shows speed and bike state."}}}},
+    "appSettingsLiveActivitiesChargingDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Summary shows battery, charge target, and status. Detailed also shows progress, remaining time, and available charging measurements."}}}},
     "app.settings.navigation.appearance.detail" : {
       "extractionState" : "manual",
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Colors and line thickness" } } }

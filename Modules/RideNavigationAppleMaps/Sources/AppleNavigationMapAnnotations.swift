@@ -144,34 +144,32 @@ private final class CompassRingView: UIView {
         let center = CGPoint(x: rect.midX, y: rect.midY)
         context.setStrokeColor(secondaryColor.cgColor)
         context.setLineWidth(Constants.ringWidth)
-        let ringRect = CGRect(
-            x: center.x - Constants.ringRadius,
-            y: center.y - Constants.ringRadius,
-            width: Constants.ringRadius * 2,
-            height: Constants.ringRadius * 2
+        let cardinals = NavigationCardinal.allCases
+        let fonts = cardinals.map {
+            UIFont.systemFont(ofSize: Constants.fontSize, weight: $0.isNorth ? .bold : .medium)
+        }
+        let sizes = cardinals.enumerated().map { index, cardinal in
+            String(localized: cardinal.resource).size(withAttributes: [.font: fonts[index]])
+        }
+        let geometry = CompassRingGeometry(
+            center: center,
+            radius: Constants.ringRadius,
+            headingDegrees: mapHeadingDegrees,
+            labelSizes: sizes,
+            padding: Constants.labelMargin
         )
-        context.strokeEllipse(in: ringRect)
+        context.addPath(geometry.path)
+        context.strokePath()
 
-        for cardinal in NavigationCardinal.allCases {
+        for (index, cardinal) in cardinals.enumerated() {
             let text = String(localized: cardinal.resource)
-            let angle = (cardinal.bearingDegrees - mapHeadingDegrees)
-                * .pi / Constants.halfCircleDegrees
-            let font = UIFont.systemFont(
-                ofSize: Constants.fontSize,
-                weight: cardinal.isNorth ? .bold : .medium
-            )
+            let font = fonts[index]
             let attributes: [NSAttributedString.Key: Any] = [
                 .font: font,
                 .foregroundColor: secondaryColor
             ]
-            let size = text.size(withAttributes: attributes)
-            let radialHalfExtent = abs(sin(angle)) * size.width / 2
-                + abs(cos(angle)) * size.height / 2
-            let labelRadius = Constants.ringRadius + Constants.labelMargin + radialHalfExtent
-            let point = CGPoint(
-                x: center.x + sin(angle) * labelRadius,
-                y: center.y - cos(angle) * labelRadius
-            )
+            let size = sizes[index]
+            let point = geometry.labels[index].center
             let origin = CGPoint(x: point.x - size.width / 2, y: point.y - size.height / 2)
             if cardinal.isNorth {
                 drawNorth(text, font: font, size: size, at: origin)

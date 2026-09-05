@@ -9,7 +9,9 @@ enum RideHistoryPreviewData {
     static let summary = RideHistoryViewState.Summary(
         rideCountText: "24 rides",
         distanceText: "1,286 km",
-        durationText: "31:42"
+        durationText: "31 hr, 42 min",
+        averageSpeedText: "41 km/h",
+        maximumSpeedText: "94 km/h"
     )
 
     static let rows = [

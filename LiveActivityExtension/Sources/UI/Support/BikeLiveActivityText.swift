@@ -27,7 +27,7 @@ enum BikeLiveActivityText {
         if state.phase == .complete {
             return ready
         }
-        if let estimatedTimeRemaining = state.estimatedTimeRemaining {
+        if state.usesDetailedPresentation, let estimatedTimeRemaining = state.estimatedTimeRemaining {
             return remaining(estimatedTimeRemaining)
         }
         if state.mode == .riding {

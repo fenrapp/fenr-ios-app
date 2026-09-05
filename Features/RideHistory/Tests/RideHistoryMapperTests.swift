@@ -8,7 +8,8 @@ import Testing
 struct RideHistoryMapperTests {
     private let mapper = RideHistoryMapper(
         locale: Locale(identifier: "en_US"),
-        measurementMapperFactory: RideHistoryMeasurementMapperFactory()
+        measurementMapperFactory: RideHistoryMeasurementMapperFactory(),
+        statisticsAggregator: RideTripStatisticsAggregator()
     )
 
     @Test("Maps summary rows and imperial measurements")
@@ -129,5 +130,28 @@ struct RideHistoryMapperTests {
         )
 
         #expect(state.comparisons.contains(where: { $0.id == "efficiency" }) == false)
+    }
+}
+
+extension RideHistoryMapperTests {
+    @Test("History summary weights average speed by observed time and retains the peak speed")
+    func summarizesSpeedAndExplicitDuration() {
+        let trips = [
+            RideHistoryFixtures.trip(
+                startedAt: .distantPast, duration: 600, averageSpeed: 20, maximumSpeed: 45
+            ),
+            RideHistoryFixtures.trip(
+                startedAt: .distantPast, duration: 1_800, averageSpeed: 60, maximumSpeed: 90
+            )
+        ]
+        let metric = mapper.mapList(trips: trips, measurementSystem: .metric)
+        #expect(metric.summary?.averageSpeedText == "50 km/h")
+        #expect(metric.summary?.maximumSpeedText == "90 km/h")
+        #expect(metric.summary?.durationText.contains("40") == true)
+        #expect(metric.summary?.durationText.contains("min") == true)
+        let imperial = mapper.mapList(trips: trips, measurementSystem: .imperial)
+        #expect(imperial.summary?.averageSpeedText == "31 mph")
+        #expect(imperial.summary?.maximumSpeedText == "56 mph")
+        #expect(mapper.mapList(trips: [], measurementSystem: .metric).summary == nil)
     }
 }

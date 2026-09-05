@@ -151,6 +151,13 @@ public struct AppSettingsView: View {
 
     private var appSection: some View {
         Section {
+            SettingsNavigationRow(
+                icon: "livephoto", iconTint: .purple,
+                title: .appSettingsLiveActivitiesTitle,
+                detail: viewModel.viewState.liveActivities.summary,
+                accessibilityIdentifier: "settings.liveActivities",
+                action: { onNavigation(.show(.liveActivities)) }
+            )
             SettingsPickerRow(
                 icon: "ruler",
                 iconTint: .gray,

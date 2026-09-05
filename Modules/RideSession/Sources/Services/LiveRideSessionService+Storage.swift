@@ -11,6 +11,7 @@ extension LiveRideSessionService {
         ))
         lastElectricalSampleDate = nil
         lastMotionSampleDate = nil
+        lastAltitudeSampleDate = nil
         lastPersistenceDate = nil
         isPrepared = false
     }
@@ -55,7 +56,12 @@ extension LiveRideSessionService {
     }
 
     func updateCurrentTrip() async {
-        guard stopTask == nil, isPrepared, isReceivingTelemetry else { return }
+        guard stopTask == nil, isPrepared else { return }
+        guard isReceivingTelemetry else {
+            updateTripAltitude()
+            await persistIfNeeded(force: false)
+            return
+        }
         let previousTripID = recorder.trip?.id
         guard var trip = recorder.record(
             runState: vehicleSnapshot.telemetry.runState,
@@ -87,6 +93,8 @@ extension LiveRideSessionService {
             lastMotionSampleDate = sampleDate
         }
 
+        updateTripAltitude()
+
         if previousTripID == nil {
             startTickerIfNeeded()
             await persistIfNeeded(force: true)
@@ -95,13 +103,22 @@ extension LiveRideSessionService {
         }
     }
 
+    func updateTripAltitude() {
+        guard let trip = recorder.trip,
+              let sampleDate = vehicleSnapshot.motion.altitudeObservedAt,
+              lastAltitudeSampleDate.map({ sampleDate > $0 }) ?? true else { return }
+        recorder.restore(trip.updatingAltitude(meters: vehicleSnapshot.motion.altitudeMeters))
+        lastAltitudeSampleDate = sampleDate
+    }
+
     func updateTripAtCurrentTime() -> RideTrip? {
         recorder.tick(at: now(), speedKilometersPerHour: resolvedSpeed())
     }
 
     func appendLivePowerSample(date: Date, powerWatts: Double) {
+        let bucket = (date.timeIntervalSinceReferenceDate / Constants.minimumLiveSampleInterval).rounded(.down)
         if let last = livePowerSamples.last,
-           date.timeIntervalSince(last.date) < Constants.minimumLiveSampleInterval {
+           bucket == (last.date.timeIntervalSinceReferenceDate / Constants.minimumLiveSampleInterval).rounded(.down) {
             livePowerSamples[livePowerSamples.index(before: livePowerSamples.endIndex)] = .init(
                 date: date,
                 powerWatts: powerWatts
@@ -144,6 +161,7 @@ extension LiveRideSessionService {
             lastPersistenceDate = restoredTrip.updatedAt
             lastElectricalSampleDate = nil
             lastMotionSampleDate = nil
+            lastAltitudeSampleDate = nil
             if !restoredTrip.isPaused { startTickerIfNeeded() }
         }
         await updateCurrentTrip()

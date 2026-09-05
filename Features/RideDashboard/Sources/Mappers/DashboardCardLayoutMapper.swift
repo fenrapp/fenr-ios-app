@@ -6,7 +6,7 @@ public struct DashboardCardLayoutMapper: Sendable {
     func map(_ configuration: DashboardCardConfiguration) -> DashboardCardLayout {
         DashboardCardLayout(
             ridingCards: configuration.sections
-                .filter { $0.isVisible || $0.id == .bikeLock }
+                .filter { $0.isVisible || $0.id == .bikeLock || $0.id == .settings }
                 .map { ridingCard($0.id) },
             currentTripPages: visiblePages(for: .currentTrip, in: configuration).compactMap(currentTripPage),
             efficiencyPages: visiblePages(for: .efficiency, in: configuration).compactMap(efficiencyPage),
@@ -32,6 +32,7 @@ public struct DashboardCardLayoutMapper: Sendable {
         case .range: .range
         case .systemHealth: .systemHealth
         case .rideDynamics: .dynamics
+        case .settings: .settings
         }
     }
 
@@ -73,6 +74,7 @@ public struct DashboardCardLayoutMapper: Sendable {
         case .lean: .lean
         case .pitch: .pitch
         case .course: .course
+        case .altitude: .altitude
         default: nil
         }
     }

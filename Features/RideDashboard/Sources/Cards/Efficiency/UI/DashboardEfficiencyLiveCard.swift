@@ -9,9 +9,9 @@ struct DashboardEfficiencyLiveCard: View {
         DashboardAdaptiveCardSurface {
             VStack(alignment: .leading, spacing: Constants.spacing) {
                 header
-                hero
                 powerLegend
                 powerChart
+                hero
                 energySummary
             }
         }
@@ -22,14 +22,23 @@ struct DashboardEfficiencyLiveCard: View {
     }
 
     private var header: some View {
-        DashboardTripCardHeader(title: rideDashboardLocalized(.rideDashboardEfficiencyLiveTitle))
+        DashboardTripCardHeader(title: rideDashboardLocalized(.rideDashboardEfficiencyLiveTitle)) {
+            Text(.rideDashboardEfficiencyWindow)
+                .font(.caption2)
+                .foregroundStyle(DesignColor.secondaryText)
+        }
     }
 
     private var hero: some View {
-        HStack(alignment: .firstTextBaseline, spacing: DesignSpace.extraSmall) {
-            Text(state.valueText)
-                .font(.system(size: Constants.heroFontSize, weight: .medium, design: .rounded))
-                .monospacedDigit()
+        HStack(alignment: .lastTextBaseline, spacing: DesignSpace.extraSmall) {
+            VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
+                Text(.rideDashboardEfficiencyAverage)
+                    .font(.caption2)
+                    .foregroundStyle(DesignColor.secondaryText)
+                Text(verbatim: state.valueText)
+                    .font(.system(size: Constants.heroFontSize, weight: .medium, design: .rounded))
+                    .monospacedDigit()
+            }
             Text(state.unitText)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(DesignColor.secondaryText)
@@ -43,37 +52,40 @@ struct DashboardEfficiencyLiveCard: View {
     private var powerChart: some View {
         Chart {
             RuleMark(y: .value(rideDashboardLocalized(.rideDashboardChartZero), 0))
-                .foregroundStyle(DesignColor.secondaryText.opacity(0.45))
-                .lineStyle(.init(lineWidth: 1, dash: [3, 3]))
+                .foregroundStyle(DesignColor.secondaryText.opacity(Constants.zeroLineOpacity))
+                .lineStyle(.init(lineWidth: Constants.gridLineWidth, dash: Constants.zeroLineDash))
             ForEach(state.powerPoints) { point in
-                AreaMark(
-                    x: .value(rideDashboardLocalized(.rideDashboardChartTime), point.date),
-                    y: .value(rideDashboardLocalized(.rideDashboardChartUsedPower), point.usedKilowatts)
-                )
-                .foregroundStyle(DesignColor.informational.opacity(0.18))
                 LineMark(
                     x: .value(rideDashboardLocalized(.rideDashboardChartTime), point.date),
-                    y: .value(rideDashboardLocalized(.rideDashboardChartUsedPower), point.usedKilowatts)
+                    y: .value(rideDashboardLocalized(.rideDashboardChartUsedPower), point.usedKilowatts),
+                    series: .value(
+                        rideDashboardLocalized(.rideDashboardChartUsedPower),
+                        rideDashboardLocalized(.rideDashboardEfficiencyLegendUsed)
+                    )
                 )
                 .foregroundStyle(DesignColor.informational)
-                .lineStyle(.init(lineWidth: 2, lineCap: .round, lineJoin: .round))
+                .lineStyle(.init(lineWidth: Constants.chartLineWidth, lineCap: .round, lineJoin: .round))
             }
             ForEach(state.powerPoints) { point in
-                AreaMark(
-                    x: .value(rideDashboardLocalized(.rideDashboardChartTime), point.date),
-                    y: .value(rideDashboardLocalized(.rideDashboardChartRegeneratedPower), point.regenKilowatts)
-                )
-                .foregroundStyle(DesignColor.positive.opacity(0.2))
                 LineMark(
                     x: .value(rideDashboardLocalized(.rideDashboardChartTime), point.date),
-                    y: .value(rideDashboardLocalized(.rideDashboardChartRegeneratedPower), point.regenKilowatts)
+                    y: .value(rideDashboardLocalized(.rideDashboardChartRegeneratedPower), point.regenKilowatts),
+                    series: .value(
+                        rideDashboardLocalized(.rideDashboardChartRegeneratedPower),
+                        rideDashboardLocalized(.rideDashboardEfficiencyLegendRegen)
+                    )
                 )
                 .foregroundStyle(DesignColor.positive)
-                .lineStyle(.init(lineWidth: 2, lineCap: .round, lineJoin: .round))
+                .lineStyle(.init(lineWidth: Constants.chartLineWidth, lineCap: .round, lineJoin: .round))
             }
         }
         .chartXAxis(.hidden)
-        .chartYAxis(.hidden)
+        .chartYAxis {
+            AxisMarks(position: .leading, values: .automatic(desiredCount: Constants.axisLabelCount)) { _ in
+                AxisGridLine().foregroundStyle(DesignColor.border)
+                AxisValueLabel().foregroundStyle(DesignColor.secondaryText)
+            }
+        }
         .chartYScale(domain: chartDomain)
         .frame(maxWidth: .infinity, minHeight: Constants.chartHeight)
         .overlay {
@@ -98,6 +110,10 @@ struct DashboardEfficiencyLiveCard: View {
                 title: rideDashboardLocalized(.rideDashboardEfficiencyLegendRegen),
                 color: DesignColor.positive
             )
+            Spacer(minLength: DesignSpace.extraSmall)
+            Text(.rideDashboardEfficiencyPowerUnit)
+                .font(.caption2)
+                .foregroundStyle(DesignColor.secondaryText)
         }
         .accessibilityHidden(true)
     }
@@ -167,8 +183,13 @@ struct DashboardEfficiencyLiveCard: View {
 
     private enum Constants {
         static let spacing: CGFloat = 8
-        static let heroFontSize: CGFloat = 40
-        static let chartHeight: CGFloat = 118
+        static let heroFontSize: CGFloat = 34
+        static let chartHeight: CGFloat = 108
+        static let axisLabelCount = 3
+        static let chartLineWidth: CGFloat = 2
+        static let gridLineWidth: CGFloat = 1
+        static let zeroLineDash: [CGFloat] = [3, 3]
+        static let zeroLineOpacity = 0.45
         static let chartScalePadding = 1.12
         static let legendLineWidth: CGFloat = 16
         static let legendLineHeight: CGFloat = 3

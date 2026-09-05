@@ -34,6 +34,8 @@ final class RideTripRecord {
     var maximumRightLeanDegrees: Double
     var maximumUphillPitchDegrees: Double
     var maximumDownhillPitchDegrees: Double
+    var minimumAltitudeMeters: Double?
+    var maximumAltitudeMeters: Double?
     var attitudeSourceRawValue: String?
 
     init(

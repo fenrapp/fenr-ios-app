@@ -21,7 +21,11 @@ public actor LiveRideSessionService: RideSessionService {
     var lastPersistenceDate: Date?
     var lastElectricalSampleDate: Date?
     var lastMotionSampleDate: Date?
+    var lastAltitudeSampleDate: Date?
     var historyRevision = 0
+    let locationConsumerID = UUID()
+    var locationRequestTask: Task<Void, Never>?
+    var isRequestingLocation = false
     var livePowerSamples: [RideElectricalPowerSample] = []
     var observers: [UUID: AsyncStream<RideSessionSnapshot>.Continuation] = [:]
 
@@ -48,6 +52,16 @@ public actor LiveRideSessionService: RideSessionService {
         preparationTask?.cancel()
         tickerTask?.cancel()
         stopTask?.cancel()
+        // The final lease release deliberately outlives the service.
+        if isRequestingLocation {
+            let previousRequest = locationRequestTask
+            let vehicleSession = vehicleSession
+            let consumerID = locationConsumerID
+            Task {
+                await previousRequest?.value
+                await vehicleSession.setLocationMonitoringRequired(false, consumerID: consumerID)
+            }
+        }
     }
 
     public func observe() -> AsyncStream<RideSessionSnapshot> {
@@ -108,6 +122,7 @@ public actor LiveRideSessionService: RideSessionService {
         recorder.clear()
         livePowerSamples.removeAll()
         lastMotionSampleDate = nil
+        lastAltitudeSampleDate = nil
         tickerTask?.cancel()
         tickerTask = nil
         publish()
@@ -161,6 +176,7 @@ public actor LiveRideSessionService: RideSessionService {
         livePowerSamples.removeAll()
         lastElectricalSampleDate = nil
         lastMotionSampleDate = nil
+        lastAltitudeSampleDate = nil
         let replacement = isReceivingTelemetry
             ? recorder.record(
                 runState: vehicleSnapshot.telemetry.runState,
@@ -215,6 +231,9 @@ private extension LiveRideSessionService {
         tickerTask = nil
 
         await finalizeCurrentTrip()
+        updateTripLocationMonitoring()
+        await locationRequestTask?.value
+        locationRequestTask = nil
         await persistence.flush()
     }
 }
@@ -244,6 +263,7 @@ extension LiveRideSessionService {
     }
 
     func publish() {
+        updateTripLocationMonitoring()
         let snapshot = snapshot
         observers.values.forEach { $0.yield(snapshot) }
     }

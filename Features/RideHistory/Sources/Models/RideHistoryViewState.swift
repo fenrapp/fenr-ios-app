@@ -12,11 +12,21 @@ public struct RideHistoryViewState: Equatable, Sendable {
         public let rideCountText: String
         public let distanceText: String
         public let durationText: String
+        public let averageSpeedText: String
+        public let maximumSpeedText: String
 
-        public init(rideCountText: String, distanceText: String, durationText: String) {
+        public init(
+            rideCountText: String,
+            distanceText: String,
+            durationText: String,
+            averageSpeedText: String = "\u{2014}",
+            maximumSpeedText: String = "\u{2014}"
+        ) {
             self.rideCountText = rideCountText
             self.distanceText = distanceText
             self.durationText = durationText
+            self.averageSpeedText = averageSpeedText
+            self.maximumSpeedText = maximumSpeedText
         }
     }
 

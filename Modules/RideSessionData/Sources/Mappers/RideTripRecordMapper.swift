@@ -46,6 +46,8 @@ public struct RideTripRecordMapper: Sendable {
         record.lastElectricalPowerWatts = trip.lastElectricalPowerWatts
         record.lastElectricalSampleAt = trip.lastElectricalSampleAt
         record.isAwaitingElectricalRebase = trip.isAwaitingElectricalRebase
+        record.minimumAltitudeMeters = trip.minimumAltitudeMeters
+        record.maximumAltitudeMeters = trip.maximumAltitudeMeters
         record.maximumLeftLeanDegrees = trip.maximumLeftLeanDegrees
         record.maximumRightLeanDegrees = trip.maximumRightLeanDegrees
         record.maximumUphillPitchDegrees = trip.maximumUphillPitchDegrees
@@ -86,6 +88,8 @@ public struct RideTripRecordMapper: Sendable {
             maximumRightLeanDegrees: record.maximumRightLeanDegrees,
             maximumUphillPitchDegrees: record.maximumUphillPitchDegrees,
             maximumDownhillPitchDegrees: record.maximumDownhillPitchDegrees,
+            minimumAltitudeMeters: record.minimumAltitudeMeters,
+            maximumAltitudeMeters: record.maximumAltitudeMeters,
             attitudeSource: record.attitudeSourceRawValue
                 .flatMap(RideAttitudeSource.init(rawValue:))
                 ?? .legacyPhone

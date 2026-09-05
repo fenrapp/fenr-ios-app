@@ -5,9 +5,11 @@ import VehicleSession
 
 public struct RideDynamicsCardMapper: Sendable {
     private let locale: Locale
+    private let altitudeMapper: DashboardAltitudeMapper
 
-    public init(locale: Locale) {
+    public init(locale: Locale, altitudeMapper: DashboardAltitudeMapper) {
         self.locale = locale
+        self.altitudeMapper = altitudeMapper
     }
 
     public func map(_ snapshot: RideSessionSnapshot) -> DashboardRideDynamicsViewData {
@@ -44,6 +46,7 @@ public struct RideDynamicsCardMapper: Sendable {
             cardinalDirectionText: resolvedHeading.map(cardinalDirection) ?? "—",
             headingSourceText: headingSourceText(motion.headingSource),
             altitudeText: altitudeText(motion.altitudeMeters, system: snapshot.measurementSystem),
+            altimeter: altitudeMapper.map(snapshot),
             latitudeText: coordinate.map {
                 coordinateText(
                     $0.latitudeDegrees,
