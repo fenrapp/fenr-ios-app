@@ -6763,7 +6763,6 @@
 		5BCBF105C8289E50CAB87D81 /* DemoSeedPreparer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSeedPreparer.swift; sourceTree = "<group>"; };
 		5BD122CBFF2F905C6AB7A19C /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		5BE8599D3529B6108BB24E5E /* RideTrip+Altitude.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "RideTrip+Altitude.swift"; sourceTree = "<group>"; };
-		5BF844EEEBBCD1BD9C811056 /* validation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = validation.md; sourceTree = "<group>"; };
 		5C00A372CD764E0AEEFBCD47 /* DashboardCompactSpeedVisibilityMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardCompactSpeedVisibilityMapper.swift; sourceTree = "<group>"; };
 		5C1D7E46EA2E65691086D2F5 /* BikeDiscoveryViewData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeDiscoveryViewData.swift; sourceTree = "<group>"; };
 		5C6EA954F5AB49D9A45E7797 /* PowerModeTelemetryMapperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerModeTelemetryMapperTests.swift; sourceTree = "<group>"; };
@@ -6918,7 +6917,6 @@
 		74BD11F706FD5B2EC341D1CF /* BikeSDKProfileAndSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeSDKProfileAndSessionTests.swift; sourceTree = "<group>"; };
 		74F879F634FDC279B4104F8E /* WatchDebugProfileRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchDebugProfileRepository.swift; sourceTree = "<group>"; };
 		750280AC4EB0465873E83332 /* BikeDataDebugMapperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeDataDebugMapperTests.swift; sourceTree = "<group>"; };
-		753E49CF9723C54F31873579 /* qa-iphone.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "qa-iphone.md"; sourceTree = "<group>"; };
 		75600285970CE8A9FB693605 /* RideNavigationForkGuidance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideNavigationForkGuidance.swift; sourceTree = "<group>"; };
 		7568144C3AFFBFB4C61AB840 /* MaintenanceFormViewState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaintenanceFormViewState.swift; sourceTree = "<group>"; };
 		757FE879D4840C89AF047484 /* BikeSDKTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BikeSDKTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -7458,7 +7456,6 @@
 		C49AC653639ED7DC73E1A169 /* StubPlaceSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubPlaceSearch.swift; sourceTree = "<group>"; };
 		C4D00578EE142A798849A59C /* RideNavigationViewModelFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideNavigationViewModelFixture.swift; sourceTree = "<group>"; };
 		C508EF3C8ACC01C6078C638C /* StarkBatterySignalsDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkBatterySignalsDecoder.swift; sourceTree = "<group>"; };
-		C52DF1AAE89FABF5A56ABC9B /* performance-iphone.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "performance-iphone.md"; sourceTree = "<group>"; };
 		C5592C636C33ABB0AA4913E0 /* AsyncEventHubTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncEventHubTests.swift; sourceTree = "<group>"; };
 		C590BB386FA79D3FDDAEF6C5 /* FocusNavigationViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusNavigationViewport.swift; sourceTree = "<group>"; };
 		C59F24421989EF629246F438 /* FakeCoreBluetoothAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeCoreBluetoothAdapter.swift; sourceTree = "<group>"; };
@@ -12731,11 +12728,8 @@
 		96C4867F73E3A057D80ADC54 /* app-store */ = {
 			isa = PBXGroup;
 			children = (
-				C52DF1AAE89FABF5A56ABC9B /* performance-iphone.md */,
-				753E49CF9723C54F31873579 /* qa-iphone.md */,
 				6640F8DC6A168EFDA0A80881 /* README.md */,
 				E61D9B1252284DD59986C86F /* routing-coverage.geojson */,
-				5BF844EEEBBCD1BD9C811056 /* validation.md */,
 			);
 			path = "app-store";
 			sourceTree = "<group>";
