@@ -28,7 +28,7 @@ public struct ChargeControlStateUpdater {
         state.failure = snapshot.didPassNoOpWrite ? nil : .noOpValidationFailed
     }
 
-    func applyPreparationFailure(_: Error, to state: inout ChargeControlState) {
+    func applyPreparationFailure(to state: inout ChargeControlState) {
         state.isVisible = true
         state.isEnabled = false
         state.status = .unavailable

@@ -11,13 +11,10 @@ import VehicleSession
 
 @MainActor
 struct RideDashboardDependencyContainer {
-    private let currentTripContainer = CurrentTripCardDependencyContainer()
-    private let chargingContainer = ChargingDashboardDependencyContainer()
-
     func makeFeature(
         dependencies: RideDashboardFeatureDependencies
     ) -> RideDashboardFeatureModel {
-        let tripViewModels = currentTripContainer.makeViewModels(
+        let tripViewModels = CurrentTripCardDependencyContainer.makeViewModels(
             dependencies: .init(
                 rideTripRepository: dependencies.rideTripRepository,
                 rideSession: dependencies.rideSession
@@ -49,7 +46,7 @@ struct RideDashboardDependencyContainer {
                 vehicleSession: dependencies.vehicleSession,
                 mapper: RideDashboardMapperFactory.makeRideDynamicsMapper(locale: .autoupdatingCurrent)
             ),
-            chargingViewModel: chargingContainer.makeViewModel(
+            chargingViewModel: ChargingDashboardDependencyContainer.makeViewModel(
                 vehicleSession: dependencies.vehicleSession,
                 chargeControl: dependencies.chargeControl
             ),

@@ -15,7 +15,7 @@ struct AltitudePersistenceTests {
         let url = directory.appendingPathComponent("trips.store")
         let tripID = UUID()
         try PreAltitudeStoreFactory.create(at: url, tripID: tripID, sessionID: UUID())
-        let container = try SwiftDataRideTripRepository.makeModelContainer(storeURL: url)
+        let container = try RideTripRepositoryFactory.makeModelContainer(storeURL: url)
         let context = ModelContext(container)
         let records = try context.fetch(FetchDescriptor<RideTripRecord>())
         let record = try #require(records.first)

@@ -3,7 +3,6 @@ public struct BikeDiagnosticsViewState: Equatable, Sendable {
     public var connection: ConnectionPanelViewData
     public var overviewMetrics: [BikeDiagnosticsMetricViewData]
     public var metrics: [BikeDiagnosticsMetricViewData]
-    public var powerMetrics: [BikeDiagnosticsMetricViewData]
     public var batteryMetrics: [BikeDiagnosticsMetricViewData]
     public var badges: [BikeDiagnosticsBadgeViewData]
     public var rawFlags: [BikeDiagnosticsMetricViewData]
@@ -38,7 +37,6 @@ public struct BikeDiagnosticsViewState: Equatable, Sendable {
         connection: ConnectionPanelViewData = BikeDiagnosticsViewState.defaultConnection,
         overviewMetrics: [BikeDiagnosticsMetricViewData] = [],
         metrics: [BikeDiagnosticsMetricViewData] = [],
-        powerMetrics: [BikeDiagnosticsMetricViewData] = [],
         batteryMetrics: [BikeDiagnosticsMetricViewData] = [],
         badges: [BikeDiagnosticsBadgeViewData] = [],
         rawFlags: [BikeDiagnosticsMetricViewData] = [],
@@ -61,7 +59,6 @@ public struct BikeDiagnosticsViewState: Equatable, Sendable {
         self.connection = connection
         self.overviewMetrics = overviewMetrics
         self.metrics = metrics
-        self.powerMetrics = powerMetrics
         self.batteryMetrics = batteryMetrics
         self.badges = badges
         self.rawFlags = rawFlags

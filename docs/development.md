@@ -3,8 +3,9 @@
 ## Requirements
 
 - Xcode 26 or later, including the iOS and watchOS SDKs used by the project.
-- XcodeGen: `brew install xcodegen`.
+- XcodeGen 2.42.0 or later: `brew install xcodegen`.
 - SwiftLint: `brew install swiftlint`.
+- Python 3 for the project-generation hook and resource-validation scripts.
 
 Deployment targets are iOS 17 and watchOS 10. These are the minimum operating
 systems for the apps, not the required SDK versions. Liquid Glass uses the iOS 26
@@ -27,6 +28,8 @@ open FENR.xcodeproj
 The optional local helper restores the developer's signing configuration after
 generation. `.xcodegen/` is ignored. A fresh clone uses XcodeGen directly; configure
 your own team for physical-device builds and keep signing values out of commits.
+Regenerate after adding, removing or moving source files as well as after editing
+`project.yml`; XcodeGen discovers target sources from the configured directories.
 
 ## Schemes
 

@@ -29,32 +29,6 @@ extension BikeBatteryHealthToViewStateMapper {
         health.stateOfHealth.percent.map { min(max(Double($0) / 100, 0), 1) }
     }
 
-    func packMetrics(
-        for health: BikeBatteryHealth,
-        analysis: BatteryHealthAnalysis,
-        captures: [BatteryDataset: BatteryDatasetCapture]
-    ) -> [BatteryHealthMetricViewData] {
-        [
-            metric(
-                "fault",
-                String(localized: .batteryHealthMetricBmsFault),
-                health.isBMSFaultActive
-                    ? String(localized: .batteryHealthStatusActive)
-                    : String(localized: .batteryHealthStatusClear)
-            ),
-            metric(
-                "captured",
-                String(localized: .batteryHealthMetricCapturedDatasets),
-                "\(captures.count)/\(BatteryDataset.allCases.count)"
-            ),
-            metric(
-                "cellDelta",
-                String(localized: .batteryHealthMetricCellDelta),
-                millivolts(analysis.cellDeltaVolts)
-            )
-        ]
-    }
-
     func overallStatus(
         health: BikeBatteryHealth,
         analysis: BatteryHealthAnalysis,

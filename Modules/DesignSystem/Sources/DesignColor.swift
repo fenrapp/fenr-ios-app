@@ -7,7 +7,6 @@ public enum DesignColor {
     public static let groupedSurface = Color.primary.opacity(0.06)
     public static let elevatedSurface = Color.primary.opacity(0.1)
     public static let controlSurface = Color.primary.opacity(0.14)
-    public static let disabledControl = Color.primary.opacity(0.18)
     public static let border = Color.primary.opacity(0.18)
     public static let accent = Color.accentColor
     public static let positive = Color.green

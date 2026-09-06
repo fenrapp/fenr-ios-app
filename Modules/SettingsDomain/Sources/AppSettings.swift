@@ -51,39 +51,6 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.bikeLockSettingsByVIN = bikeLockSettingsByVIN
     }
 
-    @available(*, deprecated, message: "Use dashboardTemperatureDisplayMode")
-    public init(
-        speedSource: SpeedSource = .motorcycle,
-        dashboardProgressBarMode: DashboardProgressBarMode = .energy,
-        dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
-        dashboardDeviceBatteryDisplayMode: DashboardDeviceBatteryDisplayMode = .iconAndText,
-        showsDashboardTemperatures: Bool,
-        dashboardCardConfiguration: DashboardCardConfiguration = .init(),
-        rideNavigation: RideNavigationSettings = .init(),
-        liveActivities: LiveActivitySettings = .init(),
-        measurementSystem: MeasurementSystem = .system,
-        batteryPackCapacity: BatteryPackCapacity = .sevenPointTwoKilowattHours,
-        batteryPackCapacitiesByVIN: [String: BatteryPackCapacity] = [:],
-        powerModeNamesByVIN: [String: [Int: PowerModeName]] = [:],
-        bikeLockSettingsByVIN: [String: BikeLockSettings] = [:]
-    ) {
-        self.init(
-            speedSource: speedSource,
-            dashboardProgressBarMode: dashboardProgressBarMode,
-            dashboardBatteryIndicatorMode: dashboardBatteryIndicatorMode,
-            dashboardDeviceBatteryDisplayMode: dashboardDeviceBatteryDisplayMode,
-            dashboardTemperatureDisplayMode: showsDashboardTemperatures ? .both : .off,
-            dashboardCardConfiguration: dashboardCardConfiguration,
-            rideNavigation: rideNavigation,
-            liveActivities: liveActivities,
-            measurementSystem: measurementSystem,
-            batteryPackCapacity: batteryPackCapacity,
-            batteryPackCapacitiesByVIN: batteryPackCapacitiesByVIN,
-            powerModeNamesByVIN: powerModeNamesByVIN,
-            bikeLockSettingsByVIN: bikeLockSettingsByVIN
-        )
-    }
-
     private enum CodingKeys: String, CodingKey {
         case vin
         case speedSource
@@ -218,12 +185,6 @@ public struct AppSettings: Codable, Equatable, Sendable {
         } else {
             bikeLockSettingsByVIN[vin] = settings
         }
-    }
-
-    @available(*, deprecated, message: "Use dashboardTemperatureDisplayMode")
-    public var showsDashboardTemperatures: Bool {
-        get { dashboardTemperatureDisplayMode.isEnabled }
-        set { dashboardTemperatureDisplayMode = newValue ? .both : .off }
     }
 
     private static let powerModeIndices = 0 ... 4

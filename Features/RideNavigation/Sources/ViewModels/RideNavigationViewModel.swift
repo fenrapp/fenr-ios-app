@@ -132,10 +132,6 @@ public final class RideNavigationViewModel: ObservableObject {
         get { operations[.draftPersistence] }
         set { operations[.draftPersistence] = newValue }
     }
-    var guidanceTask: Task<Void, Never>? {
-        get { operations[.guidance] }
-        set { operations[.guidance] = newValue }
-    }
 
     var isStarted: Bool { get { state.isStarted } set { state.isStarted = newValue } }
     var presentationMode: RideNavigationPresentationMode {

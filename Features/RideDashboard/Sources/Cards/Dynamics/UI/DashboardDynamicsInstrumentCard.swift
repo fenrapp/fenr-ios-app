@@ -16,7 +16,7 @@ struct DashboardDynamicsInstrumentCard: View {
 
     var body: some View {
         DashboardSquareCardSurface {
-            VStack(spacing: Constants.spacing) {
+            VStack(spacing: DesignSpace.extraExtraSmall) {
                 header
                 DashboardDynamicsAngleGauge(
                     status: status,
@@ -142,7 +142,6 @@ struct DashboardDynamicsInstrumentCard: View {
     }
 
     private enum Constants {
-        static let spacing: CGFloat = 4
         static let statusDotSize: CGFloat = 5
         static let zeroButtonSize: CGFloat = 22
         static let currentMetricTopSpacing: CGFloat = 4

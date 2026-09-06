@@ -124,7 +124,9 @@ public actor LiveVehicleSessionService: VehicleSessionService {
             await useCases.stopIMUMonitoring.execute()
             isIMUMonitoring = false
         }
-        motionCalibrationTask?.cancel()
+        let calibrationToDrain = motionCalibrationTask
+        calibrationToDrain?.cancel()
+        await calibrationToDrain?.value
         motionCalibrationTask = nil
         imuSample = nil
         motionCalibration = nil

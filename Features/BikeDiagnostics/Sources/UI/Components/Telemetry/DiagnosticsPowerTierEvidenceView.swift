@@ -1,3 +1,4 @@
+import DesignSystem
 import SwiftUI
 
 struct DiagnosticsPowerTierEvidenceView: View {
@@ -6,14 +7,14 @@ struct DiagnosticsPowerTierEvidenceView: View {
     let metrics: [BikeDiagnosticsMetricViewData]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Constants.spacing) {
+        VStack(alignment: .leading, spacing: DesignSpace.small) {
             Group {
                 if dynamicTypeSize.isAccessibilitySize {
-                    VStack(alignment: .leading, spacing: Constants.spacing) {
+                    VStack(alignment: .leading, spacing: DesignSpace.small) {
                         tierSummary
                     }
                 } else {
-                    HStack(alignment: .top, spacing: Constants.spacing) {
+                    HStack(alignment: .top, spacing: DesignSpace.small) {
                         tierSummary
                     }
                 }
@@ -31,7 +32,7 @@ struct DiagnosticsPowerTierEvidenceView: View {
                 }
             }
         }
-        .padding(.vertical, Constants.verticalPadding)
+        .padding(.vertical, DesignSpace.extraExtraSmall)
     }
 
     @ViewBuilder private var tierSummary: some View {
@@ -58,8 +59,6 @@ struct DiagnosticsPowerTierEvidenceView: View {
 
     private enum Constants {
         static let evidenceID = "powerTierEvidence"
-        static let spacing: CGFloat = 12
         static let metricSpacing: CGFloat = 3
-        static let verticalPadding: CGFloat = 4
     }
 }

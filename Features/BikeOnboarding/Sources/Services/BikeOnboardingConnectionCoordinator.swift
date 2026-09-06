@@ -68,10 +68,6 @@ public final class BikeOnboardingConnectionCoordinator {
         await repositoryStarter.cancelAndWait()
     }
 
-    func prepareRepository() -> Task<Void, Never> {
-        repositoryStarter.start()
-    }
-
     func connect(vin: String, after pendingOperation: Task<Void, Never>?) {
         connectionTask?.cancel()
         let previousDisconnection = disconnectionTask
@@ -116,9 +112,7 @@ public final class BikeOnboardingConnectionCoordinator {
             event = .permissionReady
         case .receivingTelemetry(let peripheralName):
             event = .telemetry(peripheralName: peripheralName)
-        case .failed:
-            event = mapper.connectionState(for: connection.state).map(BikeOnboardingConnectionEvent.recovery)
-        case .pairingResetRequired, .disconnected:
+        case .failed, .pairingResetRequired, .disconnected:
             event = mapper.connectionState(for: connection.state).map(BikeOnboardingConnectionEvent.recovery)
         case .bluetoothUnavailable:
             event = .bluetooth(.unavailable)

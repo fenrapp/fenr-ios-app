@@ -49,41 +49,9 @@ extension RideNavigationViewModel {
         trailGuidance.cancelPreparation()
         state.routePersistence.cancelTransientSave()
         operations.invalidateAll(preserving: [.completedRouteSave])
-        observationTask?.cancel()
-        observationTask = nil
-        locationObservationTask?.cancel()
-        locationObservationTask = nil
-        clockTask?.cancel()
-        clockTask = nil
-        searchTask?.cancel()
-        searchTask = nil
-        routeTask?.cancel()
-        routeTask = nil
-        externalLinkTask?.cancel()
-        externalLinkTask = nil
-        trailExitTask?.cancel()
-        trailExitTask = nil
         isCalculatingRoadRoutes = false
         isRerouting = false
         isFindingTrailExit = false
-        draftSaveTask?.cancel()
-        draftSaveTask = nil
-        loadingTask?.cancel()
-        loadingTask = nil
-        settingsLoadingTask?.cancel()
-        settingsLoadingTask = nil
-        settingsObservationTask?.cancel()
-        settingsObservationTask = nil
-        settingsSaveTask?.cancel()
-        settingsSaveTask = nil
-        routeSaveTask?.cancel()
-        routeSaveTask = nil
-        routeDeletionTasks.values.forEach { $0.cancel() }
-        routeDeletionTasks.removeAll()
-        draftPersistenceTask?.cancel()
-        draftPersistenceTask = nil
-        guidanceTask?.cancel()
-        guidanceTask = nil
         if viewState.isSearching {
             render(isSearching: false)
         }
@@ -102,7 +70,7 @@ extension RideNavigationViewModel {
     }
 
     public var canMinimize: Bool {
-        screen == .map && [.following, .navigating, .recording, .paused].contains(activity)
+        screen == .map && hasActiveSession
     }
 
     public func setMiniMapPosition(_ position: RideNavigationMiniViewState.Position) {

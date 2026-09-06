@@ -1,3 +1,4 @@
+import DesignSystem
 import SwiftUI
 
 struct RideNavigationMiniMapLayout {
@@ -10,9 +11,9 @@ struct RideNavigationMiniMapLayout {
     }
 
     init(containerSize: CGSize, scale: Double, isLandscape: Bool) {
-        let availableWidth = max(containerSize.width - Constants.edgeMargin * 2, 0)
+        let availableWidth = max(containerSize.width - DesignSpace.medium * 2, 0)
         let availableHeight = max(
-            containerSize.height - Constants.edgeMargin * 2 - Constants.dashboardHeaderClearance,
+            containerSize.height - DesignSpace.medium * 2 - Constants.dashboardHeaderClearance,
             0
         )
         let baseLongEdge = min(
@@ -46,13 +47,13 @@ struct RideNavigationMiniMapLayout {
         CGPoint(
             x: constrained(
                 proposedPosition.x,
-                minimum: Constants.edgeMargin + cardSize.width / 2,
-                maximum: containerSize.width - Constants.edgeMargin - cardSize.width / 2
+                minimum: DesignSpace.medium + cardSize.width / 2,
+                maximum: containerSize.width - DesignSpace.medium - cardSize.width / 2
             ),
             y: constrained(
                 proposedPosition.y,
-                minimum: Constants.edgeMargin + Constants.dashboardHeaderClearance + cardSize.height / 2,
-                maximum: containerSize.height - Constants.edgeMargin - cardSize.height / 2
+                minimum: DesignSpace.medium + Constants.dashboardHeaderClearance + cardSize.height / 2,
+                maximum: containerSize.height - DesignSpace.medium - cardSize.height / 2
             )
         )
     }
@@ -67,7 +68,7 @@ struct RideNavigationMiniMapLayout {
     func orientationControlPosition(for cardPosition: CGPoint) -> CGPoint {
         CGPoint(
             x: cardPosition.x + cardSize.width / 2
-                - Constants.orientationControlInset - Self.orientationControlHitSize / 2,
+                - DesignSpace.extraSmall - Self.orientationControlHitSize / 2,
             y: cardPosition.y
         )
     }
@@ -95,8 +96,6 @@ struct RideNavigationMiniMapLayout {
         static let maximumLongEdge: CGFloat = 300
         static let relativeLongEdge: CGFloat = 0.28
         static let aspectRatio: CGFloat = 2 / 3
-        static let edgeMargin: CGFloat = 16
         static let dashboardHeaderClearance: CGFloat = 44
-        static let orientationControlInset: CGFloat = 8
     }
 }

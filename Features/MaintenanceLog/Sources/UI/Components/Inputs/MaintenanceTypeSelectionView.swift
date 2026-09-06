@@ -31,7 +31,7 @@ struct MaintenanceTypeSelectionView: View {
                             .foregroundStyle(DesignColor.informational)
                     }
                 }
-                .padding(.vertical, Constants.verticalPadding)
+                .padding(.vertical, DesignSpace.extraExtraSmall)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -44,6 +44,5 @@ struct MaintenanceTypeSelectionView: View {
 
     private enum Constants {
         static let textSpacing: CGFloat = 3
-        static let verticalPadding: CGFloat = 4
     }
 }

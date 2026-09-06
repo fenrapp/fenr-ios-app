@@ -14,7 +14,6 @@
     "powerModeSettingsBikeAuthenticated" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bike authenticated" } } } },
     "powerModeSettingsBikeConnected" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bike connected" } } } },
     "powerModeSettingsBikeDisconnected" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bike disconnected" } } } },
-    "powerModeSettingsBikeSection" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bike" } } } },
     "powerModeSettingsBikeUnavailable" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bike unavailable" } } } },
     "powerModeSettingsBluetoothAccessRequired" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bluetooth access is required" } } } },
     "powerModeSettingsBluetoothOff" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bluetooth is off" } } } },
@@ -22,8 +21,6 @@
     "powerModeSettingsCapabilityUnavailable" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Capability unavailable" } } } },
     "powerModeSettingsCancel" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } } } },
     "powerModeSettingsCharacterCount" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$lld/%2$lld" } } } },
-    "powerModeSettingsConfigurationFooter" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Each map value is sent only after a confirmed read and its own no-op safety check." } } } },
-    "powerModeSettingsConfigurationSection" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Configuration" } } } },
     "powerModeSettingsConnectingToBike" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting to bike" } } } },
     "powerModeSettingsConnectionFailed" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bike connection failed" } } } },
     "powerModeSettingsDuplicateNameError" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Use a unique name for each map." } } } },
@@ -69,8 +66,7 @@
     "powerModeSettingsVerifyingSafetyStatus" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Verifying map write safety" } } } },
     "powerModeSettingsWaitingForBikeData" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Waiting for bike data" } } } },
     "powerModeSettingsWaitingForMapDataStatus" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Waiting for confirmed map data" } } } },
-    "powerModeSettingsWriteVerificationRequired" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bike write verification required" } } } },
-    "powerModeSettingsZeroValueAccessibility" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Zero" } } } }
+    "powerModeSettingsWriteVerificationRequired" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bike write verification required" } } } }
   },
   "version" : "1.1"
 }

@@ -64,10 +64,6 @@ public final class RideNavigationTrailMapController {
         completedDistanceMeters = target
     }
 
-    func appendCompletedPolylines(to polylines: inout [NavigationMapPolyline]) {
-        polylines.append(contentsOf: presentationSnapshot.completedPolylines)
-    }
-
     func resetCompletion() {
         completedPolylines = []
         partialCompletedPolyline = nil

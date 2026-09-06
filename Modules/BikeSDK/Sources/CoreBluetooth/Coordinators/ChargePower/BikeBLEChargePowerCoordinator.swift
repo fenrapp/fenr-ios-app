@@ -1,5 +1,4 @@
 import BLETraceDomain
-import CoreBluetooth
 import Foundation
 import StarkProtocol
 
@@ -133,17 +132,6 @@ final class BikeBLEChargePowerCoordinator {
             clearGuardState()
             throw error
         }
-    }
-
-    func didWriteValue(characteristic: CBCharacteristic, error: Error?) {
-        transport.completeWriteIfNeeded(characteristic: characteristic, error: error)
-    }
-
-    func completeChargePowerReadIfNeeded(
-        characteristic: CBCharacteristic,
-        error: Error?
-    ) -> Bool {
-        transport.completeReadIfNeeded(characteristic: characteristic, error: error)
     }
 
     func reset() {

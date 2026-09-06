@@ -10,10 +10,6 @@ public enum BikeOnboardingConnectionState: Equatable, Sendable {
         return phase
     }
 
-    public var isRecovery: Bool {
-        phase == nil
-    }
-
     public var title: String {
         switch self {
         case .inProgress(.finding): BikeOnboardingL10n.text(.bikeOnboardingConnectionFindingTitle)

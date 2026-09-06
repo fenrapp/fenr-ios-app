@@ -88,8 +88,8 @@ final class AppLifecycleController {
         let pendingStart = startTask
         let pendingChangeBike = changeBikeTask
         let pendingPersistence = persistenceTask
-        stopTask = Task { [weak self] in
-            guard let self else { return }
+        // Retain the owner from scheduling until the shutdown barriers finish.
+        stopTask = Task { [self] in
             await pendingStart?.value
             await pendingChangeBike?.value
             await pendingPersistence?.value

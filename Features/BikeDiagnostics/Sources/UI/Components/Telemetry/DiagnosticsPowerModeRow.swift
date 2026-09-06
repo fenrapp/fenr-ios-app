@@ -1,3 +1,4 @@
+import DesignSystem
 import SwiftUI
 
 struct DiagnosticsPowerModeRow: View {
@@ -10,13 +11,13 @@ struct DiagnosticsPowerModeRow: View {
             HStack {
                 Text(configuration.title)
                     .font(.headline)
-                Spacer(minLength: Constants.spacing)
+                Spacer(minLength: DesignSpace.small)
                 if configuration.isActive {
                     Label(DiagnosticsCopy.active, systemImage: "checkmark.circle.fill")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.green)
-                        .padding(.horizontal, Constants.badgeHorizontalPadding)
-                        .padding(.vertical, Constants.badgeVerticalPadding)
+                        .padding(.horizontal, DesignSpace.extraSmall)
+                        .padding(.vertical, DesignSpace.extraExtraSmall)
                         .background(.green.opacity(Constants.badgeOpacity), in: Capsule())
                 }
             }
@@ -35,24 +36,20 @@ struct DiagnosticsPowerModeRow: View {
                 }
             }
         }
-        .padding(.vertical, Constants.verticalPadding)
+        .padding(.vertical, DesignSpace.extraExtraSmall)
         .accessibilityElement(children: .combine)
     }
 
     private var columns: [GridItem] {
         Array(
-            repeating: GridItem(.flexible(), spacing: Constants.spacing, alignment: .leading),
+            repeating: GridItem(.flexible(), spacing: DesignSpace.small, alignment: .leading),
             count: dynamicTypeSize.isAccessibilitySize ? 2 : 4
         )
     }
 
     private enum Constants {
-        static let spacing: CGFloat = 12
         static let rowSpacing: CGFloat = 10
         static let metricSpacing: CGFloat = 2
-        static let verticalPadding: CGFloat = 4
-        static let badgeHorizontalPadding: CGFloat = 8
-        static let badgeVerticalPadding: CGFloat = 4
         static let badgeOpacity = 0.12
     }
 }

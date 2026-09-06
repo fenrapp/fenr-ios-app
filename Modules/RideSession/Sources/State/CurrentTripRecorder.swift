@@ -95,10 +95,8 @@ struct CurrentTripRecorder {
         return self.trip
     }
 
-    @discardableResult
-    mutating func clear() -> RideTrip? {
-        defer { trip = nil }
-        return trip
+    mutating func clear() {
+        trip = nil
     }
 }
 

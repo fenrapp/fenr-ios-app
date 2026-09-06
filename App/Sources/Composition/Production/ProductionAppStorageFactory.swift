@@ -18,15 +18,15 @@ struct ProductionAppStorageFactory {
     static var live: Self {
         Self(
             makeRides: {
-                SwiftDataRideTripRepository(
-                    modelContainer: try SwiftDataRideTripRepository.makeModelContainer(),
+                RideTripRepositoryFactory.make(
+                    modelContainer: try RideTripRepositoryFactory.makeModelContainer(),
                     mapper: RideTripRecordMapper(),
                     energyBucketMapper: RideEnergyBucketRecordMapper()
                 )
             },
             makeMaintenance: { try MaintenanceRepositoryFactory.make() },
             makeCalibration: {
-                try SwiftDataVehicleMotionCalibrationRepository(mapper: VehicleMotionCalibrationRecordMapper())
+                try VehicleMotionCalibrationRepositoryFactory.make(mapper: VehicleMotionCalibrationRecordMapper())
             }
         )
     }

@@ -1,3 +1,4 @@
+import DesignSystem
 import SwiftUI
 
 struct RideHistoryDetailContent: View {
@@ -31,7 +32,7 @@ struct RideHistoryDetailContent: View {
             if hasChartData {
                 Section(.rideHistorySectionEnergyProfile) {
                     RideHistoryEnergyChart(state: state)
-                        .padding(.vertical, Constants.chartVerticalPadding)
+                        .padding(.vertical, DesignSpace.extraSmall)
                 }
             }
 
@@ -71,9 +72,5 @@ struct RideHistoryDetailContent: View {
 
     private var hasChartData: Bool {
         !state.batteryPoints.isEmpty || !state.efficiencyPoints.isEmpty
-    }
-
-    private enum Constants {
-        static let chartVerticalPadding: CGFloat = 8
     }
 }

@@ -7,7 +7,7 @@ struct DashboardEfficiencyLiveCard: View {
 
     var body: some View {
         DashboardAdaptiveCardSurface {
-            VStack(alignment: .leading, spacing: Constants.spacing) {
+            VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
                 header
                 powerLegend
                 powerChart
@@ -182,7 +182,6 @@ struct DashboardEfficiencyLiveCard: View {
     }
 
     private enum Constants {
-        static let spacing: CGFloat = 8
         static let heroFontSize: CGFloat = 34
         static let chartHeight: CGFloat = 108
         static let axisLabelCount = 3

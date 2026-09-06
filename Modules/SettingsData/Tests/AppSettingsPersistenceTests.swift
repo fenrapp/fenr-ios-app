@@ -1,23 +1,23 @@
-@preconcurrency import Foundation
-import SettingsData
+import Foundation
 import SettingsDomain
 import Testing
 
 @MainActor
 @Suite("App settings persistence")
-struct UserDefaultsAppSettingsRepositoryTests {
+struct AppSettingsPersistenceTests {
     @Test("Returns defaults until settings are saved")
-    func returnsDefaults() async {
-        let repository = UserDefaultsAppSettingsRepository(userDefaults: makeDefaults())
-        #expect(await repository.load() == AppSettings())
+    func returnsDefaults() async throws {
+        let fixture = try VINSettingsTestFixture()
+        defer { fixture.cleanUp() }
+        let repository = fixture.repository
+        #expect(await repository.load() == AppSettings().scoped(toVIN: "FENRTEST000000001"))
     }
 
     @Test("Persists selected dashboard, speed, units, and battery settings")
-    func persistsSettings() async {
-        let suiteName = makeSuiteName()
-        let repository = UserDefaultsAppSettingsRepository(
-            userDefaults: makeDefaults(suiteName: suiteName)
-        )
+    func persistsSettings() async throws {
+        let fixture = try VINSettingsTestFixture()
+        defer { fixture.cleanUp() }
+        let repository = fixture.repository
         var cardConfiguration = DashboardCardConfiguration()
         cardConfiguration.setSectionOrder([
             .range, .navigation, .currentTrip, .efficiency, .systemHealth, .rideDynamics
@@ -51,28 +51,28 @@ struct UserDefaultsAppSettingsRepositoryTests {
             liveActivities: .init(isEnabled: false, showsRiding: false, chargingDetailLevel: .summary),
             measurementSystem: .imperial,
             batteryPackCapacity: .sixPointEightKilowattHours
-        )
+        ).scoped(toVIN: "FENRTEST000000001")
 
         await repository.save(expected)
 
-        let reloadedRepository = UserDefaultsAppSettingsRepository(
-            userDefaults: makeDefaults(suiteName: suiteName, clearsDomain: false)
-        )
+        let reloadedRepository = fixture.reopen()
         #expect(await reloadedRepository.load() == expected)
     }
 
     @Test("Persists power mode names independently by bike and map")
     func persistsPowerModeNames() async throws {
-        let suiteName = makeSuiteName()
-        let repository = UserDefaultsAppSettingsRepository(
-            userDefaults: makeDefaults(suiteName: suiteName)
-        )
-        var settings = AppSettings()
+        let fixture = try VINSettingsTestFixture()
+        defer { fixture.cleanUp() }
+        let repository = fixture.repository
+        var settings = await repository.load()
         try settings.setPowerModeName(
             try PowerModeName("ECO"),
             forVIN: "FENRTEST000000001",
             mapIndex: 0
         )
+        await repository.save(settings)
+        await fixture.profiles.saveProfile(.init(vin: "FENRTEST000000002"))
+        settings = await repository.load()
         try settings.setPowerModeName(
             try PowerModeName("Enduro"),
             forVIN: "FENRTEST000000002",
@@ -81,21 +81,21 @@ struct UserDefaultsAppSettingsRepositoryTests {
 
         await repository.save(settings)
 
-        let reloaded = await UserDefaultsAppSettingsRepository(
-            userDefaults: makeDefaults(suiteName: suiteName, clearsDomain: false)
-        ).load()
-        #expect(reloaded.powerModeName(forVIN: "FENRTEST000000001", mapIndex: 0)?.value == "ECO")
+        let reloaded = await fixture.reopen().load()
+        #expect(reloaded.powerModeName(forVIN: "FENRTEST000000001", mapIndex: 0) == nil)
         #expect(reloaded.powerModeName(forVIN: "FENRTEST000000002", mapIndex: 1)?.value == "Enduro")
-        #expect(reloaded.powerModeName(forVIN: "FENRTEST000000001", mapIndex: 1) == nil)
+        await fixture.profiles.saveProfile(.init(vin: "FENRTEST000000001"))
+        let first = await fixture.reopen().load()
+        #expect(first.powerModeName(forVIN: "FENRTEST000000001", mapIndex: 0)?.value == "ECO")
+        #expect(first.powerModeName(forVIN: "FENRTEST000000002", mapIndex: 1) == nil)
     }
 
     @Test("Persists Bike Lock security independently by bike")
-    func persistsBikeLockSettingsByBike() async {
-        let suiteName = makeSuiteName()
-        let repository = UserDefaultsAppSettingsRepository(
-            userDefaults: makeDefaults(suiteName: suiteName)
-        )
-        var settings = AppSettings()
+    func persistsBikeLockSettingsByBike() async throws {
+        let fixture = try VINSettingsTestFixture()
+        defer { fixture.cleanUp() }
+        let repository = fixture.repository
+        var settings = await repository.load()
         settings.setBikeLockSettings(
             .init(securityMode: .pinAndFaceID),
             forVIN: "FENRTEST000000001"
@@ -103,9 +103,7 @@ struct UserDefaultsAppSettingsRepositoryTests {
 
         await repository.save(settings)
 
-        let reloaded = await UserDefaultsAppSettingsRepository(
-            userDefaults: makeDefaults(suiteName: suiteName, clearsDomain: false)
-        ).load()
+        let reloaded = await fixture.reopen().load()
         #expect(
             reloaded.bikeLockSettings(forVIN: "FENRTEST000000001").securityMode
                 == .pinAndFaceID
@@ -117,13 +115,15 @@ struct UserDefaultsAppSettingsRepositoryTests {
     }
 
     @Test("Does not notify observers when the saved settings are unchanged")
-    func skipsDuplicateSettingsNotifications() async {
-        let repository = UserDefaultsAppSettingsRepository(userDefaults: makeDefaults())
+    func skipsDuplicateSettingsNotifications() async throws {
+        let fixture = try VINSettingsTestFixture()
+        defer { fixture.cleanUp() }
+        let repository = fixture.repository
         let stream = await repository.observe()
         var iterator = stream.makeAsyncIterator()
-        #expect(await iterator.next() == AppSettings())
-        let metric = AppSettings(measurementSystem: .metric)
-        let imperial = AppSettings(measurementSystem: .imperial)
+        #expect(await iterator.next() == AppSettings().scoped(toVIN: "FENRTEST000000001"))
+        let metric = AppSettings(measurementSystem: .metric).scoped(toVIN: "FENRTEST000000001")
+        let imperial = AppSettings(measurementSystem: .imperial).scoped(toVIN: "FENRTEST000000001")
 
         await repository.save(metric)
         #expect(await iterator.next() == metric)
@@ -134,19 +134,18 @@ struct UserDefaultsAppSettingsRepositoryTests {
     }
 
     @Test("Loads the legacy blob from the stable settings key without rewriting it")
-    func loadsLegacyBlobFromStableKey() async {
-        let suiteName = makeSuiteName()
-        let setupDefaults = makeDefaults(suiteName: suiteName)
+    func loadsLegacyBlobFromStableKey() async throws {
+        let fixture = try VINSettingsTestFixture()
+        defer { fixture.cleanUp() }
+        let setupDefaults = try #require(UserDefaults(suiteName: fixture.suite))
         setupDefaults.set(
             AppSettingsPersistenceFixtures.legacySettingsData,
             forKey: AppSettingsPersistenceFixtures.settingsKey
         )
-        let repository = UserDefaultsAppSettingsRepository(
-            userDefaults: makeDefaults(suiteName: suiteName, clearsDomain: false)
-        )
+        let repository = fixture.repository
 
         let settings = await repository.load()
-        let verificationDefaults = makeDefaults(suiteName: suiteName, clearsDomain: false)
+        let verificationDefaults = try #require(UserDefaults(suiteName: fixture.suite))
 
         #expect(settings.speedSource == .gps)
         #expect(settings.measurementSystem == .metric)
@@ -157,19 +156,18 @@ struct UserDefaultsAppSettingsRepositoryTests {
     }
 
     @Test("Returns defaults for corrupt data without mutating the stored blob")
-    func returnsDefaultsForCorruptData() async {
-        let suiteName = makeSuiteName()
-        let setupDefaults = makeDefaults(suiteName: suiteName)
+    func returnsDefaultsForCorruptData() async throws {
+        let fixture = try VINSettingsTestFixture()
+        defer { fixture.cleanUp() }
+        let setupDefaults = try #require(UserDefaults(suiteName: fixture.suite))
         setupDefaults.set(
             AppSettingsPersistenceFixtures.corruptSettingsData,
             forKey: AppSettingsPersistenceFixtures.settingsKey
         )
-        let repository = UserDefaultsAppSettingsRepository(
-            userDefaults: makeDefaults(suiteName: suiteName, clearsDomain: false)
-        )
+        let repository = fixture.repository
 
-        #expect(await repository.load() == AppSettings())
-        let verificationDefaults = makeDefaults(suiteName: suiteName, clearsDomain: false)
+        #expect(await repository.load() == AppSettings().scoped(toVIN: "FENRTEST000000001"))
+        let verificationDefaults = try #require(UserDefaults(suiteName: fixture.suite))
         #expect(
             verificationDefaults.data(forKey: AppSettingsPersistenceFixtures.settingsKey)
                 == AppSettingsPersistenceFixtures.corruptSettingsData
@@ -177,15 +175,17 @@ struct UserDefaultsAppSettingsRepositoryTests {
     }
 
     @Test("Broadcasts the same saved settings to every observer")
-    func broadcastsSettingsToEveryObserver() async {
-        let repository = UserDefaultsAppSettingsRepository(userDefaults: makeDefaults())
+    func broadcastsSettingsToEveryObserver() async throws {
+        let fixture = try VINSettingsTestFixture()
+        defer { fixture.cleanUp() }
+        let repository = fixture.repository
         let firstStream = await repository.observe()
         let secondStream = await repository.observe()
         var firstIterator = firstStream.makeAsyncIterator()
         var secondIterator = secondStream.makeAsyncIterator()
-        #expect(await firstIterator.next() == AppSettings())
-        #expect(await secondIterator.next() == AppSettings())
-        let expected = AppSettings(measurementSystem: .metric)
+        #expect(await firstIterator.next() == AppSettings().scoped(toVIN: "FENRTEST000000001"))
+        #expect(await secondIterator.next() == AppSettings().scoped(toVIN: "FENRTEST000000001"))
+        let expected = AppSettings(measurementSystem: .metric).scoped(toVIN: "FENRTEST000000001")
 
         await repository.save(expected)
 
@@ -194,29 +194,17 @@ struct UserDefaultsAppSettingsRepositoryTests {
     }
 
     @Test("A delayed observer receives only the latest pending settings")
-    func delayedObserverReceivesLatestPendingSettings() async {
-        let repository = UserDefaultsAppSettingsRepository(userDefaults: makeDefaults())
+    func delayedObserverReceivesLatestPendingSettings() async throws {
+        let fixture = try VINSettingsTestFixture()
+        defer { fixture.cleanUp() }
+        let repository = fixture.repository
         let stream = await repository.observe()
-        await repository.save(AppSettings(measurementSystem: .metric))
-        let expected = AppSettings(measurementSystem: .imperial)
+        await repository.save(AppSettings(measurementSystem: .metric).scoped(toVIN: "FENRTEST000000001"))
+        let expected = AppSettings(measurementSystem: .imperial).scoped(toVIN: "FENRTEST000000001")
         await repository.save(expected)
         var iterator = stream.makeAsyncIterator()
 
         #expect(await iterator.next() == expected)
     }
 
-    nonisolated private func makeSuiteName() -> String {
-        "UserDefaultsAppSettingsRepositoryTests.\(UUID().uuidString)"
-    }
-
-    nonisolated private func makeDefaults(
-        suiteName: String = "UserDefaultsAppSettingsRepositoryTests.\(UUID().uuidString)",
-        clearsDomain: Bool = true
-    ) -> UserDefaults {
-        let defaults = UserDefaults(suiteName: suiteName)!
-        if clearsDomain {
-            defaults.removePersistentDomain(forName: suiteName)
-        }
-        return defaults
-    }
 }

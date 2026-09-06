@@ -17,21 +17,15 @@ public struct DashboardSystemHealthViewData: Equatable, Sendable {
 
     public struct Cell: Equatable, Sendable {
         public let position: Int
-        public let voltageText: String
-        public let deviationText: String
         public let condition: CellCondition
         public let isBalancing: Bool
 
         public init(
             position: Int,
-            voltageText: String,
-            deviationText: String,
             condition: CellCondition,
             isBalancing: Bool
         ) {
             self.position = position
-            self.voltageText = voltageText
-            self.deviationText = deviationText
             self.condition = condition
             self.isBalancing = isBalancing
         }

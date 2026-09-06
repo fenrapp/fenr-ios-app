@@ -28,18 +28,15 @@ public struct MaintenanceFormViewState: Equatable, Sendable {
     public let options: [Option]
     public let currencyOptions: [CurrencyOption]
     public let distanceUnit: String
-    public let currencyCode: String
 
     public init(
         options: [Option],
         currencyOptions: [CurrencyOption],
-        distanceUnit: String,
-        currencyCode: String
+        distanceUnit: String
     ) {
         self.options = options
         self.currencyOptions = currencyOptions
         self.distanceUnit = distanceUnit
-        self.currencyCode = currencyCode
     }
 }
 

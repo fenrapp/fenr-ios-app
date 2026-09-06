@@ -1,5 +1,4 @@
 @testable import BikeSDK
-import CoreBluetooth
 import Foundation
 import StarkProtocol
 
@@ -69,11 +68,6 @@ final class FakeBikeBLEChargePowerConfigurationTransport:
         ))
     }
 
-    func completeWriteIfNeeded(characteristic: CBCharacteristic, error: Error?) {}
-
-    func completeReadIfNeeded(characteristic: CBCharacteristic, error: Error?) -> Bool {
-        false
-    }
 }
 
 struct ImmediateBikeBLEChargePowerVerificationWaiter: BikeBLEChargePowerVerificationWaiting {

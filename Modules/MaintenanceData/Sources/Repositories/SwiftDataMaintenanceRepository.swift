@@ -2,7 +2,7 @@ import Foundation
 import MaintenanceDomain
 import StarkProtocol
 
-public final class SwiftDataMaintenanceRepository: MaintenanceRepository, Sendable {
+public struct SwiftDataMaintenanceRepository: MaintenanceRepository, Sendable {
     private let store: MaintenanceStore
     private let mapper: MaintenanceEntryRecordMapper
 
@@ -26,8 +26,7 @@ public final class SwiftDataMaintenanceRepository: MaintenanceRepository, Sendab
 
     public func save(_ entry: MaintenanceEntry) async -> Bool {
         guard let vin = normalizedValidVIN(entry.vin), entry.isValid else { return false }
-        var normalized = entry
-        normalized = MaintenanceEntry(
+        let normalized = MaintenanceEntry(
             id: entry.id,
             vin: vin,
             selection: entry.selection,

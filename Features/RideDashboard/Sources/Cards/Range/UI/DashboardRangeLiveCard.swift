@@ -7,7 +7,7 @@ struct DashboardRangeLiveCard: View {
 
     var body: some View {
         DashboardAdaptiveCardSurface {
-            VStack(alignment: .leading, spacing: Constants.spacing) {
+            VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
                 DashboardTripCardHeader(title: rideDashboardLocalized(.rideDashboardRangeLiveTitle))
                 hero
                 consumptionChart
@@ -114,7 +114,6 @@ struct DashboardRangeLiveCard: View {
     }
 
     private enum Constants {
-        static let spacing: CGFloat = 8
         static let heroFontSize: CGFloat = 48
         static let chartHeight: CGFloat = 112
     }

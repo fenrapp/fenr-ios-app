@@ -15,9 +15,6 @@ struct DemoIsolationTests {
         let fixture = try DemoIsolationTestFixture()
         defer { try? fixture.cleanUp() }
         let experience = try await fixture.demo.factory.make(identity: fixture.demo.identity)
-        let realSettings = UserDefaultsAppSettingsRepository(
-            userDefaults: try fixture.defaults(suite: fixture.realSuite)
-        )
         let demoSettings = AppSettingsRepositoryFactory.make(
             userDefaults: try fixture.defaults(suite: fixture.demo.identity.suiteName),
             profileRepository: UserDefaultsBikeProfileRepository(
@@ -27,9 +24,13 @@ struct DemoIsolationTests {
         let realProfile = UserDefaultsBikeProfileRepository(
             userDefaults: try fixture.defaults(suite: fixture.realSuite)
         )
+        let realSettings = AppSettingsRepositoryFactory.make(
+            userDefaults: try fixture.defaults(suite: fixture.realSuite),
+            profileRepository: realProfile
+        )
         let profile = BikeProfile(vin: fixture.demo.identity.vin)
         await realProfile.saveProfile(profile)
-        let settings = AppSettings(measurementSystem: .metric)
+        let settings = AppSettings(measurementSystem: .metric).scoped(toVIN: profile.vin)
         await realSettings.save(settings)
         let model = experience.root.featureStore.appSettingsViewModel
         var initialDemoSettings = await demoSettings.load()

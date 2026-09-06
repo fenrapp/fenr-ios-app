@@ -176,6 +176,24 @@ struct AppDependencyContainerTests {
         #expect(await fixture.repository.startCount() == 2)
     }
 
+    @Test("Scheduled shutdown finishes after the composition root is released")
+    func scheduledShutdownOutlivesCompositionRoot() async throws {
+        var fixture: AppLifecycleControllerFixture? = AppLifecycleControllerFixture()
+        let repository = try #require(fixture?.repository)
+        let rideSession = try #require(fixture?.rideSession)
+        let vehicleSession = try #require(fixture?.vehicleSession)
+        weak var controller = fixture?.lifecycleController
+        await fixture?.lifecycleController.start()
+
+        fixture?.lifecycleController.stop()
+        fixture = nil
+
+        #expect(await waitUntil { await repository.stopCount() == 1 })
+        #expect(await rideSession.recordedEvents() == ["start", "stop"])
+        #expect(await vehicleSession.stopCount() == 1)
+        #expect(await waitUntil { controller == nil })
+    }
+
     @Test("Lifecycle awaits startup preparation before starting sessions")
     func lifecycleAwaitsStartupPreparationBeforeStartingSessions() async {
         let preparer = ControllableAppStartupPreparer()

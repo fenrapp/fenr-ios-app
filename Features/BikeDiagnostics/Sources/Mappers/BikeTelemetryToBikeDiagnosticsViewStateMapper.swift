@@ -43,7 +43,6 @@ public struct BikeTelemetryToBikeDiagnosticsViewStateMapper {
         let telemetry = snapshot.telemetry
         let profileVIN = snapshot.profile?.vin
         let metrics = metricsMapper.map(telemetry)
-        let powerMetrics = powerMetricsMapper.map(telemetry.powerTelemetry)
         let batteryMetrics = batteryMetricsMapper.map(telemetry.batteryTelemetry)
         let rawFlags = rawFlagsMapper.map(telemetry)
         let visibleEvents = debugEvents
@@ -58,7 +57,6 @@ public struct BikeTelemetryToBikeDiagnosticsViewStateMapper {
             ),
             overviewMetrics: overviewMetrics(telemetry),
             metrics: metrics,
-            powerMetrics: powerMetrics,
             batteryMetrics: batteryMetrics,
             badges: badgesMapper.map(telemetry),
             rawFlags: rawFlags,

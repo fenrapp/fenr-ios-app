@@ -116,6 +116,43 @@ public struct RideNavigationPresentationMapper: Sendable {
         )
     }
 
+    func forkGuidance(
+        routeState: RideRouteGuidanceRouteState?,
+        decision: RideRouteGuidanceDecision?,
+        measurementSystem: MeasurementSystem
+    ) -> RideNavigationForkGuidance? {
+        if routeState == .wrongFork {
+            return RideNavigationForkGuidance(
+                instructionText: String(localized: .rideNavigationWrongFork),
+                distanceText: String(localized: .rideNavigationReturnToTrack),
+                systemImage: "arrow.uturn.backward",
+                emphasis: .warning
+            )
+        }
+        guard let decision else { return nil }
+        let instruction: String
+        let systemImage: String
+        switch decision.direction {
+        case .left:
+            instruction = String(localized: .rideNavigationKeepLeftUppercase)
+            systemImage = "arrow.turn.up.left"
+        case .right:
+            instruction = String(localized: .rideNavigationKeepRightUppercase)
+            systemImage = "arrow.turn.up.right"
+        case .straight:
+            instruction = String(localized: .rideNavigationContinueStraightUppercase)
+            systemImage = "arrow.up"
+        }
+        return RideNavigationForkGuidance(
+            instructionText: instruction,
+            distanceText: distance(
+                meters: decision.distanceMeters,
+                measurementSystem: measurementSystem
+            ),
+            systemImage: systemImage
+        )
+    }
+
     private func travelTime(_ seconds: TimeInterval) -> String {
         let totalMinutes = max(Int((seconds / 60).rounded()), 1)
         return Duration.seconds(totalMinutes * 60).formatted(travelTimeStyle)

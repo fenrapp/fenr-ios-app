@@ -99,8 +99,7 @@ public struct MaintenanceViewStateMapper: Sendable {
                 )
             },
             currencyOptions: currencyOptions(defaultCode: currencyCode),
-            distanceUnit: mapper.distance(kilometers: 1).unit,
-            currencyCode: currencyCode
+            distanceUnit: mapper.distance(kilometers: 1).unit
         )
     }
 

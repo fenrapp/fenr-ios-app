@@ -25,8 +25,8 @@ struct DemoIsolationTestFixture {
     }
 
     func realRides() throws -> SwiftDataRideTripRepository {
-        SwiftDataRideTripRepository(
-            modelContainer: try SwiftDataRideTripRepository.makeModelContainer(
+        RideTripRepositoryFactory.make(
+            modelContainer: try RideTripRepositoryFactory.makeModelContainer(
                 storeURL: realDirectory.appendingPathComponent("Rides.store")
             ), mapper: RideTripRecordMapper(), energyBucketMapper: RideEnergyBucketRecordMapper()
         )
@@ -37,7 +37,7 @@ struct DemoIsolationTestFixture {
     }
 
     func calibration(directory: URL) throws -> SwiftDataVehicleMotionCalibrationRepository {
-        try SwiftDataVehicleMotionCalibrationRepository(
+        try VehicleMotionCalibrationRepositoryFactory.make(
             mapper: VehicleMotionCalibrationRecordMapper(),
             storeURL: directory.appendingPathComponent("Calibration.store")
         )

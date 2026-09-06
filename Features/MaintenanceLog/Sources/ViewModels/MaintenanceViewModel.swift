@@ -25,6 +25,7 @@ public final class MaintenanceViewModel: ObservableObject {
     private var mutationTask: Task<Void, Never>?
     private var mutationID: UUID?
     private var errorMessage: String?
+    private var needsReload = true
 
     public init(
         useCases: MaintenanceUseCases,
@@ -75,6 +76,7 @@ public final class MaintenanceViewModel: ObservableObject {
         mutationTask = nil
         mutationID = nil
         isMutating = false
+        needsReload = true
     }
 
     public func refresh() {
@@ -229,7 +231,8 @@ private extension MaintenanceViewModel {
             odometerKilometers = nil
         }
         formState = mapper.mapForm(measurementSystem: measurementSystem)
-        if didChangeVIN {
+        if didChangeVIN || needsReload {
+            needsReload = false
             entries = []
             loadEntries()
         } else {
@@ -287,6 +290,7 @@ private extension MaintenanceViewModel {
         let notificationTitle = String(localized: .maintenanceNotificationTitle)
         let currentDate = now()
         for entry in entries {
+            guard !Task.isCancelled else { return }
             guard entry.schedule?.completedAt == nil,
                   let dueDate = entry.schedule?.dueDate,
                   dueDate > currentDate else {

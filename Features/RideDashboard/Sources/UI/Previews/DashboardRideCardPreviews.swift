@@ -216,13 +216,8 @@ private func makePreviewSystemHealthState(
 ) -> DashboardSystemHealthViewData {
     let cells = (1 ... 100).map { position in
         let isCritical = position == criticalCellPosition
-        let variation = Double((position * 7) % 9)
-        let voltageText = (3.89 + variation * 0.001)
-            .formatted(.number.precision(.fractionLength(4))) + " V"
         return DashboardSystemHealthViewData.Cell(
             position: position,
-            voltageText: isCritical ? "2.8500 V" : voltageText,
-            deviationText: isCritical ? "−1,042 mV" : "\(Int(variation) - 4) mV",
             condition: isCritical ? .critical : .normal,
             isBalancing: balancingCellPositions.contains(position)
         )
@@ -261,7 +256,7 @@ private func makePreviewSystemHealthState(
     )
 }
 
-private extension View {
+extension View {
     func dashboardCardPreviewCanvas() -> some View {
         frame(width: 430, height: 390)
             .background(DesignColor.surface)
