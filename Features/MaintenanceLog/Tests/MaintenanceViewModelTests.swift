@@ -99,4 +99,44 @@ struct MaintenanceViewModelTests {
         #expect(!fixture.viewModel.hasOfficialSchedule(kindID: MaintenanceKind.breakInGearOil.rawValue))
         #expect(!fixture.viewModel.hasOfficialSchedule(kindID: MaintenanceKind.chainLubrication.rawValue))
     }
+
+    @Test("Stopping reminder synchronization does not schedule the remaining entries")
+    func stopCancelsRemainingReminders() async {
+        let entries = (0 ..< 2).map { index in
+            MaintenanceEntry(
+                vin: MaintenanceTestFactory.Constants.firstVIN,
+                selection: .init(kind: .gearOil),
+                performedAt: MaintenanceTestFactory.now.addingTimeInterval(Double(-index)),
+                schedule: .init(dueDate: MaintenanceTestFactory.now.addingTimeInterval(3_600))
+            )
+        }
+        let fixture = MaintenanceTestFactory.make(entries: entries)
+        await fixture.reminders.suspendScheduling()
+        fixture.viewModel.start()
+        #expect(await waitUntil { await fixture.reminders.scheduled.count == 1 })
+
+        await fixture.viewModel.stopAndWait()
+
+        #expect(await fixture.reminders.scheduled.count == 1)
+        #expect(fixture.viewModel.viewState.status == .loading)
+    }
+
+    @Test("Restarting reloads persisted entries for the same motorcycle")
+    func restartReloadsCurrentBike() async {
+        let fixture = MaintenanceTestFactory.make()
+        fixture.viewModel.start()
+        #expect(await waitUntil { fixture.viewModel.viewState.status == .loaded })
+        await fixture.viewModel.stopAndWait()
+        let entry = MaintenanceEntry(
+            vin: MaintenanceTestFactory.Constants.firstVIN,
+            selection: .init(kind: .tires),
+            performedAt: MaintenanceTestFactory.now
+        )
+        #expect(await fixture.repository.save(entry))
+
+        fixture.viewModel.start()
+
+        #expect(await waitUntil { fixture.viewModel.viewState.history.map(\.id) == [entry.id] })
+        await fixture.viewModel.stopAndWait()
+    }
 }

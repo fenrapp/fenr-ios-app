@@ -39,7 +39,7 @@ public struct SystemHealthCardMapper: Sendable {
             criticalCellCount: analysis.criticalCellCount,
             attentionCellCount: analysis.attentionCellCount,
             balancingCellCount: analysis.balancingCellCount,
-            cells: analysis.cells.map { cell($0, measurementMapper: measurementMapper) },
+            cells: analysis.cells.map(cell),
             minimumCellText: cellSummary(analysis.minimumCell, measurementMapper: measurementMapper),
             maximumCellText: cellSummary(analysis.maximumCell, measurementMapper: measurementMapper),
             batteryThermalRange: batteryThermalRange,
@@ -120,13 +120,10 @@ private extension SystemHealthCardMapper {
     }
 
     func cell(
-        _ assessment: BatteryCellHealthAssessment,
-        measurementMapper: RideDashboardMeasurementMapper
+        _ assessment: BatteryCellHealthAssessment
     ) -> DashboardSystemHealthViewData.Cell {
         .init(
             position: assessment.position,
-            voltageText: voltage(assessment.voltage, fractionDigits: 4, measurementMapper: measurementMapper),
-            deviationText: signedMillivolts(assessment.deviation, measurementMapper: measurementMapper),
             condition: cellCondition(assessment.condition),
             isBalancing: assessment.isBalancing
         )
@@ -164,14 +161,6 @@ private extension SystemHealthCardMapper {
     ) -> String {
         guard let volts, volts.isFinite else { return "—" }
         return measurementMapper.number(volts * Constants.millivoltsPerVolt, fractionDigits: .zero) + " mV"
-    }
-
-    func signedMillivolts(
-        _ volts: Double,
-        measurementMapper: RideDashboardMeasurementMapper
-    ) -> String {
-        let value = measurementMapper.number(abs(volts) * Constants.millivoltsPerVolt, fractionDigits: .zero)
-        return (volts >= .zero ? "+" : "−") + value + " mV"
     }
 
     func thermalStatistics(_ values: [Double?]) -> BatteryTemperatureStatistics? {

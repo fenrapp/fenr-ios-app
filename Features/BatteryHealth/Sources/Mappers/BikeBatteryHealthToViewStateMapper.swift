@@ -34,7 +34,6 @@ public struct BikeBatteryHealthToViewStateMapper {
         let stateOfHealthMetric = summary.first { $0.id == "soh" }
         let charging = chargingMetrics(for: health)
         let cells = cellViewData(for: analysis)
-        let temperatures = temperatureViewData(for: health, analysis: analysis)
         let datasets = BatteryDataset.allCases.map {
             datasetViewData(dataset: $0, capture: captures[$0], health: health)
         }
@@ -61,13 +60,6 @@ public struct BikeBatteryHealthToViewStateMapper {
                 rawFlags: rawFlags(for: health),
                 chargeAuditLines: chargeAuditLines
             ),
-            summary: summary,
-            charging: charging,
-            packStatus: packMetrics(for: health, analysis: analysis, captures: captures),
-            cells: cells,
-            temperatures: temperatures,
-            datasets: datasets,
-            chargePowerControl: control,
             isMonitoring: isMonitoring,
             monitorError: monitorError
         )

@@ -19,6 +19,11 @@ final class UIKitDashboardDeviceBatteryMonitor: DashboardDeviceBatteryMonitoring
         self.notificationCenter = notificationCenter
     }
 
+    isolated deinit {
+        stop()
+        continuations.values.forEach { $0.finish() }
+    }
+
     func start() {
         guard !isStarted else { return }
         isStarted = true

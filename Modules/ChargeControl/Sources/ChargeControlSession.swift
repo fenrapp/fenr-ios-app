@@ -90,7 +90,7 @@ public final class ChargeControlSession: ObservableObject {
                 return
             } catch {
                 guard let self, operations.belongsToCurrentConnection(generation) else { return }
-                stateUpdater.applyPreparationFailure(error, to: &state)
+                stateUpdater.applyPreparationFailure(to: &state)
                 logger.append("prepare failed: \(error)")
             }
         }
@@ -135,7 +135,7 @@ public final class ChargeControlSession: ObservableObject {
         } catch {
             guard operations.belongsToCurrentConnection(generation) else { return }
             rollback(command)
-            markFailed(error)
+            markFailed(.writeFailed)
             logger.append("write failed: \(error)")
         }
         operations.finishWrite()
@@ -269,8 +269,6 @@ public final class ChargeControlSession: ObservableObject {
             markReady(status: status)
         }
     }
-
-    private func markFailed(_: Error) { markFailed(.writeFailed) }
 
     private func markFailed(_ failure: ChargeControlFailure) {
         state.phase = .failed

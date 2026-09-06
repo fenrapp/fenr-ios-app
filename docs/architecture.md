@@ -16,7 +16,8 @@ FENR is structured as a modular Swift application. The goal is to keep vehicle t
 | `BikeSDK` | Platform Bluetooth integration, authenticated telemetry, and guarded VCU configuration transport. |
 | `StarkProtocol` | Clean-room UUID catalogues, payload parsing/encoding, firmware gates, and pairing identity helpers. |
 | `DesignSystem` | SwiftUI-only shared colours, spacing, radii, and reusable visual components. |
-| `AsyncSupport` | Cross-app asynchronous support utilities used by tests and infrastructure. |
+| `AsyncSupport` | Production asynchronous event-stream support. |
+| `TestSupport` | Bounded asynchronous polling and event hubs for test targets. |
 
 ## Session ownership
 
@@ -35,15 +36,37 @@ FENR is structured as a modular Swift application. The goal is to keep vehicle t
 - `RideHistory` and `MaintenanceLog`: locally stored rides and maintenance records.
 - `WatchOnboarding` and `WatchDashboard`: direct-bike setup and a telemetry-only Watch dashboard.
 
-`ChargeControl` coordinates charging settings, `VehicleSession` shares vehicle
-presentation across iPhone features, and `RideSession` coordinates location,
-recording and navigation. Their composition reuses the same bike repository.
+`ChargeControl` coordinates charging settings, `VehicleSession` combines vehicle
+and device measurements for iPhone features, and `RideSession` coordinates trip
+recording. Their composition reuses the same bike repository.
 `ShareExtension` accepts destinations; `LiveActivityExtension` presents charging
 updates without owning a Bluetooth connection.
+
+## Supporting modules
+
+| Modules | Responsibility |
+| --- | --- |
+| `BikeDomain`, `BikeData` | Vehicle contracts, use cases and the shared repository backed by `BikeSDK`. |
+| `BikeEmulator` | Simulated vehicle scenarios used by development apps and the public demo. |
+| `BLETraceDomain`, `BLETraceData` | Diagnostic capture contracts, log storage and export. |
+| `EnvironmentDomain`, `EnvironmentData` | Device location, heading and motion contracts and platform services. |
+| `RideSessionDomain`, `RideSessionData` | Trip models, recording contracts and persistent ride history. |
+| `RideNavigationDomain`, `RideNavigationData` | Route and destination contracts, GPX handling and saved navigation state. |
+| `RideNavigationAppleMaps` | MapKit rendering, place search, road directions and supported map-link resolution. |
+| `MaintenanceDomain`, `MaintenanceData` | Maintenance records, reminders and persistence. |
+| `SettingsDomain`, `SettingsData` | Preferences, bike setup and dashboard configuration. |
+| `MeasurementPresentation` | Shared measurement conversion and localized numeric formatting. |
+| `RuntimeConfiguration` | Shared timing and runtime constants for apps, SDK and emulator. |
 
 ## Dependency direction
 
 Dependencies point inward: features consume domain contracts and use cases; data implements those contracts; SDK and protocol code stay below product/UI layers. `DesignSystem` is a feature dependency only and must not leak into domain, data, SDK, or protocol modules.
+
+Views under a feature's `UI/` render immutable feature-owned presentation models
+and emit semantic intents. Injected mappers convert domain output before a view
+model publishes it; views do not consume repository, SDK or domain entities.
+Composition roots construct collaborators explicitly. Controllers own and cancel
+their asynchronous tasks across stop, reset and reconnection boundaries.
 
 ## Vehicle writes
 
@@ -58,8 +81,8 @@ require matching configuration reads. A transport timeout invalidates the
 transaction stream until reconnection so a late reply cannot confirm a new write.
 
 Charging controls and base-map changes have physical evidence. Instrumented
-traction-control and lock write/read-back evidence remains incomplete. Packet
-layouts, firmware thresholds and confidence levels belong in the
+traction-control and lock write/read-back evidence remains incomplete. Protocol
+research details and physical validation evidence belong in the
 [protocol research repository](https://github.com/fenrapp/bike-protocol-research);
 implementation constraints remain in [AGENTS.md](../AGENTS.md).
 

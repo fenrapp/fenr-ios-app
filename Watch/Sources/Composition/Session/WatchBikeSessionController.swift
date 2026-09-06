@@ -1,9 +1,7 @@
 import BikeDomain
-import Combine
-import Foundation
 
 @MainActor
-final class WatchBikeSessionController: ObservableObject {
+struct WatchBikeSessionController {
     private let repository: any BikeRepository
 
     init(repository: any BikeRepository) {
@@ -20,9 +18,5 @@ final class WatchBikeSessionController: ObservableObject {
 
     func disconnect() async {
         try? await repository.disconnect()
-    }
-
-    func stop() async {
-        await repository.stop()
     }
 }

@@ -8,7 +8,6 @@
     "maintenanceBikeUnavailable" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bike Unavailable" } } } },
     "maintenanceBikeUnavailableDescription" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connect or configure a bike to manage its maintenance history." } } } },
     "maintenanceCancel" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } } } },
-    "maintenanceCostPrompt" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cost (%@)" } } } },
     "maintenanceCustomName" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Maintenance Name" } } } },
     "maintenanceDescriptionBearings" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Inspect or replace wheel, steering, or chassis bearings." } } } },
     "maintenanceDescriptionBrakeDiscs" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Inspect disc wear, condition, or record a replacement." } } } },

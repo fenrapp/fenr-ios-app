@@ -1,4 +1,3 @@
-import DesignSystem
 import Foundation
 import SwiftUI
 
@@ -21,42 +20,8 @@ public struct MaintenanceDetailView: View {
     public var body: some View {
         Group {
             if let detail = viewModel.detail(id: entryID) {
-                Form {
-                    Section {
-                        HStack(spacing: DesignSpace.small) {
-                            Image(systemName: detail.symbolName)
-                                .font(.title2)
-                                .foregroundStyle(.tint)
-                            Text(detail.title)
-                                .font(.title3.bold())
-                        }
-                        .padding(.vertical, DesignSpace.extraSmall)
-                    }
-                    Section(.maintenanceDetailsSection) {
-                        ForEach(detail.fields) { field in
-                            LabeledContent(field.label, value: field.value)
-                        }
-                    }
-                    if !detail.reminderFields.isEmpty {
-                        Section(.maintenanceNextSection) {
-                            ForEach(detail.reminderFields) { field in
-                                LabeledContent(field.label, value: field.value)
-                            }
-                        }
-                    }
-                    if let guidance = detail.officialGuidance {
-                        Section(.maintenanceOfficialGuidanceSection) {
-                            Label(guidance, systemImage: "book.closed.fill")
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    Section {
-                        Button(.maintenanceDeleteEntry, role: .destructive) {
-                            confirmsDeletion = true
-                        }
-                        .disabled(viewModel.isMutating)
-                        .accessibilityIdentifier("maintenance.delete.open")
-                    }
+                MaintenanceDetailContent(detail: detail, isMutating: viewModel.isMutating) {
+                    confirmsDeletion = true
                 }
                 .navigationTitle(.maintenanceDetailTitle)
                 .toolbar {

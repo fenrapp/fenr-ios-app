@@ -5,8 +5,8 @@ import SettingsDomain
 import VehicleSession
 
 @MainActor
-struct ChargingDashboardDependencyContainer {
-    func makeViewModel(
+enum ChargingDashboardDependencyContainer {
+    static func makeViewModel(
         vehicleSession: any VehicleSessionService,
         chargeControl: ChargeControlSession
     ) -> ChargingDashboardViewModel {

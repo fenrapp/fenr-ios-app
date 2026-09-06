@@ -7,10 +7,10 @@ import Testing
 struct DebugRideHistorySeederTests {
     @Test("Seeds debug ride history once and remains idempotent")
     func seedsDebugRideHistoryOnceAndIsIdempotent() async throws {
-        let modelContainer = try SwiftDataRideTripRepository.makeModelContainer(
+        let modelContainer = try RideTripRepositoryFactory.makeModelContainer(
             isStoredInMemoryOnly: true
         )
-        let repository = SwiftDataRideTripRepository(
+        let repository = RideTripRepositoryFactory.make(
             modelContainer: modelContainer,
             mapper: RideTripRecordMapper(),
             energyBucketMapper: RideEnergyBucketRecordMapper()

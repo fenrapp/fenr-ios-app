@@ -14,10 +14,14 @@ labels: bug
 ## Environment
 
 - FENR version/commit:
-- iOS version:
+- iOS/watchOS version:
 - Device:
 - Bike/emulator state:
+- Motorcycle model and firmware version, if relevant (no VIN or pairing details):
 
 ## Validation or logs
 
-Do not attach raw captures, identifiers, credentials, or private telemetry.
+Include a minimal reproduction using the built-in demo when possible. Do not
+attach raw captures, motorcycle identifiers, credentials, location history or
+private telemetry. Report suspected security or safety vulnerabilities through
+the private reporting instructions in SECURITY.md.

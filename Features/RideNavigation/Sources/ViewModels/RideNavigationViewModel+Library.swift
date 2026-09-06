@@ -88,14 +88,6 @@ extension RideNavigationViewModel {
         discardActivity()
     }
 
-    func publishSavedRoute(_ route: RideRoute) {
-        savedRoutes.removeAll { $0.id == route.id }
-        savedRoutes.insert(route, at: .zero)
-        completedRecording = route
-        errorText = nil
-        render()
-    }
-
     public func exportCompletedRoute() {
         guard canExportCompletedRoute, let route = completedRecording ?? selectedRoute ?? roadRouteForExport else {
             errorText = String(localized: .rideNavigationNoRouteToExport)

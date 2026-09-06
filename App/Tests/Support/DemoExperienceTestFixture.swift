@@ -26,8 +26,8 @@ struct DemoExperienceTestFixture {
     }
 
     func makeRides() throws -> SwiftDataRideTripRepository {
-        SwiftDataRideTripRepository(
-            modelContainer: try SwiftDataRideTripRepository.makeModelContainer(
+        RideTripRepositoryFactory.make(
+            modelContainer: try RideTripRepositoryFactory.makeModelContainer(
                 storeURL: directory.appendingPathComponent(identity.id.uuidString).appendingPathComponent("Rides.store")
             ),
             mapper: RideTripRecordMapper(), energyBucketMapper: RideEnergyBucketRecordMapper()

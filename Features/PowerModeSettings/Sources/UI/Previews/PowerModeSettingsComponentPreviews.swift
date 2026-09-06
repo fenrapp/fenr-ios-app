@@ -104,3 +104,20 @@ private func previewTitle(for id: PowerModeAdjustmentID) -> String {
     case .brakingTraction: "Regen traction control"
     }
 }
+
+#Preview("Control feedback states") {
+    List {
+        PowerModeControlFeedbackView(feedback: .init(
+            state: .applying, title: "Applying setting", emphasis: .informational, isActivity: true
+        ))
+        PowerModeControlFeedbackView(feedback: .init(
+            state: .confirmed, title: "Confirmed", systemImage: "checkmark.circle.fill", emphasis: .positive
+        ))
+        PowerModeControlFeedbackView(feedback: .init(
+            state: .failed,
+            title: "The bike did not confirm the change. Try again.",
+            systemImage: "exclamationmark.triangle.fill",
+            emphasis: .critical
+        ))
+    }
+}

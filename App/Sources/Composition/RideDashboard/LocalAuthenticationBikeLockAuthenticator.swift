@@ -1,41 +1,18 @@
-import Foundation
-import LocalAuthentication
 import SettingsDomain
 
 struct LocalAuthenticationBikeLockAuthenticator: BikeLockAuthenticating {
+    let makeContext: @Sendable () -> any BikeLockAuthenticationContext
+
     func authenticate(reason: String) async throws -> Bool {
-        let context = LocalAuthenticationContext()
+        try Task.checkCancellation()
+        let context = makeContext()
         return try await withTaskCancellationHandler {
             try Task.checkCancellation()
-            return try await context.authenticate(reason: reason)
+            let authenticated = try await context.authenticate(reason: reason)
+            try Task.checkCancellation()
+            return authenticated
         } onCancel: {
             context.invalidate()
         }
-    }
-}
-
-private final class LocalAuthenticationContext: @unchecked Sendable {
-    private let context = LAContext()
-
-    init() {
-        context.localizedFallbackTitle = String(localized: .appBikeLockEnterPIN)
-    }
-
-    func authenticate(reason: String) async throws -> Bool {
-        var authorizationError: NSError?
-        guard context.canEvaluatePolicy(
-            .deviceOwnerAuthenticationWithBiometrics,
-            error: &authorizationError
-        ) else {
-            return false
-        }
-        return try await context.evaluatePolicy(
-            .deviceOwnerAuthenticationWithBiometrics,
-            localizedReason: reason
-        )
-    }
-
-    func invalidate() {
-        context.invalidate()
     }
 }

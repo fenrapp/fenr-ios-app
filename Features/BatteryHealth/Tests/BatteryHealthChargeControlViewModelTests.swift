@@ -34,8 +34,8 @@ struct BatteryHealthChargeControlViewModelTests {
         viewModel.setChargePowerLimit(watts: 2_700)
 
         #expect(await waitUntil {
-            !viewModel.viewState.chargePowerControl.isEnabled
-                && viewModel.viewState.chargePowerControl.power.selected == 2_000
+            !viewModel.viewState.chargingDetail.control.isEnabled
+                && viewModel.viewState.chargingDetail.control.power.selected == 2_000
         })
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargePowerWrites() == [2_000] })
         viewModel.stop()
@@ -53,7 +53,7 @@ struct BatteryHealthChargeControlViewModelTests {
         await sendChargingHealth(repository: repository, maximumPowerWatts: 1_000)
 
         #expect(await waitUntil {
-            viewModel.viewState.chargePowerControl.power.selected == 1_500
+            viewModel.viewState.chargingDetail.control.power.selected == 1_500
         })
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargePowerWrites() == [1_500] })
         viewModel.stop()
@@ -71,7 +71,7 @@ struct BatteryHealthChargeControlViewModelTests {
         await sendChargingHealth(repository: repository, maximumPowerWatts: 1_000)
 
         #expect(await waitUntil {
-            viewModel.viewState.chargePowerControl.power.selected == 2_200
+            viewModel.viewState.chargingDetail.control.power.selected == 2_200
         })
         #expect(await repository.chargePowerWrites().isEmpty)
         viewModel.stop()
@@ -103,7 +103,7 @@ struct BatteryHealthChargeControlViewModelTests {
         viewModel.setChargePowerLimit(watts: 100)
 
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargePowerWrites() == [300] })
-        #expect(viewModel.viewState.chargePowerControl.power.selected == 300)
+        #expect(viewModel.viewState.chargingDetail.control.power.selected == 300)
         viewModel.stop()
     }
 
@@ -142,8 +142,8 @@ struct BatteryHealthChargeControlViewModelTests {
         viewModel.setChargeTarget(percent: 75)
 
         #expect(await waitUntil {
-            !viewModel.viewState.chargePowerControl.isEnabled
-                && viewModel.viewState.chargePowerControl.target.selected == 90
+            !viewModel.viewState.chargingDetail.control.isEnabled
+                && viewModel.viewState.chargingDetail.control.target.selected == 90
         })
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargeTargetWrites() == [90] })
         viewModel.stop()
@@ -188,7 +188,7 @@ struct BatteryHealthChargeControlViewModelTests {
             maximumPowerWatts: 1_000,
             maximumStateOfChargePercent: 1
         )
-        #expect(await waitUntil { viewModel.viewState.chargePowerControl.isEnabled })
+        #expect(await waitUntil { viewModel.viewState.chargingDetail.control.isEnabled })
         viewModel.setChargeTarget(percent: 105)
 
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargeTargetWrites() == [1, 100] })
@@ -215,7 +215,7 @@ struct BatteryHealthChargeControlViewModelTests {
         )
 
         #expect(await waitUntil {
-            viewModel.viewState.chargePowerControl.target.selected == 72
+            viewModel.viewState.chargingDetail.control.target.selected == 72
         })
         #expect(await repository.chargeTargetWrites().isEmpty)
         viewModel.stop()
@@ -239,14 +239,14 @@ struct BatteryHealthChargeControlViewModelTests {
         viewModel.setChargeTarget(percent: 80)
         try? await Task.sleep(for: .milliseconds(1_200))
         #expect(await repository.chargeTargetWrites().isEmpty)
-        #expect(!viewModel.viewState.chargePowerControl.isEnabled)
+        #expect(!viewModel.viewState.chargingDetail.control.isEnabled)
 
         await sendChargingHealth(
             repository: repository,
             maximumPowerWatts: 1_500,
             maximumStateOfChargePercent: 100
         )
-        #expect(await waitUntil { viewModel.viewState.chargePowerControl.isEnabled })
+        #expect(await waitUntil { viewModel.viewState.chargingDetail.control.isEnabled })
         #expect(await repository.chargeTargetWrites().isEmpty)
         viewModel.setChargeTarget(percent: 80)
         #expect(await waitUntil(timeout: .seconds(2)) { await repository.chargeTargetWrites() == [80] })

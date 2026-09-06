@@ -4,6 +4,7 @@ import MaintenanceDomain
 @testable import MaintenanceLog
 import MeasurementPresentation
 import SettingsDomain
+import TestSupport
 import VehicleSession
 
 @MainActor
@@ -18,7 +19,7 @@ enum MaintenanceTestFactory {
         let operation = ControllableMaintenanceOperation()
         let repository = MaintenanceTestRepository(entries: entries, operation: operation)
         let session = MaintenanceTestVehicleSession(snapshot: snapshot(vin: vin))
-        let reminders = MaintenanceReminderRecorder()
+        let reminders = MaintenanceReminderRecorder(schedulingGate: TestEventHub(bufferingPolicy: .unbounded))
         let clock: @Sendable () -> Date = { now }
         let viewModel = MaintenanceViewModel(
             useCases: .init(

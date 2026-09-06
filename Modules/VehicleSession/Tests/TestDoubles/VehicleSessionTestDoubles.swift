@@ -213,9 +213,27 @@ actor VehicleSessionTestIMURepository: BikeIMURepository {
 
 actor VehicleSessionTestMotionCalibrationRepository: VehicleMotionCalibrationRepository {
     private var value: VehicleMotionCalibration?
-    func load(vin _: String) -> VehicleMotionCalibration? { value }
+    private var shouldSuspendNextLoad = false
+    private var loadWaiter: CheckedContinuation<Void, Never>?
+
+    func load(vin _: String) async -> VehicleMotionCalibration? {
+        if shouldSuspendNextLoad {
+            shouldSuspendNextLoad = false
+            await withCheckedContinuation { loadWaiter = $0 }
+        }
+        return value
+    }
+
     func save(_ calibration: VehicleMotionCalibration) { value = calibration }
     func savedValue() -> VehicleMotionCalibration? { value }
+    func suspendNextLoadIgnoringCancellation() { shouldSuspendNextLoad = true }
+    func hasPendingLoad() -> Bool { loadWaiter != nil }
+
+    func resumeLoad() {
+        let waiter = loadWaiter
+        loadWaiter = nil
+        waiter?.resume()
+    }
 }
 
 private actor VehicleSessionTestHub<Element: Sendable> {

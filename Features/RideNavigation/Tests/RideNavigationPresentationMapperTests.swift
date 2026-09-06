@@ -127,6 +127,58 @@ struct RideNavigationPresentationMapperTests {
         #expect(mapper.routeDetail(route, measurementSystem: .metric) == "0,0 km · \(dateText)")
     }
 
+    @Test("Fork directions map to the matching symbol and selected distance units", arguments: [
+        (RideRouteGuidanceTurnDirection.left, "arrow.turn.up.left"),
+        (.right, "arrow.turn.up.right"),
+        (.straight, "arrow.up")
+    ])
+    func mapsForkDirections(direction: RideRouteGuidanceTurnDirection, symbol: String) throws {
+        let mapper = RideNavigationPresentationMapper(locale: Locale(identifier: "en_US"))
+        let decision = RideRouteGuidanceDecision(
+            direction: direction,
+            coordinate: coordinate(latitude: 41, longitude: 2),
+            distanceMeters: 1_609.344,
+            isFork: true,
+            identifier: "fork"
+        )
+
+        let guidance = try #require(mapper.forkGuidance(
+            routeState: .onRoute,
+            decision: decision,
+            measurementSystem: .imperial
+        ))
+
+        #expect(guidance.systemImage == symbol)
+        #expect(guidance.distanceText == "1.0 mi")
+    }
+
+    @Test("Wrong-fork recovery overrides the next directional instruction")
+    func wrongForkOverridesDecision() throws {
+        let mapper = RideNavigationPresentationMapper(locale: Locale(identifier: "en_US"))
+        let guidance = try #require(mapper.forkGuidance(
+            routeState: .wrongFork,
+            decision: .init(
+                direction: .left,
+                coordinate: coordinate(latitude: 41, longitude: 2),
+                distanceMeters: 100,
+                isFork: true,
+                identifier: "fork"
+            ),
+            measurementSystem: .metric
+        ))
+
+        #expect(guidance.emphasis == .warning)
+        #expect(guidance.systemImage == "arrow.uturn.backward")
+    }
+
+    @Test("Absent fork decisions produce no directional card")
+    func omitsMissingFork() {
+        let mapper = RideNavigationPresentationMapper(locale: Locale(identifier: "en_US"))
+
+        #expect(mapper.forkGuidance(routeState: nil, decision: nil, measurementSystem: .metric) == nil)
+        #expect(mapper.forkGuidance(routeState: .onRoute, decision: nil, measurementSystem: .metric) == nil)
+    }
+
     private func coordinate(latitude: Double, longitude: Double) -> GeographicCoordinate {
         GeographicCoordinate(latitudeDegrees: latitude, longitudeDegrees: longitude)!
     }

@@ -9,29 +9,12 @@ public struct LiveActivitySettingsView: View {
     }
 
     public var body: some View {
-        Form {
-            Section {
-                Toggle(.appSettingsLiveActivitiesEnabled, isOn: Binding(
-                    get: { viewModel.viewState.liveActivities.isEnabled },
-                    set: { viewModel.setLiveActivitiesEnabled($0) }
-                ))
-                .accessibilityIdentifier("settings.liveActivities.enabled")
-            } footer: {
-                Text(.appSettingsLiveActivitiesEnabledDetail)
-            }
-            ForEach(viewModel.viewState.liveActivities.activities) { activity in
-                LiveActivitySettingsSection(
-                    activity: activity,
-                    setEnabled: { viewModel.setLiveActivityEnabled($0, id: activity.id) },
-                    selectPresentation: {
-                        viewModel.selectLiveActivityPresentation(id: activity.id, presentationID: $0)
-                    }
-                )
-                .disabled(!viewModel.viewState.liveActivities.isEnabled)
-            }
-        }
-        .navigationTitle(Text(.appSettingsLiveActivitiesTitle))
-        .navigationBarTitleDisplayMode(.inline)
+        LiveActivitySettingsContent(
+            state: viewModel.viewState.liveActivities,
+            setEnabled: viewModel.setLiveActivitiesEnabled,
+            setActivityEnabled: { viewModel.setLiveActivityEnabled($0, id: $1) },
+            selectPresentation: { viewModel.selectLiveActivityPresentation(id: $0, presentationID: $1) }
+        )
     }
 }
 #endif

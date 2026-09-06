@@ -198,8 +198,8 @@ extension LiveVehicleSessionService {
     }
 
     private func expireIMUSample(_ sample: BikeIMUSample) async {
+        guard !Task.isCancelled, !isStopping, imuSample == sample else { return }
         imuExpiryTask = nil
-        guard imuSample == sample else { return }
         await refreshMotion()
         publish()
     }
@@ -252,8 +252,8 @@ extension LiveVehicleSessionService {
     }
 
     private func receive(_ calibration: VehicleMotionCalibration?, vin: String) async {
+        guard !Task.isCancelled, !isStopping, profile?.vin == vin else { return }
         motionCalibrationTask = nil
-        guard profile?.vin == vin else { return }
         motionCalibration = calibration
         hasLoadedMotionCalibration = true
         motionEstimator.reset()

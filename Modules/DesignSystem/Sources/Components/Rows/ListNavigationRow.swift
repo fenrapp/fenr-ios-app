@@ -77,3 +77,22 @@ public struct ListNavigationRow: View {
         static let textSpacing: CGFloat = 2
     }
 }
+
+#Preview("Navigation row") {
+    List {
+        ListNavigationRow(
+            title: "Measurements", subtitle: "Choose speed and distance units",
+            systemImage: "ruler", tint: DesignColor.accent, trailingValue: "Metric"
+        ) {}
+    }
+}
+
+#Preview("Navigation row accessibility text") {
+    List {
+        ListNavigationRow(
+            title: "Measurements", subtitle: "Choose speed and distance units",
+            systemImage: "ruler", tint: DesignColor.accent, trailingValue: "Metric"
+        ) {}
+    }
+    .environment(\.dynamicTypeSize, .accessibility3)
+}

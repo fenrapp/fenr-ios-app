@@ -33,12 +33,12 @@ struct RideSessionDataTestContext {
 
 enum RideSessionDataTestFactory {
     static func makeContext() throws -> RideSessionDataTestContext {
-        let modelContainer = try SwiftDataRideTripRepository.makeModelContainer(
+        let modelContainer = try RideTripRepositoryFactory.makeModelContainer(
             isStoredInMemoryOnly: true
         )
         return RideSessionDataTestContext(
             modelContainer: modelContainer,
-            repository: SwiftDataRideTripRepository(
+            repository: RideTripRepositoryFactory.make(
                 modelContainer: modelContainer,
                 mapper: RideTripRecordMapper(),
                 energyBucketMapper: RideEnergyBucketRecordMapper()

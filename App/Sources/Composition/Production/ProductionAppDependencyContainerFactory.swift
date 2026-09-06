@@ -71,7 +71,7 @@ enum ProductionAppDependencyContainerFactory {
             bleTraceLogRepository: bleTraceRepository,
             incomingMapLinkStore: makeIncomingMapLinkStore(),
             bikeLockCredentialStore: makeBikeLockCredentialStore(),
-            bikeLockAuthenticator: LocalAuthenticationBikeLockAuthenticator(),
+            bikeLockAuthenticator: BikeLockAuthenticationFactory.makeAuthenticator(),
             bikeLockCapabilityStore: bikeLockCapabilityStore,
             startupPreparer: NoOpAppStartupPreparer()
         )

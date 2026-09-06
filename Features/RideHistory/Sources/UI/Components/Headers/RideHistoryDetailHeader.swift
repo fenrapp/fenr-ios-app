@@ -1,10 +1,11 @@
+import DesignSystem
 import SwiftUI
 
 struct RideHistoryDetailHeader: View {
     let state: RideHistoryDetailViewState
 
     var body: some View {
-        VStack(spacing: Constants.spacing) {
+        VStack(spacing: DesignSpace.small) {
             Image(systemName: "motorcycle.fill")
                 .font(.title2)
                 .foregroundStyle(.tint)
@@ -25,15 +26,13 @@ struct RideHistoryDetailHeader: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, Constants.verticalPadding)
+        .padding(.vertical, DesignSpace.extraSmall)
         .accessibilityElement(children: .combine)
     }
 
     private enum Constants {
         static let iconSize: CGFloat = 52
         static let iconBackgroundOpacity = 0.12
-        static let spacing: CGFloat = 12
         static let textSpacing: CGFloat = 3
-        static let verticalPadding: CGFloat = 8
     }
 }

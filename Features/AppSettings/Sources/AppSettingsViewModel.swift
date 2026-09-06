@@ -88,63 +88,49 @@ public final class AppSettingsViewModel: ObservableObject {
         guard let speedSource = SpeedSource(rawValue: id) else { return }
         var updated = settings
         updated.speedSource = speedSource
-        settings = updated
-        render()
-        save(updated)
+        applyAndSave(updated)
     }
 
     public func selectDashboardProgressBarMode(id: String) {
         guard let mode = DashboardProgressBarMode(rawValue: id) else { return }
         var updated = settings
         updated.dashboardProgressBarMode = mode
-        settings = updated
-        render()
-        save(updated)
+        applyAndSave(updated)
     }
 
     public func selectDashboardBatteryIndicatorMode(id: String) {
         guard let mode = DashboardBatteryIndicatorMode(rawValue: id) else { return }
         var updated = settings
         updated.dashboardBatteryIndicatorMode = mode
-        settings = updated
-        render()
-        save(updated)
+        applyAndSave(updated)
     }
 
     public func selectDashboardDeviceBatteryDisplayMode(id: String) {
         guard let mode = DashboardDeviceBatteryDisplayMode(rawValue: id) else { return }
         var updated = settings
         updated.dashboardDeviceBatteryDisplayMode = mode
-        settings = updated
-        render()
-        save(updated)
+        applyAndSave(updated)
     }
 
     public func selectDashboardTemperatureDisplayMode(id: String) {
         guard let mode = DashboardTemperatureDisplayMode(rawValue: id) else { return }
         var updated = settings
         updated.dashboardTemperatureDisplayMode = mode
-        settings = updated
-        render()
-        save(updated)
+        applyAndSave(updated)
     }
 
     public func selectMeasurementSystem(id: String) {
         guard let measurementSystem = MeasurementSystem(rawValue: id) else { return }
         var updated = settings
         updated.measurementSystem = measurementSystem
-        settings = updated
-        render()
-        save(updated)
+        applyAndSave(updated)
     }
 
     public func selectBatteryPackCapacity(id: String) {
         guard let batteryPackCapacity = BatteryPackCapacity(rawValue: id), let vin = profile?.vin else { return }
         var updated = settings
         updated.setBatteryPackCapacity(batteryPackCapacity, forVIN: vin)
-        settings = updated
-        render()
-        save(updated)
+        applyAndSave(updated)
     }
 
     public func requestLocationAccess() {
@@ -204,12 +190,15 @@ public final class AppSettingsViewModel: ObservableObject {
 
     private func refreshLocationAuthorizationStatus() async {
         guard let locationAuthorizationStatus = useCases.location?.authorizationStatus else { return }
-        self.locationAuthorizationStatus = await locationAuthorizationStatus.execute()
+        let status = await locationAuthorizationStatus.execute()
         guard !Task.isCancelled else { return }
+        self.locationAuthorizationStatus = status
         render()
     }
 
-    private func save(_ settings: AppSettings) {
+    private func applyAndSave(_ settings: AppSettings) {
+        self.settings = settings
+        render()
         let previousSaveTask = settingsSaveTask
         let saveSettings = useCases.settings.save
         settingsSaveTask = Task {
@@ -225,18 +214,14 @@ public final class AppSettingsViewModel: ObservableObject {
         var updated = settings
         update(&updated.rideNavigation)
         guard updated != settings else { return }
-        settings = updated
-        render()
-        save(updated)
+        applyAndSave(updated)
     }
 
     func updateLiveActivitySettings(_ update: (inout LiveActivitySettings) -> Void) {
         var updated = settings
         update(&updated.liveActivities)
         guard updated != settings else { return }
-        settings = updated
-        render()
-        save(updated)
+        applyAndSave(updated)
     }
 
     private func observeProfile() {

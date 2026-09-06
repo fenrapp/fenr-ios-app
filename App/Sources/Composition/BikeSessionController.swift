@@ -1,5 +1,4 @@
 import BikeDomain
-import Combine
 
 struct BikeSessionControllerUseCases {
     let startRepository: StartBikeRepositoryUseCase
@@ -9,7 +8,7 @@ struct BikeSessionControllerUseCases {
 }
 
 @MainActor
-final class BikeSessionController: ObservableObject {
+final class BikeSessionController {
     private enum State {
         case stopped
         case starting

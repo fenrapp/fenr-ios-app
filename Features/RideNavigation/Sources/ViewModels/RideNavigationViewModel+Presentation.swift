@@ -150,35 +150,10 @@ extension RideNavigationViewModel {
 
     var presentedForkGuidance: RideNavigationForkGuidance? {
         let guidance = trailGuidance.snapshot.guidance
-        if guidance?.routeState == .wrongFork {
-            return RideNavigationForkGuidance(
-                instructionText: String(localized: .rideNavigationWrongFork),
-                distanceText: String(localized: .rideNavigationReturnToTrack),
-                systemImage: "arrow.uturn.backward",
-                emphasis: .warning
-            )
-        }
-        guard let decision = guidance?.decision else { return nil }
-        let instruction: String
-        let systemImage: String
-        switch decision.direction {
-        case .left:
-            instruction = String(localized: .rideNavigationKeepLeftUppercase)
-            systemImage = "arrow.turn.up.left"
-        case .right:
-            instruction = String(localized: .rideNavigationKeepRightUppercase)
-            systemImage = "arrow.turn.up.right"
-        case .straight:
-            instruction = String(localized: .rideNavigationContinueStraightUppercase)
-            systemImage = "arrow.up"
-        }
-        return RideNavigationForkGuidance(
-            instructionText: instruction,
-            distanceText: mapper.distance(
-                meters: decision.distanceMeters,
-                measurementSystem: measurementSystem
-            ),
-            systemImage: systemImage
+        return mapper.forkGuidance(
+            routeState: guidance?.routeState,
+            decision: guidance?.decision,
+            measurementSystem: measurementSystem
         )
     }
 
@@ -334,9 +309,7 @@ extension RideNavigationViewModel {
 
     enum Constants {
         static let offRouteDistanceMeters = 50.0
-        static let routeRecoveryDistanceMeters = 30.0
         static let arrivalDistanceMeters = 30.0
-        static let approachDistanceMeters = 100.0
         static let roadRerouteDistanceMeters = 75.0
         static let enduroLookAheadMeters = 35.0
         static let voiceDecisionDistanceMeters = 80.0

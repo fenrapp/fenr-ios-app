@@ -1,35 +1,19 @@
 import Foundation
 import RideSessionDomain
-import SwiftData
 
-public final class SwiftDataRideTripRepository: RideTripRepository, Sendable {
+public struct SwiftDataRideTripRepository: RideTripRepository, Sendable {
     private let store: RideTripStore
     private let mapper: RideTripRecordMapper
     private let energyBucketMapper: RideEnergyBucketRecordMapper
 
-    public init(
-        modelContainer: ModelContainer,
+    init(
+        store: RideTripStore,
         mapper: RideTripRecordMapper,
         energyBucketMapper: RideEnergyBucketRecordMapper
     ) {
-        store = RideTripStore(modelContainer: modelContainer)
+        self.store = store
         self.mapper = mapper
         self.energyBucketMapper = energyBucketMapper
-    }
-
-    public static func makeModelContainer(
-        isStoredInMemoryOnly: Bool = false,
-        storeURL: URL? = nil
-    ) throws -> ModelContainer {
-        let configuration = storeURL.map { ModelConfiguration(Constants.storeName, url: $0) } ?? ModelConfiguration(
-            Constants.storeName,
-            isStoredInMemoryOnly: isStoredInMemoryOnly
-        )
-        return try ModelContainer(
-            for: RideTripRecord.self,
-            RideEnergyBucketRecord.self,
-            configurations: configuration
-        )
     }
 
     public func prepare(context: BikeSessionContext) async -> RideTrip? {
@@ -82,11 +66,5 @@ public final class SwiftDataRideTripRepository: RideTripRepository, Sendable {
     @discardableResult
     public func promoteTemporaryIdentity(_ temporaryID: UUID, toVIN vin: String) async -> Bool {
         await store.promoteTemporaryIdentity(temporaryID, toVIN: vin)
-    }
-}
-
-private extension SwiftDataRideTripRepository {
-    enum Constants {
-        static let storeName = "RideTripsV4"
     }
 }

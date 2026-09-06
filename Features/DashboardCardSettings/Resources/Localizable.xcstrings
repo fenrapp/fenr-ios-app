@@ -52,17 +52,6 @@
         }
       }
     },
-    "dashboard.card.settings.bike.lock.required.detail" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Required while unlock protection is configured"
-          }
-        }
-      }
-    },
     "dashboard.card.settings.bike.lock.unavailable.detail" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -70,17 +59,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Connect a supported bike to enable this card"
-          }
-        }
-      }
-    },
-    "dashboard.card.settings.bike.lock.visibility.hint" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bike Lock must remain visible while unlock protection is configured"
           }
         }
       }

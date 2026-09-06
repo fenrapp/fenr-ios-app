@@ -217,11 +217,10 @@ extension RideNavigationViewModel {
 
     func announce(_ text: String) {
         guard !isVoiceMuted else { return }
-        let generation = operations.begin(.voiceAnnouncement)
+        _ = operations.begin(.voiceAnnouncement)
         voiceAnnouncementTask = Task { [guidance] in
             guard !Task.isCancelled else { return }
             await guidance.announce(text)
-            _ = generation
         }
     }
 
@@ -241,15 +240,6 @@ extension RideNavigationViewModel {
     ) {
         _ = operations.begin(.draftPersistence)
         draftPersistenceTask = Task {
-            await operation()
-        }
-    }
-
-    func replaceGuidanceTask(
-        _ operation: @escaping @Sendable () async -> Void
-    ) {
-        _ = operations.begin(.guidance)
-        guidanceTask = Task {
             await operation()
         }
     }

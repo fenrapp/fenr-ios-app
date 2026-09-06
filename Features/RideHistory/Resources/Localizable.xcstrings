@@ -104,7 +104,6 @@
     "rideHistoryRideTitle" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Ride" } } } },
     "rideHistoryRideUnavailable" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Ride Unavailable" } } } },
     "rideHistoryRideUnavailableDescription" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "This saved ride could not be loaded." } } } },
-    "rideHistorySavedRideHistory" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Saved ride history" } } } },
     "rideHistorySectionEnergy" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Energy" } } } },
     "rideHistorySectionEnergyProfile" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Energy Profile" } } } },
     "rideHistorySectionOverview" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Overview" } } } },

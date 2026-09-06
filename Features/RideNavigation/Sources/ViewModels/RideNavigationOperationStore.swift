@@ -19,7 +19,6 @@ final class RideNavigationOperationStore: @unchecked Sendable {
         case plannedRouteSave
         case completedRouteSave
         case draftPersistence
-        case guidance
         case voiceAnnouncement
         case feedback
     }

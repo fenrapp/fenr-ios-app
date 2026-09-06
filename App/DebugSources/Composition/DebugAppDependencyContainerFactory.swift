@@ -130,7 +130,7 @@ enum DebugAppDependencyContainerFactory {
             bikeLockCredentialStore: KeychainBikeLockCredentialStore(
                 service: "com.fenr.app.debug.bike-lock"
             ),
-            bikeLockAuthenticator: LocalAuthenticationBikeLockAuthenticator(),
+            bikeLockAuthenticator: BikeLockAuthenticationFactory.makeAuthenticator(),
             bikeLockCapabilityStore: bikeLockCapabilityStore,
             startupPreparer: DebugRideHistorySeeder(
                 repository: rideTripRepository,
@@ -182,8 +182,8 @@ enum DebugAppDependencyContainerFactory {
 
     private static func makeRideTripRepository() -> SwiftDataRideTripRepository {
         do {
-            let modelContainer = try SwiftDataRideTripRepository.makeModelContainer()
-            let repository = SwiftDataRideTripRepository(
+            let modelContainer = try RideTripRepositoryFactory.makeModelContainer()
+            let repository = RideTripRepositoryFactory.make(
                 modelContainer: modelContainer,
                 mapper: RideTripRecordMapper(),
                 energyBucketMapper: RideEnergyBucketRecordMapper()

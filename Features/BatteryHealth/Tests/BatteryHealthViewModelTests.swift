@@ -40,13 +40,17 @@ struct BatteryHealthViewModelTests {
             lastUpdated: Date(timeIntervalSince1970: 0)
         ))
         #expect(await waitUntil {
-            viewModel.viewState.summary.contains(where: { $0.value == "76%" })
+            viewModel.viewState.overview.summaryMetrics.contains(where: { $0.value == "76%" })
         })
 
-        #expect(viewModel.viewState.summary.contains(.init(id: "soc", title: "SOC", value: "76%")))
-        #expect(viewModel.viewState.summary.contains(.init(id: "soh", title: "SOH", value: "94%")))
-        #expect(viewModel.viewState.summary.contains(.init(id: "charge", title: "Charge", value: "Charging")))
-        #expect(viewModel.viewState.summary.contains(.init(id: "dcBus", title: "DC bus", value: "394.8 V")))
+        #expect(viewModel.viewState.overview.summaryMetrics.contains(.init(id: "soc", title: "SOC", value: "76%")))
+        #expect(viewModel.viewState.overview.stateOfHealthMetric == .init(id: "soh", title: "SOH", value: "94%"))
+        #expect(viewModel.viewState.overview.summaryMetrics.contains(
+            .init(id: "charge", title: "Charge", value: "Charging")
+        ))
+        #expect(viewModel.viewState.overview.summaryMetrics.contains(
+            .init(id: "dcBus", title: "DC bus", value: "394.8 V")
+        ))
         viewModel.stop()
     }
 
@@ -94,13 +98,13 @@ struct BatteryHealthViewModelTests {
             date: Date(timeIntervalSince1970: 0)
         ))
         #expect(await waitUntil {
-            viewModel.viewState.datasets.contains(where: {
+            viewModel.viewState.rawDataDetail.datasets.contains(where: {
                 $0.status.emphasis == .warning
             })
         })
 
-        #expect(viewModel.viewState.summary.contains(.init(id: "soc", title: "SOC", value: "--")))
-        let cellsDataset = viewModel.viewState.datasets.first { $0.id == "cellVoltages" }
+        #expect(viewModel.viewState.overview.summaryMetrics.contains(.init(id: "soc", title: "SOC", value: "--")))
+        let cellsDataset = viewModel.viewState.rawDataDetail.datasets.first { $0.id == "cellVoltages" }
         #expect(cellsDataset?.title == "Cell voltages")
         #expect(cellsDataset?.status == .init(text: "Captured Only", emphasis: .warning))
         #expect(cellsDataset?.state == .capturedOnly)
@@ -123,16 +127,16 @@ struct BatteryHealthViewModelTests {
             balancingCellIndexes: [0],
             temperatures: [.init(position: 1, celsius: 28.1)]
         ))
-        #expect(await waitUntil { !viewModel.viewState.cells.isEmpty })
+        #expect(await waitUntil { !viewModel.viewState.cellsDetail.cells.isEmpty })
 
-        #expect(viewModel.viewState.cells.count == 2)
-        #expect(viewModel.viewState.cells[0].isBalancing)
-        #expect(viewModel.viewState.cells[0].isMinimum)
-        #expect(viewModel.viewState.cells[1].isMaximum)
-        #expect(viewModel.viewState.temperatures == [
+        #expect(viewModel.viewState.cellsDetail.cells.count == 2)
+        #expect(viewModel.viewState.cellsDetail.cells[0].isBalancing)
+        #expect(viewModel.viewState.cellsDetail.cells[0].isMinimum)
+        #expect(viewModel.viewState.cellsDetail.cells[1].isMaximum)
+        #expect(viewModel.viewState.thermalDetail.sensors == [
             .init(position: 1, value: "82.6°F", emphasis: .positive)
         ])
-        #expect(viewModel.viewState.datasets.contains(.init(
+        #expect(viewModel.viewState.rawDataDetail.datasets.contains(.init(
             id: "cellVoltages",
             title: "Cell voltages",
             status: .init(text: "Decoded", emphasis: .positive),
@@ -159,14 +163,14 @@ struct BatteryHealthViewModelTests {
             ),
             lastUpdated: Date()
         ))
-        #expect(await waitUntil { !viewModel.viewState.charging.isEmpty })
+        #expect(await waitUntil { !viewModel.viewState.chargingDetail.metrics.isEmpty })
 
-        #expect(viewModel.viewState.charging.contains(.init(
+        #expect(viewModel.viewState.chargingDetail.metrics.contains(.init(
             id: "chargePowerLimit",
             title: "Power limit",
             value: "1 kW"
         )))
-        #expect(viewModel.viewState.charging.contains(.init(
+        #expect(viewModel.viewState.chargingDetail.metrics.contains(.init(
             id: "chargeCellTarget",
             title: "Cell target",
             value: "4.2750 V"
@@ -186,11 +190,11 @@ struct BatteryHealthViewModelTests {
                 .init(position: 3, volts: 3.82)
             ]
         ))
-        #expect(await waitUntil { !viewModel.viewState.cells.isEmpty })
+        #expect(await waitUntil { !viewModel.viewState.cellsDetail.cells.isEmpty })
 
-        #expect(viewModel.viewState.cells[0].condition == .aboveAverage)
-        #expect(viewModel.viewState.cells[2].condition == .critical)
-        #expect(viewModel.viewState.cells[2].deviation == "-53 mV")
+        #expect(viewModel.viewState.cellsDetail.cells[0].condition == .aboveAverage)
+        #expect(viewModel.viewState.cellsDetail.cells[2].condition == .critical)
+        #expect(viewModel.viewState.cellsDetail.cells[2].deviation == "-53 mV")
         viewModel.stop()
     }
 
@@ -209,7 +213,7 @@ struct BatteryHealthViewModelTests {
             ),
             isMonitoring: false,
             monitorError: nil
-        ).chargePowerControl
+        ).chargingDetail.control
 
         #expect(state.chargerText == "Unknown charger (91)")
         #expect(state.statusText == "Confirming \(1_500.formatted()) W")

@@ -6,7 +6,7 @@ struct DashboardSystemHealthThermalCard: View {
 
     var body: some View {
         DashboardAdaptiveCardSurface {
-            VStack(spacing: Constants.spacing) {
+            VStack(spacing: DesignSpace.extraSmall) {
                 DashboardSystemHealthHeader(
                     title: rideDashboardLocalized(.rideDashboardSystemHealthThermalTitle),
                     state: state
@@ -103,7 +103,6 @@ struct DashboardSystemHealthThermalCard: View {
     }
 
     private enum Constants {
-        static let spacing: CGFloat = 8
         static let temperatureDomain = -10.0 ... 100.0
         static let batteryStops: [Gradient.Stop] = [
             .init(color: DesignColor.critical.opacity(0.5), location: 0.00),

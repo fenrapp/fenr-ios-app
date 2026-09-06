@@ -11,4 +11,7 @@ labels: enhancement
 
 ## Safety and telemetry boundary
 
-Explain why this remains read-only and does not require undocumented vehicle writes.
+Describe any effect on vehicle telemetry or controls. Changes to supported controls
+must preserve the guarded write boundary in [AGENTS.md](../../AGENTS.md).
+Arbitrary configuration, custom curves, safety-control, ownership and firmware
+writes are out of scope.

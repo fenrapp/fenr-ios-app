@@ -601,17 +601,6 @@
         }
       }
     },
-    "rideNavigationExpandNavigation": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Expand navigation"
-          }
-        }
-      }
-    },
     "rideNavigationExportGPX": {
       "extractionState": "manual",
       "localizations": {
@@ -987,17 +976,6 @@
         }
       }
     },
-    "rideNavigationMapOrientation": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Map Orientation"
-          }
-        }
-      }
-    },
     "rideNavigationMapOrientationAccessibility": {
       "extractionState": "manual",
       "localizations": {
@@ -1104,17 +1082,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Speed"
-          }
-        }
-      }
-    },
-    "rideNavigationMetricTime": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Time"
           }
         }
       }

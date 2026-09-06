@@ -7,7 +7,7 @@ import Testing
 struct SwiftDataVehicleMotionCalibrationRepositoryTests {
     @Test("Persists complete calibrations independently per VIN and updates in place")
     func persistsPerVIN() async throws {
-        let repository = try SwiftDataVehicleMotionCalibrationRepository(
+        let repository = try VehicleMotionCalibrationRepositoryFactory.make(
             mapper: VehicleMotionCalibrationRecordMapper(),
             isStoredInMemoryOnly: true
         )

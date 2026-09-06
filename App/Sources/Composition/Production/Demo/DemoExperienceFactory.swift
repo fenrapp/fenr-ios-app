@@ -81,8 +81,8 @@ struct DemoExperienceFactory {
         }
         let directory = directory(for: identity)
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
-        let rides = SwiftDataRideTripRepository(
-            modelContainer: try SwiftDataRideTripRepository.makeModelContainer(
+        let rides = RideTripRepositoryFactory.make(
+            modelContainer: try RideTripRepositoryFactory.makeModelContainer(
                 storeURL: directory.appendingPathComponent("Rides.store")
             ),
             mapper: RideTripRecordMapper(), energyBucketMapper: RideEnergyBucketRecordMapper()
@@ -92,7 +92,7 @@ struct DemoExperienceFactory {
             maintenance: try MaintenanceRepositoryFactory.make(
                 storeURL: directory.appendingPathComponent("Maintenance.store")
             ),
-            calibration: try SwiftDataVehicleMotionCalibrationRepository(
+            calibration: try VehicleMotionCalibrationRepositoryFactory.make(
                 mapper: VehicleMotionCalibrationRecordMapper(),
                 storeURL: directory.appendingPathComponent("Calibration.store")
             )
@@ -153,7 +153,7 @@ struct DemoExperienceFactory {
                 userDefaults: try makeDefaults(identity: identity), encoder: JSONEncoder(), decoder: JSONDecoder()
             ),
             bikeLockCredentialStore: makeCredentialStore(identity.credentialService),
-            bikeLockAuthenticator: LocalAuthenticationBikeLockAuthenticator(),
+            bikeLockAuthenticator: BikeLockAuthenticationFactory.makeAuthenticator(),
             bikeLockCapabilityStore: BikeLockCapabilityStateStore(),
             startupPreparer: NoOpAppStartupPreparer(),
             experienceOptions: .init(

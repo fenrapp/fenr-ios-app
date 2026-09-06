@@ -4,8 +4,8 @@ import RideSession
 import RideSessionDomain
 
 @MainActor
-struct CurrentTripCardDependencyContainer {
-    func makeViewModels(
+enum CurrentTripCardDependencyContainer {
+    static func makeViewModels(
         dependencies: CurrentTripCardDependencies
     ) -> CurrentTripCardViewModels {
         let rideTripRepository = dependencies.rideTripRepository

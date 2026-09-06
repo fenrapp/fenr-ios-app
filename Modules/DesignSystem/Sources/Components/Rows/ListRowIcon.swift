@@ -24,11 +24,11 @@ public struct ListRowIcon: View {
     }
 }
 
-enum ListRowConstants {
-    static let spacing = DesignSpace.small
-    static let iconSize = DesignSpace.extraLarge
-    static let iconGlyphSize: CGFloat = 16
-    static let iconRadius = DesignSpace.extraSmall
-    static let iconBackgroundOpacity = 0.12
-    static let minimumHeight: CGFloat = 44
+#Preview("Row icons") {
+    HStack(spacing: DesignSpace.small) {
+        ListRowIcon(systemImage: "checkmark", tint: DesignColor.positive)
+        ListRowIcon(systemImage: "exclamationmark.triangle", tint: DesignColor.warning)
+        ListRowIcon(systemImage: "trash", tint: DesignColor.critical)
+    }
+    .padding()
 }

@@ -23,8 +23,7 @@ struct RideNavigationTrailMapPreparerTests {
         let controller = RideNavigationTrailMapController()
         controller.apply(plan)
         controller.advanceCompletion(to: plan.distanceMeters * 0.9)
-        var completed: [NavigationMapPolyline] = []
-        controller.appendCompletedPolylines(to: &completed)
+        let completed = controller.presentationSnapshot.completedPolylines
 
         #expect(!completed.isEmpty)
         #expect(completed.allSatisfy { $0.points.count <= 512 })
@@ -35,12 +34,10 @@ struct RideNavigationTrailMapPreparerTests {
         controller.advanceCompletion(
             to: (firstChunk.lowerBoundMeters + firstChunk.upperBoundMeters) / 2
         )
-        var partial: [NavigationMapPolyline] = []
-        controller.appendCompletedPolylines(to: &partial)
+        let partial = controller.presentationSnapshot.completedPolylines
         let partialPolyline = try #require(partial.last)
         controller.advanceCompletion(to: firstChunk.upperBoundMeters)
-        var full: [NavigationMapPolyline] = []
-        controller.appendCompletedPolylines(to: &full)
+        let full = controller.presentationSnapshot.completedPolylines
         let fullPolyline = try #require(full.first { $0.id == partialPolyline.id })
 
         #expect(partialPolyline.revision != fullPolyline.revision)

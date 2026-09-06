@@ -20,7 +20,7 @@ public protocol MaintenanceReminderScheduling: Sendable {
     func cancel(id: UUID) async
 }
 
-public actor NoOpMaintenanceReminderScheduler: MaintenanceReminderScheduling {
+public struct NoOpMaintenanceReminderScheduler: MaintenanceReminderScheduling {
     public init() {}
     public func schedule(_: MaintenanceDateReminderRequest, requestingAuthorization _: Bool) async {}
     public func cancel(id _: UUID) async {}
@@ -43,11 +43,14 @@ public final class SystemMaintenanceReminderScheduler: MaintenanceReminderSchedu
         _ request: MaintenanceDateReminderRequest,
         requestingAuthorization: Bool
     ) async {
+        guard !Task.isCancelled else { return }
         if requestingAuthorization {
             _ = try? await center.requestAuthorization(options: [.alert, .badge, .sound])
         }
+        guard !Task.isCancelled else { return }
         let settings = await center.notificationSettings()
-        guard settings.authorizationStatus == .authorized
+        guard !Task.isCancelled,
+              settings.authorizationStatus == .authorized
                 || settings.authorizationStatus == .provisional else { return }
         let content = UNMutableNotificationContent()
         content.title = request.title
