@@ -29,16 +29,16 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
         )
         let mapLinkSecurityPolicy = AppleMapLinkSecurityPolicy.standard
         let redirectSession = Self.makeRedirectSession(policy: mapLinkSecurityPolicy)
+        let timing = RideNavigationTiming.live
+        let library = RideNavigationLibraryController(
+            routeLibrary: Self.makeRouteLibrary(repository: repository, dateFormat: iso8601, isDemo: isDemo),
+            timing: timing
+        )
         return RideNavigationFeatureModel(
             viewModel: RideNavigationViewModel(
                 dependencies: RideNavigationViewModelDependencies(
                     vehicleSession: vehicleSession,
                     observeDeviceSpeed: observeDeviceSpeed,
-                    routeLibrary: Self.makeRouteLibrary(
-                        repository: repository,
-                        dateFormat: iso8601,
-                        isDemo: isDemo
-                    ),
                     planning: RideNavigationPlanningService(
                         roadRouteCalculator: roadRouteCalculator,
                         externalMapLinkResolver: AppleExternalMapLinkResolver(
@@ -66,11 +66,12 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
                     mapSceneBuilder: RideNavigationMapSceneBuilder(mapper: mapPresentationMapper),
                     searchService: RideNavigationSearchService(
                         placeSearch: placeSearch,
-                        sleep: RideNavigationTiming.live.sleep
+                        sleep: timing.sleep
                     ),
                     locationGeometry: RideNavigationLocationGeometry(),
-                    timing: .live
+                    timing: timing
                 ),
+                library: library,
                 recorder: RideRouteRecorder(),
                 breadcrumbRecorder: RideRouteRecorder()
             ),

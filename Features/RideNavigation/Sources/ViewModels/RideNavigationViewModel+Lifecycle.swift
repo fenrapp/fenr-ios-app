@@ -13,20 +13,8 @@ extension RideNavigationViewModel {
         let lifecycle = operations.startLifecycle()
         startLocationObservation()
         synchronizePresentationObservations()
-        let routesGeneration = operations.begin(.initialRoutes)
-        let routeLibrary = dependencies.routeLibrary
-        loadingTask = Task { [weak self] in
-            let routes = await routeLibrary.loadRoutes()
-            guard !Task.isCancelled else { return }
-            guard let self,
-                  operations.isCurrent(
-                      .initialRoutes,
-                      generation: routesGeneration,
-                      lifecycle: lifecycle
-                  ),
-                  isStarted else { return }
-            receiveLoadedRoutes(routes)
-        }
+        startLibraryObservation(lifecycle: lifecycle)
+        library.start()
         let settingsGeneration = operations.begin(.initialSettings)
         let loadSettings = loadSettings
         settingsLoadingTask = Task { [weak self] in
@@ -47,8 +35,10 @@ extension RideNavigationViewModel {
     public func stop() {
         isStarted = false
         trailGuidance.cancelPreparation()
-        state.routePersistence.cancelTransientSave()
-        operations.invalidateAll(preserving: [.completedRouteSave])
+        library.stop()
+        libraryObservationTask?.cancel()
+        libraryObservationTask = nil
+        operations.invalidateAll()
         settingsWorkerGeneration &+= 1
         pendingSettings.removeAll()
         appSettings = pendingSettings.settings

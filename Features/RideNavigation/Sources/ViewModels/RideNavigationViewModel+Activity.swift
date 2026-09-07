@@ -4,6 +4,7 @@ import RideNavigationDomain
 extension RideNavigationViewModel {
     public func startRecording() {
         let date = now()
+        library.resetPersistence()
         recorder.start(at: date, name: defaultRouteName(at: date))
         completedRecording = nil
         activityStartedAt = date
@@ -201,13 +202,13 @@ extension RideNavigationViewModel {
     }
 
     public func discardActivity() {
-        guard !state.routePersistence.status.isSaving else { return }
+        guard !library.snapshot.persistence.status.isSaving else { return }
         let destinationToOpen = openIncomingDestinationAfterSummary ? pendingExternalDestination : nil
         recorder.reset()
         breadcrumbRecorder.reset()
         completedRecording = nil
         trailGuidance.reset()
-        state.routePersistence.reset()
+        library.resetPersistence()
         frozenMiniMapScene = nil
         miniCompletionTitle = nil
         trailProgress = nil
@@ -231,9 +232,7 @@ extension RideNavigationViewModel {
         screen = .home
         stopClock()
         synchronizePresentationObservations()
-        replaceDraftPersistenceTask { [routeLibrary = dependencies.routeLibrary] in
-            try? await routeLibrary.saveDraft(nil)
-        }
+        library.clearDraft()
         render()
         if let destinationToOpen {
             pendingExternalDestination = nil

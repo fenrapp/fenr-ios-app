@@ -10,6 +10,7 @@ extension RideNavigationViewModel {
         routeTask = nil
         screen = .home
         selectedRoute = nil
+        library.resetPersistence()
         trailMap.reset()
         roadRoute = nil
         roadRoutes = []
@@ -22,6 +23,7 @@ extension RideNavigationViewModel {
         isRerouting = false
         isCalculatingRoadRoutes = false
         errorText = nil
+        library.clearError()
         render()
     }
 

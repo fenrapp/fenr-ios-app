@@ -4,7 +4,7 @@ import RideNavigationDomain
 @MainActor
 extension RideNavigationViewModel {
     public func saveCompletedRoute(name: String) {
-        guard let completedRecording, !state.routePersistence.status.isSaving else { return }
+        guard let completedRecording, !library.snapshot.persistence.status.isSaving else { return }
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let route = completedRecording.renamed(
             trimmed.isEmpty ? completedRecording.name : trimmed,
@@ -14,46 +14,11 @@ extension RideNavigationViewModel {
     }
 
     func beginCompletedRouteSave(_ route: RideRoute) {
-        let generation = operations.begin(.completedRouteSave)
-        state.routePersistence.beginCompletedRouteSave()
         completedRecording = route
         errorText = nil
+        library.clearError()
+        library.saveCompletedRoute(route)
         render()
-        let routeLibrary = dependencies.routeLibrary
-        completedRouteSaveTask = Task { [weak self] in
-            do {
-                let routes = try await routeLibrary.saveAndReload(route)
-                guard let self,
-                      operations.isCurrent(
-                          .completedRouteSave,
-                          generation: generation
-                      ) else { return }
-                savedRoutes = routes
-                if screen == .summary, self.completedRecording?.id == route.id {
-                    self.completedRecording = route
-                    errorText = nil
-                }
-                let shouldClose = state.routePersistence.completeCompletedRouteSave()
-                if shouldClose, isStarted {
-                    discardActivity()
-                } else if isStarted {
-                    render()
-                }
-            } catch is CancellationError {
-                return
-            } catch {
-                guard let self,
-                      operations.isCurrent(
-                          .completedRouteSave,
-                          generation: generation
-                      ) else { return }
-                state.routePersistence.fail(
-                    String(localized: .rideNavigationRecordedRouteSaveError)
-                )
-                errorText = nil
-                if isStarted { render() }
-            }
-        }
     }
 
     public func saveCompletedRouteAndClose(name: String) {
@@ -63,18 +28,18 @@ extension RideNavigationViewModel {
         }
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let resolvedName = trimmed.isEmpty ? completedRecording.name : trimmed
-        if state.routePersistence.status == .saved,
+        if library.snapshot.persistence.status == .saved,
            resolvedName == completedRecording.name {
             discardActivity()
             return
         }
-        state.routePersistence.requestCloseAfterSave()
+        library.requestCloseAfterSave()
         saveCompletedRoute(name: resolvedName)
     }
 
     public func retryCompletedRouteSave(name: String? = nil) {
         guard let completedRecording,
-              case .failed = state.routePersistence.status else { return }
+              case .failed = library.snapshot.persistence.status else { return }
         let trimmed = name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let route = trimmed.isEmpty
             ? completedRecording
@@ -83,8 +48,8 @@ extension RideNavigationViewModel {
     }
 
     public func discardUnsavedCompletedRoute() {
-        guard case .failed = state.routePersistence.status else { return }
-        state.routePersistence.clearFailure()
+        guard case .failed = library.snapshot.persistence.status else { return }
+        library.clearPersistenceFailure()
         discardActivity()
     }
 
@@ -94,70 +59,38 @@ extension RideNavigationViewModel {
             render()
             return
         }
-        do {
-            exportRequest = GPXExportRequest(
-                filename: sanitizedFilename(route.name) + ".gpx",
-                data: try dependencies.routeLibrary.export(route)
-            )
-        } catch {
-            errorText = String(localized: .rideNavigationGPXCreateError)
-            render()
-        }
+        library.exportRoute(route)
+        render()
     }
 
     public func clearExportRequest() {
-        exportRequest = nil
+        library.clearExportRequest()
+        render()
     }
 
     public func shareSavedRoute(id: UUID) {
-        guard let route = savedRoutes.first(where: { $0.id == id }) else { return }
-        do {
-            shareRequest = GPXExportRequest(
-                filename: sanitizedFilename(route.name) + ".gpx",
-                data: try dependencies.routeLibrary.export(route)
-            )
-            errorText = nil
-            render()
-        } catch {
-            errorText = String(localized: .rideNavigationGPXCreateError)
-            render()
-        }
+        errorText = nil
+        library.clearError()
+        library.shareSavedRoute(id: id)
+        render()
     }
 
     public func clearShareRequest() {
-        shareRequest = nil
+        library.clearShareRequest()
+        render()
     }
 
     public func deleteSavedRoute(id: UUID) {
-        guard savedRoutes.contains(where: { $0.id == id }) else { return }
-        savedRoutes.removeAll { $0.id == id }
+        guard library.snapshot.savedRoutes.contains(where: { $0.id == id }) else { return }
         if selectedRoute?.id == id {
             selectedRoute = nil
             trailMap.reset()
+            library.resetPersistence()
         }
         errorText = nil
+        library.clearError()
+        library.deleteSavedRoute(id: id)
         render()
-
-        let routeLibrary = dependencies.routeLibrary
-        routeDeletionTasks[id] = Task { [weak self] in
-            do {
-                try await routeLibrary.delete(id: id)
-                try Task.checkCancellation()
-                let routes = await routeLibrary.loadRoutes()
-                try Task.checkCancellation()
-                self?.receiveRouteDeletion(routes, id: id, errorText: nil)
-            } catch is CancellationError {
-                return
-            } catch {
-                let routes = await routeLibrary.loadRoutes()
-                guard !Task.isCancelled else { return }
-                self?.receiveRouteDeletion(
-                    routes,
-                    id: id,
-                    errorText: String(localized: .rideNavigationRouteDeleteError)
-                )
-            }
-        }
     }
 
     public func openIncomingMapLink(_ url: URL) {
@@ -214,20 +147,13 @@ extension RideNavigationViewModel {
     }
 
     public func importGPX(from url: URL) {
-        let gainedAccess = url.startAccessingSecurityScopedResource()
-        defer { if gainedAccess { url.stopAccessingSecurityScopedResource() } }
         do {
-            let data = try Data(contentsOf: url, options: .mappedIfSafe)
-            let fallbackName = url.deletingPathExtension().lastPathComponent
-            let routes = try dependencies.routeLibrary.importRoutes(
-                from: data,
-                fallbackName: fallbackName
-            )
+            let routes = try library.importGPX(from: url)
             guard let route = routes.first else { return }
             selectedRoute = route
             selectedDirection = .forward
             trailMap.reset()
-            state.routePersistence.selectImportedRoute()
+            library.selectImportedRoute(id: route.id)
             trailGuidance.reset()
             trailProgress = nil
             roadRoute = nil
@@ -252,11 +178,11 @@ extension RideNavigationViewModel {
     }
 
     public func openSavedRoute(id: UUID) {
-        guard let route = savedRoutes.first(where: { $0.id == id }) else { return }
+        guard let route = library.snapshot.savedRoutes.first(where: { $0.id == id }) else { return }
         selectedRoute = route
         selectedDirection = .forward
         trailMap.reset()
-        state.routePersistence.selectSavedRoute()
+        library.selectSavedRoute(id: route.id)
         trailGuidance.reset()
         trailProgress = nil
         roadRoute = nil
@@ -270,6 +196,7 @@ extension RideNavigationViewModel {
         mapDisplayStyle = .map
         cameraMode = .automatic
         errorText = nil
+        library.clearError()
         render()
         prepareTrailPreview()
     }
@@ -308,31 +235,30 @@ extension RideNavigationViewModel {
             : .rideNavigationAnnouncementRoadStarted))
     }
 
-    func receiveLoadedRoutes(_ routes: [RideRoute]) {
-        savedRoutes = routes
-        render()
-    }
-
-    func receiveRouteDeletion(
-        _ routes: [RideRoute],
-        id: UUID,
-        errorText: String?
-    ) {
-        routeDeletionTasks[id] = nil
-        let pendingDeletionIDs = Set(routeDeletionTasks.keys)
-        savedRoutes = routes.filter { !pendingDeletionIDs.contains($0.id) }
-        self.errorText = errorText
-        render()
-    }
-
     func defaultRouteName(at date: Date) -> String {
         String(localized: .rideNavigationDefaultRideName(date.formatted(date: .abbreviated, time: .shortened)))
     }
 
-    func sanitizedFilename(_ value: String) -> String {
-        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_"))
-        let sanitized = value.unicodeScalars.map { allowed.contains($0) ? Character(String($0)) : "-" }
-        let filename = String(sanitized).trimmingCharacters(in: CharacterSet(charactersIn: "-"))
-        return filename.isEmpty ? String(localized: .rideNavigationDefaultExportName) : filename
+    func previewExternalDestination(_ destination: NavigationPlace) {
+        guard let origin = locationSnapshot.coordinate else {
+            pendingExternalDestination = destination
+            errorText = String(localized: .rideNavigationCurrentLocationRequired)
+            render()
+            return
+        }
+        stopClock()
+        screen = .map
+        activity = .preview
+        mapDisplayStyle = .map
+        selectedRoute = nil
+        library.resetPersistence()
+        trailMap.reset()
+        trailProgress = nil
+        trailExitPreview = nil
+        roadNavigationPurpose = .destination
+        selectedDestination = destination
+        errorText = nil
+        library.clearError()
+        calculateRoadPreview(from: origin, to: destination, showsSearchLoading: false)
     }
 }

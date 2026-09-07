@@ -6,7 +6,6 @@ import VehicleSession
 public struct RideNavigationViewModelDependencies: Sendable {
     let vehicleSession: any VehicleSessionService
     let observeDeviceSpeed: ObserveDeviceSpeedUseCase
-    let routeLibrary: RideNavigationRouteLibraryService
     let planning: RideNavigationPlanningService
     let trailGuidance: RideNavigationTrailGuidanceController
     let trailMapPreparer: any RideNavigationTrailMapPreparing
@@ -25,7 +24,6 @@ public struct RideNavigationViewModelDependencies: Sendable {
     public init(
         vehicleSession: any VehicleSessionService,
         observeDeviceSpeed: ObserveDeviceSpeedUseCase,
-        routeLibrary: RideNavigationRouteLibraryService,
         planning: RideNavigationPlanningService,
         trailGuidance: RideNavigationTrailGuidanceController,
         trailMapPreparer: any RideNavigationTrailMapPreparing,
@@ -43,7 +41,6 @@ public struct RideNavigationViewModelDependencies: Sendable {
     ) {
         self.vehicleSession = vehicleSession
         self.observeDeviceSpeed = observeDeviceSpeed
-        self.routeLibrary = routeLibrary
         self.planning = planning
         self.trailGuidance = trailGuidance
         self.trailMapPreparer = trailMapPreparer

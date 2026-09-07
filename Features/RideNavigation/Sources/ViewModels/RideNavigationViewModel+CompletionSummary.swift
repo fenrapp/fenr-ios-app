@@ -21,9 +21,7 @@ extension RideNavigationViewModel {
                 )
                 return "\(distance) \u{00B7} \(elapsedText(at: date))"
             } ?? String(localized: .rideNavigationNoValidGPSPoints)
-            replaceDraftPersistenceTask { [routeLibrary = dependencies.routeLibrary] in
-                try? await routeLibrary.saveDraft(nil)
-            }
+            library.clearDraft()
             return nil
         }
         guard finishedActivity == .following else {
@@ -32,7 +30,7 @@ extension RideNavigationViewModel {
         }
         guard let breadcrumb = breadcrumbRecorder.finish(at: date) else {
             completedRecording = nil
-            state.routePersistence.reset()
+            library.resetPersistence()
             summaryDetail = String(localized: .rideNavigationNoValidGPSPoints)
             return nil
         }
@@ -46,7 +44,6 @@ extension RideNavigationViewModel {
             segments: breadcrumb.segments
         )
         completedRecording = route
-        state.routePersistence.beginCompletedRouteSave()
         let distance = mapper.distance(
             meters: route.distanceMeters,
             measurementSystem: measurementSystem

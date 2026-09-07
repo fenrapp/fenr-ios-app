@@ -184,6 +184,7 @@ extension RideNavigationViewModel {
                 resetRoadStepGuidance()
                 isRerouting = false
                 errorText = nil
+                library.clearError()
                 render()
                 announce(String(localized: .rideNavigationAnnouncementRouteUpdated))
             } catch is CancellationError {
@@ -200,19 +201,8 @@ extension RideNavigationViewModel {
     }
 
     func scheduleDraftSave() {
-        draftSaveTask?.cancel()
         guard let route = recorder.snapshot(at: now()).route else { return }
-        let routeLibrary = dependencies.routeLibrary
-        let sleep = timing.sleep
-        draftSaveTask = Task {
-            do {
-                try await sleep(.seconds(2))
-                try Task.checkCancellation()
-                try await routeLibrary.saveDraft(route)
-            } catch {
-                return
-            }
-        }
+        library.scheduleDraft(route)
     }
 
     func announce(_ text: String) {
@@ -232,15 +222,6 @@ extension RideNavigationViewModel {
         lastRoadRerouteAt = nil
         if let point = locationGeometry.routePoint(from: locationSnapshot) {
             breadcrumbRecorder.append(point)
-        }
-    }
-
-    func replaceDraftPersistenceTask(
-        _ operation: @escaping @Sendable () async -> Void
-    ) {
-        _ = operations.begin(.draftPersistence)
-        draftPersistenceTask = Task {
-            await operation()
         }
     }
 

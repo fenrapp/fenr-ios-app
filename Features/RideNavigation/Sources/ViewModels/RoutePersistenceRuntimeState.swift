@@ -1,5 +1,5 @@
-struct RoutePersistenceRuntimeState {
-    enum SaveOperation {
+struct RoutePersistenceRuntimeState: Sendable {
+    enum SaveOperation: Sendable {
         case plannedRoute
         case completedRoute
     }

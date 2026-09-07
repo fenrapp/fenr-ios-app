@@ -48,11 +48,6 @@ struct RideNavigationViewModelFixture {
             dependencies: RideNavigationViewModelDependencies(
                 vehicleSession: vehicleSession,
                 observeDeviceSpeed: ObserveDeviceSpeedUseCase(repository: deviceSpeedRepository),
-                routeLibrary: RideNavigationRouteLibraryService(
-                    repository: routeRepository,
-                    importer: importer,
-                    exporter: StubGPXRouteExporter()
-                ),
                 planning: RideNavigationPlanningService(
                     roadRouteCalculator: roadRouteCalculator,
                     externalMapLinkResolver: externalMapLinkResolver,
@@ -78,6 +73,14 @@ struct RideNavigationViewModelFixture {
                     sleep: timing.sleep
                 ),
                 locationGeometry: RideNavigationLocationGeometry(),
+                timing: timing
+            ),
+            library: RideNavigationLibraryController(
+                routeLibrary: RideNavigationRouteLibraryService(
+                    repository: routeRepository,
+                    importer: importer,
+                    exporter: StubGPXRouteExporter()
+                ),
                 timing: timing
             ),
             recorder: RideRouteRecorder(),

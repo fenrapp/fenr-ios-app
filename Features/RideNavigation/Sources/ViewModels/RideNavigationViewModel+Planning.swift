@@ -8,6 +8,7 @@ extension RideNavigationViewModel {
         searchTask?.cancel()
         let query = value.trimmingCharacters(in: .whitespacesAndNewlines)
         errorText = nil
+        library.clearError()
         guard query.count >= Constants.minimumSearchCharacters else {
             searchResults = []
             render(isSearching: false)
@@ -45,6 +46,7 @@ extension RideNavigationViewModel {
         let lifecycle = operations.lifecycleGeneration
         isFindingTrailExit = true
         errorText = nil
+        library.clearError()
         render()
         let trailExitFinder = trailExitFinder
         let preferences = roadRoutePreferences
@@ -94,6 +96,7 @@ extension RideNavigationViewModel {
         applyPreferredMapStyleForActiveNavigation()
         cameraMode = followCamera
         errorText = nil
+        library.clearError()
         render()
         announce(String(localized: .rideNavigationAnnouncementExitStarted))
     }
@@ -118,6 +121,7 @@ extension RideNavigationViewModel {
         }
         cameraMode = followCamera
         errorText = nil
+        library.clearError()
         render()
         announce(String(localized: .rideNavigationAnnouncementEnduroResumed))
     }
@@ -157,6 +161,7 @@ extension RideNavigationViewModel {
                 resetRoadStepGuidance()
                 selectedDestination = destination
                 selectedRoute = nil
+                library.resetPersistence()
                 trailMap.reset()
                 trailProgress = nil
                 screen = .map
@@ -164,6 +169,7 @@ extension RideNavigationViewModel {
                 mapDisplayStyle = .map
                 cameraMode = .overview(mapMapper.coordinates(roadRoute?.points ?? []))
                 errorText = nil
+                library.clearError()
             } catch is CancellationError {
                 return
             } catch {
@@ -236,6 +242,7 @@ extension RideNavigationViewModel {
         let lifecycle = operations.lifecycleGeneration
         isCalculatingRoadRoutes = true
         errorText = nil
+        library.clearError()
         render()
         let roadRouteCalculator = roadRouteCalculator
         let preferences = roadRoutePreferences
@@ -259,6 +266,7 @@ extension RideNavigationViewModel {
                 resetRoadStepGuidance()
                 cameraMode = .overview(mapMapper.coordinates(firstRoute.points))
                 errorText = nil
+                library.clearError()
                 isCalculatingRoadRoutes = false
                 render()
             } catch is CancellationError {
@@ -314,6 +322,7 @@ extension RideNavigationViewModel {
                 cameraMode = followCamera
                 startClock()
                 errorText = nil
+                library.clearError()
                 render()
                 announce(String(localized: .rideNavigationAnnouncementTrailApproachStarted))
             } catch is CancellationError {
@@ -326,25 +335,5 @@ extension RideNavigationViewModel {
                 render()
             }
         }
-    }
-    func previewExternalDestination(_ destination: NavigationPlace) {
-        guard let origin = locationSnapshot.coordinate else {
-            pendingExternalDestination = destination
-            errorText = String(localized: .rideNavigationCurrentLocationRequired)
-            render()
-            return
-        }
-        stopClock()
-        screen = .map
-        activity = .preview
-        mapDisplayStyle = .map
-        selectedRoute = nil
-        trailMap.reset()
-        trailProgress = nil
-        trailExitPreview = nil
-        roadNavigationPurpose = .destination
-        selectedDestination = destination
-        errorText = nil
-        calculateRoadPreview(from: origin, to: destination, showsSearchLoading: false)
     }
 }

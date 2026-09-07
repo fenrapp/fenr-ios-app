@@ -77,6 +77,7 @@ extension RideNavigationViewModel {
             startAfterPreparation: startAfterPreparation
         )
         errorText = nil
+        library.clearError()
         render()
         let trailGuidance = trailGuidance
         let trailMapPreparer = trailMapPreparer
@@ -114,14 +115,14 @@ extension RideNavigationViewModel {
 
     func startSelectedTrailRoute() {
         guard let route = selectedRoute,
-              !state.routePersistence.status.isSaving else { return }
+              !library.snapshot.persistence.status.isSaving else { return }
         let guidanceSnapshot = trailGuidance.snapshot
         if guidanceSnapshot.isPreparing {
             trailGuidance.requestStartAfterPreparation()
             render()
             return
         }
-        if state.routePersistence.selectedRouteNeedsSave {
+        if library.snapshot.persistence.selectedRouteNeedsSave {
             savePlannedRouteBeforeStart(route)
             return
         }
@@ -167,43 +168,10 @@ extension RideNavigationViewModel {
     }
 
     private func savePlannedRouteBeforeStart(_ route: RideRoute) {
-        let generation = operations.begin(.plannedRouteSave)
-        let lifecycle = operations.lifecycleGeneration
-        state.routePersistence.beginPlannedRouteSave()
         errorText = nil
+        library.clearError()
+        library.savePlannedRoute(route)
         render()
-        let routeLibrary = dependencies.routeLibrary
-        plannedRouteSaveTask = Task { [weak self] in
-            do {
-                let routes = try await routeLibrary.saveAndReload(route)
-                guard let self,
-                      operations.isCurrent(
-                          .plannedRouteSave,
-                          generation: generation,
-                          lifecycle: lifecycle
-                      ),
-                      isStarted,
-                      selectedRoute?.id == route.id else { return }
-                savedRoutes = routes
-                state.routePersistence.completePlannedRouteSave()
-                startSelectedTrailRoute()
-            } catch is CancellationError {
-                return
-            } catch {
-                guard let self,
-                      operations.isCurrent(
-                          .plannedRouteSave,
-                          generation: generation,
-                          lifecycle: lifecycle
-                      ),
-                      isStarted else { return }
-                state.routePersistence.fail(
-                    String(localized: .rideNavigationImportedGPXSaveRetry)
-                )
-                errorText = String(localized: .rideNavigationImportedGPXSaveError)
-                render()
-            }
-        }
     }
 
     private func resolveTrailEntryAndStart() {

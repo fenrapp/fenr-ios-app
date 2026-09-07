@@ -15,7 +15,6 @@ final class RideNavigationViewModelState {
     var latestDeviceSpeedKilometersPerHour: Double?
     var frozenMiniMapScene: NavigationMapScene?
     var miniCompletionTitle: String?
-    var savedRoutes: [RideRoute] = []
     var searchResults: [NavigationPlace] = []
     var selectedRoute: RideRoute?
     var selectedDirection = RideRouteDirection.forward
@@ -36,7 +35,6 @@ final class RideNavigationViewModelState {
     var breadcrumbRecorder: RideRouteRecorder
     var completedRecording: RideRoute?
     var trailProgress: RideRouteProgress?
-    var routePersistence = RoutePersistenceRuntimeState()
     var activityStartedAt: Date?
     var mapSource = MapSourceDescriptor.appleStandard
     var mapDisplayStyle = NavigationMapDisplayStyle.map

@@ -9,16 +9,10 @@ final class RideNavigationOperationStore: @unchecked Sendable {
         case route
         case externalLink
         case trailExit
-        case draftSave
-        case initialRoutes
         case initialSettings
         case settingsObservation
         case settingsSave
-        case routeSave
         case trailPreparation
-        case plannedRouteSave
-        case completedRouteSave
-        case draftPersistence
         case voiceAnnouncement
         case feedback
     }
@@ -26,7 +20,6 @@ final class RideNavigationOperationStore: @unchecked Sendable {
     private var tasks: [Kind: Task<Void, Never>] = [:]
     private var generations: [Kind: UInt] = [:]
     private(set) var lifecycleGeneration: UInt = 0
-    var routeDeletionTasks: [UUID: Task<Void, Never>] = [:]
 
     subscript(kind: Kind) -> Task<Void, Never>? {
         get { tasks[kind] }
@@ -63,7 +56,5 @@ final class RideNavigationOperationStore: @unchecked Sendable {
         for kind in Kind.allCases where !preservedKinds.contains(kind) {
             invalidate(kind)
         }
-        routeDeletionTasks.values.forEach { $0.cancel() }
-        routeDeletionTasks.removeAll()
     }
 }

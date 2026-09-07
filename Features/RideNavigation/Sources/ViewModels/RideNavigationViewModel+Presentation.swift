@@ -46,7 +46,7 @@ extension RideNavigationViewModel {
             isPreparingTrail: trailGuidanceSnapshot.isPreparing,
             isRerouting: isRerouting,
             isSearching: isSearching ?? viewState.isSearching,
-            errorText: errorText,
+            errorText: errorText ?? library.snapshot.errorMessage,
             isVoiceMuted: isVoiceMuted,
             canReverseRoute: selectedRoute != nil && activity == .preview,
             canMinimize: canMinimize,
@@ -61,7 +61,7 @@ extension RideNavigationViewModel {
             trailEntryPrompt: trailGuidanceSnapshot.entryPrompt,
             arrivalPrompt: trailGuidanceSnapshot.arrivalPrompt,
             forkGuidance: presentedForkGuidance,
-            routePersistence: state.routePersistence.status,
+            routePersistence: library.snapshot.persistence.status,
             canSaveCompletedRoute: completedRecording != nil, canExportCompletedRoute: canExportCompletedRoute,
             summaryIsSuccessful: state.summaryIsSuccessful,
             completedRouteName: completedRecording?.name,
@@ -127,7 +127,7 @@ extension RideNavigationViewModel {
     }
 
     var routeRows: [RideNavigationRouteRow] {
-        savedRoutes.map {
+        library.snapshot.savedRoutes.map {
             RideNavigationRouteRow(
                 id: $0.id,
                 title: $0.name,

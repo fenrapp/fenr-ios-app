@@ -9,23 +9,27 @@ import VehicleSession
 public final class RideNavigationViewModel: ObservableObject {
     @Published public internal(set) var viewState = RideNavigationViewState()
     @Published public internal(set) var miniViewState = RideNavigationMiniViewState()
-    @Published public internal(set) var exportRequest: GPXExportRequest?
-    @Published public internal(set) var shareRequest: GPXExportRequest?
+    public var exportRequest: GPXExportRequest? { library.snapshot.exportRequest }
+    public var shareRequest: GPXExportRequest? { library.snapshot.shareRequest }
     @Published public internal(set) var settingsSaveError: String?
 
     var pendingSettings = AppSettingsPendingChanges()
     var settingsWorkerGeneration: UInt64 = 0
 
+    let library: RideNavigationLibraryController
+    var libraryObservationTask: Task<Void, Never>?
     let dependencies: RideNavigationViewModelDependencies
     let state: RideNavigationViewModelState
     let operations = RideNavigationOperationStore()
 
     public init(
         dependencies: RideNavigationViewModelDependencies,
+        library: RideNavigationLibraryController,
         recorder: RideRouteRecorder,
         breadcrumbRecorder: RideRouteRecorder
     ) {
         self.dependencies = dependencies
+        self.library = library
         state = RideNavigationViewModelState(
             recorder: recorder,
             breadcrumbRecorder: breadcrumbRecorder
@@ -33,7 +37,8 @@ public final class RideNavigationViewModel: ObservableObject {
     }
 
     deinit {
-        operations.invalidateAll(preserving: [.completedRouteSave])
+        libraryObservationTask?.cancel()
+        operations.invalidateAll()
     }
 
     var vehicleSession: any VehicleSessionService { dependencies.vehicleSession }
@@ -84,14 +89,6 @@ public final class RideNavigationViewModel: ObservableObject {
         get { operations[.trailExit] }
         set { operations[.trailExit] = newValue }
     }
-    var draftSaveTask: Task<Void, Never>? {
-        get { operations[.draftSave] }
-        set { operations[.draftSave] = newValue }
-    }
-    var loadingTask: Task<Void, Never>? {
-        get { operations[.initialRoutes] }
-        set { operations[.initialRoutes] = newValue }
-    }
     var settingsLoadingTask: Task<Void, Never>? {
         get { operations[.initialSettings] }
         set { operations[.initialSettings] = newValue }
@@ -104,21 +101,9 @@ public final class RideNavigationViewModel: ObservableObject {
         get { operations[.settingsSave] }
         set { operations[.settingsSave] = newValue }
     }
-    var routeSaveTask: Task<Void, Never>? {
-        get { operations[.routeSave] }
-        set { operations[.routeSave] = newValue }
-    }
     var trailPreparationTask: Task<Void, Never>? {
         get { operations[.trailPreparation] }
         set { operations[.trailPreparation] = newValue }
-    }
-    var plannedRouteSaveTask: Task<Void, Never>? {
-        get { operations[.plannedRouteSave] }
-        set { operations[.plannedRouteSave] = newValue }
-    }
-    var completedRouteSaveTask: Task<Void, Never>? {
-        get { operations[.completedRouteSave] }
-        set { operations[.completedRouteSave] = newValue }
     }
     var voiceAnnouncementTask: Task<Void, Never>? {
         get { operations[.voiceAnnouncement] }
@@ -127,14 +112,6 @@ public final class RideNavigationViewModel: ObservableObject {
     var feedbackTask: Task<Void, Never>? {
         get { operations[.feedback] }
         set { operations[.feedback] = newValue }
-    }
-    var routeDeletionTasks: [UUID: Task<Void, Never>] {
-        get { operations.routeDeletionTasks }
-        set { operations.routeDeletionTasks = newValue }
-    }
-    var draftPersistenceTask: Task<Void, Never>? {
-        get { operations[.draftPersistence] }
-        set { operations[.draftPersistence] = newValue }
     }
 
     var isStarted: Bool { get { state.isStarted } set { state.isStarted = newValue } }
@@ -162,7 +139,6 @@ public final class RideNavigationViewModel: ObservableObject {
         get { state.miniCompletionTitle }
         set { state.miniCompletionTitle = newValue }
     }
-    var savedRoutes: [RideRoute] { get { state.savedRoutes } set { state.savedRoutes = newValue } }
     var searchResults: [NavigationPlace] { get { state.searchResults } set { state.searchResults = newValue } }
     var selectedRoute: RideRoute? { get { state.selectedRoute } set { state.selectedRoute = newValue } }
     var selectedDirection: RideRouteDirection {

@@ -24,14 +24,6 @@ public struct RideNavigationRouteLibraryService: Sendable {
         try await repository.save(route)
     }
 
-    func saveAndReload(_ route: RideRoute) async throws -> [RideRoute] {
-        try await repository.save(route)
-        try Task.checkCancellation()
-        let routes = await repository.loadRoutes()
-        try Task.checkCancellation()
-        return routes
-    }
-
     func delete(id: UUID) async throws {
         try await repository.delete(id: id)
     }
