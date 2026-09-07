@@ -53,7 +53,7 @@ struct RideNavigationSettingsPersistenceTests {
         let model = fixture.viewModel
         model.start()
         #expect(await waitUntil { model.pendingSettings.confirmed != nil })
-        model.activity = .navigating
+        model.activityController.activity = .navigating
         model.screen = .map
         await fixture.settingsRepository.failNextUpdate(.persistenceFailed)
         model.setMapStyle("focus")
@@ -68,7 +68,7 @@ struct RideNavigationSettingsPersistenceTests {
     func settingsIntentsRequireScopedSnapshot() {
         let fixture = RideNavigationViewModelFixture()
         let model = fixture.viewModel
-        model.activity = .navigating
+        model.activityController.activity = .navigating
         model.setMapStyle("focus")
         #expect(model.settingsSaveError != nil)
         #expect(model.mapDisplayStyle == .map)

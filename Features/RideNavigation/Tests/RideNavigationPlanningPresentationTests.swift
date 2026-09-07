@@ -18,8 +18,10 @@ struct RideNavigationPlanningPresentationTests {
         let buffered = PlanningControllerUpdateRecorder(stream: controller.observe())
         let destination = PlanningControllerTestData.place(name: "Destination")
         let trail = LibraryControllerTestRoutes.route(name: "Previous trail")
-        let plan = try #require(await model.trailMapPreparer.prepare(route: trail, direction: .forward))
-        model.trailMap.apply(plan)
+        let plan = try #require(await model.activityController.dependencies.trailMapPreparer.prepare(
+            route: trail, direction: .forward
+        ))
+        model.activityController.dependencies.trailMap.apply(plan)
         model.library.selectImportedRoute(id: trail.id)
         let previousLibraryContext = model.library.contextGeneration
         model.calculateRoadPreview(from: PlanningControllerTestData.origin, to: destination, showsSearchLoading: true)
@@ -35,7 +37,7 @@ struct RideNavigationPlanningPresentationTests {
         try #require(await waitUntil { buffered.updates.contains { $0.effect == .previewReady } })
         let superseded = try #require(buffered.updates.first { $0.effect == .previewReady })
         #expect(!controller.accepts(superseded))
-        model.startPlanningObservation(lifecycle: model.operations.lifecycleGeneration)
+        model.startPlanningObservation(lifecycle: model.lifecycleGeneration)
         try #require(await waitUntil { buffered.isFinished })
         buffered.stop()
         await fixture.roadRouteCalculator.succeed(routes: [
@@ -51,7 +53,7 @@ struct RideNavigationPlanningPresentationTests {
         #expect(model.viewState.activity == .preview)
         #expect(model.library.contextGeneration > previousLibraryContext)
         #expect(!model.library.snapshot.persistence.selectedRouteNeedsSave)
-        #expect(model.trailMap.overviewCoordinates.isEmpty)
+        #expect(model.activityController.dependencies.trailMap.overviewCoordinates.isEmpty)
     }
 
     @Test("Refreshing an already presented preview preserves unrelated library and trail state")
@@ -66,11 +68,13 @@ struct RideNavigationPlanningPresentationTests {
         await fixture.roadRouteCalculator.succeed(routes: [PlanningControllerTestData.roadRoute(name: "First")])
         try #require(await waitUntil { model.viewState.screen == .map && model.viewState.activity == .preview })
         let trail = LibraryControllerTestRoutes.route(name: "Retained trail")
-        let plan = try #require(await model.trailMapPreparer.prepare(route: trail, direction: .forward))
-        model.trailMap.apply(plan)
+        let plan = try #require(await model.activityController.dependencies.trailMapPreparer.prepare(
+            route: trail, direction: .forward
+        ))
+        model.activityController.dependencies.trailMap.apply(plan)
         model.library.selectImportedRoute(id: trail.id)
         let previousLibraryContext = model.library.contextGeneration
-        let previousCoordinates = model.trailMap.overviewCoordinates
+        let previousCoordinates = model.activityController.dependencies.trailMap.overviewCoordinates
         model.cameraMode = .automatic
         model.recalculatePreviewRoutes(from: PlanningControllerTestData.origin, to: destination)
         let refresh = model.planningController.routeTask
@@ -86,6 +90,6 @@ struct RideNavigationPlanningPresentationTests {
         })
         #expect(model.library.contextGeneration == previousLibraryContext)
         #expect(model.library.snapshot.persistence.selectedRouteNeedsSave)
-        #expect(model.trailMap.overviewCoordinates == previousCoordinates)
+        #expect(model.activityController.dependencies.trailMap.overviewCoordinates == previousCoordinates)
     }
 }

@@ -83,7 +83,7 @@ struct RideNavigationTrailGuidanceFlowTests {
 
         #expect(await waitUntil { await fixture.roadRouteCalculator.hasPendingRequest })
         #expect(fixture.viewModel.viewState.activity == .preview)
-        #expect(fixture.viewModel.trailGuidance.snapshot.hasActiveSession)
+        #expect(fixture.viewModel.activityController.dependencies.trailGuidance.snapshot.hasActiveSession)
         fixture.viewModel.stop()
     }
 

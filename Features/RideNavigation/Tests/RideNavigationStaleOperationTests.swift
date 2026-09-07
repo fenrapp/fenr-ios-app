@@ -127,7 +127,7 @@ struct RideNavigationStaleOperationTests {
         let repository = ControllableRecordedRouteRepository()
         let fixture = RideNavigationViewModelFixture(repository: repository)
         fixture.viewModel.start()
-        fixture.viewModel.completedRecording = route(name: "Original")
+        fixture.viewModel.activityController.completedRecording = route(name: "Original")
 
         fixture.viewModel.saveCompletedRoute(name: "First")
         #expect(await waitUntil { await repository.saveRequestCount == 1 })
@@ -195,8 +195,8 @@ struct RideNavigationStaleOperationTests {
     func voiceAndFeedbackHaveIndependentOwnership() async {
         let fixture = RideNavigationViewModelFixture()
 
-        fixture.viewModel.announce("Keep right")
-        fixture.viewModel.replaceFeedbackTask { [guidance = fixture.guidance] in
+        fixture.viewModel.activityController.announce("Keep right")
+        fixture.viewModel.activityController.replaceFeedbackTask { [guidance = fixture.guidance] in
             await guidance.notifySuccess()
         }
 

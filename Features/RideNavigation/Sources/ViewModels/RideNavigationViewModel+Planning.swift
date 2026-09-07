@@ -47,13 +47,13 @@ extension RideNavigationViewModel {
     public func selectRoadRouteOption(_ index: Int) {
         guard planningController.selectRoadOption(index),
               let route = planningController.snapshot.roadRoute else { return }
-        resetRoadStepGuidance()
-        cameraMode = .overview(mapMapper.coordinates(route.points))
+        activityController.resetRoadStepGuidance()
+        cameraMode = .overview(dependencies.mapPresentationMapper.coordinates(route.points))
         render()
     }
 
     public func findTrailExit() {
-        guard activity == .following, planningController.snapshot.selectedRoute != nil,
+        guard activityController.snapshot.activity == .following, planningController.snapshot.selectedRoute != nil,
               let origin = locationSnapshot.coordinate else {
             errorText = String(localized: .rideNavigationCurrentLocationRequiredForExit)
             render()
@@ -71,45 +71,33 @@ extension RideNavigationViewModel {
     }
 
     public func startTrailExit() {
-        guard activity == .following, planningController.selectTrailExit() else { return }
-        resetRoadStepGuidance()
-        activity = .navigating
+        guard activityController.snapshot.activity == .following, planningController.selectTrailExit() else { return }
+        activityController.resetRoadStepGuidance()
+        activityController.continueRoadNavigation()
         applyPreferredMapStyleForActiveNavigation()
         cameraMode = followCamera
         clearPlanningFeedback()
         render()
-        announce(String(localized: .rideNavigationAnnouncementExitStarted))
+        activityController.announce(String(localized: .rideNavigationAnnouncementExitStarted))
     }
 
     public func resumeGPX() {
-        guard activity == .navigating, planningController.snapshot.roadNavigationPurpose == .trailExit,
+        guard activityController.snapshot.activity == .navigating,
+              planningController.snapshot.roadNavigationPurpose == .trailExit,
               planningController.snapshot.selectedRoute != nil else { return }
         planningController.clearRoadPlan()
-        resetRoadStepGuidance()
-        activity = .following
-        trailProgress = nil
-        didAnnounceOffRoute = false
-        if !trailGuidance.snapshot.hasActiveSession { trailGuidance.startSession(at: nil) }
-        if let sample = trailGuidanceSample { updateTrailGuidance(with: sample) }
+        activityController.resetRoadStepGuidance()
+        activityController.resumeTrailFollowing()
         cameraMode = followCamera
         clearPlanningFeedback()
         render()
-        announce(String(localized: .rideNavigationAnnouncementEnduroResumed))
-    }
-
-    func startApproachRoute(from origin: GeographicCoordinate, to start: GeographicCoordinate) {
-        let destination = NavigationPlace(
-            name: String(localized: planningController.snapshot.selectedDirection == .forward
-                ? .rideNavigationTrailStart : .rideNavigationTrailFinish),
-            detail: String(localized: .rideNavigationTrailApproachDetail), coordinate: start
-        )
-        clearPlanningFeedback()
-        planningController.approach(from: origin, to: destination, preferences: roadRoutePreferences)
+        activityController.announce(String(localized: .rideNavigationAnnouncementEnduroResumed))
     }
 
     func clearPlanningFeedback() {
         errorText = nil
         library.clearError()
         planningController.clearError()
+        activityController.clearError()
     }
 }

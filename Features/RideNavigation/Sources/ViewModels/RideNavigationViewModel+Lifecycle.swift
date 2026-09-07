@@ -4,30 +4,29 @@ import SettingsDomain
 @MainActor
 extension RideNavigationViewModel {
     public var hasActiveSession: Bool {
-        [.following, .navigating, .recording, .paused].contains(activity)
+        activityController.snapshot.hasActiveSession
     }
 
     public func start() {
         guard !isStarted else { return }
         isStarted = true
-        let lifecycle = operations.startLifecycle()
-        startLocationObservation()
-        synchronizePresentationObservations()
-        startPlanningObservation(lifecycle: lifecycle)
-        planningController.start()
+        lifecycleGeneration &+= 1
+        let lifecycle = lifecycleGeneration
         startLibraryObservation(lifecycle: lifecycle)
+        startPlanningObservation(lifecycle: lifecycle)
+        startActivityObservation(lifecycle: lifecycle)
         library.start()
-        let settingsGeneration = operations.begin(.initialSettings)
-        let loadSettings = loadSettings
+        planningController.start()
+        activityController.start()
+        synchronizePresentationObservations()
+        settingsLoadingGeneration &+= 1
+        let settingsGeneration = settingsLoadingGeneration
+        let loadSettings = dependencies.loadSettings
         settingsLoadingTask = Task { [weak self] in
             let settings = await loadSettings.execute()
             guard !Task.isCancelled else { return }
             guard let self,
-                  operations.isCurrent(
-                      .initialSettings,
-                      generation: settingsGeneration,
-                      lifecycle: lifecycle
-                  ),
+                  settingsLoadingGeneration == settingsGeneration, lifecycleGeneration == lifecycle,
                   isStarted else { return }
             if pendingSettings.confirmed == nil { receiveLoadedSettings(settings) }
             startSettingsObservation(lifecycle: lifecycle)
@@ -36,14 +35,26 @@ extension RideNavigationViewModel {
 
     public func stop() {
         isStarted = false
-        trailGuidance.cancelPreparation()
+        lifecycleGeneration &+= 1
+        activityController.stop()
+        activityObservationTask?.cancel()
+        activityObservationTask = nil
         planningController.stop()
         planningObservationTask?.cancel()
         planningObservationTask = nil
         library.stop()
         libraryObservationTask?.cancel()
         libraryObservationTask = nil
-        operations.invalidateAll()
+        stopVehicleObservation()
+        stopLocationObservation()
+        settingsLoadingGeneration &+= 1
+        settingsLoadingTask?.cancel()
+        settingsLoadingTask = nil
+        settingsObservationGeneration &+= 1
+        settingsObservationTask?.cancel()
+        settingsObservationTask = nil
+        settingsSaveTask?.cancel()
+        settingsSaveTask = nil
         settingsWorkerGeneration &+= 1
         pendingSettings.removeAll()
         appSettings = pendingSettings.settings

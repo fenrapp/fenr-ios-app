@@ -30,6 +30,10 @@ actor TestDeviceSpeedRepository: DeviceSpeedRepository {
                 subscriberWaiters.append(continuation)
             }
         }
+        sendToCurrentObservers(sample)
+    }
+
+    func sendToCurrentObservers(_ sample: DeviceSpeedSample) {
         continuations.values.forEach { $0.yield(sample) }
     }
 

@@ -8,7 +8,7 @@ extension RideNavigationViewModel {
         planningObservationTask = Task { [weak self] in
             for await update in stream {
                 guard !Task.isCancelled, let self, isStarted,
-                      operations.lifecycleGeneration == lifecycle else { return }
+                      lifecycleGeneration == lifecycle else { return }
                 receivePlanningUpdate(update)
             }
         }
@@ -20,34 +20,27 @@ extension RideNavigationViewModel {
         case .previewReady:
             planningController.acknowledgePreviewPresentation(update)
             library.resetPersistence()
-            trailMap.reset()
-            trailProgress = nil
+            activityController.resetForPreview()
             screen = .map
-            activity = .preview
             mapDisplayStyle = .map
             showUpdatedRoadPreview()
         case .previewUpdated:
             showUpdatedRoadPreview()
         case .rerouteReady:
-            resetRoadStepGuidance()
+            activityController.resetRoadStepGuidance()
             errorText = nil
             library.clearError()
-            announce(String(localized: .rideNavigationAnnouncementRouteUpdated))
+            activityController.announce(String(localized: .rideNavigationAnnouncementRouteUpdated))
         case .approachReady:
-            resetRoadStepGuidance()
-            let date = now()
-            startBreadcrumb(at: date)
-            activityStartedAt = date
-            activity = .navigating
-            applyPreferredMapStyleForActiveNavigation()
-            cameraMode = followCamera
-            startClock()
-            errorText = nil
-            library.clearError()
-            announce(String(localized: .rideNavigationAnnouncementTrailApproachStarted))
+            let activityUpdate = activityController.beginRoadNavigation(isApproach: true)
+            receiveActivityUpdate(activityUpdate)
         case .trailExitReady:
-            if activity == .following, let exit = planningController.snapshot.trailExitPreview {
-                cameraMode = .overview(trailMap.overviewCoordinates + mapMapper.coordinates(exit.route.points))
+            if activityController.snapshot.activity == .following,
+               let exit = planningController.snapshot.trailExitPreview {
+                cameraMode = .overview(
+                    activityController.snapshot.trailOverviewCoordinates
+                        + dependencies.mapPresentationMapper.coordinates(exit.route.points)
+                )
             }
         case .externalDestinationResolved:
             receiveIncomingDestination()
@@ -58,8 +51,10 @@ extension RideNavigationViewModel {
     }
 
     private func showUpdatedRoadPreview() {
-        resetRoadStepGuidance()
-        cameraMode = .overview(mapMapper.coordinates(planningController.snapshot.roadRoute?.points ?? []))
+        activityController.resetRoadStepGuidance()
+        cameraMode = .overview(
+            dependencies.mapPresentationMapper.coordinates(planningController.snapshot.roadRoute?.points ?? [])
+        )
         errorText = nil
         library.clearError()
     }

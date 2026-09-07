@@ -9,8 +9,8 @@ extension RideNavigationViewModel {
         planningController.resetPlan()
         screen = .home
         library.resetPersistence()
-        trailMap.reset()
-        resetRoadStepGuidance()
+        activityController.resetForPreview()
+        activityController.resetRoadStepGuidance()
         mapDisplayStyle = .map
         errorText = nil
         library.clearError()
@@ -48,7 +48,7 @@ extension RideNavigationViewModel {
     }
 
     public func toggleVoice() {
-        isVoiceMuted.toggle()
+        activityController.toggleVoice()
         render()
     }
 
@@ -78,6 +78,7 @@ extension RideNavigationViewModel {
         let routePreferencesChanged = appSettings.rideNavigation.avoidsTolls != settings.rideNavigation.avoidsTolls
             || appSettings.rideNavigation.avoidsHighways != settings.rideNavigation.avoidsHighways
         appSettings = settings
+        activityController.updatePreferences(roadRoutePreferences)
         switch settings.rideNavigation.preferredMapStyle {
         case .focus:
             break
@@ -96,7 +97,7 @@ extension RideNavigationViewModel {
     }
 
     func routePreferencesDidChange() {
-        guard activity == .preview,
+        guard activityController.snapshot.activity == .preview,
               let destination = planningController.snapshot.selectedDestination,
               let origin = locationSnapshot.coordinate else {
             render()
@@ -122,7 +123,7 @@ extension RideNavigationViewModel {
             guard settingsSaveTask == nil else { return true }
             settingsWorkerGeneration &+= 1
             let generation = settingsWorkerGeneration
-            let update = updateSettings
+            let update = dependencies.updateSettings
             settingsSaveTask = Task { [weak self] in
                 defer {
                     if self?.settingsWorkerGeneration == generation { self?.settingsSaveTask = nil }
@@ -162,10 +163,6 @@ extension RideNavigationViewModel {
         }
     }
 
-    func resetRoadStepGuidance() {
-        activeRoadStepIndex = .zero
-        announcedRoadStepIndex = nil
-    }
 }
 extension MiniMapPosition {
     init(_ position: RideNavigationMiniViewState.Position) {

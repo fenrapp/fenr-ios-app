@@ -21,13 +21,18 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
         let repository = Self.makeRecordedRouteRepository(directory: routeDirectory)
         let iso8601 = Date.ISO8601FormatStyle(includingFractionalSeconds: true)
         let mapPresentationMapper = RideNavigationMapPresentationMapper()
-        let trailGuidance = RideNavigationTrailGuidanceController(
-            planner: DefaultRideRouteGuidancePlanner(entryClassifier: RideRouteEntryClassifier()),
-            projectionSelector: RideRouteProjectionSelector()
-        )
         let timing = RideNavigationTiming.live
+        let locationGeometry = RideNavigationLocationGeometry()
         let library = RideNavigationLibraryController(
             routeLibrary: Self.makeRouteLibrary(repository: repository, dateFormat: iso8601, isDemo: isDemo),
+            timing: timing
+        )
+        let planning = Self.makePlanningController(timing: timing)
+        let activity = Self.makeActivityController(
+            library: library,
+            planning: planning,
+            mapMapper: mapPresentationMapper,
+            locationGeometry: locationGeometry,
             timing: timing
         )
         return RideNavigationFeatureModel(
@@ -35,28 +40,49 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
                 dependencies: RideNavigationViewModelDependencies(
                     vehicleSession: vehicleSession,
                     observeDeviceSpeed: observeDeviceSpeed,
-                    trailGuidance: trailGuidance,
-                    trailMapPreparer: RideNavigationTrailMapPreparer(mapper: mapPresentationMapper),
-                    trailMap: RideNavigationTrailMapController(),
-                    guidance: AppleNavigationGuidanceClient(
-                        synthesizer: AVSpeechSynthesizer(),
-                        notificationGenerator: UINotificationFeedbackGenerator()
-                    ),
                     loadSettings: LoadAppSettingsUseCase(repository: settingsRepository),
                     observeSettings: ObserveAppSettingsUseCase(repository: settingsRepository),
                     updateSettings: UpdateAppSettingsUseCase(repository: settingsRepository),
                     presentationMapper: RideNavigationPresentationMapper(locale: .autoupdatingCurrent),
                     mapPresentationMapper: mapPresentationMapper,
                     mapSceneBuilder: RideNavigationMapSceneBuilder(mapper: mapPresentationMapper),
-                    locationGeometry: RideNavigationLocationGeometry(),
+                    locationGeometry: locationGeometry,
                     timing: timing
                 ),
                 library: library,
-                planningController: Self.makePlanningController(timing: timing),
-                recorder: RideRouteRecorder(),
-                breadcrumbRecorder: RideRouteRecorder()
+                planningController: planning,
+                activityController: activity
             ),
             mapSurfaceFactory: AppleNavigationMapSurfaceFactory().makeFactory()
+        )
+    }
+
+    private static func makeActivityController(
+        library: RideNavigationLibraryController,
+        planning: RideNavigationPlanningController,
+        mapMapper: RideNavigationMapPresentationMapper,
+        locationGeometry: RideNavigationLocationGeometry,
+        timing: RideNavigationTiming
+    ) -> RideNavigationActivityController {
+        RideNavigationActivityController(
+            dependencies: RideNavigationActivityDependencies(
+                library: library,
+                planning: planning,
+                trailGuidance: RideNavigationTrailGuidanceController(
+                    planner: DefaultRideRouteGuidancePlanner(entryClassifier: RideRouteEntryClassifier()),
+                    projectionSelector: RideRouteProjectionSelector()
+                ),
+                trailMapPreparer: RideNavigationTrailMapPreparer(mapper: mapMapper),
+                trailMap: RideNavigationTrailMapController(),
+                guidance: AppleNavigationGuidanceClient(
+                    synthesizer: AVSpeechSynthesizer(),
+                    notificationGenerator: UINotificationFeedbackGenerator()
+                ),
+                locationGeometry: locationGeometry,
+                timing: timing
+            ),
+            recorder: RideRouteRecorder(),
+            breadcrumbRecorder: RideRouteRecorder()
         )
     }
 
