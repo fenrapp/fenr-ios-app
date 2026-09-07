@@ -29,8 +29,8 @@ struct RideDashboardDependencyContainer {
                     device: .current,
                     notificationCenter: .default
                 ),
-                loadSettings: LoadAppSettingsUseCase(repository: dependencies.settingsRepository),
-                saveSettings: SaveAppSettingsUseCase(repository: dependencies.settingsRepository),
+                observeSettings: ObserveAppSettingsUseCase(repository: dependencies.settingsRepository),
+                updateSettings: UpdateAppSettingsUseCase(repository: dependencies.settingsRepository),
                 mapper: DashboardDeviceBatteryMapper()
             ),
             currentTripViewModel: tripViewModels.currentTrip,

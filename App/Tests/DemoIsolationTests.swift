@@ -31,11 +31,9 @@ struct DemoIsolationTests {
         let profile = BikeProfile(vin: fixture.demo.identity.vin)
         await realProfile.saveProfile(profile)
         let settings = AppSettings(measurementSystem: .metric).scoped(toVIN: profile.vin)
-        await realSettings.save(settings)
+        _ = try await realSettings.update(expectedVIN: profile.vin, change: .measurementSystem(.metric))
         let model = experience.root.featureStore.appSettingsViewModel
-        var initialDemoSettings = await demoSettings.load()
-        initialDemoSettings.measurementSystem = .metric
-        await demoSettings.save(initialDemoSettings)
+        _ = try await demoSettings.update(expectedVIN: profile.vin, change: .measurementSystem(.metric))
         model.start()
         #expect(await waitUntil { model.viewState.measurementSystem.selectedID == "metric" })
         model.selectMeasurementSystem(id: MeasurementSystem.imperial.rawValue)

@@ -299,7 +299,7 @@ extension RideNavigationViewModel {
         let generation = operations.begin(.settingsObservation)
         settingsObservationTask = Task { [weak self] in
             let stream = await observeSettings.execute()
-            for await settings in stream where !Task.isCancelled {
+            for await snapshot in stream where !Task.isCancelled {
                 guard let self,
                       operations.isCurrent(
                           .settingsObservation,
@@ -307,8 +307,7 @@ extension RideNavigationViewModel {
                           lifecycle: lifecycle
                       ),
                       isStarted else { return }
-                guard appSettings != settings else { continue }
-                receiveLoadedSettings(settings)
+                receiveSettingsSnapshot(snapshot)
             }
         }
     }

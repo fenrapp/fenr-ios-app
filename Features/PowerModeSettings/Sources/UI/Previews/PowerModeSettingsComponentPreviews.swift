@@ -59,7 +59,7 @@ import SwiftUI
         maximumLength: 10,
         isEnabled: true,
         error: "Use a unique name for each map.",
-        save: { _ in false },
+        save: { _ in },
         reset: {}
     )
 }

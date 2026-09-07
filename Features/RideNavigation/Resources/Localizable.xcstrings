@@ -1,6 +1,10 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "rideNavigationSaveErrorTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Settings not saved"}}}},
+    "rideNavigationSaveErrorDismiss" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "OK"}}}},
+    "rideNavigationSettingsSaveFailed" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Your changes could not be saved. Please try again."}}}},
+
     "rideNavigationRecordingEnded": {
       "extractionState": "manual",
       "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Recording ended" } } }

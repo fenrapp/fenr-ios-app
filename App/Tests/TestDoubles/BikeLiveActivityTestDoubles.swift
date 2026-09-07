@@ -77,17 +77,32 @@ actor BikeLiveActivityRepository: BikeRepository, BikeBatteryHealthRepository {
 }
 
 actor BikeLiveActivitySettingsRepository: AppSettingsRepository {
-    private var settings = AppSettings()
-    private let hub = TestEventHub<AppSettings>(bufferingPolicy: .bufferingNewest(1))
+    private var settings = AppSettings().scoped(toVIN: "FENRTEST000000001")
+    private var revision: UInt64 = 0
+    private let hub = TestEventHub<AppSettingsSnapshot>(bufferingPolicy: .bufferingNewest(1))
 
     func load() async -> AppSettings { settings }
-    func save(_ settings: AppSettings) async {
-        self.settings = settings
-        await hub.send(settings)
+    func setSettings(_ settings: AppSettings) async {
+        self.settings = settings.scoped(toVIN: "FENRTEST000000001")
+        revision &+= 1
+        await hub.send(.init(settings: self.settings, revision: revision))
     }
 
-    func observe() async -> AsyncStream<AppSettings> {
-        await hub.stream(replay: settings)
+    func update(expectedVIN: String, change: AppSettingsChange) async throws -> AppSettingsUpdateResult {
+        guard expectedVIN == settings.vin else { throw AppSettingsUpdateError.vehicleChanged }
+        let updated = try change.applying(to: settings)
+        guard updated != settings else {
+            return .unchanged(.init(settings: settings, revision: revision))
+        }
+        settings = updated
+        revision &+= 1
+        let snapshot = AppSettingsSnapshot(settings: settings, revision: revision)
+        await hub.send(snapshot)
+        return .changed(snapshot)
+    }
+
+    func observe() async -> AsyncStream<AppSettingsSnapshot> {
+        await hub.stream(replay: .init(settings: settings, revision: revision))
     }
 }
 

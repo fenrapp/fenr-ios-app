@@ -11,6 +11,10 @@ public final class RideNavigationViewModel: ObservableObject {
     @Published public internal(set) var miniViewState = RideNavigationMiniViewState()
     @Published public internal(set) var exportRequest: GPXExportRequest?
     @Published public internal(set) var shareRequest: GPXExportRequest?
+    @Published public internal(set) var settingsSaveError: String?
+
+    var pendingSettings = AppSettingsPendingChanges()
+    var settingsWorkerGeneration: UInt64 = 0
 
     let dependencies: RideNavigationViewModelDependencies
     let state: RideNavigationViewModelState
@@ -43,7 +47,7 @@ public final class RideNavigationViewModel: ObservableObject {
     var guidance: any NavigationGuidanceClient { dependencies.guidance }
     var loadSettings: LoadAppSettingsUseCase { dependencies.loadSettings }
     var observeSettings: ObserveAppSettingsUseCase { dependencies.observeSettings }
-    var saveSettings: SaveAppSettingsUseCase { dependencies.saveSettings }
+    var updateSettings: UpdateAppSettingsUseCase { dependencies.updateSettings }
     var mapper: RideNavigationPresentationMapper { dependencies.presentationMapper }
     var mapMapper: RideNavigationMapPresentationMapper { dependencies.mapPresentationMapper }
     var mapSceneBuilder: RideNavigationMapSceneBuilder { dependencies.mapSceneBuilder }

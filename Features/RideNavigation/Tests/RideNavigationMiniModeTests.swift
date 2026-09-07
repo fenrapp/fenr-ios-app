@@ -63,6 +63,8 @@ struct RideNavigationMiniModeTests {
     @Test("mini map settings persist in order with the latest values")
     func miniMapSettingsPersistenceIsLatestWriteWins() async {
         let fixture = RideNavigationViewModelFixture()
+        fixture.viewModel.start()
+        #expect(await waitUntil { fixture.viewModel.pendingSettings.confirmed != nil })
         let firstPosition = RideNavigationMiniViewState.Position(
             horizontalFraction: 0.02,
             verticalFraction: 0.98
@@ -83,7 +85,7 @@ struct RideNavigationMiniModeTests {
 
         await fixture.settingsRepository.resumeSuspendedSave()
         #expect(await waitUntil {
-            await fixture.settingsRepository.savedSettings().count == 2
+            await fixture.settingsRepository.savedSettings().count == 4
         })
 
         let savedSettings = await fixture.settingsRepository.savedSettings()

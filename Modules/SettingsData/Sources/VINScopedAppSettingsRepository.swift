@@ -9,6 +9,7 @@ actor VINScopedAppSettingsRepository: AppSettingsRepository {
     private var observers: [UUID: Observer] = [:]
     private var profileTask: Task<Void, Never>?
     private var generation: UUID?
+    private var snapshot: AppSettingsSnapshot?
 
     init(store: sending VINAppSettingsStore, profiles: any BikeProfileRepository) {
         self.store = store
@@ -18,24 +19,32 @@ actor VINScopedAppSettingsRepository: AppSettingsRepository {
     deinit { profileTask?.cancel() }
 
     func load() async -> AppSettings {
-        store.load(vin: await currentVIN())
+        refresh(vin: await currentVIN()).settings
     }
 
-    func save(_ settings: AppSettings) async {
-        guard let vin = settings.vin, vin == (await currentVIN()),
-              store.save(settings, vin: vin) else { return }
-        publish(settings.scoped(toVIN: vin))
+    func update(expectedVIN: String, change: AppSettingsChange) async throws -> AppSettingsUpdateResult {
+        guard let vin = Self.validVIN(expectedVIN) else { throw AppSettingsUpdateError.invalidVIN }
+        let selectedVIN = await currentVIN()
+        try Task.checkCancellation()
+        guard let selectedVIN else { throw AppSettingsUpdateError.vehicleUnavailable }
+        guard vin == selectedVIN else { throw AppSettingsUpdateError.vehicleChanged }
+        let settings = try store.load(vin: vin)
+        let current = record(settings)
+        let updated = try change.applying(to: settings)
+        guard updated != settings else { return .unchanged(current) }
+        try store.save(updated, vin: vin)
+        return .changed(record(updated))
     }
 
-    func observe() async -> AsyncStream<AppSettings> {
-        let settings = await load()
+    func observe() async -> AsyncStream<AppSettingsSnapshot> {
+        let current = refresh(vin: await currentVIN())
         let id = UUID()
-        let (stream, continuation) = AsyncStream<AppSettings>.makeStream(bufferingPolicy: .bufferingNewest(1))
+        let (stream, continuation) = AsyncStream<AppSettingsSnapshot>.makeStream(bufferingPolicy: .bufferingNewest(1))
         continuation.onTermination = { [weak self] _ in
             Task { await self?.removeObserver(id) }
         }
-        observers[id] = Observer(continuation: continuation, lastValue: settings)
-        continuation.yield(settings)
+        observers[id] = Observer(continuation: continuation)
+        continuation.yield(current)
         if observers.count == 1 { startProfileObservation() }
         return stream
     }
@@ -72,14 +81,24 @@ actor VINScopedAppSettingsRepository: AppSettingsRepository {
         guard generation == token, !Task.isCancelled,
               vin == (await currentVIN()),
               generation == token, !Task.isCancelled else { return }
-        publish(store.load(vin: vin))
+        _ = refresh(vin: vin)
     }
 
-    private func publish(_ settings: AppSettings) {
-        for (id, observer) in observers where observer.lastValue != settings {
-            observers[id]?.lastValue = settings
-            observer.continuation.yield(settings)
+    private func refresh(vin: String?) -> AppSettingsSnapshot {
+        do {
+            return record(try store.load(vin: vin))
+        } catch {
+            if let snapshot, snapshot.settings.vin == vin { return snapshot }
+            return record(vin.map { AppSettings().scoped(toVIN: $0) } ?? AppSettings())
         }
+    }
+
+    private func record(_ settings: AppSettings) -> AppSettingsSnapshot {
+        if let snapshot, snapshot.settings == settings { return snapshot }
+        let current = AppSettingsSnapshot(settings: settings, revision: snapshot.map { $0.revision + 1 } ?? 0)
+        snapshot = current
+        for observer in observers.values { observer.continuation.yield(current) }
+        return current
     }
 
     private func removeObserver(_ id: UUID) async {
@@ -93,7 +112,6 @@ actor VINScopedAppSettingsRepository: AppSettingsRepository {
     }
 
     private struct Observer {
-        let continuation: AsyncStream<AppSettings>.Continuation
-        var lastValue: AppSettings
+        let continuation: AsyncStream<AppSettingsSnapshot>.Continuation
     }
 }

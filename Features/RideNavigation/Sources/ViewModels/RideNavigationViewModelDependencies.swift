@@ -14,7 +14,7 @@ public struct RideNavigationViewModelDependencies: Sendable {
     let guidance: any NavigationGuidanceClient
     let loadSettings: LoadAppSettingsUseCase
     let observeSettings: ObserveAppSettingsUseCase
-    let saveSettings: SaveAppSettingsUseCase
+    let updateSettings: UpdateAppSettingsUseCase
     let presentationMapper: RideNavigationPresentationMapper
     let mapPresentationMapper: RideNavigationMapPresentationMapper
     let mapSceneBuilder: RideNavigationMapSceneBuilder
@@ -33,7 +33,7 @@ public struct RideNavigationViewModelDependencies: Sendable {
         guidance: any NavigationGuidanceClient,
         loadSettings: LoadAppSettingsUseCase,
         observeSettings: ObserveAppSettingsUseCase,
-        saveSettings: SaveAppSettingsUseCase,
+        updateSettings: UpdateAppSettingsUseCase,
         presentationMapper: RideNavigationPresentationMapper,
         mapPresentationMapper: RideNavigationMapPresentationMapper,
         mapSceneBuilder: RideNavigationMapSceneBuilder,
@@ -51,7 +51,7 @@ public struct RideNavigationViewModelDependencies: Sendable {
         self.guidance = guidance
         self.loadSettings = loadSettings
         self.observeSettings = observeSettings
-        self.saveSettings = saveSettings
+        self.updateSettings = updateSettings
         self.presentationMapper = presentationMapper
         self.mapPresentationMapper = mapPresentationMapper
         self.mapSceneBuilder = mapSceneBuilder

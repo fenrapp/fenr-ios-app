@@ -46,9 +46,11 @@ actor SessionSettingsRepository: AppSettingsRepository {
     }
 
     func load() -> AppSettings { settings }
-    func save(_: AppSettings) {}
-    func observe() -> AsyncStream<AppSettings> {
-        AsyncStream { $0.yield(settings) }
+    func update(expectedVIN _: String, change _: AppSettingsChange) throws -> AppSettingsUpdateResult {
+        throw AppSettingsUpdateError.invalidChange
+    }
+    func observe() -> AsyncStream<AppSettingsSnapshot> {
+        AsyncStream { $0.yield(.init(settings: settings, revision: 0)) }
     }
 }
 

@@ -13,6 +13,7 @@ public final class WatchDashboardViewModel: ObservableObject {
     private var telemetry = BikeTelemetry()
     private var batteryHealth = BikeBatteryHealth()
     private var settings = AppSettings()
+    private var settingsRevision: UInt64?
     private var telemetryTask: Task<Void, Never>?
     private var connectionTask: Task<Void, Never>?
     private var debugTask: Task<Void, Never>?
@@ -102,10 +103,16 @@ public final class WatchDashboardViewModel: ObservableObject {
             let stream = await useCase.execute()
             for await settings in stream {
                 guard !Task.isCancelled else { return }
-                self?.settings = settings
-                self?.updateViewState()
+                self?.receiveSettings(settings)
             }
         }
+    }
+
+    private func receiveSettings(_ snapshot: AppSettingsSnapshot) {
+        guard settingsRevision == nil || snapshot.revision > settingsRevision! else { return }
+        settingsRevision = snapshot.revision
+        settings = snapshot.settings
+        updateViewState()
     }
 
     private func receive(_ telemetry: BikeTelemetry) {

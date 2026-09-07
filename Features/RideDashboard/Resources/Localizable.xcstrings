@@ -1,6 +1,7 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "rideDashboardDeviceBatterySaveError" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unable to save battery display. Tap to try again." } } } },
     "rideDashboard.settings.tagline" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Make it yours"}}}},
     "rideDashboard.settings.detail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Customize your dashboard, bike, and app preferences."}}}},
     "rideDashboard.settings.open" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Open Settings"}}}},

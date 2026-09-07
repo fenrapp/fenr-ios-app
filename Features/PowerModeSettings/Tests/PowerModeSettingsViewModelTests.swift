@@ -18,13 +18,13 @@ struct PowerModeSettingsViewModelTests {
         await fixture.vehicleSession.send(snapshot())
         #expect(await waitUntil { fixture.viewModel.viewState.canEditName })
 
-        #expect(fixture.viewModel.saveName("Eco"))
+        fixture.viewModel.saveName("Eco")
         #expect(await waitUntil {
             await fixture.repository.settings.powerModeName(forVIN: vin, mapIndex: 0)?.value == "Eco"
         })
 
         fixture.viewModel.selectMap(index: 1)
-        #expect(!fixture.viewModel.saveName("ECO"))
+        fixture.viewModel.saveName("ECO")
 
         #expect(fixture.viewModel.viewState.nameError == "Use a unique name for each map.")
         #expect(await fixture.repository.settings.powerModeName(forVIN: vin, mapIndex: 1) == nil)
@@ -40,7 +40,7 @@ struct PowerModeSettingsViewModelTests {
             fixture.viewModel.viewState.connectionText == "Bike unavailable"
         })
 
-        #expect(!fixture.viewModel.saveName("Eco"))
+        fixture.viewModel.saveName("Eco")
         #expect(fixture.viewModel.viewState.nameError == "A bike profile is required to save map names.")
         fixture.viewModel.stop()
     }
@@ -50,6 +50,7 @@ struct PowerModeSettingsViewModelTests {
         let fixture = makeFixture()
         var settings = AppSettings()
         try settings.setPowerModeName(try PowerModeName("MX"), forVIN: vin, mapIndex: 0)
+        await fixture.repository.send(settings)
         fixture.viewModel.start()
         await fixture.vehicleSession.send(snapshot(settings: settings))
         #expect(await waitUntil { fixture.viewModel.viewState.currentName == "MX" })
@@ -372,8 +373,8 @@ extension PowerModeSettingsViewModelTests {
         fixture.viewModel.stop()
     }
 
-    @Test("Stop allows pending settings saves to finish in order")
-    func stopAllowsPendingSettingsSaveToFinishInOrder() async {
+    @Test("Stop cancels queued settings names before persistence begins")
+    func stopCancelsQueuedSettingsSaves() async {
         let fixture = makeFixture()
         fixture.viewModel.start()
         await fixture.vehicleSession.send(snapshot())
@@ -383,9 +384,8 @@ extension PowerModeSettingsViewModelTests {
         fixture.viewModel.saveName("Enduro")
         fixture.viewModel.stop()
 
-        #expect(await waitUntil {
-            await fixture.repository.settings.powerModeName(forVIN: vin, mapIndex: 0)?.value == "Enduro"
-        })
+        #expect(await fixture.repository.settings.powerModeName(forVIN: vin, mapIndex: 0) == nil)
+        #expect(fixture.viewModel.viewState.nameSaveCompletionID == nil)
     }
 }
 
@@ -424,14 +424,61 @@ extension PowerModeSettingsViewModelTests {
         })
         fixture.viewModel.stop()
     }
-    private func makeFixture(bikeRepository: PowerModeSettingsBikeRepository = .init()) -> Fixture {
-        let repository = PowerModeSettingsRepository()
+    @Test("Map name confirmation waits for persistence and failures preserve the saved name")
+    func nameConfirmationWaitsForPersistence() async {
+        let operation = ControllablePowerModeSettingsOperation()
+        let repository = PowerModeSettingsRepository(operation: operation)
+        let fixture = makeFixture(repository: repository)
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(snapshot())
+        #expect(await waitUntil { fixture.viewModel.viewState.canEditName })
+        fixture.viewModel.saveName("Eco")
+        #expect(await waitUntil { await operation.pendingCount == 1 })
+        #expect(fixture.viewModel.viewState.isSavingName)
+        #expect(fixture.viewModel.viewState.currentName.isEmpty)
+        #expect(fixture.viewModel.viewState.nameSaveCompletionID == nil)
+        await operation.failNext(message: "Store unavailable")
+        #expect(await waitUntil { fixture.viewModel.viewState.nameError != nil })
+        #expect(fixture.viewModel.viewState.nameSaveCompletionID == nil)
+        #expect(fixture.viewModel.viewState.currentName.isEmpty)
+        fixture.viewModel.saveName("Eco")
+        #expect(await waitUntil { await operation.pendingCount == 1 })
+        await operation.succeedNext()
+        #expect(await waitUntil { fixture.viewModel.viewState.nameSaveCompletionID != nil })
+        #expect(fixture.viewModel.viewState.currentName == "Eco")
+        fixture.viewModel.stop()
+    }
+
+    @Test("A failed name reset keeps the original name and does not confirm dismissal")
+    func failedNameResetPreservesName() async throws {
+        let operation = ControllablePowerModeSettingsOperation()
+        var settings = AppSettings()
+        try settings.setPowerModeName(try PowerModeName("Eco"), forVIN: vin, mapIndex: 0)
+        let repository = PowerModeSettingsRepository(settings: settings, operation: operation)
+        let fixture = makeFixture(repository: repository)
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(snapshot(settings: settings))
+        #expect(await waitUntil { fixture.viewModel.viewState.currentName == "Eco" })
+        fixture.viewModel.resetName()
+        #expect(await waitUntil { await operation.pendingCount == 1 })
+        await operation.failNext(message: "Store unavailable")
+        #expect(await waitUntil { fixture.viewModel.viewState.nameError != nil })
+        #expect(fixture.viewModel.viewState.currentName == "Eco")
+        #expect(fixture.viewModel.viewState.nameSaveCompletionID == nil)
+        fixture.viewModel.stop()
+    }
+
+    private func makeFixture(
+        bikeRepository: PowerModeSettingsBikeRepository = .init(),
+        repository: PowerModeSettingsRepository = .init()
+    ) -> Fixture {
         let vehicleSession = PowerModeSettingsVehicleSession()
         return Fixture(
             viewModel: PowerModeSettingsViewModel(
                 vehicleSession: vehicleSession,
                 useCases: .init(
-                    saveSettings: .init(repository: repository),
+                    observeSettings: .init(repository: repository),
+                    updateSettings: .init(repository: repository),
                     refreshPowerModes: .init(repository: bikeRepository),
                     preparePowerModeControl: .init(repository: bikeRepository),
                     setPowerModeConfiguration: .init(repository: bikeRepository),

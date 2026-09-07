@@ -120,20 +120,22 @@ actor VehicleSessionTestRepository: BikeRepository, BikeBatteryHealthRepository 
 actor VehicleSessionTestSettingsRepository: AppSettingsRepository {
     private let settings: AppSettings
     private var subscriptions = 0
-    private var continuations: [UUID: AsyncStream<AppSettings>.Continuation] = [:]
+    private var continuations: [UUID: AsyncStream<AppSettingsSnapshot>.Continuation] = [:]
 
     init(speedSource: SpeedSource = .motorcycle) {
         settings = .init(speedSource: speedSource)
     }
 
     func load() -> AppSettings { settings }
-    func save(_: AppSettings) {}
-    func observe() -> AsyncStream<AppSettings> {
+    func update(expectedVIN _: String, change _: AppSettingsChange) throws -> AppSettingsUpdateResult {
+        throw AppSettingsUpdateError.invalidChange
+    }
+    func observe() -> AsyncStream<AppSettingsSnapshot> {
         subscriptions += 1
         return .init { continuation in
             let id = UUID()
             continuations[id] = continuation
-            continuation.yield(settings)
+            continuation.yield(.init(settings: settings, revision: 0))
             continuation.onTermination = { [weak self] _ in
                 Task { await self?.removeContinuation(id) }
             }

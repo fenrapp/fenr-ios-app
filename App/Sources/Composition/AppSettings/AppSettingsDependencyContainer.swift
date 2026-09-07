@@ -14,7 +14,7 @@ struct AppSettingsDependencyContainer {
         AppSettingsViewModel(
             useCases: .init(
                 settings: .init(
-                    save: SaveAppSettingsUseCase(repository: settingsRepository),
+                    update: UpdateAppSettingsUseCase(repository: settingsRepository),
                     observe: ObserveAppSettingsUseCase(repository: settingsRepository)
                 ),
                 location: .init(

@@ -1,24 +1,29 @@
 import SettingsDomain
 import TestSupport
 
-actor PowerModeSettingsRepository: AppSettingsRepository {
+actor TestDashboardDeviceBatterySettingsRepository: AppSettingsRepository {
     private let hub = TestEventHub<AppSettingsSnapshot>(bufferingPolicy: .unbounded)
-    private let operation: ControllablePowerModeSettingsOperation?
+    private var settings: AppSettings
     private var revision: UInt64 = 0
-    private(set) var settings: AppSettings
+    private var blocksNextUpdate = false
+    private var updateContinuation: CheckedContinuation<Void, Never>?
+    private var shouldFail = false
     private(set) var changes: [AppSettingsChange] = []
 
-    init(settings: AppSettings = .init(), operation: ControllablePowerModeSettingsOperation? = nil) {
+    init(settings: AppSettings = .init()) {
         self.settings = settings.scoped(toVIN: settings.vin ?? "FENRTEST000000001")
-        self.operation = operation
     }
 
     func load() -> AppSettings { settings }
 
     func update(expectedVIN: String, change: AppSettingsChange) async throws -> AppSettingsUpdateResult {
         changes.append(change)
-        try await operation?.run()
+        if blocksNextUpdate {
+            blocksNextUpdate = false
+            await withCheckedContinuation { updateContinuation = $0 }
+        }
         try Task.checkCancellation()
+        if shouldFail { throw AppSettingsUpdateError.persistenceFailed }
         guard expectedVIN == settings.vin else { throw AppSettingsUpdateError.vehicleChanged }
         let updated = try change.applying(to: settings)
         guard updated != settings else { return .unchanged(.init(settings: settings, revision: revision)) }
@@ -33,9 +38,19 @@ actor PowerModeSettingsRepository: AppSettingsRepository {
         await hub.stream(replay: .init(settings: settings, revision: revision))
     }
 
-    func send(_ settings: AppSettings) async {
-        self.settings = settings.scoped(toVIN: settings.vin ?? "FENRTEST000000001")
-        revision += 1
-        await hub.send(.init(settings: self.settings, revision: revision))
+    func send(_ snapshot: AppSettingsSnapshot) async {
+        if snapshot.revision > revision {
+            settings = snapshot.settings
+            revision = snapshot.revision
+        }
+        await hub.send(snapshot)
     }
+
+    func blockNextUpdate() { blocksNextUpdate = true }
+    func hasBlockedUpdate() -> Bool { updateContinuation != nil }
+    func resumeUpdate() {
+        updateContinuation?.resume()
+        updateContinuation = nil
+    }
+    func setFailsUpdating(_ value: Bool) { shouldFail = value }
 }

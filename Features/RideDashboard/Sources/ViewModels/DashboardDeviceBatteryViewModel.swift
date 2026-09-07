@@ -3,39 +3,38 @@ import SettingsDomain
 
 @MainActor
 public final class DashboardDeviceBatteryViewModel: ObservableObject {
-    @Published public private(set) var viewState = DashboardDeviceBatteryViewData()
+    @Published public private(set) var viewState = DashboardDeviceBatteryViewData(canChangeDisplayMode: false)
 
     private let monitor: any DashboardDeviceBatteryMonitoring
-    private let loadSettings: LoadAppSettingsUseCase
-    private let saveSettings: SaveAppSettingsUseCase
+    private let observeSettings: ObserveAppSettingsUseCase
+    private let updateSettings: UpdateAppSettingsUseCase
     private let mapper: DashboardDeviceBatteryMapper
     private var snapshot = DashboardDeviceBatterySnapshot(level: nil, isCharging: false)
-    private var displayMode = DashboardDeviceBatteryDisplayMode.iconAndText
+    private var pendingChanges = AppSettingsPendingChanges()
+    private var settingsError: String?
     private var observationTask: Task<Void, Never>?
-    private var settingsLoadTask: Task<Void, Never>?
+    private var settingsObservationTask: Task<Void, Never>?
     private var settingsSaveTask: Task<Void, Never>?
-    private var pendingDisplayMode: DashboardDeviceBatteryDisplayMode?
     private var isMonitoring = false
+    private var generation = 0
 
     public init(
         monitor: any DashboardDeviceBatteryMonitoring,
-        loadSettings: LoadAppSettingsUseCase,
-        saveSettings: SaveAppSettingsUseCase,
+        observeSettings: ObserveAppSettingsUseCase,
+        updateSettings: UpdateAppSettingsUseCase,
         mapper: DashboardDeviceBatteryMapper
     ) {
         self.monitor = monitor
-        self.loadSettings = loadSettings
-        self.saveSettings = saveSettings
+        self.observeSettings = observeSettings
+        self.updateSettings = updateSettings
         self.mapper = mapper
     }
 
     isolated deinit {
         observationTask?.cancel()
-        settingsLoadTask?.cancel()
+        settingsObservationTask?.cancel()
         settingsSaveTask?.cancel()
-        if isMonitoring {
-            monitor.stop()
-        }
+        if isMonitoring { monitor.stop() }
     }
 
     func start() {
@@ -49,25 +48,43 @@ public final class DashboardDeviceBatteryViewModel: ObservableObject {
                 self?.receive(snapshot)
             }
         }
-        loadDisplayMode()
+        settingsObservationTask = Task { [weak self, observeSettings] in
+            let stream = await observeSettings.execute()
+            for await snapshot in stream {
+                guard !Task.isCancelled else { return }
+                self?.receive(settings: snapshot)
+            }
+        }
     }
 
     func stop() {
         guard isMonitoring else { return }
         isMonitoring = false
+        generation += 1
         observationTask?.cancel()
         observationTask = nil
-        settingsLoadTask?.cancel()
-        settingsLoadTask = nil
+        settingsObservationTask?.cancel()
+        settingsObservationTask = nil
+        settingsSaveTask?.cancel()
+        settingsSaveTask = nil
+        pendingChanges.removeAll()
+        settingsError = nil
         monitor.stop()
+        render()
     }
 
     func toggleDisplayMode() {
-        settingsLoadTask?.cancel()
-        settingsLoadTask = nil
-        displayMode = displayMode.nextVisibleMode
-        render()
-        save(displayMode)
+        guard isMonitoring else { return }
+        do {
+            let mode = pendingChanges.settings.dashboardDeviceBatteryDisplayMode.nextVisibleMode
+            try pendingChanges.enqueue(.dashboardDeviceBatteryDisplayMode(mode))
+            settingsError = nil
+            render()
+            savePendingChanges()
+        } catch {
+            settingsError = rideDashboardLocalized(.rideDashboardDeviceBatterySaveError)
+            render()
+        }
     }
 
 #if DEBUG
@@ -81,49 +98,43 @@ public final class DashboardDeviceBatteryViewModel: ObservableObject {
         render()
     }
 
-    private func render() {
-        viewState = mapper.map(snapshot: snapshot, displayMode: displayMode)
-    }
-
-    private func loadDisplayMode() {
-        let previousSaveTask = settingsSaveTask
-        let loadSettings = loadSettings
-        settingsLoadTask = Task { [weak self] in
-            await previousSaveTask?.value
-            guard !Task.isCancelled else { return }
-            let settings = await loadSettings.execute()
-            guard !Task.isCancelled else { return }
-            self?.receive(displayMode: settings.dashboardDeviceBatteryDisplayMode)
-        }
-    }
-
-    private func receive(displayMode: DashboardDeviceBatteryDisplayMode) {
-        self.displayMode = displayMode
+    private func receive(settings snapshot: AppSettingsSnapshot) {
+        let previousVIN = pendingChanges.confirmed?.settings.vin
+        pendingChanges.receive(snapshot)
+        if previousVIN != pendingChanges.confirmed?.settings.vin { settingsError = nil }
         render()
-        settingsLoadTask = nil
     }
 
-    private func save(_ displayMode: DashboardDeviceBatteryDisplayMode) {
-        pendingDisplayMode = displayMode
+    private func render() {
+        viewState = mapper.map(
+            snapshot: snapshot,
+            displayMode: pendingChanges.settings.dashboardDeviceBatteryDisplayMode,
+            canChangeDisplayMode: pendingChanges.confirmed?.settings.vin != nil,
+            errorText: settingsError
+        )
+    }
+
+    private func savePendingChanges() {
         guard settingsSaveTask == nil else { return }
-        let loadSettings = loadSettings
-        let saveSettings = saveSettings
-        settingsSaveTask = Task { [weak self] in
-            while !Task.isCancelled {
-                guard let displayMode = self?.nextPendingDisplayMode() else { break }
-                var settings = await loadSettings.execute()
-                guard !Task.isCancelled else { return }
-                settings.dashboardDeviceBatteryDisplayMode = displayMode
-                await saveSettings.execute(settings)
+        let generation = generation
+        settingsSaveTask = Task { [weak self, updateSettings] in
+            while let pending = self?.pendingChanges.next {
+                do {
+                    let result = try await updateSettings.execute(
+                        expectedVIN: pending.expectedVIN, change: pending.change
+                    )
+                    guard !Task.isCancelled, self?.generation == generation else { return }
+                    self?.pendingChanges.complete(id: pending.id, result: result)
+                } catch {
+                    guard !Task.isCancelled, self?.generation == generation else { return }
+                    if self?.pendingChanges.reject(id: pending.id) == true {
+                        self?.settingsError = rideDashboardLocalized(.rideDashboardDeviceBatterySaveError)
+                    }
+                }
+                self?.render()
             }
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, self?.generation == generation else { return }
             self?.settingsSaveTask = nil
         }
     }
-
-    private func nextPendingDisplayMode() -> DashboardDeviceBatteryDisplayMode? {
-        defer { pendingDisplayMode = nil }
-        return pendingDisplayMode
-    }
-
 }

@@ -10,7 +10,7 @@ struct PowerModeNameEditor: View {
     let maximumLength: Int
     let isEnabled: Bool
     let error: String?
-    let save: (String) -> Bool
+    let save: (String) -> Void
     let reset: () -> Void
     @State private var draft: String
     @State private var isResetConfirmationPresented = false
@@ -21,7 +21,7 @@ struct PowerModeNameEditor: View {
         maximumLength: Int,
         isEnabled: Bool,
         error: String?,
-        save: @escaping (String) -> Bool,
+        save: @escaping (String) -> Void,
         reset: @escaping () -> Void
     ) {
         self.mapIndex = mapIndex
@@ -64,6 +64,7 @@ struct PowerModeNameEditor: View {
                             isResetConfirmationPresented = true
                         }
                         .frame(minHeight: Constants.minimumControlSize)
+                        .disabled(!isEnabled)
                     } footer: {
                         Text(.powerModeSettingsResetNameFooter)
                     }
@@ -87,7 +88,6 @@ struct PowerModeNameEditor: View {
             ) {
                 Button(.powerModeSettingsResetName, role: .destructive) {
                     reset()
-                    dismiss()
                 }
                 Button(.powerModeSettingsCancel, role: .cancel) {}
             } message: {
@@ -95,9 +95,6 @@ struct PowerModeNameEditor: View {
             }
         }
         .onChange(of: mapIndex) {
-            draft = currentName
-        }
-        .onChange(of: currentName) {
             draft = currentName
         }
     }
@@ -140,9 +137,7 @@ struct PowerModeNameEditor: View {
 
     private func submit() {
         guard canSave else { return }
-        if save(draft) {
-            dismiss()
-        }
+        save(draft)
     }
 
     private enum Constants {

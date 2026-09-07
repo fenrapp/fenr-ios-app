@@ -5,11 +5,15 @@ public struct DashboardDeviceBatteryMapper: Sendable {
 
     public func map(
         snapshot: DashboardDeviceBatterySnapshot,
-        displayMode: DashboardDeviceBatteryDisplayMode
+        displayMode: DashboardDeviceBatteryDisplayMode,
+        canChangeDisplayMode: Bool = true,
+        errorText: String? = nil
     ) -> DashboardDeviceBatteryViewData {
         let presentation = presentation(for: displayMode)
         guard let level = snapshot.level, level.isFinite, level >= .zero else {
             return .init(
+                canChangeDisplayMode: canChangeDisplayMode,
+                errorText: errorText,
                 isVisible: presentation.isVisible,
                 showsIcon: presentation.showsIcon,
                 showsPercentage: presentation.showsPercentage,
@@ -26,6 +30,8 @@ public struct DashboardDeviceBatteryMapper: Sendable {
             emphasis = .normal
         }
         return .init(
+            canChangeDisplayMode: canChangeDisplayMode,
+            errorText: errorText,
             percentageText: "\(percent)%",
             systemImage: batterySymbol(percent: percent),
             emphasis: emphasis,

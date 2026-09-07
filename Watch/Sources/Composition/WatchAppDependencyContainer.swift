@@ -66,7 +66,7 @@ struct WatchAppDependencyContainer {
         AppSettingsViewModel(
             useCases: .init(
                 settings: .init(
-                    save: .init(repository: settingsRepository),
+                    update: .init(repository: settingsRepository),
                     observe: .init(repository: settingsRepository)
                 ),
                 profile: .init(

@@ -159,6 +159,48 @@ struct UpdateBikeLockSecurityUseCaseTests {
         #expect(await repository.currentSettings().bikeLockSettingsByVIN[vehicleIdentifier] == nil)
     }
 
+    @Test("Rejects another vehicle before mutating credentials")
+    func rejectsMismatchedIdentity() async {
+        let repository = RecordingAppSettingsRepository()
+        let credentialStore = RecordingBikeLockCredentialStore()
+        let useCase = makeUseCase(repository: repository, credentialStore: credentialStore)
+        await #expect(throws: AppSettingsUpdateError.vehicleChanged) {
+            try await useCase.execute(vehicleIdentifier: "FENRTEST000000002", securityMode: .pin, newPIN: validPIN)
+        }
+        #expect(await credentialStore.saves().isEmpty)
+        #expect(await repository.saves().isEmpty)
+    }
+
+    @Test("Reports settings failure after credential persistence instead of claiming success")
+    func propagatesSettingsFailure() async {
+        let repository = RecordingAppSettingsRepository(updateError: .unreadableStore)
+        let credentialStore = RecordingBikeLockCredentialStore()
+        let useCase = makeUseCase(repository: repository, credentialStore: credentialStore)
+        await #expect(throws: AppSettingsUpdateError.unreadableStore) {
+            try await useCase.execute(vehicleIdentifier: vehicleIdentifier, securityMode: .pin, newPIN: validPIN)
+        }
+        #expect(await credentialStore.containsPIN(for: vehicleIdentifier))
+        #expect(await repository.saves().isEmpty)
+        let settings = await repository.currentSettings()
+        #expect(settings.bikeLockSettings(forVIN: vehicleIdentifier).securityMode == .notConfigured)
+    }
+
+    @Test("A vehicle switch during credential persistence cannot configure the new vehicle")
+    func rejectsIdentityChangeDuringCredentialSave() async {
+        let repository = RecordingAppSettingsRepository()
+        let credentialStore = RecordingBikeLockCredentialStore(afterSave: {
+            await repository.switchVIN("FENRTEST000000002")
+        })
+        let useCase = makeUseCase(repository: repository, credentialStore: credentialStore)
+        await #expect(throws: AppSettingsUpdateError.vehicleChanged) {
+            try await useCase.execute(vehicleIdentifier: vehicleIdentifier, securityMode: .pin, newPIN: validPIN)
+        }
+        #expect(await credentialStore.containsPIN(for: vehicleIdentifier))
+        #expect(await repository.saves().isEmpty)
+        #expect(await repository.currentSettings().vin == "FENRTEST000000002")
+        #expect(await repository.currentSettings().bikeLockSettingsByVIN.isEmpty)
+    }
+
     private func makeUseCase(
         repository: RecordingAppSettingsRepository,
         credentialStore: RecordingBikeLockCredentialStore

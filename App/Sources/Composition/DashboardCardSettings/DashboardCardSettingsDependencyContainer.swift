@@ -12,7 +12,7 @@ struct DashboardCardSettingsDependencyContainer {
             useCases: .init(
                 loadSettings: .init(repository: settingsRepository),
                 observeSettings: .init(repository: settingsRepository),
-                saveSettings: .init(repository: settingsRepository)
+                updateSettings: .init(repository: settingsRepository)
             ),
             mapper: DashboardCardSettingsViewStateMapper(),
             bikeLockCapabilityStore: bikeLockCapabilityStore

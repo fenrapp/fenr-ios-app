@@ -6,6 +6,8 @@ public struct PowerModeSettingsViewState: Equatable, Sendable {
     public let currentName: String
     public let maximumNameLength: Int
     public let canEditName: Bool
+    public let isSavingName: Bool
+    public let nameSaveCompletionID: UUID?
     public let nameError: String?
     public let connectionText: String
     public let capabilityText: String
@@ -26,6 +28,8 @@ public struct PowerModeSettingsViewState: Equatable, Sendable {
         maximumNameLength: Int = 10,
         canEditName: Bool = false,
         nameError: String? = nil,
+        isSavingName: Bool = false,
+        nameSaveCompletionID: UUID? = nil,
         connectionText: String? = nil,
         capabilityText: String? = nil,
         statusText: String? = nil,
@@ -41,6 +45,8 @@ public struct PowerModeSettingsViewState: Equatable, Sendable {
         self.maximumNameLength = maximumNameLength
         self.canEditName = canEditName
         self.nameError = nameError
+        self.isSavingName = isSavingName
+        self.nameSaveCompletionID = nameSaveCompletionID
         self.connectionText = connectionText
             ?? String(localized: .powerModeSettingsBikeUnavailable)
         self.capabilityText = capabilityText

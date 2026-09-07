@@ -39,7 +39,7 @@ extension RideNavigationViewModel {
                       lifecycle: lifecycle
                   ),
                   isStarted else { return }
-            receiveLoadedSettings(settings)
+            if pendingSettings.confirmed == nil { receiveLoadedSettings(settings) }
             startSettingsObservation(lifecycle: lifecycle)
         }
     }
@@ -49,6 +49,9 @@ extension RideNavigationViewModel {
         trailGuidance.cancelPreparation()
         state.routePersistence.cancelTransientSave()
         operations.invalidateAll(preserving: [.completedRouteSave])
+        settingsWorkerGeneration &+= 1
+        pendingSettings.removeAll()
+        appSettings = pendingSettings.settings
         isCalculatingRoadRoutes = false
         isRerouting = false
         isFindingTrailExit = false
@@ -76,23 +79,21 @@ extension RideNavigationViewModel {
     public func setMiniMapPosition(_ position: RideNavigationMiniViewState.Position) {
         let setting = MiniMapPosition(position)
         guard appSettings.rideNavigation.miniMapPosition != setting else { return }
-        appSettings.rideNavigation.miniMapPosition = setting
-        persistSettings()
+        persistSettings(.miniMapPosition(setting))
         renderMiniViewState()
     }
 
     public func setMiniMapScale(_ scale: Double) {
         let setting = MiniMapScale(scale)
         guard appSettings.rideNavigation.miniMapScale != setting else { return }
-        appSettings.rideNavigation.miniMapScale = setting
-        persistSettings()
+        persistSettings(.miniMapScale(setting))
         renderMiniViewState()
     }
 
     public func toggleMiniMapLayoutOrientation() {
-        appSettings.rideNavigation.miniMapLayoutOrientation =
+        let orientation: MiniMapLayoutOrientation =
             appSettings.rideNavigation.miniMapLayoutOrientation == .portrait ? .landscape : .portrait
-        persistSettings()
+        persistSettings(.miniMapLayoutOrientation(orientation))
         renderMiniViewState()
     }
 }

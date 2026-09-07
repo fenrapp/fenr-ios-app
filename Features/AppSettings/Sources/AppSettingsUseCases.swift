@@ -4,11 +4,11 @@ import SettingsDomain
 
 public struct AppSettingsUseCases: Sendable {
     public struct Settings: Sendable {
-        let save: SaveAppSettingsUseCase
+        let update: UpdateAppSettingsUseCase
         let observe: ObserveAppSettingsUseCase
 
-        public init(save: SaveAppSettingsUseCase, observe: ObserveAppSettingsUseCase) {
-            self.save = save
+        public init(update: UpdateAppSettingsUseCase, observe: ObserveAppSettingsUseCase) {
+            self.update = update
             self.observe = observe
         }
     }

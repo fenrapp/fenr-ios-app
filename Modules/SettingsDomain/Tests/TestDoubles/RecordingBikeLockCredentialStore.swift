@@ -10,15 +10,18 @@ actor RecordingBikeLockCredentialStore: BikeLockCredentialStoring {
     private var removedVehicleIdentifiers: [String] = []
     private let failsSavingPIN: Bool
     private let operationRecorder: SettingsDomainOperationRecorder?
+    private let afterSave: (@Sendable () async -> Void)?
 
     init(
         pinsByVehicleIdentifier: [String: String] = [:],
         failsSavingPIN: Bool = false,
-        operationRecorder: SettingsDomainOperationRecorder? = nil
+        operationRecorder: SettingsDomainOperationRecorder? = nil,
+        afterSave: (@Sendable () async -> Void)? = nil
     ) {
         self.pinsByVehicleIdentifier = pinsByVehicleIdentifier
         self.failsSavingPIN = failsSavingPIN
         self.operationRecorder = operationRecorder
+        self.afterSave = afterSave
     }
 
     func save(pin: String, for vehicleIdentifier: String) async throws {
@@ -28,6 +31,7 @@ actor RecordingBikeLockCredentialStore: BikeLockCredentialStoring {
         pinsByVehicleIdentifier[vehicleIdentifier] = pin
         savedCredentials.append((pin, vehicleIdentifier))
         await operationRecorder?.record(.credentialSaved(vehicleIdentifier: vehicleIdentifier))
+        await afterSave?()
     }
 
     func verify(pin: String, for vehicleIdentifier: String) async -> Bool {

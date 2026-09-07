@@ -1,6 +1,10 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "appSettingsSaveErrorTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Settings not saved"}}}},
+    "appSettingsSaveErrorDismiss" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "OK"}}}},
+    "appSettingsSaveFailed" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Your changes could not be saved. Please try again."}}}},
+
     "appSettingsLegalSection" : {
       "extractionState" : "manual",
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Legal" } } }

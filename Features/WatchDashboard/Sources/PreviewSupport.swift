@@ -44,11 +44,13 @@ private actor WatchDashboardPreviewRepository: BikeRepository, BikeBatteryHealth
 
 private actor WatchDashboardPreviewSettingsRepository: AppSettingsRepository {
     func load() -> AppSettings { .init() }
-    func save(_: AppSettings) {}
+    func update(expectedVIN _: String, change _: AppSettingsChange) throws -> AppSettingsUpdateResult {
+        throw AppSettingsUpdateError.invalidChange
+    }
 
-    func observe() -> AsyncStream<AppSettings> {
+    func observe() -> AsyncStream<AppSettingsSnapshot> {
         AsyncStream { continuation in
-            continuation.yield(.init())
+            continuation.yield(.init(settings: .init(), revision: 0))
         }
     }
 }

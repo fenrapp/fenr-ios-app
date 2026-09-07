@@ -1,6 +1,7 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "powerModeSettingsNameSaveError" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unable to save the map name. Try again." } } } },
     "powerModeSettingsAllControlsReady" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "All map controls ready" } } } },
     "powerModeSettingsAlphaCapabilityDetected" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Alpha capability detected · 80 HP" } } } },
     "powerModeSettingsAlphaVerificationPending" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Alpha expected · verification pending" } } } },

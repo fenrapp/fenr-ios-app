@@ -13,15 +13,19 @@ public final class PowerModeSettingsViewModel: ObservableObject {
     private let mapper: PowerModeSettingsViewStateMapper
     var telemetry = BikeTelemetry()
     var connection = BikeConnection()
-    private var settings = AppSettings()
-    private var profile: BikeProfile?
+    var settings = AppSettings()
+    var pendingChanges = AppSettingsPendingChanges()
+    var nameSaveCompletionID: UUID?
+    var settingsObservationTask: Task<Void, Never>?
+    var settingsGeneration = 0
+    var profile: BikeProfile?
     var selectedMapIndex = 0
     private var didSelectInitialMap = false
     private var didRequestRefresh = false
     private var isStarted = false
     var isRefreshing = false
     private var refreshError: String?
-    private var nameError: String?
+    var nameError: String?
     var preparedBaseMapIndex: Int?
     var preparedTractionMapIndex: Int?
     var attemptedPreparationMapIndex: Int?
@@ -33,7 +37,7 @@ public final class PowerModeSettingsViewModel: ObservableObject {
     var controlError: String?
     private var observationTask: Task<Void, Never>?
     private var refreshTask: Task<Void, Never>?
-    private var settingsSaveTask: Task<Void, Never>?
+    var settingsSaveTask: Task<Void, Never>?
     var controlTask: Task<Void, Never>?
     private var refreshGeneration = 0
     var controlGeneration = 0
@@ -52,6 +56,7 @@ public final class PowerModeSettingsViewModel: ObservableObject {
     deinit {
         observationTask?.cancel()
         refreshTask?.cancel()
+        settingsObservationTask?.cancel()
         settingsSaveTask?.cancel()
         controlTask?.cancel()
     }
@@ -59,6 +64,7 @@ public final class PowerModeSettingsViewModel: ObservableObject {
     public func start() {
         guard observationTask == nil else { return }
         isStarted = true
+        observeSettingsIfNeeded()
         let vehicleSession = vehicleSession
         observationTask = Task { [weak self] in
             let stream = await vehicleSession.observe()
@@ -79,7 +85,7 @@ public final class PowerModeSettingsViewModel: ObservableObject {
     }
 
     public func stopAndWait() async {
-        let tasks = [observationTask, refreshTask, settingsSaveTask, controlTask]
+        let tasks = [observationTask, refreshTask, settingsObservationTask, settingsSaveTask, controlTask]
         tasks.forEach { $0?.cancel() }
         stop()
         for task in tasks { await task?.value }
@@ -87,6 +93,12 @@ public final class PowerModeSettingsViewModel: ObservableObject {
 
     public func stop() {
         isStarted = false
+        settingsGeneration += 1
+        settingsObservationTask?.cancel()
+        settingsObservationTask = nil
+        settingsSaveTask?.cancel()
+        settingsSaveTask = nil
+        pendingChanges.removeAll()
         observationTask?.cancel()
         observationTask = nil
         cancelRefresh(resetRequest: true)
@@ -105,38 +117,18 @@ public final class PowerModeSettingsViewModel: ObservableObject {
         prepareControlIfPossible()
     }
 
-    @discardableResult
-    public func saveName(_ candidate: String) -> Bool {
-        guard let vin = profile?.vin else {
-            nameError = String(localized: .powerModeSettingsProfileRequiredError)
-            render()
-            return false
-        }
+    public func saveName(_ candidate: String) {
         do {
             let name = try PowerModeName(candidate)
-            guard !isDuplicate(name, vin: vin) else {
-                nameError = String(localized: .powerModeSettingsDuplicateNameError)
-                render()
-                return false
-            }
-            try settings.setPowerModeName(name, forVIN: vin, mapIndex: selectedMapIndex)
-            nameError = nil
-            render()
-            save(settings)
-            return true
+            saveNameChange(.powerModeName(mapIndex: selectedMapIndex, name: name))
         } catch {
             nameError = String(localized: .powerModeSettingsInvalidNameError)
             render()
-            return false
         }
     }
 
     public func resetName() {
-        guard let vin = profile?.vin else { return }
-        settings.clearPowerModeName(forVIN: vin, mapIndex: selectedMapIndex)
-        nameError = nil
-        render()
-        save(settings)
+        saveNameChange(.powerModeName(mapIndex: selectedMapIndex, name: nil))
     }
 
     public func refresh() {
@@ -182,7 +174,6 @@ extension PowerModeSettingsViewModel {
     private func receive(_ snapshot: VehicleSessionSnapshot) {
         telemetry = snapshot.telemetry
         connection = snapshot.connection
-        settings = snapshot.settings
         profile = snapshot.profile
         isCanonicalTelemetryAvailable = snapshot.isCanonicalTelemetryAvailable
         if !didSelectInitialMap,
@@ -221,22 +212,6 @@ extension PowerModeSettingsViewModel {
         }
     }
 
-    private func isDuplicate(_ candidate: PowerModeName, vin: String) -> Bool {
-        settings.powerModeNames(forVIN: vin).contains { mapIndex, name in
-            mapIndex != selectedMapIndex && candidate.matchesIgnoringCase(name)
-        }
-    }
-
-    private func save(_ updatedSettings: AppSettings) {
-        let previousSaveTask = settingsSaveTask
-        let saveSettings = useCases.saveSettings
-        settingsSaveTask = Task {
-            await previousSaveTask?.value
-            guard !Task.isCancelled else { return }
-            await saveSettings.execute(updatedSettings)
-        }
-    }
-
     func render() {
         let nextState = mapper.map(.init(
             telemetry: telemetry,
@@ -248,6 +223,8 @@ extension PowerModeSettingsViewModel {
             isRefreshing: isRefreshing,
             refreshError: refreshError,
             nameError: nameError,
+            isSavingName: !pendingChanges.isEmpty,
+            nameSaveCompletionID: nameSaveCompletionID,
             isPreparingControl: isPreparingControl,
             isApplyingControl: isApplyingControl,
             activeAdjustmentID: activeAdjustmentID,

@@ -68,11 +68,13 @@ actor WatchDashboardSettingsRepository: AppSettingsRepository {
     }
 
     func load() -> AppSettings { settings }
-    func save(_: AppSettings) {}
+    func update(expectedVIN _: String, change _: AppSettingsChange) throws -> AppSettingsUpdateResult {
+        throw AppSettingsUpdateError.invalidChange
+    }
 
-    func observe() -> AsyncStream<AppSettings> {
+    func observe() -> AsyncStream<AppSettingsSnapshot> {
         AsyncStream { continuation in
-            continuation.yield(settings)
+            continuation.yield(.init(settings: settings, revision: 0))
         }
     }
 }

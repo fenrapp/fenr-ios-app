@@ -15,6 +15,7 @@ public actor LiveVehicleSessionService: VehicleSessionService {
     var minimumCanonicalTelemetryRevision = 0
     var connection = BikeConnection()
     var settings = AppSettings()
+    var settingsRevision: UInt64?
     var profile: BikeProfile?
     var deviceHeadingSample: DeviceHeadingSample?
     var deviceHeadingTask: Task<Void, Never>?

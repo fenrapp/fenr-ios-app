@@ -1,11 +1,14 @@
+import Foundation
 import SettingsDomain
 import TestSupport
 
 actor StubAppSettingsRepository: AppSettingsRepository {
-    private let settingsHub = TestEventHub<AppSettings>(bufferingPolicy: .bufferingNewest(1))
+    private let settingsHub = TestEventHub<AppSettingsSnapshot>(bufferingPolicy: .bufferingNewest(1))
     private var settings: AppSettings
     private var saves: [AppSettings] = []
     private var saveInvocations = 0
+    private var revision: UInt64 = 0
+    private var nextUpdateError: AppSettingsUpdateError?
     private var shouldSuspendNextSave = false
     private var suspendedSaveContinuation: CheckedContinuation<Void, Never>?
     private var saveSuspendedWaiters: [CheckedContinuation<Void, Never>] = []
@@ -13,7 +16,7 @@ actor StubAppSettingsRepository: AppSettingsRepository {
     private var blocksLoads = false
 
     init(settings: AppSettings = .init()) {
-        self.settings = settings
+        self.settings = settings.scoped(toVIN: settings.vin ?? "FENRTEST000000001")
     }
 
     func load() async -> AppSettings {
@@ -25,7 +28,7 @@ actor StubAppSettingsRepository: AppSettingsRepository {
         return settings
     }
 
-    func save(_ settings: AppSettings) async {
+    func update(expectedVIN: String, change: AppSettingsChange) async throws -> AppSettingsUpdateResult {
         saveInvocations += 1
         if shouldSuspendNextSave {
             shouldSuspendNextSave = false
@@ -36,19 +39,35 @@ actor StubAppSettingsRepository: AppSettingsRepository {
                 waiters.forEach { $0.resume() }
             }
         }
-        self.settings = settings
-        saves.append(settings)
-        await settingsHub.send(settings)
+        try Task.checkCancellation()
+        guard settings.vin == expectedVIN else { throw AppSettingsUpdateError.vehicleChanged }
+        if let error = nextUpdateError {
+            nextUpdateError = nil
+            throw error
+        }
+        let updated = try change.applying(to: settings)
+        guard updated != settings else { return .unchanged(snapshot) }
+        settings = updated
+        saves.append(updated)
+        revision += 1
+        await settingsHub.send(snapshot)
+        return .changed(snapshot)
     }
 
-    func observe() async -> AsyncStream<AppSettings> {
-        await settingsHub.stream(replay: settings)
+    func observe() async -> AsyncStream<AppSettingsSnapshot> {
+        await settingsHub.stream(replay: snapshot)
     }
 
     func publish(_ settings: AppSettings) async {
-        self.settings = settings
-        await settingsHub.send(settings)
+        self.settings = settings.scoped(toVIN: settings.vin ?? "FENRTEST000000001")
+        revision += 1
+        await settingsHub.send(snapshot)
     }
+
+    var snapshot: AppSettingsSnapshot { .init(settings: settings, revision: revision) }
+
+    func publishSnapshot(_ snapshot: AppSettingsSnapshot) async { await settingsHub.send(snapshot) }
+    func failNextUpdate(_ error: AppSettingsUpdateError) { nextUpdateError = error }
 
     func waitForSubscriber() async -> Bool {
         await settingsHub.waitForSubscriber()
