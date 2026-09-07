@@ -109,10 +109,12 @@ class FENRUITestCase: XCTestCase {
         target.typeText(text)
         let replaced = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", text), object: target)
         XCTAssertEqual(XCTWaiter.wait(for: [replaced], timeout: 10), .completed)
+        dismissKeyboardIntroductionIfNeeded(preserving: target)
     }
 
     private func revealFocusedField(_ target: XCUIElement, keyboardAccessory: String?) {
         waitFor(app.keyboards.firstMatch)
+        dismissKeyboardIntroductionIfNeeded(preserving: target)
         guard let keyboardAccessory else { return }
         let accessory = element(keyboardAccessory)
         waitFor(accessory)
@@ -128,6 +130,30 @@ class FENRUITestCase: XCTestCase {
             return
         }
         XCTFail("Focused field remains covered by the keyboard toolbar: \(target)")
+    }
+
+    private func dismissKeyboardIntroductionIfNeeded(preserving target: XCUIElement) {
+        let title = app.staticTexts["Type English and Spanish"].firstMatch
+        guard title.exists else { return }
+        guard let previousValue = target.value as? String else {
+            XCTFail("Cannot verify the draft value before backgrounding")
+            return
+        }
+        // iOS 26's first-use bilingual keyboard overlay passes Continue taps to the space key.
+        // Backgrounding removes that system overlay without discarding the in-memory form.
+        XCUIDevice.shared.press(.home)
+        XCTAssertTrue(app.wait(for: .runningBackground, timeout: 10))
+        app.activate()
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
+        waitForAbsence(title)
+        let preserved = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value == %@", previousValue), object: target
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [preserved], timeout: 10), .completed)
+        if !app.keyboards.firstMatch.exists {
+            target.tap()
+            waitFor(app.keyboards.firstMatch)
+        }
     }
 
     func dismissKeyboard(using identifier: String) {
@@ -160,7 +186,7 @@ class FENRUITestCase: XCTestCase {
     }
 
     func capture(_ name: String) {
-        let attachment = XCTAttachment(screenshot: app.screenshot())
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
