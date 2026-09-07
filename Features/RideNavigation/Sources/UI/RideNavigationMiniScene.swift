@@ -2,7 +2,7 @@ import SwiftUI
 
 @MainActor
 struct RideNavigationMiniScene: View {
-    @ObservedObject var viewModel: RideNavigationViewModel
+    let viewModel: RideNavigationViewModel
     let mapSurfaceFactory: RideNavigationMapSurfaceFactory
     let transitionNamespace: Namespace.ID
     let onExpand: () -> Void

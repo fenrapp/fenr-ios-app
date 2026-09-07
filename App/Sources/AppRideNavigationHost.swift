@@ -2,7 +2,7 @@ import RideNavigation
 import SwiftUI
 
 struct AppRideNavigationHost: View {
-    @ObservedObject var coordinator: AppNavigationCoordinator
+    let coordinator: AppNavigationCoordinator
     let featureStore: AppFeatureStore
 
     var body: some View {

@@ -1,23 +1,25 @@
 import Foundation
+import Observation
 import RideNavigationDomain
 
 @MainActor
+@Observable
 public final class RideNavigationLibraryController {
     var snapshot = RideNavigationLibrarySnapshot()
     let routeLibrary: RideNavigationRouteLibraryService
     let timing: RideNavigationTiming
-    var continuation: AsyncStream<RideNavigationLibraryUpdate>.Continuation?
-    var isStarted = false
-    var lifecycleGeneration: UInt = 0
-    var contextGeneration: UInt = 0
-    var refreshGeneration: UInt = 0
-    var saveGeneration: UInt = 0
-    var selectedRouteID: UUID?
-    var refreshTask: Task<Void, Never>?
-    var plannedSaveTask: Task<Void, Never>?
-    var completedSaveTask: Task<Void, Never>?
-    var draftTask: Task<Void, Never>?
-    var deletionTasks: [UUID: Task<Void, Never>] = [:]
+    @ObservationIgnored var continuation: AsyncStream<RideNavigationLibraryUpdate>.Continuation?
+    @ObservationIgnored var isStarted = false
+    @ObservationIgnored var lifecycleGeneration: UInt = 0
+    @ObservationIgnored var contextGeneration: UInt = 0
+    @ObservationIgnored var refreshGeneration: UInt = 0
+    @ObservationIgnored var saveGeneration: UInt = 0
+    @ObservationIgnored var selectedRouteID: UUID?
+    @ObservationIgnored var refreshTask: Task<Void, Never>?
+    @ObservationIgnored var plannedSaveTask: Task<Void, Never>?
+    @ObservationIgnored var completedSaveTask: Task<Void, Never>?
+    @ObservationIgnored var draftTask: Task<Void, Never>?
+    @ObservationIgnored var deletionTasks: [UUID: Task<Void, Never>] = [:]
 
     public init(routeLibrary: RideNavigationRouteLibraryService, timing: RideNavigationTiming) {
         self.routeLibrary = routeLibrary

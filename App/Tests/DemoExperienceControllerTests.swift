@@ -245,7 +245,7 @@ struct DemoExperienceControllerTests {
         let real = try #require(controller.experience)
         #expect(real.demoViewModel == nil)
         #expect(real.id != demo.id)
-        #expect(real.root.featureStore !== demo.root.featureStore)
+        #expect(real.root.featureStore.onboardingViewModel !== demo.root.featureStore.onboardingViewModel)
         #expect(real.root.featureStore.appSettingsViewModel !== demo.root.featureStore.appSettingsViewModel)
         #expect(real.root.featureStore.powerModeSettingsViewModel !== demo.root.featureStore.powerModeSettingsViewModel)
         #expect(real.root.chargeControlSession !== demo.root.chargeControlSession)

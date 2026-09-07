@@ -2,9 +2,8 @@ import SwiftUI
 
 @MainActor
 public struct RideNavigationScene: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Namespace private var navigationSurfaceNamespace
-    @StateObject private var feature: RideNavigationFeatureModel
+    @State private var feature: RideNavigationFeatureModel?
+    private let factory: any RideNavigationFeatureBuilding
     private let presentationMode: RideNavigationPresentationMode
     private let importedURL: URL?
     private let importedURLToken: UUID?
@@ -17,7 +16,7 @@ public struct RideNavigationScene: View {
         importedURLToken: UUID? = nil,
         onNavigation: @escaping (RideNavigationPresentationEvent) -> Void
     ) {
-        _feature = StateObject(wrappedValue: factory.makeFeature())
+        self.factory = factory
         self.presentationMode = presentationMode
         self.importedURL = importedURL
         self.importedURLToken = importedURLToken
@@ -26,64 +25,21 @@ public struct RideNavigationScene: View {
 
     public var body: some View {
         Group {
-            switch presentationMode {
-            case .hidden:
-                EmptyView()
-            case .fullScreen:
-                RideNavigationView(
-                    viewModel: feature.viewModel,
-                    mapSurfaceFactory: feature.mapSurfaceFactory,
-                    transitionNamespace: navigationSurfaceNamespace,
-                    onClose: { onNavigation(.close) },
-                    onMinimize: { onNavigation(.minimize) }
+            if let feature {
+                RideNavigationLoadedScene(
+                    feature: feature,
+                    presentationMode: presentationMode,
+                    importedURL: importedURL,
+                    importedURLToken: importedURLToken,
+                    onNavigation: onNavigation
                 )
-                .transition(.opacity)
-            case .mini:
-                RideNavigationMiniScene(
-                    viewModel: feature.viewModel,
-                    mapSurfaceFactory: feature.mapSurfaceFactory,
-                    transitionNamespace: navigationSurfaceNamespace,
-                    onExpand: { onNavigation(.expand) }
-                )
-                .transition(.opacity)
+            } else {
+                ProgressView()
             }
         }
-        .statusBarHidden(presentationMode == .fullScreen)
         .task {
-            feature.viewModel.setPresentationMode(presentationMode)
-            feature.viewModel.start()
-            if let importedURL {
-                open(importedURL)
-            }
+            guard !Task.isCancelled else { return }
+            if feature == nil { feature = factory.makeFeature() }
         }
-        .onChange(of: presentationMode) {
-            feature.viewModel.setPresentationMode(presentationMode)
-        }
-        .onChange(of: importedURLToken) {
-            if let importedURL {
-                open(importedURL)
-            }
-        }
-        .onDisappear { feature.viewModel.stop() }
-        .animation(presentationTransitionAnimation, value: presentationMode)
-    }
-
-    private func open(_ url: URL) {
-        if url.pathExtension.lowercased() == "gpx" {
-            feature.viewModel.importGPX(from: url)
-        } else {
-            feature.viewModel.openIncomingMapLink(url)
-        }
-    }
-
-    private var presentationTransitionAnimation: Animation {
-        reduceMotion
-            ? .easeOut(duration: Constants.reducedPresentationTransitionDuration)
-            : .smooth(duration: Constants.presentationTransitionDuration)
-    }
-
-    private enum Constants {
-        static let presentationTransitionDuration = 0.45
-        static let reducedPresentationTransitionDuration = 0.12
     }
 }

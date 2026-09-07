@@ -2,7 +2,7 @@ import SwiftUI
 
 public struct RideNavigationView: View {
     @Environment(\.colorScheme) private var colorScheme
-    @ObservedObject private var viewModel: RideNavigationViewModel
+    private let viewModel: RideNavigationViewModel
     private let mapSurfaceFactory: RideNavigationMapSurfaceFactory
     private let transitionNamespace: Namespace.ID
     private let onClose: () -> Void

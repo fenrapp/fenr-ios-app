@@ -1,20 +1,21 @@
-import Combine
 import Foundation
+import Observation
 
 @MainActor
-final class AppExperienceController: ObservableObject {
-    @Published private(set) var experience: AppExperience?
-    @Published private(set) var isBusy = false
-    @Published private(set) var failure: AppExperienceFailure?
+@Observable
+final class AppExperienceController {
+    private(set) var experience: AppExperience?
+    private(set) var isBusy = false
+    private(set) var failure: AppExperienceFailure?
     var hasError: Bool { failure != nil }
-    @Published var showsIntroduction = false
+    var showsIntroduction = false
 
     private let selectionStore: DemoSelectionStore
     private let makeReal: @MainActor () throws -> AppExperience
     private let makeDemo: @MainActor (DemoIdentity) async throws -> AppExperience
     private let discardDemo: @MainActor (DemoIdentity) async throws -> Void
-    private var transitionTask: Task<Void, Never>?
-    private var pendingIdentity: DemoIdentity?
+    @ObservationIgnored private var transitionTask: Task<Void, Never>?
+    @ObservationIgnored private var pendingIdentity: DemoIdentity?
 
     init(
         selectionStore: DemoSelectionStore,

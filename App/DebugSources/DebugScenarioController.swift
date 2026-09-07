@@ -1,5 +1,5 @@
 import BikeEmulator
-import Combine
+import Observation
 
 private enum DebugScenarioCommand: Sendable {
     case scenario(BikeEmulatorScenario)
@@ -9,10 +9,11 @@ private enum DebugScenarioCommand: Sendable {
 }
 
 @MainActor
-final class DebugScenarioController: ObservableObject {
-    @Published private(set) var selectedScenario: BikeEmulatorScenario
-    @Published private(set) var selectedPowerModePreset: BikeEmulatorPowerModePreset
-    @Published private(set) var selectedMap: Int
+@Observable
+final class DebugScenarioController {
+    private(set) var selectedScenario: BikeEmulatorScenario
+    private(set) var selectedPowerModePreset: BikeEmulatorPowerModePreset
+    private(set) var selectedMap: Int
 
     private let store: DebugScenarioStore
     private let commandContinuation: AsyncStream<DebugScenarioCommand>.Continuation

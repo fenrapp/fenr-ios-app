@@ -3,7 +3,7 @@ import Foundation
 import SwiftUI
 
 struct DebugPowerModeControls: View {
-    @ObservedObject var controller: DebugScenarioController
+    let controller: DebugScenarioController
 
     var body: some View {
         Section(.debugPowerModeSection) {

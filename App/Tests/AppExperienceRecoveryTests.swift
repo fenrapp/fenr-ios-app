@@ -1,11 +1,46 @@
 import Foundation
 import MaintenanceLog
+import Observation
 import Testing
 import TestSupport
 
 @MainActor
 @Suite("Production experience recovery")
 struct AppExperienceRecoveryTests {
+    @Test("Computed recovery visibility observes failure and its dismissal independently of busy state")
+    func hasErrorTracksFailureAndDismissal() async throws {
+        let suite = "fenr.tests.recovery.observation.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let controller = AppExperienceController(
+            selectionStore: makeSelection(defaults: defaults),
+            makeReal: { throw AppExperienceFailure.storage },
+            makeDemo: { _ in throw AppExperienceFailure.demo },
+            discardDemo: { _ in }
+        )
+        controller.restore()
+        let recorder = AppObservationChangeRecorder()
+        withObservationTracking {
+            _ = controller.hasError
+        } onChange: {
+            recorder.record()
+        }
+
+        try #require(await waitUntil { controller.hasError && !controller.isBusy })
+        #expect(recorder.count == 1)
+        #expect(controller.failure == .storage)
+        withObservationTracking {
+            _ = controller.hasError
+        } onChange: {
+            recorder.record()
+        }
+        controller.exploreDemo()
+
+        #expect(recorder.count == 2)
+        #expect(!controller.hasError)
+        #expect(controller.showsIntroduction)
+    }
+
     @Test("Every storage failure propagates before runtime composition and preserves existing records",
           arguments: ["rides", "maintenance", "calibration"])
     func storageFailurePreservesRecords(failingStore: String) async throws {

@@ -1,9 +1,28 @@
 import BikeDomain
+import Observation
 import Testing
 
 @MainActor
 @Suite("Bike setup flow")
 struct BikeSetupFlowControllerTests {
+    @Test("Configured VIN observation follows profile replacement while setup remains complete")
+    func configuredVINTracksProfileReplacement() {
+        let controller = makeController(repository: SetupProfileRepository())
+        controller.complete(vin: "FENRTEST000000001")
+        let recorder = AppObservationChangeRecorder()
+        withObservationTracking {
+            _ = controller.configuredVIN
+        } onChange: {
+            recorder.record()
+        }
+
+        controller.complete(vin: "FENRTEST000000002")
+
+        #expect(recorder.count == 1)
+        #expect(controller.configuredVIN == "FENRTEST000000002")
+        #expect(controller.isCompleted)
+    }
+
     @Test("Loads a completed profile on a subsequent launch")
     func loadsCompletedProfile() async {
         let repository = SetupProfileRepository(profile: .init(vin: "FENRTEST000000001"))

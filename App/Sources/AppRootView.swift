@@ -3,9 +3,9 @@ import UIKit
 
 struct AppRootView: View {
     @Environment(\.scenePhase) private var scenePhase
-    @StateObject private var featureStore: AppFeatureStore
-    @StateObject private var setupFlow: BikeSetupFlowController
-    @StateObject private var navigationCoordinator: AppNavigationCoordinator
+    private let featureStore: AppFeatureStore
+    @State private var setupFlow: BikeSetupFlowController
+    @State private var navigationCoordinator: AppNavigationCoordinator
     private let incomingMapLinkController: IncomingMapLinkController
     private let presentationController: AppPresentationController
     private let lifecycleController: AppLifecycleController
@@ -24,9 +24,9 @@ struct AppRootView: View {
         dashboardAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) },
         settingsAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
-        _featureStore = StateObject(wrappedValue: dependencies.featureStore)
-        _setupFlow = StateObject(wrappedValue: dependencies.setupFlow)
-        _navigationCoordinator = StateObject(wrappedValue: dependencies.navigationCoordinator)
+        featureStore = dependencies.featureStore
+        _setupFlow = State(initialValue: dependencies.setupFlow)
+        _navigationCoordinator = State(initialValue: dependencies.navigationCoordinator)
         incomingMapLinkController = dependencies.incomingMapLinkController
         presentationController = dependencies.presentationController
         lifecycleController = dependencies.lifecycleController

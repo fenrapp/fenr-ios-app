@@ -7,7 +7,7 @@ import UserNotifications
 struct FENRDebugApp: App {
     @UIApplicationDelegateAdaptor(AppOrientationDelegate.self) private var appDelegate
     private let dependencies: AppRootDependencies
-    @StateObject private var scenarioController: DebugScenarioController
+    @State private var scenarioController: DebugScenarioController
 
     init() {
         let scheduler = SystemMaintenanceReminderScheduler(
@@ -22,7 +22,7 @@ struct FENRDebugApp: App {
                 "-openRideNavigation"
             )
         )
-        _scenarioController = StateObject(wrappedValue: context.scenarioController)
+        _scenarioController = State(initialValue: context.scenarioController)
     }
 
     var body: some Scene {
