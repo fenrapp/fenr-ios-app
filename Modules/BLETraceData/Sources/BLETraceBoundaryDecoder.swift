@@ -33,7 +33,8 @@ struct BLETraceBoundaryDecoder: Sendable {
     }
 
     private func parseTimestamp(_ value: String) -> Date? {
-        try? Date(value, strategy: .iso8601)
+        (try? Date(value, strategy: Date.ISO8601FormatStyle(includingFractionalSeconds: true)))
+            ?? (try? Date(value, strategy: .iso8601))
     }
 
     private struct StoredHeader: Decodable {
