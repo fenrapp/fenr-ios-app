@@ -145,18 +145,19 @@ struct AppDependencyContainerTests {
     }
 
     @Test("Stopping during repository startup rolls back started services")
-    func lifecycleStopDuringStartupRollsBackInReverseOrder() async {
+    func lifecycleStopDuringStartupRollsBackInReverseOrder() async throws {
         let fixture = AppLifecycleControllerFixture()
         await fixture.repository.blockNextStart()
         let startTask = Task { await fixture.lifecycleController.start() }
-        #expect(await waitUntil { await fixture.repository.hasPendingStart() })
+        try #require(await waitUntil { await fixture.repository.hasPendingStart() })
         fixture.lifecycleController.stop()
         await fixture.repository.resumeStart()
         await startTask.value
-        #expect(await waitUntil {
+        try #require(await waitUntil {
             let rideEvents = await fixture.rideSession.recordedEvents()
             let vehicleStopCount = await fixture.vehicleSession.stopCount()
-            return rideEvents == ["start", "stop"] && vehicleStopCount == 1
+            let repositoryStopCount = await fixture.repository.stopCount()
+            return rideEvents == ["start", "stop"] && vehicleStopCount == 1 && repositoryStopCount == 1
         })
         #expect(await fixture.repository.startCount() == 1)
         #expect(await fixture.repository.stopCount() == 1)

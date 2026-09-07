@@ -1,3 +1,5 @@
+import CoreLocation
+import EnvironmentData
 import Foundation
 import MaintenanceLog
 import UserNotifications
@@ -12,6 +14,11 @@ enum AppExperienceFactory {
         let demoFactory = DemoExperienceFactory(
             fileManager: fileManager, baseDirectory: support.appendingPathComponent("Demo", isDirectory: true),
             notifications: SystemDemoNotifications(center: center, calendar: .autoupdatingCurrent),
+            makeDeviceSpeedRepository: {
+                CoreLocationDeviceSpeedRepository(
+                    locationManager: CLLocationManager(), requestsAuthorizationOnObservation: false
+                )
+            },
             makeCredentialStore: { KeychainBikeLockCredentialStore(service: $0) }
         )
         return AppExperienceController(

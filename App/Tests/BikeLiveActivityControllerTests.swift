@@ -210,18 +210,17 @@ struct BikeLiveActivityUpdateTests {
     }
 
     @Test("Allows immediate updates for critical phase changes")
-    func updatesCriticalPhaseImmediately() async {
+    func updatesCriticalPhaseImmediately() async throws {
         let fixture = BikeLiveActivityControllerFixture()
 
         await fixture.start()
-        await settle()
         fixture.controller.setIsSetupCompleted(true)
         fixture.controller.setCanShowLiveActivity(true)
         await fixture.repository.sendConnection(.receivingTelemetry)
         await fixture.repository.sendTelemetry(chargingTelemetry(percent: 62))
-        await settle()
+        try #require(await waitUntil { fixture.activityClient.startCount == 1 && fixture.activityClient.isActive })
         await fixture.repository.sendConnection(BikeConnection(state: .disconnected(reason: "Out of range")))
-        await settle()
+        try #require(await waitUntil { fixture.activityClient.updatedStates.last?.phase == .connectionLost })
 
         #expect(fixture.activityClient.updateCount == 1)
         #expect(fixture.activityClient.updatedStates.last?.phase == .connectionLost)

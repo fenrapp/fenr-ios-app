@@ -26,10 +26,14 @@ struct DemoIsolationTests {
             userDefaults: try fixture.defaults(suite: fixture.demo.identity.suiteName),
             profileRepository: demoProfile
         )
-        _ = try await demoSettings.update(
+        let seeded = try await demoSettings.update(
             expectedVIN: fixture.demo.identity.vin, change: .measurementSystem(.metric)
         )
+        try #require(seeded.snapshot.settings.measurementSystem == .metric)
+        try #require(await demoSettings.load().measurementSystem == .metric)
         let experience = try await fixture.demo.factory.make(identity: fixture.demo.identity)
+        #expect(await demoSettings.load().measurementSystem == .metric)
+        #expect(await demoProfile.loadProfile()?.vin == fixture.demo.identity.vin)
         let realProfile = UserDefaultsBikeProfileRepository(
             userDefaults: try fixture.defaults(suite: fixture.realSuite)
         )
@@ -43,10 +47,19 @@ struct DemoIsolationTests {
         _ = try await realSettings.update(expectedVIN: profile.vin, change: .measurementSystem(.metric))
         let model = experience.root.featureStore.appSettingsViewModel
         model.start()
-        #expect(await waitUntil { model.viewState.measurementSystem.selectedID == "metric" })
+        let ready = await waitUntil {
+            model.viewState.measurementSystem.selectedID == MeasurementSystem.metric.rawValue
+        }
+        if !ready { await experience.close() }
+        try #require(ready, "Initial preferences must arrive before sending a settings command")
         model.selectMeasurementSystem(id: MeasurementSystem.imperial.rawValue)
-        #expect(await waitUntil { await demoSettings.load().measurementSystem == .imperial })
+        #expect(model.settingsSaveError == nil)
+        let saved = await waitUntil {
+            await demoSettings.load().measurementSystem == .imperial
+        }
         await experience.close()
+        #expect(saved)
+        #expect(model.settingsSaveError == nil)
         #expect(await realSettings.load() == settings)
         #expect(await realProfile.loadProfile() == profile)
         #expect(await demoSettings.load().measurementSystem == .imperial)
