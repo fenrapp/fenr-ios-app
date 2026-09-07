@@ -28,10 +28,6 @@ public struct MaintenanceFormView: View {
             remindersSection
         }
         .scrollDismissesKeyboard(.interactively)
-        .simultaneousGesture(
-            TapGesture().onEnded { focusedField = nil },
-            including: .gesture
-        )
         .navigationTitle(entryID == nil ? Text(.maintenanceNewTitle) : Text(.maintenanceEditTitle))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $presentedSelection) { selection in
