@@ -4,18 +4,18 @@ import WatchDashboard
 import WatchOnboarding
 
 struct WatchRootView: View {
-    @StateObject private var dashboardViewModel: WatchDashboardViewModel
-    @StateObject private var onboardingViewModel: WatchOnboardingViewModel
+    @State private var dashboardViewModel: WatchDashboardViewModel
+    @State private var onboardingViewModel: WatchOnboardingViewModel
     @State private var settingsViewModel: AppSettingsViewModel
-    @StateObject private var setupController: WatchSetupController
-    @StateObject private var navigationCoordinator: WatchNavigationCoordinator
+    @State private var setupController: WatchSetupController
+    @State private var navigationCoordinator: WatchNavigationCoordinator
 
     init(dependencies: WatchRootDependencies) {
-        _dashboardViewModel = StateObject(wrappedValue: dependencies.dashboardViewModel)
+        _dashboardViewModel = State(initialValue: dependencies.dashboardViewModel)
         _settingsViewModel = State(initialValue: dependencies.settingsViewModel)
-        _onboardingViewModel = StateObject(wrappedValue: dependencies.onboardingViewModel)
-        _setupController = StateObject(wrappedValue: dependencies.setupController)
-        _navigationCoordinator = StateObject(wrappedValue: dependencies.navigationCoordinator)
+        _onboardingViewModel = State(initialValue: dependencies.onboardingViewModel)
+        _setupController = State(initialValue: dependencies.setupController)
+        _navigationCoordinator = State(initialValue: dependencies.navigationCoordinator)
     }
 
     var body: some View {

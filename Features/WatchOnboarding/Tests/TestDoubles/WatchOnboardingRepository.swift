@@ -9,6 +9,9 @@ actor WatchOnboardingRepository: BikeRepository, BikeDiscoveryRepository, BikePr
     private(set) var connectedVIN: String?
     private var discoveryStarts = 0
     private var discoveryStops = 0
+    private(set) var connectionObservationCount = 0
+    private(set) var debugObservationCount = 0
+    private(set) var discoveryObservationCount = 0
     private var suspendsDiscoveryStop = false
     private var discoveryStopContinuations: [CheckedContinuation<Void, Never>] = []
 
@@ -19,8 +22,14 @@ actor WatchOnboardingRepository: BikeRepository, BikeDiscoveryRepository, BikePr
     func retrySecurityHandshake() async throws {}
     func readTelemetrySnapshot() async throws {}
     func observeTelemetry() async -> AsyncStream<BikeTelemetry> { AsyncStream { _ in } }
-    func observeConnection() async -> AsyncStream<BikeConnection> { await connections.stream() }
-    func observeDebugEvents() async -> AsyncStream<BikeDebugEvent> { await debugEvents.stream() }
+    func observeConnection() async -> AsyncStream<BikeConnection> {
+        connectionObservationCount += 1
+        return await connections.stream()
+    }
+    func observeDebugEvents() async -> AsyncStream<BikeDebugEvent> {
+        debugObservationCount += 1
+        return await debugEvents.stream()
+    }
     func startBikeDiscovery() async { discoveryStarts += 1 }
 
     func stopBikeDiscovery() async {
@@ -30,7 +39,10 @@ actor WatchOnboardingRepository: BikeRepository, BikeDiscoveryRepository, BikePr
             discoveryStopContinuations.append(continuation)
         }
     }
-    func observeDiscoveredBikes() async -> AsyncStream<[DiscoveredBike]> { await discoveredBikes.stream() }
+    func observeDiscoveredBikes() async -> AsyncStream<[DiscoveredBike]> {
+        discoveryObservationCount += 1
+        return await discoveredBikes.stream()
+    }
     func loadProfile() async -> BikeProfile? { profile }
     func saveProfile(_ profile: BikeProfile) async { self.profile = profile }
     func clearProfile() async { profile = nil }

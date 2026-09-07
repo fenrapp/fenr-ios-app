@@ -419,6 +419,8 @@ targets:
         embed: true
       - target: BikeEmulator
         embed: true
+      - target: BLETraceDomain
+        embed: true
       - target: WatchDashboard
         embed: true
       - target: WatchOnboarding

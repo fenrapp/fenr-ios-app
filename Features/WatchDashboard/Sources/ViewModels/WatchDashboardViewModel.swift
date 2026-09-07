@@ -1,28 +1,29 @@
 import BikeDomain
-import Combine
+import Observation
 import SettingsDomain
 
 @MainActor
-public final class WatchDashboardViewModel: ObservableObject {
-    @Published public private(set) var viewState = WatchDashboardViewState()
-    @Published public private(set) var debugEvents: [BikeDebugEvent] = []
+@Observable
+public final class WatchDashboardViewModel {
+    public private(set) var viewState = WatchDashboardViewState()
+    public private(set) var debugEvents: [BikeDebugEvent] = []
 
     private let useCases: WatchDashboardUseCases
     private let mapper: WatchDashboardViewStateMapper
     private let maximumDebugEvents: Int
-    private var telemetry = BikeTelemetry()
-    private var batteryHealth = BikeBatteryHealth()
-    private var settings = AppSettings()
-    private var settingsRevision: UInt64?
-    private var telemetryTask: Task<Void, Never>?
-    private var connectionTask: Task<Void, Never>?
-    private var debugTask: Task<Void, Never>?
-    private var settingsTask: Task<Void, Never>?
-    private var batteryHealthTask: Task<Void, Never>?
-    private var monitoringTask: Task<Void, Never>?
-    private var monitoringStopTask: Task<Void, Never>?
-    private var isMonitoringBatteryHealth = false
-    private var monitoringGeneration = 0
+    @ObservationIgnored private var telemetry = BikeTelemetry()
+    @ObservationIgnored private var batteryHealth = BikeBatteryHealth()
+    @ObservationIgnored private var settings = AppSettings()
+    @ObservationIgnored private var settingsRevision: UInt64?
+    @ObservationIgnored private var telemetryTask: Task<Void, Never>?
+    @ObservationIgnored private var connectionTask: Task<Void, Never>?
+    @ObservationIgnored private var debugTask: Task<Void, Never>?
+    @ObservationIgnored private var settingsTask: Task<Void, Never>?
+    @ObservationIgnored private var batteryHealthTask: Task<Void, Never>?
+    @ObservationIgnored private var monitoringTask: Task<Void, Never>?
+    @ObservationIgnored private var monitoringStopTask: Task<Void, Never>?
+    @ObservationIgnored private var isMonitoringBatteryHealth = false
+    @ObservationIgnored private var monitoringGeneration = 0
 
     public init(
         useCases: WatchDashboardUseCases,

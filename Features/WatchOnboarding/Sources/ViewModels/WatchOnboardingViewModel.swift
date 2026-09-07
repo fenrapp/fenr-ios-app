@@ -1,22 +1,23 @@
 import BikeDomain
-import Combine
 import Foundation
+import Observation
 
 @MainActor
-public final class WatchOnboardingViewModel: ObservableObject {
-    @Published private(set) var viewState = WatchOnboardingViewState()
+@Observable
+public final class WatchOnboardingViewModel {
+    private(set) var viewState = WatchOnboardingViewState()
 
     private let maximumDebugEvents = 12
     private let useCases: WatchOnboardingUseCases
     private let onCompleted: @MainActor (BikeProfile) -> Void
-    private var connectionTask: Task<Void, Never>?
-    private var connectionAttemptTask: Task<Void, Never>?
-    private var debugTask: Task<Void, Never>?
-    private var discoveryTask: Task<Void, Never>?
-    private var discoveryStopTask: Task<Void, Never>?
-    private var completionTask: Task<Void, Never>?
-    private var selectedVIN: String?
-    private var didComplete = false
+    @ObservationIgnored private var connectionTask: Task<Void, Never>?
+    @ObservationIgnored private var connectionAttemptTask: Task<Void, Never>?
+    @ObservationIgnored private var debugTask: Task<Void, Never>?
+    @ObservationIgnored private var discoveryTask: Task<Void, Never>?
+    @ObservationIgnored private var discoveryStopTask: Task<Void, Never>?
+    @ObservationIgnored private var completionTask: Task<Void, Never>?
+    @ObservationIgnored private var selectedVIN: String?
+    @ObservationIgnored private var didComplete = false
 
     public init(
         useCases: WatchOnboardingUseCases,

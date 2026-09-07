@@ -2,7 +2,7 @@ import DesignSystem
 import SwiftUI
 
 public struct WatchDashboardView: View {
-    @ObservedObject private var viewModel: WatchDashboardViewModel
+    private let viewModel: WatchDashboardViewModel
     private let onNavigation: (WatchDashboardNavigationEvent) -> Void
 
     public init(
