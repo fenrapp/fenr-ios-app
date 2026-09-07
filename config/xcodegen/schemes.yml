@@ -15,6 +15,7 @@ schemes:
         BikeDomainTests: [test]
         BikeDataTests: [test]
         BikeEmulatorTests: [test]
+        BikeDemoTests: [test]
         ChargeControlTests: [test]
         SettingsDomainTests: [test]
         SettingsDataTests: [test]
@@ -56,6 +57,7 @@ schemes:
         - BikeDomainTests
         - BikeDataTests
         - BikeEmulatorTests
+        - BikeDemoTests
         - ChargeControlTests
         - SettingsDomainTests
         - SettingsDataTests

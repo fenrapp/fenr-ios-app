@@ -82,6 +82,17 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikeemulator.tests
+  BikeDemoTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Features/BikeDemo/Tests
+    dependencies:
+      - target: BikeDemo
+      - target: BikeEmulator
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikedemo.tests
   ChargeControlTests:
     templates: [IOSUnitTests]
     sources:

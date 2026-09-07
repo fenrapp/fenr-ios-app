@@ -84,7 +84,7 @@ private struct AppExperienceContent: View {
 
 private struct AppDemoExperienceView: View {
     let root: AppRootDependencies
-    @ObservedObject var model: BikeDemoViewModel
+    let model: BikeDemoViewModel
     @ObservedObject var navigationCoordinator: AppNavigationCoordinator
     let onExit: () -> Void
     @State private var showsControls = false
