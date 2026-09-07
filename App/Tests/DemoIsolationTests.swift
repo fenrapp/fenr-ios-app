@@ -14,13 +14,22 @@ struct DemoIsolationTests {
     func settingsAndProfileStaySeparate() async throws {
         let fixture = try DemoIsolationTestFixture()
         defer { try? fixture.cleanUp() }
-        let experience = try await fixture.demo.factory.make(identity: fixture.demo.identity)
+        let demoProfile = UserDefaultsBikeProfileRepository(
+            userDefaults: try fixture.defaults(suite: fixture.demo.identity.suiteName)
+        )
+        await demoProfile.saveProfile(BikeProfile(
+            vin: fixture.demo.identity.vin, declaredPowerTier: .alpha,
+            alphaEvidence: [.powerAboveStandard, .tractionControlConfigured],
+            alphaDetectedAt: fixture.demo.identity.createdAt
+        ))
         let demoSettings = AppSettingsRepositoryFactory.make(
             userDefaults: try fixture.defaults(suite: fixture.demo.identity.suiteName),
-            profileRepository: UserDefaultsBikeProfileRepository(
-                userDefaults: try fixture.defaults(suite: fixture.demo.identity.suiteName)
-            )
+            profileRepository: demoProfile
         )
+        _ = try await demoSettings.update(
+            expectedVIN: fixture.demo.identity.vin, change: .measurementSystem(.metric)
+        )
+        let experience = try await fixture.demo.factory.make(identity: fixture.demo.identity)
         let realProfile = UserDefaultsBikeProfileRepository(
             userDefaults: try fixture.defaults(suite: fixture.realSuite)
         )
@@ -33,7 +42,6 @@ struct DemoIsolationTests {
         let settings = AppSettings(measurementSystem: .metric).scoped(toVIN: profile.vin)
         _ = try await realSettings.update(expectedVIN: profile.vin, change: .measurementSystem(.metric))
         let model = experience.root.featureStore.appSettingsViewModel
-        _ = try await demoSettings.update(expectedVIN: profile.vin, change: .measurementSystem(.metric))
         model.start()
         #expect(await waitUntil { model.viewState.measurementSystem.selectedID == "metric" })
         model.selectMeasurementSystem(id: MeasurementSystem.imperial.rawValue)
@@ -42,9 +50,6 @@ struct DemoIsolationTests {
         #expect(await realSettings.load() == settings)
         #expect(await realProfile.loadProfile() == profile)
         #expect(await demoSettings.load().measurementSystem == .imperial)
-        let demoProfile = UserDefaultsBikeProfileRepository(
-            userDefaults: try fixture.defaults(suite: fixture.demo.identity.suiteName)
-        )
         #expect(await demoProfile.loadProfile()?.declaredPowerTier == .alpha)
         await realProfile.clearProfile()
         #expect(await demoProfile.loadProfile() != nil)
