@@ -4,7 +4,9 @@ import RideNavigationDomain
 @MainActor
 extension RideNavigationViewModel {
     var canExportCompletedRoute: Bool {
-        state.summaryIsSuccessful && (completedRecording != nil || selectedRoute != nil || roadRoute != nil)
+        state.summaryIsSuccessful
+            && (completedRecording != nil || planningController.snapshot.selectedRoute != nil
+                || planningController.snapshot.roadRoute != nil)
     }
 
     func prepareCompletionSummary(
@@ -37,7 +39,7 @@ extension RideNavigationViewModel {
         let route = RideRoute(
             id: UUID(),
             name: String(localized: .rideNavigationRideWithTrailName(
-                selectedRoute?.name ?? String(localized: .rideNavigationTrailName)
+                planningController.snapshot.selectedRoute?.name ?? String(localized: .rideNavigationTrailName)
             )),
             createdAt: breadcrumb.createdAt,
             updatedAt: date,

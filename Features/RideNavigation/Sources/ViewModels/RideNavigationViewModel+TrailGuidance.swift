@@ -67,8 +67,8 @@ extension RideNavigationViewModel {
     }
 
     func prepareTrailPreview(startAfterPreparation: Bool = false) {
-        guard let route = selectedRoute else { return }
-        let direction = selectedDirection
+        guard let route = planningController.snapshot.selectedRoute else { return }
+        let direction = planningController.snapshot.selectedDirection
         let generation = operations.begin(.trailPreparation)
         let lifecycle = operations.lifecycleGeneration
         trailGuidance.beginPreparation(
@@ -93,8 +93,8 @@ extension RideNavigationViewModel {
                       lifecycle: lifecycle
                   ),
                   isStarted,
-                  selectedRoute?.id == route.id,
-                  selectedDirection == direction else { return }
+                  planningController.snapshot.selectedRoute?.id == route.id,
+                  planningController.snapshot.selectedDirection == direction else { return }
             if let preparedMap {
                 trailMap.apply(preparedMap)
             }
@@ -114,7 +114,7 @@ extension RideNavigationViewModel {
     }
 
     func startSelectedTrailRoute() {
-        guard let route = selectedRoute,
+        guard let route = planningController.snapshot.selectedRoute,
               !library.snapshot.persistence.status.isSaving else { return }
         let guidanceSnapshot = trailGuidance.snapshot
         if guidanceSnapshot.isPreparing {
@@ -127,7 +127,7 @@ extension RideNavigationViewModel {
             return
         }
         guard guidanceSnapshot.routeID == route.id,
-              guidanceSnapshot.direction == selectedDirection,
+              guidanceSnapshot.direction == planningController.snapshot.selectedDirection,
               guidanceSnapshot.plan != nil else {
             prepareTrailPreview(startAfterPreparation: true)
             return
@@ -138,7 +138,7 @@ extension RideNavigationViewModel {
     public func selectTrailDirection(_ direction: RideNavigationTrailDirection) {
         trailGuidance.dismissEntryPrompt()
         let routeDirection: RideRouteDirection = direction == .forward ? .forward : .reverse
-        guard selectedDirection != routeDirection else {
+        guard planningController.snapshot.selectedDirection != routeDirection else {
             guard let plan = trailGuidance.snapshot.plan else {
                 prepareTrailPreview(startAfterPreparation: true)
                 return
@@ -146,7 +146,7 @@ extension RideNavigationViewModel {
             beginTrailFollowing(plan: plan, projection: nearestEntryProjection(in: plan))
             return
         }
-        selectedDirection = routeDirection
+        planningController.setDirection(routeDirection)
         trailMap.reset()
         trailGuidance.reset()
         prepareTrailPreview(startAfterPreparation: true)
@@ -225,7 +225,7 @@ extension RideNavigationViewModel {
         startBreadcrumb(at: date)
         activityStartedAt = date
         activity = .following
-        roadNavigationPurpose = nil
+        planningController.clearRoadPlan()
         applyPreferredMapStyleForActiveNavigation()
         cameraMode = followCamera
         screen = .map

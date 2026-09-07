@@ -5,6 +5,7 @@ extension RideNavigationViewModel {
     public func startRecording() {
         let date = now()
         library.resetPersistence()
+        planningController.resetPlan()
         recorder.start(at: date, name: defaultRouteName(at: date))
         completedRecording = nil
         activityStartedAt = date
@@ -40,7 +41,7 @@ extension RideNavigationViewModel {
             reason = .rideRecorded
         case .following:
             reason = .trailEnded
-        case .navigating where roadNavigationPurpose == .trailExit:
+        case .navigating where planningController.snapshot.roadNavigationPurpose == .trailExit:
             reason = .exitNavigationEnded
         case .navigating:
             reason = .navigationEnded
@@ -50,10 +51,7 @@ extension RideNavigationViewModel {
         finishActivity(reason: reason)
     }
     func finishActivity(reason: CompletionReason) {
-        routeTask?.cancel()
-        routeTask = nil
-        trailExitTask?.cancel()
-        trailExitTask = nil
+        planningController.cancelNavigationRequests()
         let date = now()
         let finishedActivity = activity
         let keepsMiniCompletion = presentationMode == .mini && reason.isAutomaticArrival
@@ -75,9 +73,6 @@ extension RideNavigationViewModel {
         activityStartedAt = nil
         activity = .preview
         mapDisplayStyle = .map
-        isRerouting = false
-        isCalculatingRoadRoutes = false
-        isFindingTrailExit = false
         screen = .summary
         stopClock()
         synchronizePresentationObservations()
@@ -169,7 +164,7 @@ extension RideNavigationViewModel {
         let meters: Double
         if activity == .recording || activity == .paused {
             meters = recorder.snapshot(at: now()).route?.distanceMeters ?? .zero
-        } else if let roadRoute {
+        } else if let roadRoute = planningController.snapshot.roadRoute {
             meters = roadRoute.distanceMeters
         } else {
             meters = trailMap.routeDistanceMeters
@@ -188,8 +183,8 @@ extension RideNavigationViewModel {
     }
 
     var allVisibleCoordinates: [NavigationMapCoordinate] {
-        if selectedRoute != nil { return trailMap.overviewCoordinates }
-        if let roadRoute { return mapMapper.coordinates(roadRoute.points) }
+        if planningController.snapshot.selectedRoute != nil { return trailMap.overviewCoordinates }
+        if let roadRoute = planningController.snapshot.roadRoute { return mapMapper.coordinates(roadRoute.points) }
         return mapMapper.coordinates(recorder.snapshot(at: now()).route?.points.map(\.coordinate) ?? [])
     }
 
@@ -203,7 +198,8 @@ extension RideNavigationViewModel {
 
     public func discardActivity() {
         guard !library.snapshot.persistence.status.isSaving else { return }
-        let destinationToOpen = openIncomingDestinationAfterSummary ? pendingExternalDestination : nil
+        let destinationToOpen = openIncomingDestinationAfterSummary
+            ? planningController.snapshot.pendingExternalDestination : nil
         recorder.reset()
         breadcrumbRecorder.reset()
         completedRecording = nil
@@ -213,52 +209,35 @@ extension RideNavigationViewModel {
         miniCompletionTitle = nil
         trailProgress = nil
         didAnnounceOffRoute = false
-        lastRoadRerouteAt = nil
-        selectedRoute = nil
+        planningController.resetRerouteThrottle()
+        planningController.resetPlan()
         trailMap.reset()
-        roadRoute = nil
-        roadRoutes = []
-        roadNavigationPurpose = nil
-        trailExitPreview = nil
-        selectedRoadRouteIndex = 0
         resetRoadStepGuidance()
-        selectedDestination = nil
         activityStartedAt = nil
         activity = .preview
         mapDisplayStyle = .map
-        isRerouting = false
-        isCalculatingRoadRoutes = false
-        isFindingTrailExit = false
         screen = .home
         stopClock()
         synchronizePresentationObservations()
         library.clearDraft()
         render()
         if let destinationToOpen {
-            pendingExternalDestination = nil
+            planningController.consumePendingDestination()
             openIncomingDestinationAfterSummary = false
             previewExternalDestination(destinationToOpen)
         }
     }
 
     func stopNavigationWithoutSummary() {
-        routeTask?.cancel()
-        trailExitTask?.cancel()
+        planningController.clearRoadPlan()
         if activity == .following || activity == .navigating {
             _ = breadcrumbRecorder.finish(at: now())
         }
         activityStartedAt = nil
         trailProgress = nil
-        trailExitPreview = nil
-        roadRoute = nil
-        roadRoutes = []
-        selectedDestination = nil
-        roadNavigationPurpose = nil
         resetRoadStepGuidance()
         didAnnounceOffRoute = false
-        lastRoadRerouteAt = nil
-        isRerouting = false
-        isFindingTrailExit = false
+        planningController.resetRerouteThrottle()
         stopClock()
     }
     enum CompletionReason: Equatable {

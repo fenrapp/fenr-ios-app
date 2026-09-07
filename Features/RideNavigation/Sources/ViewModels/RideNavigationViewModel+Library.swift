@@ -54,7 +54,8 @@ extension RideNavigationViewModel {
     }
 
     public func exportCompletedRoute() {
-        guard canExportCompletedRoute, let route = completedRecording ?? selectedRoute ?? roadRouteForExport else {
+        guard canExportCompletedRoute,
+              let route = completedRecording ?? planningController.snapshot.selectedRoute ?? roadRouteForExport else {
             errorText = String(localized: .rideNavigationNoRouteToExport)
             render()
             return
@@ -82,8 +83,8 @@ extension RideNavigationViewModel {
 
     public func deleteSavedRoute(id: UUID) {
         guard library.snapshot.savedRoutes.contains(where: { $0.id == id }) else { return }
-        if selectedRoute?.id == id {
-            selectedRoute = nil
+        if planningController.snapshot.selectedRoute?.id == id {
+            planningController.resetPlan()
             trailMap.reset()
             library.resetPersistence()
         }
@@ -94,34 +95,7 @@ extension RideNavigationViewModel {
     }
 
     public func openIncomingMapLink(_ url: URL) {
-        let generation = operations.begin(.externalLink)
-        let lifecycle = operations.lifecycleGeneration
-        let resolver = externalMapLinkResolver
-        externalLinkTask = Task { [weak self] in
-            do {
-                let destination = try await resolver.destination(from: url)
-                try Task.checkCancellation()
-                guard let self,
-                      operations.isCurrent(.externalLink, generation: generation, lifecycle: lifecycle),
-                      isStarted else { return }
-                pendingExternalDestination = destination
-                if hasActiveSession {
-                    showsIncomingDestinationPrompt = true
-                    render()
-                } else {
-                    pendingExternalDestination = nil
-                    previewExternalDestination(destination)
-                }
-            } catch is CancellationError {
-                return
-            } catch {
-                guard let self,
-                      operations.isCurrent(.externalLink, generation: generation, lifecycle: lifecycle),
-                      isStarted else { return }
-                errorText = String(localized: .rideNavigationMapLinkNoDestination)
-                render()
-            }
-        }
+        planningController.resolveExternalLink(url)
     }
 
     public func keepRidingWithIncomingDestination() {
@@ -132,7 +106,7 @@ extension RideNavigationViewModel {
 
     public func endRideAndOpenIncomingDestination() {
         showsIncomingDestinationPrompt = false
-        guard let destination = pendingExternalDestination else {
+        guard let destination = planningController.snapshot.pendingExternalDestination else {
             render()
             return
         }
@@ -142,7 +116,7 @@ extension RideNavigationViewModel {
             return
         }
         stopNavigationWithoutSummary()
-        pendingExternalDestination = nil
+        planningController.consumePendingDestination()
         previewExternalDestination(destination)
     }
 
@@ -150,17 +124,11 @@ extension RideNavigationViewModel {
         do {
             let routes = try library.importGPX(from: url)
             guard let route = routes.first else { return }
-            selectedRoute = route
-            selectedDirection = .forward
+            planningController.selectTrailRoute(route)
             trailMap.reset()
             library.selectImportedRoute(id: route.id)
             trailGuidance.reset()
             trailProgress = nil
-            roadRoute = nil
-            roadRoutes = []
-            roadNavigationPurpose = nil
-            trailExitPreview = nil
-            selectedRoadRouteIndex = 0
             resetRoadStepGuidance()
             screen = .map
             activity = .preview
@@ -179,17 +147,11 @@ extension RideNavigationViewModel {
 
     public func openSavedRoute(id: UUID) {
         guard let route = library.snapshot.savedRoutes.first(where: { $0.id == id }) else { return }
-        selectedRoute = route
-        selectedDirection = .forward
+        planningController.selectTrailRoute(route)
         trailMap.reset()
         library.selectSavedRoute(id: route.id)
         trailGuidance.reset()
         trailProgress = nil
-        roadRoute = nil
-        roadRoutes = []
-        roadNavigationPurpose = nil
-        trailExitPreview = nil
-        selectedRoadRouteIndex = 0
         resetRoadStepGuidance()
         screen = .map
         activity = .preview
@@ -202,8 +164,8 @@ extension RideNavigationViewModel {
     }
 
     public func toggleRouteDirection() {
-        guard selectedRoute != nil else { return }
-        selectedDirection = selectedDirection == .forward ? .reverse : .forward
+        guard planningController.snapshot.selectedRoute != nil else { return }
+        planningController.setDirection(planningController.snapshot.selectedDirection == .forward ? .reverse : .forward)
         trailMap.reset()
         trailProgress = nil
         trailGuidance.reset()
@@ -213,18 +175,17 @@ extension RideNavigationViewModel {
     }
 
     public func startPreviewedRoute() {
-        guard selectedRoute != nil || roadRoute != nil else { return }
-        if selectedRoute != nil {
+        guard planningController.snapshot.selectedRoute != nil
+                || planningController.snapshot.roadRoute != nil else { return }
+        if planningController.snapshot.selectedRoute != nil {
             startSelectedTrailRoute()
             return
         }
         let date = now()
         startBreadcrumb(at: date)
         activityStartedAt = date
-        activity = roadRoute == nil ? .following : .navigating
-        if activity == .navigating, roadNavigationPurpose == nil {
-            roadNavigationPurpose = .destination
-        }
+        activity = planningController.snapshot.roadRoute == nil ? .following : .navigating
+        if activity == .navigating { planningController.beginRoadNavigation() }
         applyPreferredMapStyleForActiveNavigation()
         cameraMode = followCamera
         screen = .map
@@ -241,7 +202,7 @@ extension RideNavigationViewModel {
 
     func previewExternalDestination(_ destination: NavigationPlace) {
         guard let origin = locationSnapshot.coordinate else {
-            pendingExternalDestination = destination
+            planningController.holdExternalDestination(destination)
             errorText = String(localized: .rideNavigationCurrentLocationRequired)
             render()
             return
@@ -250,13 +211,10 @@ extension RideNavigationViewModel {
         screen = .map
         activity = .preview
         mapDisplayStyle = .map
-        selectedRoute = nil
+        planningController.prepareExternalDestination(destination)
         library.resetPersistence()
         trailMap.reset()
         trailProgress = nil
-        trailExitPreview = nil
-        roadNavigationPurpose = .destination
-        selectedDestination = destination
         errorText = nil
         library.clearError()
         calculateRoadPreview(from: origin, to: destination, showsSearchLoading: false)

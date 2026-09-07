@@ -49,7 +49,7 @@ extension RideNavigationViewModel {
         }
         if activity == .navigating,
            let location = locationSnapshot.coordinate,
-           let roadRoute,
+           let roadRoute = planningController.snapshot.roadRoute,
            let distance = RideRouteGeometry.closestDistanceMeters(
                from: location,
                to: roadRoute.points
@@ -59,19 +59,16 @@ extension RideNavigationViewModel {
         }
         if activity == .navigating,
            let location = locationSnapshot.coordinate,
-           let finish = roadRoute?.points.last,
+           let finish = planningController.snapshot.roadRoute?.points.last,
            RideRouteGeometry.distanceMeters(from: location, to: finish) <= Constants.arrivalDistanceMeters {
-            if roadNavigationPurpose == .trailApproach {
-                roadRoute = nil
-                roadRoutes = []
-                selectedDestination = nil
-                roadNavigationPurpose = nil
+            if planningController.snapshot.roadNavigationPurpose == .trailApproach {
+                planningController.clearRoadPlan()
                 activity = .following
                 trailProgress = nil
                 resetRoadStepGuidance()
                 didAnnounceOffRoute = false
                 announce(String(localized: .rideNavigationAnnouncementTrailReached))
-            } else if roadNavigationPurpose == .trailExit {
+            } else if planningController.snapshot.roadNavigationPurpose == .trailExit {
                 finishActivity(reason: .exitPointReached)
             } else {
                 finishActivity(reason: .destinationReached)
@@ -107,12 +104,13 @@ extension RideNavigationViewModel {
     }
 
     var activeRoadStep: RoadNavigationStep? {
-        guard let roadRoute, roadRoute.steps.indices.contains(activeRoadStepIndex) else { return nil }
+        guard let roadRoute = planningController.snapshot.roadRoute,
+              roadRoute.steps.indices.contains(activeRoadStepIndex) else { return nil }
         return roadRoute.steps[activeRoadStepIndex]
     }
 
     func updateRoadStepProgress(from location: GeographicCoordinate) {
-        guard let roadRoute, !roadRoute.steps.isEmpty else { return }
+        guard let roadRoute = planningController.snapshot.roadRoute, !roadRoute.steps.isEmpty else { return }
         activeRoadStepIndex = min(activeRoadStepIndex, roadRoute.steps.index(before: roadRoute.steps.endIndex))
         while roadRoute.steps.indices.contains(activeRoadStepIndex + 1) {
             let current = roadRoute.steps[activeRoadStepIndex]
@@ -154,50 +152,8 @@ extension RideNavigationViewModel {
     }
 
     func rerouteRoadNavigation(from origin: GeographicCoordinate) {
-        let date = now()
-        if let lastRoadRerouteAt,
-           date.timeIntervalSince(lastRoadRerouteAt) < Constants.minimumRerouteIntervalSeconds {
-            return
-        }
-        guard let destination = selectedDestination else { return }
-        lastRoadRerouteAt = date
-        let generation = operations.begin(.route)
-        let lifecycle = operations.lifecycleGeneration
-        isRerouting = true
+        planningController.reroute(from: origin, preferences: roadRoutePreferences)
         render()
-        let roadRouteCalculator = roadRouteCalculator
-        let preferences = roadRoutePreferences
-        routeTask = Task { [weak self] in
-            do {
-                let calculatedRoute = try await roadRouteCalculator.route(
-                    from: origin,
-                    to: destination,
-                    preferences: preferences
-                )
-                try Task.checkCancellation()
-                guard let self,
-                      operations.isCurrent(.route, generation: generation, lifecycle: lifecycle),
-                      isStarted else { return }
-                roadRoute = calculatedRoute
-                roadRoutes = [calculatedRoute]
-                selectedRoadRouteIndex = .zero
-                resetRoadStepGuidance()
-                isRerouting = false
-                errorText = nil
-                library.clearError()
-                render()
-                announce(String(localized: .rideNavigationAnnouncementRouteUpdated))
-            } catch is CancellationError {
-                return
-            } catch {
-                guard let self,
-                      operations.isCurrent(.route, generation: generation, lifecycle: lifecycle),
-                      isStarted else { return }
-                isRerouting = false
-                errorText = String(localized: .rideNavigationReroutingUnavailable)
-                render()
-            }
-        }
     }
 
     func scheduleDraftSave() {
@@ -219,7 +175,7 @@ extension RideNavigationViewModel {
         breadcrumbRecorder.start(at: date, name: String(localized: .rideNavigationBreadcrumbName))
         trailProgress = nil
         didAnnounceOffRoute = false
-        lastRoadRerouteAt = nil
+        planningController.resetRerouteThrottle()
         if let point = locationGeometry.routePoint(from: locationSnapshot) {
             breadcrumbRecorder.append(point)
         }

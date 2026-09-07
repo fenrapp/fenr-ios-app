@@ -12,7 +12,7 @@ extension RideNavigationViewModel {
                       operations.lifecycleGeneration == lifecycle else { return }
                 guard update.contextGeneration == library.contextGeneration else { continue }
                 switch update.effect {
-                case let .plannedRouteReady(id) where selectedRoute?.id == id:
+                case let .plannedRouteReady(id) where planningController.snapshot.selectedRoute?.id == id:
                     startSelectedTrailRoute()
                 case let .closeCompletedRoute(id) where screen == .summary && completedRecording?.id == id:
                     discardActivity()

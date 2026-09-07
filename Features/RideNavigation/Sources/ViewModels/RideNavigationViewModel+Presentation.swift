@@ -7,11 +7,12 @@ import VehicleSession
 
 @MainActor
 extension RideNavigationViewModel {
-    func render(isSearching: Bool? = nil) {
+    func render() {
         if presentationMode == .mini {
             renderMiniViewState()
             return
         }
+        let planning = planningController.snapshot
         let speed = presentedSpeed
         let altitude = presentedAltitude
         let trailGuidanceSnapshot = trailGuidance.snapshot
@@ -26,38 +27,37 @@ extension RideNavigationViewModel {
             speedUnit: speed.1,
             modeText: presentedModeText,
             batteryText: presentedBatteryText,
-            elapsedText: elapsedText(at: now()),
-            distanceText: currentDistanceText,
+            elapsedText: elapsedText(at: now()), distanceText: currentDistanceText,
             altitudeText: altitude?.0,
             altitudeUnit: altitude?.1 ?? "",
             gpxProgressText: presentedGPXProgress,
             connectionNoticeText: presentedConnectionNotice,
             showsGuidanceInFocus: appSettings.rideNavigation.showsGuidanceInFocus,
             guidance: currentGuidance,
-            routeTitle: selectedRoute?.name ?? selectedDestination?.name,
+            routeTitle: planning.selectedRoute?.name ?? planning.selectedDestination?.name,
             savedRoutes: routeRows,
-            searchQuery: searchQuery,
+            searchQuery: planning.searchQuery,
             searchResults: presentedSearchResults,
             roadRouteOptions: activity == .preview ? roadRouteOptions : [],
             avoidsTolls: appSettings.rideNavigation.avoidsTolls,
             avoidsHighways: appSettings.rideNavigation.avoidsHighways,
-            showsRoadRoutePreferences: activity == .preview && selectedDestination != nil,
-            isCalculatingRoadRoutes: isCalculatingRoadRoutes,
+            showsRoadRoutePreferences: activity == .preview && planning.selectedDestination != nil,
+            isCalculatingRoadRoutes: planning.isCalculatingRoadRoutes,
             isPreparingTrail: trailGuidanceSnapshot.isPreparing,
-            isRerouting: isRerouting,
-            isSearching: isSearching ?? viewState.isSearching,
-            errorText: errorText ?? library.snapshot.errorMessage,
+            isRerouting: planning.isRerouting,
+            isSearching: planning.isSearching,
+            errorText: errorText ?? planning.errorMessage ?? library.snapshot.errorMessage,
             isVoiceMuted: isVoiceMuted,
-            canReverseRoute: selectedRoute != nil && activity == .preview,
-            canMinimize: canMinimize,
-            canFindTrailExit: activity == .following && selectedRoute != nil && trailExitPreview == nil,
+            canReverseRoute: planning.selectedRoute != nil && activity == .preview, canMinimize: canMinimize,
+            canFindTrailExit: activity == .following && planning.selectedRoute != nil
+                && planning.trailExitPreview == nil,
             canResumeGPX: activity == .navigating
-                && roadNavigationPurpose == .trailExit
-                && selectedRoute != nil,
-            isFindingTrailExit: isFindingTrailExit,
+                && planning.roadNavigationPurpose == .trailExit
+                && planning.selectedRoute != nil,
+            isFindingTrailExit: planning.isFindingTrailExit,
             trailExitPreview: presentedTrailExit,
             showsIncomingDestinationPrompt: showsIncomingDestinationPrompt,
-            incomingDestinationTitle: pendingExternalDestination?.name,
+            incomingDestinationTitle: planning.pendingExternalDestination?.name,
             trailEntryPrompt: trailGuidanceSnapshot.entryPrompt,
             arrivalPrompt: trailGuidanceSnapshot.arrivalPrompt,
             forkGuidance: presentedForkGuidance,
@@ -137,13 +137,13 @@ extension RideNavigationViewModel {
     }
 
     var presentedSearchResults: [RideNavigationSearchResult] {
-        searchResults.map {
+        planningController.snapshot.searchResults.map {
             RideNavigationSearchResult(id: $0.id, title: $0.name, detail: $0.detail)
         }
     }
 
     var presentedTrailExit: RideNavigationTrailExitPreview? {
-        trailExitPreview.map {
+        planningController.snapshot.trailExitPreview.map {
             mapper.trailExitPreview($0, measurementSystem: measurementSystem)
         }
     }
@@ -163,7 +163,7 @@ extension RideNavigationViewModel {
         let statusText: String?
         if let miniCompletionTitle {
             statusText = miniCompletionTitle
-        } else if isRerouting {
+        } else if planningController.snapshot.isRerouting {
             statusText = String(localized: .rideNavigationRerouting)
         } else if guidanceSnapshot.arrivalPrompt != nil {
             statusText = String(localized: .rideNavigationEndReachedTap)
@@ -209,19 +209,19 @@ extension RideNavigationViewModel {
                 userCoordinate: locationSnapshot.coordinate,
                 userHeadingDegrees: locationSnapshot.courseDegrees,
                 trailOverlay: RideNavigationMapPresentationMapper.TrailOverlayInput(
-                hasSelectedRoute: selectedRoute != nil,
+                hasSelectedRoute: planningController.snapshot.selectedRoute != nil,
                 activity: activity,
-                isPresentingTrailExit: trailExitPreview != nil
-                    || roadNavigationPurpose == .trailExit,
+                isPresentingTrailExit: planningController.snapshot.trailExitPreview != nil
+                    || planningController.snapshot.roadNavigationPurpose == .trailExit,
                 trailMap: trailMap.presentationSnapshot,
                 guidancePlan: guidanceSnapshot.plan,
                 guidance: guidanceSnapshot.guidance
                 ),
-                roadRoute: roadRoute,
-                roadRouteRevision: state.roadRouteRevision,
-                destination: selectedDestination,
-                trailExit: trailExitPreview,
-                trailExitRevision: state.trailExitPreviewRevision,
+                roadRoute: planningController.snapshot.roadRoute,
+                roadRouteRevision: planningController.snapshot.roadRouteRevision,
+                destination: planningController.snapshot.selectedDestination,
+                trailExit: planningController.snapshot.trailExitPreview,
+                trailExitRevision: planningController.snapshot.trailExitPreviewRevision,
                 rejoinGuide: rejoinGuide(inFocusModeOnly: true),
                 traces: routeTraces,
                 lineAppearances: appSettings.rideNavigation.lineAppearances,
@@ -257,11 +257,11 @@ extension RideNavigationViewModel {
     }
 
     var roadRouteOptions: [RideNavigationRoadRouteOption] {
-        roadRoutes.enumerated().map { index, route in
+        planningController.snapshot.roadRoutes.enumerated().map { index, route in
             mapper.roadRouteOption(
                 route,
                 index: index,
-                isSelected: index == selectedRoadRouteIndex,
+                isSelected: index == planningController.snapshot.selectedRoadRouteIndex,
                 measurementSystem: measurementSystem
             )
         }
@@ -283,8 +283,9 @@ extension RideNavigationViewModel {
     }
 
     var roadRouteForExport: RideRoute? {
-        roadRoute?.exportRoute(
-            name: selectedDestination?.name ?? roadRoute?.name ?? String(localized: .rideNavigationRouteName),
+        planningController.snapshot.roadRoute?.exportRoute(
+            name: planningController.snapshot.selectedDestination?.name
+                ?? planningController.snapshot.roadRoute?.name ?? String(localized: .rideNavigationRouteName),
             createdAt: now()
         )
     }
@@ -313,8 +314,6 @@ extension RideNavigationViewModel {
         static let roadRerouteDistanceMeters = 75.0
         static let enduroLookAheadMeters = 35.0
         static let voiceDecisionDistanceMeters = 80.0
-        static let minimumRerouteIntervalSeconds: TimeInterval = 15
-        static let minimumSearchCharacters = 2
         static let roadStepAdvanceDistanceMeters = 30.0
         static let roadStepDistanceAdvantageMeters = 10.0
         static let focusMapStyleID = "focus"

@@ -6,22 +6,12 @@ import SettingsDomain
 extension RideNavigationViewModel {
     public func showHome() {
         guard !hasActiveSession else { return }
-        routeTask?.cancel()
-        routeTask = nil
+        planningController.resetPlan()
         screen = .home
-        selectedRoute = nil
         library.resetPersistence()
         trailMap.reset()
-        roadRoute = nil
-        roadRoutes = []
-        roadNavigationPurpose = nil
-        trailExitPreview = nil
-        selectedRoadRouteIndex = 0
         resetRoadStepGuidance()
-        selectedDestination = nil
         mapDisplayStyle = .map
-        isRerouting = false
-        isCalculatingRoadRoutes = false
         errorText = nil
         library.clearError()
         render()
@@ -107,7 +97,7 @@ extension RideNavigationViewModel {
 
     func routePreferencesDidChange() {
         guard activity == .preview,
-              let destination = selectedDestination,
+              let destination = planningController.snapshot.selectedDestination,
               let origin = locationSnapshot.coordinate else {
             render()
             return
@@ -157,10 +147,6 @@ extension RideNavigationViewModel {
             settingsSaveError = String(localized: .rideNavigationSettingsSaveFailed)
             return false
         }
-    }
-
-    var normalizedSearchQuery: String {
-        searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func applyPreferredMapStyleForActiveNavigation() {

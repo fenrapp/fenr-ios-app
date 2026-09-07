@@ -48,11 +48,6 @@ struct RideNavigationViewModelFixture {
             dependencies: RideNavigationViewModelDependencies(
                 vehicleSession: vehicleSession,
                 observeDeviceSpeed: ObserveDeviceSpeedUseCase(repository: deviceSpeedRepository),
-                planning: RideNavigationPlanningService(
-                    roadRouteCalculator: roadRouteCalculator,
-                    externalMapLinkResolver: externalMapLinkResolver,
-                    trailExitFinder: trailExitFinder
-                ),
                 trailGuidance: RideNavigationTrailGuidanceController(
                     planner: DefaultRideRouteGuidancePlanner(entryClassifier: RideRouteEntryClassifier()),
                     projectionSelector: RideRouteProjectionSelector()
@@ -68,10 +63,6 @@ struct RideNavigationViewModelFixture {
                 presentationMapper: RideNavigationPresentationMapper(locale: Locale(identifier: "en_US")),
                 mapPresentationMapper: mapPresentationMapper,
                 mapSceneBuilder: RideNavigationMapSceneBuilder(mapper: mapPresentationMapper),
-                searchService: RideNavigationSearchService(
-                    placeSearch: placeSearch,
-                    sleep: timing.sleep
-                ),
                 locationGeometry: RideNavigationLocationGeometry(),
                 timing: timing
             ),
@@ -81,6 +72,15 @@ struct RideNavigationViewModelFixture {
                     importer: importer,
                     exporter: StubGPXRouteExporter()
                 ),
+                timing: timing
+            ),
+            planningController: RideNavigationPlanningController(
+                planning: RideNavigationPlanningService(
+                    roadRouteCalculator: roadRouteCalculator,
+                    externalMapLinkResolver: externalMapLinkResolver,
+                    trailExitFinder: trailExitFinder
+                ),
+                search: RideNavigationSearchService(placeSearch: placeSearch, sleep: timing.sleep),
                 timing: timing
             ),
             recorder: RideRouteRecorder(),

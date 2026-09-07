@@ -28,7 +28,7 @@ struct RideNavigationTrailGuidanceFlowTests {
         fixture.viewModel.selectTrailDirection(.reverse)
 
         #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
-        #expect(fixture.viewModel.selectedDirection == .reverse)
+        #expect(fixture.viewModel.planningController.snapshot.selectedDirection == .reverse)
         #expect(fixture.viewModel.viewState.gpxProgressText == "50%")
         fixture.viewModel.stop()
     }

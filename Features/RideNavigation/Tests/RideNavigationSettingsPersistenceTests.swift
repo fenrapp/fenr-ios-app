@@ -17,7 +17,7 @@ struct RideNavigationSettingsPersistenceTests {
         let origin = GeographicCoordinate(latitudeDegrees: 41.0, longitudeDegrees: 2.0)!
         let destination = NavigationPlace(name: "Test destination", detail: "", coordinate: origin)
         model.locationSnapshot = .init(coordinate: origin)
-        model.selectedDestination = destination
+        model.planningController.prepareExternalDestination(destination)
         model.screen = .map
         await fixture.settingsRepository.suspendNextSave()
         await fixture.settingsRepository.failNextUpdate(.persistenceFailed)
@@ -38,10 +38,10 @@ struct RideNavigationSettingsPersistenceTests {
             expectedTravelTime: 20, steps: []
         )
         await fixture.roadRouteCalculator.succeed(request: 1, routes: [confirmedRoute])
-        #expect(await waitUntil { model.roadRoute?.name == confirmedRoute.name })
+        #expect(await waitUntil { model.planningController.snapshot.roadRoute?.name == confirmedRoute.name })
         await fixture.roadRouteCalculator.succeed(request: 0, routes: [rejectedRoute])
         #expect(await waitUntil { await fixture.roadRouteCalculator.completionCount == 2 })
-        #expect(model.roadRoute?.name == confirmedRoute.name)
+        #expect(model.planningController.snapshot.roadRoute?.name == confirmedRoute.name)
         model.stop()
     }
 

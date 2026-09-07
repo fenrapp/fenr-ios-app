@@ -5,10 +5,6 @@ final class RideNavigationOperationStore: @unchecked Sendable {
         case vehicleObservation
         case locationObservation
         case clock
-        case search
-        case route
-        case externalLink
-        case trailExit
         case initialSettings
         case settingsObservation
         case settingsSave

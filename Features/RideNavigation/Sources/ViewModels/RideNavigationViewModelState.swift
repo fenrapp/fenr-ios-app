@@ -15,20 +15,8 @@ final class RideNavigationViewModelState {
     var latestDeviceSpeedKilometersPerHour: Double?
     var frozenMiniMapScene: NavigationMapScene?
     var miniCompletionTitle: String?
-    var searchResults: [NavigationPlace] = []
-    var selectedRoute: RideRoute?
-    var selectedDirection = RideRouteDirection.forward
-    var roadRoute: RoadNavigationRoute?
-    var roadRouteRevision = 0
-    var roadRoutes: [RoadNavigationRoute] = []
-    var selectedRoadRouteIndex = 0
     var activeRoadStepIndex = 0
     var announcedRoadStepIndex: Int?
-    var selectedDestination: NavigationPlace?
-    var roadNavigationPurpose: RoadNavigationPurpose?
-    var trailExitPreview: TrailExitRoute?
-    var trailExitPreviewRevision = 0
-    var pendingExternalDestination: NavigationPlace?
     var showsIncomingDestinationPrompt = false
     var openIncomingDestinationAfterSummary = false
     var recorder: RideRouteRecorder
@@ -39,14 +27,9 @@ final class RideNavigationViewModelState {
     var mapSource = MapSourceDescriptor.appleStandard
     var mapDisplayStyle = NavigationMapDisplayStyle.map
     var cameraMode = NavigationMapCamera.automatic
-    var searchQuery = ""
     var errorText: String?
     var isVoiceMuted = false
-    var isCalculatingRoadRoutes = false
-    var isRerouting = false
-    var isFindingTrailExit = false
     var didAnnounceOffRoute = false
-    var lastRoadRerouteAt: Date?
     var summaryTitle = String(localized: .rideNavigationSummaryRideComplete)
     var summaryDetail = ""
     var summaryIsSuccessful = true

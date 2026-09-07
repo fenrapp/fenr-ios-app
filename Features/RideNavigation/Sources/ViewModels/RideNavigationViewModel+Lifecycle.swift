@@ -13,6 +13,8 @@ extension RideNavigationViewModel {
         let lifecycle = operations.startLifecycle()
         startLocationObservation()
         synchronizePresentationObservations()
+        startPlanningObservation(lifecycle: lifecycle)
+        planningController.start()
         startLibraryObservation(lifecycle: lifecycle)
         library.start()
         let settingsGeneration = operations.begin(.initialSettings)
@@ -35,6 +37,9 @@ extension RideNavigationViewModel {
     public func stop() {
         isStarted = false
         trailGuidance.cancelPreparation()
+        planningController.stop()
+        planningObservationTask?.cancel()
+        planningObservationTask = nil
         library.stop()
         libraryObservationTask?.cancel()
         libraryObservationTask = nil
@@ -42,11 +47,8 @@ extension RideNavigationViewModel {
         settingsWorkerGeneration &+= 1
         pendingSettings.removeAll()
         appSettings = pendingSettings.settings
-        isCalculatingRoadRoutes = false
-        isRerouting = false
-        isFindingTrailExit = false
         if viewState.isSearching {
-            render(isSearching: false)
+            render()
         }
     }
 

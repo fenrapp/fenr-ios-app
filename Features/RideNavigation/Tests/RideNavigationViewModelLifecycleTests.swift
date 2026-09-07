@@ -65,6 +65,8 @@ struct RideNavigationViewModelLifecycleTests {
     @Test("a stale search failure cannot replace newer results")
     func staleSearchFailureIsIgnored() async throws {
         let fixture = RideNavigationViewModelFixture()
+        fixture.viewModel.start()
+        defer { fixture.viewModel.stop() }
         let destination = NavigationPlace(
             name: "Fresh destination",
             detail: "Barcelona",
