@@ -23,7 +23,8 @@ public struct MaintenanceViewStateMapper: Sendable {
         measurementSystem: MeasurementSystem,
         odometerKilometers: Double?,
         ridingHours: Double?,
-        errorMessage: String?
+        errorMessage: String?,
+        loadErrorMessage: String? = nil
     ) -> MaintenanceLogViewState {
         let rows = entries.map { row($0, measurementSystem: measurementSystem) }
         let active = entries.filter { $0.schedule?.completedAt == nil && $0.schedule?.hasDueValue == true }
@@ -40,7 +41,8 @@ public struct MaintenanceViewStateMapper: Sendable {
             due: rows.filter { dueIDs.contains($0.id) },
             upcoming: rows.filter { activeIDs.contains($0.id) && !dueIDs.contains($0.id) },
             history: rows,
-            errorMessage: errorMessage
+            errorMessage: errorMessage,
+            loadErrorMessage: loadErrorMessage
         )
     }
 

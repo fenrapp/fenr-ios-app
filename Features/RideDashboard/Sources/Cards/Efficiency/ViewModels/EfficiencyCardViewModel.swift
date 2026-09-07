@@ -17,6 +17,8 @@ public final class EfficiencyCardViewModel: ObservableObject {
     private var trendTrips: [RideTrip] = []
     private var selectedPage = EfficiencyDashboardPage.live
     private var loadedKey: DashboardRideHistoryKey?
+    private var failedKey: DashboardRideHistoryKey?
+    private var loadGeneration = 0
     private var isVisible = false
     private var trendIsLoading = false
     private var sessionTask: Task<Void, Never>?
@@ -38,6 +40,7 @@ public final class EfficiencyCardViewModel: ObservableObject {
     }
 
     func setIsVisible(_ isVisible: Bool, page: EfficiencyDashboardPage) {
+        if isVisible, !self.isVisible || page != selectedPage { failedKey = nil }
         self.isVisible = isVisible
         selectedPage = page
         guard isVisible else {
@@ -53,6 +56,7 @@ public final class EfficiencyCardViewModel: ObservableObject {
         isVisible = false
         stopPublishing()
         loadedKey = nil
+        failedKey = nil
         trendTrips = []
     }
 
@@ -61,7 +65,15 @@ public final class EfficiencyCardViewModel: ObservableObject {
         stopPublishing()
     }
 
+    func retryHistory() {
+        guard loadTask == nil else { return }
+        failedKey = nil
+        loadTrendIfNeeded()
+    }
+
 #if DEBUG
+    var historyLoadTaskForTesting: Task<Void, Never>? { loadTask }
+
     func setPreviewState(_ viewState: DashboardEfficiencyViewData) {
         self.viewState = viewState
     }
@@ -81,15 +93,20 @@ private extension EfficiencyCardViewModel {
     }
 
     func receive(_ snapshot: RideSessionSnapshot) {
-        guard snapshot.isCanonicalTelemetryAvailable else { return }
-        let previousVIN = self.snapshot.vehicleIdentity.confirmedVIN
-        self.snapshot = snapshot
-        if previousVIN != snapshot.vehicleIdentity.confirmedVIN {
+        let changedVIN = self.snapshot.vehicleIdentity.confirmedVIN != snapshot.vehicleIdentity.confirmedVIN
+        if changedVIN {
+            self.snapshot = snapshot
             loadedKey = nil
+            failedKey = nil
             trendTrips = []
+            loadGeneration += 1
             loadTask?.cancel()
             loadTask = nil
+            trendIsLoading = false
+            render()
         }
+        guard snapshot.isCanonicalTelemetryAvailable else { return }
+        self.snapshot = snapshot
         loadTrendIfNeeded()
         render()
     }
@@ -100,18 +117,26 @@ private extension EfficiencyCardViewModel {
               let vin = snapshot.vehicleIdentity.confirmedVIN,
               loadTask == nil else { return }
         let key = DashboardRideHistoryKey(vin: vin, revision: snapshot.historyRevision)
-        guard loadedKey != key else { return }
+        guard loadedKey != key, failedKey != key else { return }
+        failedKey = nil
         trendIsLoading = trendTrips.isEmpty
         render()
         let loadTrend = useCases.loadTrend
+        let generation = loadGeneration
         loadTask = Task { [weak self] in
-            let trips = await loadTrend.execute(vin: vin)
-            guard !Task.isCancelled else { return }
-            self?.finishLoading(trips, key: key)
+            do {
+                let trips = try await loadTrend.execute(vin: vin)
+                guard !Task.isCancelled, self?.loadGeneration == generation else { return }
+                self?.finishLoading(trips, key: key)
+            } catch {
+                guard !Task.isCancelled, self?.loadGeneration == generation else { return }
+                self?.failLoading(key: key)
+            }
         }
     }
 
     func finishLoading(_ trips: [RideTrip], key: DashboardRideHistoryKey) {
+        guard acceptsCompletion(for: key) else { return }
         trendTrips = trips
         loadedKey = key
         trendIsLoading = false
@@ -120,17 +145,40 @@ private extension EfficiencyCardViewModel {
         loadTrendIfNeeded()
     }
 
+    func failLoading(key: DashboardRideHistoryKey) {
+        guard acceptsCompletion(for: key) else { return }
+        failedKey = key
+        trendIsLoading = false
+        loadTask = nil
+        render()
+        loadTrendIfNeeded()
+    }
+
+    func acceptsCompletion(for key: DashboardRideHistoryKey) -> Bool {
+        guard key.vin == snapshot.vehicleIdentity.confirmedVIN, key.revision == snapshot.historyRevision else {
+            loadTask = nil
+            loadTrendIfNeeded()
+            return false
+        }
+        return true
+    }
+
     func render() {
         guard isVisible else { return }
         viewState = mapper.map(
             snapshot: snapshot,
             trendTrips: trendTrips,
-            trendIsLoading: trendIsLoading,
-            measurementSystem: snapshot.measurementSystem
+            trendIsLoading: trendIsLoading || (
+                loadedKey == nil && failedKey == nil && snapshot.vehicleIdentity.confirmedVIN != nil
+            ),
+            measurementSystem: snapshot.measurementSystem,
+            historyReadFailed: failedKey != nil,
+            hasLoadedHistory: loadedKey != nil
         )
     }
 
     func stopPublishing() {
+        loadGeneration += 1
         sessionTask?.cancel()
         sessionTask = nil
         loadTask?.cancel()

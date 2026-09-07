@@ -13,8 +13,8 @@ struct AppExperienceRecoveryTests {
         let template = try await fixture.factory.make(identity: fixture.identity)
         let rides = try fixture.makeRides()
         let maintenance = try fixture.makeMaintenance()
-        let originalTrips = await rides.loadCompletedTrips(vin: fixture.identity.vin)
-        let originalEntries = await maintenance.loadEntries(vin: fixture.identity.vin)
+        let originalTrips = try await rides.loadCompletedTrips(vin: fixture.identity.vin)
+        let originalEntries = try await maintenance.loadEntries(vin: fixture.identity.vin)
         let recorder = AppRecoveryRecorder()
         recorder.failingStore = failingStore
         let storageFactory = ProductionAppStorageFactory(
@@ -36,8 +36,8 @@ struct AppExperienceRecoveryTests {
         let stages = ["rides", "maintenance", "calibration"]
         let failedIndex = try #require(stages.firstIndex(of: failingStore))
         #expect(recorder.openedStores == Array(stages.prefix(failedIndex + 1)))
-        #expect(await rides.loadCompletedTrips(vin: fixture.identity.vin).map(\.id) == originalTrips.map(\.id))
-        #expect(await maintenance.loadEntries(vin: fixture.identity.vin).map(\.id) == originalEntries.map(\.id))
+        #expect(try await rides.loadCompletedTrips(vin: fixture.identity.vin).map(\.id) == originalTrips.map(\.id))
+        #expect(try await maintenance.loadEntries(vin: fixture.identity.vin).map(\.id) == originalEntries.map(\.id))
         await template.close()
         try await template.discard()
     }

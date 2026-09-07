@@ -16,7 +16,9 @@ public struct TripStatisticsCardMapper: Sendable {
 
     public func map(
         _ statistics: RideTripStatistics,
-        measurementSystem: MeasurementSystem
+        measurementSystem: MeasurementSystem,
+        historyReadFailed: Bool = false,
+        hasLoadedHistory: Bool = false
     ) -> DashboardTripStatisticsViewData {
         let measurementMapper = makeMeasurementMapper(measurementSystem)
         let distance = measurementMapper.distance(
@@ -35,6 +37,11 @@ public struct TripStatisticsCardMapper: Sendable {
         )
 
         return DashboardTripStatisticsViewData(
+            historyError: historyReadFailed
+                ? rideDashboardLocalized(hasLoadedHistory
+                    ? .rideDashboardHistoryRefreshError : .rideDashboardHistoryLoadError)
+                : nil,
+            showsStatistics: hasLoadedHistory || !historyReadFailed,
             statusText: statistics.tripCount == .zero
                 ? rideDashboardLocalized(.rideDashboardTripStatisticsStatusNone)
                 : tripLabel,

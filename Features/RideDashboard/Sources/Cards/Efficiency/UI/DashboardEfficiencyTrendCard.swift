@@ -4,19 +4,23 @@ import SwiftUI
 
 struct DashboardEfficiencyTrendCard: View {
     let state: DashboardEfficiencyViewData
+    let retryHistory: () -> Void
 
     var body: some View {
         DashboardAdaptiveCardSurface {
             VStack(alignment: .leading, spacing: Constants.spacing) {
                 header
+                if let error = state.historyError {
+                    DashboardHistoryReadFeedback(message: error, retry: retryHistory)
+                }
                 if state.trendIsLoading {
                     ProgressView()
                         .tint(DesignColor.informational)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .accessibilityLabel(.rideDashboardEfficiencyTrendLoading)
-                } else if state.trendPoints.isEmpty {
+                } else if state.trendPoints.isEmpty, state.historyError == nil {
                     emptyState
-                } else {
+                } else if !state.trendPoints.isEmpty {
                     hero
                     trendChart
                 }
@@ -107,7 +111,9 @@ struct DashboardEfficiencyTrendCard: View {
     }
 
     private var accessibilityLabel: String {
-        state.trendPoints.isEmpty
+        if let error = state.historyError { return error }
+        if state.trendIsLoading { return rideDashboardLocalized(.rideDashboardEfficiencyTrendLoading) }
+        return state.trendPoints.isEmpty
             ? rideDashboardLocalized(.rideDashboardEfficiencyTrendEmptyAccessibility)
             : rideDashboardLocalized(.rideDashboardEfficiencyTrendLatestAccessibility(
                 (state.trendPoints.last?.efficiency ?? .zero).formatted(),

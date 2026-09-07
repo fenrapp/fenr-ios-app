@@ -76,7 +76,7 @@ struct RideTripSessionTests {
             at: original.updatedAt
         )
 
-        let history = await testContext.repository.loadCompletedTrips(
+        let history = try await testContext.repository.loadCompletedTrips(
             vin: RideSessionDataFixtures.firstVIN
         )
         let restored = await testContext.repository.prepare(context: .init(
@@ -93,7 +93,7 @@ struct RideTripSessionTests {
         let trip = RideSessionDataFixtures.makeFullyPopulatedCompletedTrip()
 
         #expect(await testContext.repository.saveActiveTrip(trip) == false)
-        #expect(await testContext.repository.loadCompletedTrips(
+        #expect(try await testContext.repository.loadCompletedTrips(
             vin: RideSessionDataFixtures.firstVIN
         ).isEmpty)
         #expect(try testContext.tripSnapshots().isEmpty)

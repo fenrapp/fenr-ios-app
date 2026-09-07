@@ -5,10 +5,10 @@ public struct LoadRideTripEfficiencyTrendUseCase: Sendable {
         self.repository = repository
     }
 
-    public func execute(vin: String, limit: Int = 10) async -> [RideTrip] {
+    public func execute(vin: String, limit: Int = 10) async throws -> [RideTrip] {
         let validLimit = max(limit, .zero)
         return Array(
-            await repository.loadCompletedTrips(vin: vin)
+            try await repository.loadCompletedTrips(vin: vin)
                 .filter(\.isEfficiencyEligibleForHistory)
                 .prefix(validLimit)
                 .reversed()

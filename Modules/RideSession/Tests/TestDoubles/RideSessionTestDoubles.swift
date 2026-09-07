@@ -124,7 +124,7 @@ actor SessionTripRepository: RideTripRepository {
         completed.append(completedTrip)
         return true
     }
-    func loadCompletedTrips(vin _: String) -> [RideTrip] { [] }
+    func loadCompletedTrips(vin _: String) throws -> [RideTrip] { [] }
     func deleteCompletedTrip(id: UUID, vin _: String) -> Bool {
         deletedTripIDs.append(id)
         recordedEvents.append(.delete(id))
@@ -221,7 +221,7 @@ actor BlockingRideTripRepository: RideTripRepository {
         return true
     }
 
-    func loadCompletedTrips(vin _: String) -> [RideTrip] { [] }
+    func loadCompletedTrips(vin _: String) throws -> [RideTrip] { [] }
     func deleteCompletedTrip(id: UUID, vin _: String) -> Bool {
         recordedEvents.append(.delete(id))
         return true

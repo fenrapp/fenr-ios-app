@@ -15,8 +15,8 @@ struct SwiftDataMaintenanceRepositoryTests {
         #expect(await repository.save(newer))
         #expect(await repository.save(otherBike))
 
-        #expect(await repository.loadEntries(vin: Constants.firstVIN).map(\.id) == [newer.id, older.id])
-        #expect(await repository.loadEntries(vin: Constants.secondVIN).map(\.id) == [otherBike.id])
+        #expect(try await repository.loadEntries(vin: Constants.firstVIN).map(\.id) == [newer.id, older.id])
+        #expect(try await repository.loadEntries(vin: Constants.secondVIN).map(\.id) == [otherBike.id])
     }
 
     @Test("Saving a later entry completes matching pending reminders")
@@ -37,7 +37,7 @@ struct SwiftDataMaintenanceRepositoryTests {
         )
         #expect(await repository.save(second))
 
-        let reloaded = try #require(await repository.loadEntry(id: first.id, vin: Constants.firstVIN))
+        let reloaded = try #require(try await repository.loadEntry(id: first.id, vin: Constants.firstVIN))
         #expect(reloaded.schedule?.completedAt == second.performedAt)
     }
 
@@ -57,7 +57,7 @@ struct SwiftDataMaintenanceRepositoryTests {
         )
         #expect(await repository.save(reminder))
         #expect(await repository.save(service))
-        #expect(await repository.loadEntry(id: reminder.id, vin: Constants.firstVIN)?.schedule?.completedAt != nil)
+        #expect(try await repository.loadEntry(id: reminder.id, vin: Constants.firstVIN)?.schedule?.completedAt != nil)
 
         let reclassified = MaintenanceEntry(
             id: service.id,
@@ -68,7 +68,7 @@ struct SwiftDataMaintenanceRepositoryTests {
             updatedAt: Date(timeIntervalSince1970: 100)
         )
         #expect(await repository.save(reclassified))
-        #expect(await repository.loadEntry(id: reminder.id, vin: Constants.firstVIN)?.schedule?.completedAt == nil)
+        #expect(try await repository.loadEntry(id: reminder.id, vin: Constants.firstVIN)?.schedule?.completedAt == nil)
 
         let laterService = MaintenanceEntry(
             vin: Constants.firstVIN,
@@ -77,7 +77,7 @@ struct SwiftDataMaintenanceRepositoryTests {
         )
         #expect(await repository.save(laterService))
         #expect(await repository.deleteEntry(id: laterService.id, vin: Constants.firstVIN))
-        #expect(await repository.loadEntry(id: reminder.id, vin: Constants.firstVIN)?.schedule?.completedAt == nil)
+        #expect(try await repository.loadEntry(id: reminder.id, vin: Constants.firstVIN)?.schedule?.completedAt == nil)
     }
 
     @Test("Invalid VINs and cross-bike deletion are rejected")
@@ -86,7 +86,7 @@ struct SwiftDataMaintenanceRepositoryTests {
         let saved = entry(vin: Constants.firstVIN, date: Date())
         #expect(await repository.save(saved))
         #expect(!(await repository.deleteEntry(id: saved.id, vin: Constants.secondVIN)))
-        #expect(await repository.loadEntries(vin: "invalid").isEmpty)
+        #expect(try await repository.loadEntries(vin: "invalid").isEmpty)
     }
 
     private func entry(vin: String, date: Date) -> MaintenanceEntry {

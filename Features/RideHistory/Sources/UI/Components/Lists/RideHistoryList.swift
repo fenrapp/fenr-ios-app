@@ -12,6 +12,15 @@ struct RideHistoryList: View {
 
     var body: some View {
         switch state.status {
+        case .failed:
+            ContentUnavailableView {
+                Label(.rideHistoryReadErrorTitle, systemImage: "exclamationmark.triangle")
+            } description: {
+                Text(verbatim: state.loadErrorMessage ?? "")
+            } actions: {
+                Button(.rideHistoryRetry, action: refresh)
+                    .accessibilityIdentifier("rideHistory.retry")
+            }
         case .loading:
             ProgressView(.rideHistoryLoading)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -22,11 +31,17 @@ struct RideHistoryList: View {
                 description: Text(.rideHistoryBikeUnavailableDescription)
             )
         case .empty:
-            ContentUnavailableView(
-                .rideHistoryNoSavedRides,
-                systemImage: "clock.arrow.circlepath",
-                description: Text(.rideHistoryNoSavedRidesDescription)
-            )
+            VStack {
+                if let message = state.loadErrorMessage {
+                    RideHistoryReadErrorNotice(message: message, retry: refresh)
+                        .padding(DesignSpace.medium)
+                }
+                ContentUnavailableView(
+                    .rideHistoryNoSavedRides,
+                    systemImage: "clock.arrow.circlepath",
+                    description: Text(.rideHistoryNoSavedRidesDescription)
+                )
+            }
         case .loaded:
             list
         }
@@ -34,6 +49,9 @@ struct RideHistoryList: View {
 
     private var list: some View {
         List(selection: listSelection) {
+            if let message = state.loadErrorMessage {
+                Section { RideHistoryReadErrorNotice(message: message, retry: refresh) }
+            }
             if let summary = state.summary {
                 Section {
                     RideHistorySummaryHeader(summary: summary)

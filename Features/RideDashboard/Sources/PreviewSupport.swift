@@ -179,7 +179,7 @@ private actor PreviewRideTripRepository: RideTripRepository {
     func prepare(context _: BikeSessionContext) -> RideTrip? { nil }
     func saveActiveTrip(_: RideTrip) -> Bool { true }
     func completeTrip(_: RideTrip, at _: Date) -> Bool { true }
-    func loadCompletedTrips(vin _: String) -> [RideTrip] { [] }
+    func loadCompletedTrips(vin _: String) throws -> [RideTrip] { [] }
     func promoteTemporaryIdentity(_: UUID, toVIN _: String) -> Bool { true }
 }
 

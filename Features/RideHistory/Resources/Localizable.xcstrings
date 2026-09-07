@@ -1,6 +1,12 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "rideHistoryReadErrorTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Unable to load rides"}}}},
+    "rideHistoryReadError" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Saved rides could not be read. Please try again."}}}},
+    "rideHistoryDetailReadErrorTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Unable to load ride"}}}},
+    "rideHistoryDetailReadError" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "This ride could not be read. Please try again."}}}},
+    "rideHistoryRetry" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Retry"}}}},
+
     "rideHistorySummaryTotalDistance" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Total distance"}}}},
     "rideHistoryBatteryNoRecordedChange" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No recorded change" } } } },
     "rideHistoryBatteryPointsGained" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld percentage points gained" } } } },

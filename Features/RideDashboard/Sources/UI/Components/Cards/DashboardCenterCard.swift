@@ -24,6 +24,9 @@ struct DashboardCenterCard: View {
     let reduceMotion: Bool
     let toggleCurrentTripPause: () -> Void
     let resetCurrentTrip: () -> Void
+    let retryTripStatistics: () -> Void
+    let retryEfficiencyHistory: () -> Void
+    let retryRangeHistory: () -> Void
     let calibrateDynamics: () -> Void
     let setChargePowerLimit: (Double) -> Void
     let setChargeTarget: (Double) -> Void
@@ -89,23 +92,18 @@ struct DashboardCenterCard: View {
                 statistics: tripStatistics,
                 reduceMotion: reduceMotion,
                 togglePause: toggleCurrentTripPause,
-                reset: resetCurrentTrip
+                reset: resetCurrentTrip,
+                retryStatistics: retryTripStatistics
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-        case .efficiency:
-            DashboardEfficiencyPager(
-                pages: cardLayout.efficiencyPages,
-                selection: $selectedEfficiencyPage,
-                state: efficiency,
-                reduceMotion: reduceMotion
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        case .efficiency: efficiencyCard
         case .range:
             DashboardRangePager(
                 pages: cardLayout.rangePages,
                 selection: $selectedRangePage,
                 state: range,
-                reduceMotion: reduceMotion
+                reduceMotion: reduceMotion,
+                retryHistory: retryRangeHistory
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .systemHealth:
@@ -126,6 +124,17 @@ struct DashboardCenterCard: View {
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+    }
+
+    private var efficiencyCard: some View {
+        DashboardEfficiencyPager(
+            pages: cardLayout.efficiencyPages,
+            selection: $selectedEfficiencyPage,
+            state: efficiency,
+            reduceMotion: reduceMotion,
+            retryHistory: retryEfficiencyHistory
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var settingsCard: some View {

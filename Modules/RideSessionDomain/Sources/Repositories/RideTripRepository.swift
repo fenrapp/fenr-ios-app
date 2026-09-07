@@ -8,8 +8,8 @@ public protocol RideTripRepository: Sendable {
     func completeTrip(_ trip: RideTrip, at date: Date) async -> Bool
     @discardableResult
     func resetTrip(completing trip: RideTrip, starting replacement: RideTrip?, at date: Date) async -> Bool
-    func loadCompletedTrips(vin: String) async -> [RideTrip]
-    func loadCompletedTrip(id: UUID, vin: String) async -> RideTrip?
+    func loadCompletedTrips(vin: String) async throws -> [RideTrip]
+    func loadCompletedTrip(id: UUID, vin: String) async throws -> RideTrip?
     @discardableResult
     func deleteCompletedTrip(id: UUID, vin: String) async -> Bool
     @discardableResult
@@ -17,8 +17,8 @@ public protocol RideTripRepository: Sendable {
 }
 
 public extension RideTripRepository {
-    func loadCompletedTrip(id: UUID, vin: String) async -> RideTrip? {
-        await loadCompletedTrips(vin: vin).first { $0.id == id }
+    func loadCompletedTrip(id: UUID, vin: String) async throws -> RideTrip? {
+        try await loadCompletedTrips(vin: vin).first { $0.id == id }
     }
 
     func deleteCompletedTrip(id _: UUID, vin _: String) async -> Bool {

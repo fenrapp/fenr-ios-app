@@ -3,6 +3,7 @@ import SwiftUI
 
 struct DashboardTripStatisticsCard: View {
     let state: DashboardTripStatisticsViewData
+    let retryHistory: () -> Void
 
     var body: some View {
         DashboardAdaptiveCardSurface {
@@ -12,11 +13,16 @@ struct DashboardTripStatisticsCard: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .accessibilityLabel(.rideDashboardTripStatisticsLoading)
             } else {
-                content
+                VStack(alignment: .leading, spacing: Constants.sectionSpacing) {
+                    if let error = state.historyError {
+                        DashboardHistoryReadFeedback(message: error, retry: retryHistory)
+                    }
+                    if state.showsStatistics { content }
+                }
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(state.accessibilityLabel)
+        .accessibilityLabel(state.historyError ?? state.accessibilityLabel)
     }
 
     private var content: some View {

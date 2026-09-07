@@ -18,18 +18,33 @@ struct MaintenanceListContent: View {
                 systemImage: "motorcycle",
                 description: Text(.maintenanceBikeUnavailableDescription)
             )
+        case .failed:
+            ContentUnavailableView {
+                Label(.maintenanceReadErrorTitle, systemImage: "exclamationmark.triangle")
+            } description: {
+                Text(verbatim: state.loadErrorMessage ?? "")
+            } actions: {
+                Button(.maintenanceRetry, action: onRefresh)
+                    .accessibilityIdentifier("maintenance.retry")
+            }
         case .loading:
             ProgressView(.maintenanceLoading)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .loaded:
             if state.history.isEmpty {
-                ContentUnavailableView {
-                    Label(.maintenanceEmptyTitle, systemImage: "wrench.and.screwdriver")
-                } description: {
-                    Text(.maintenanceEmptyDescription)
-                } actions: {
-                    Button(.maintenanceAddFirst) { onAdd() }
-                        .buttonStyle(.borderedProminent)
+                VStack {
+                    if let message = state.loadErrorMessage {
+                        MaintenanceReadErrorNotice(message: message, retry: onRefresh)
+                            .padding(DesignSpace.medium)
+                    }
+                    ContentUnavailableView {
+                        Label(.maintenanceEmptyTitle, systemImage: "wrench.and.screwdriver")
+                    } description: {
+                        Text(.maintenanceEmptyDescription)
+                    } actions: {
+                        Button(.maintenanceAddFirst) { onAdd() }
+                            .buttonStyle(.borderedProminent)
+                    }
                 }
             } else {
                 list
@@ -39,6 +54,9 @@ struct MaintenanceListContent: View {
 
     private var list: some View {
         List {
+            if let message = state.loadErrorMessage {
+                Section { MaintenanceReadErrorNotice(message: message, retry: onRefresh) }
+            }
             if !state.due.isEmpty {
                 Section {
                     ForEach(state.due) { maintenanceRow($0, showsReminder: true) }

@@ -11,7 +11,7 @@ public struct RideHistoryDetailView: View {
     }
 
     public var body: some View {
-        RideHistoryDetailContent(state: viewModel.detailViewState)
+        RideHistoryDetailContent(state: viewModel.detailViewState, retry: { viewModel.loadDetail(id: rideID) })
         .navigationTitle(.rideHistoryRideTitle)
         .navigationBarTitleDisplayMode(.inline)
         .task(id: rideID) { viewModel.loadDetail(id: rideID) }

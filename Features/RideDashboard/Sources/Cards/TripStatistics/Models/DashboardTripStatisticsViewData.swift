@@ -1,4 +1,6 @@
 public struct DashboardTripStatisticsViewData: Equatable, Sendable {
+    public let historyError: String?
+    public let showsStatistics: Bool
     public let statusText: String
     public let totalDistance: Metric
     public let totalDuration: Metric
@@ -8,6 +10,8 @@ public struct DashboardTripStatisticsViewData: Equatable, Sendable {
     public let accessibilityLabel: String
 
     public init(
+        historyError: String? = nil,
+        showsStatistics: Bool = true,
         statusText: String? = nil,
         totalDistance: Metric? = nil,
         totalDuration: Metric? = nil,
@@ -16,6 +20,8 @@ public struct DashboardTripStatisticsViewData: Equatable, Sendable {
         isLoading: Bool = false,
         accessibilityLabel: String? = nil
     ) {
+        self.historyError = historyError
+        self.showsStatistics = showsStatistics
         self.statusText = statusText ?? rideDashboardLocalized(.rideDashboardTripStatisticsStatusNone)
         self.totalDistance = totalDistance ?? .init(
             label: rideDashboardLocalized(.rideDashboardMetricTotalDistance), valueText: "0", unit: "km"

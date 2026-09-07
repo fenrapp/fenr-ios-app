@@ -6,25 +6,29 @@ import VehicleSession
 
 @MainActor
 public final class MaintenanceViewModel: ObservableObject {
-    @Published public private(set) var viewState = MaintenanceLogViewState()
+    @Published public internal(set) var viewState = MaintenanceLogViewState()
     @Published public private(set) var formState: MaintenanceFormViewState
     @Published public private(set) var isMutating = false
 
-    private let useCases: MaintenanceUseCases
+    let useCases: MaintenanceUseCases
     private let vehicleSession: any VehicleSessionService
-    private let mapper: MaintenanceViewStateMapper
+    let mapper: MaintenanceViewStateMapper
     private let draftMapper: MaintenanceFormDraftMapper
-    private let reminderScheduler: any MaintenanceReminderScheduling
+    let reminderScheduler: any MaintenanceReminderScheduling
     private let now: @Sendable () -> Date
-    private var entries: [MaintenanceEntry] = []
-    private var activeVIN: String?
+    var entries: [MaintenanceEntry] = []
+    var activeVIN: String?
     private var measurementSystem: MeasurementSystem = .system
     private var odometerKilometers: Double?
     private var observationTask: Task<Void, Never>?
-    private var loadTask: Task<Void, Never>?
+    var loadTask: Task<Void, Never>?
     private var mutationTask: Task<Void, Never>?
-    private var mutationID: UUID?
-    private var errorMessage: String?
+    var mutationID: UUID?
+    var errorMessage: String?
+    var loadErrorMessage: String?
+    var hasLoadedEntries = false
+    var loadID: UUID?
+    var pendingReminderAuthorizationIDs: Set<UUID> = []
     private var needsReload = true
 
     public init(
@@ -72,6 +76,7 @@ public final class MaintenanceViewModel: ObservableObject {
         observationTask = nil
         loadTask?.cancel()
         loadTask = nil
+        loadID = nil
         mutationTask?.cancel()
         mutationTask = nil
         mutationID = nil
@@ -147,6 +152,7 @@ public final class MaintenanceViewModel: ObservableObject {
         }
         loadTask?.cancel()
         loadTask = nil
+        loadID = nil
         errorMessage = nil
         isMutating = true
         render()
@@ -163,16 +169,13 @@ public final class MaintenanceViewModel: ObservableObject {
                 )
                 return
             }
-            let refreshed = await self.useCases.loadEntries.execute(vin: vin)
-            guard !Task.isCancelled, self.mutationID == operationID else { return }
-            await self.synchronizeDateReminders(
-                refreshed,
-                requestingAuthorizationFor: self.activeVIN == vin ? entry.id : nil
-            )
-            guard !Task.isCancelled, self.mutationID == operationID else { return }
-            self.finishMutation(operationID: operationID, entries: refreshed, vin: vin)
             guard self.activeVIN == vin else { return }
-            onSuccess()
+            var confirmedEntries = self.entries.filter { $0.id != entry.id }
+            confirmedEntries.append(entry)
+            await self.completeConfirmedMutation(
+                operationID: operationID, vin: vin, confirmedEntries: confirmedEntries,
+                requestingAuthorizationFor: entry.id, onSuccess: onSuccess
+            )
         }
     }
 
@@ -180,13 +183,18 @@ public final class MaintenanceViewModel: ObservableObject {
         guard mutationTask == nil, let vin = activeVIN else { return }
         loadTask?.cancel()
         loadTask = nil
+        loadID = nil
         errorMessage = nil
         isMutating = true
         render()
         let operationID = UUID()
         mutationID = operationID
+        let deleteEntry = useCases.deleteEntry
+        let reminderScheduler = reminderScheduler
         mutationTask = Task { [weak self] in
-            let deleted = await self?.useCases.deleteEntry.execute(id: id, vin: vin) == true
+            let deleted = await deleteEntry.execute(id: id, vin: vin)
+            // A confirmed deletion must revoke its reminder even after presentation cancellation.
+            if deleted { await reminderScheduler.cancel(id: id) }
             guard !Task.isCancelled, let self, self.mutationID == operationID else { return }
             guard deleted else {
                 self.finishMutation(
@@ -196,14 +204,12 @@ public final class MaintenanceViewModel: ObservableObject {
                 )
                 return
             }
-            await self.reminderScheduler.cancel(id: id)
-            let refreshed = await self.useCases.loadEntries.execute(vin: vin)
-            guard !Task.isCancelled, self.mutationID == operationID else { return }
-            await self.synchronizeDateReminders(refreshed, requestingAuthorizationFor: nil)
-            guard !Task.isCancelled, self.mutationID == operationID else { return }
-            self.finishMutation(operationID: operationID, entries: refreshed, vin: vin)
             guard self.activeVIN == vin else { return }
-            onSuccess()
+            await self.completeConfirmedMutation(
+                operationID: operationID, vin: vin,
+                confirmedEntries: self.entries.filter { $0.id != id },
+                requestingAuthorizationFor: nil, onSuccess: onSuccess
+            )
         }
     }
 
@@ -213,7 +219,7 @@ public final class MaintenanceViewModel: ObservableObject {
     }
 }
 
-private extension MaintenanceViewModel {
+extension MaintenanceViewModel {
     var currentRidingHours: Double? {
         entries.compactMap(\.ridingHours).max()
     }
@@ -231,31 +237,22 @@ private extension MaintenanceViewModel {
             odometerKilometers = nil
         }
         formState = mapper.mapForm(measurementSystem: measurementSystem)
+        if didChangeVIN {
+            pendingReminderAuthorizationIDs.removeAll()
+            entries = []
+            hasLoadedEntries = false
+            loadErrorMessage = nil
+            errorMessage = nil
+            mutationTask?.cancel()
+            mutationTask = nil
+            mutationID = nil
+            isMutating = false
+        }
         if didChangeVIN || needsReload {
             needsReload = false
-            entries = []
             loadEntries()
         } else {
             render()
-        }
-    }
-
-    func loadEntries() {
-        loadTask?.cancel()
-        guard let vin = activeVIN else {
-            entries = []
-            viewState = .init(status: .bikeUnavailable)
-            return
-        }
-        viewState = .init(status: .loading, errorMessage: errorMessage)
-        loadTask = Task { [weak self] in
-            let loaded = await self?.useCases.loadEntries.execute(vin: vin) ?? []
-            guard !Task.isCancelled, let self, self.activeVIN == vin else { return }
-            await self.synchronizeDateReminders(loaded, requestingAuthorizationFor: nil)
-            guard !Task.isCancelled, self.activeVIN == vin else { return }
-            self.loadTask = nil
-            self.entries = loaded
-            self.render()
         }
     }
 
@@ -264,12 +261,21 @@ private extension MaintenanceViewModel {
             viewState = .init(status: .bikeUnavailable, errorMessage: errorMessage)
             return
         }
+        if !hasLoadedEntries, let loadErrorMessage {
+            viewState = .init(status: .failed, loadErrorMessage: loadErrorMessage)
+            return
+        }
+        guard hasLoadedEntries else {
+            viewState = .init(status: .loading)
+            return
+        }
         viewState = mapper.mapList(
             entries: entries,
             measurementSystem: measurementSystem,
             odometerKilometers: odometerKilometers,
             ridingHours: currentRidingHours,
-            errorMessage: errorMessage
+            errorMessage: errorMessage,
+            loadErrorMessage: loadErrorMessage
         )
     }
 
@@ -287,6 +293,7 @@ private extension MaintenanceViewModel {
         _ entries: [MaintenanceEntry],
         requestingAuthorizationFor entryID: UUID?
     ) async {
+        pendingReminderAuthorizationIDs.formIntersection(Set(entries.map(\.id)))
         let notificationTitle = String(localized: .maintenanceNotificationTitle)
         let currentDate = now()
         for entry in entries {
@@ -295,6 +302,8 @@ private extension MaintenanceViewModel {
                   let dueDate = entry.schedule?.dueDate,
                   dueDate > currentDate else {
                 await reminderScheduler.cancel(id: entry.id)
+                guard !Task.isCancelled else { return }
+                pendingReminderAuthorizationIDs.remove(entry.id)
                 continue
             }
             await reminderScheduler.schedule(
@@ -304,8 +313,10 @@ private extension MaintenanceViewModel {
                     title: notificationTitle,
                     body: mapper.title(for: entry.selection)
                 ),
-                requestingAuthorization: entry.id == entryID
+                requestingAuthorization: entry.id == entryID || pendingReminderAuthorizationIDs.contains(entry.id)
             )
+            guard !Task.isCancelled else { return }
+            pendingReminderAuthorizationIDs.remove(entry.id)
         }
     }
 
@@ -321,7 +332,7 @@ private extension MaintenanceViewModel {
         isMutating = false
         errorMessage = vin == nil || activeVIN == vin ? error : nil
         if let refreshedEntries, activeVIN == vin {
-            entries = refreshedEntries
+            entries = refreshedEntries.sorted { $0.performedAt > $1.performedAt }
         }
         render()
     }

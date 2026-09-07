@@ -6,8 +6,31 @@ import Testing
 struct RideTripHistoryUseCaseTests {
     private let vehicleIdentifier = "FENRTEST000000001"
 
+    @Test("Read failures propagate through history, detail and every aggregate", arguments: [
+        RideTripReadError.readFailed, .invalidData
+    ])
+    func propagatesReadFailures(error: RideTripReadError) async {
+        let repository = StubRideTripRepository(readError: error)
+        await #expect(throws: error) {
+            try await LoadRideTripHistoryUseCase(repository: repository).execute(vin: vehicleIdentifier)
+        }
+        await #expect(throws: error) {
+            try await LoadRideTripDetailUseCase(repository: repository).execute(id: UUID(), vin: vehicleIdentifier)
+        }
+        await #expect(throws: error) {
+            try await LoadRideTripRangeHistoryUseCase(repository: repository).execute(vin: vehicleIdentifier)
+        }
+        await #expect(throws: error) {
+            try await LoadRideTripEfficiencyTrendUseCase(repository: repository).execute(vin: vehicleIdentifier)
+        }
+        await #expect(throws: error) {
+            try await LoadRideTripStatisticsUseCase(repository: repository, aggregator: .init())
+                .execute(vin: vehicleIdentifier)
+        }
+    }
+
     @Test("Filters partial and unconfirmed trips before limiting the efficiency trend")
-    func filtersEfficiencyTrendBeforeLimit() async {
+    func filtersEfficiencyTrendBeforeLimit() async throws {
         let unconfirmed = makeTrip(dateOffset: 60, vehicleIdentity: .temporary(UUID()))
         let partial = makeTrip(dateOffset: 50, electricalCoverage: 0.5)
         let newestEligible = makeTrip(dateOffset: 40, efficiency: 10)
@@ -21,7 +44,7 @@ struct RideTripHistoryUseCaseTests {
             oldestEligible
         ])
 
-        let trips = await LoadRideTripEfficiencyTrendUseCase(repository: repository).execute(
+        let trips = try await LoadRideTripEfficiencyTrendUseCase(repository: repository).execute(
             vin: vehicleIdentifier,
             limit: 2
         )
@@ -30,7 +53,7 @@ struct RideTripHistoryUseCaseTests {
     }
 
     @Test("Keeps only finite positive range efficiencies in newest-first order")
-    func filtersRangeHistoryBeforeLimit() async {
+    func filtersRangeHistoryBeforeLimit() async throws {
         let negative = makeTrip(dateOffset: 70, efficiency: -5)
         let nonfinite = makeTrip(dateOffset: 65, efficiency: .infinity)
         let zero = makeTrip(dateOffset: 60, efficiency: .zero)
@@ -48,7 +71,7 @@ struct RideTripHistoryUseCaseTests {
             oldestEligible
         ])
 
-        let trips = await LoadRideTripRangeHistoryUseCase(repository: repository).execute(
+        let trips = try await LoadRideTripRangeHistoryUseCase(repository: repository).execute(
             vin: vehicleIdentifier,
             limit: 2
         )
@@ -57,14 +80,14 @@ struct RideTripHistoryUseCaseTests {
     }
 
     @Test("Returns no history for a nonpositive limit", arguments: [0, -1])
-    func nonpositiveLimitReturnsEmpty(limit: Int) async {
+    func nonpositiveLimitReturnsEmpty(limit: Int) async throws {
         let repository = StubRideTripRepository(completedTrips: [makeTrip(dateOffset: 10)])
 
-        let efficiencyTrips = await LoadRideTripEfficiencyTrendUseCase(repository: repository).execute(
+        let efficiencyTrips = try await LoadRideTripEfficiencyTrendUseCase(repository: repository).execute(
             vin: vehicleIdentifier,
             limit: limit
         )
-        let rangeTrips = await LoadRideTripRangeHistoryUseCase(repository: repository).execute(
+        let rangeTrips = try await LoadRideTripRangeHistoryUseCase(repository: repository).execute(
             vin: vehicleIdentifier,
             limit: limit
         )

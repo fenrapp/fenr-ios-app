@@ -1,6 +1,9 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "rideDashboardHistoryRetry" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Retry" } } } },
+    "rideDashboardHistoryRefreshError" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unable to refresh saved ride data. Showing previous data." } } } },
+    "rideDashboardHistoryLoadError" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unable to load saved ride data." } } } },
     "rideDashboardDeviceBatterySaveError" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unable to save battery display. Tap to try again." } } } },
     "rideDashboard.settings.tagline" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Make it yours"}}}},
     "rideDashboard.settings.detail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Customize your dashboard, bike, and app preferences."}}}},

@@ -1,6 +1,11 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "maintenanceReadErrorTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Unable to load maintenance"}}}},
+    "maintenanceReadError" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Maintenance records could not be read. Please try again."}}}},
+    "maintenanceSavedRefreshError" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Your change was saved, but the records could not be refreshed. Retry to update the list."}}}},
+    "maintenanceRetry" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Retry"}}}},
+
     "maintenanceAdd" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Add Maintenance" } } } },
     "maintenanceAddFirst" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Log Maintenance" } } } },
     "maintenanceAdditionalSection" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Additional Details" } } } },

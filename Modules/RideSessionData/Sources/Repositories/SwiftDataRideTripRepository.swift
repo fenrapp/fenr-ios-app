@@ -45,12 +45,12 @@ public struct SwiftDataRideTripRepository: RideTripRepository, Sendable {
         )
     }
 
-    public func loadCompletedTrips(vin: String) async -> [RideTrip] {
-        await store.loadCompletedTrips(vin: vin, mapper: mapper)
+    public func loadCompletedTrips(vin: String) async throws -> [RideTrip] {
+        try await store.loadCompletedTrips(vin: vin, mapper: mapper)
     }
 
-    public func loadCompletedTrip(id: UUID, vin: String) async -> RideTrip? {
-        await store.loadCompletedTrip(
+    public func loadCompletedTrip(id: UUID, vin: String) async throws -> RideTrip? {
+        try await store.loadCompletedTrip(
             id: id,
             vin: vin,
             mapper: mapper,

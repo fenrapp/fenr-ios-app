@@ -5,6 +5,7 @@ struct DashboardRangePager: View {
     @Binding var selection: RangeDashboardPage
     let state: DashboardRangeViewData
     let reduceMotion: Bool
+    let retryHistory: () -> Void
 
     var body: some View {
         DashboardHorizontalCardPager(
@@ -16,7 +17,7 @@ struct DashboardRangePager: View {
         ) { page in
             switch page {
             case .range:
-                DashboardRangeLiveCard(state: state)
+                DashboardRangeLiveCard(state: state, retryHistory: retryHistory)
             case .battery:
                 DashboardBatteryTripCard(state: state)
             }

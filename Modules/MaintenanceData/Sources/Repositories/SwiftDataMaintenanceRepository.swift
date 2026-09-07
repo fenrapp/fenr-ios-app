@@ -14,14 +14,14 @@ public struct SwiftDataMaintenanceRepository: MaintenanceRepository, Sendable {
         self.mapper = mapper
     }
 
-    public func loadEntries(vin: String) async -> [MaintenanceEntry] {
+    public func loadEntries(vin: String) async throws -> [MaintenanceEntry] {
         guard let vin = normalizedValidVIN(vin) else { return [] }
-        return await store.loadEntries(vin: vin, mapper: mapper)
+        return try await store.loadEntries(vin: vin, mapper: mapper)
     }
 
-    public func loadEntry(id: UUID, vin: String) async -> MaintenanceEntry? {
+    public func loadEntry(id: UUID, vin: String) async throws -> MaintenanceEntry? {
         guard let vin = normalizedValidVIN(vin) else { return nil }
-        return await store.loadEntry(id: id, vin: vin, mapper: mapper)
+        return try await store.loadEntry(id: id, vin: vin, mapper: mapper)
     }
 
     public func save(_ entry: MaintenanceEntry) async -> Bool {

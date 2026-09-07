@@ -1,8 +1,8 @@
 import Foundation
 
 public protocol MaintenanceRepository: Sendable {
-    func loadEntries(vin: String) async -> [MaintenanceEntry]
-    func loadEntry(id: UUID, vin: String) async -> MaintenanceEntry?
+    func loadEntries(vin: String) async throws -> [MaintenanceEntry]
+    func loadEntry(id: UUID, vin: String) async throws -> MaintenanceEntry?
     @discardableResult
     func save(_ entry: MaintenanceEntry) async -> Bool
     @discardableResult
@@ -16,8 +16,8 @@ public struct LoadMaintenanceEntriesUseCase: Sendable {
         self.repository = repository
     }
 
-    public func execute(vin: String) async -> [MaintenanceEntry] {
-        await repository.loadEntries(vin: vin)
+    public func execute(vin: String) async throws -> [MaintenanceEntry] {
+        try await repository.loadEntries(vin: vin)
     }
 }
 
