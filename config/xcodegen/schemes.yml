@@ -1,4 +1,23 @@
 schemes:
+  FENRUITests:
+    management:
+      shared: true
+      isShown: true
+    build:
+      targets:
+        FENRDebug: [test]
+        FENR: [test]
+        FENRDebugUITests: [test]
+        FENRDemoUITests: [test]
+    test:
+      config: Debug
+      targets:
+        - name: FENRDebugUITests
+          parallelizable: false
+          randomExecutionOrder: false
+        - name: FENRDemoUITests
+          parallelizable: false
+          randomExecutionOrder: false
   FENR:
     management:
       shared: true

@@ -67,6 +67,7 @@ struct RideHistoryDetailContent: View {
             metricSection(title: .rideHistorySectionRideDynamics, metrics: state.dynamicsMetrics)
         }
         .listStyle(.insetGrouped)
+        .accessibilityIdentifier("rideHistory.detail.loaded")
     }
 
     @ViewBuilder

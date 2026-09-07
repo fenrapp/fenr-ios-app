@@ -33,6 +33,7 @@ struct RideDisplaySettingsContent: View {
                 selection: deviceBatteryDisplayMode,
                 onSelect: onSelectDeviceBatteryDisplayMode
             )
+            .accessibilityIdentifier("settings.phoneBattery")
         } header: {
             Text(.appSettingsDashboardPresentationHeader)
         } footer: {

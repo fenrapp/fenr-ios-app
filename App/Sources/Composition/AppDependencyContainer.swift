@@ -51,6 +51,7 @@ struct AppDependencyContainer {
     private let bikeLockCapabilityStore: any BikeLockCapabilityStateStoring
     private let startupPreparer: any AppStartupPreparing
     private let experienceOptions: AppExperienceOptions
+    private let rideNavigationFactoryBuilder: AppRideNavigationFactoryBuilder?
 
     init(
         diagnosticsContainer: BikeDiagnosticsDependencyContainer,
@@ -78,7 +79,8 @@ struct AppDependencyContainer {
         startupPreparer: any AppStartupPreparing,
         initialOnboardingVIN: String? = nil,
         forceOnboarding: Bool = false,
-        experienceOptions: AppExperienceOptions = .init()
+        experienceOptions: AppExperienceOptions = .init(),
+        rideNavigationFactoryBuilder: AppRideNavigationFactoryBuilder? = nil
     ) {
         self.diagnosticsContainer = diagnosticsContainer
         self.batteryHealthContainer = batteryHealthContainer
@@ -107,6 +109,7 @@ struct AppDependencyContainer {
         self.bikeLockCapabilityStore = bikeLockCapabilityStore
         self.startupPreparer = startupPreparer
         self.experienceOptions = experienceOptions
+        self.rideNavigationFactoryBuilder = rideNavigationFactoryBuilder
     }
 
     func makeRootDependencies(opensRideNavigationOnLaunch: Bool = false) -> AppRootDependencies {
@@ -302,15 +305,13 @@ private extension AppDependencyContainer {
             rideHistoryViewModel: makeRideHistoryViewModel(),
             maintenanceViewModel: makeMaintenanceViewModel(),
             rideDashboardFactory: rideDashboardFactory,
-            rideNavigationFactory: AppRideNavigationFeatureFactory(
+            rideNavigationFactory: AppRideNavigationFactoryContext(
                 vehicleSession: vehicleSession,
                 observeDeviceSpeed: ObserveDeviceSpeedUseCase(
                     repository: deviceSpeedRepository, requestsAuthorization: experienceOptions.isDemo
                 ),
-                settingsRepository: settingsRepository,
-                routeDirectory: experienceOptions.routeDirectory,
-                isDemo: experienceOptions.isDemo
-            )
+                settingsRepository: settingsRepository
+            ).makeFactory(builder: rideNavigationFactoryBuilder, options: experienceOptions)
         )
     }
 

@@ -95,6 +95,7 @@ struct RideNavigationSummaryPanel: View {
                 .font(.subheadline.monospacedDigit())
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("rideNavigation.summary.detail")
         }
     }
 

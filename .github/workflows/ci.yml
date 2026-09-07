@@ -277,3 +277,57 @@ jobs:
           path: ${{ runner.temp }}/fenr-reports
           if-no-files-found: warn
           retention-days: 7
+
+  iphone-e2e:
+    needs: lint
+    runs-on: macos-26
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - size: primary
+            device-type: com.apple.CoreSimulator.SimDeviceType.iPhone-17
+          - size: compact
+            device-type: com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation
+    steps:
+      - uses: actions/checkout@v5
+      - name: Select Xcode 26.6
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Create clean iPhone simulator
+        id: simulator
+        run: |
+          FENR_DEVICE_ID=$(xcrun simctl create 'FENR iPhone E2E' \
+            '${{ matrix.device-type }}' com.apple.CoreSimulator.SimRuntime.iOS-26-5)
+          echo "device-id=$FENR_DEVICE_ID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$FENR_DEVICE_ID"
+          xcrun simctl bootstatus "$FENR_DEVICE_ID" -b
+      - name: Run serial iPhone E2E suites
+        env:
+          FENR_DEVICE_ID: ${{ steps.simulator.outputs.device-id }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/fenr-e2e-results"
+          xcodebuild -project FENR.xcodeproj -scheme FENRUITests \
+            -destination "platform=iOS Simulator,id=$FENR_DEVICE_ID" \
+            -derivedDataPath "$RUNNER_TEMP/fenr-e2e" \
+            -resultBundlePath "$RUNNER_TEMP/fenr-e2e-results/iphone-e2e.xcresult" \
+            -parallel-testing-enabled NO \
+            CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=- test \
+            | tee "$RUNNER_TEMP/fenr-e2e-results/iphone-e2e.log"
+      - name: Remove E2E simulator
+        if: always() && steps.simulator.outputs.device-id != ''
+        env:
+          FENR_DEVICE_ID: ${{ steps.simulator.outputs.device-id }}
+        run: xcrun simctl delete "$FENR_DEVICE_ID"
+      - name: Upload iPhone E2E results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: iphone-e2e-${{ matrix.size }}
+          path: ${{ runner.temp }}/fenr-e2e-results
+          if-no-files-found: warn
+          retention-days: 7

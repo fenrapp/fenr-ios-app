@@ -38,6 +38,7 @@ public struct BikeDemoPanel: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(.bikeDemoDone) { dismiss() }
+                        .accessibilityIdentifier("demo.done")
                 }
             }
         }

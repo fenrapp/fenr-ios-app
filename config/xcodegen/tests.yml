@@ -1,4 +1,30 @@
 targets:
+  FENRDebugUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: App/DebugUITests
+      - path: App/UITestSupport
+    dependencies:
+      - target: FENRDebug
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.debug.uitests
+        TEST_TARGET_NAME: FENRDebug
+        TARGETED_DEVICE_FAMILY: 1
+  FENRDemoUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: App/DemoUITests
+      - path: App/UITestSupport
+    dependencies:
+      - target: FENR
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.demo.uitests
+        TEST_TARGET_NAME: FENR
+        TARGETED_DEVICE_FAMILY: 1
   StarkProtocolTests:
     templates: [SharedUnitTests]
     sources:

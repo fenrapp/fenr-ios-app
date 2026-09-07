@@ -55,6 +55,7 @@ struct RideNavigationSavedRoutesPanel: View {
                 .padding(.horizontal, routes.count > Constants.singleDigitMaximum ? DesignSpace.extraExtraSmall : .zero)
                 .background(DesignColor.controlSurface, in: Capsule())
                 .accessibilityLabel(String(localized: .rideNavigationSavedRouteCount(routeCount: routes.count)))
+                .accessibilityIdentifier("rideNavigation.savedRoute.count")
         }
     }
 

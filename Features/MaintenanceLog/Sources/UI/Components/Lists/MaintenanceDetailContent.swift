@@ -21,6 +21,7 @@ struct MaintenanceDetailContent: View {
             Section(.maintenanceDetailsSection) {
                 ForEach(detail.fields) { field in
                     LabeledContent(field.label, value: field.value)
+                        .accessibilityIdentifier("maintenance.detail.\(field.id)")
                 }
             }
             if !detail.reminderFields.isEmpty {

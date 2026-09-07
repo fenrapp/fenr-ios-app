@@ -68,6 +68,7 @@ public struct MaintenanceFormView: View {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
                 Button(.maintenanceDone) { focusedField = nil }
+                    .accessibilityIdentifier("maintenance.keyboard.done")
             }
         }
     }
