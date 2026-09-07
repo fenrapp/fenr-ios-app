@@ -1,0 +1,147 @@
+schemes:
+  FENR:
+    management:
+      shared: true
+      orderHint: 0
+      isShown: true
+    build:
+      targets:
+        FENR: all
+        StarkProtocolTests: [test]
+        AsyncSupportTests: [test]
+        BLETraceDomainTests: [test]
+        BikeSDKTests: [test]
+        BLETraceDataTests: [test]
+        BikeDomainTests: [test]
+        BikeDataTests: [test]
+        BikeEmulatorTests: [test]
+        ChargeControlTests: [test]
+        SettingsDomainTests: [test]
+        SettingsDataTests: [test]
+        EnvironmentDomainTests: [test]
+        EnvironmentDataTests: [test]
+        RideSessionDomainTests: [test]
+        RideNavigationDomainTests: [test]
+        RideNavigationDataTests: [test]
+        RideNavigationTests: [test]
+        RideNavigationAppleMapsTests: [test]
+        RideSessionTests: [test]
+        VehicleSessionTests: [test]
+        RideSessionDataTests: [test]
+        MaintenanceDomainTests: [test]
+        MaintenanceDataTests: [test]
+        DesignSystemTests: [test]
+        MeasurementPresentationTests: [test]
+        BikeDiagnosticsTests: [test]
+        BikeOnboardingTests: [test]
+        RideDashboardTests: [test]
+        BatteryHealthTests: [test]
+        AppSettingsTests: [test]
+        DashboardCardSettingsTests: [test]
+        BikeLockSettingsTests: [test]
+        PowerModeSettingsTests: [test]
+        RideHistoryTests: [test]
+        MaintenanceLogTests: [test]
+        FENRShareExtensionTests: [test]
+        TestSupportTests: [test]
+        FENRTests: [test]
+        FENRDebugTests: [test]
+    test:
+      targets:
+        - StarkProtocolTests
+        - AsyncSupportTests
+        - BLETraceDomainTests
+        - BLETraceDataTests
+        - BikeSDKTests
+        - BikeDomainTests
+        - BikeDataTests
+        - BikeEmulatorTests
+        - ChargeControlTests
+        - SettingsDomainTests
+        - SettingsDataTests
+        - EnvironmentDomainTests
+        - EnvironmentDataTests
+        - RideSessionDomainTests
+        - RideNavigationDomainTests
+        - RideNavigationDataTests
+        - RideNavigationTests
+        - RideNavigationAppleMapsTests
+        - RideSessionTests
+        - VehicleSessionTests
+        - RideSessionDataTests
+        - MaintenanceDomainTests
+        - MaintenanceDataTests
+        - DesignSystemTests
+        - MeasurementPresentationTests
+        - BikeDiagnosticsTests
+        - BikeOnboardingTests
+        - RideDashboardTests
+        - BatteryHealthTests
+        - AppSettingsTests
+        - DashboardCardSettingsTests
+        - BikeLockSettingsTests
+        - PowerModeSettingsTests
+        - RideHistoryTests
+        - MaintenanceLogTests
+        - FENRShareExtensionTests
+        - TestSupportTests
+        - FENRTests
+        - FENRDebugTests
+  FENRDebug:
+    management:
+      shared: true
+      orderHint: 1
+      isShown: true
+    build:
+      targets:
+        FENRDebug: all
+        FENRDebugTests: [test]
+    test:
+      targets:
+        - FENRDebugTests
+    run:
+      config: Debug
+      commandLineArguments:
+        "-skipOnboarding": true
+  FENRWatch:
+    management:
+      shared: true
+      orderHint: 2
+      isShown: true
+    build:
+      targets:
+        FENRWatch: all
+  FENRWatchDebug:
+    management:
+      shared: true
+      orderHint: 3
+      isShown: true
+    build:
+      targets:
+        FENRWatchDebug: all
+        StarkProtocolTests: [test]
+        AsyncSupportTests: [test]
+        BLETraceDomainTests: [test]
+        BikeDomainTests: [test]
+        BikeEmulatorTests: [test]
+        EnvironmentDomainTests: [test]
+        SettingsDomainTests: [test]
+        SettingsDataTests: [test]
+        TestSupportTests: [test]
+        MeasurementPresentationTests: [test]
+        WatchDashboardTests: [test]
+        WatchOnboardingTests: [test]
+    test:
+      targets:
+        - StarkProtocolTests
+        - AsyncSupportTests
+        - BLETraceDomainTests
+        - BikeDomainTests
+        - BikeEmulatorTests
+        - EnvironmentDomainTests
+        - SettingsDomainTests
+        - SettingsDataTests
+        - TestSupportTests
+        - MeasurementPresentationTests
+        - WatchDashboardTests
+        - WatchOnboardingTests

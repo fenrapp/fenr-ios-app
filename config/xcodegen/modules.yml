@@ -1,0 +1,245 @@
+targets:
+  AsyncSupport:
+    templates: [SharedFramework]
+    sources:
+      - path: Modules/AsyncSupport/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.asyncsupport
+  BLETraceDomain:
+    templates: [SharedFramework]
+    sources:
+      - path: Modules/BLETraceDomain/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bletracedomain
+  BLETraceData:
+    templates: [IOSFramework]
+    sources:
+      - path: Modules/BLETraceData/Sources
+    dependencies:
+      - target: AsyncSupport
+      - target: BLETraceDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bletracedata
+  RuntimeConfiguration:
+    templates: [SharedFramework]
+    sources:
+      - path: Modules/RuntimeConfiguration/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.runtimeconfiguration
+  StarkProtocol:
+    templates: [SharedFramework]
+    sources:
+      - path: Modules/StarkProtocol/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.protocol
+  BikeSDK:
+    templates: [SharedFramework]
+    sources:
+      - path: Modules/BikeSDK/Sources
+    dependencies:
+      - target: AsyncSupport
+      - target: BLETraceDomain
+      - target: RuntimeConfiguration
+      - target: StarkProtocol
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikesdk
+  BikeDomain:
+    templates: [SharedFramework]
+    sources:
+      - path: Modules/BikeDomain/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikedomain
+  BikeData:
+    templates: [SharedFramework]
+    sources:
+      - path: Modules/BikeData/Sources
+      - path: Modules/BikeData/Resources/iOS/PrivacyInfo.xcprivacy
+        buildPhase: resources
+        destinationFilters: [iOS]
+    dependencies:
+      - target: AsyncSupport
+      - target: BikeDomain
+      - target: BikeSDK
+      - target: StarkProtocol
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikedata
+  BikeEmulator:
+    templates: [SharedFramework]
+    sources:
+      - path: Modules/BikeEmulator/Sources
+    dependencies:
+      - target: AsyncSupport
+      - target: BikeDomain
+      - target: BLETraceDomain
+      - target: RuntimeConfiguration
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikeemulator
+  ChargeControl:
+    templates: [IOSFramework]
+    sources:
+      - path: Modules/ChargeControl/Sources
+    dependencies:
+      - target: BikeDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.chargecontrol
+  EnvironmentDomain:
+    templates: [SharedFramework]
+    sources:
+      - path: Modules/EnvironmentDomain/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.environmentdomain
+  EnvironmentData:
+    templates: [IOSFramework]
+    sources:
+      - path: Modules/EnvironmentData/Sources
+    dependencies:
+      - target: EnvironmentDomain
+      - target: RuntimeConfiguration
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.environmentdata
+  RideSessionDomain:
+    templates: [IOSFramework]
+    sources:
+      - path: Modules/RideSessionDomain/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesessiondomain
+  VehicleSession:
+    templates: [IOSFramework]
+    sources:
+      - path: Modules/VehicleSession/Sources
+    dependencies:
+      - target: BikeDomain
+      - target: EnvironmentDomain
+      - target: SettingsDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.vehiclesession
+  RideSession:
+    templates: [IOSFramework]
+    sources:
+      - path: Modules/RideSession/Sources
+    dependencies:
+      - target: BikeDomain
+      - target: RideSessionDomain
+      - target: SettingsDomain
+      - target: VehicleSession
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesession
+  RideSessionData:
+    templates: [IOSFramework]
+    sources:
+      - path: Modules/RideSessionData/Sources
+    dependencies:
+      - target: RideSessionDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesessiondata
+  MaintenanceDomain:
+    templates: [IOSFramework]
+    sources:
+      - path: Modules/MaintenanceDomain/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.maintenancedomain
+  MaintenanceData:
+    templates: [IOSFramework]
+    sources:
+      - path: Modules/MaintenanceData/Sources
+    dependencies:
+      - target: MaintenanceDomain
+      - target: StarkProtocol
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.maintenancedata
+  RideNavigationDomain:
+    templates: [IOSFramework]
+    sources:
+      - path: Modules/RideNavigationDomain/Sources
+    dependencies:
+      - target: EnvironmentDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigationdomain
+  RideNavigationData:
+    templates: [IOSFramework]
+    sources:
+      - path: Modules/RideNavigationData/Sources
+      - path: Modules/RideNavigationData/Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
+    dependencies:
+      - target: EnvironmentDomain
+      - target: RideNavigationDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigationdata
+  SettingsDomain:
+    templates: [SharedFramework]
+    sources:
+      - path: Modules/SettingsDomain/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.settingsdomain
+  SettingsData:
+    templates: [SharedFramework]
+    sources:
+      - path: Modules/SettingsData/Sources
+      - path: Modules/SettingsData/Resources/iOS/PrivacyInfo.xcprivacy
+        buildPhase: resources
+        destinationFilters: [iOS]
+    dependencies:
+      - target: SettingsDomain
+      - target: BikeDomain
+      - target: StarkProtocol
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.settingsdata
+  DesignSystem:
+    templates: [SharedFramework]
+    sources:
+      - path: Modules/DesignSystem/Sources
+      - path: Modules/DesignSystem/Resources
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.designsystem
+  MeasurementPresentation:
+    templates: [SharedFramework]
+    sources:
+      - path: Modules/MeasurementPresentation/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.measurementpresentation
+  TestSupport:
+    templates: [SharedFramework]
+    sources:
+      - path: Modules/TestSupport/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.testsupport
+  RideNavigationAppleMaps:
+    templates: [IOSFramework]
+    sources:
+      - path: Modules/RideNavigationAppleMaps/Sources
+      - path: Modules/RideNavigationAppleMaps/Resources
+        buildPhase: resources
+    dependencies:
+      - target: EnvironmentDomain
+      - target: RideNavigationDomain
+      - target: RideNavigation
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigationapplemaps

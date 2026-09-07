@@ -1,0 +1,448 @@
+targets:
+  FENR:
+    type: application
+    platform: iOS
+    info:
+      path: App/Generated/FENR-Info.plist
+      properties:
+        ITSAppUsesNonExemptEncryption: false
+        NSSupportsLiveActivities: true
+        LSSupportsOpeningDocumentsInPlace: true
+        CFBundleURLTypes:
+          - CFBundleURLName: com.fenr.app.navigation
+            CFBundleURLSchemes:
+              - fenr-app
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: GPX route
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Owner
+            LSItemContentTypes:
+              - com.topografix.gpx
+          - CFBundleTypeName: XML GPX route
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - public.xml
+          - CFBundleTypeName: Apple Maps directions request
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - com.apple.maps.directionsrequest
+        MKDirectionsApplicationSupportedModes:
+          - MKDirectionsModeCar
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: com.topografix.gpx
+            UTTypeDescription: GPS Exchange Format
+            UTTypeConformsTo:
+              - public.xml
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - gpx
+              public.mime-type:
+                - application/gpx+xml
+        UIBackgroundModes:
+          - bluetooth-central
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    sources:
+      - path: App/Sources
+      - path: App/Resources/Assets.xcassets
+      - path: App/Resources/Shared/Localizable.xcstrings
+        buildPhase: resources
+      - path: App/Resources/Shared/PrivacyInfo.xcprivacy
+        buildPhase: resources
+      - path: App/Resources/Production/InfoPlist.xcstrings
+        buildPhase: resources
+    preBuildScripts:
+      - name: SwiftLint
+        basedOnDependencyAnalysis: false
+        script: |
+          if command -v swiftlint >/dev/null; then
+            swiftlint lint --config "${SRCROOT}/.swiftlint.yml"
+          elif [ -x "$HOME/.local/share/mise/installs/swiftlint/latest/swiftlint" ]; then
+            "$HOME/.local/share/mise/installs/swiftlint/latest/swiftlint" lint --config "${SRCROOT}/.swiftlint.yml"
+          elif [ -x "/opt/homebrew/bin/swiftlint" ]; then
+            "/opt/homebrew/bin/swiftlint" lint --config "${SRCROOT}/.swiftlint.yml"
+          else
+            echo "warning: SwiftLint not installed. Install with: brew install swiftlint"
+          fi
+    dependencies:
+      # DesignSystem is embedded for feature frameworks at runtime; the app does not import it.
+      - target: DesignSystem
+        embed: true
+      # AsyncSupport is loaded by BikeSDK, BikeData, and BikeDiagnostics at runtime.
+      - target: AsyncSupport
+        embed: true
+      - target: BLETraceDomain
+        embed: true
+      - target: BLETraceData
+        embed: true
+      - target: BikeDiagnostics
+      - target: BikeOnboarding
+      - target: BikeDemo
+      - target: BikeEmulator
+      - target: RideDashboard
+      - target: MeasurementPresentation
+        embed: true
+      - target: BatteryHealth
+      - target: ChargeControl
+      - target: AppSettings
+      - target: DashboardCardSettings
+      - target: BikeLockSettings
+      - target: PowerModeSettings
+      - target: RideHistory
+      - target: MaintenanceLog
+      - target: RideNavigation
+      - target: RideNavigationAppleMaps
+      - target: RideNavigationData
+      - target: RideNavigationDomain
+      - target: BikeData
+      - target: EnvironmentDomain
+      - target: EnvironmentData
+      - target: RideSession
+      - target: VehicleSession
+      - target: RideSessionDomain
+      - target: RideSessionData
+      - target: MaintenanceDomain
+      - target: MaintenanceData
+      - target: SettingsDomain
+      - target: SettingsData
+      - target: BikeDomain
+      - target: BikeSDK
+      - target: StarkProtocol
+      - target: RuntimeConfiguration
+      - target: ChargingLiveActivityExtension
+        embed: true
+      - target: FENRShareExtension
+        embed: true
+    settings:
+      base:
+        INFOPLIST_KEY_NSFaceIDUsageDescription: "FENR uses Face ID to authorize unlocking your motorcycle."
+        PRODUCT_BUNDLE_IDENTIFIER: in.fenr.app
+        TARGETED_DEVICE_FAMILY: "1"
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        INFOPLIST_KEY_CFBundleDisplayName: FENR
+        INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: FENR uses Bluetooth to authenticate with your Stark Varg and display telemetry.
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: FENR uses your location for GPS speed, ride recording, and route navigation.
+        CODE_SIGN_ENTITLEMENTS: App/FENR.entitlements
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+  FENRDebug:
+    type: application
+    platform: iOS
+    info:
+      path: App/Generated/FENRDebug-Info.plist
+      properties:
+        ITSAppUsesNonExemptEncryption: false
+        NSSupportsLiveActivities: true
+        LSSupportsOpeningDocumentsInPlace: true
+        CFBundleURLTypes:
+          - CFBundleURLName: com.fenr.app.navigation
+            CFBundleURLSchemes:
+              - fenr-app
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: GPX route
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Owner
+            LSItemContentTypes:
+              - com.topografix.gpx
+          - CFBundleTypeName: XML GPX route
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - public.xml
+          - CFBundleTypeName: Apple Maps directions request
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - com.apple.maps.directionsrequest
+        MKDirectionsApplicationSupportedModes:
+          - MKDirectionsModeCar
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: com.topografix.gpx
+            UTTypeDescription: GPS Exchange Format
+            UTTypeConformsTo:
+              - public.xml
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - gpx
+              public.mime-type:
+                - application/gpx+xml
+        UIBackgroundModes:
+          - bluetooth-central
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    sources:
+      - path: App/Sources
+        excludes:
+          - FENRApp.swift
+          - Composition/BikeData
+          - Composition/BikeSDK
+          - Composition/StarkProtocol
+          - Composition/Production
+          - ProductionUI
+      - path: App/DebugSources
+      - path: App/Resources/Assets.xcassets
+      - path: App/Resources/Shared/Localizable.xcstrings
+        buildPhase: resources
+      - path: App/Resources/Shared/PrivacyInfo.xcprivacy
+        buildPhase: resources
+      - path: App/Resources/Debug/InfoPlist.xcstrings
+        buildPhase: resources
+    preBuildScripts:
+      - name: SwiftLint
+        basedOnDependencyAnalysis: false
+        script: |
+          if command -v swiftlint >/dev/null; then
+            swiftlint lint --config "${SRCROOT}/.swiftlint.yml"
+          elif [ -x "$HOME/.local/share/mise/installs/swiftlint/latest/swiftlint" ]; then
+            "$HOME/.local/share/mise/installs/swiftlint/latest/swiftlint" lint --config "${SRCROOT}/.swiftlint.yml"
+          elif [ -x "/opt/homebrew/bin/swiftlint" ]; then
+            "/opt/homebrew/bin/swiftlint" lint --config "${SRCROOT}/.swiftlint.yml"
+          else
+            echo "warning: SwiftLint not installed. Install with: brew install swiftlint"
+          fi
+    dependencies:
+      # DesignSystem is embedded for feature frameworks at runtime; the app does not import it.
+      - target: DesignSystem
+        embed: true
+      # AsyncSupport is loaded by BikeEmulator and BikeDiagnostics at runtime.
+      - target: AsyncSupport
+        embed: true
+      - target: BLETraceDomain
+        embed: true
+      - target: BLETraceData
+        embed: true
+      # BikeOnboarding loads StarkProtocol at runtime; the app does not import it.
+      - target: StarkProtocol
+        embed: true
+      - target: BikeDiagnostics
+      - target: BikeOnboarding
+      - target: BikeDemo
+      - target: RideDashboard
+      - target: MeasurementPresentation
+        embed: true
+      - target: BatteryHealth
+      - target: ChargeControl
+      - target: AppSettings
+      - target: DashboardCardSettings
+      - target: BikeLockSettings
+      - target: PowerModeSettings
+      - target: RideHistory
+      - target: MaintenanceLog
+      - target: RideNavigation
+      - target: RideNavigationAppleMaps
+      - target: RideNavigationData
+      - target: RideNavigationDomain
+      - target: BikeDomain
+      - target: EnvironmentDomain
+      - target: EnvironmentData
+      - target: RideSession
+      - target: VehicleSession
+      - target: RideSessionDomain
+      - target: RideSessionData
+      - target: MaintenanceDomain
+      - target: MaintenanceData
+      - target: SettingsDomain
+      - target: SettingsData
+      - target: RuntimeConfiguration
+      - target: BikeEmulator
+      - target: ChargingLiveActivityDebugExtension
+        embed: true
+      - target: FENRDebugShareExtension
+        embed: true
+    settings:
+      base:
+        INFOPLIST_KEY_NSFaceIDUsageDescription: "FENR uses Face ID to authorize unlocking your motorcycle."
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug
+        TARGETED_DEVICE_FAMILY: "1"
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        INFOPLIST_KEY_CFBundleDisplayName: FENR Debug
+        INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: FENR uses Bluetooth to authenticate with your Stark Varg and display telemetry.
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: FENR uses your location for GPS speed, ride recording, and route navigation.
+        CODE_SIGN_ENTITLEMENTS: App/FENRDebug.entitlements
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+  ChargingLiveActivityExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: LiveActivityExtension/Sources
+      - path: LiveActivityExtension/Resources
+        buildPhase: resources
+      - path: App/Sources/Composition/LiveActivity/BikeLiveActivityAttributes.swift
+    dependencies:
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: in.fenr.app.charging-live-activity
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: LiveActivityExtension/Info.plist
+  ChargingLiveActivityDebugExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: LiveActivityExtension/Sources
+      - path: LiveActivityExtension/Resources
+        buildPhase: resources
+      - path: App/Sources/Composition/LiveActivity/BikeLiveActivityAttributes.swift
+    dependencies:
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug.charging-live-activity
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: LiveActivityExtension/Info.plist
+  FENRShareExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: ShareExtension/Sources
+      - path: ShareExtension/Resources
+        buildPhase: resources
+    dependencies:
+      - target: RideNavigationData
+      - target: RideNavigationDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: in.fenr.app.share
+        TARGETED_DEVICE_FAMILY: "1"
+        PRODUCT_NAME: Open in FENR
+        PRODUCT_MODULE_NAME: FENRShareExtension
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: ShareExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: ShareExtension/FENRShare.entitlements
+        SKIP_INSTALL: YES
+  FENRDebugShareExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: ShareExtension/Sources
+      - path: ShareExtension/Resources
+        buildPhase: resources
+    dependencies:
+      - target: RideNavigationData
+      - target: RideNavigationDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug.share
+        TARGETED_DEVICE_FAMILY: "1"
+        PRODUCT_NAME: Open in FENR Debug
+        PRODUCT_MODULE_NAME: FENRDebugShareExtension
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: ShareExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: ShareExtension/FENRDebugShare.entitlements
+        SKIP_INSTALL: YES
+  FENRWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget: "10.0"
+    info:
+      path: Watch/Generated/FENRWatch-Info.plist
+      properties:
+        UIBackgroundModes:
+          - bluetooth-central
+    sources:
+      - path: Watch/Sources
+      - path: Watch/Resources/Production/InfoPlist.xcstrings
+        buildPhase: resources
+    dependencies:
+      - target: AsyncSupport
+        embed: true
+      - target: BLETraceDomain
+        embed: true
+      - target: StarkProtocol
+        embed: true
+      - target: BikeSDK
+        embed: true
+      - target: BikeDomain
+        embed: true
+      - target: BikeData
+        embed: true
+      - target: WatchDashboard
+        embed: true
+      - target: WatchOnboarding
+        embed: true
+      - target: AppSettings
+        embed: true
+      - target: SettingsDomain
+        embed: true
+      - target: SettingsData
+        embed: true
+      - target: EnvironmentDomain
+        embed: true
+      - target: DesignSystem
+        embed: true
+      - target: MeasurementPresentation
+        embed: true
+      - target: RuntimeConfiguration
+        embed: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watch
+        INFOPLIST_KEY_CFBundleDisplayName: FENR
+        INFOPLIST_KEY_WKWatchOnly: YES
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: FENR uses Bluetooth to connect directly to your bike and show live telemetry.
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
+  FENRWatchDebug:
+    type: application
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: Watch/Sources
+        excludes:
+          - App/FENRWatchApp.swift
+          - Composition/Production/LiveWatchAppDependencyContainerFactory.swift
+      - path: Watch/DebugSources
+      - path: Watch/Resources/Debug/InfoPlist.xcstrings
+        buildPhase: resources
+    dependencies:
+      - target: AsyncSupport
+        embed: true
+      - target: BikeDomain
+        embed: true
+      - target: BikeEmulator
+        embed: true
+      - target: WatchDashboard
+        embed: true
+      - target: WatchOnboarding
+        embed: true
+      - target: AppSettings
+        embed: true
+      - target: SettingsDomain
+        embed: true
+      - target: SettingsData
+        embed: true
+      - target: StarkProtocol
+        embed: true
+      - target: EnvironmentDomain
+        embed: true
+      - target: DesignSystem
+        embed: true
+      - target: MeasurementPresentation
+        embed: true
+      - target: RuntimeConfiguration
+        embed: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watch.debug
+        INFOPLIST_KEY_CFBundleDisplayName: FENR Debug
+        INFOPLIST_KEY_WKWatchOnly: YES
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: FENR uses Bluetooth to connect directly to your bike and show live telemetry.
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
