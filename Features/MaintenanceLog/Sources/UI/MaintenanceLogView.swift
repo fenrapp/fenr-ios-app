@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct MaintenanceLogView: View {
-    @ObservedObject private var viewModel: MaintenanceViewModel
+    private let viewModel: MaintenanceViewModel
     private let onNavigation: (MaintenanceNavigationEvent) -> Void
 
     public init(

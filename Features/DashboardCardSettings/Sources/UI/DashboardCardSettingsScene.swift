@@ -2,7 +2,7 @@ import SwiftUI
 
 public struct DashboardCardSettingsScene: View {
     private let destination: DashboardCardSettingsDestination
-    @ObservedObject private var viewModel: DashboardCardSettingsViewModel
+    private let viewModel: DashboardCardSettingsViewModel
     private let isPresentationActive: Bool
     private let onNavigation: (DashboardCardSettingsNavigationEvent) -> Void
 

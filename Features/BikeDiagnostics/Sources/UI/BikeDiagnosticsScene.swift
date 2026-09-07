@@ -2,7 +2,7 @@ import SwiftUI
 
 public struct BikeDiagnosticsScene: View {
     private let destination: BikeDiagnosticsDestination
-    @ObservedObject private var viewModel: BikeDiagnosticsViewModel
+    private let viewModel: BikeDiagnosticsViewModel
     private let isPresentationActive: Bool
     private let onNavigation: (BikeDiagnosticsNavigationEvent) -> Void
 

@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct BikeLockSettingsView: View {
-    @ObservedObject private var viewModel: BikeLockSettingsViewModel
+    private let viewModel: BikeLockSettingsViewModel
 
     public init(viewModel: BikeLockSettingsViewModel) {
         self.viewModel = viewModel

@@ -1,14 +1,15 @@
-import Combine
 import Foundation
 import MaintenanceDomain
+import Observation
 import SettingsDomain
 import VehicleSession
 
 @MainActor
-public final class MaintenanceViewModel: ObservableObject {
-    @Published public internal(set) var viewState = MaintenanceLogViewState()
-    @Published public private(set) var formState: MaintenanceFormViewState
-    @Published public private(set) var isMutating = false
+@Observable
+public final class MaintenanceViewModel {
+    public internal(set) var viewState = MaintenanceLogViewState()
+    public private(set) var formState: MaintenanceFormViewState
+    public private(set) var isMutating = false
 
     let useCases: MaintenanceUseCases
     private let vehicleSession: any VehicleSessionService
@@ -17,19 +18,19 @@ public final class MaintenanceViewModel: ObservableObject {
     let reminderScheduler: any MaintenanceReminderScheduling
     private let now: @Sendable () -> Date
     var entries: [MaintenanceEntry] = []
-    var activeVIN: String?
+    @ObservationIgnored var activeVIN: String?
     private var measurementSystem: MeasurementSystem = .system
-    private var odometerKilometers: Double?
-    private var observationTask: Task<Void, Never>?
-    var loadTask: Task<Void, Never>?
-    private var mutationTask: Task<Void, Never>?
-    var mutationID: UUID?
-    var errorMessage: String?
-    var loadErrorMessage: String?
-    var hasLoadedEntries = false
-    var loadID: UUID?
-    var pendingReminderAuthorizationIDs: Set<UUID> = []
-    private var needsReload = true
+    @ObservationIgnored private var odometerKilometers: Double?
+    @ObservationIgnored private var observationTask: Task<Void, Never>?
+    @ObservationIgnored var loadTask: Task<Void, Never>?
+    @ObservationIgnored private var mutationTask: Task<Void, Never>?
+    @ObservationIgnored var mutationID: UUID?
+    @ObservationIgnored var errorMessage: String?
+    @ObservationIgnored var loadErrorMessage: String?
+    @ObservationIgnored var hasLoadedEntries = false
+    @ObservationIgnored var loadID: UUID?
+    @ObservationIgnored var pendingReminderAuthorizationIDs: Set<UUID> = []
+    @ObservationIgnored private var needsReload = true
 
     public init(
         useCases: MaintenanceUseCases,

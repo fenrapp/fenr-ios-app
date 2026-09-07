@@ -1,32 +1,34 @@
 import BikeDomain
 import BLETraceDomain
 import Foundation
+import Observation
 import SettingsDomain
 import VehicleSession
 
 @MainActor
-public final class BikeDiagnosticsViewModel: ObservableObject {
-    @Published public private(set) var viewState = BikeDiagnosticsViewState()
-    @Published public private(set) var bleTraceExport: BLETraceExportViewData?
-    @Published public private(set) var isPresentationActive = false
+@Observable
+public final class BikeDiagnosticsViewModel {
+    public private(set) var viewState = BikeDiagnosticsViewState()
+    public private(set) var bleTraceExport: BLETraceExportViewData?
+    public private(set) var isPresentationActive = false
 
     private let useCases: BikeDiagnosticsUseCases
     private let bleTraceCaptureConfirmationTimeout: Duration
-    private var mappers: BikeDiagnosticsMappers
+    @ObservationIgnored private var mappers: BikeDiagnosticsMappers
     private let makeMappers: (MeasurementSystem) -> BikeDiagnosticsMappers
-    private var sessionSnapshot = VehicleSessionSnapshot()
-    private var debugLogEvents: [BikeDebugEvent] = []
-    private var bleTraceSessions: [BLETraceSessionSummary] = []
-    private var bleTraceError: String?
-    private var bleTraceRecordingError: String?
-    private var isBLETraceCaptureControlInProgress = false
-    private var observationTasks: [Task<Void, Never>] = []
-    private var actionTask: Task<Void, Never>?
-    private var bleTraceActionTask: Task<Void, Never>?
-    private var bleTraceActionGeneration: UInt64 = 0
-    private var bleTraceCaptureControlTask: Task<Void, Never>?
-    private var bleTraceCaptureControlGeneration: UInt64 = 0
-    private var pendingBLETraceCaptureExpectation: BLETraceCaptureExpectation?
+    @ObservationIgnored private var sessionSnapshot = VehicleSessionSnapshot()
+    @ObservationIgnored private var debugLogEvents: [BikeDebugEvent] = []
+    @ObservationIgnored private var bleTraceSessions: [BLETraceSessionSummary] = []
+    @ObservationIgnored private var bleTraceError: String?
+    @ObservationIgnored private var bleTraceRecordingError: String?
+    @ObservationIgnored private var isBLETraceCaptureControlInProgress = false
+    @ObservationIgnored private var observationTasks: [Task<Void, Never>] = []
+    @ObservationIgnored private var actionTask: Task<Void, Never>?
+    @ObservationIgnored private var bleTraceActionTask: Task<Void, Never>?
+    @ObservationIgnored private var bleTraceActionGeneration: UInt64 = 0
+    @ObservationIgnored private var bleTraceCaptureControlTask: Task<Void, Never>?
+    @ObservationIgnored private var bleTraceCaptureControlGeneration: UInt64 = 0
+    @ObservationIgnored private var pendingBLETraceCaptureExpectation: BLETraceCaptureExpectation?
 
     public init(
         useCases: BikeDiagnosticsUseCases,

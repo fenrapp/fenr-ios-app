@@ -1,47 +1,48 @@
 import BikeDomain
-import Combine
 import Foundation
+import Observation
 import SettingsDomain
 import VehicleSession
 
 @MainActor
-public final class PowerModeSettingsViewModel: ObservableObject {
-    @Published public private(set) var viewState = PowerModeSettingsViewState()
+@Observable
+public final class PowerModeSettingsViewModel {
+    public private(set) var viewState = PowerModeSettingsViewState()
 
     private let vehicleSession: any VehicleSessionService
     let useCases: PowerModeSettingsUseCases
     private let mapper: PowerModeSettingsViewStateMapper
-    var telemetry = BikeTelemetry()
-    var connection = BikeConnection()
-    var settings = AppSettings()
-    var pendingChanges = AppSettingsPendingChanges()
-    var nameSaveCompletionID: UUID?
-    var settingsObservationTask: Task<Void, Never>?
-    var settingsGeneration = 0
-    var profile: BikeProfile?
-    var selectedMapIndex = 0
-    private var didSelectInitialMap = false
-    private var didRequestRefresh = false
-    private var isStarted = false
-    var isRefreshing = false
-    private var refreshError: String?
-    var nameError: String?
-    var preparedBaseMapIndex: Int?
-    var preparedTractionMapIndex: Int?
-    var attemptedPreparationMapIndex: Int?
-    var isPreparingControl = false
-    var isApplyingControl = false
-    var activeAdjustmentID: PowerModeAdjustmentID?
-    var recentAdjustmentResult: PowerModeAdjustmentResult?
-    var controlMessage: String?
-    var controlError: String?
-    private var observationTask: Task<Void, Never>?
-    private var refreshTask: Task<Void, Never>?
-    var settingsSaveTask: Task<Void, Never>?
-    var controlTask: Task<Void, Never>?
-    private var refreshGeneration = 0
-    var controlGeneration = 0
-    var isCanonicalTelemetryAvailable = false
+    @ObservationIgnored var telemetry = BikeTelemetry()
+    @ObservationIgnored var connection = BikeConnection()
+    @ObservationIgnored var settings = AppSettings()
+    @ObservationIgnored var pendingChanges = AppSettingsPendingChanges()
+    @ObservationIgnored var nameSaveCompletionID: UUID?
+    @ObservationIgnored var settingsObservationTask: Task<Void, Never>?
+    @ObservationIgnored var settingsGeneration = 0
+    @ObservationIgnored var profile: BikeProfile?
+    @ObservationIgnored var selectedMapIndex = 0
+    @ObservationIgnored private var didSelectInitialMap = false
+    @ObservationIgnored private var didRequestRefresh = false
+    @ObservationIgnored private var isStarted = false
+    @ObservationIgnored var isRefreshing = false
+    @ObservationIgnored private var refreshError: String?
+    @ObservationIgnored var nameError: String?
+    @ObservationIgnored var preparedBaseMapIndex: Int?
+    @ObservationIgnored var preparedTractionMapIndex: Int?
+    @ObservationIgnored var attemptedPreparationMapIndex: Int?
+    @ObservationIgnored var isPreparingControl = false
+    @ObservationIgnored var isApplyingControl = false
+    @ObservationIgnored var activeAdjustmentID: PowerModeAdjustmentID?
+    @ObservationIgnored var recentAdjustmentResult: PowerModeAdjustmentResult?
+    @ObservationIgnored var controlMessage: String?
+    @ObservationIgnored var controlError: String?
+    @ObservationIgnored private var observationTask: Task<Void, Never>?
+    @ObservationIgnored private var refreshTask: Task<Void, Never>?
+    @ObservationIgnored var settingsSaveTask: Task<Void, Never>?
+    @ObservationIgnored var controlTask: Task<Void, Never>?
+    @ObservationIgnored private var refreshGeneration = 0
+    @ObservationIgnored var controlGeneration = 0
+    @ObservationIgnored var isCanonicalTelemetryAvailable = false
 
     public init(
         vehicleSession: any VehicleSessionService,

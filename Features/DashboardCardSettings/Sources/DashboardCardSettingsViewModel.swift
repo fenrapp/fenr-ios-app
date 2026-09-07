@@ -1,23 +1,24 @@
 import BikeDomain
-import Combine
 import Foundation
+import Observation
 import SettingsDomain
 
 @MainActor
-public final class DashboardCardSettingsViewModel: ObservableObject {
-    @Published public private(set) var viewState: DashboardCardSettingsViewState
-    @Published public private(set) var settingsSaveError: String?
+@Observable
+public final class DashboardCardSettingsViewModel {
+    public private(set) var viewState: DashboardCardSettingsViewState
+    public private(set) var settingsSaveError: String?
 
     private let useCases: DashboardCardSettingsUseCases
     private let mapper: DashboardCardSettingsViewStateMapper
     private let bikeLockCapabilityStore: any BikeLockCapabilityStateStoring
-    private var settings = AppSettings()
-    private var bikeLockCapability = BikeLockCapabilityState()
-    private var observationTask: Task<Void, Never>?
-    private var bikeLockCapabilityTask: Task<Void, Never>?
-    private var saveTask: Task<Void, Never>?
-    private var observationRequestCount = 0
-    private(set) var pendingSettings = AppSettingsPendingChanges()
+    @ObservationIgnored private var settings = AppSettings()
+    @ObservationIgnored private var bikeLockCapability = BikeLockCapabilityState()
+    @ObservationIgnored private var observationTask: Task<Void, Never>?
+    @ObservationIgnored private var bikeLockCapabilityTask: Task<Void, Never>?
+    @ObservationIgnored private var saveTask: Task<Void, Never>?
+    @ObservationIgnored private var observationRequestCount = 0
+    @ObservationIgnored private(set) var pendingSettings = AppSettingsPendingChanges()
 
     public init(
         useCases: DashboardCardSettingsUseCases,

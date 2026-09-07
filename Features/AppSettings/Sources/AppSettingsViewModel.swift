@@ -1,32 +1,33 @@
 import BikeDomain
-import Combine
 import EnvironmentDomain
 import Foundation
+import Observation
 import SettingsDomain
 
 @MainActor
-public final class AppSettingsViewModel: ObservableObject {
-    @Published public private(set) var viewState: AppSettingsViewState
-    @Published public private(set) var settingsSaveError: String?
+@Observable
+public final class AppSettingsViewModel {
+    public private(set) var viewState: AppSettingsViewState
+    public private(set) var settingsSaveError: String?
 
     private let useCases: AppSettingsUseCases
     private let mapper: AppSettingsViewStateMapper
-    private var settings = AppSettings()
-    private(set) var pendingSettings = AppSettingsPendingChanges()
-    private var locationAuthorizationStatus: LocationAuthorizationStatus = .notDetermined
-    private var profile: BikeProfile?
-    private var connection = BikeConnection()
-    private var isVerifyingPowerTier = false
-    private var powerTierVerificationMessage: LocalizedStringResource?
-    private var powerTierVerificationMessageIsError = false
-    private var observationTask: Task<Void, Never>?
-    private var settingsSaveTask: Task<Void, Never>?
-    private var locationAuthorizationTask: Task<Void, Never>?
-    private var profileTask: Task<Void, Never>?
-    private var profileSaveTask: Task<Void, Never>?
-    private var connectionTask: Task<Void, Never>?
-    private var powerTierTask: Task<Void, Never>?
-    private var activePresentationCount = 0
+    @ObservationIgnored private var settings = AppSettings()
+    @ObservationIgnored private(set) var pendingSettings = AppSettingsPendingChanges()
+    @ObservationIgnored private var locationAuthorizationStatus: LocationAuthorizationStatus = .notDetermined
+    @ObservationIgnored private var profile: BikeProfile?
+    @ObservationIgnored private var connection = BikeConnection()
+    @ObservationIgnored private var isVerifyingPowerTier = false
+    @ObservationIgnored private var powerTierVerificationMessage: LocalizedStringResource?
+    @ObservationIgnored private var powerTierVerificationMessageIsError = false
+    @ObservationIgnored private var observationTask: Task<Void, Never>?
+    @ObservationIgnored private var settingsSaveTask: Task<Void, Never>?
+    @ObservationIgnored private var locationAuthorizationTask: Task<Void, Never>?
+    @ObservationIgnored private var profileTask: Task<Void, Never>?
+    @ObservationIgnored private var profileSaveTask: Task<Void, Never>?
+    @ObservationIgnored private var connectionTask: Task<Void, Never>?
+    @ObservationIgnored private var powerTierTask: Task<Void, Never>?
+    @ObservationIgnored private var activePresentationCount = 0
 
     public init(useCases: AppSettingsUseCases, mapper: AppSettingsViewStateMapper) {
         self.useCases = useCases

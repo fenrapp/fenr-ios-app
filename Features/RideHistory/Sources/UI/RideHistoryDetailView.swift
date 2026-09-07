@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 public struct RideHistoryDetailView: View {
-    @ObservedObject private var viewModel: RideHistoryViewModel
+    private let viewModel: RideHistoryViewModel
     private let rideID: UUID
 
     public init(viewModel: RideHistoryViewModel, rideID: UUID) {

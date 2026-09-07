@@ -2,7 +2,7 @@
 import SwiftUI
 
 public struct NavigationSettingsView: View {
-    @ObservedObject private var viewModel: AppSettingsViewModel
+    private let viewModel: AppSettingsViewModel
     private let onNavigation: (AppSettingsNavigationEvent) -> Void
 
     public init(

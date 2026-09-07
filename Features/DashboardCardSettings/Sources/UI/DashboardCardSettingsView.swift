@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct DashboardCardSettingsView: View {
-    @ObservedObject private var viewModel: DashboardCardSettingsViewModel
+    private let viewModel: DashboardCardSettingsViewModel
     private let onNavigation: (DashboardCardSettingsNavigationEvent) -> Void
 
     public init(

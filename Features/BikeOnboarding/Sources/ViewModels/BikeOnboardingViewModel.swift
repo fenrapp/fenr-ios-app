@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 
 public enum BikeOnboardingBluetoothAuthorization: Sendable {
     case notDetermined
@@ -7,8 +8,9 @@ public enum BikeOnboardingBluetoothAuthorization: Sendable {
 }
 
 @MainActor
-public final class BikeOnboardingViewModel: ObservableObject {
-    @Published public private(set) var viewState: BikeOnboardingViewState
+@Observable
+public final class BikeOnboardingViewModel {
+    public private(set) var viewState: BikeOnboardingViewState
 
     private let discoveryCoordinator: BikeOnboardingDiscoveryCoordinator
     private let connectionCoordinator: BikeOnboardingConnectionCoordinator
@@ -18,9 +20,9 @@ public final class BikeOnboardingViewModel: ObservableObject {
     private let eventCoordinator: BikeOnboardingEventCoordinator
     private let eventReducer: BikeOnboardingEventReducer
     private let onCompleted: @MainActor (String) -> Void
-    private var eventTask: Task<Void, Never>?
-    private var transitionTask: Task<Void, Never>?
-    private var isObservingConnection = false
+    @ObservationIgnored private var eventTask: Task<Void, Never>?
+    @ObservationIgnored private var transitionTask: Task<Void, Never>?
+    @ObservationIgnored private var isObservingConnection = false
 
     public init(
         discoveryCoordinator: BikeOnboardingDiscoveryCoordinator,

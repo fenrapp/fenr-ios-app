@@ -2,7 +2,7 @@ import DesignSystem
 import SwiftUI
 
 public struct PowerModeSettingsView: View {
-    @ObservedObject private var viewModel: PowerModeSettingsViewModel
+    private let viewModel: PowerModeSettingsViewModel
     private let isPresentationActive: Bool
     @State private var isNameEditorPresented = false
 

@@ -1,36 +1,37 @@
-import Combine
 import Foundation
+import Observation
 import RideSession
 import RideSessionDomain
 import SettingsDomain
 
 @MainActor
-public final class RideHistoryViewModel: ObservableObject {
-    @Published public private(set) var viewState = RideHistoryViewState()
-    @Published public private(set) var detailViewState = RideHistoryDetailViewState()
+@Observable
+public final class RideHistoryViewModel {
+    public private(set) var viewState = RideHistoryViewState()
+    public private(set) var detailViewState = RideHistoryDetailViewState()
 
     private let useCases: RideHistoryUseCases
     private let session: any RideSessionService
     private let mapper: RideHistoryMapper
-    private var trips: [RideTrip] = []
-    private var detailTrip: RideTrip?
-    private var activeVIN: String?
-    private var measurementSystem: MeasurementSystem = .system
-    private var requestedHistoryKey: HistoryKey?
-    private var loadedHistoryKey: HistoryKey?
-    private var observationTask: Task<Void, Never>?
-    private var historyLoadTask: Task<Void, Never>?
-    private var historyLoadID: UUID?
-    private var detailLoadTask: Task<Void, Never>?
-    private var detailLoadID: UUID?
-    private var deleteTask: Task<Void, Never>?
-    private var deleteID: UUID?
-    private var deletingRideIDs: Set<UUID> = []
-    private var errorMessage: String?
-    private var loadErrorMessage: String?
-    private var detailLoadErrorMessage: String?
-    private var hasLoadedHistory = false
-    private var failedHistoryKey: HistoryKey?
+    @ObservationIgnored private var trips: [RideTrip] = []
+    @ObservationIgnored private var detailTrip: RideTrip?
+    @ObservationIgnored private var activeVIN: String?
+    @ObservationIgnored private var measurementSystem: MeasurementSystem = .system
+    @ObservationIgnored private var requestedHistoryKey: HistoryKey?
+    @ObservationIgnored private var loadedHistoryKey: HistoryKey?
+    @ObservationIgnored private var observationTask: Task<Void, Never>?
+    @ObservationIgnored private var historyLoadTask: Task<Void, Never>?
+    @ObservationIgnored private var historyLoadID: UUID?
+    @ObservationIgnored private var detailLoadTask: Task<Void, Never>?
+    @ObservationIgnored private var detailLoadID: UUID?
+    @ObservationIgnored private var deleteTask: Task<Void, Never>?
+    @ObservationIgnored private var deleteID: UUID?
+    @ObservationIgnored private var deletingRideIDs: Set<UUID> = []
+    @ObservationIgnored private var errorMessage: String?
+    @ObservationIgnored private var loadErrorMessage: String?
+    @ObservationIgnored private var detailLoadErrorMessage: String?
+    @ObservationIgnored private var hasLoadedHistory = false
+    @ObservationIgnored private var failedHistoryKey: HistoryKey?
 
     public init(
         useCases: RideHistoryUseCases,

@@ -2,7 +2,7 @@ import SwiftUI
 
 public struct AppSettingsScene: View {
     private let destination: AppSettingsDestination
-    @ObservedObject private var viewModel: AppSettingsViewModel
+    private let viewModel: AppSettingsViewModel
     private let bikeLockModeTitle: String?
     private let isPresentationActive: Bool
     private let onNavigation: (AppSettingsNavigationEvent) -> Void

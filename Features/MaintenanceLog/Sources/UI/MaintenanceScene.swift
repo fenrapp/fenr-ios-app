@@ -2,7 +2,7 @@ import SwiftUI
 
 public struct MaintenanceScene: View {
     private let destination: MaintenanceDestination
-    @ObservedObject private var viewModel: MaintenanceViewModel
+    private let viewModel: MaintenanceViewModel
     private let isPresentationActive: Bool
     private let onNavigation: (MaintenanceNavigationEvent) -> Void
 

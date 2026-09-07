@@ -3,7 +3,7 @@ import Foundation
 import SwiftUI
 
 public struct MaintenanceFormView: View {
-    @ObservedObject private var viewModel: MaintenanceViewModel
+    private let viewModel: MaintenanceViewModel
     private let entryID: UUID?
     private let onNavigation: (MaintenanceNavigationEvent) -> Void
     @State private var draft: MaintenanceFormDraft

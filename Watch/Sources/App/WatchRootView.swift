@@ -6,13 +6,13 @@ import WatchOnboarding
 struct WatchRootView: View {
     @StateObject private var dashboardViewModel: WatchDashboardViewModel
     @StateObject private var onboardingViewModel: WatchOnboardingViewModel
-    @StateObject private var settingsViewModel: AppSettingsViewModel
+    @State private var settingsViewModel: AppSettingsViewModel
     @StateObject private var setupController: WatchSetupController
     @StateObject private var navigationCoordinator: WatchNavigationCoordinator
 
     init(dependencies: WatchRootDependencies) {
         _dashboardViewModel = StateObject(wrappedValue: dependencies.dashboardViewModel)
-        _settingsViewModel = StateObject(wrappedValue: dependencies.settingsViewModel)
+        _settingsViewModel = State(initialValue: dependencies.settingsViewModel)
         _onboardingViewModel = StateObject(wrappedValue: dependencies.onboardingViewModel)
         _setupController = StateObject(wrappedValue: dependencies.setupController)
         _navigationCoordinator = StateObject(wrappedValue: dependencies.navigationCoordinator)
