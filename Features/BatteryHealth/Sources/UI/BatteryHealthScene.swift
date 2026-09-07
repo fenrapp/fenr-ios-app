@@ -2,7 +2,7 @@ import SwiftUI
 
 public struct BatteryHealthScene: View {
     private let destination: BatteryHealthDestination
-    @ObservedObject private var viewModel: BatteryHealthViewModel
+    private let viewModel: BatteryHealthViewModel
     private let isPresentationActive: Bool
     private let onNavigation: (BatteryHealthNavigationEvent) -> Void
 

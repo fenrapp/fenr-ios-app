@@ -10,6 +10,7 @@ actor FakeBatteryHealthRepository: BikeBatteryHealthRepository, BikeChargePowerC
     private var monitoringStops = 0
     private var delaysNextMonitoringStart = false
     private var prepareCount = 0
+    private var failsNextPreparation = false
     private var writtenWatts: [Int] = []
     private var writtenTargetPercents: [Int] = []
 
@@ -37,6 +38,10 @@ actor FakeBatteryHealthRepository: BikeBatteryHealthRepository, BikeChargePowerC
         chargingStatus: BikeChargingStatus
     ) async throws -> BikeChargePowerControlSnapshot {
         prepareCount += 1
+        if failsNextPreparation {
+            failsNextPreparation = false
+            throw PreparationFailure.requested
+        }
         return chargePowerSnapshot(
             watts: Int(chargingStatus.maximumPowerWatts.rounded()),
             writeHex: "01 04 01 50 00 E8 03 E8 03 E4 0C E4 0C"
@@ -70,6 +75,7 @@ actor FakeBatteryHealthRepository: BikeBatteryHealthRepository, BikeChargePowerC
     func monitoringStopCount() -> Int { monitoringStops }
     func delayNextMonitoringStart() { delaysNextMonitoringStart = true }
     func chargePowerPrepareCount() -> Int { prepareCount }
+    func failNextChargePreparation() { failsNextPreparation = true }
     func chargePowerWrites() -> [Int] { writtenWatts }
     func chargeTargetWrites() -> [Int] { writtenTargetPercents }
 
@@ -98,5 +104,9 @@ actor FakeBatteryHealthRepository: BikeBatteryHealthRepository, BikeChargePowerC
 
     private enum Constants {
         static let delayedMonitoringStartDuration: Duration = .milliseconds(100)
+    }
+
+    private enum PreparationFailure: Error {
+        case requested
     }
 }

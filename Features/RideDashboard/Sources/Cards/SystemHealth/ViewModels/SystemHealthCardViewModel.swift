@@ -1,24 +1,25 @@
 import BikeDomain
-import Combine
 import Foundation
+import Observation
 import VehicleSession
 
 @MainActor
-public final class SystemHealthCardViewModel: ObservableObject {
-    @Published public private(set) var viewState = DashboardSystemHealthViewData()
+@Observable
+public final class SystemHealthCardViewModel {
+    public private(set) var viewState = DashboardSystemHealthViewData()
 
     private let vehicleSession: any VehicleSessionService
     private let mapper: SystemHealthCardMapper
     private let consumerID = UUID()
-    private var snapshot = VehicleSessionSnapshot()
-    private var observationTask: Task<Void, Never>?
-    private var monitoringRequestTask: Task<Void, Never>?
-    private var renderTask: Task<Void, Never>?
-    private var isVisible = false
-    private var isRequestingBatteryHealth = false
-    private var cachedVehicleIdentity: String?
-    private var cachedBatteryHealth = BikeBatteryHealth()
-    private var cachedInverterTemperatures: [Double?] = []
+    @ObservationIgnored private var snapshot = VehicleSessionSnapshot()
+    @ObservationIgnored private var observationTask: Task<Void, Never>?
+    @ObservationIgnored private var monitoringRequestTask: Task<Void, Never>?
+    @ObservationIgnored private var renderTask: Task<Void, Never>?
+    @ObservationIgnored private var isVisible = false
+    @ObservationIgnored private var isRequestingBatteryHealth = false
+    @ObservationIgnored private var cachedVehicleIdentity: String?
+    @ObservationIgnored private var cachedBatteryHealth = BikeBatteryHealth()
+    @ObservationIgnored private var cachedInverterTemperatures: [Double?] = []
 
     public init(
         vehicleSession: any VehicleSessionService,

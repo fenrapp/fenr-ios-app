@@ -1,22 +1,23 @@
-import Combine
+import Observation
 import SettingsDomain
 
 @MainActor
-public final class DashboardDeviceBatteryViewModel: ObservableObject {
-    @Published public private(set) var viewState = DashboardDeviceBatteryViewData(canChangeDisplayMode: false)
+@Observable
+public final class DashboardDeviceBatteryViewModel {
+    public private(set) var viewState = DashboardDeviceBatteryViewData(canChangeDisplayMode: false)
 
     private let monitor: any DashboardDeviceBatteryMonitoring
     private let observeSettings: ObserveAppSettingsUseCase
     private let updateSettings: UpdateAppSettingsUseCase
     private let mapper: DashboardDeviceBatteryMapper
-    private var snapshot = DashboardDeviceBatterySnapshot(level: nil, isCharging: false)
-    private var pendingChanges = AppSettingsPendingChanges()
-    private var settingsError: String?
-    private var observationTask: Task<Void, Never>?
-    private var settingsObservationTask: Task<Void, Never>?
-    private var settingsSaveTask: Task<Void, Never>?
-    private var isMonitoring = false
-    private var generation = 0
+    @ObservationIgnored private var snapshot = DashboardDeviceBatterySnapshot(level: nil, isCharging: false)
+    @ObservationIgnored private var pendingChanges = AppSettingsPendingChanges()
+    @ObservationIgnored private var settingsError: String?
+    @ObservationIgnored private var observationTask: Task<Void, Never>?
+    @ObservationIgnored private var settingsObservationTask: Task<Void, Never>?
+    @ObservationIgnored private var settingsSaveTask: Task<Void, Never>?
+    @ObservationIgnored private var isMonitoring = false
+    @ObservationIgnored private var generation = 0
 
     public init(
         monitor: any DashboardDeviceBatteryMonitoring,

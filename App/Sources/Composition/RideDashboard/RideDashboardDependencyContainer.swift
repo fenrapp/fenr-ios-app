@@ -14,15 +14,12 @@ struct RideDashboardDependencyContainer {
     func makeFeature(
         dependencies: RideDashboardFeatureDependencies
     ) -> RideDashboardFeatureModel {
-        let tripViewModels = CurrentTripCardDependencyContainer.makeViewModels(
-            dependencies: .init(
-                rideTripRepository: dependencies.rideTripRepository,
-                rideSession: dependencies.rideSession
-            )
-        )
+        let cards = makeCards(dependencies: dependencies)
+        let lifecycle = RideDashboardCardLifecycleController(dependencies: cards)
         return RideDashboardFeatureModel(
             dashboardViewModel: makeViewModel(
-                vehicleSession: dependencies.vehicleSession
+                vehicleSession: dependencies.vehicleSession,
+                onContinuityChanged: lifecycle.receiveContinuity
             ),
             deviceBatteryViewModel: DashboardDeviceBatteryViewModel(
                 monitor: UIKitDashboardDeviceBatteryMonitor(
@@ -33,24 +30,46 @@ struct RideDashboardDependencyContainer {
                 updateSettings: UpdateAppSettingsUseCase(repository: dependencies.settingsRepository),
                 mapper: DashboardDeviceBatteryMapper()
             ),
-            currentTripViewModel: tripViewModels.currentTrip,
-            tripStatisticsViewModel: tripViewModels.statistics,
-            efficiencyViewModel: tripViewModels.efficiency,
-            rangeViewModel: tripViewModels.range,
-            systemHealthViewModel: SystemHealthCardViewModel(
+            currentTripViewModel: cards.currentTrip,
+            tripStatisticsViewModel: cards.statistics,
+            efficiencyViewModel: cards.efficiency,
+            rangeViewModel: cards.range,
+            systemHealthViewModel: cards.systemHealth,
+            dynamicsViewModel: cards.dynamics,
+            chargingViewModel: cards.charging,
+            bikeLockViewModel: cards.bikeLock,
+            cardLifecycle: lifecycle
+        )
+    }
+
+    private func makeCards(
+        dependencies: RideDashboardFeatureDependencies
+    ) -> RideDashboardCardLifecycleDependencies {
+        let tripViewModels = CurrentTripCardDependencyContainer.makeViewModels(
+            dependencies: .init(
+                rideTripRepository: dependencies.rideTripRepository,
+                rideSession: dependencies.rideSession
+            )
+        )
+        return RideDashboardCardLifecycleDependencies(
+            currentTrip: tripViewModels.currentTrip,
+            statistics: tripViewModels.statistics,
+            efficiency: tripViewModels.efficiency,
+            range: tripViewModels.range,
+            systemHealth: SystemHealthCardViewModel(
                 vehicleSession: dependencies.vehicleSession,
                 mapper: RideDashboardMapperFactory.makeSystemHealthMapper(locale: .autoupdatingCurrent)
             ),
-            dynamicsViewModel: RideDynamicsCardViewModel(
+            dynamics: RideDynamicsCardViewModel(
                 rideSession: dependencies.rideSession,
                 vehicleSession: dependencies.vehicleSession,
                 mapper: RideDashboardMapperFactory.makeRideDynamicsMapper(locale: .autoupdatingCurrent)
             ),
-            chargingViewModel: ChargingDashboardDependencyContainer.makeViewModel(
+            charging: ChargingDashboardDependencyContainer.makeViewModel(
                 vehicleSession: dependencies.vehicleSession,
                 chargeControl: dependencies.chargeControl
             ),
-            bikeLockViewModel: BikeLockCardViewModel(
+            bikeLock: BikeLockCardViewModel(
                 operationService: BikeLockCardOperationService(
                     readFirmwareCompatibility: ReadBikeLockFirmwareCompatibilityUseCase(
                         repository: dependencies.bikeRepository
@@ -74,7 +93,8 @@ struct RideDashboardDependencyContainer {
     }
 
     private func makeViewModel(
-        vehicleSession: any VehicleSessionService
+        vehicleSession: any VehicleSessionService,
+        onContinuityChanged: @escaping @MainActor (RideDashboardContinuityPhase) -> Void
     ) -> RideDashboardViewModel {
         RideDashboardViewModel(
             mapper: RideDashboardMapperFactory.makeRideMapper(locale: .autoupdatingCurrent),
@@ -84,7 +104,8 @@ struct RideDashboardDependencyContainer {
             continuityPolicy: RideDashboardContinuityPolicy(),
             initialConnectionStabilityPeriod:
                 FENRRuntimeConstants.Telemetry.connectionStabilityPeriod,
-            reconnectionNoticeDelay: FENRRuntimeConstants.RideDashboard.reconnectionNoticeDelay
+            reconnectionNoticeDelay: FENRRuntimeConstants.RideDashboard.reconnectionNoticeDelay,
+            onContinuityChanged: onContinuityChanged
         )
     }
 }

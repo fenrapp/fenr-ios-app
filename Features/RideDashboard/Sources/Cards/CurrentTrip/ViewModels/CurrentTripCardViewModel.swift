@@ -1,18 +1,19 @@
-import Combine
 import Foundation
+import Observation
 import RideSession
 import RideSessionDomain
 
 @MainActor
-public final class CurrentTripCardViewModel: ObservableObject {
-    @Published public private(set) var viewState = DashboardCurrentTripViewData()
+@Observable
+public final class CurrentTripCardViewModel {
+    public private(set) var viewState = DashboardCurrentTripViewData()
 
     private let session: any RideSessionService
     private let mapper: CurrentTripCardMapper
-    private var snapshot: RideSessionSnapshot
-    private var sessionTask: Task<Void, Never>?
-    private var commandTask: Task<Void, Never>?
-    private var isVisible = false
+    @ObservationIgnored private var snapshot: RideSessionSnapshot
+    @ObservationIgnored private var sessionTask: Task<Void, Never>?
+    @ObservationIgnored private var commandTask: Task<Void, Never>?
+    @ObservationIgnored private var isVisible = false
 
     public init(
         session: any RideSessionService,

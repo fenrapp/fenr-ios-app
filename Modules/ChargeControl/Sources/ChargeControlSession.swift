@@ -1,10 +1,13 @@
 import BikeDomain
-import Combine
 import Foundation
+import Observation
 
 @MainActor
-public final class ChargeControlSession: ObservableObject {
-    @Published public private(set) var state: ChargeControlState
+@Observable
+public final class ChargeControlSession {
+    public private(set) var state: ChargeControlState {
+        didSet { stateEmitter.send(state) }
+    }
 
     public var logLines: [String] { logger.lines }
 
@@ -12,22 +15,26 @@ public final class ChargeControlSession: ObservableObject {
     private var logger: ChargeControlLogStore
     private let stateUpdater: ChargeControlStateUpdater
     private let taskScheduler: ChargeControlTaskScheduler
-    private var health = BikeBatteryHealth()
-    private var operations = ChargeControlOperationState()
-    private var preparationTask: Task<Void, Never>?
-    private var queuedWriteTask: Task<Void, Never>?
+    private let stateEmitter: ChargeControlStateEmitter
+    @ObservationIgnored private var health = BikeBatteryHealth()
+    @ObservationIgnored private var operations = ChargeControlOperationState()
+    @ObservationIgnored private var preparationTask: Task<Void, Never>?
+    @ObservationIgnored private var queuedWriteTask: Task<Void, Never>?
+    @ObservationIgnored private var queuedWriteTaskID: UUID?
 
     public init(
         useCases: ChargeControlUseCases,
         logger: ChargeControlLogStore,
         stateUpdater: ChargeControlStateUpdater,
         taskScheduler: ChargeControlTaskScheduler,
+        stateEmitter: ChargeControlStateEmitter,
         initialState: ChargeControlState = .init()
     ) {
         self.useCases = useCases
         self.logger = logger
         self.stateUpdater = stateUpdater
         self.taskScheduler = taskScheduler
+        self.stateEmitter = stateEmitter
         state = initialState
     }
 
@@ -232,23 +239,13 @@ public final class ChargeControlSession: ObservableObject {
         }
     }
 
-    private func drainQueuedWriteIfNeeded() {
-        guard let command = operations.nextQueuedCommand() else { return }
-        let generation = operations.connectionGeneration
-        queuedWriteTask?.cancel()
-        queuedWriteTask = Task { @MainActor [weak self] in
-            guard let self, operations.belongsToCurrentConnection(generation) else { return }
-            await write(command)
-            queuedWriteTask = nil
-        }
-    }
-
     private func resetAfterDisconnect() {
         guard state.isVisible || operations.hasAttemptedPreparation || operations.hasBlockingOperation else { return }
         preparationTask?.cancel()
         preparationTask = nil
         queuedWriteTask?.cancel()
         queuedWriteTask = nil
+        queuedWriteTaskID = nil
         taskScheduler.cancelAll()
         operations.reset()
         state = ChargeControlState()
@@ -278,6 +275,25 @@ public final class ChargeControlSession: ObservableObject {
 }
 
 extension ChargeControlSession {
+    private func drainQueuedWriteIfNeeded() {
+        guard let command = operations.nextQueuedCommand() else { return }
+        let generation = operations.connectionGeneration
+        let taskID = UUID()
+        queuedWriteTask?.cancel()
+        queuedWriteTaskID = taskID
+        queuedWriteTask = Task { @MainActor [weak self] in
+            guard let self, operations.belongsToCurrentConnection(generation) else { return }
+            await write(command)
+            guard queuedWriteTaskID == taskID else { return }
+            queuedWriteTask = nil
+            queuedWriteTaskID = nil
+        }
+    }
+
+    public func observeState() -> AsyncStream<ChargeControlState> {
+        stateEmitter.stream(replaying: state)
+    }
+
     public func stopAndWait() async {
         let pendingPreparation = preparationTask
         let pendingWrite = queuedWriteTask

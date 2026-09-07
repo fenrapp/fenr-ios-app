@@ -2,7 +2,8 @@ import SwiftUI
 
 @MainActor
 public struct RideDashboardScene: View {
-    @StateObject private var feature: RideDashboardFeatureModel
+    @State private var feature: RideDashboardFeatureModel?
+    private let factory: any RideDashboardFeatureBuilding
     private let onNavigation: (RideDashboardNavigationEvent) -> Void
     private let onRetryConnection: () -> Void
     private let isNavigationActive: Bool
@@ -17,7 +18,7 @@ public struct RideDashboardScene: View {
         isPresentationActive: Bool = true,
         bottomLeadingAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
-        _feature = StateObject(wrappedValue: factory.makeFeature())
+        self.factory = factory
         self.onNavigation = onNavigation
         self.onRetryConnection = onRetryConnection
         self.isNavigationActive = isNavigationActive
@@ -26,14 +27,24 @@ public struct RideDashboardScene: View {
     }
 
     public var body: some View {
-        RideDashboardView(
-            feature: feature,
-            onSettings: { onNavigation(.openSettings) },
-            onNavigation: { onNavigation(.openRideNavigation) },
-            isNavigationActive: isNavigationActive,
-            isPresentationActive: isPresentationActive,
-            onRetryConnection: onRetryConnection,
-            bottomLeadingAccessory: bottomLeadingAccessory
-        )
+        Group {
+            if let feature {
+                RideDashboardView(
+                    feature: feature,
+                    onSettings: { onNavigation(.openSettings) },
+                    onNavigation: { onNavigation(.openRideNavigation) },
+                    isNavigationActive: isNavigationActive,
+                    isPresentationActive: isPresentationActive,
+                    onRetryConnection: onRetryConnection,
+                    bottomLeadingAccessory: bottomLeadingAccessory
+                )
+            } else {
+                ProgressView()
+            }
+        }
+        .task {
+            guard !Task.isCancelled else { return }
+            if feature == nil { feature = factory.makeFeature() }
+        }
     }
 }

@@ -1,29 +1,30 @@
-import Combine
 import Foundation
+import Observation
 import RideSession
 import RideSessionDomain
 
 @MainActor
-public final class RangeCardViewModel: ObservableObject {
-    @Published public private(set) var viewState = DashboardRangeViewData()
-    @Published public private(set) var summary: DashboardRangeViewData.Summary?
+@Observable
+public final class RangeCardViewModel {
+    public private(set) var viewState = DashboardRangeViewData()
+    public private(set) var summary: DashboardRangeViewData.Summary?
 
     private let useCases: RangeCardUseCases
     private let mapper: RangeCardMapper
     private let session: any RideSessionService
-    private var snapshot = RideSessionSnapshot(
+    @ObservationIgnored private var snapshot = RideSessionSnapshot(
         vehicleIdentity: .temporary(UUID()),
         isCanonicalTelemetryAvailable: false
     )
-    private var historicalTrips: [RideTrip] = []
-    private var loadedKey: DashboardRideHistoryKey?
-    private var failedKey: DashboardRideHistoryKey?
-    private var loadGeneration = 0
-    private var isStarted = false
-    private var isVisible = false
-    private var historyIsLoading = false
-    private var sessionTask: Task<Void, Never>?
-    private var loadTask: Task<Void, Never>?
+    @ObservationIgnored private var historicalTrips: [RideTrip] = []
+    @ObservationIgnored private var loadedKey: DashboardRideHistoryKey?
+    @ObservationIgnored private var failedKey: DashboardRideHistoryKey?
+    @ObservationIgnored private var loadGeneration = 0
+    @ObservationIgnored private var isStarted = false
+    @ObservationIgnored private var isVisible = false
+    @ObservationIgnored private var historyIsLoading = false
+    @ObservationIgnored private var sessionTask: Task<Void, Never>?
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
 
     public init(
         useCases: RangeCardUseCases,

@@ -1,28 +1,29 @@
-import Combine
 import Foundation
+import Observation
 import RideSession
 import RideSessionDomain
 
 @MainActor
-public final class EfficiencyCardViewModel: ObservableObject {
-    @Published public private(set) var viewState = DashboardEfficiencyViewData()
+@Observable
+public final class EfficiencyCardViewModel {
+    public private(set) var viewState = DashboardEfficiencyViewData()
 
     private let useCases: EfficiencyCardUseCases
     private let mapper: EfficiencyCardMapper
     private let session: any RideSessionService
-    private var snapshot = RideSessionSnapshot(
+    @ObservationIgnored private var snapshot = RideSessionSnapshot(
         vehicleIdentity: .temporary(UUID()),
         isCanonicalTelemetryAvailable: false
     )
-    private var trendTrips: [RideTrip] = []
-    private var selectedPage = EfficiencyDashboardPage.live
-    private var loadedKey: DashboardRideHistoryKey?
-    private var failedKey: DashboardRideHistoryKey?
-    private var loadGeneration = 0
-    private var isVisible = false
-    private var trendIsLoading = false
-    private var sessionTask: Task<Void, Never>?
-    private var loadTask: Task<Void, Never>?
+    @ObservationIgnored private var trendTrips: [RideTrip] = []
+    @ObservationIgnored private var selectedPage = EfficiencyDashboardPage.live
+    @ObservationIgnored private var loadedKey: DashboardRideHistoryKey?
+    @ObservationIgnored private var failedKey: DashboardRideHistoryKey?
+    @ObservationIgnored private var loadGeneration = 0
+    @ObservationIgnored private var isVisible = false
+    @ObservationIgnored private var trendIsLoading = false
+    @ObservationIgnored private var sessionTask: Task<Void, Never>?
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
 
     public init(
         useCases: EfficiencyCardUseCases,

@@ -104,7 +104,8 @@ struct ChargingDashboardViewModelTests {
             ),
             logger: ChargeControlLogStore(isRecording: { true }),
             stateUpdater: ChargeControlStateUpdater(normalizer: ChargeControlNormalizer()),
-            taskScheduler: ChargeControlTaskScheduler()
+            taskScheduler: ChargeControlTaskScheduler(),
+            stateEmitter: ChargeControlStateEmitter()
         )
     }
 

@@ -10,7 +10,10 @@ import VehicleSession
 #if DEBUG
 @MainActor
 enum RideDashboardPreviewFactory {
-    static func makeViewModel(state: RideDashboardViewState) -> RideDashboardViewModel {
+    static func makeViewModel(
+        state: RideDashboardViewState,
+        onContinuityChanged: @escaping @MainActor (RideDashboardContinuityPhase) -> Void = { _ in }
+    ) -> RideDashboardViewModel {
         let viewModel = RideDashboardViewModel(
             mapper: RideDashboardMapperFactory.makeRideMapper(locale: .autoupdatingCurrent),
             cardLayoutMapper: DashboardCardLayoutMapper(),
@@ -18,7 +21,8 @@ enum RideDashboardPreviewFactory {
             timing: .live,
             continuityPolicy: RideDashboardContinuityPolicy(),
             initialConnectionStabilityPeriod: .zero,
-            reconnectionNoticeDelay: FENRRuntimeConstants.RideDashboard.reconnectionNoticeDelay
+            reconnectionNoticeDelay: FENRRuntimeConstants.RideDashboard.reconnectionNoticeDelay,
+            onContinuityChanged: onContinuityChanged
         )
         viewModel.setPreviewState(state)
         return viewModel
@@ -43,7 +47,8 @@ enum ChargingDashboardPreviewFactory {
                 ),
                 logger: ChargeControlLogStore(isRecording: { true }),
                 stateUpdater: ChargeControlStateUpdater(normalizer: ChargeControlNormalizer()),
-                taskScheduler: ChargeControlTaskScheduler()
+                taskScheduler: ChargeControlTaskScheduler(),
+                stateEmitter: ChargeControlStateEmitter()
             ),
             mapper: makeMapper(AppSettings(), nil),
             makeMapper: makeMapper

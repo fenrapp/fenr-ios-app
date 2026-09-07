@@ -1,7 +1,5 @@
-import Combine
-
 @MainActor
-public final class RideDashboardFeatureModel: ObservableObject {
+public final class RideDashboardFeatureModel {
     let dashboardViewModel: RideDashboardViewModel
     let deviceBatteryViewModel: DashboardDeviceBatteryViewModel
     let currentTripViewModel: CurrentTripCardViewModel
@@ -14,9 +12,7 @@ public final class RideDashboardFeatureModel: ObservableObject {
     let bikeLockViewModel: BikeLockCardViewModel
     private var isStarted = false
     private var isPresentationActive = false
-    private var continuityObservation: AnyCancellable?
-    private var latestCenterMode: RideDashboardViewState.CenterMode?
-    private var latestSelection: DashboardCardSelectionState?
+    private let cardLifecycle: RideDashboardCardLifecycleController
 
     public init(
         dashboardViewModel: RideDashboardViewModel,
@@ -28,7 +24,8 @@ public final class RideDashboardFeatureModel: ObservableObject {
         systemHealthViewModel: SystemHealthCardViewModel,
         dynamicsViewModel: RideDynamicsCardViewModel,
         chargingViewModel: ChargingDashboardViewModel,
-        bikeLockViewModel: BikeLockCardViewModel
+        bikeLockViewModel: BikeLockCardViewModel,
+        cardLifecycle: RideDashboardCardLifecycleController
     ) {
         self.dashboardViewModel = dashboardViewModel
         self.deviceBatteryViewModel = deviceBatteryViewModel
@@ -40,17 +37,13 @@ public final class RideDashboardFeatureModel: ObservableObject {
         self.dynamicsViewModel = dynamicsViewModel
         self.chargingViewModel = chargingViewModel
         self.bikeLockViewModel = bikeLockViewModel
+        self.cardLifecycle = cardLifecycle
     }
 
     func start() {
         guard !isStarted else { return }
         isStarted = true
-        continuityObservation = dashboardViewModel.$viewState
-            .map(\.continuityPhase)
-            .removeDuplicates()
-            .sink { [weak self] phase in
-                self?.applyCardLifecycles(for: phase)
-            }
+        cardLifecycle.receiveContinuity(dashboardViewModel.viewState.continuityPhase)
     }
 
     func setPresentationActive(_ isActive: Bool) {
@@ -69,14 +62,12 @@ public final class RideDashboardFeatureModel: ObservableObject {
     func invalidateSession() {
         setPresentationActive(false)
         dashboardViewModel.invalidateSession()
-        continuityObservation?.cancel()
-        continuityObservation = nil
-        latestCenterMode = nil
-        latestSelection = nil
+        cardLifecycle.invalidate()
         isStarted = false
     }
 
     private func resumePresentation() {
+        cardLifecycle.setPresentationActive(true)
         dashboardViewModel.startObserving()
         deviceBatteryViewModel.start()
     }
@@ -84,88 +75,13 @@ public final class RideDashboardFeatureModel: ObservableObject {
     private func pausePresentation() {
         dashboardViewModel.pausePresentation()
         deviceBatteryViewModel.stop()
-        chargingViewModel.suspend()
-        currentTripViewModel.setIsVisible(false)
-        tripStatisticsViewModel.pause()
-        efficiencyViewModel.pause()
-        rangeViewModel.pause()
-        systemHealthViewModel.setIsVisible(false)
-        dynamicsViewModel.setIsVisible(false)
-        bikeLockViewModel.suspend()
+        cardLifecycle.setPresentationActive(false)
     }
 
     func synchronizeCardLifecycles(
         centerMode: RideDashboardViewState.CenterMode,
         selection: DashboardCardSelectionState
     ) {
-        latestCenterMode = centerMode
-        latestSelection = selection
-        applyCardLifecycles(for: dashboardViewModel.viewState.continuityPhase)
-    }
-
-    private func applyCardLifecycles(for phase: RideDashboardContinuityPhase) {
-        guard isPresentationActive else { return }
-        switch phase {
-        case .live:
-            guard let latestCenterMode, let latestSelection else { return }
-            rangeViewModel.start()
-            bikeLockViewModel.start()
-            synchronizeLiveCardLifecycles(
-                centerMode: latestCenterMode,
-                selection: latestSelection
-            )
-        case .recovering:
-            pauseRecoverySensitiveCards()
-            guard let latestCenterMode, let latestSelection else {
-                systemHealthViewModel.setIsVisible(false)
-                return
-            }
-            systemHealthViewModel.setIsVisible(
-                latestSelection.isSystemHealthVisible(in: latestCenterMode)
-            )
-        case .cold, .terminal:
-            pauseAllCards()
-        }
-    }
-
-    private func synchronizeLiveCardLifecycles(
-        centerMode: RideDashboardViewState.CenterMode,
-        selection: DashboardCardSelectionState
-    ) {
-        if centerMode == .charging {
-            chargingViewModel.start()
-        } else {
-            chargingViewModel.stop()
-        }
-
-        let isCurrentTripVisible = selection.isCurrentTripVisible(in: centerMode)
-        currentTripViewModel.setIsVisible(
-            isCurrentTripVisible && selection.currentTripPage == .current
-        )
-        tripStatisticsViewModel.setIsVisible(
-            isCurrentTripVisible && selection.currentTripPage == .statistics
-        )
-        efficiencyViewModel.setIsVisible(
-            selection.isEfficiencyVisible(in: centerMode),
-            page: selection.efficiencyPage
-        )
-        rangeViewModel.setIsVisible(selection.isRangeVisible(in: centerMode))
-        systemHealthViewModel.setIsVisible(selection.isSystemHealthVisible(in: centerMode))
-        dynamicsViewModel.setIsVisible(selection.isDynamicsVisible(in: centerMode))
-    }
-
-    private func pauseRecoverySensitiveCards() {
-        currentTripViewModel.setIsVisible(false)
-        tripStatisticsViewModel.pause()
-        efficiencyViewModel.pause()
-        rangeViewModel.pause()
-        dynamicsViewModel.setIsVisible(false)
-    }
-
-    private func pauseAllCards() {
-        chargingViewModel.suspend()
-        pauseRecoverySensitiveCards()
-        systemHealthViewModel.setIsVisible(false)
-        bikeLockViewModel.suspend()
+        cardLifecycle.synchronize(centerMode: centerMode, selection: selection)
     }
 }

@@ -1,23 +1,24 @@
-import Combine
 import Foundation
+import Observation
 import RideSession
 import VehicleSession
 
 @MainActor
-public final class RideDynamicsCardViewModel: ObservableObject {
-    @Published public private(set) var viewState = DashboardRideDynamicsViewData()
+@Observable
+public final class RideDynamicsCardViewModel {
+    public private(set) var viewState = DashboardRideDynamicsViewData()
 
     private let rideSession: any RideSessionService
     private let vehicleSession: any VehicleSessionService
     private let mapper: RideDynamicsCardMapper
     private let locationConsumerID = UUID()
-    private var observationTask: Task<Void, Never>?
-    private var locationRequestTask: Task<Void, Never>?
-    private var calibrationTask: Task<Void, Never>?
-    private var isVisible = false
-    private var isRequestingLocation = false
-    private var isCanonicalTelemetryAvailable = false
-    private var snapshot = RideSessionSnapshot(
+    @ObservationIgnored private var observationTask: Task<Void, Never>?
+    @ObservationIgnored private var locationRequestTask: Task<Void, Never>?
+    @ObservationIgnored private var calibrationTask: Task<Void, Never>?
+    @ObservationIgnored private var isVisible = false
+    @ObservationIgnored private var isRequestingLocation = false
+    @ObservationIgnored private var isCanonicalTelemetryAvailable = false
+    @ObservationIgnored private var snapshot = RideSessionSnapshot(
         vehicleIdentity: .temporary(UUID()),
         isCanonicalTelemetryAvailable: false
     )

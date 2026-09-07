@@ -1,11 +1,12 @@
-import Combine
+import Observation
 import RideSession
 import RideSessionDomain
 import SettingsDomain
 
 @MainActor
-public final class TripStatisticsCardViewModel: ObservableObject {
-    @Published public private(set) var viewState = DashboardTripStatisticsViewData(
+@Observable
+public final class TripStatisticsCardViewModel {
+    public private(set) var viewState = DashboardTripStatisticsViewData(
         showsStatistics: false, isLoading: true,
         accessibilityLabel: rideDashboardLocalized(.rideDashboardTripStatisticsLoading)
     )
@@ -13,16 +14,16 @@ public final class TripStatisticsCardViewModel: ObservableObject {
     private let useCases: TripStatisticsCardUseCases
     private let mapper: TripStatisticsCardMapper
     private let session: any RideSessionService
-    private var measurementSystem = MeasurementSystem.metric
-    private var statistics = RideTripStatistics()
-    private var loadTask: Task<Void, Never>?
-    private var sessionTask: Task<Void, Never>?
-    private var activeVIN: String?
-    private var requestedRevision = 0
-    private var loadedKey: DashboardRideHistoryKey?
-    private var failedKey: DashboardRideHistoryKey?
-    private var loadGeneration = 0
-    private var isVisible = false
+    @ObservationIgnored private var measurementSystem = MeasurementSystem.metric
+    @ObservationIgnored private var statistics = RideTripStatistics()
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
+    @ObservationIgnored private var sessionTask: Task<Void, Never>?
+    @ObservationIgnored private var activeVIN: String?
+    @ObservationIgnored private var requestedRevision = 0
+    @ObservationIgnored private var loadedKey: DashboardRideHistoryKey?
+    @ObservationIgnored private var failedKey: DashboardRideHistoryKey?
+    @ObservationIgnored private var loadGeneration = 0
+    @ObservationIgnored private var isVisible = false
 
     public init(
         useCases: TripStatisticsCardUseCases,

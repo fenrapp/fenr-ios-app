@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct BatteryHealthView: View {
-    @ObservedObject private var viewModel: BatteryHealthViewModel
+    private let viewModel: BatteryHealthViewModel
 
     public init(viewModel: BatteryHealthViewModel) {
         self.viewModel = viewModel

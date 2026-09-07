@@ -1,25 +1,27 @@
 import BikeDomain
 import ChargeControl
-import Combine
 import Foundation
+import Observation
 import SettingsDomain
 import VehicleSession
 
 @MainActor
-public final class ChargingDashboardViewModel: ObservableObject {
-    @Published public private(set) var viewState = ChargingDashboardViewState()
+@Observable
+public final class ChargingDashboardViewModel {
+    public private(set) var viewState = ChargingDashboardViewState()
 
     private let vehicleSession: any VehicleSessionService
     private let chargeControl: ChargeControlSession
     private let makeMapper: @Sendable (AppSettings, String?) -> ChargingDashboardMapper
-    private var mapper: ChargingDashboardMapper
-    private var snapshot = VehicleSessionSnapshot()
-    private var observationTask: Task<Void, Never>?
+    @ObservationIgnored private var mapper: ChargingDashboardMapper
+    @ObservationIgnored private var snapshot = VehicleSessionSnapshot()
+    @ObservationIgnored private var observationTask: Task<Void, Never>?
     private let batteryHealthConsumerID = UUID()
-    private var isRequestingBatteryHealth = false
-    private var batteryHealthRequirementTask: Task<Void, Never>?
-    private var chargeControlCancellable: AnyCancellable?
-    private var hasCanonicalTelemetry = false
+    @ObservationIgnored private var isRequestingBatteryHealth = false
+    @ObservationIgnored private var batteryHealthRequirementTask: Task<Void, Never>?
+    @ObservationIgnored private var chargeControlObservationTask: Task<Void, Never>?
+    @ObservationIgnored private var observationGeneration: UInt = 0
+    @ObservationIgnored private var hasCanonicalTelemetry = false
 
     public init(
         vehicleSession: any VehicleSessionService,
@@ -31,13 +33,11 @@ public final class ChargingDashboardViewModel: ObservableObject {
         self.chargeControl = chargeControl
         self.mapper = mapper
         self.makeMapper = makeMapper
-        chargeControlCancellable = chargeControl.$state
-            .dropFirst()
-            .sink { [weak self] _ in self?.render() }
     }
 
     deinit {
         observationTask?.cancel()
+        chargeControlObservationTask?.cancel()
         guard isRequestingBatteryHealth else { return }
         let previousRequirement = batteryHealthRequirementTask
         let vehicleSession = vehicleSession
@@ -50,6 +50,15 @@ public final class ChargingDashboardViewModel: ObservableObject {
 
     func start() {
         guard observationTask == nil else { return }
+        observationGeneration &+= 1
+        let generation = observationGeneration
+        let stateStream = chargeControl.observeState()
+        chargeControlObservationTask = Task { [weak self] in
+            for await _ in stateStream {
+                guard !Task.isCancelled, let self, observationGeneration == generation else { return }
+                render()
+            }
+        }
         let vehicleSession = vehicleSession
         observationTask = Task { [weak self] in
             let stream = await vehicleSession.observe()
@@ -67,6 +76,9 @@ public final class ChargingDashboardViewModel: ObservableObject {
     }
 
     func suspend() {
+        observationGeneration &+= 1
+        chargeControlObservationTask?.cancel()
+        chargeControlObservationTask = nil
         observationTask?.cancel()
         observationTask = nil
         setBatteryHealthRequired(false)

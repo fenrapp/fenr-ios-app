@@ -1,33 +1,34 @@
 import BikeDomain
-import Combine
 import Foundation
+import Observation
 import SettingsDomain
 import VehicleSession
 @MainActor
-public final class BikeLockCardViewModel: ObservableObject {
-    @Published public internal(set) var viewState = BikeLockCardViewState()
+@Observable
+public final class BikeLockCardViewModel {
+    public internal(set) var viewState = BikeLockCardViewState()
     public let securityOptions: [BikeLockSecurityOptionViewData]
     let operationService: BikeLockCardOperationService
     let vehicleSession: any VehicleSessionService
     let capabilityStore: any BikeLockCapabilityStateStoring
     let mapper: BikeLockCardViewStateMapper
     let vehicleContextMapper: BikeLockCardVehicleContextMapper
-    var observationTask: Task<Void, Never>?
-    var compatibilityTask: Task<Void, Never>?
-    var operationTask: Task<Void, Never>?
-    var vehicleIdentifier: String?
-    var settings = BikeLockSettings()
-    var isLocked = false
-    var hasConfirmedLockState = false
-    var firmware: String?
-    var isFirmwareCompatible = false
-    var isControlPrepared = false
-    var canPrepareControl = false
-    var isVehicleStationary = false
-    var hasAttemptedCompatibilityCheck = false
-    var hasAttemptedPreparation = false
-    var isReceivingTelemetry = false
-    var operationError: String?
+    @ObservationIgnored var observationTask: Task<Void, Never>?
+    @ObservationIgnored var compatibilityTask: Task<Void, Never>?
+    @ObservationIgnored var operationTask: Task<Void, Never>?
+    @ObservationIgnored var vehicleIdentifier: String?
+    @ObservationIgnored var settings = BikeLockSettings()
+    @ObservationIgnored var isLocked = false
+    @ObservationIgnored var hasConfirmedLockState = false
+    @ObservationIgnored var firmware: String?
+    @ObservationIgnored var isFirmwareCompatible = false
+    @ObservationIgnored var isControlPrepared = false
+    @ObservationIgnored var canPrepareControl = false
+    @ObservationIgnored var isVehicleStationary = false
+    @ObservationIgnored var hasAttemptedCompatibilityCheck = false
+    @ObservationIgnored var hasAttemptedPreparation = false
+    @ObservationIgnored var isReceivingTelemetry = false
+    @ObservationIgnored var operationError: String?
 
     public init(
         operationService: BikeLockCardOperationService,
