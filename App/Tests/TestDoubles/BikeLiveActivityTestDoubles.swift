@@ -6,12 +6,18 @@ import TestSupport
 import VehicleSession
 
 actor BikeLiveActivityRepository: BikeRepository, BikeBatteryHealthRepository {
-    private let telemetrySource = AsyncSource<BikeTelemetry>()
-    private let batteryHealthSource = AsyncSource<BikeBatteryHealth>()
-    private let connectionSource = AsyncSource<BikeConnection>()
+    private let telemetrySource = TestEventHub<BikeTelemetry>(bufferingPolicy: .unbounded)
+    private let batteryHealthSource = TestEventHub<BikeBatteryHealth>(bufferingPolicy: .unbounded)
+    private let connectionSource = TestEventHub<BikeConnection>(bufferingPolicy: .unbounded)
     private var monitoringStarts = 0
     private var monitoringStops = 0
     private var delaysNextMonitoringStart = false
+
+    func waitForObservers() async -> Bool {
+        let telemetryIsReady = await telemetrySource.waitForSubscriber()
+        let connectionIsReady = await connectionSource.waitForSubscriber()
+        return telemetryIsReady && connectionIsReady
+    }
 
     func start() async {}
     func stop() async {}
@@ -242,30 +248,6 @@ actor ControllableBikeLiveActivityTiming {
             return
         }
         sleeps.remove(at: index).continuation.resume(throwing: CancellationError())
-    }
-}
-
-private actor AsyncSource<Element: Sendable> {
-    private var continuations: [UUID: AsyncStream<Element>.Continuation] = [:]
-
-    func stream() -> AsyncStream<Element> {
-        AsyncStream { continuation in
-            let id = UUID()
-            continuations[id] = continuation
-            continuation.onTermination = { [weak self] _ in
-                Task { await self?.remove(id) }
-            }
-        }
-    }
-
-    func send(_ value: Element) {
-        for continuation in continuations.values {
-            continuation.yield(value)
-        }
-    }
-
-    private func remove(_ id: UUID) {
-        continuations[id] = nil
     }
 }
 
