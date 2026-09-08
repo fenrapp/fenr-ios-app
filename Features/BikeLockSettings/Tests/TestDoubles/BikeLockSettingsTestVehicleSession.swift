@@ -5,7 +5,9 @@ import VehicleSession
 actor BikeLockSettingsTestVehicleSession: VehicleSessionService {
     private let hub = TestEventHub<VehicleSessionSnapshot>(bufferingPolicy: .bufferingNewest(1))
 
-    func observe() async -> AsyncStream<VehicleSessionSnapshot> { await hub.stream() }
+    private var snapshot: VehicleSessionSnapshot?
+
+    func observe() async -> AsyncStream<VehicleSessionSnapshot> { await hub.stream(replay: snapshot) }
     func start() {}
     func stop() {}
     func refreshBikeStatus() {}
@@ -13,7 +15,7 @@ actor BikeLockSettingsTestVehicleSession: VehicleSessionService {
     func setBatteryHealthMonitoringRequired(_: Bool, consumerID _: UUID) {}
 
     func send(_ snapshot: VehicleSessionSnapshot) async {
-        _ = await hub.waitForSubscriber()
+        self.snapshot = snapshot
         await hub.send(snapshot)
     }
 }
