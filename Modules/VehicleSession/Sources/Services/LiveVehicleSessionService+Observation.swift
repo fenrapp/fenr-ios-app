@@ -115,8 +115,10 @@ extension LiveVehicleSessionService {
         publish()
     }
 
-    private func receive(_ value: AppSettings) async {
-        settings = value
+    private func receive(_ value: AppSettingsSnapshot) async {
+        guard settingsRevision == nil || value.revision > settingsRevision! else { return }
+        settingsRevision = value.revision
+        settings = value.settings
         hasReceivedSettings = true
         await updateDeviceSpeedObservation()
         publish()

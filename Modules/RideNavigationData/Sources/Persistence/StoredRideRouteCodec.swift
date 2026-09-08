@@ -2,7 +2,7 @@ import EnvironmentDomain
 import Foundation
 import RideNavigationDomain
 
-public struct StoredRideRouteCodec: Sendable {
+public struct StoredRideRouteCodec: StoredRideRouteCoding {
     public init() {}
 
     public func encode(_ route: RideRoute) throws -> Data {

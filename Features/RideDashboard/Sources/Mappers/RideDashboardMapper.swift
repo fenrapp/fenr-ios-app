@@ -26,19 +26,25 @@ public struct RideDashboardMapper: Sendable {
         self.compactSpeedVisibilityMapper = compactSpeedVisibilityMapper
     }
 
+    func measurementMapper(for system: MeasurementSystem) -> RideDashboardMeasurementMapper {
+        makeMeasurementMapper(system)
+    }
+
     public func map(
         telemetry: BikeTelemetry,
         connection: BikeConnection,
         speedKilometersPerHour: Double?,
         speedSource: SpeedSource = .motorcycle,
         progressBarMode: DashboardProgressBarMode = .energy,
+        progressBarThickness: DashboardProgressBarThickness = .regular,
         batteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
         temperatureDisplayMode: DashboardTemperatureDisplayMode = .off,
         measurementSystem: MeasurementSystem,
         isGPSAvailable: Bool = true,
-        powerModeNames: [Int: PowerModeName] = [:]
+        powerModeNames: [Int: PowerModeName] = [:],
+        using measurementMapper: RideDashboardMeasurementMapper? = nil
     ) -> RideDashboardViewState {
-        let measurementMapper = makeMeasurementMapper(measurementSystem)
+        let measurementMapper = measurementMapper ?? makeMeasurementMapper(measurementSystem)
         let hasTelemetry = connectionMapper.hasTelemetry(telemetry, connection: connection)
         let speed = hasTelemetry
             ? speedKilometersPerHour.map {
@@ -76,6 +82,7 @@ public struct RideDashboardMapper: Sendable {
                 hasTelemetry: hasTelemetry,
                 measurementMapper: measurementMapper
             ),
+            progressBarLayout: progressBarMapper.layout(for: progressBarThickness),
             battery: battery(percentage: hasTelemetry ? telemetry.batteryLevel.percent : nil),
             showsEstimatedRangeBatteryIndicator: batteryIndicatorMode == .estimatedRange,
             temperatureSummary: temperatureMapper.map(telemetry, mode: temperatureMode, using: measurementMapper),
@@ -179,10 +186,7 @@ public struct RideDashboardMapper: Sendable {
             : .zero
         let unit = speed?.unit ?? maximum.unit
         let valueText = measurementMapper.number(value, fractionDigits: .zero)
-        let sourceIndicator = speedSourceIndicatorMapper.map(
-            source,
-            isGPSAvailable: isGPSAvailable
-        )
+        let sourceIndicator = speedSourceIndicatorMapper.map(source, isGPSAvailable: isGPSAvailable)
         return .init(
             valueText: valueText,
             unit: unit,

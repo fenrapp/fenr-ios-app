@@ -4,8 +4,8 @@ import BikeDiagnostics
 import BikeDomain
 import BikeEmulator
 import BLETraceDomain
-import CoreLocation
 import EnvironmentData
+import EnvironmentDomain
 import Foundation
 import MaintenanceData
 import MaintenanceLog
@@ -20,6 +20,7 @@ struct DemoExperienceFactory {
     let fileManager: FileManager
     let baseDirectory: URL
     let notifications: any DemoNotificationManaging
+    let makeDeviceSpeedRepository: @MainActor () -> any DeviceSpeedRepository
     let makeCredentialStore: @MainActor (String) -> any BikeLockCredentialStoring
 
     func make(identity: DemoIdentity) async throws -> AppExperience {
@@ -116,9 +117,7 @@ struct DemoExperienceFactory {
         let settings = AppSettingsRepositoryFactory.make(
             userDefaults: try makeDefaults(identity: identity), profileRepository: profileRepository
         )
-        let speed = CoreLocationDeviceSpeedRepository(
-            locationManager: CLLocationManager(), requestsAuthorizationOnObservation: false
-        )
+        let speed = makeDeviceSpeedRepository()
         let services = AppSessionDependencyContainer.makeServices(dependencies: .init(
             repository: repository, profileRepository: profileRepository,
             settingsRepository: settings, deviceSpeedRepository: speed,

@@ -4,18 +4,22 @@ import SwiftUI
 
 struct DashboardRangeLiveCard: View {
     let state: DashboardRangeViewData
+    let retryHistory: () -> Void
 
     var body: some View {
         DashboardAdaptiveCardSurface {
             VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
                 DashboardTripCardHeader(title: rideDashboardLocalized(.rideDashboardRangeLiveTitle))
+                if let error = state.historyError {
+                    DashboardHistoryReadFeedback(message: error, retry: retryHistory)
+                }
                 hero
                 consumptionChart
                 rangeComparison
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(rideDashboardLocalized(
+        .accessibilityLabel(state.historyError ?? rideDashboardLocalized(
             .rideDashboardRangeLiveAccessibility(state.rangeText, state.distanceUnitText, state.status.text)
         ))
     }

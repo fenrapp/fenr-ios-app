@@ -1,4 +1,4 @@
-import AppSettings
+@testable import AppSettings
 import BikeDomain
 import EnvironmentDomain
 import Foundation
@@ -45,7 +45,7 @@ struct AppSettingsViewModelTests {
             forVIN: AppSettingsViewModelFixture.vin
         )
         let didSave = await waitUntil {
-            await fixture.settingsRepository.settings == expectedSettings
+            await fixture.settingsRepository.settings == expectedSettings.scoped(toVIN: AppSettingsViewModelFixture.vin)
         }
 
         #expect(didSave)

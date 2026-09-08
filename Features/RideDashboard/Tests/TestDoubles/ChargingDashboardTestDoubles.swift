@@ -5,6 +5,9 @@ import TestSupport
 actor ChargingDashboardRepository: BikeRepository, BikeBatteryHealthRepository,
     BikeChargePowerControlRepository {
     private let telemetryHub = TestEventHub<BikeTelemetry>(bufferingPolicy: .unbounded)
+    private var failsNextPreparation = false
+
+    func failNextChargePreparation() { failsNextPreparation = true }
 
     func start() async {}
     func stop() async {}
@@ -39,7 +42,11 @@ actor ChargingDashboardRepository: BikeRepository, BikeBatteryHealthRepository,
     func prepareChargePowerControl(
         chargingStatus: BikeChargingStatus
     ) async throws -> BikeChargePowerControlSnapshot {
-        .init(
+        if failsNextPreparation {
+            failsNextPreparation = false
+            throw PreparationFailure.requested
+        }
+        return .init(
             vcuFirmware: "1.12.0",
             isFirmwareCompatible: true,
             readRequestHex: "00 04",
@@ -60,6 +67,10 @@ actor ChargingDashboardRepository: BikeRepository, BikeBatteryHealthRepository,
     func sendTelemetry(_ telemetry: BikeTelemetry) async {
         _ = await telemetryHub.waitForSubscriber()
         await telemetryHub.send(telemetry)
+    }
+
+    private enum PreparationFailure: Error {
+        case requested
     }
 
 }

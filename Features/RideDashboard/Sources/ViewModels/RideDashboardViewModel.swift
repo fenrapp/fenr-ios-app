@@ -1,33 +1,42 @@
 import BikeDomain
-import Combine
 import Foundation
+import Observation
+import SettingsDomain
 import VehicleSession
 
 @MainActor
-public final class RideDashboardViewModel: ObservableObject {
-    @Published public private(set) var viewState = RideDashboardViewState()
-    @Published private(set) var cardLayout = DashboardCardLayout()
+@Observable
+public final class RideDashboardViewModel {
+    public private(set) var viewState = RideDashboardViewState()
+    private(set) var cardLayout = DashboardCardLayout()
 
+    private let onContinuityChanged: @MainActor (RideDashboardContinuityPhase) -> Void
     private let mapper: RideDashboardMapper
     private let cardLayoutMapper: DashboardCardLayoutMapper
     private let vehicleSession: any VehicleSessionService
     private let timing: RideDashboardTiming
     private let continuityPolicy: RideDashboardContinuityPolicy
     private let temperatureMonitoringConsumerID = UUID()
-    private var snapshot = VehicleSessionSnapshot()
-    private var observationTask: Task<Void, Never>?
-    private var temperatureMonitoringTask: Task<Void, Never>?
-    private var isRequestingTemperatureMonitoring = false
-    private var statusSnapshotRefreshTask: Task<Void, Never>?
-    private var didRefreshStatusForTelemetrySession = false
-    private var connectionStabilityTask: Task<Void, Never>?
-    private var reconnectionNoticeTask: Task<Void, Never>?
-    private var reconnectionNoticeGeneration = 0
-    private var isShowingReconnectionNotice = false
-    private var pendingLiveViewState: RideDashboardViewState?
-    private var lastLiveViewState: RideDashboardViewState?
-    private var lastLivePowerModeIndex: Int?
-    private var cachedVehicleIdentity: String?
+    @ObservationIgnored private var snapshot = VehicleSessionSnapshot()
+    @ObservationIgnored private var observationTask: Task<Void, Never>?
+    @ObservationIgnored private var temperatureMonitoringTask: Task<Void, Never>?
+    @ObservationIgnored private var isRequestingTemperatureMonitoring = false
+    @ObservationIgnored private var statusSnapshotRefreshTask: Task<Void, Never>?
+    @ObservationIgnored private var didRefreshStatusForTelemetrySession = false
+    @ObservationIgnored private var connectionStabilityTask: Task<Void, Never>?
+    @ObservationIgnored private var reconnectionNoticeTask: Task<Void, Never>?
+    @ObservationIgnored private var reconnectionNoticeGeneration = 0
+    @ObservationIgnored private var isShowingReconnectionNotice = false
+    @ObservationIgnored private var pendingLiveViewState: RideDashboardViewState?
+    @ObservationIgnored private var lastLiveViewState: RideDashboardViewState?
+    @ObservationIgnored private var lastLivePowerModeIndex: Int?
+    @ObservationIgnored private var cachedVehicleIdentity: String?
+    @ObservationIgnored private var measurementCache =
+        DashboardPresentationCache<RideDashboardMappingInput.Configuration, RideDashboardMeasurementMapper>()
+    @ObservationIgnored private var presentationCache =
+        DashboardPresentationCache<RideDashboardMappingInput, RideDashboardViewState>()
+    @ObservationIgnored private var layoutCache =
+        DashboardPresentationCache<DashboardCardConfiguration, DashboardCardLayout>()
     private let initialConnectionStabilityPeriod: Duration
     private let reconnectionNoticeDelay: Duration
 
@@ -38,8 +47,10 @@ public final class RideDashboardViewModel: ObservableObject {
         timing: RideDashboardTiming,
         continuityPolicy: RideDashboardContinuityPolicy,
         initialConnectionStabilityPeriod: Duration,
-        reconnectionNoticeDelay: Duration
+        reconnectionNoticeDelay: Duration,
+        onContinuityChanged: @escaping @MainActor (RideDashboardContinuityPhase) -> Void
     ) {
+        self.onContinuityChanged = onContinuityChanged
         self.mapper = mapper
         self.cardLayoutMapper = cardLayoutMapper
         self.vehicleSession = vehicleSession
@@ -90,6 +101,9 @@ public final class RideDashboardViewModel: ObservableObject {
     func invalidateSession() {
         pausePresentation()
         snapshot = .init()
+        measurementCache = .init()
+        presentationCache = .init()
+        layoutCache = .init()
         didRefreshStatusForTelemetrySession = false
         cachedVehicleIdentity = nil
         clearCachedPresentation()
@@ -104,7 +118,7 @@ public final class RideDashboardViewModel: ObservableObject {
 #if DEBUG
 extension RideDashboardViewModel {
     func setPreviewState(_ viewState: RideDashboardViewState) {
-        self.viewState = viewState
+        publish(viewState)
     }
 }
 #endif
@@ -112,22 +126,19 @@ extension RideDashboardViewModel {
 private extension RideDashboardViewModel {
     func render() {
         updateVehicleIdentity()
-        let nextCardLayout = cardLayoutMapper.map(snapshot.settings.dashboardCardConfiguration)
+        let nextCardLayout = layoutCache.value(for: snapshot.settings.dashboardCardConfiguration) {
+            cardLayoutMapper.map(snapshot.settings.dashboardCardConfiguration)
+        }
         if nextCardLayout != cardLayout {
             cardLayout = nextCardLayout
         }
-        let mappedViewState = mapper.map(
-            telemetry: snapshot.telemetry,
-            connection: snapshot.connection,
-            speedKilometersPerHour: snapshot.resolvedSpeedKilometersPerHour,
-            speedSource: snapshot.speedSource,
-            progressBarMode: snapshot.settings.dashboardProgressBarMode,
-            batteryIndicatorMode: snapshot.settings.dashboardBatteryIndicatorMode,
-            temperatureDisplayMode: snapshot.settings.dashboardTemperatureDisplayMode,
-            measurementSystem: snapshot.settings.measurementSystem,
-            isGPSAvailable: snapshot.isGPSAvailable,
-            powerModeNames: snapshot.settings.powerModeNames(forVIN: snapshot.profile?.vin)
-        )
+        let input = RideDashboardMappingInput(snapshot: snapshot)
+        let measurementMapper = measurementCache.value(for: input.configuration) {
+            mapper.measurementMapper(for: input.configuration.measurementSystem)
+        }
+        let mappedViewState = presentationCache.value(for: input) {
+            input.map(using: mapper, measurementMapper: measurementMapper)
+        }
         updateViewState(with: mappedViewState)
         updateStatusSnapshotRefresh()
         if mappedViewState.hasTelemetry, snapshot.isCanonicalTelemetryAvailable {
@@ -182,7 +193,9 @@ private extension RideDashboardViewModel {
 
     private func publish(_ nextViewState: RideDashboardViewState) {
         guard nextViewState != viewState else { return }
+        let phaseChanged = viewState.continuityPhase != nextViewState.continuityPhase
         viewState = nextViewState
+        if phaseChanged { onContinuityChanged(nextViewState.continuityPhase) }
     }
 
     private func startConnectionStabilityPeriod() {
@@ -202,7 +215,7 @@ private extension RideDashboardViewModel {
 
     private func promoteStableConnection() {
         connectionStabilityTask = nil
-        guard let pendingLiveViewState, isReceivingTelemetry else {
+        guard let pendingLiveViewState, case .receivingTelemetry = snapshot.connection.state else {
             self.pendingLiveViewState = nil
             render()
             return
@@ -262,7 +275,7 @@ private extension RideDashboardViewModel {
     }
 
     private func updateStatusSnapshotRefresh() {
-        guard isReceivingTelemetry else {
+        guard case .receivingTelemetry = snapshot.connection.state else {
             statusSnapshotRefreshTask?.cancel()
             statusSnapshotRefreshTask = nil
             didRefreshStatusForTelemetrySession = false
@@ -274,14 +287,6 @@ private extension RideDashboardViewModel {
         let vehicleSession = vehicleSession
         statusSnapshotRefreshTask = Task {
             await vehicleSession.refreshBikeStatus()
-        }
-    }
-
-    private var isReceivingTelemetry: Bool {
-        if case .receivingTelemetry = snapshot.connection.state {
-            true
-        } else {
-            false
         }
     }
 

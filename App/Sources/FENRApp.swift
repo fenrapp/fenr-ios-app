@@ -3,11 +3,21 @@ import SwiftUI
 @main
 struct FENRApp: App {
     @UIApplicationDelegateAdaptor(AppOrientationDelegate.self) private var appDelegate
-    @StateObject private var experienceController = AppExperienceFactory.makeController()
+    @State private var experienceController: AppExperienceController?
 
     var body: some Scene {
         WindowGroup {
-            AppExperienceView(controller: experienceController)
+            Group {
+                if let experienceController {
+                    AppExperienceView(controller: experienceController)
+                } else {
+                    ProgressView()
+                }
+            }
+            .task {
+                guard !Task.isCancelled, experienceController == nil else { return }
+                experienceController = AppExperienceFactory.makeController()
+            }
         }
     }
 }

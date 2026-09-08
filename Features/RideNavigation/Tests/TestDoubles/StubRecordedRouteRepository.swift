@@ -10,8 +10,12 @@ actor StubRecordedRouteRepository: RecordedRouteRepository {
         self.draft = draft
     }
 
-    func loadRoutes() async -> [RideRoute] {
-        routes
+    func loadRouteSummaries() async -> [RideRouteSummary] {
+        routes.map(RideRouteSummary.init)
+    }
+
+    func loadRoute(id: UUID) async throws -> RideRoute? {
+        routes.first { $0.id == id }
     }
 
     func save(_ route: RideRoute) async throws {

@@ -1,26 +1,27 @@
 import BikeDomain
-import Combine
 import Foundation
+import Observation
 import SettingsDomain
 import VehicleSession
 
 @MainActor
-public final class BikeLockSettingsViewModel: ObservableObject {
-    @Published public private(set) var viewState = BikeLockSettingsViewState()
+@Observable
+public final class BikeLockSettingsViewModel {
+    public private(set) var viewState = BikeLockSettingsViewState()
 
     private let vehicleSession: any VehicleSessionService
     private let capabilityStore: any BikeLockCapabilityStateStoring
     private let securityService: BikeLockSettingsSecurityService
     private let mapper: BikeLockSettingsViewStateMapper
-    private var activeVIN: String?
-    private var settings = AppSettings()
-    private var capability = BikeLockCapabilityState()
-    private var observationTask: Task<Void, Never>?
-    private var capabilityTask: Task<Void, Never>?
-    private var operationTask: Task<Void, Never>?
-    private var operationGeneration = 0
-    private var actionAfterAuthentication: BikeLockSettingsDestination?
-    private var isCanonicalTelemetryAvailable = false
+    @ObservationIgnored private var activeVIN: String?
+    @ObservationIgnored private var settings = AppSettings()
+    @ObservationIgnored private var capability = BikeLockCapabilityState()
+    @ObservationIgnored private var observationTask: Task<Void, Never>?
+    @ObservationIgnored private var capabilityTask: Task<Void, Never>?
+    @ObservationIgnored private var operationTask: Task<Void, Never>?
+    @ObservationIgnored private var operationGeneration = 0
+    @ObservationIgnored private var actionAfterAuthentication: BikeLockSettingsDestination?
+    @ObservationIgnored private var isCanonicalTelemetryAvailable = false
 
     public init(
         vehicleSession: any VehicleSessionService,

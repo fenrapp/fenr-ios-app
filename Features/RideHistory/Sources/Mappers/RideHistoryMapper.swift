@@ -25,10 +25,11 @@ public struct RideHistoryMapper: Sendable {
         trips: [RideTrip],
         measurementSystem: MeasurementSystem,
         deletingRideIDs: Set<UUID> = [],
-        errorMessage: String? = nil
+        errorMessage: String? = nil,
+        loadErrorMessage: String? = nil
     ) -> RideHistoryViewState {
         guard !trips.isEmpty else {
-            return .init(status: .empty, errorMessage: errorMessage)
+            return .init(status: .empty, errorMessage: errorMessage, loadErrorMessage: loadErrorMessage)
         }
         let measurementMapper = makeMeasurementMapper(measurementSystem)
         let statistics = statisticsAggregator.aggregate(trips)
@@ -55,7 +56,8 @@ public struct RideHistoryMapper: Sendable {
             ),
             daySections: daySections(from: rows),
             deletingRideIDs: deletingRideIDs,
-            errorMessage: errorMessage
+            errorMessage: errorMessage,
+            loadErrorMessage: loadErrorMessage
         )
     }
 
@@ -76,7 +78,8 @@ public struct RideHistoryMapper: Sendable {
     public func mapDetail(
         trip: RideTrip,
         history: [RideTrip],
-        measurementSystem: MeasurementSystem
+        measurementSystem: MeasurementSystem,
+        loadErrorMessage: String? = nil
     ) -> RideHistoryDetailViewState {
         let measurementMapper = makeMeasurementMapper(measurementSystem)
         let distance = measurementMapper.distance(kilometers: trip.distanceKilometers)
@@ -127,6 +130,7 @@ public struct RideHistoryMapper: Sendable {
             batteryPoints: chartData.battery,
             efficiencyPoints: chartData.efficiency,
             distanceUnit: distance.unit,
+            loadErrorMessage: loadErrorMessage,
             efficiencyUnit: efficiencyUnit
         )
     }

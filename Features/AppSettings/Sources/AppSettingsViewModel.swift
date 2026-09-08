@@ -1,30 +1,33 @@
 import BikeDomain
-import Combine
 import EnvironmentDomain
 import Foundation
+import Observation
 import SettingsDomain
 
 @MainActor
-public final class AppSettingsViewModel: ObservableObject {
-    @Published public private(set) var viewState: AppSettingsViewState
+@Observable
+public final class AppSettingsViewModel {
+    public private(set) var viewState: AppSettingsViewState
+    public private(set) var settingsSaveError: String?
 
     private let useCases: AppSettingsUseCases
     private let mapper: AppSettingsViewStateMapper
-    private var settings = AppSettings()
-    private var locationAuthorizationStatus: LocationAuthorizationStatus = .notDetermined
-    private var profile: BikeProfile?
-    private var connection = BikeConnection()
-    private var isVerifyingPowerTier = false
-    private var powerTierVerificationMessage: LocalizedStringResource?
-    private var powerTierVerificationMessageIsError = false
-    private var observationTask: Task<Void, Never>?
-    private var settingsSaveTask: Task<Void, Never>?
-    private var locationAuthorizationTask: Task<Void, Never>?
-    private var profileTask: Task<Void, Never>?
-    private var profileSaveTask: Task<Void, Never>?
-    private var connectionTask: Task<Void, Never>?
-    private var powerTierTask: Task<Void, Never>?
-    private var activePresentationCount = 0
+    @ObservationIgnored private var settings = AppSettings()
+    @ObservationIgnored private(set) var pendingSettings = AppSettingsPendingChanges()
+    @ObservationIgnored private var locationAuthorizationStatus: LocationAuthorizationStatus = .notDetermined
+    @ObservationIgnored private var profile: BikeProfile?
+    @ObservationIgnored private var connection = BikeConnection()
+    @ObservationIgnored private var isVerifyingPowerTier = false
+    @ObservationIgnored private var powerTierVerificationMessage: LocalizedStringResource?
+    @ObservationIgnored private var powerTierVerificationMessageIsError = false
+    @ObservationIgnored private var observationTask: Task<Void, Never>?
+    @ObservationIgnored private var settingsSaveTask: Task<Void, Never>?
+    @ObservationIgnored private var locationAuthorizationTask: Task<Void, Never>?
+    @ObservationIgnored private var profileTask: Task<Void, Never>?
+    @ObservationIgnored private var profileSaveTask: Task<Void, Never>?
+    @ObservationIgnored private var connectionTask: Task<Void, Never>?
+    @ObservationIgnored private var powerTierTask: Task<Void, Never>?
+    @ObservationIgnored private var activePresentationCount = 0
 
     public init(useCases: AppSettingsUseCases, mapper: AppSettingsViewStateMapper) {
         self.useCases = useCases
@@ -48,12 +51,11 @@ public final class AppSettingsViewModel: ObservableObject {
         let observeSettings = useCases.settings.observe
         observationTask = Task { [weak self] in
             let stream = await observeSettings.execute()
-            for await settings in stream {
+            for await snapshot in stream {
                 guard !Task.isCancelled, let self else { return }
-                guard self.settings != settings else { continue }
-                self.settings = settings
+                self.pendingSettings.receive(snapshot)
+                self.settings = self.pendingSettings.settings
                 self.render()
-                await self.refreshLocationAuthorizationStatus()
             }
         }
         locationAuthorizationTask?.cancel()
@@ -86,51 +88,43 @@ public final class AppSettingsViewModel: ObservableObject {
 
     public func selectSpeedSource(id: String) {
         guard let speedSource = SpeedSource(rawValue: id) else { return }
-        var updated = settings
-        updated.speedSource = speedSource
-        applyAndSave(updated)
+        applyAndSave(.speedSource(speedSource))
     }
 
     public func selectDashboardProgressBarMode(id: String) {
         guard let mode = DashboardProgressBarMode(rawValue: id) else { return }
-        var updated = settings
-        updated.dashboardProgressBarMode = mode
-        applyAndSave(updated)
+        applyAndSave(.dashboardProgressBarMode(mode))
+    }
+
+    public func selectDashboardProgressBarThickness(id: String) {
+        guard let thickness = DashboardProgressBarThickness(rawValue: id) else { return }
+        applyAndSave(.dashboardProgressBarThickness(thickness))
     }
 
     public func selectDashboardBatteryIndicatorMode(id: String) {
         guard let mode = DashboardBatteryIndicatorMode(rawValue: id) else { return }
-        var updated = settings
-        updated.dashboardBatteryIndicatorMode = mode
-        applyAndSave(updated)
+        applyAndSave(.dashboardBatteryIndicatorMode(mode))
     }
 
     public func selectDashboardDeviceBatteryDisplayMode(id: String) {
         guard let mode = DashboardDeviceBatteryDisplayMode(rawValue: id) else { return }
-        var updated = settings
-        updated.dashboardDeviceBatteryDisplayMode = mode
-        applyAndSave(updated)
+        applyAndSave(.dashboardDeviceBatteryDisplayMode(mode))
     }
 
     public func selectDashboardTemperatureDisplayMode(id: String) {
         guard let mode = DashboardTemperatureDisplayMode(rawValue: id) else { return }
-        var updated = settings
-        updated.dashboardTemperatureDisplayMode = mode
-        applyAndSave(updated)
+        applyAndSave(.dashboardTemperatureDisplayMode(mode))
     }
 
     public func selectMeasurementSystem(id: String) {
         guard let measurementSystem = MeasurementSystem(rawValue: id) else { return }
-        var updated = settings
-        updated.measurementSystem = measurementSystem
-        applyAndSave(updated)
+        applyAndSave(.measurementSystem(measurementSystem))
     }
 
     public func selectBatteryPackCapacity(id: String) {
-        guard let batteryPackCapacity = BatteryPackCapacity(rawValue: id), let vin = profile?.vin else { return }
-        var updated = settings
-        updated.setBatteryPackCapacity(batteryPackCapacity, forVIN: vin)
-        applyAndSave(updated)
+        guard let batteryPackCapacity = BatteryPackCapacity(rawValue: id),
+              profile?.vin == settings.vin else { return }
+        applyAndSave(.batteryPackCapacity(batteryPackCapacity))
     }
 
     public func requestLocationAccess() {
@@ -196,32 +190,44 @@ public final class AppSettingsViewModel: ObservableObject {
         render()
     }
 
-    private func applyAndSave(_ settings: AppSettings) {
-        self.settings = settings
-        render()
-        let previousSaveTask = settingsSaveTask
-        let saveSettings = useCases.settings.save
-        settingsSaveTask = Task {
-            await previousSaveTask?.value
-            guard !Task.isCancelled else { return }
-            await saveSettings.execute(settings)
+    func applyAndSave(_ change: AppSettingsChange) {
+        do {
+            guard try change.applying(to: settings) != settings else { return }
+            try pendingSettings.enqueue(change)
+            settings = pendingSettings.settings
+            render()
+            startSettingsWorkerIfNeeded()
+        } catch {
+            settingsSaveError = String(localized: .appSettingsSaveFailed)
         }
     }
 
-    func updateNavigationSettings(
-        _ update: (inout RideNavigationSettings) -> Void
-    ) {
-        var updated = settings
-        update(&updated.rideNavigation)
-        guard updated != settings else { return }
-        applyAndSave(updated)
+    public func dismissSettingsSaveError() {
+        settingsSaveError = nil
     }
 
-    func updateLiveActivitySettings(_ update: (inout LiveActivitySettings) -> Void) {
-        var updated = settings
-        update(&updated.liveActivities)
-        guard updated != settings else { return }
-        applyAndSave(updated)
+    private func startSettingsWorkerIfNeeded() {
+        guard settingsSaveTask == nil else { return }
+        let update = useCases.settings.update
+        settingsSaveTask = Task { [weak self] in
+            defer { self?.settingsSaveTask = nil }
+            while !Task.isCancelled, let pending = self?.pendingSettings.next {
+                do {
+                    let result = try await update.execute(expectedVIN: pending.expectedVIN, change: pending.change)
+                    guard !Task.isCancelled, let self else { return }
+                    pendingSettings.complete(id: pending.id, result: result)
+                    settings = pendingSettings.settings
+                    render()
+                } catch {
+                    guard !Task.isCancelled, let self else { return }
+                    if pendingSettings.reject(id: pending.id) {
+                        settingsSaveError = String(localized: .appSettingsSaveFailed)
+                    }
+                    settings = pendingSettings.settings
+                    render()
+                }
+            }
+        }
     }
 
     private func observeProfile() {
@@ -272,6 +278,8 @@ extension AppSettingsViewModel {
             profileTask, profileSaveTask, connectionTask, powerTierTask
         ]
         tasks.forEach { $0?.cancel() }
+        pendingSettings.removeAll()
+        settings = pendingSettings.settings
         stop()
         for task in tasks { await task?.value }
     }

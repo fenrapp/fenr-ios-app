@@ -1,5 +1,5 @@
 import BikeDomain
-import DashboardCardSettings
+@testable import DashboardCardSettings
 import SettingsDomain
 import Testing
 

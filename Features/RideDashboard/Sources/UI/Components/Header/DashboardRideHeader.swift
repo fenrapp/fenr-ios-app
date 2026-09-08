@@ -7,10 +7,18 @@ struct DashboardRideHeader: View {
     let toggleDeviceBatteryDisplayMode: () -> Void
 
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            horizontalHeader
-                .fixedSize(horizontal: true, vertical: true)
-            verticalHeader
+        VStack(alignment: .leading, spacing: Constants.compactSpacing) {
+            ViewThatFits(in: .horizontal) {
+                horizontalHeader
+                    .fixedSize(horizontal: true, vertical: true)
+                verticalHeader
+            }
+            if let error = deviceBattery.errorText {
+                Label(error, systemImage: "exclamationmark.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(DesignColor.critical)
+                    .accessibilityIdentifier("dashboard.phone-battery.error")
+            }
         }
         .font(.system(size: Constants.fontSize, weight: .semibold, design: .rounded))
         .monospacedDigit()
@@ -77,6 +85,7 @@ struct DashboardRideHeader: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .disabled(!deviceBattery.canChangeDisplayMode)
         .foregroundStyle(phoneBatteryColor)
         .lineLimit(1)
         .accessibilityElement(children: .ignore)

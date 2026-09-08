@@ -1,34 +1,36 @@
 import BikeDomain
 import ChargeControl
-import Combine
 import Foundation
+import Observation
 import RuntimeConfiguration
 import SettingsDomain
 import VehicleSession
 
 @MainActor
-public final class BatteryHealthViewModel: ObservableObject {
-    @Published public private(set) var viewState = BatteryHealthViewState()
+@Observable
+public final class BatteryHealthViewModel {
+    public private(set) var viewState = BatteryHealthViewState()
 
     private let useCases: BatteryHealthUseCases
     private let vehicleSession: any VehicleSessionService
-    private var mapper: BikeBatteryHealthToViewStateMapper
+    @ObservationIgnored private var mapper: BikeBatteryHealthToViewStateMapper
     private let makeMapper: (MeasurementSystem) -> BikeBatteryHealthToViewStateMapper
     private let chargeControl: ChargeControlSession
     private let captureFormatter: BatteryHealthCaptureFormatter
-    private var health = BikeBatteryHealth()
-    private var captures: [BatteryDataset: BatteryDatasetCapture] = [:]
-    private var streamTasks: [Task<Void, Never>] = []
+    @ObservationIgnored private var health = BikeBatteryHealth()
+    @ObservationIgnored private var captures: [BatteryDataset: BatteryDatasetCapture] = [:]
+    @ObservationIgnored private var streamTasks: [Task<Void, Never>] = []
     private let batteryHealthConsumerID = UUID()
-    private var monitoringRequestTask: Task<Void, Never>?
-    private var renderTask: Task<Void, Never>?
-    private var chargeControlCancellable: AnyCancellable?
-    private var isPresentationActive = false
-    private var isMonitoring = false
-    private var monitorError: String?
-    private var activeVehicleIdentity: String?
-    private var hasResolvedVehicleIdentity = false
-    private var wasVehicleSessionActive = false
+    @ObservationIgnored private var monitoringRequestTask: Task<Void, Never>?
+    @ObservationIgnored private var renderTask: Task<Void, Never>?
+    @ObservationIgnored private var chargeControlObservationTask: Task<Void, Never>?
+    @ObservationIgnored private var presentationGeneration: UInt64 = 0
+    @ObservationIgnored private var isPresentationActive = false
+    @ObservationIgnored private var isMonitoring = false
+    @ObservationIgnored private var monitorError: String?
+    @ObservationIgnored private var activeVehicleIdentity: String?
+    @ObservationIgnored private var hasResolvedVehicleIdentity = false
+    @ObservationIgnored private var wasVehicleSessionActive = false
 
     public init(
         useCases: BatteryHealthUseCases,
@@ -44,26 +46,28 @@ public final class BatteryHealthViewModel: ObservableObject {
         self.makeMapper = makeMapper
         self.chargeControl = chargeControl
         self.captureFormatter = captureFormatter
-        chargeControlCancellable = chargeControl.$state
-            .dropFirst()
-            .sink { [weak self] _ in self?.scheduleRender() }
     }
 
     deinit {
         streamTasks.forEach { $0.cancel() }
         monitoringRequestTask?.cancel()
         renderTask?.cancel()
+        chargeControlObservationTask?.cancel()
     }
 
     public func setPresentationActive(_ isActive: Bool) {
         guard isPresentationActive != isActive else { return }
         isPresentationActive = isActive
+        presentationGeneration &+= 1
         if isActive {
             bindStreams()
+            observeChargeControl()
             setBatteryHealthMonitoringRequired(true)
         } else {
             streamTasks.forEach { $0.cancel() }
             streamTasks.removeAll()
+            chargeControlObservationTask?.cancel()
+            chargeControlObservationTask = nil
             renderTask?.cancel()
             renderTask = nil
             setBatteryHealthMonitoringRequired(false)
@@ -83,11 +87,17 @@ public final class BatteryHealthViewModel: ObservableObject {
     public func stopAndWait() async {
         let pendingStreams = streamTasks
         let pendingRender = renderTask
+        let pendingChargeControl = chargeControlObservationTask
         stop()
+        let stoppedGeneration = presentationGeneration
+        let pendingMonitoring = monitoringRequestTask
         for task in pendingStreams { await task.value }
         await pendingRender?.value
-        await monitoringRequestTask?.value
-        monitoringRequestTask = nil
+        await pendingChargeControl?.value
+        await pendingMonitoring?.value
+        if presentationGeneration == stoppedGeneration {
+            monitoringRequestTask = nil
+        }
     }
 
     public func setChargePowerLimit(watts: Double) {
@@ -107,6 +117,19 @@ public final class BatteryHealthViewModel: ObservableObject {
 }
 
 private extension BatteryHealthViewModel {
+    func observeChargeControl() {
+        chargeControlObservationTask?.cancel()
+        let stream = chargeControl.observeState()
+        let generation = presentationGeneration
+        chargeControlObservationTask = Task { [weak self] in
+            for await _ in stream {
+                guard !Task.isCancelled, let self,
+                      self.isPresentationActive, self.presentationGeneration == generation else { return }
+                self.scheduleRender()
+            }
+        }
+    }
+
     func bindStreams() {
         guard streamTasks.isEmpty else { return }
         let vehicleSession = vehicleSession

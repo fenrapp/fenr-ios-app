@@ -1,4 +1,4 @@
-import AppSettings
+@testable import AppSettings
 import EnvironmentDomain
 import Testing
 import TestSupport
@@ -13,7 +13,7 @@ struct AppSettingsLocationLifecycleTests {
         let viewModel = AppSettingsViewModel(
             useCases: .init(
                 settings: .init(
-                    save: .init(repository: settingsRepository),
+                    update: .init(repository: settingsRepository),
                     observe: .init(repository: settingsRepository)
                 ),
                 location: .init(
@@ -23,7 +23,8 @@ struct AppSettingsLocationLifecycleTests {
             ),
             mapper: AppSettingsViewStateMapper()
         )
-        viewModel.requestLocationAccess()
+        viewModel.start()
+        #expect(await waitUntil { viewModel.pendingSettings.confirmed != nil })
         #expect(await waitUntil { locationRepository.hasPendingRead })
 
         let teardown = Task { await viewModel.stopAndWait() }

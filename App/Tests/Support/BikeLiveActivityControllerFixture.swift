@@ -3,6 +3,7 @@ import Foundation
 import RideDashboard
 import RuntimeConfiguration
 import SettingsDomain
+import Testing
 import VehicleSession
 
 @MainActor
@@ -59,7 +60,7 @@ final class BikeLiveActivityControllerFixture {
     func start() async {
         await vehicleSession.start()
         controller.start()
-        await Task.yield()
+        #expect(await repository.waitForObservers())
     }
 }
 

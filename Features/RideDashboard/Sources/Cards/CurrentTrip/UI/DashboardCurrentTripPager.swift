@@ -8,6 +8,7 @@ struct DashboardCurrentTripPager: View {
     let reduceMotion: Bool
     let togglePause: () -> Void
     let reset: () -> Void
+    let retryStatistics: () -> Void
 
     @State private var freezesDurationUpdates = false
     @State private var durationReleaseTask: Task<Void, Never>?
@@ -30,7 +31,7 @@ struct DashboardCurrentTripPager: View {
                     reset: reset
                 )
             case .statistics:
-                DashboardTripStatisticsCard(state: statistics)
+                DashboardTripStatisticsCard(state: statistics, retryHistory: retryStatistics)
             }
         }
         .onDisappear {

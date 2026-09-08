@@ -2,6 +2,7 @@ import Foundation
 
 public struct RideHistoryViewState: Equatable, Sendable {
     public enum Status: Equatable, Sendable {
+        case failed
         case loading
         case bikeUnavailable
         case empty
@@ -75,6 +76,7 @@ public struct RideHistoryViewState: Equatable, Sendable {
     public let daySections: [DaySection]
     public let deletingRideIDs: Set<UUID>
     public let errorMessage: String?
+    public let loadErrorMessage: String?
 
     public var isDeleting: Bool { !deletingRideIDs.isEmpty }
     public var rides: [Row] { daySections.flatMap(\.rides) }
@@ -84,12 +86,14 @@ public struct RideHistoryViewState: Equatable, Sendable {
         summary: Summary? = nil,
         daySections: [DaySection] = [],
         deletingRideIDs: Set<UUID> = [],
-        errorMessage: String? = nil
+        errorMessage: String? = nil,
+        loadErrorMessage: String? = nil
     ) {
         self.status = status
         self.summary = summary
         self.daySections = daySections
         self.deletingRideIDs = deletingRideIDs
         self.errorMessage = errorMessage
+        self.loadErrorMessage = loadErrorMessage
     }
 }

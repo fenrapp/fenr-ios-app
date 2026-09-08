@@ -6,6 +6,8 @@ public struct DashboardDeviceBatteryViewData: Equatable, Sendable {
         case charging
     }
 
+    public let canChangeDisplayMode: Bool
+    public let errorText: String?
     public let percentageText: String
     public let systemImage: String
     public let emphasis: Emphasis
@@ -16,6 +18,8 @@ public struct DashboardDeviceBatteryViewData: Equatable, Sendable {
     public let displayModeAccessibilityHint: String
 
     public init(
+        canChangeDisplayMode: Bool = true,
+        errorText: String? = nil,
         percentageText: String = "--%",
         systemImage: String = "battery.0percent",
         emphasis: Emphasis = .unavailable,
@@ -25,6 +29,8 @@ public struct DashboardDeviceBatteryViewData: Equatable, Sendable {
         showsPercentage: Bool = true,
         displayModeAccessibilityHint: String? = nil
     ) {
+        self.canChangeDisplayMode = canChangeDisplayMode
+        self.errorText = errorText
         self.percentageText = percentageText
         self.systemImage = systemImage
         self.emphasis = emphasis

@@ -27,11 +27,13 @@ struct ChargePowerControlView: View {
                 in: state.power.minimum ... state.power.maximum,
                 step: state.power.step,
                 isEnabled: state.isEnabled,
+                accessibilityIdentifier: "batteryHealth.charging.power",
                 onCommit: setPowerLimit,
                 header: { value in
                     controlHeader(
                         title: BatteryHealthText.powerLimit,
-                        value: "\(Int(value)) W"
+                        value: "\(Int(value)) W",
+                        valueIdentifier: "batteryHealth.charging.power.value"
                     )
                 },
                 footer: {
@@ -50,11 +52,13 @@ struct ChargePowerControlView: View {
                 in: state.target.minimum ... state.target.maximum,
                 step: state.target.step,
                 isEnabled: state.isEnabled,
+                accessibilityIdentifier: "batteryHealth.charging.target",
                 onCommit: setChargeTarget,
                 header: { value in
                     controlHeader(
                         title: BatteryHealthText.chargeTarget,
-                        value: "\(Int(value))%"
+                        value: "\(Int(value))%",
+                        valueIdentifier: "batteryHealth.charging.target.value"
                     )
                 },
                 footer: {
@@ -85,6 +89,7 @@ struct ChargePowerControlView: View {
         let status = Text(state.statusText)
             .font(.caption.weight(.medium))
             .foregroundStyle(state.statusIsError ? Color.red : Color.secondary)
+            .accessibilityIdentifier("batteryHealth.charging.status")
 
         if dynamicTypeSize.isAccessibilitySize {
             VStack(alignment: .leading, spacing: Constants.labelSpacing) {
@@ -105,13 +110,14 @@ struct ChargePowerControlView: View {
     }
 
     @ViewBuilder
-    private func controlHeader(title: String, value: String) -> some View {
+    private func controlHeader(title: String, value: String, valueIdentifier: String) -> some View {
         if dynamicTypeSize.isAccessibilitySize {
             VStack(alignment: .leading, spacing: Constants.labelSpacing) {
                 Text(title)
                     .foregroundStyle(.secondary)
                 Text(verbatim: value)
                     .fontWeight(.semibold)
+                    .accessibilityIdentifier(valueIdentifier)
             }
         } else {
             HStack {
@@ -120,6 +126,7 @@ struct ChargePowerControlView: View {
                 Spacer()
                 Text(verbatim: value)
                     .fontWeight(.semibold)
+                    .accessibilityIdentifier(valueIdentifier)
             }
         }
     }

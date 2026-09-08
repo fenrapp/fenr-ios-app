@@ -2,7 +2,7 @@ import SwiftUI
 
 public struct RideNavigationView: View {
     @Environment(\.colorScheme) private var colorScheme
-    @ObservedObject private var viewModel: RideNavigationViewModel
+    private let viewModel: RideNavigationViewModel
     private let mapSurfaceFactory: RideNavigationMapSurfaceFactory
     private let transitionNamespace: Namespace.ID
     private let onClose: () -> Void
@@ -99,6 +99,18 @@ public struct RideNavigationView: View {
                 )
             }
         }
+            .alert(
+                Text(.rideNavigationSaveErrorTitle),
+                isPresented: Binding(
+                    get: { viewModel.settingsSaveError != nil },
+                    set: { if !$0 { viewModel.dismissSettingsSaveError() } }
+                )
+            ) {
+                Button(.rideNavigationSaveErrorDismiss) { viewModel.dismissSettingsSaveError() }
+            } message: {
+                Text(verbatim: viewModel.settingsSaveError ?? "")
+            }
+
         .background(navigationBackground)
         .rideNavigationFocusAppearance(usesFocusAppearance)
         .toolbar(.hidden, for: .navigationBar)

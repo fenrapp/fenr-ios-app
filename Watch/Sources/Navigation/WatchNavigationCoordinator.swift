@@ -1,4 +1,4 @@
-import Combine
+import Observation
 import WatchDashboard
 
 enum WatchNavigationRoot: Equatable {
@@ -53,8 +53,9 @@ struct WatchNavigationState: Equatable {
 }
 
 @MainActor
-final class WatchNavigationCoordinator: ObservableObject {
-    @Published private(set) var state = WatchNavigationState()
+@Observable
+final class WatchNavigationCoordinator {
+    private(set) var state = WatchNavigationState()
 
     func send(_ intent: WatchNavigationIntent) {
         switch intent {

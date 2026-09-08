@@ -3,6 +3,7 @@ import Foundation
 public struct MaintenanceLogViewState: Equatable, Sendable {
     public enum Status: Equatable, Sendable {
         case bikeUnavailable
+        case failed
         case loading
         case loaded
     }
@@ -37,18 +38,21 @@ public struct MaintenanceLogViewState: Equatable, Sendable {
     public let upcoming: [Row]
     public let history: [Row]
     public let errorMessage: String?
+    public let loadErrorMessage: String?
 
     public init(
         status: Status = .bikeUnavailable,
         due: [Row] = [],
         upcoming: [Row] = [],
         history: [Row] = [],
-        errorMessage: String? = nil
+        errorMessage: String? = nil,
+        loadErrorMessage: String? = nil
     ) {
         self.status = status
         self.due = due
         self.upcoming = upcoming
         self.history = history
         self.errorMessage = errorMessage
+        self.loadErrorMessage = loadErrorMessage
     }
 }

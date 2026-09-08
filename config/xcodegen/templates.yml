@@ -1,0 +1,15 @@
+targetTemplates:
+  IOSFramework:
+    type: framework
+    platform: iOS
+  SharedFramework:
+    type: framework
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
+  IOSUnitTests:
+    type: bundle.unit-test
+    platform: iOS
+  SharedUnitTests:
+    type: bundle.unit-test
+    platform: auto
+    supportedDestinations: [iOS, watchOS]

@@ -1,32 +1,37 @@
-import Combine
 import Foundation
+import Observation
 import RideSession
 import RideSessionDomain
 import SettingsDomain
 
 @MainActor
-public final class RideHistoryViewModel: ObservableObject {
-    @Published public private(set) var viewState = RideHistoryViewState()
-    @Published public private(set) var detailViewState = RideHistoryDetailViewState()
+@Observable
+public final class RideHistoryViewModel {
+    public private(set) var viewState = RideHistoryViewState()
+    public private(set) var detailViewState = RideHistoryDetailViewState()
 
     private let useCases: RideHistoryUseCases
     private let session: any RideSessionService
     private let mapper: RideHistoryMapper
-    private var trips: [RideTrip] = []
-    private var detailTrip: RideTrip?
-    private var activeVIN: String?
-    private var measurementSystem: MeasurementSystem = .system
-    private var requestedHistoryKey: HistoryKey?
-    private var loadedHistoryKey: HistoryKey?
-    private var observationTask: Task<Void, Never>?
-    private var historyLoadTask: Task<Void, Never>?
-    private var historyLoadID: UUID?
-    private var detailLoadTask: Task<Void, Never>?
-    private var detailLoadID: UUID?
-    private var deleteTask: Task<Void, Never>?
-    private var deleteID: UUID?
-    private var deletingRideIDs: Set<UUID> = []
-    private var errorMessage: String?
+    @ObservationIgnored private var trips: [RideTrip] = []
+    @ObservationIgnored private var detailTrip: RideTrip?
+    @ObservationIgnored private var activeVIN: String?
+    @ObservationIgnored private var measurementSystem: MeasurementSystem = .system
+    @ObservationIgnored private var requestedHistoryKey: HistoryKey?
+    @ObservationIgnored private var loadedHistoryKey: HistoryKey?
+    @ObservationIgnored private var observationTask: Task<Void, Never>?
+    @ObservationIgnored private var historyLoadTask: Task<Void, Never>?
+    @ObservationIgnored private var historyLoadID: UUID?
+    @ObservationIgnored private var detailLoadTask: Task<Void, Never>?
+    @ObservationIgnored private var detailLoadID: UUID?
+    @ObservationIgnored private var deleteTask: Task<Void, Never>?
+    @ObservationIgnored private var deleteID: UUID?
+    @ObservationIgnored private var deletingRideIDs: Set<UUID> = []
+    @ObservationIgnored private var errorMessage: String?
+    @ObservationIgnored private var loadErrorMessage: String?
+    @ObservationIgnored private var detailLoadErrorMessage: String?
+    @ObservationIgnored private var hasLoadedHistory = false
+    @ObservationIgnored private var failedHistoryKey: HistoryKey?
 
     public init(
         useCases: RideHistoryUseCases,
@@ -60,6 +65,8 @@ public final class RideHistoryViewModel: ObservableObject {
         let tasks = [observationTask, historyLoadTask, detailLoadTask, deleteTask]
         tasks.forEach { $0?.cancel() }
         stop()
+        detailLoadTask = nil
+        detailLoadID = nil
         for task in tasks { await task?.value }
     }
 
@@ -70,11 +77,13 @@ public final class RideHistoryViewModel: ObservableObject {
         historyLoadTask = nil
         historyLoadID = nil
         requestedHistoryKey = nil
+        // The presented detail owns its load beyond the list's visible lifetime.
     }
 
     public func refresh() {
         guard deleteTask == nil else { return }
         loadedHistoryKey = nil
+        failedHistoryKey = nil
         loadHistoryIfNeeded(force: true)
     }
 
@@ -86,22 +95,43 @@ public final class RideHistoryViewModel: ObservableObject {
         detailLoadTask?.cancel()
         let operationID = UUID()
         detailLoadID = operationID
-        detailTrip = nil
-        detailViewState = .init(status: .loading, rideID: id)
+        detailLoadErrorMessage = nil
+        if detailTrip?.id != id {
+            detailTrip = nil
+            detailViewState = .init(status: .loading, rideID: id)
+        } else {
+            renderDetail()
+        }
         let loadDetail = useCases.loadDetail
         detailLoadTask = Task { [weak self] in
-            let trip = await loadDetail.execute(id: id, vin: vin)
-            guard !Task.isCancelled, let self, self.activeVIN == vin,
-                  self.detailViewState.rideID == id,
-                  self.detailLoadID == operationID else { return }
-            self.detailLoadTask = nil
-            self.detailLoadID = nil
-            guard let trip else {
-                self.detailViewState = .init(status: .unavailable, rideID: id)
+            do {
+                let trip = try await loadDetail.execute(id: id, vin: vin)
+                guard !Task.isCancelled, let self, self.activeVIN == vin,
+                      self.detailViewState.rideID == id, self.detailLoadID == operationID else { return }
+                self.detailLoadTask = nil
+                self.detailLoadID = nil
+                self.detailTrip = trip
+                guard trip != nil else {
+                    self.detailViewState = .init(status: .unavailable, rideID: id)
+                    return
+                }
+                self.renderDetail()
+            } catch is CancellationError {
                 return
+            } catch {
+                guard !Task.isCancelled, let self, self.activeVIN == vin,
+                      self.detailViewState.rideID == id, self.detailLoadID == operationID else { return }
+                self.detailLoadTask = nil
+                self.detailLoadID = nil
+                self.detailLoadErrorMessage = String(localized: .rideHistoryDetailReadError)
+                if self.detailTrip != nil {
+                    self.renderDetail()
+                } else {
+                    self.detailViewState = .init(
+                        status: .failed, rideID: id, loadErrorMessage: self.detailLoadErrorMessage
+                    )
+                }
             }
-            self.detailTrip = trip
-            self.renderDetail()
         }
     }
 
@@ -188,6 +218,7 @@ private extension RideHistoryViewModel {
             historyLoadID = nil
             requestedHistoryKey = key
             loadedHistoryKey = nil
+            failedHistoryKey = nil
         }
         loadHistoryIfNeeded(force: false)
     }
@@ -197,26 +228,43 @@ private extension RideHistoryViewModel {
             viewState = .init(status: .bikeUnavailable)
             return
         }
-        guard force || loadedHistoryKey != key else { return }
+        guard force || (loadedHistoryKey != key && failedHistoryKey != key) else { return }
+        guard force || historyLoadTask == nil else { return }
         guard deleteTask == nil else { return }
         historyLoadTask?.cancel()
         let operationID = UUID()
         historyLoadID = operationID
-        if trips.isEmpty {
+        loadErrorMessage = nil
+        if !hasLoadedHistory {
             viewState = .init(status: .loading, errorMessage: errorMessage)
+        } else {
+            renderList()
         }
         let loadHistory = useCases.loadHistory
         historyLoadTask = Task { [weak self] in
-            let loadedTrips = await loadHistory.execute(vin: key.vin)
-            guard !Task.isCancelled, let self, self.activeVIN == key.vin,
-                  self.requestedHistoryKey == key,
-                  self.historyLoadID == operationID else { return }
-            self.historyLoadTask = nil
-            self.historyLoadID = nil
-            self.trips = loadedTrips.sorted { $0.startedAt > $1.startedAt }
-            self.loadedHistoryKey = self.requestedHistoryKey ?? key
-            self.renderList()
-            self.renderDetail()
+            do {
+                let loadedTrips = try await loadHistory.execute(vin: key.vin)
+                guard !Task.isCancelled, let self, self.activeVIN == key.vin,
+                      self.requestedHistoryKey == key, self.historyLoadID == operationID else { return }
+                self.historyLoadTask = nil
+                self.historyLoadID = nil
+                self.trips = loadedTrips.sorted { $0.startedAt > $1.startedAt }
+                self.hasLoadedHistory = true
+                self.loadedHistoryKey = key
+                self.failedHistoryKey = nil
+                self.renderList()
+                self.renderDetail()
+            } catch is CancellationError {
+                return
+            } catch {
+                guard !Task.isCancelled, let self, self.activeVIN == key.vin,
+                      self.requestedHistoryKey == key, self.historyLoadID == operationID else { return }
+                self.historyLoadTask = nil
+                self.historyLoadID = nil
+                self.failedHistoryKey = key
+                self.loadErrorMessage = String(localized: .rideHistoryReadError)
+                self.renderList()
+            }
         }
     }
 
@@ -225,11 +273,20 @@ private extension RideHistoryViewModel {
             viewState = .init(status: .bikeUnavailable, errorMessage: errorMessage)
             return
         }
+        if !hasLoadedHistory, let loadErrorMessage {
+            viewState = .init(status: .failed, loadErrorMessage: loadErrorMessage)
+            return
+        }
+        guard hasLoadedHistory else {
+            viewState = .init(status: .loading)
+            return
+        }
         viewState = mapper.mapList(
             trips: trips,
             measurementSystem: measurementSystem,
             deletingRideIDs: deletingRideIDs,
-            errorMessage: errorMessage
+            errorMessage: errorMessage,
+            loadErrorMessage: loadErrorMessage
         )
     }
 
@@ -238,7 +295,8 @@ private extension RideHistoryViewModel {
         detailViewState = mapper.mapDetail(
             trip: detailTrip,
             history: trips,
-            measurementSystem: measurementSystem
+            measurementSystem: measurementSystem,
+            loadErrorMessage: detailLoadErrorMessage
         )
     }
 
@@ -253,6 +311,10 @@ private extension RideHistoryViewModel {
         deleteTask = nil
         deleteID = nil
         trips = []
+        hasLoadedHistory = false
+        failedHistoryKey = nil
+        loadErrorMessage = nil
+        detailLoadErrorMessage = nil
         detailTrip = nil
         deletingRideIDs = []
         errorMessage = nil

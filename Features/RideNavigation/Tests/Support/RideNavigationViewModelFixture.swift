@@ -44,39 +44,62 @@ struct RideNavigationViewModelFixture {
         self.settingsRepository = settingsRepository
         self.guidance = guidance
         let routeRepository = repository ?? StubRecordedRouteRepository(routes: routes)
+        let library = RideNavigationLibraryController(
+            routeLibrary: RideNavigationRouteLibraryService(
+                repository: routeRepository, importer: importer, exporter: StubGPXRouteExporter()
+            ),
+            timing: timing
+        )
+        let planning = RideNavigationPlanningController(
+            planning: RideNavigationPlanningService(
+                roadRouteCalculator: roadRouteCalculator,
+                externalMapLinkResolver: externalMapLinkResolver,
+                trailExitFinder: trailExitFinder
+            ),
+            search: RideNavigationSearchService(placeSearch: placeSearch, sleep: timing.sleep),
+            timing: timing
+        )
+        let activity = Self.makeActivity(
+            library: library, planning: planning, mapper: mapPresentationMapper,
+            guidance: guidance, timing: timing
+        )
         viewModel = RideNavigationViewModel(
             dependencies: RideNavigationViewModelDependencies(
                 vehicleSession: vehicleSession,
                 observeDeviceSpeed: ObserveDeviceSpeedUseCase(repository: deviceSpeedRepository),
-                routeLibrary: RideNavigationRouteLibraryService(
-                    repository: routeRepository,
-                    importer: importer,
-                    exporter: StubGPXRouteExporter()
-                ),
-                planning: RideNavigationPlanningService(
-                    roadRouteCalculator: roadRouteCalculator,
-                    externalMapLinkResolver: externalMapLinkResolver,
-                    trailExitFinder: trailExitFinder
-                ),
+                loadSettings: LoadAppSettingsUseCase(repository: settingsRepository),
+                observeSettings: ObserveAppSettingsUseCase(repository: settingsRepository),
+                updateSettings: UpdateAppSettingsUseCase(repository: settingsRepository),
+                presentationMapper: RideNavigationPresentationMapper(locale: Locale(identifier: "en_US")),
+                mapPresentationMapper: mapPresentationMapper,
+                mapSceneBuilder: RideNavigationMapSceneBuilder(mapper: mapPresentationMapper),
+                locationGeometry: activity.dependencies.locationGeometry,
+                timing: timing
+            ),
+            library: library,
+            planningController: planning,
+            activityController: activity
+        )
+    }
+
+    private static func makeActivity(
+        library: RideNavigationLibraryController,
+        planning: RideNavigationPlanningController,
+        mapper: RideNavigationMapPresentationMapper,
+        guidance: NoOpNavigationGuidanceClient,
+        timing: RideNavigationTiming
+    ) -> RideNavigationActivityController {
+        RideNavigationActivityController(
+            dependencies: RideNavigationActivityDependencies(
+                library: library,
+                planning: planning,
                 trailGuidance: RideNavigationTrailGuidanceController(
                     planner: DefaultRideRouteGuidancePlanner(entryClassifier: RideRouteEntryClassifier()),
                     projectionSelector: RideRouteProjectionSelector()
                 ),
-                trailMapPreparer: RideNavigationTrailMapPreparer(
-                    mapper: mapPresentationMapper
-                ),
+                trailMapPreparer: RideNavigationTrailMapPreparer(mapper: mapper),
                 trailMap: RideNavigationTrailMapController(),
                 guidance: guidance,
-                loadSettings: LoadAppSettingsUseCase(repository: settingsRepository),
-                observeSettings: ObserveAppSettingsUseCase(repository: settingsRepository),
-                saveSettings: SaveAppSettingsUseCase(repository: settingsRepository),
-                presentationMapper: RideNavigationPresentationMapper(locale: Locale(identifier: "en_US")),
-                mapPresentationMapper: mapPresentationMapper,
-                mapSceneBuilder: RideNavigationMapSceneBuilder(mapper: mapPresentationMapper),
-                searchService: RideNavigationSearchService(
-                    placeSearch: placeSearch,
-                    sleep: timing.sleep
-                ),
                 locationGeometry: RideNavigationLocationGeometry(),
                 timing: timing
             ),
@@ -84,4 +107,5 @@ struct RideNavigationViewModelFixture {
             breadcrumbRecorder: RideRouteRecorder()
         )
     }
+
 }

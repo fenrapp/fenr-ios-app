@@ -1,11 +1,12 @@
-import Combine
 import Foundation
+import Observation
 
 @MainActor
-final class AppNavigationCoordinator: ObservableObject {
-    @Published private(set) var state: AppNavigationState
+@Observable
+final class AppNavigationCoordinator {
+    private(set) var state: AppNavigationState
 
-    private var pendingExternalRequest: AppExternalNavigationRequest?
+    @ObservationIgnored private var pendingExternalRequest: AppExternalNavigationRequest?
 
     init(opensRideNavigationOnLaunch: Bool = false) {
         state = AppNavigationState()

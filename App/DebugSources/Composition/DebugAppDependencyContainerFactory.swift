@@ -2,12 +2,13 @@ import BikeDomain
 import BikeEmulator
 import BLETraceDomain
 import EnvironmentData
-import EnvironmentDomain
 import Foundation
 import MaintenanceData
+import MaintenanceDomain
 import MaintenanceLog
 import RideNavigationData
 import RideSessionData
+import RideSessionDomain
 import SettingsData
 
 @MainActor
@@ -42,17 +43,15 @@ enum DebugAppDependencyContainerFactory {
             )
         )
         let profileRepository = DebugBikeProfileRepository(
-            initialProfile: skipsOnboarding
-                ? profile(for: launchConfiguration.powerModePreset)
-                : nil
+            initialProfile: skipsOnboarding ? profile(for: launchConfiguration.powerModePreset) : nil
         )
         return DebugAppContext(
             container: makeContainer(
                 repository: repository,
                 profileRepository: profileRepository,
-                forceOnboarding: !skipsOnboarding,
                 maintenanceReminderScheduler: maintenanceReminderScheduler,
-                diagnostics: DebugDiagnosticsContext(traceRepository: traceRepository, captureState: captureState)
+                diagnostics: DebugDiagnosticsContext(traceRepository: traceRepository, captureState: captureState),
+                forceOnboarding: !skipsOnboarding
             ),
             scenarioController: DebugScenarioController(
                 repository: repository,
@@ -63,7 +62,9 @@ enum DebugAppDependencyContainerFactory {
             )
         )
     }
+}
 
+private extension DebugAppDependencyContainerFactory {
     private static func makeLaunchConfiguration(
         arguments: [String],
         store: DebugScenarioStore
@@ -82,17 +83,16 @@ enum DebugAppDependencyContainerFactory {
     private static func makeContainer(
         repository: BikeEmulatorRepository,
         profileRepository: DebugBikeProfileRepository,
-        forceOnboarding: Bool,
         maintenanceReminderScheduler: any MaintenanceReminderScheduling,
-        diagnostics: DebugDiagnosticsContext
+        diagnostics: DebugDiagnosticsContext,
+        forceOnboarding: Bool
     ) -> AppDependencyContainer {
         let settingsRepository = AppSettingsRepositoryFactory.make(
             userDefaults: .standard, profileRepository: profileRepository
         )
         let deviceSpeedRepository = DebugDeviceSpeedRepository()
         let motionCalibrationRepository = makeMotionCalibrationRepository()
-        let rideTripRepository = makeRideTripRepository()
-        let maintenanceRepository = makeMaintenanceRepository()
+        let persistence = makePersistence()
         let sessionServices = AppSessionDependencyContainer.makeServices(
             dependencies: .init(
                 repository: repository,
@@ -100,8 +100,8 @@ enum DebugAppDependencyContainerFactory {
                 settingsRepository: settingsRepository,
                 deviceSpeedRepository: deviceSpeedRepository,
                 motionCalibrationRepository: motionCalibrationRepository,
-                imuProfile: .debug,
-                rideTripRepository: rideTripRepository
+                imuProfile: makeIMUProfile(),
+                rideTripRepository: persistence.rides
             )
         )
         let bikeLockCapabilityStore = BikeLockCapabilityStateStore()
@@ -115,8 +115,8 @@ enum DebugAppDependencyContainerFactory {
             profileRepository: profileRepository,
             settingsRepository: settingsRepository,
             deviceSpeedRepository: deviceSpeedRepository,
-            rideTripRepository: rideTripRepository,
-            maintenanceRepository: maintenanceRepository,
+            rideTripRepository: persistence.rides,
+            maintenanceRepository: persistence.maintenance,
             sessionServices: sessionServices,
             onboardingContainer: BikeOnboardingDependencyContainer(),
             dashboardContainer: RideDashboardDependencyContainer(),
@@ -132,17 +132,23 @@ enum DebugAppDependencyContainerFactory {
             ),
             bikeLockAuthenticator: BikeLockAuthenticationFactory.makeAuthenticator(),
             bikeLockCapabilityStore: bikeLockCapabilityStore,
-            startupPreparer: DebugRideHistorySeeder(
-                repository: rideTripRepository,
-                now: Date.init
-            ),
+            startupPreparer: persistence.seeder,
             initialOnboardingVIN: BikeEmulatorIdentity.vin,
             forceOnboarding: forceOnboarding
         )
     }
 
+    private static func makePersistence() -> DebugPersistenceContext {
+        let rides = makeRideTripRepository()
+        return DebugPersistenceContext(
+            rides: rides,
+            maintenance: makeMaintenanceRepository(),
+            seeder: DebugRideHistorySeeder(repository: rides, now: Date.init)
+        )
+    }
+
     private static func makeIncomingMapLinkStore() -> UserDefaultsIncomingMapLinkStore {
-        return (try? UserDefaultsIncomingMapLinkStore.shared())
+        (try? UserDefaultsIncomingMapLinkStore.shared())
             ?? UserDefaultsIncomingMapLinkStore(
                 userDefaults: .standard,
                 encoder: JSONEncoder(),
@@ -230,4 +236,10 @@ private struct DebugBikePinDeriver: BikePinDeriving {
 private struct DebugDiagnosticsContext {
     let traceRepository: any BLETraceRecording & BLETraceLogRepository
     let captureState: BLETraceCaptureState
+}
+
+private struct DebugPersistenceContext {
+    let rides: any RideTripRepository
+    let maintenance: any MaintenanceRepository
+    let seeder: DebugRideHistorySeeder
 }

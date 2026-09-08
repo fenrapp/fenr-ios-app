@@ -4,6 +4,13 @@ import SettingsDomain
 public struct DashboardProgressBarMapper: Sendable {
     public init() {}
 
+    public func layout(for thickness: DashboardProgressBarThickness) -> DashboardProgressBarLayout {
+        switch thickness {
+        case .regular: .regular
+        case .thick: .init(trackHeight: 6, energyHeight: 10, centerMarkerWidth: 3)
+        }
+    }
+
     public func map(
         mode: DashboardProgressBarMode,
         speedProgress: Double,

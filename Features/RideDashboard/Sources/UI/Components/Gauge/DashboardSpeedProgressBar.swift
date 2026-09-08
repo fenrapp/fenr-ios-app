@@ -5,6 +5,7 @@ struct DashboardSpeedProgressBar: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var colorScheme
     let progress: Double
+    let height: Double
 
     var body: some View {
         GeometryReader { proxy in
@@ -30,7 +31,7 @@ struct DashboardSpeedProgressBar: View {
             )
             .offset(x: -Constants.horizontalOverflow)
         }
-        .frame(height: Constants.height)
+        .frame(height: height)
         .accessibilityHidden(true)
     }
 
@@ -68,7 +69,6 @@ struct DashboardSpeedProgressBar: View {
     }
 
     private enum Constants {
-        static let height: CGFloat = 3
         static let horizontalOverflow: CGFloat = 24
         static let animationDuration = 0.32
         static let lightInformational = Color(red: 0, green: 0.48, blue: 0.52)

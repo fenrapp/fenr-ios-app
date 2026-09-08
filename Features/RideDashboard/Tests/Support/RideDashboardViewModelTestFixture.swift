@@ -8,9 +8,11 @@ import VehicleSession
 func makeFixture(
     timing: RideDashboardTiming = .live,
     initialConnectionStabilityPeriod: Duration = .zero,
-    reconnectionNoticeDelay: Duration = .seconds(5)
+    reconnectionNoticeDelay: Duration = .seconds(5),
+    vehicleSession: RideDashboardVehicleSession? = nil,
+    onContinuityChanged: @escaping @MainActor (RideDashboardContinuityPhase) -> Void = { _ in }
 ) -> RideDashboardViewModelTestFixture {
-    let vehicleSession = RideDashboardVehicleSession()
+    let vehicleSession = vehicleSession ?? RideDashboardVehicleSession()
     return .init(
         viewModel: RideDashboardViewModel(
             mapper: RideDashboardMapperFactory.makeRideMapper(
@@ -21,7 +23,8 @@ func makeFixture(
             timing: timing,
             continuityPolicy: RideDashboardContinuityPolicy(),
             initialConnectionStabilityPeriod: initialConnectionStabilityPeriod,
-            reconnectionNoticeDelay: reconnectionNoticeDelay
+            reconnectionNoticeDelay: reconnectionNoticeDelay,
+            onContinuityChanged: onContinuityChanged
         ),
         vehicleSession: vehicleSession
     )

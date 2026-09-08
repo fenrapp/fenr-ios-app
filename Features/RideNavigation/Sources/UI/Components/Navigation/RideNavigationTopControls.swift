@@ -67,6 +67,7 @@ struct RideNavigationTopControls: View {
                 Text(verbatim: "\(state.distanceText) · \(state.elapsedText)")
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("rideNavigation.progress")
             }
             .padding(.trailing, DesignSpace.medium)
             .fixedSize(horizontal: false, vertical: true)

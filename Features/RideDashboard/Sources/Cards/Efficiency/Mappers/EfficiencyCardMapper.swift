@@ -14,7 +14,9 @@ public struct EfficiencyCardMapper: Sendable {
         snapshot: RideSessionSnapshot,
         trendTrips: [RideTrip],
         trendIsLoading: Bool,
-        measurementSystem: MeasurementSystem
+        measurementSystem: MeasurementSystem,
+        historyReadFailed: Bool = false,
+        hasLoadedHistory: Bool = false
     ) -> DashboardEfficiencyViewData {
         let usesMiles = measurementSystem.resolved(for: locale) == .us
         let unit = usesMiles ? "Wh/mi" : "Wh/km"
@@ -34,6 +36,10 @@ public struct EfficiencyCardMapper: Sendable {
         }
 
         return DashboardEfficiencyViewData(
+            historyError: historyReadFailed
+                ? rideDashboardLocalized(hasLoadedHistory
+                    ? .rideDashboardHistoryRefreshError : .rideDashboardHistoryLoadError)
+                : nil,
             valueText: efficiency.map(formatEfficiency) ?? "—",
             unitText: unit,
             status: status,

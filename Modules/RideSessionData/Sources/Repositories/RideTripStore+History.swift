@@ -6,7 +6,8 @@ extension RideTripStore {
     func loadCompletedTrips(
         vin: String,
         mapper: RideTripRecordMapper
-    ) -> [RideTrip] {
+    ) throws -> [RideTrip] {
+        try Task.checkCancellation()
         do {
             let vinKind = RideTripRecordMapper.Constants.vinKind
             let descriptor = FetchDescriptor<RideTripRecord>(
@@ -17,10 +18,14 @@ extension RideTripStore {
                 },
                 sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
             )
-            return try modelContext.fetch(descriptor).compactMap(mapper.mapToDomain)
+            return try modelContext.fetch(descriptor).map { record in
+                guard let trip = mapper.mapToDomain(record) else { throw RideTripReadError.invalidData }
+                return trip
+            }
+        } catch let error as RideTripReadError {
+            throw error
         } catch {
-            handlePersistenceError(error)
-            return []
+            throw RideTripReadError.readFailed
         }
     }
 
@@ -29,7 +34,8 @@ extension RideTripStore {
         vin: String,
         mapper: RideTripRecordMapper,
         energyBucketMapper: RideEnergyBucketRecordMapper
-    ) -> RideTrip? {
+    ) throws -> RideTrip? {
+        try Task.checkCancellation()
         do {
             let vinKind = RideTripRecordMapper.Constants.vinKind
             var descriptor = FetchDescriptor<RideTripRecord>(predicate: #Predicate {
@@ -39,14 +45,15 @@ extension RideTripStore {
                     && $0.vehicleIdentityValue == vin
             })
             descriptor.fetchLimit = 1
-            guard let record = try modelContext.fetch(descriptor).first,
-                  let trip = mapper.mapToDomain(record) else { return nil }
+            guard let record = try modelContext.fetch(descriptor).first else { return nil }
+            guard let trip = mapper.mapToDomain(record) else { throw RideTripReadError.invalidData }
             return trip.restoringEnergyBuckets(
                 try fetchEnergyBuckets(tripID: id, mapper: energyBucketMapper)
             )
+        } catch let error as RideTripReadError {
+            throw error
         } catch {
-            handlePersistenceError(error)
-            return nil
+            throw RideTripReadError.readFailed
         }
     }
 

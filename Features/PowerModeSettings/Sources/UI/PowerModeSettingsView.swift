@@ -2,7 +2,7 @@ import DesignSystem
 import SwiftUI
 
 public struct PowerModeSettingsView: View {
-    @ObservedObject private var viewModel: PowerModeSettingsViewModel
+    private let viewModel: PowerModeSettingsViewModel
     private let isPresentationActive: Bool
     @State private var isNameEditorPresented = false
 
@@ -66,11 +66,14 @@ public struct PowerModeSettingsView: View {
                 mapIndex: viewModel.viewState.selectedMapIndex,
                 currentName: viewModel.viewState.currentName,
                 maximumLength: viewModel.viewState.maximumNameLength,
-                isEnabled: viewModel.viewState.canEditName,
+                isEnabled: viewModel.viewState.canEditName && !viewModel.viewState.isSavingName,
                 error: viewModel.viewState.nameError,
                 save: viewModel.saveName,
                 reset: viewModel.resetName
             )
+        }
+        .onChange(of: viewModel.viewState.nameSaveCompletionID) {
+            isNameEditorPresented = false
         }
         .task { synchronizePresentation() }
         .onChange(of: isPresentationActive) { synchronizePresentation() }
@@ -103,7 +106,7 @@ public struct PowerModeSettingsView: View {
             }
             .frame(minHeight: Constants.minimumControlSize)
         }
-        .disabled(!viewModel.viewState.canEditName)
+        .disabled(!viewModel.viewState.canEditName || viewModel.viewState.isSavingName)
         .accessibilityHint(.powerModeSettingsEditNameHint)
         .accessibilityIdentifier("powerModes.editName")
     }

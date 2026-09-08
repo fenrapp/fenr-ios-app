@@ -48,7 +48,7 @@ import SwiftUI
         averageSpeed: .init(label: "AVERAGE", valueText: "41", unit: "km/h"),
         maximumSpeed: .init(label: "MAX SPEED", valueText: "137", unit: "km/h"),
         accessibilityLabel: "Ride statistics preview"
-    ))
+    ), retryHistory: {})
     .dashboardCardPreviewCanvas()
 }
 
@@ -69,12 +69,12 @@ import SwiftUI
         status: .calculated,
         trendPoints: previewTrendPoints,
         hasConfirmedVehicle: true
-    ))
+    ), retryHistory: {})
     .dashboardCardPreviewCanvas()
 }
 
 #Preview("Range live card") {
-    DashboardRangeLiveCard(state: previewRangeState)
+    DashboardRangeLiveCard(state: previewRangeState, retryHistory: {})
         .dashboardCardPreviewCanvas()
 }
 

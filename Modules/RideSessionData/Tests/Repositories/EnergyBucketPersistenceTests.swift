@@ -54,7 +54,7 @@ struct RideEnergyBucketPersistenceTests {
             toVIN: RideSessionDataFixtures.firstVIN
         ))
 
-        let completed = await testContext.repository.loadCompletedTrips(
+        let completed = try await testContext.repository.loadCompletedTrips(
             vin: RideSessionDataFixtures.firstVIN
         )
         let tripRecord = try #require(testContext.tripSnapshots().first)

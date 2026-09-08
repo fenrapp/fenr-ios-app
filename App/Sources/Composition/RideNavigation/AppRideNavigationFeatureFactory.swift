@@ -20,61 +20,92 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
     func makeFeature() -> RideNavigationFeatureModel {
         let repository = Self.makeRecordedRouteRepository(directory: routeDirectory)
         let iso8601 = Date.ISO8601FormatStyle(includingFractionalSeconds: true)
-        let placeSearch = ApplePlaceSearchService()
-        let roadRouteCalculator = AppleRoadRouteCalculator()
         let mapPresentationMapper = RideNavigationMapPresentationMapper()
-        let trailGuidance = RideNavigationTrailGuidanceController(
-            planner: DefaultRideRouteGuidancePlanner(entryClassifier: RideRouteEntryClassifier()),
-            projectionSelector: RideRouteProjectionSelector()
+        let timing = RideNavigationTiming.live
+        let locationGeometry = RideNavigationLocationGeometry()
+        let library = RideNavigationLibraryController(
+            routeLibrary: Self.makeRouteLibrary(repository: repository, dateFormat: iso8601, isDemo: isDemo),
+            timing: timing
         )
-        let mapLinkSecurityPolicy = AppleMapLinkSecurityPolicy.standard
-        let redirectSession = Self.makeRedirectSession(policy: mapLinkSecurityPolicy)
+        let planning = Self.makePlanningController(timing: timing)
+        let activity = Self.makeActivityController(
+            library: library,
+            planning: planning,
+            mapMapper: mapPresentationMapper,
+            locationGeometry: locationGeometry,
+            timing: timing
+        )
         return RideNavigationFeatureModel(
             viewModel: RideNavigationViewModel(
                 dependencies: RideNavigationViewModelDependencies(
                     vehicleSession: vehicleSession,
                     observeDeviceSpeed: observeDeviceSpeed,
-                    routeLibrary: Self.makeRouteLibrary(
-                        repository: repository,
-                        dateFormat: iso8601,
-                        isDemo: isDemo
-                    ),
-                    planning: RideNavigationPlanningService(
-                        roadRouteCalculator: roadRouteCalculator,
-                        externalMapLinkResolver: AppleExternalMapLinkResolver(
-                            redirectResolver: URLSessionMapLinkRedirectResolver(ownedSession: redirectSession),
-                            placeSearch: placeSearch,
-                            securityPolicy: mapLinkSecurityPolicy
-                        ),
-                        trailExitFinder: AppleTrailExitFinder(
-                            candidateSearch: AppleTrailExitCandidateSearch(),
-                            roadRouteCalculator: roadRouteCalculator
-                        )
-                    ),
-                    trailGuidance: trailGuidance,
-                    trailMapPreparer: RideNavigationTrailMapPreparer(mapper: mapPresentationMapper),
-                    trailMap: RideNavigationTrailMapController(),
-                    guidance: AppleNavigationGuidanceClient(
-                        synthesizer: AVSpeechSynthesizer(),
-                        notificationGenerator: UINotificationFeedbackGenerator()
-                    ),
                     loadSettings: LoadAppSettingsUseCase(repository: settingsRepository),
                     observeSettings: ObserveAppSettingsUseCase(repository: settingsRepository),
-                    saveSettings: SaveAppSettingsUseCase(repository: settingsRepository),
+                    updateSettings: UpdateAppSettingsUseCase(repository: settingsRepository),
                     presentationMapper: RideNavigationPresentationMapper(locale: .autoupdatingCurrent),
                     mapPresentationMapper: mapPresentationMapper,
                     mapSceneBuilder: RideNavigationMapSceneBuilder(mapper: mapPresentationMapper),
-                    searchService: RideNavigationSearchService(
-                        placeSearch: placeSearch,
-                        sleep: RideNavigationTiming.live.sleep
-                    ),
-                    locationGeometry: RideNavigationLocationGeometry(),
-                    timing: .live
+                    locationGeometry: locationGeometry,
+                    timing: timing
                 ),
-                recorder: RideRouteRecorder(),
-                breadcrumbRecorder: RideRouteRecorder()
+                library: library,
+                planningController: planning,
+                activityController: activity
             ),
             mapSurfaceFactory: AppleNavigationMapSurfaceFactory().makeFactory()
+        )
+    }
+
+    private static func makeActivityController(
+        library: RideNavigationLibraryController,
+        planning: RideNavigationPlanningController,
+        mapMapper: RideNavigationMapPresentationMapper,
+        locationGeometry: RideNavigationLocationGeometry,
+        timing: RideNavigationTiming
+    ) -> RideNavigationActivityController {
+        RideNavigationActivityController(
+            dependencies: RideNavigationActivityDependencies(
+                library: library,
+                planning: planning,
+                trailGuidance: RideNavigationTrailGuidanceController(
+                    planner: DefaultRideRouteGuidancePlanner(entryClassifier: RideRouteEntryClassifier()),
+                    projectionSelector: RideRouteProjectionSelector()
+                ),
+                trailMapPreparer: RideNavigationTrailMapPreparer(mapper: mapMapper),
+                trailMap: RideNavigationTrailMapController(),
+                guidance: AppleNavigationGuidanceClient(
+                    synthesizer: AVSpeechSynthesizer(),
+                    notificationGenerator: UINotificationFeedbackGenerator()
+                ),
+                locationGeometry: locationGeometry,
+                timing: timing
+            ),
+            recorder: RideRouteRecorder(),
+            breadcrumbRecorder: RideRouteRecorder()
+        )
+    }
+
+    private static func makePlanningController(timing: RideNavigationTiming) -> RideNavigationPlanningController {
+        let placeSearch = ApplePlaceSearchService()
+        let roadRouteCalculator = AppleRoadRouteCalculator()
+        let mapLinkSecurityPolicy = AppleMapLinkSecurityPolicy.standard
+        let redirectSession = makeRedirectSession(policy: mapLinkSecurityPolicy)
+        return RideNavigationPlanningController(
+            planning: RideNavigationPlanningService(
+                roadRouteCalculator: roadRouteCalculator,
+                externalMapLinkResolver: AppleExternalMapLinkResolver(
+                    redirectResolver: URLSessionMapLinkRedirectResolver(ownedSession: redirectSession),
+                    placeSearch: placeSearch,
+                    securityPolicy: mapLinkSecurityPolicy
+                ),
+                trailExitFinder: AppleTrailExitFinder(
+                    candidateSearch: AppleTrailExitCandidateSearch(),
+                    roadRouteCalculator: roadRouteCalculator
+                )
+            ),
+            search: RideNavigationSearchService(placeSearch: placeSearch, sleep: timing.sleep),
+            timing: timing
         )
     }
 

@@ -81,6 +81,7 @@ struct DashboardDeviceBatteryViewModelTests {
         viewModel.start()
         #expect(viewModel.viewState.showsIcon)
         #expect(viewModel.viewState.showsPercentage)
+        #expect(await waitUntil { viewModel.viewState.canChangeDisplayMode })
 
         viewModel.toggleDisplayMode()
 
@@ -108,14 +109,72 @@ struct DashboardDeviceBatteryViewModelTests {
         #expect(await waitUntil { await repository.load().dashboardDeviceBatteryDisplayMode == .iconOnly })
     }
 
+    @Test("Failed battery display updates roll back and show an error")
+    func failedDisplayModeRollsBack() async {
+        let repository = TestDashboardDeviceBatterySettingsRepository()
+        await repository.setFailsUpdating(true)
+        let viewModel = makeViewModel(monitor: .init(), repository: repository)
+        viewModel.start()
+        #expect(await waitUntil { viewModel.viewState.canChangeDisplayMode })
+        viewModel.toggleDisplayMode()
+        #expect(!viewModel.viewState.showsIcon)
+        #expect(await waitUntil { viewModel.viewState.errorText != nil })
+        #expect(viewModel.viewState.showsIcon && viewModel.viewState.showsPercentage)
+        await repository.setFailsUpdating(false)
+        viewModel.toggleDisplayMode()
+        #expect(await waitUntil { await repository.load().dashboardDeviceBatteryDisplayMode == .textOnly })
+        #expect(viewModel.viewState.errorText == nil)
+        viewModel.stop()
+    }
+
+    @Test("Queued display updates preserve order and ignore older observations")
+    func queuedUpdatesIgnoreStaleSnapshots() async {
+        let repository = TestDashboardDeviceBatterySettingsRepository()
+        await repository.blockNextUpdate()
+        let viewModel = makeViewModel(monitor: .init(), repository: repository)
+        viewModel.start()
+        #expect(await waitUntil { viewModel.viewState.canChangeDisplayMode })
+        viewModel.toggleDisplayMode()
+        #expect(await waitUntil { await repository.hasBlockedUpdate() })
+        viewModel.toggleDisplayMode()
+        #expect(viewModel.viewState.showsIcon && !viewModel.viewState.showsPercentage)
+        await repository.send(.init(settings: .init().scoped(toVIN: "FENRTEST000000001"), revision: 0))
+        await repository.resumeUpdate()
+        #expect(await waitUntil { await repository.load().dashboardDeviceBatteryDisplayMode == .iconOnly })
+        #expect(await repository.changes == [
+            .dashboardDeviceBatteryDisplayMode(.textOnly), .dashboardDeviceBatteryDisplayMode(.iconOnly)
+        ])
+        #expect(viewModel.viewState.showsIcon && !viewModel.viewState.showsPercentage)
+        viewModel.stop()
+    }
+
+    @Test("Stop cancels queued battery settings and ignores a late update")
+    func stopCancelsPendingDisplayUpdates() async {
+        let repository = TestDashboardDeviceBatterySettingsRepository()
+        await repository.blockNextUpdate()
+        let viewModel = makeViewModel(monitor: .init(), repository: repository)
+        viewModel.start()
+        #expect(await waitUntil { viewModel.viewState.canChangeDisplayMode })
+        viewModel.toggleDisplayMode()
+        #expect(await waitUntil { await repository.hasBlockedUpdate() })
+        viewModel.toggleDisplayMode()
+        viewModel.stop()
+        await repository.resumeUpdate()
+        viewModel.start()
+        #expect(await waitUntil { viewModel.viewState.showsIcon && viewModel.viewState.showsPercentage })
+        #expect(await repository.changes == [.dashboardDeviceBatteryDisplayMode(.textOnly)])
+        #expect(viewModel.viewState.errorText == nil)
+        viewModel.stop()
+    }
+
     private func makeViewModel(
         monitor: TestDashboardDeviceBatteryMonitor,
         repository: TestDashboardDeviceBatterySettingsRepository = .init()
     ) -> DashboardDeviceBatteryViewModel {
         DashboardDeviceBatteryViewModel(
             monitor: monitor,
-            loadSettings: LoadAppSettingsUseCase(repository: repository),
-            saveSettings: SaveAppSettingsUseCase(repository: repository),
+            observeSettings: ObserveAppSettingsUseCase(repository: repository),
+            updateSettings: UpdateAppSettingsUseCase(repository: repository),
             mapper: DashboardDeviceBatteryMapper()
         )
     }

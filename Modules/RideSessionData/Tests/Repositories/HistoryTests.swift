@@ -21,10 +21,10 @@ struct RideTripHistoryTests {
         await testContext.repository.completeTrip(first, at: first.updatedAt)
         await testContext.repository.completeTrip(second, at: second.updatedAt)
 
-        let firstHistory = await testContext.repository.loadCompletedTrips(
+        let firstHistory = try await testContext.repository.loadCompletedTrips(
             vin: RideSessionDataFixtures.firstVIN
         )
-        let secondHistory = await testContext.repository.loadCompletedTrips(
+        let secondHistory = try await testContext.repository.loadCompletedTrips(
             vin: RideSessionDataFixtures.secondVIN
         )
 
@@ -45,7 +45,7 @@ struct RideTripHistoryTests {
             await testContext.repository.completeTrip(trip, at: date.addingTimeInterval(1))
         }
 
-        let history = await testContext.repository.loadCompletedTrips(
+        let history = try await testContext.repository.loadCompletedTrips(
             vin: RideSessionDataFixtures.firstVIN
         )
         #expect(history.count == 101)
@@ -72,13 +72,13 @@ struct RideTripHistoryTests {
         )
         await testContext.repository.completeTrip(trip, at: .distantFuture)
 
-        let detail = await testContext.repository.loadCompletedTrip(
+        let detail = try await testContext.repository.loadCompletedTrip(
             id: trip.id,
             vin: RideSessionDataFixtures.firstVIN
         )
 
         #expect(detail?.energyBuckets == [bucket])
-        #expect(await testContext.repository.loadCompletedTrip(
+        #expect(try await testContext.repository.loadCompletedTrip(
             id: trip.id,
             vin: RideSessionDataFixtures.secondVIN
         ) == nil)
@@ -122,11 +122,11 @@ struct RideTripHistoryTests {
             id: completed.id,
             vin: RideSessionDataFixtures.firstVIN
         ))
-        #expect(await testContext.repository.loadCompletedTrip(
+        #expect(try await testContext.repository.loadCompletedTrip(
             id: completed.id,
             vin: RideSessionDataFixtures.firstVIN
         ) == nil)
-        #expect(await testContext.repository.loadCompletedTrip(
+        #expect(try await testContext.repository.loadCompletedTrip(
             id: retained.id,
             vin: RideSessionDataFixtures.firstVIN
         )?.energyBuckets == [retainedBucket])
@@ -143,7 +143,7 @@ struct RideTripHistoryTests {
 
         #expect(await testContext.repository.completeTrip(trip, at: .distantFuture))
 
-        let restored = await testContext.repository.loadCompletedTrip(
+        let restored = try await testContext.repository.loadCompletedTrip(
             id: trip.id,
             vin: RideSessionDataFixtures.firstVIN
         )

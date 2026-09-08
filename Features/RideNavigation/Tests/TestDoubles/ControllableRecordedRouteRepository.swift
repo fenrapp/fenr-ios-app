@@ -8,7 +8,7 @@ actor ControllableRecordedRouteRepository: RecordedRouteRepository {
 
     private var routes: [RideRoute] = []
     private var saveRequests: [(RideRoute, CheckedContinuation<Void, any Error>)] = []
-    private var loadContinuations: [CheckedContinuation<[RideRoute], Never>] = []
+    private var loadContinuations: [CheckedContinuation<[RideRouteSummary], Never>] = []
     private var blocksLoads = false
     private var draftSaveContinuations: [CheckedContinuation<Void, any Error>] = []
     private var draftSaves = 0
@@ -18,13 +18,17 @@ actor ControllableRecordedRouteRepository: RecordedRouteRepository {
         self.routes = routes
     }
 
-    func loadRoutes() async -> [RideRoute] {
+    func loadRouteSummaries() async -> [RideRouteSummary] {
         if blocksLoads {
             return await withCheckedContinuation { continuation in
                 loadContinuations.append(continuation)
             }
         }
-        return routes
+        return routes.map(RideRouteSummary.init)
+    }
+
+    func loadRoute(id: UUID) async throws -> RideRoute? {
+        routes.first { $0.id == id }
     }
 
     func save(_ route: RideRoute) async throws {
@@ -87,7 +91,7 @@ actor ControllableRecordedRouteRepository: RecordedRouteRepository {
         blocksLoads = false
         let continuations = loadContinuations
         loadContinuations.removeAll()
-        continuations.forEach { $0.resume(returning: routes) }
+        continuations.forEach { $0.resume(returning: routes.map(RideRouteSummary.init)) }
     }
 
     var draftSaveCount: Int {

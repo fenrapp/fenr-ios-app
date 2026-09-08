@@ -6,12 +6,18 @@ import TestSupport
 import VehicleSession
 
 actor BikeLiveActivityRepository: BikeRepository, BikeBatteryHealthRepository {
-    private let telemetrySource = AsyncSource<BikeTelemetry>()
-    private let batteryHealthSource = AsyncSource<BikeBatteryHealth>()
-    private let connectionSource = AsyncSource<BikeConnection>()
+    private let telemetrySource = TestEventHub<BikeTelemetry>(bufferingPolicy: .unbounded)
+    private let batteryHealthSource = TestEventHub<BikeBatteryHealth>(bufferingPolicy: .unbounded)
+    private let connectionSource = TestEventHub<BikeConnection>(bufferingPolicy: .unbounded)
     private var monitoringStarts = 0
     private var monitoringStops = 0
     private var delaysNextMonitoringStart = false
+
+    func waitForObservers() async -> Bool {
+        let telemetryIsReady = await telemetrySource.waitForSubscriber()
+        let connectionIsReady = await connectionSource.waitForSubscriber()
+        return telemetryIsReady && connectionIsReady
+    }
 
     func start() async {}
     func stop() async {}
@@ -77,17 +83,32 @@ actor BikeLiveActivityRepository: BikeRepository, BikeBatteryHealthRepository {
 }
 
 actor BikeLiveActivitySettingsRepository: AppSettingsRepository {
-    private var settings = AppSettings()
-    private let hub = TestEventHub<AppSettings>(bufferingPolicy: .bufferingNewest(1))
+    private var settings = AppSettings().scoped(toVIN: "FENRTEST000000001")
+    private var revision: UInt64 = 0
+    private let hub = TestEventHub<AppSettingsSnapshot>(bufferingPolicy: .bufferingNewest(1))
 
     func load() async -> AppSettings { settings }
-    func save(_ settings: AppSettings) async {
-        self.settings = settings
-        await hub.send(settings)
+    func setSettings(_ settings: AppSettings) async {
+        self.settings = settings.scoped(toVIN: "FENRTEST000000001")
+        revision &+= 1
+        await hub.send(.init(settings: self.settings, revision: revision))
     }
 
-    func observe() async -> AsyncStream<AppSettings> {
-        await hub.stream(replay: settings)
+    func update(expectedVIN: String, change: AppSettingsChange) async throws -> AppSettingsUpdateResult {
+        guard expectedVIN == settings.vin else { throw AppSettingsUpdateError.vehicleChanged }
+        let updated = try change.applying(to: settings)
+        guard updated != settings else {
+            return .unchanged(.init(settings: settings, revision: revision))
+        }
+        settings = updated
+        revision &+= 1
+        let snapshot = AppSettingsSnapshot(settings: settings, revision: revision)
+        await hub.send(snapshot)
+        return .changed(snapshot)
+    }
+
+    func observe() async -> AsyncStream<AppSettingsSnapshot> {
+        await hub.stream(replay: .init(settings: settings, revision: revision))
     }
 }
 
@@ -227,30 +248,6 @@ actor ControllableBikeLiveActivityTiming {
             return
         }
         sleeps.remove(at: index).continuation.resume(throwing: CancellationError())
-    }
-}
-
-private actor AsyncSource<Element: Sendable> {
-    private var continuations: [UUID: AsyncStream<Element>.Continuation] = [:]
-
-    func stream() -> AsyncStream<Element> {
-        AsyncStream { continuation in
-            let id = UUID()
-            continuations[id] = continuation
-            continuation.onTermination = { [weak self] _ in
-                Task { await self?.remove(id) }
-            }
-        }
-    }
-
-    func send(_ value: Element) {
-        for continuation in continuations.values {
-            continuation.yield(value)
-        }
-    }
-
-    private func remove(_ id: UUID) {
-        continuations[id] = nil
     }
 }
 

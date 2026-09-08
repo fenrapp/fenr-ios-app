@@ -7,32 +7,40 @@ struct VINAppSettingsStore {
     let encoder: JSONEncoder
     let decoder: JSONDecoder
 
-    func load(vin: String?) -> AppSettings {
-        let records = loadRecords(migratingTo: vin)
+    func load(vin: String?) throws -> AppSettings {
+        let records = try loadRecords(migratingTo: vin)
         guard let vin else { return AppSettings() }
-        return records?[vin] ?? AppSettings().scoped(toVIN: vin)
+        return records[vin] ?? AppSettings().scoped(toVIN: vin)
     }
 
-    func save(_ settings: AppSettings, vin: String) -> Bool {
-        guard var records = loadRecords(migratingTo: vin) else { return false }
+    func save(_ settings: AppSettings, vin: String) throws {
+        var records = try loadRecords(migratingTo: vin)
         let scoped = settings.scoped(toVIN: vin)
-        guard records[vin] != scoped else { return false }
+        guard records[vin] != scoped else { return }
         records[vin] = scoped
-        guard let data = try? encoder.encode(records) else { return false }
+        guard let data = try? encoder.encode(records) else { throw AppSettingsUpdateError.persistenceFailed }
         defaults.set(data, forKey: Constants.recordsKey)
-        return true
     }
 
-    private func loadRecords(migratingTo selectedVIN: String?) -> [String: AppSettings]? {
-        if let data = defaults.data(forKey: Constants.recordsKey) {
-            guard let records = try? decoder.decode([String: AppSettings].self, from: data),
+    private func loadRecords(migratingTo selectedVIN: String?) throws -> [String: AppSettings] {
+        if let stored = defaults.object(forKey: Constants.recordsKey) {
+            guard let data = stored as? Data,
+                  let records = try? decoder.decode([String: AppSettings].self, from: data),
                   records.allSatisfy({ vin, settings in
                       StarkPairingIdentity.isValidVIN(vin) && settings.vin == vin
-                  }) else { return nil }
+                  }) else { throw AppSettingsUpdateError.unreadableStore }
             return records
         }
-        let legacy = defaults.data(forKey: Constants.legacyKey)
-            .flatMap { try? decoder.decode(AppSettings.self, from: $0) } ?? AppSettings()
+        let legacy: AppSettings
+        if let stored = defaults.object(forKey: Constants.legacyKey) {
+            guard let data = stored as? Data,
+                  let decoded = try? decoder.decode(AppSettings.self, from: data) else {
+                throw AppSettingsUpdateError.unreadableStore
+            }
+            legacy = decoded
+        } else {
+            legacy = AppSettings()
+        }
         let knownVINs = Set(legacy.batteryPackCapacitiesByVIN.keys)
             .union(legacy.powerModeNamesByVIN.keys)
             .union(legacy.bikeLockSettingsByVIN.keys)
@@ -48,7 +56,7 @@ struct VINAppSettingsStore {
         if let selectedVIN {
             records[selectedVIN] = legacy.scoped(toVIN: selectedVIN)
         }
-        guard let data = try? encoder.encode(records) else { return nil }
+        guard let data = try? encoder.encode(records) else { throw AppSettingsUpdateError.persistenceFailed }
         defaults.set(data, forKey: Constants.recordsKey)
         return records
     }

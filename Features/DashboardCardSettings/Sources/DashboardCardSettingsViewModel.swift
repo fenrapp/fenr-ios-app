@@ -1,22 +1,24 @@
 import BikeDomain
-import Combine
+import Foundation
+import Observation
 import SettingsDomain
 
 @MainActor
-public final class DashboardCardSettingsViewModel: ObservableObject {
-    @Published public private(set) var viewState: DashboardCardSettingsViewState
+@Observable
+public final class DashboardCardSettingsViewModel {
+    public private(set) var viewState: DashboardCardSettingsViewState
+    public private(set) var settingsSaveError: String?
 
     private let useCases: DashboardCardSettingsUseCases
     private let mapper: DashboardCardSettingsViewStateMapper
     private let bikeLockCapabilityStore: any BikeLockCapabilityStateStoring
-    private var settings = AppSettings()
-    private var bikeLockCapability = BikeLockCapabilityState()
-    private var observationTask: Task<Void, Never>?
-    private var bikeLockCapabilityTask: Task<Void, Never>?
-    private var saveTask: Task<Void, Never>?
-    private var observationRequestCount = 0
-    private var pendingConfigurations: [DashboardCardConfiguration] = []
-    private var unconfirmedLocalConfiguration: DashboardCardConfiguration?
+    @ObservationIgnored private var settings = AppSettings()
+    @ObservationIgnored private var bikeLockCapability = BikeLockCapabilityState()
+    @ObservationIgnored private var observationTask: Task<Void, Never>?
+    @ObservationIgnored private var bikeLockCapabilityTask: Task<Void, Never>?
+    @ObservationIgnored private var saveTask: Task<Void, Never>?
+    @ObservationIgnored private var observationRequestCount = 0
+    @ObservationIgnored private(set) var pendingSettings = AppSettingsPendingChanges()
 
     public init(
         useCases: DashboardCardSettingsUseCases,
@@ -42,14 +44,11 @@ public final class DashboardCardSettingsViewModel: ObservableObject {
     public func start() {
         observationRequestCount += 1
         guard observationTask == nil else { return }
-        let loadSettings = useCases.loadSettings
         let observeSettings = useCases.observeSettings
         observationTask = Task { [weak self] in
-            for await _ in await observeSettings.execute() {
+            for await snapshot in await observeSettings.execute() {
                 guard !Task.isCancelled, let self else { return }
-                let latestSettings = await loadSettings.execute()
-                guard !Task.isCancelled else { return }
-                self.receive(latestSettings)
+                self.receive(snapshot)
             }
         }
         let bikeLockCapabilityStore = self.bikeLockCapabilityStore
@@ -68,6 +67,8 @@ public final class DashboardCardSettingsViewModel: ObservableObject {
             observationTask, bikeLockCapabilityTask, saveTask
         ]
         tasks.forEach { $0?.cancel() }
+        pendingSettings.removeAll()
+        settings = pendingSettings.settings
         stop()
         for task in tasks { await task?.value }
     }
@@ -83,106 +84,72 @@ public final class DashboardCardSettingsViewModel: ObservableObject {
     }
 
     public func setSectionOrder(ids: [String]) {
-        var ids = ids.compactMap(DashboardCardSectionID.init(rawValue:))
-        var configuration = settings.dashboardCardConfiguration
-        if !ids.contains(.bikeLock),
-           let bikeLockIndex = configuration.sections.firstIndex(where: { $0.id == .bikeLock }) {
-            ids.insert(.bikeLock, at: min(bikeLockIndex, ids.endIndex))
-        }
-        configuration.setSectionOrder(ids)
-        update(configuration)
+        update(.sectionOrder(ids.compactMap(DashboardCardSectionID.init(rawValue:))))
     }
 
     public func setSectionVisibility(_ isVisible: Bool, id: String) {
-        guard let id = DashboardCardSectionID(rawValue: id) else { return }
-        if id == .bikeLock || id == .settings {
-            return
-        }
-        var configuration = settings.dashboardCardConfiguration
-        configuration.setSectionVisibility(isVisible, id: id)
-        update(configuration)
+        guard let id = DashboardCardSectionID(rawValue: id), id != .bikeLock, id != .settings else { return }
+        update(.sectionVisibility(id: id, isVisible: isVisible))
     }
 
     public func setPageOrder(ids: [String], sectionID: String) {
         guard let sectionID = DashboardCardSectionID(rawValue: sectionID) else { return }
-        let ids = ids.compactMap(DashboardCardPageID.init(rawValue:))
-        var configuration = settings.dashboardCardConfiguration
-        configuration.setPageOrder(ids, sectionID: sectionID)
-        update(configuration)
+        update(.pageOrder(sectionID: sectionID, ids: ids.compactMap(DashboardCardPageID.init(rawValue:))))
     }
 
     public func setPageVisibility(_ isVisible: Bool, id: String, sectionID: String) {
         guard let id = DashboardCardPageID(rawValue: id),
               let sectionID = DashboardCardSectionID(rawValue: sectionID) else { return }
         var configuration = settings.dashboardCardConfiguration
-        guard configuration.setPageVisibility(
-            isVisible,
-            id: id,
-            sectionID: sectionID
-        ) else { return }
-        update(configuration)
+        guard configuration.setPageVisibility(isVisible, id: id, sectionID: sectionID) else { return }
+        update(.pageVisibility(sectionID: sectionID, id: id, isVisible: isVisible))
     }
 
-    private func receive(_ observedSettings: AppSettings) {
-        var updated = observedSettings
-        if let unconfirmedLocalConfiguration {
-            if observedSettings.dashboardCardConfiguration == unconfirmedLocalConfiguration {
-                self.unconfirmedLocalConfiguration = nil
-            } else {
-                updated.dashboardCardConfiguration = unconfirmedLocalConfiguration
-            }
+    public func dismissSettingsSaveError() {
+        settingsSaveError = nil
+    }
+
+    private func receive(_ snapshot: AppSettingsSnapshot) {
+        pendingSettings.receive(snapshot)
+        settings = pendingSettings.settings
+        render()
+    }
+
+    private func update(_ change: AppSettingsChange.Dashboard) {
+        do {
+            let change = AppSettingsChange.dashboard(change)
+            guard try change.applying(to: settings) != settings else { return }
+            try pendingSettings.enqueue(change)
+            settings = pendingSettings.settings
+            render()
+            startSaveWorkerIfNeeded()
+        } catch {
+            settingsSaveError = String(localized: .dashboardCardSettingsSaveFailed)
         }
-        guard updated != settings else { return }
-        settings = updated
-        render()
-    }
-
-    private func update(_ configuration: DashboardCardConfiguration) {
-        guard configuration != settings.dashboardCardConfiguration else { return }
-        settings.dashboardCardConfiguration = configuration
-        unconfirmedLocalConfiguration = configuration
-        pendingConfigurations.append(configuration)
-        render()
-        startSaveWorkerIfNeeded()
     }
 
     private func startSaveWorkerIfNeeded() {
         guard saveTask == nil else { return }
-        let loadSettings = useCases.loadSettings
-        let saveSettings = useCases.saveSettings
+        let update = useCases.updateSettings
         saveTask = Task { [weak self] in
-            while !Task.isCancelled {
-                guard let configuration = self?.nextPendingConfiguration() else { break }
-                var latestSettings = await loadSettings.execute()
-                guard !Task.isCancelled else { return }
-                latestSettings.dashboardCardConfiguration = configuration
-                await saveSettings.execute(latestSettings)
-                guard !Task.isCancelled else { return }
-                self?.didSave(latestSettings)
-            }
-            guard !Task.isCancelled else { return }
-            self?.saveTask = nil
-        }
-    }
-
-    private func nextPendingConfiguration() -> DashboardCardConfiguration? {
-        guard !pendingConfigurations.isEmpty else { return nil }
-        return pendingConfigurations.removeFirst()
-    }
-
-    private func didSave(_ savedSettings: AppSettings) {
-        var updated = savedSettings
-        if let unconfirmedLocalConfiguration {
-            if pendingConfigurations.isEmpty,
-               savedSettings.dashboardCardConfiguration == unconfirmedLocalConfiguration {
-                self.unconfirmedLocalConfiguration = nil
-            } else {
-                updated.dashboardCardConfiguration = unconfirmedLocalConfiguration
+            defer { self?.saveTask = nil }
+            while !Task.isCancelled, let pending = self?.pendingSettings.next {
+                do {
+                    let result = try await update.execute(expectedVIN: pending.expectedVIN, change: pending.change)
+                    guard !Task.isCancelled, let self else { return }
+                    pendingSettings.complete(id: pending.id, result: result)
+                    settings = pendingSettings.settings
+                    render()
+                } catch {
+                    guard !Task.isCancelled, let self else { return }
+                    if pendingSettings.reject(id: pending.id) {
+                        settingsSaveError = String(localized: .dashboardCardSettingsSaveFailed)
+                    }
+                    settings = pendingSettings.settings
+                    render()
+                }
             }
         }
-        guard updated != settings else { return }
-        settings = updated
-        render()
     }
 
     private func render() {

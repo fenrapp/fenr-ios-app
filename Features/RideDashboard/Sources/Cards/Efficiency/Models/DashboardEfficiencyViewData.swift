@@ -47,6 +47,7 @@ public struct DashboardEfficiencyViewData: Equatable, Sendable {
         }
     }
 
+    public let historyError: String?
     public let valueText: String
     public let unitText: String
     public let status: Status
@@ -58,6 +59,7 @@ public struct DashboardEfficiencyViewData: Equatable, Sendable {
     public let hasConfirmedVehicle: Bool
 
     public init(
+        historyError: String? = nil,
         valueText: String = "—",
         unitText: String = "Wh/km",
         status: Status = .calculating,
@@ -68,6 +70,7 @@ public struct DashboardEfficiencyViewData: Equatable, Sendable {
         trendIsLoading: Bool = false,
         hasConfirmedVehicle: Bool = false
     ) {
+        self.historyError = historyError
         self.valueText = valueText
         self.unitText = unitText
         self.status = status

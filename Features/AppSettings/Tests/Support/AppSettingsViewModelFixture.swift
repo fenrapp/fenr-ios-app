@@ -1,7 +1,9 @@
-import AppSettings
+@testable import AppSettings
 import BikeDomain
 import EnvironmentDomain
 import SettingsDomain
+import Testing
+import TestSupport
 
 @MainActor
 struct AppSettingsViewModelFixture {
@@ -25,7 +27,7 @@ struct AppSettingsViewModelFixture {
         viewModel = AppSettingsViewModel(
             useCases: .init(
                 settings: .init(
-                    save: .init(repository: settingsRepository),
+                    update: .init(repository: settingsRepository),
                     observe: .init(repository: settingsRepository)
                 ),
                 location: .init(
@@ -49,5 +51,6 @@ struct AppSettingsViewModelFixture {
         viewModel.start()
         _ = await settingsRepository.waitForSettingsSubscriber()
         _ = await profileRepository.waitForProfileSubscriber()
+        #expect(await waitUntil { viewModel.pendingSettings.confirmed != nil })
     }
 }

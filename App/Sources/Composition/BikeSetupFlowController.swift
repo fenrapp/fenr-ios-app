@@ -1,10 +1,11 @@
 import BikeDomain
-import Combine
+import Observation
 
 @MainActor
-final class BikeSetupFlowController: ObservableObject {
-    @Published private(set) var isCompleted = false
-    @Published private(set) var isLoaded = false
+@Observable
+final class BikeSetupFlowController {
+    private(set) var isCompleted = false
+    private(set) var isLoaded = false
 
     private let useCases: BikeProfileUseCases
     private let forceOnboarding: Bool

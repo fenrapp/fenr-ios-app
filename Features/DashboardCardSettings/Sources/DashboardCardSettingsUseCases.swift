@@ -3,15 +3,15 @@ import SettingsDomain
 public struct DashboardCardSettingsUseCases: Sendable {
     let loadSettings: LoadAppSettingsUseCase
     let observeSettings: ObserveAppSettingsUseCase
-    let saveSettings: SaveAppSettingsUseCase
+    let updateSettings: UpdateAppSettingsUseCase
 
     public init(
         loadSettings: LoadAppSettingsUseCase,
         observeSettings: ObserveAppSettingsUseCase,
-        saveSettings: SaveAppSettingsUseCase
+        updateSettings: UpdateAppSettingsUseCase
     ) {
         self.loadSettings = loadSettings
         self.observeSettings = observeSettings
-        self.saveSettings = saveSettings
+        self.updateSettings = updateSettings
     }
 }

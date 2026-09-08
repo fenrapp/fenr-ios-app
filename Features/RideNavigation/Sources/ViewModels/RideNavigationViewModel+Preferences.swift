@@ -6,74 +6,57 @@ import SettingsDomain
 extension RideNavigationViewModel {
     public func showHome() {
         guard !hasActiveSession else { return }
-        routeTask?.cancel()
-        routeTask = nil
+        planningController.resetPlan()
         screen = .home
-        selectedRoute = nil
-        trailMap.reset()
-        roadRoute = nil
-        roadRoutes = []
-        roadNavigationPurpose = nil
-        trailExitPreview = nil
-        selectedRoadRouteIndex = 0
-        resetRoadStepGuidance()
-        selectedDestination = nil
+        library.resetPersistence()
+        activityController.resetForPreview()
+        activityController.resetRoadStepGuidance()
         mapDisplayStyle = .map
-        isRerouting = false
-        isCalculatingRoadRoutes = false
         errorText = nil
+        library.clearError()
         render()
     }
 
     public func setMapStyle(_ styleID: String) {
+        let style: RideNavigationMapStylePreference
         switch styleID {
-        case Constants.focusMapStyleID where allowsFocusMapStyle:
-            mapDisplayStyle = .focus
-            appSettings.rideNavigation.preferredMapStyle = .focus
-        case MapSourceDescriptor.appleStandard.id:
-            mapSource = .appleStandard
-            mapDisplayStyle = .map
-            if allowsFocusMapStyle {
-                appSettings.rideNavigation.preferredMapStyle = .standard
-            }
-        case MapSourceDescriptor.appleHybrid.id:
-            mapSource = .appleHybrid
-            mapDisplayStyle = .map
-            if allowsFocusMapStyle {
-                appSettings.rideNavigation.preferredMapStyle = .satellite
-            }
-        default:
-            return
+        case Constants.focusMapStyleID where allowsFocusMapStyle: style = .focus
+        case MapSourceDescriptor.appleStandard.id: style = .standard
+        case MapSourceDescriptor.appleHybrid.id: style = .satellite
+        default: return
         }
         if allowsFocusMapStyle {
-            persistSettings()
+            guard persistSettings(.preferredMapStyle(style)) else { return }
+            applyPreferredMapStyleForActiveNavigation()
+        } else {
+            mapSource = style == .satellite ? .appleHybrid : .appleStandard
+            mapDisplayStyle = .map
         }
         render()
     }
 
     public func setAvoidsTolls(_ avoidsTolls: Bool) {
         guard appSettings.rideNavigation.avoidsTolls != avoidsTolls else { return }
-        appSettings.rideNavigation.avoidsTolls = avoidsTolls
+        guard persistSettings(.avoidsTolls(avoidsTolls)) else { return }
         routePreferencesDidChange()
     }
 
     public func setAvoidsHighways(_ avoidsHighways: Bool) {
         guard appSettings.rideNavigation.avoidsHighways != avoidsHighways else { return }
-        appSettings.rideNavigation.avoidsHighways = avoidsHighways
+        guard persistSettings(.avoidsHighways(avoidsHighways)) else { return }
         routePreferencesDidChange()
     }
 
     public func toggleVoice() {
-        isVoiceMuted.toggle()
+        activityController.toggleVoice()
         render()
     }
 
     public func setMapHeadingUp(_ isHeadingUp: Bool) {
         let orientation: RideNavigationMapOrientationPreference = isHeadingUp ? .headingUp : .northUp
         guard appSettings.rideNavigation.mapOrientation != orientation else { return }
-        appSettings.rideNavigation.mapOrientation = orientation
+        guard persistSettings(.mapOrientation(orientation)) else { return }
         cameraMode = followCamera
-        persistSettings()
         render()
     }
 
@@ -92,7 +75,10 @@ extension RideNavigationViewModel {
     }
 
     func receiveLoadedSettings(_ settings: AppSettings) {
+        let routePreferencesChanged = appSettings.rideNavigation.avoidsTolls != settings.rideNavigation.avoidsTolls
+            || appSettings.rideNavigation.avoidsHighways != settings.rideNavigation.avoidsHighways
         appSettings = settings
+        activityController.updatePreferences(roadRoutePreferences)
         switch settings.rideNavigation.preferredMapStyle {
         case .focus:
             break
@@ -101,13 +87,18 @@ extension RideNavigationViewModel {
         case .satellite:
             mapSource = .appleHybrid
         }
-        render()
+        if allowsFocusMapStyle { applyPreferredMapStyleForActiveNavigation() }
+        if case .follow = cameraMode { cameraMode = followCamera }
+        if routePreferencesChanged {
+            routePreferencesDidChange()
+        } else {
+            render()
+        }
     }
 
     func routePreferencesDidChange() {
-        persistSettings()
-        guard activity == .preview,
-              let destination = selectedDestination,
+        guard activityController.snapshot.activity == .preview,
+              let destination = planningController.snapshot.selectedDestination,
               let origin = locationSnapshot.coordinate else {
             render()
             return
@@ -115,20 +106,48 @@ extension RideNavigationViewModel {
         recalculatePreviewRoutes(from: origin, to: destination)
     }
 
-    func persistSettings() {
-        let previousTask = settingsSaveTask
-        previousTask?.cancel()
-        let settings = appSettings
-        let saveSettings = saveSettings
-        settingsSaveTask = Task {
-            await previousTask?.value
-            guard !Task.isCancelled else { return }
-            await saveSettings.execute(settings)
-        }
+    func receiveSettingsSnapshot(_ snapshot: AppSettingsSnapshot) {
+        pendingSettings.receive(snapshot)
+        receiveLoadedSettings(pendingSettings.settings)
     }
 
-    var normalizedSearchQuery: String {
-        searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+    public func dismissSettingsSaveError() {
+        settingsSaveError = nil
+    }
+
+    @discardableResult
+    func persistSettings(_ change: AppSettingsChange.Navigation) -> Bool {
+        do {
+            try pendingSettings.enqueue(.navigation(change))
+            appSettings = pendingSettings.settings
+            guard settingsSaveTask == nil else { return true }
+            settingsWorkerGeneration &+= 1
+            let generation = settingsWorkerGeneration
+            let update = dependencies.updateSettings
+            settingsSaveTask = Task { [weak self] in
+                defer {
+                    if self?.settingsWorkerGeneration == generation { self?.settingsSaveTask = nil }
+                }
+                while !Task.isCancelled, let pending = self?.pendingSettings.next {
+                    do {
+                        let result = try await update.execute(expectedVIN: pending.expectedVIN, change: pending.change)
+                        guard !Task.isCancelled, let self else { return }
+                        pendingSettings.complete(id: pending.id, result: result)
+                        receiveLoadedSettings(pendingSettings.settings)
+                    } catch {
+                        guard !Task.isCancelled, let self else { return }
+                        if pendingSettings.reject(id: pending.id) {
+                            settingsSaveError = String(localized: .rideNavigationSettingsSaveFailed)
+                        }
+                        receiveLoadedSettings(pendingSettings.settings)
+                    }
+                }
+            }
+            return true
+        } catch {
+            settingsSaveError = String(localized: .rideNavigationSettingsSaveFailed)
+            return false
+        }
     }
 
     func applyPreferredMapStyleForActiveNavigation() {
@@ -144,10 +163,6 @@ extension RideNavigationViewModel {
         }
     }
 
-    func resetRoadStepGuidance() {
-        activeRoadStepIndex = .zero
-        announcedRoadStepIndex = nil
-    }
 }
 extension MiniMapPosition {
     init(_ position: RideNavigationMiniViewState.Position) {

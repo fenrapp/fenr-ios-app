@@ -15,7 +15,8 @@ struct FileRecordedRouteRepositoryTests {
         try await repository.save(route)
         try await repository.saveDraft(route)
 
-        #expect(await repository.loadRoutes() == [route])
+        #expect(await repository.loadRouteSummaries() == [RideRouteSummary(route)])
+        #expect(try await repository.loadRoute(id: route.id) == route)
         #expect(await repository.loadDraft() == route)
         let routeAttributes = try FileManager.default.attributesOfItem(
             atPath: directory.routeURL(id: route.id).path
@@ -36,7 +37,8 @@ struct FileRecordedRouteRepositoryTests {
 
         try await repository.delete(id: route.id)
         try await repository.saveDraft(nil)
-        #expect(await repository.loadRoutes().isEmpty)
+        #expect(await repository.loadRouteSummaries().isEmpty)
+        #expect(try await repository.loadRoute(id: route.id) == nil)
         #expect(await repository.loadDraft() == nil)
         #expect(!FileManager.default.fileExists(atPath: directory.routeURL(id: route.id).path))
         #expect(!FileManager.default.fileExists(atPath: directory.draftURL.path))
@@ -54,7 +56,8 @@ struct FileRecordedRouteRepositoryTests {
         let mismatched = RideNavigationDataFixtures.makeRoute(id: UUID())
         try StoredRideRouteCodec().encode(mismatched).write(to: directory.routeURL(id: UUID()))
 
-        #expect(await repository.loadRoutes() == [valid])
+        #expect(await repository.loadRouteSummaries() == [RideRouteSummary(valid)])
+        #expect(try await repository.loadRoute(id: valid.id) == valid)
     }
 
     @Test("Sorts routes by updated date, created date, then UUID")
@@ -88,7 +91,7 @@ struct FileRecordedRouteRepositoryTests {
             try await repository.save(route)
         }
 
-        #expect(await repository.loadRoutes().map(\.id) == [
+        #expect(await repository.loadRouteSummaries().map(\.id) == [
             first.id,
             second.id,
             third.id,
@@ -111,7 +114,7 @@ struct FileRecordedRouteRepositoryTests {
             await saveGate.wait()
             try await repository.save(unsaved)
         }
-        await saveGate.waitUntilBlocked()
+        #expect(await saveGate.waitUntilBlocked())
         saveTask.cancel()
         await saveGate.open()
         await #expect(throws: CancellationError.self) { try await saveTask.value }
@@ -121,7 +124,7 @@ struct FileRecordedRouteRepositoryTests {
             await deleteGate.wait()
             try await repository.delete(id: saved.id)
         }
-        await deleteGate.waitUntilBlocked()
+        #expect(await deleteGate.waitUntilBlocked())
         deleteTask.cancel()
         await deleteGate.open()
         await #expect(throws: CancellationError.self) { try await deleteTask.value }
@@ -131,12 +134,13 @@ struct FileRecordedRouteRepositoryTests {
             await draftGate.wait()
             try await repository.saveDraft(replacementDraft)
         }
-        await draftGate.waitUntilBlocked()
+        #expect(await draftGate.waitUntilBlocked())
         draftTask.cancel()
         await draftGate.open()
         await #expect(throws: CancellationError.self) { try await draftTask.value }
 
-        #expect(await repository.loadRoutes() == [saved])
+        #expect(await repository.loadRouteSummaries() == [RideRouteSummary(saved)])
+        #expect(try await repository.loadRoute(id: saved.id) == saved)
         #expect(await repository.loadDraft() == saved)
         #expect(!FileManager.default.fileExists(atPath: directory.routeURL(id: unsaved.id).path))
     }
@@ -152,9 +156,9 @@ struct FileRecordedRouteRepositoryTests {
         let routesGate = DeterministicAsyncGate()
         let routesTask = Task {
             await routesGate.wait()
-            return await repository.loadRoutes()
+            return await repository.loadRouteSummaries()
         }
-        await routesGate.waitUntilBlocked()
+        #expect(await routesGate.waitUntilBlocked())
         routesTask.cancel()
         await routesGate.open()
 
@@ -163,7 +167,7 @@ struct FileRecordedRouteRepositoryTests {
             await draftGate.wait()
             return await repository.loadDraft()
         }
-        await draftGate.waitUntilBlocked()
+        #expect(await draftGate.waitUntilBlocked())
         draftTask.cancel()
         await draftGate.open()
 

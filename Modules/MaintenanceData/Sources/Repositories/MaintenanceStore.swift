@@ -4,27 +4,38 @@ import SwiftData
 
 @ModelActor
 actor MaintenanceStore {
-    func loadEntries(vin: String, mapper: MaintenanceEntryRecordMapper) -> [MaintenanceEntry] {
+    func loadEntries(vin: String, mapper: MaintenanceEntryRecordMapper) throws -> [MaintenanceEntry] {
+        try Task.checkCancellation()
         do {
             let descriptor = FetchDescriptor<MaintenanceEntryRecord>(
                 predicate: #Predicate { $0.vin == vin },
                 sortBy: [SortDescriptor(\.performedAt, order: .reverse)]
             )
-            return try modelContext.fetch(descriptor).compactMap(mapper.mapToDomain)
+            return try modelContext.fetch(descriptor).map { record in
+                guard let entry = mapper.mapToDomain(record) else { throw MaintenanceReadError.invalidData }
+                return entry
+            }
+        } catch let error as MaintenanceReadError {
+            throw error
         } catch {
-            return []
+            throw MaintenanceReadError.readFailed
         }
     }
 
-    func loadEntry(id: UUID, vin: String, mapper: MaintenanceEntryRecordMapper) -> MaintenanceEntry? {
+    func loadEntry(id: UUID, vin: String, mapper: MaintenanceEntryRecordMapper) throws -> MaintenanceEntry? {
+        try Task.checkCancellation()
         do {
             var descriptor = FetchDescriptor<MaintenanceEntryRecord>(predicate: #Predicate {
                 $0.id == id && $0.vin == vin
             })
             descriptor.fetchLimit = 1
-            return try modelContext.fetch(descriptor).first.flatMap(mapper.mapToDomain)
+            guard let record = try modelContext.fetch(descriptor).first else { return nil }
+            guard let entry = mapper.mapToDomain(record) else { throw MaintenanceReadError.invalidData }
+            return entry
+        } catch let error as MaintenanceReadError {
+            throw error
         } catch {
-            return nil
+            throw MaintenanceReadError.readFailed
         }
     }
 

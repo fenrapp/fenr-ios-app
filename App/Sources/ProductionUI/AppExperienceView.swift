@@ -3,7 +3,7 @@ import DesignSystem
 import SwiftUI
 
 struct AppExperienceView: View {
-    @ObservedObject var controller: AppExperienceController
+    @Bindable var controller: AppExperienceController
 
     var body: some View {
         Group {
@@ -66,7 +66,7 @@ struct AppExperienceView: View {
 
 private struct AppExperienceContent: View {
     let experience: AppExperience
-    @ObservedObject var controller: AppExperienceController
+    let controller: AppExperienceController
 
     var body: some View {
         if let model = experience.demoViewModel {
@@ -84,8 +84,8 @@ private struct AppExperienceContent: View {
 
 private struct AppDemoExperienceView: View {
     let root: AppRootDependencies
-    @ObservedObject var model: BikeDemoViewModel
-    @ObservedObject var navigationCoordinator: AppNavigationCoordinator
+    let model: BikeDemoViewModel
+    let navigationCoordinator: AppNavigationCoordinator
     let onExit: () -> Void
     @State private var showsControls = false
     @State private var controlsHeight: CGFloat = .zero

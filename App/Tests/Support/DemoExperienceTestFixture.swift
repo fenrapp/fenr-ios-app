@@ -21,6 +21,7 @@ struct DemoExperienceTestFixture {
         notifications = DemoTestNotifications()
         factory = DemoExperienceFactory(
             fileManager: fileManager, baseDirectory: directory, notifications: notifications,
+            makeDeviceSpeedRepository: { DemoTestDeviceSpeedRepository() },
             makeCredentialStore: makeCredentialStore
         )
     }

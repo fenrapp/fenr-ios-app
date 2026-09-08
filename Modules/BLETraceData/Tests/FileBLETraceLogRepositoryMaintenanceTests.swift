@@ -25,7 +25,7 @@ struct FileBLETraceLogRepositoryMaintenanceTests {
             }
         }
 
-        let sessions = await context.repository.observeSessions().first { !$0.isEmpty } ?? []
+        let sessions = try await firstBLETraceSessionSnapshot(from: context.repository.observeSessions())
         #expect(sessions.map(\.startedAt) == [
             Date(timeIntervalSince1970: 2),
             Date(timeIntervalSince1970: 1)
@@ -47,10 +47,8 @@ struct FileBLETraceLogRepositoryMaintenanceTests {
         )
 
         let context = makeBLETraceDataTestContext(maximumTotalBytes: 1_024, root: root)
-        let stream = await context.repository.observeSessions()
-        var iterator = stream.makeAsyncIterator()
-        let snapshot = await iterator.next()
-        #expect(snapshot?.isEmpty == true)
+        let snapshot = try await firstBLETraceSessionSnapshot(from: context.repository.observeSessions())
+        #expect(snapshot.isEmpty)
         #expect(!FileManager.default.fileExists(atPath: trace.path))
     }
 
@@ -66,7 +64,7 @@ struct FileBLETraceLogRepositoryMaintenanceTests {
         try writeCompletedTrace(to: logs.appendingPathComponent("first.jsonl"), id: first)
 
         let context = makeBLETraceDataTestContext(root: root)
-        let sessions = await context.repository.observeSessions().first { !$0.isEmpty } ?? []
+        let sessions = try await firstBLETraceSessionSnapshot(from: context.repository.observeSessions())
         #expect(sessions.map(\.id) == [first, second])
     }
 
@@ -87,7 +85,7 @@ struct FileBLETraceLogRepositoryMaintenanceTests {
         await #expect(throws: CocoaError.self) {
             try await context.repository.deleteSession(id: session.id)
         }
-        let sessions = await context.repository.observeSessions().first { !$0.isEmpty } ?? []
+        let sessions = try await firstBLETraceSessionSnapshot(from: context.repository.observeSessions())
         #expect(sessions.map(\.id) == [session.id])
         #expect(!FileManager.default.fileExists(atPath: export.path))
     }
@@ -117,7 +115,7 @@ struct FileBLETraceLogRepositoryMaintenanceTests {
         await #expect(throws: CocoaError.self) {
             try await context.repository.deleteAllSessions()
         }
-        let sessions = await context.repository.observeSessions().first { !$0.isEmpty } ?? []
+        let sessions = try await firstBLETraceSessionSnapshot(from: context.repository.observeSessions())
         #expect(sessions.map(\.id) == [first.id])
         #expect(!FileManager.default.fileExists(atPath: firstExport.path))
         #expect(!FileManager.default.fileExists(atPath: secondExport.path))
@@ -171,7 +169,7 @@ struct FileBLETraceLogRepositoryMaintenanceTests {
         deleteTask.cancel()
         await deleteGate.open()
         await #expect(throws: CancellationError.self) { try await deleteTask.value }
-        let sessions = await context.repository.observeSessions().first { !$0.isEmpty } ?? []
+        let sessions = try await firstBLETraceSessionSnapshot(from: context.repository.observeSessions())
         #expect(sessions.map(\.id) == [session.id])
         #expect(try FileManager.default.contentsOfDirectory(
             at: context.exportDirectory,
@@ -189,7 +187,8 @@ struct FileBLETraceLogRepositoryMaintenanceTests {
         let session = BLETraceDataFixtures.session()
         await context.repository.startSession(session)
         await context.repository.finishSession(reason: .userDisconnected)
-        let summary = await context.repository.observeSessions().first { !$0.isEmpty }?.first
+        let summaries = try await firstBLETraceSessionSnapshot(from: context.repository.observeSessions())
+        let summary = summaries.first
         let fileName = try #require(summary?.fileName)
         let destination = context.exportDirectory.appendingPathComponent(fileName)
         controller.failNextAttributes(of: destination)

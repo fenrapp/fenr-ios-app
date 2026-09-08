@@ -67,7 +67,7 @@ struct UserDefaultsIncomingMapLinkStoreTests {
             await gate.wait()
             try await store.save(replacement)
         }
-        await gate.waitUntilBlocked()
+        #expect(await gate.waitUntilBlocked())
         task.cancel()
         await gate.open()
 
@@ -92,7 +92,7 @@ struct UserDefaultsIncomingMapLinkStoreTests {
             await gate.wait()
             return try await store.consume()
         }
-        await gate.waitUntilBlocked()
+        #expect(await gate.waitUntilBlocked())
         task.cancel()
         await gate.open()
 

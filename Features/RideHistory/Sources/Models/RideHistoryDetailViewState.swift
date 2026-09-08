@@ -3,6 +3,7 @@ import Foundation
 public struct RideHistoryDetailViewState: Equatable, Sendable {
     public enum Status: Equatable, Sendable {
         case idle
+        case failed
         case loading
         case unavailable
         case loaded
@@ -93,6 +94,7 @@ public struct RideHistoryDetailViewState: Equatable, Sendable {
     public let batteryPoints: [ChartPoint]
     public let efficiencyPoints: [ChartPoint]
     public let distanceUnit: String
+    public let loadErrorMessage: String?
     public let efficiencyUnit: String
 
     public init(
@@ -110,6 +112,7 @@ public struct RideHistoryDetailViewState: Equatable, Sendable {
         batteryPoints: [ChartPoint] = [],
         efficiencyPoints: [ChartPoint] = [],
         distanceUnit: String = "km",
+        loadErrorMessage: String? = nil,
         efficiencyUnit: String = "Wh/km"
     ) {
         self.status = status
@@ -127,5 +130,6 @@ public struct RideHistoryDetailViewState: Equatable, Sendable {
         self.efficiencyPoints = efficiencyPoints
         self.distanceUnit = distanceUnit
         self.efficiencyUnit = efficiencyUnit
+        self.loadErrorMessage = loadErrorMessage
     }
 }

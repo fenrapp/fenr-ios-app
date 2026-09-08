@@ -1,7 +1,8 @@
 import Foundation
 
 public protocol RecordedRouteRepository: Sendable {
-    func loadRoutes() async -> [RideRoute]
+    func loadRouteSummaries() async -> [RideRouteSummary]
+    func loadRoute(id: UUID) async throws -> RideRoute?
     func save(_ route: RideRoute) async throws
     func delete(id: UUID) async throws
     func loadDraft() async -> RideRoute?

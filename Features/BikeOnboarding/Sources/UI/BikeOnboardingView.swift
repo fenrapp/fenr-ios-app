@@ -4,7 +4,7 @@ import UIKit
 public struct BikeOnboardingView: View {
     @Environment(\.openURL) private var openURL
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
-    @ObservedObject private var viewModel: BikeOnboardingViewModel
+    private let viewModel: BikeOnboardingViewModel
     private let onExploreDemo: (() -> Void)?
     @State private var navigationPath: [BikeOnboardingRoute] = []
     @State private var navigationSynchronizationTask: Task<Void, Never>?

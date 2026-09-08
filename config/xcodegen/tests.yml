@@ -1,0 +1,570 @@
+targets:
+  FENRDemoUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: App/DemoUITests
+    dependencies:
+      - target: FENR
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.demo.uitests
+        TEST_TARGET_NAME: FENR
+        TARGETED_DEVICE_FAMILY: 1
+  StarkProtocolTests:
+    templates: [SharedUnitTests]
+    sources:
+      - path: Modules/StarkProtocol/Tests
+    dependencies:
+      - target: StarkProtocol
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.protocol.tests
+  AsyncSupportTests:
+    templates: [SharedUnitTests]
+    sources:
+      - path: Modules/AsyncSupport/Tests
+    dependencies:
+      - target: AsyncSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.asyncsupport.tests
+  BLETraceDomainTests:
+    templates: [SharedUnitTests]
+    sources:
+      - path: Modules/BLETraceDomain/Tests
+    dependencies:
+      - target: BLETraceDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bletracedomain.tests
+  BLETraceDataTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/BLETraceData/Tests
+    dependencies:
+      - target: BLETraceData
+      - target: BLETraceDomain
+      - target: AsyncSupport
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bletracedata.tests
+  BikeSDKTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/BikeSDK/Tests
+    dependencies:
+      - target: BikeSDK
+      - target: BLETraceDomain
+      - target: RuntimeConfiguration
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikesdk.tests
+  BikeDomainTests:
+    templates: [SharedUnitTests]
+    sources:
+      - path: Modules/BikeDomain/Tests
+    dependencies:
+      - target: BikeDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikedomain.tests
+  BikeDataTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/BikeData/Tests
+    dependencies:
+      - target: BikeData
+      - target: BikeDomain
+      - target: BikeSDK
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikedata.tests
+  BikeEmulatorTests:
+    templates: [SharedUnitTests]
+    sources:
+      - path: Modules/BikeEmulator/Tests
+    dependencies:
+      - target: BLETraceDomain
+      - target: BikeEmulator
+      - target: BikeDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikeemulator.tests
+  BikeDemoTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Features/BikeDemo/Tests
+    dependencies:
+      - target: BikeDemo
+      - target: BikeEmulator
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikedemo.tests
+  ChargeControlTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/ChargeControl/Tests
+    dependencies:
+      - target: ChargeControl
+      - target: BikeDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.chargecontrol.tests
+  SettingsDomainTests:
+    templates: [SharedUnitTests]
+    sources:
+      - path: Modules/SettingsDomain/Tests
+    dependencies:
+      - target: SettingsDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.settingsdomain.tests
+  SettingsDataTests:
+    templates: [SharedUnitTests]
+    sources:
+      - path: Modules/SettingsData/Tests
+    dependencies:
+      - target: SettingsData
+      - target: SettingsDomain
+      - target: BikeDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.settingsdata.tests
+  EnvironmentDomainTests:
+    templates: [SharedUnitTests]
+    sources:
+      - path: Modules/EnvironmentDomain/Tests
+    dependencies:
+      - target: EnvironmentDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.environmentdomain.tests
+  EnvironmentDataTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/EnvironmentData/Tests
+    dependencies:
+      - target: EnvironmentData
+      - target: EnvironmentDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.environmentdata.tests
+  RideSessionDomainTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/RideSessionDomain/Tests
+    dependencies:
+      - target: RideSessionDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesessiondomain.tests
+  RideNavigationDomainTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/RideNavigationDomain/Tests
+    dependencies:
+      - target: EnvironmentDomain
+      - target: RideNavigationDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigationdomain.tests
+  RideNavigationDataTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/RideNavigationData/Tests
+    dependencies:
+      - target: EnvironmentDomain
+      - target: RideNavigationDomain
+      - target: RideNavigationData
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigationdata.tests
+  RideNavigationTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Features/RideNavigation/Tests
+    dependencies:
+      - target: EnvironmentDomain
+      - target: RideNavigation
+      - target: RideNavigationDomain
+      - target: SettingsDomain
+      - target: TestSupport
+      - target: VehicleSession
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigation.tests
+  RideNavigationAppleMapsTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/RideNavigationAppleMaps/Tests
+    dependencies:
+      - target: EnvironmentDomain
+      - target: RideNavigation
+      - target: RideNavigationAppleMaps
+      - target: RideNavigationDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigationapplemaps.tests
+  RideSessionTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/RideSession/Tests
+    dependencies:
+      - target: RideSession
+      - target: RideSessionDomain
+      - target: BikeDomain
+      - target: EnvironmentDomain
+      - target: SettingsDomain
+      - target: TestSupport
+      - target: VehicleSession
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesession.tests
+  VehicleSessionTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/VehicleSession/Tests
+    dependencies:
+      - target: VehicleSession
+      - target: BikeDomain
+      - target: EnvironmentDomain
+      - target: SettingsDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.vehiclesession.tests
+  RideSessionDataTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/RideSessionData/Tests
+    dependencies:
+      - target: RideSessionData
+      - target: RideSessionDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridesessiondata.tests
+  MaintenanceDomainTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/MaintenanceDomain/Tests
+    dependencies:
+      - target: MaintenanceDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.maintenancedomain.tests
+  MaintenanceDataTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/MaintenanceData/Tests
+    dependencies:
+      - target: MaintenanceData
+      - target: MaintenanceDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.maintenancedata.tests
+  DesignSystemTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/DesignSystem/Tests
+    dependencies:
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.designsystem.tests
+  MeasurementPresentationTests:
+    templates: [SharedUnitTests]
+    sources:
+      - path: Modules/MeasurementPresentation/Tests
+    dependencies:
+      - target: MeasurementPresentation
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.measurementpresentation.tests
+  BikeDiagnosticsTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Features/BikeDiagnostics/Tests
+    dependencies:
+      - target: BikeDiagnostics
+      - target: BLETraceDomain
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: TestSupport
+      - target: VehicleSession
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.diagnostics.tests
+  BikeOnboardingTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Features/BikeOnboarding/Tests
+    dependencies:
+      - target: BikeOnboarding
+      - target: BikeDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.onboarding.tests
+  RideDashboardTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Features/RideDashboard/Tests
+    dependencies:
+      - target: RideDashboard
+      - target: BikeDomain
+      - target: EnvironmentDomain
+      - target: RideSessionDomain
+      - target: SettingsDomain
+      - target: TestSupport
+      - target: ChargeControl
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.dashboard.tests
+  WatchDashboardTests:
+    type: bundle.unit-test
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: Features/WatchDashboard/Tests
+      - path: Watch/Tests
+      - path: Watch/Sources/Navigation
+    dependencies:
+      - target: WatchDashboard
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchdashboard.tests
+  WatchOnboardingTests:
+    type: bundle.unit-test
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: Features/WatchOnboarding/Tests
+    dependencies:
+      - target: WatchOnboarding
+      - target: BikeDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchonboarding.tests
+  BatteryHealthTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Features/BatteryHealth/Tests
+    dependencies:
+      - target: BatteryHealth
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: TestSupport
+      - target: ChargeControl
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.batteryhealth.tests
+  AppSettingsTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Features/AppSettings/Tests
+    dependencies:
+      - target: AppSettings
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: EnvironmentDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.appsettings.tests
+  DashboardCardSettingsTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Features/DashboardCardSettings/Tests
+    dependencies:
+      - target: DashboardCardSettings
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.dashboardcardsettings.tests
+  BikeLockSettingsTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Features/BikeLockSettings/Tests
+    dependencies:
+      - target: BikeLockSettings
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: VehicleSession
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikelocksettings.tests
+  PowerModeSettingsTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Features/PowerModeSettings/Tests
+    dependencies:
+      - target: PowerModeSettings
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: VehicleSession
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.powermodesettings.tests
+  RideHistoryTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Features/RideHistory/Tests
+    dependencies:
+      - target: RideHistory
+      - target: RideSession
+      - target: RideSessionDomain
+      - target: SettingsDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridehistory.tests
+  MaintenanceLogTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Features/MaintenanceLog/Tests
+    dependencies:
+      - target: MaintenanceLog
+      - target: MaintenanceDomain
+      - target: MeasurementPresentation
+      - target: SettingsDomain
+      - target: TestSupport
+      - target: VehicleSession
+      - target: BikeDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.maintenancelog.tests
+  TestSupportTests:
+    templates: [SharedUnitTests]
+    sources:
+      - path: Modules/TestSupport/Tests
+    dependencies:
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.testsupport.tests
+  FENRShareExtensionTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: ShareExtension/Tests
+      - path: ShareExtension/Sources/MapLinkShareProcessor.swift
+    dependencies:
+      - target: FENRShareExtension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.shareextension.tests
+  FENRTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: App/Tests
+      - path: App/Sources/Composition
+      - path: App/Sources/Navigation
+      - path: App/Resources/Shared/Localizable.xcstrings
+        buildPhase: resources
+    dependencies:
+      - target: TestSupport
+      - target: BLETraceData
+      - target: BLETraceDomain
+      - target: BikeDiagnostics
+      - target: BikeOnboarding
+      - target: BikeDemo
+      - target: BikeEmulator
+      - target: RideDashboard
+      - target: MeasurementPresentation
+      - target: AppSettings
+      - target: DashboardCardSettings
+      - target: BikeLockSettings
+      - target: PowerModeSettings
+      - target: RideHistory
+      - target: MaintenanceLog
+      - target: RideNavigation
+      - target: RideNavigationAppleMaps
+      - target: RideNavigationData
+      - target: RideNavigationDomain
+      - target: BikeData
+      - target: EnvironmentDomain
+      - target: EnvironmentData
+      - target: RideSession
+      - target: VehicleSession
+      - target: RideSessionDomain
+      - target: RideSessionData
+      - target: MaintenanceDomain
+      - target: MaintenanceData
+      - target: SettingsDomain
+      - target: SettingsData
+      - target: BikeDomain
+      - target: BikeSDK
+      - target: StarkProtocol
+      - target: BatteryHealth
+      - target: RuntimeConfiguration
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.tests
+  FENRDebugTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: App/DebugTests
+      - path: App/DebugSources
+        excludes:
+          - FENRDebugApp.swift
+      - path: App/Sources/Composition
+        excludes:
+          - BikeData
+          - BikeSDK
+          - StarkProtocol
+          - Production
+      - path: App/Sources/Navigation
+      - path: App/Resources/Shared/Localizable.xcstrings
+        buildPhase: resources
+    dependencies:
+      - target: AsyncSupport
+      - target: BLETraceData
+      - target: BLETraceDomain
+      - target: AppSettings
+      - target: DashboardCardSettings
+      - target: BikeLockSettings
+      - target: PowerModeSettings
+      - target: RideHistory
+      - target: MaintenanceLog
+      - target: RideNavigation
+      - target: RideNavigationAppleMaps
+      - target: RideNavigationData
+      - target: RideNavigationDomain
+      - target: BikeDiagnostics
+      - target: BikeOnboarding
+      - target: RideDashboard
+      - target: BatteryHealth
+      - target: BikeDomain
+      - target: BikeEmulator
+      - target: EnvironmentDomain
+      - target: EnvironmentData
+      - target: RideSession
+      - target: VehicleSession
+      - target: RideSessionDomain
+      - target: RideSessionData
+      - target: MaintenanceDomain
+      - target: MaintenanceData
+      - target: SettingsDomain
+      - target: SettingsData
+      - target: RuntimeConfiguration
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug.tests

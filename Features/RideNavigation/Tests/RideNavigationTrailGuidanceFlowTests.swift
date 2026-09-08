@@ -18,6 +18,7 @@ struct RideNavigationTrailGuidanceFlowTests {
         #expect(await waitUntil { fixture.viewModel.viewState.savedRoutes.count == 1 })
 
         fixture.viewModel.openSavedRoute(id: route.id)
+        await fixture.viewModel.savedRouteLoadingTask?.value
         fixture.viewModel.startPreviewedRoute()
 
         #expect(await waitUntil {
@@ -28,7 +29,7 @@ struct RideNavigationTrailGuidanceFlowTests {
         fixture.viewModel.selectTrailDirection(.reverse)
 
         #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
-        #expect(fixture.viewModel.selectedDirection == .reverse)
+        #expect(fixture.viewModel.planningController.snapshot.selectedDirection == .reverse)
         #expect(fixture.viewModel.viewState.gpxProgressText == "50%")
         fixture.viewModel.stop()
     }
@@ -79,11 +80,12 @@ struct RideNavigationTrailGuidanceFlowTests {
         #expect(await waitUntil { fixture.viewModel.viewState.savedRoutes.count == 1 })
 
         fixture.viewModel.openSavedRoute(id: route.id)
+        await fixture.viewModel.savedRouteLoadingTask?.value
         fixture.viewModel.startPreviewedRoute()
 
         #expect(await waitUntil { await fixture.roadRouteCalculator.hasPendingRequest })
         #expect(fixture.viewModel.viewState.activity == .preview)
-        #expect(fixture.viewModel.trailGuidance.snapshot.hasActiveSession)
+        #expect(fixture.viewModel.activityController.dependencies.trailGuidance.snapshot.hasActiveSession)
         fixture.viewModel.stop()
     }
 
@@ -167,6 +169,7 @@ struct RideNavigationTrailGuidanceFlowTests {
         )
         #expect(await waitUntil { fixture.viewModel.viewState.savedRoutes.count == 1 })
         fixture.viewModel.openSavedRoute(id: route.id)
+        await fixture.viewModel.savedRouteLoadingTask?.value
         fixture.viewModel.startPreviewedRoute()
         #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
     }

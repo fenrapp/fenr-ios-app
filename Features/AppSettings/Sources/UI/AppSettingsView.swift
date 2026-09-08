@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct AppSettingsView: View {
-    @ObservedObject private var viewModel: AppSettingsViewModel
+    private let viewModel: AppSettingsViewModel
     private let bikeLockModeTitle: String?
     private let onNavigation: (AppSettingsNavigationEvent) -> Void
     private let accessory: () -> AnyView

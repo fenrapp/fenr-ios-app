@@ -5,7 +5,9 @@ enum ChargeControlSessionTestFactory {
     static func make(
         repository: ChargeControlRepository,
         debounceDelay: Duration = .seconds(1),
-        confirmationDelay: Duration = .seconds(5)
+        confirmationDelay: Duration = .seconds(5),
+        stateEmitter: ChargeControlStateEmitter? = nil,
+        initialState: ChargeControlState = .init()
     ) -> ChargeControlSession {
         ChargeControlSession(
             useCases: .init(
@@ -18,7 +20,9 @@ enum ChargeControlSessionTestFactory {
             taskScheduler: ChargeControlTaskScheduler(
                 debounceDelay: debounceDelay,
                 confirmationDelay: confirmationDelay
-            )
+            ),
+            stateEmitter: stateEmitter ?? ChargeControlStateEmitter(),
+            initialState: initialState
         )
     }
 }

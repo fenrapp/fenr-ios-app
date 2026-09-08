@@ -5,16 +5,16 @@ import UIKit
 public struct RideDashboardView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let feature: RideDashboardFeatureModel
-    @ObservedObject private var viewModel: RideDashboardViewModel
-    @ObservedObject private var deviceBatteryViewModel: DashboardDeviceBatteryViewModel
-    @ObservedObject private var currentTripViewModel: CurrentTripCardViewModel
-    @ObservedObject private var tripStatisticsViewModel: TripStatisticsCardViewModel
-    @ObservedObject private var efficiencyViewModel: EfficiencyCardViewModel
-    @ObservedObject private var rangeViewModel: RangeCardViewModel
-    @ObservedObject private var systemHealthViewModel: SystemHealthCardViewModel
-    @ObservedObject private var dynamicsViewModel: RideDynamicsCardViewModel
-    @ObservedObject private var chargingViewModel: ChargingDashboardViewModel
-    @ObservedObject private var bikeLockViewModel: BikeLockCardViewModel
+    private let viewModel: RideDashboardViewModel
+    private let deviceBatteryViewModel: DashboardDeviceBatteryViewModel
+    private let currentTripViewModel: CurrentTripCardViewModel
+    private let tripStatisticsViewModel: TripStatisticsCardViewModel
+    private let efficiencyViewModel: EfficiencyCardViewModel
+    private let rangeViewModel: RangeCardViewModel
+    private let systemHealthViewModel: SystemHealthCardViewModel
+    private let dynamicsViewModel: RideDynamicsCardViewModel
+    private let chargingViewModel: ChargingDashboardViewModel
+    private let bikeLockViewModel: BikeLockCardViewModel
     @ScaledMetric(relativeTo: .body) private var speedometerTypeScale: CGFloat = 1
     @State private var cardSelection = DashboardCardSelectionState()
     @State private var hiddenPageResetTask: Task<Void, Never>?
@@ -37,16 +37,16 @@ public extension RideDashboardView {
         bottomLeadingAccessory: @escaping () -> AnyView = { AnyView(EmptyView()) }
     ) {
         self.feature = feature
-        _viewModel = ObservedObject(wrappedValue: feature.dashboardViewModel)
-        _deviceBatteryViewModel = ObservedObject(wrappedValue: feature.deviceBatteryViewModel)
-        _currentTripViewModel = ObservedObject(wrappedValue: feature.currentTripViewModel)
-        _tripStatisticsViewModel = ObservedObject(wrappedValue: feature.tripStatisticsViewModel)
-        _efficiencyViewModel = ObservedObject(wrappedValue: feature.efficiencyViewModel)
-        _rangeViewModel = ObservedObject(wrappedValue: feature.rangeViewModel)
-        _systemHealthViewModel = ObservedObject(wrappedValue: feature.systemHealthViewModel)
-        _dynamicsViewModel = ObservedObject(wrappedValue: feature.dynamicsViewModel)
-        _chargingViewModel = ObservedObject(wrappedValue: feature.chargingViewModel)
-        _bikeLockViewModel = ObservedObject(wrappedValue: feature.bikeLockViewModel)
+        self.viewModel = feature.dashboardViewModel
+        self.deviceBatteryViewModel = feature.deviceBatteryViewModel
+        self.currentTripViewModel = feature.currentTripViewModel
+        self.tripStatisticsViewModel = feature.tripStatisticsViewModel
+        self.efficiencyViewModel = feature.efficiencyViewModel
+        self.rangeViewModel = feature.rangeViewModel
+        self.systemHealthViewModel = feature.systemHealthViewModel
+        self.dynamicsViewModel = feature.dynamicsViewModel
+        self.chargingViewModel = feature.chargingViewModel
+        self.bikeLockViewModel = feature.bikeLockViewModel
         _cardSelection = State(initialValue: .init(layout: feature.dashboardViewModel.cardLayout))
         self.onSettings = onSettings
         self.onNavigation = onNavigation
@@ -129,6 +129,9 @@ extension RideDashboardView {
                                     reduceMotion: reduceMotion,
                                     toggleCurrentTripPause: currentTripViewModel.togglePauseCurrentTrip,
                                     resetCurrentTrip: currentTripViewModel.resetCurrentTrip,
+                                    retryTripStatistics: tripStatisticsViewModel.retryHistory,
+                                    retryEfficiencyHistory: efficiencyViewModel.retryHistory,
+                                    retryRangeHistory: rangeViewModel.retryHistory,
                                     calibrateDynamics: dynamicsViewModel.calibrate,
                                     setChargePowerLimit: chargingViewModel.setChargePowerLimit(watts:),
                                     setChargeTarget: chargingViewModel.setChargeTarget(percent:),
@@ -175,7 +178,10 @@ extension RideDashboardView {
                     .overlay(alignment: .bottom) {
                         if viewModel.viewState.centerMode == .riding,
                            cardSelection.ridingCard == .speedometer {
-                            DashboardProgressBar(state: viewModel.viewState.progressBar)
+                            DashboardProgressBar(
+                                state: viewModel.viewState.progressBar,
+                                layout: viewModel.viewState.progressBarLayout
+                            )
                             .offset(y: proxy.safeAreaInsets.bottom)
                             .allowsHitTesting(false)
                         }

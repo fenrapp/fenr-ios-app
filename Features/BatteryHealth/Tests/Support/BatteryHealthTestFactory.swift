@@ -9,7 +9,8 @@ import VehicleSession
 func makeBatteryHealthViewModel(
     repository: any BikeBatteryHealthRepository & BikeChargePowerControlRepository,
     monitoringState: VehicleBatteryHealthMonitoringState = .active,
-    vehicleSession: (any VehicleSessionService)? = nil
+    vehicleSession: (any VehicleSessionService)? = nil,
+    chargeControl: ChargeControlSession? = nil
 ) -> BatteryHealthViewModel {
     BatteryHealthViewModel(
         useCases: .init(
@@ -21,7 +22,7 @@ func makeBatteryHealthViewModel(
             ),
         mapper: makeBatteryHealthMapper(),
         makeMapper: { _ in makeBatteryHealthMapper() },
-        chargeControl: makeChargeControlSession(repository: repository),
+        chargeControl: chargeControl ?? makeChargeControlSession(repository: repository),
         captureFormatter: .init(
             dateFormatStyle: Date.FormatStyle(date: .omitted, time: .standard)
         )
@@ -52,7 +53,8 @@ func makeChargeControlSession(repository: any BikeChargePowerControlRepository) 
         ),
         logger: ChargeControlLogStore(isRecording: { true }),
         stateUpdater: ChargeControlStateUpdater(normalizer: ChargeControlNormalizer()),
-        taskScheduler: ChargeControlTaskScheduler()
+        taskScheduler: ChargeControlTaskScheduler(),
+        stateEmitter: ChargeControlStateEmitter()
     )
 }
 

@@ -10,15 +10,15 @@ public struct LoadAppSettingsUseCase: Sendable {
     }
 }
 
-public struct SaveAppSettingsUseCase: Sendable {
+public struct UpdateAppSettingsUseCase: Sendable {
     private let repository: AppSettingsRepository
 
     public init(repository: AppSettingsRepository) {
         self.repository = repository
     }
 
-    public func execute(_ settings: AppSettings) async {
-        await repository.save(settings)
+    public func execute(expectedVIN: String, change: AppSettingsChange) async throws -> AppSettingsUpdateResult {
+        try await repository.update(expectedVIN: expectedVIN, change: change)
     }
 }
 
@@ -29,7 +29,7 @@ public struct ObserveAppSettingsUseCase: Sendable {
         self.repository = repository
     }
 
-    public func execute() async -> AsyncStream<AppSettings> {
+    public func execute() async -> AsyncStream<AppSettingsSnapshot> {
         await repository.observe()
     }
 }

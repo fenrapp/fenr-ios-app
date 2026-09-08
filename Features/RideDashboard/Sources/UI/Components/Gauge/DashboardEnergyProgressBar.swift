@@ -6,6 +6,7 @@ struct DashboardEnergyProgressBar: View {
     @Environment(\.colorScheme) private var colorScheme
     let regenerationProgress: Double
     let consumptionProgress: Double
+    let layout: DashboardProgressBarLayout
 
     var body: some View {
         GeometryReader { proxy in
@@ -14,7 +15,7 @@ struct DashboardEnergyProgressBar: View {
             ZStack {
                 Capsule()
                     .fill(DesignColor.inactive)
-                    .frame(width: extendedWidth, height: Constants.trackHeight)
+                    .frame(width: extendedWidth, height: layout.trackHeight)
 
                 HStack(spacing: .zero) {
                     regenerationGradient
@@ -35,9 +36,9 @@ struct DashboardEnergyProgressBar: View {
 
                 Capsule()
                     .fill(DesignColor.secondaryText.opacity(Constants.centerMarkerOpacity))
-                    .frame(width: Constants.centerMarkerWidth, height: Constants.centerMarkerHeight)
+                    .frame(width: layout.centerMarkerWidth, height: layout.energyHeight)
             }
-            .frame(width: extendedWidth, height: Constants.centerMarkerHeight)
+            .frame(width: extendedWidth, height: layout.energyHeight)
             .animation(
                 reduceMotion ? nil : .linear(duration: Constants.animationDuration),
                 value: clampedRegenerationProgress
@@ -48,7 +49,7 @@ struct DashboardEnergyProgressBar: View {
             )
             .offset(x: -Constants.horizontalOverflow)
         }
-        .frame(height: Constants.centerMarkerHeight)
+        .frame(height: layout.energyHeight)
     }
 
     private var regenerationGradient: LinearGradient {
@@ -95,9 +96,6 @@ struct DashboardEnergyProgressBar: View {
     }
 
     private enum Constants {
-        static let trackHeight: CGFloat = 3
-        static let centerMarkerWidth: CGFloat = 2
-        static let centerMarkerHeight: CGFloat = 7
         static let horizontalOverflow: CGFloat = 24
         static let centerMarkerOpacity = 0.7
         static let centerColorOpacity = 0.32

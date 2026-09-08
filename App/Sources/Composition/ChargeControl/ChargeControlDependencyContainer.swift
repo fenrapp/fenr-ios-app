@@ -16,7 +16,8 @@ struct ChargeControlDependencyContainer {
             ),
             logger: ChargeControlLogStore(isRecording: { captureState?.isRecording ?? false }),
             stateUpdater: ChargeControlStateUpdater(normalizer: ChargeControlNormalizer()),
-            taskScheduler: ChargeControlTaskScheduler()
+            taskScheduler: ChargeControlTaskScheduler(),
+            stateEmitter: ChargeControlStateEmitter()
         )
     }
 }

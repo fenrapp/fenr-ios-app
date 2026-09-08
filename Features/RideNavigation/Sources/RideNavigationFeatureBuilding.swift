@@ -6,7 +6,7 @@ public protocol RideNavigationFeatureBuilding {
 }
 
 @MainActor
-public final class RideNavigationFeatureModel: ObservableObject {
+public struct RideNavigationFeatureModel {
     let viewModel: RideNavigationViewModel
     let mapSurfaceFactory: RideNavigationMapSurfaceFactory
 

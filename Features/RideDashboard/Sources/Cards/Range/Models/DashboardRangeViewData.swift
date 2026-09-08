@@ -55,6 +55,7 @@ public struct DashboardRangeViewData: Equatable, Sendable {
         }
     }
 
+    public let historyError: String?
     public let rangeText: String
     public let distanceUnitText: String
     public let summary: Summary?
@@ -71,6 +72,7 @@ public struct DashboardRangeViewData: Equatable, Sendable {
     public let isLoadingHistory: Bool
 
     public init(
+        historyError: String? = nil,
         rangeText: String = "—",
         distanceUnitText: String = "km",
         summary: Summary? = nil,
@@ -86,6 +88,7 @@ public struct DashboardRangeViewData: Equatable, Sendable {
         peakRegenerationText: String = "—",
         isLoadingHistory: Bool = false
     ) {
+        self.historyError = historyError
         self.rangeText = rangeText
         self.distanceUnitText = distanceUnitText
         self.summary = summary

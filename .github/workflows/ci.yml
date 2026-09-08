@@ -4,6 +4,13 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "23 5 * * 1"
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   secrets:
@@ -29,8 +36,23 @@ jobs:
         run: brew install xcodegen swiftlint
       - name: Generate Xcode project
         run: xcodegen generate
+      - name: Validate architecture and automation scripts
+        run: |
+          mkdir -p "$RUNNER_TEMP/fenr-reports"
+          python3 scripts/validate-architecture.py --report "$RUNNER_TEMP/fenr-reports/architecture-report.json"
+          python3 -m unittest discover -s scripts/tests -p 'test_architecture.py'
+          python3 -m unittest discover -s scripts/tests -p 'test_compatibility_runtime.py'
+          python3 -m unittest discover -s scripts/tests -p 'test_runtime_frameworks.py'
       - name: Lint
         run: swiftlint lint --strict
+      - name: Upload architecture report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: architecture
+          path: ${{ runner.temp }}/fenr-reports
+          if-no-files-found: warn
+          retention-days: 7
 
   ios-debug:
     needs: lint
@@ -44,15 +66,37 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
       - name: Test iOS debug
-        run: >-
-          xcodebuild -project FENR.xcodeproj -scheme FENR
-          -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5'
-          CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test
-      - name: Build iOS debug app
-        run: >-
-          xcodebuild -project FENR.xcodeproj -scheme FENRDebug
-          -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5'
-          CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+        run: |
+          mkdir -p "$RUNNER_TEMP/fenr-reports"
+          xcodebuild -project FENR.xcodeproj -scheme FENR \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5' \
+            -derivedDataPath "$RUNNER_TEMP/fenr-ios-debug" \
+            -resultBundlePath "$RUNNER_TEMP/fenr-reports/ios-debug.xcresult" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test \
+            | tee "$RUNNER_TEMP/fenr-reports/ios-debug-test.log"
+      - name: Validate production iOS app built by tests
+        run: |
+          python3 scripts/validate-runtime-frameworks.py \
+            --app "$RUNNER_TEMP/fenr-ios-debug/Build/Products/Debug-iphonesimulator/FENR.app" \
+            --report "$RUNNER_TEMP/fenr-reports/embedding-production-debug.json"
+      - name: Build and validate iOS debug app
+        run: |
+          xcodebuild -project FENR.xcodeproj -scheme FENRDebug \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5' \
+            -derivedDataPath "$RUNNER_TEMP/fenr-ios-debug" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build \
+            | tee "$RUNNER_TEMP/fenr-reports/ios-debug-build.log"
+          python3 scripts/validate-runtime-frameworks.py \
+            --app "$RUNNER_TEMP/fenr-ios-debug/Build/Products/Debug-iphonesimulator/FENRDebug.app" \
+            --report "$RUNNER_TEMP/fenr-reports/embedding-report.json"
+      - name: Upload iOS debug results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-debug
+          path: ${{ runner.temp }}/fenr-reports
+          if-no-files-found: warn
+          retention-days: 7
 
   ios-release:
     needs: lint
@@ -65,11 +109,25 @@ jobs:
         run: brew install xcodegen
       - name: Generate Xcode project
         run: xcodegen generate
-      - name: Build iOS release
-        run: >-
-          xcodebuild -project FENR.xcodeproj -scheme FENR -configuration Release
-          -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5'
-          CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+      - name: Build and validate iOS release
+        run: |
+          mkdir -p "$RUNNER_TEMP/fenr-reports"
+          xcodebuild -project FENR.xcodeproj -scheme FENR -configuration Release \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5' \
+            -derivedDataPath "$RUNNER_TEMP/fenr-ios-release" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build \
+            | tee "$RUNNER_TEMP/fenr-reports/ios-release-build.log"
+          python3 scripts/validate-runtime-frameworks.py \
+            --app "$RUNNER_TEMP/fenr-ios-release/Build/Products/Release-iphonesimulator/FENR.app" \
+            --report "$RUNNER_TEMP/fenr-reports/embedding-report.json"
+      - name: Upload iOS release results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-release
+          path: ${{ runner.temp }}/fenr-reports
+          if-no-files-found: warn
+          retention-days: 7
 
   watch-debug:
     needs: lint
@@ -83,10 +141,32 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
       - name: Test Watch debug
-        run: >-
-          xcodebuild -project FENR.xcodeproj -scheme FENRWatchDebug
-          -destination 'platform=watchOS Simulator,name=Apple Watch Series 11 (46mm),OS=26.5'
-          CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test
+        run: |
+          mkdir -p "$RUNNER_TEMP/fenr-reports"
+          xcodebuild -project FENR.xcodeproj -scheme FENRWatchDebug \
+            -destination 'platform=watchOS Simulator,name=Apple Watch Series 11 (46mm),OS=26.5' \
+            -derivedDataPath "$RUNNER_TEMP/fenr-watch-debug" \
+            -resultBundlePath "$RUNNER_TEMP/fenr-reports/watch-debug.xcresult" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test \
+            | tee "$RUNNER_TEMP/fenr-reports/watch-debug-test.log"
+      - name: Build and validate Watch debug app
+        run: |
+          xcodebuild -project FENR.xcodeproj -scheme FENRWatchDebug \
+            -destination 'platform=watchOS Simulator,name=Apple Watch Series 11 (46mm),OS=26.5' \
+            -derivedDataPath "$RUNNER_TEMP/fenr-watch-debug" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build \
+            | tee "$RUNNER_TEMP/fenr-reports/watch-debug-build.log"
+          python3 scripts/validate-runtime-frameworks.py \
+            --app "$RUNNER_TEMP/fenr-watch-debug/Build/Products/Debug-watchsimulator/FENRWatchDebug.app" \
+            --report "$RUNNER_TEMP/fenr-reports/embedding-report.json"
+      - name: Upload Watch debug results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: watch-debug
+          path: ${{ runner.temp }}/fenr-reports
+          if-no-files-found: warn
+          retention-days: 7
 
   watch-release:
     needs: lint
@@ -99,8 +179,155 @@ jobs:
         run: brew install xcodegen
       - name: Generate Xcode project
         run: xcodegen generate
-      - name: Build Watch release
-        run: >-
-          xcodebuild -project FENR.xcodeproj -scheme FENRWatch -configuration Release
-          -destination 'platform=watchOS Simulator,name=Apple Watch Series 11 (46mm),OS=26.5'
-          CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+      - name: Build and validate Watch release
+        run: |
+          mkdir -p "$RUNNER_TEMP/fenr-reports"
+          xcodebuild -project FENR.xcodeproj -scheme FENRWatch -configuration Release \
+            -destination 'platform=watchOS Simulator,name=Apple Watch Series 11 (46mm),OS=26.5' \
+            -derivedDataPath "$RUNNER_TEMP/fenr-watch-release" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build \
+            | tee "$RUNNER_TEMP/fenr-reports/watch-release-build.log"
+          python3 scripts/validate-runtime-frameworks.py \
+            --app "$RUNNER_TEMP/fenr-watch-release/Build/Products/Release-watchsimulator/FENRWatch.app" \
+            --report "$RUNNER_TEMP/fenr-reports/embedding-report.json"
+      - name: Upload Watch release results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: watch-release
+          path: ${{ runner.temp }}/fenr-reports
+          if-no-files-found: warn
+          retention-days: 7
+
+  compatibility:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: lint
+    runs-on: macos-26
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: iOS
+            requested: '17.5'
+            test-scheme: FENR
+            app-scheme: FENRDebug
+            products: Debug-iphonesimulator
+            app: FENRDebug.app
+          - platform: watchOS
+            requested: '10.5'
+            test-scheme: FENRWatchDebug
+            app-scheme: FENRWatchDebug
+            products: Debug-watchsimulator
+            app: FENRWatchDebug.app
+    steps:
+      - uses: actions/checkout@v5
+      - name: Select Xcode 26.6
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Provision requested official runtime or report fallback
+        id: runtime
+        run: |
+          python3 scripts/prepare-compatibility-runtime.py \
+            --platform '${{ matrix.platform }}' --version '${{ matrix.requested }}' \
+            --report "$RUNNER_TEMP/fenr-reports/runtime-preflight.json"
+      - name: Test selected runtime
+        if: steps.runtime.outputs.available == 'true'
+        env:
+          FENR_DESTINATION: ${{ steps.runtime.outputs.destination }}
+        run: |
+          xcodebuild -project FENR.xcodeproj -scheme '${{ matrix.test-scheme }}' \
+            -destination "$FENR_DESTINATION" \
+            -derivedDataPath "$RUNNER_TEMP/fenr-compatibility" \
+            -resultBundlePath "$RUNNER_TEMP/fenr-reports/compatibility.xcresult" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test \
+            | tee "$RUNNER_TEMP/fenr-reports/compatibility-test.log"
+      - name: Validate production iOS compatibility app
+        if: steps.runtime.outputs.available == 'true' && matrix.platform == 'iOS'
+        run: |
+          python3 scripts/validate-runtime-frameworks.py \
+            --app "$RUNNER_TEMP/fenr-compatibility/Build/Products/Debug-iphonesimulator/FENR.app" \
+            --report "$RUNNER_TEMP/fenr-reports/embedding-production-debug.json"
+      - name: Build and validate selected runtime app
+        if: steps.runtime.outputs.available == 'true'
+        env:
+          FENR_DESTINATION: ${{ steps.runtime.outputs.destination }}
+        run: |
+          xcodebuild -project FENR.xcodeproj -scheme '${{ matrix.app-scheme }}' \
+            -destination "$FENR_DESTINATION" \
+            -derivedDataPath "$RUNNER_TEMP/fenr-compatibility" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build \
+            | tee "$RUNNER_TEMP/fenr-reports/compatibility-build.log"
+          python3 scripts/validate-runtime-frameworks.py \
+            --app "$RUNNER_TEMP/fenr-compatibility/Build/Products/${{ matrix.products }}/${{ matrix.app }}" \
+            --report "$RUNNER_TEMP/fenr-reports/embedding-report.json"
+      - name: Remove temporary compatibility simulator
+        if: always() && steps.runtime.outputs.device-id != ''
+        env:
+          FENR_DEVICE_ID: ${{ steps.runtime.outputs.device-id }}
+        run: xcrun simctl delete "$FENR_DEVICE_ID"
+      - name: Upload compatibility coverage and results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: compatibility-${{ matrix.platform }}-${{ matrix.requested }}
+          path: ${{ runner.temp }}/fenr-reports
+          if-no-files-found: warn
+          retention-days: 7
+
+  iphone-e2e:
+    needs: lint
+    runs-on: macos-26
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - size: primary
+            device-type: com.apple.CoreSimulator.SimDeviceType.iPhone-17
+          - size: compact
+            device-type: com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation
+    steps:
+      - uses: actions/checkout@v5
+      - name: Select Xcode 26.6
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Create clean iPhone simulator
+        id: simulator
+        run: |
+          FENR_DEVICE_ID=$(xcrun simctl create 'FENR iPhone E2E' \
+            '${{ matrix.device-type }}' com.apple.CoreSimulator.SimRuntime.iOS-26-5)
+          echo "device-id=$FENR_DEVICE_ID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$FENR_DEVICE_ID"
+          xcrun simctl bootstatus "$FENR_DEVICE_ID" -b
+      - name: Run serial public demo E2E suite
+        env:
+          FENR_DEVICE_ID: ${{ steps.simulator.outputs.device-id }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/fenr-e2e-results"
+          xcodebuild -project FENR.xcodeproj -scheme FENRUITests \
+            -destination "platform=iOS Simulator,id=$FENR_DEVICE_ID" \
+            -derivedDataPath "$RUNNER_TEMP/fenr-e2e" \
+            -resultBundlePath "$RUNNER_TEMP/fenr-e2e-results/iphone-e2e.xcresult" \
+            -parallel-testing-enabled NO \
+            CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=- test \
+            | tee "$RUNNER_TEMP/fenr-e2e-results/iphone-e2e.log"
+      - name: Remove E2E simulator
+        if: always() && steps.simulator.outputs.device-id != ''
+        env:
+          FENR_DEVICE_ID: ${{ steps.simulator.outputs.device-id }}
+        run: xcrun simctl delete "$FENR_DEVICE_ID"
+      - name: Upload public demo E2E results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: iphone-e2e-${{ matrix.size }}
+          path: ${{ runner.temp }}/fenr-e2e-results
+          if-no-files-found: warn
+          retention-days: 7

@@ -87,6 +87,7 @@ import SwiftUI
                 locationPermission: .authorized
             ),
             onSelectProgressBarMode: { _ in },
+            onSelectProgressBarThickness: { _ in },
             onSelectBikeBatteryDisplayMode: { _ in },
             onSelectDeviceBatteryDisplayMode: { _ in },
             onSelectTemperatureDisplayMode: { _ in },

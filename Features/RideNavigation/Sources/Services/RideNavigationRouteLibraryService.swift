@@ -16,20 +16,16 @@ public struct RideNavigationRouteLibraryService: Sendable {
         self.exporter = exporter
     }
 
-    func loadRoutes() async -> [RideRoute] {
-        await repository.loadRoutes()
+    func loadRouteSummaries() async -> [RideRouteSummary] {
+        await repository.loadRouteSummaries()
+    }
+
+    func loadRoute(id: UUID) async throws -> RideRoute? {
+        try await repository.loadRoute(id: id)
     }
 
     func save(_ route: RideRoute) async throws {
         try await repository.save(route)
-    }
-
-    func saveAndReload(_ route: RideRoute) async throws -> [RideRoute] {
-        try await repository.save(route)
-        try Task.checkCancellation()
-        let routes = await repository.loadRoutes()
-        try Task.checkCancellation()
-        return routes
     }
 
     func delete(id: UUID) async throws {

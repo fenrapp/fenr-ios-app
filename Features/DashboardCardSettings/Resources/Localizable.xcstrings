@@ -1,6 +1,10 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "dashboardCardSettingsSaveErrorTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Settings not saved"}}}},
+    "dashboardCardSettingsSaveErrorDismiss" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "OK"}}}},
+    "dashboardCardSettingsSaveFailed" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Your changes could not be saved. Please try again."}}}},
+
     "dashboard.card.settings.section.settings" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Settings"}}}},
     "dashboard.card.settings.settings.detail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Open app settings. Always available."}}}},
     "dashboard.card.settings.page.altitude" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Altitude"}}}},

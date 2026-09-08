@@ -2,7 +2,7 @@
 import SwiftUI
 
 public struct RideDisplaySettingsView: View {
-    @ObservedObject private var viewModel: AppSettingsViewModel
+    private let viewModel: AppSettingsViewModel
 
     public init(viewModel: AppSettingsViewModel) {
         self.viewModel = viewModel
@@ -17,6 +17,7 @@ public struct RideDisplaySettingsView: View {
                 temperatureDisplayMode: viewModel.viewState.dashboardTemperatureDisplayMode,
                 speedSource: viewModel.viewState.speedSource,
                 onSelectProgressBarMode: viewModel.selectDashboardProgressBarMode,
+                onSelectProgressBarThickness: viewModel.selectDashboardProgressBarThickness,
                 onSelectBikeBatteryDisplayMode: viewModel.selectDashboardBatteryIndicatorMode,
                 onSelectDeviceBatteryDisplayMode: viewModel.selectDashboardDeviceBatteryDisplayMode,
                 onSelectTemperatureDisplayMode: viewModel.selectDashboardTemperatureDisplayMode,

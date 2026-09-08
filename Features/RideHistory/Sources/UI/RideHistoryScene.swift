@@ -2,7 +2,7 @@ import SwiftUI
 
 public struct RideHistoryScene: View {
     private let destination: RideHistoryDestination
-    @ObservedObject private var viewModel: RideHistoryViewModel
+    private let viewModel: RideHistoryViewModel
     private let isPresentationActive: Bool
     private let onNavigation: (RideHistoryNavigationEvent) -> Void
 

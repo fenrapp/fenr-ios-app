@@ -8,6 +8,10 @@ actor CurrentTripCardTripRepository: RideTripRepository {
     private var activeTrip: RideTrip?
     private var completedTrips: [RideTrip]
     private var completedTripLoadCount = 0
+    private var readError: RideTripReadError?
+    private var blocksNextRead = false
+    private var readContinuation: CheckedContinuation<Void, Never>?
+    private var finishedReadCount = 0
 
     init(completedTrips: [RideTrip] = []) {
         self.completedTrips = completedTrips
@@ -31,9 +35,26 @@ actor CurrentTripCardTripRepository: RideTripRepository {
         return true
     }
 
-    func loadCompletedTrips(vin: String) -> [RideTrip] {
+    func loadCompletedTrips(vin: String) async throws -> [RideTrip] {
         completedTripLoadCount += 1
-        return completedTrips.filter { $0.confirmedVIN == vin }
+        let trips = completedTrips.filter { $0.confirmedVIN == vin }
+        let error = readError
+        if blocksNextRead {
+            blocksNextRead = false
+            await withCheckedContinuation { readContinuation = $0 }
+        }
+        finishedReadCount += 1
+        if let error { throw error }
+        return trips
+    }
+
+    func setReadError(_ error: RideTripReadError?) { readError = error }
+    func blockNextRead() { blocksNextRead = true }
+    func hasBlockedRead() -> Bool { readContinuation != nil }
+    func completedReadCount() -> Int { finishedReadCount }
+    func releaseRead() {
+        readContinuation?.resume()
+        readContinuation = nil
     }
 
     func promoteTemporaryIdentity(_ temporaryID: UUID, toVIN vin: String) -> Bool {

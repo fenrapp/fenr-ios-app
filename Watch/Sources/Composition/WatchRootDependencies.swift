@@ -1,6 +1,6 @@
 import AppSettings
 import BikeDomain
-import Combine
+import Observation
 import WatchDashboard
 import WatchOnboarding
 
@@ -14,15 +14,16 @@ struct WatchRootDependencies {
 }
 
 @MainActor
-final class WatchSetupController: ObservableObject {
-    @Published private(set) var isConfigured = false
-    @Published private(set) var isLoading = true
+@Observable
+final class WatchSetupController {
+    private(set) var isConfigured = false
+    private(set) var isLoading = true
 
     private let sessionController: WatchBikeSessionController
     private let profileRepository: any BikeProfileRepository
     private let initialProfile: BikeProfile?
-    private var changeBikeTask: Task<Void, Never>?
-    private var hasStarted = false
+    @ObservationIgnored private var changeBikeTask: Task<Void, Never>?
+    @ObservationIgnored private var hasStarted = false
 
     init(
         sessionController: WatchBikeSessionController,

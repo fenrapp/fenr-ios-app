@@ -10,7 +10,10 @@ import VehicleSession
 #if DEBUG
 @MainActor
 enum RideDashboardPreviewFactory {
-    static func makeViewModel(state: RideDashboardViewState) -> RideDashboardViewModel {
+    static func makeViewModel(
+        state: RideDashboardViewState,
+        onContinuityChanged: @escaping @MainActor (RideDashboardContinuityPhase) -> Void = { _ in }
+    ) -> RideDashboardViewModel {
         let viewModel = RideDashboardViewModel(
             mapper: RideDashboardMapperFactory.makeRideMapper(locale: .autoupdatingCurrent),
             cardLayoutMapper: DashboardCardLayoutMapper(),
@@ -18,7 +21,8 @@ enum RideDashboardPreviewFactory {
             timing: .live,
             continuityPolicy: RideDashboardContinuityPolicy(),
             initialConnectionStabilityPeriod: .zero,
-            reconnectionNoticeDelay: FENRRuntimeConstants.RideDashboard.reconnectionNoticeDelay
+            reconnectionNoticeDelay: FENRRuntimeConstants.RideDashboard.reconnectionNoticeDelay,
+            onContinuityChanged: onContinuityChanged
         )
         viewModel.setPreviewState(state)
         return viewModel
@@ -43,7 +47,8 @@ enum ChargingDashboardPreviewFactory {
                 ),
                 logger: ChargeControlLogStore(isRecording: { true }),
                 stateUpdater: ChargeControlStateUpdater(normalizer: ChargeControlNormalizer()),
-                taskScheduler: ChargeControlTaskScheduler()
+                taskScheduler: ChargeControlTaskScheduler(),
+                stateEmitter: ChargeControlStateEmitter()
             ),
             mapper: makeMapper(AppSettings(), nil),
             makeMapper: makeMapper
@@ -179,7 +184,7 @@ private actor PreviewRideTripRepository: RideTripRepository {
     func prepare(context _: BikeSessionContext) -> RideTrip? { nil }
     func saveActiveTrip(_: RideTrip) -> Bool { true }
     func completeTrip(_: RideTrip, at _: Date) -> Bool { true }
-    func loadCompletedTrips(vin _: String) -> [RideTrip] { [] }
+    func loadCompletedTrips(vin _: String) throws -> [RideTrip] { [] }
     func promoteTemporaryIdentity(_: UUID, toVIN _: String) -> Bool { true }
 }
 
@@ -229,11 +234,20 @@ private actor PreviewVehicleSessionService: VehicleSessionService {
 }
 
 private actor PreviewBikeLockSettingsRepository: AppSettingsRepository {
-    private var settings = AppSettings()
+    private var settings = AppSettings().scoped(toVIN: "FENRTEST000000001")
+    private var revision: UInt64 = 0
 
     func load() -> AppSettings { settings }
-    func save(_ settings: AppSettings) { self.settings = settings }
-    func observe() -> AsyncStream<AppSettings> { .init { $0.finish() } }
+    func update(expectedVIN: String, change: AppSettingsChange) throws -> AppSettingsUpdateResult {
+        guard settings.vin == expectedVIN else { throw AppSettingsUpdateError.vehicleChanged }
+        let updated = try change.applying(to: settings)
+        guard updated != settings else { return .unchanged(.init(settings: settings, revision: revision)) }
+        settings = updated
+        revision += 1
+        return .changed(.init(settings: settings, revision: revision))
+    }
+
+    func observe() -> AsyncStream<AppSettingsSnapshot> { .init { $0.finish() } }
 }
 
 private actor PreviewBikeLockCredentialStore: BikeLockCredentialStoring {

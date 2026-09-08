@@ -9,35 +9,11 @@ import TestSupport
 struct RideDashboardFeatureModelTests {
     @Test("Rearms global card observers only when presentation is live")
     func rearmsGlobalCardsAcrossContinuityPhases() async {
-        let dashboardFixture = makeFixture()
-        let rangeSession = TestRideSessionService()
-        let range = RangeCardViewModel(
-            useCases: .init(
-                loadHistory: .init(repository: CurrentTripCardTripRepository())
-            ),
-            mapper: .init(
-                locale: Locale(identifier: "en_GB"),
-                estimator: RideRangeEstimator()
-            ),
-            session: rangeSession
-        )
-        let bikeLock = BikeLockCardViewModelTestFactory.make().viewModel
-        let systemHealth = SystemHealthCardViewModel(
-            vehicleSession: dashboardFixture.vehicleSession,
-            mapper: RideDashboardMapperFactory.makeSystemHealthMapper(locale: Locale(identifier: "en_GB"))
-        )
-        let feature = RideDashboardFeatureModel(
-            dashboardViewModel: dashboardFixture.viewModel,
-            deviceBatteryViewModel: DashboardDeviceBatteryPreviewFactory.makeViewModel(),
-            currentTripViewModel: CurrentTripCardPreviewFactory.makeViewModel(state: .init()),
-            tripStatisticsViewModel: TripStatisticsCardPreviewFactory.makeViewModel(state: .init()),
-            efficiencyViewModel: EfficiencyCardPreviewFactory.makeViewModel(state: .init()),
-            rangeViewModel: range,
-            systemHealthViewModel: systemHealth,
-            dynamicsViewModel: RideDynamicsCardPreviewFactory.makeViewModel(state: .init()),
-            chargingViewModel: ChargingDashboardPreviewFactory.makeViewModel(state: .init()),
-            bikeLockViewModel: bikeLock
-        )
+        let fixture = RideDashboardFeatureTestFixture.make()
+        let dashboardFixture = fixture.dashboard
+        let range = fixture.range
+        let bikeLock = fixture.bikeLock
+        let feature = fixture.feature
         var selection = DashboardCardSelectionState()
 
         feature.setPresentationActive(true)

@@ -1,0 +1,212 @@
+targets:
+  BikeDemo:
+    templates: [IOSFramework]
+    sources:
+      - path: Features/BikeDemo/Sources
+      - path: Features/BikeDemo/Resources
+        buildPhase: resources
+    dependencies:
+      - target: DesignSystem
+      - target: BikeEmulator
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikedemo
+  BikeDiagnostics:
+    templates: [IOSFramework]
+    sources:
+      - path: Features/BikeDiagnostics/Sources
+      - path: Features/BikeDiagnostics/Resources
+        buildPhase: resources
+    dependencies:
+      - target: AsyncSupport
+      - target: BLETraceDomain
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: MeasurementPresentation
+      - target: VehicleSession
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.diagnostics
+  BikeOnboarding:
+    templates: [IOSFramework]
+    sources:
+      - path: Features/BikeOnboarding/Sources
+      - path: Features/BikeOnboarding/Resources
+        buildPhase: resources
+    dependencies:
+      - target: BikeDomain
+      - target: StarkProtocol
+      - target: DesignSystem
+      - target: RuntimeConfiguration
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.onboarding
+  RideDashboard:
+    templates: [IOSFramework]
+    sources:
+      - path: Features/RideDashboard/Sources
+      - path: Features/RideDashboard/Resources
+        buildPhase: resources
+    dependencies:
+      - target: BikeDomain
+      - target: RideSession
+      - target: RideSessionDomain
+      - target: VehicleSession
+      - target: SettingsDomain
+      - target: DesignSystem
+      - target: MeasurementPresentation
+      - target: RuntimeConfiguration
+      - target: ChargeControl
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.dashboard
+  BatteryHealth:
+    templates: [IOSFramework]
+    sources:
+      - path: Features/BatteryHealth/Sources
+      - path: Features/BatteryHealth/Resources
+        buildPhase: resources
+    dependencies:
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: DesignSystem
+      - target: MeasurementPresentation
+      - target: RuntimeConfiguration
+      - target: ChargeControl
+      - target: VehicleSession
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.batteryhealth
+  AppSettings:
+    templates: [SharedFramework]
+    sources:
+      - path: Features/AppSettings/Sources
+      - path: Features/AppSettings/Resources
+        buildPhase: resources
+    dependencies:
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: EnvironmentDomain
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.appsettings
+  DashboardCardSettings:
+    templates: [IOSFramework]
+    sources:
+      - path: Features/DashboardCardSettings/Sources
+      - path: Features/DashboardCardSettings/Resources
+        buildPhase: resources
+    dependencies:
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.dashboardcardsettings
+  BikeLockSettings:
+    templates: [IOSFramework]
+    sources:
+      - path: Features/BikeLockSettings/Sources
+      - path: Features/BikeLockSettings/Resources
+        buildPhase: resources
+    dependencies:
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: VehicleSession
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.bikelocksettings
+  PowerModeSettings:
+    templates: [IOSFramework]
+    sources:
+      - path: Features/PowerModeSettings/Sources
+      - path: Features/PowerModeSettings/Resources
+        buildPhase: resources
+    dependencies:
+      - target: BikeDomain
+      - target: SettingsDomain
+      - target: VehicleSession
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.powermodesettings
+  RideHistory:
+    templates: [IOSFramework]
+    sources:
+      - path: Features/RideHistory/Sources
+      - path: Features/RideHistory/Resources
+        buildPhase: resources
+    dependencies:
+      - target: RideSession
+      - target: RideSessionDomain
+      - target: SettingsDomain
+      - target: DesignSystem
+      - target: MeasurementPresentation
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridehistory
+  MaintenanceLog:
+    templates: [IOSFramework]
+    sources:
+      - path: Features/MaintenanceLog/Sources
+      - path: Features/MaintenanceLog/Resources
+        buildPhase: resources
+    dependencies:
+      - target: MaintenanceDomain
+      - target: MeasurementPresentation
+      - target: SettingsDomain
+      - target: VehicleSession
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.maintenancelog
+  RideNavigation:
+    templates: [IOSFramework]
+    sources:
+      - path: Features/RideNavigation/Sources
+      - path: Features/RideNavigation/Resources
+        buildPhase: resources
+    dependencies:
+      - target: BikeDomain
+      - target: EnvironmentDomain
+      - target: RideNavigationDomain
+      - target: SettingsDomain
+      - target: VehicleSession
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigation
+  WatchDashboard:
+    type: framework
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: Features/WatchDashboard/Sources
+      - path: Features/WatchDashboard/Resources
+        buildPhase: resources
+    dependencies:
+      - target: BikeDomain
+      - target: DesignSystem
+      - target: MeasurementPresentation
+      - target: SettingsDomain
+      - target: RuntimeConfiguration
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchdashboard
+  WatchOnboarding:
+    type: framework
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: Features/WatchOnboarding/Sources
+      - path: Features/WatchOnboarding/Resources
+        buildPhase: resources
+    dependencies:
+      - target: BikeDomain
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchonboarding

@@ -46,6 +46,7 @@ struct DashboardRidingCardDeck<Content: View>: View {
             },
             content: content
         )
+        .accessibilityIdentifier("dashboard.cards")
         .overlay(alignment: .trailing) {
             if showsIndicator {
                 DashboardPageIndicator(

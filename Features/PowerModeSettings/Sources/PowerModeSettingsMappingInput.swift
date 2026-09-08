@@ -1,4 +1,5 @@
 import BikeDomain
+import Foundation
 import SettingsDomain
 
 struct PowerModeSettingsMappingInput: Sendable {
@@ -10,6 +11,8 @@ struct PowerModeSettingsMappingInput: Sendable {
     let isStarted: Bool
     let isRefreshing: Bool
     let refreshError: String?
+    let isSavingName: Bool
+    let nameSaveCompletionID: UUID?
     let nameError: String?
     let isPreparingControl: Bool
     let isApplyingControl: Bool
@@ -31,6 +34,8 @@ struct PowerModeSettingsMappingInput: Sendable {
         isRefreshing: Bool,
         refreshError: String?,
         nameError: String?,
+        isSavingName: Bool = false,
+        nameSaveCompletionID: UUID? = nil,
         isPreparingControl: Bool = false,
         isApplyingControl: Bool = false,
         activeAdjustmentID: PowerModeAdjustmentID? = nil,
@@ -50,6 +55,8 @@ struct PowerModeSettingsMappingInput: Sendable {
         self.isRefreshing = isRefreshing
         self.refreshError = refreshError
         self.nameError = nameError
+        self.isSavingName = isSavingName
+        self.nameSaveCompletionID = nameSaveCompletionID
         self.isPreparingControl = isPreparingControl
         self.isApplyingControl = isApplyingControl
         self.activeAdjustmentID = activeAdjustmentID

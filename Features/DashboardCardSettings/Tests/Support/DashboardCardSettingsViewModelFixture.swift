@@ -16,7 +16,7 @@ struct DashboardCardSettingsViewModelFixture {
             useCases: .init(
                 loadSettings: .init(repository: repository),
                 observeSettings: .init(repository: repository),
-                saveSettings: .init(repository: repository)
+                updateSettings: .init(repository: repository)
             ),
             mapper: DashboardCardSettingsViewStateMapper(),
             bikeLockCapabilityStore: capabilityStore

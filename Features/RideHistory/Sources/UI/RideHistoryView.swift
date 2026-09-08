@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 public struct RideHistoryView: View {
-    @ObservedObject private var viewModel: RideHistoryViewModel
+    private let viewModel: RideHistoryViewModel
     private let onNavigation: (RideHistoryNavigationEvent) -> Void
 
     @Environment(\.editMode) private var editMode

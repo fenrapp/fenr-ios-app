@@ -17,21 +17,22 @@ public struct UpdateBikeLockSecurityUseCase: Sendable {
         securityMode: BikeLockSecurityMode,
         newPIN: String? = nil
     ) async throws {
+        if let newPIN, securityMode.requiresPIN, !Self.isValidPIN(newPIN) {
+            throw BikeLockSecurityUpdateError.invalidPIN
+        }
+        let initialSettings = await repository.load()
+        try Task.checkCancellation()
+        guard initialSettings.vin == vehicleIdentifier else { throw AppSettingsUpdateError.vehicleChanged }
         if securityMode.requiresPIN {
             if let newPIN {
-                guard Self.isValidPIN(newPIN) else { throw BikeLockSecurityUpdateError.invalidPIN }
                 try await credentialStore.save(pin: newPIN, for: vehicleIdentifier)
             }
         } else {
             try await credentialStore.removePIN(for: vehicleIdentifier)
         }
 
-        var settings = await repository.load()
-        settings.setBikeLockSettings(.init(securityMode: securityMode), forVIN: vehicleIdentifier)
-        if securityMode.requiresPIN {
-            settings.dashboardCardConfiguration.setSectionVisibility(true, id: .bikeLock)
-        }
-        await repository.save(settings)
+        try Task.checkCancellation()
+        _ = try await repository.update(expectedVIN: vehicleIdentifier, change: .bikeLockSecurity(securityMode))
     }
 
     public static func isValidPIN(_ pin: String) -> Bool {

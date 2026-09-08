@@ -4,6 +4,33 @@ import Testing
 
 @Suite("App settings decoding")
 struct AppSettingsDecodingTests {
+    @Test("Decodes current and retired progress bar thickness values", arguments: [
+        ("regular", DashboardProgressBarThickness.regular),
+        ("thick", DashboardProgressBarThickness.thick),
+        ("extraThick", DashboardProgressBarThickness.thick)
+    ])
+    func decodesProgressBarThickness(rawValue: String, expected: DashboardProgressBarThickness) throws {
+        let data = Data("""
+        { "dashboardProgressBarThickness": "\(rawValue)" }
+        """.utf8)
+        let settings = try JSONDecoder().decode(AppSettings.self, from: data)
+
+        #expect(settings.dashboardProgressBarThickness == expected)
+        let encoded = try JSONEncoder().encode(settings.dashboardProgressBarThickness)
+        #expect(try JSONDecoder().decode(String.self, from: encoded) == expected.rawValue)
+        #expect(DashboardProgressBarThickness(rawValue: "extraThick") == nil)
+    }
+
+    @Test("Unknown progress bar thickness values remain decoding errors")
+    func rejectsUnknownProgressBarThickness() {
+        let data = Data("""
+        { "dashboardProgressBarThickness": "unsupported" }
+        """.utf8)
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(AppSettings.self, from: data)
+        }
+    }
+
     @Test("Decodes legacy settings with dashboard display defaults")
     func decodesLegacySettings() throws {
         let data = Data("""
@@ -18,6 +45,7 @@ struct AppSettingsDecodingTests {
         let settings = try JSONDecoder().decode(AppSettings.self, from: data)
 
         #expect(settings.dashboardProgressBarMode == .energy)
+        #expect(settings.dashboardProgressBarThickness == .regular)
         #expect(settings.dashboardBatteryIndicatorMode == .percentage)
         #expect(settings.dashboardDeviceBatteryDisplayMode == .iconAndText)
         #expect(settings.dashboardTemperatureDisplayMode == .off)

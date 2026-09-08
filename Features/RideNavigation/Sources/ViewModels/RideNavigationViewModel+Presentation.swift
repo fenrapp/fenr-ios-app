@@ -7,18 +7,26 @@ import VehicleSession
 
 @MainActor
 extension RideNavigationViewModel {
-    func render(isSearching: Bool? = nil) {
-        if presentationMode == .mini {
-            renderMiniViewState()
-            return
+    func render() {
+        if presentationMode != .mini {
+            viewState = makeFullViewState(
+                activity: activityController.snapshot, planning: planningController.snapshot,
+                speed: presentedSpeed, altitude: presentedAltitude
+            )
         }
-        let speed = presentedSpeed
-        let altitude = presentedAltitude
-        let trailGuidanceSnapshot = trailGuidance.snapshot
-        viewState = RideNavigationViewState(
+        renderMiniViewState()
+    }
+
+    private func makeFullViewState(
+        activity: RideNavigationActivitySnapshot,
+        planning: RideNavigationPlanningSnapshot,
+        speed: (String, String),
+        altitude: (String, String)?
+    ) -> RideNavigationViewState {
+        .init(
             screen: screen,
-            activity: activity,
-            mapScene: makeMapScene(),
+            activity: activity.activity,
+            mapScene: makeMapScene(activity: activity, planning: planning),
             selectedMapStyleID: selectedMapStyleID,
             allowsFocusMapStyle: allowsFocusMapStyle,
             isHeadingUp: isHeadingUp,
@@ -26,7 +34,7 @@ extension RideNavigationViewModel {
             speedUnit: speed.1,
             modeText: presentedModeText,
             batteryText: presentedBatteryText,
-            elapsedText: elapsedText(at: now()),
+            elapsedText: elapsedText(),
             distanceText: currentDistanceText,
             altitudeText: altitude?.0,
             altitudeUnit: altitude?.1 ?? "",
@@ -34,44 +42,56 @@ extension RideNavigationViewModel {
             connectionNoticeText: presentedConnectionNotice,
             showsGuidanceInFocus: appSettings.rideNavigation.showsGuidanceInFocus,
             guidance: currentGuidance,
-            routeTitle: selectedRoute?.name ?? selectedDestination?.name,
+            routeTitle: planning.selectedRoute?.name ?? planning.selectedDestination?.name,
             savedRoutes: routeRows,
-            searchQuery: searchQuery,
+            searchQuery: planning.searchQuery,
             searchResults: presentedSearchResults,
-            roadRouteOptions: activity == .preview ? roadRouteOptions : [],
+            roadRouteOptions: activity.activity == .preview ? roadRouteOptions : [],
             avoidsTolls: appSettings.rideNavigation.avoidsTolls,
             avoidsHighways: appSettings.rideNavigation.avoidsHighways,
-            showsRoadRoutePreferences: activity == .preview && selectedDestination != nil,
-            isCalculatingRoadRoutes: isCalculatingRoadRoutes,
-            isPreparingTrail: trailGuidanceSnapshot.isPreparing,
-            isRerouting: isRerouting,
-            isSearching: isSearching ?? viewState.isSearching,
-            errorText: errorText,
-            isVoiceMuted: isVoiceMuted,
-            canReverseRoute: selectedRoute != nil && activity == .preview,
+            showsRoadRoutePreferences: activity.activity == .preview && planning.selectedDestination != nil,
+            isCalculatingRoadRoutes: planning.isCalculatingRoadRoutes,
+            isPreparingTrail: activity.trailGuidance.isPreparing,
+            isRerouting: planning.isRerouting,
+            isSearching: planning.isSearching,
+            errorText: errorText ?? activity.errorMessage ?? planning.errorMessage ?? library.snapshot.errorMessage,
+            isVoiceMuted: activity.isVoiceMuted,
+            canReverseRoute: planning.selectedRoute != nil && activity.activity == .preview,
             canMinimize: canMinimize,
-            canFindTrailExit: activity == .following && selectedRoute != nil && trailExitPreview == nil,
-            canResumeGPX: activity == .navigating
-                && roadNavigationPurpose == .trailExit
-                && selectedRoute != nil,
-            isFindingTrailExit: isFindingTrailExit,
+            canFindTrailExit: canFindTrailExit(activity: activity, planning: planning),
+            canResumeGPX: canResumeGPX(activity: activity, planning: planning),
+            isFindingTrailExit: planning.isFindingTrailExit,
             trailExitPreview: presentedTrailExit,
             showsIncomingDestinationPrompt: showsIncomingDestinationPrompt,
-            incomingDestinationTitle: pendingExternalDestination?.name,
-            trailEntryPrompt: trailGuidanceSnapshot.entryPrompt,
-            arrivalPrompt: trailGuidanceSnapshot.arrivalPrompt,
+            incomingDestinationTitle: planning.pendingExternalDestination?.name,
+            trailEntryPrompt: activity.trailGuidance.entryPrompt,
+            arrivalPrompt: activity.trailGuidance.arrivalPrompt,
             forkGuidance: presentedForkGuidance,
-            routePersistence: state.routePersistence.status,
-            canSaveCompletedRoute: completedRecording != nil, canExportCompletedRoute: canExportCompletedRoute,
-            summaryIsSuccessful: state.summaryIsSuccessful,
-            completedRouteName: completedRecording?.name,
-            summaryTitle: summaryTitle, summaryDetail: summaryDetail
+            routePersistence: library.snapshot.persistence.status,
+            canSaveCompletedRoute: activity.completedRecording != nil,
+            canExportCompletedRoute: canExportCompletedRoute,
+            summaryIsSuccessful: activity.completion?.isSuccessful ?? true,
+            completedRouteName: activity.completedRecording?.name,
+            summaryTitle: summaryTitle,
+            summaryDetail: summaryDetail
         )
-        renderMiniViewState()
+    }
+
+    private func canFindTrailExit(
+        activity: RideNavigationActivitySnapshot, planning: RideNavigationPlanningSnapshot
+    ) -> Bool {
+        activity.activity == .following && planning.selectedRoute != nil && planning.trailExitPreview == nil
+    }
+
+    private func canResumeGPX(
+        activity: RideNavigationActivitySnapshot, planning: RideNavigationPlanningSnapshot
+    ) -> Bool {
+        activity.activity == .navigating && planning.roadNavigationPurpose == .trailExit
+            && planning.selectedRoute != nil
     }
 
     private var presentedSpeed: (String, String) {
-        mapper.speed(
+        dependencies.presentationMapper.speed(
             kilometersPerHour: vehicleSnapshot.resolvedSpeedKilometersPerHour
                 ?? latestDeviceSpeedKilometersPerHour,
             measurementSystem: measurementSystem
@@ -79,7 +99,7 @@ extension RideNavigationViewModel {
     }
 
     private var presentedAltitude: (String, String)? {
-        mapper.altitude(
+        dependencies.presentationMapper.altitude(
             meters: locationSnapshot.altitudeMeters,
             verticalAccuracyMeters: locationSnapshot.verticalAccuracyMeters,
             measurementSystem: measurementSystem
@@ -91,7 +111,7 @@ extension RideNavigationViewModel {
            let percentage = vehicleSnapshot.telemetry.batteryLevel.percent {
             return "\(percentage)%"
         }
-        return state.lastValidBatteryText ?? "--%"
+        return lastValidBatteryText ?? "--%"
     }
 
     private var presentedModeText: String {
@@ -99,15 +119,16 @@ extension RideNavigationViewModel {
            vehicleSnapshot.telemetry.mode.displayIndex != nil {
             return resolvedModeText
         }
-        return state.lastValidModeText ?? String(localized: .rideNavigationModeUnavailable)
+        return lastValidModeText ?? String(localized: .rideNavigationModeUnavailable)
     }
 
     private var presentedGPXProgress: String? {
-        guard activity == .following, let trailProgress else { return nil }
+        guard activityController.snapshot.activity == .following,
+              let trailProgress = activityController.snapshot.trailProgress else { return nil }
         let totalDistance = trailProgress.distanceAlongRouteMeters
             + trailProgress.remainingDistanceMeters
-        guard totalDistance > .zero else { return mapper.progress(1) }
-        return mapper.progress(trailProgress.distanceAlongRouteMeters / totalDistance)
+        guard totalDistance > .zero else { return dependencies.presentationMapper.progress(1) }
+        return dependencies.presentationMapper.progress(trailProgress.distanceAlongRouteMeters / totalDistance)
     }
 
     private var presentedConnectionNotice: String? {
@@ -115,7 +136,7 @@ extension RideNavigationViewModel {
         switch vehicleSnapshot.connection.state {
         case .scanning, .connecting, .discovering, .authenticating, .authenticated,
              .subscribed, .receivingTelemetry, .reconnecting:
-            return state.lastValidBatteryText != nil || state.lastValidModeText != nil
+            return lastValidBatteryText != nil || lastValidModeText != nil
                 ? String(localized: .rideNavigationBikeReconnecting)
                 : nil
         case .bluetoothUnavailable, .bluetoothUnauthorized, .bluetoothPoweredOff,
@@ -127,30 +148,35 @@ extension RideNavigationViewModel {
     }
 
     var routeRows: [RideNavigationRouteRow] {
-        savedRoutes.map {
+        let revision = library.snapshot.revision
+        if routeRowsRevision == revision, routeRowsMeasurementSystem == measurementSystem { return cachedRouteRows }
+        cachedRouteRows = library.snapshot.savedRoutes.map {
             RideNavigationRouteRow(
                 id: $0.id,
                 title: $0.name,
-                detail: mapper.routeDetail($0, measurementSystem: measurementSystem)
+                detail: dependencies.presentationMapper.routeDetail($0, measurementSystem: measurementSystem)
             )
         }
+        routeRowsRevision = revision
+        routeRowsMeasurementSystem = measurementSystem
+        return cachedRouteRows
     }
 
     var presentedSearchResults: [RideNavigationSearchResult] {
-        searchResults.map {
+        planningController.snapshot.searchResults.map {
             RideNavigationSearchResult(id: $0.id, title: $0.name, detail: $0.detail)
         }
     }
 
     var presentedTrailExit: RideNavigationTrailExitPreview? {
-        trailExitPreview.map {
-            mapper.trailExitPreview($0, measurementSystem: measurementSystem)
+        planningController.snapshot.trailExitPreview.map {
+            dependencies.presentationMapper.trailExitPreview($0, measurementSystem: measurementSystem)
         }
     }
 
     var presentedForkGuidance: RideNavigationForkGuidance? {
-        let guidance = trailGuidance.snapshot.guidance
-        return mapper.forkGuidance(
+        let guidance = activityController.snapshot.trailGuidance.guidance
+        return dependencies.presentationMapper.forkGuidance(
             routeState: guidance?.routeState,
             decision: guidance?.decision,
             measurementSystem: measurementSystem
@@ -159,19 +185,19 @@ extension RideNavigationViewModel {
 
     func renderMiniViewState() {
         let scene = frozenMiniMapScene ?? makeMiniMapScene()
-        let guidanceSnapshot = trailGuidance.snapshot
+        let guidanceSnapshot = activityController.snapshot.trailGuidance
         let statusText: String?
         if let miniCompletionTitle {
             statusText = miniCompletionTitle
-        } else if isRerouting {
+        } else if planningController.snapshot.isRerouting {
             statusText = String(localized: .rideNavigationRerouting)
         } else if guidanceSnapshot.arrivalPrompt != nil {
             statusText = String(localized: .rideNavigationEndReachedTap)
         } else if guidanceSnapshot.guidance?.routeState == .wrongFork {
             statusText = String(localized: .rideNavigationWrongFork)
-        } else if activity == .following, didAnnounceOffRoute {
+        } else if activityController.snapshot.activity == .following, activityController.snapshot.didAnnounceOffRoute {
             statusText = String(localized: .rideNavigationOffTrail)
-        } else if activity == .paused {
+        } else if activityController.snapshot.activity == .paused {
             statusText = String(localized: .rideNavigationRecordingPaused)
         } else {
             statusText = nil
@@ -191,77 +217,12 @@ extension RideNavigationViewModel {
         )
     }
 
-    func makeMiniMapScene() -> NavigationMapScene {
-        mapSceneBuilder.makeMiniScene(
-            from: makeMapScene(),
-            camera: followCamera,
-            rejoinGuide: rejoinGuide(inFocusModeOnly: false)
-        )
-    }
-
-    func makeMapScene() -> NavigationMapScene {
-        let guidanceSnapshot = trailGuidance.snapshot
-        return mapSceneBuilder.makeScene(
-            RideNavigationMapSceneBuilder.Input(
-                source: mapSource,
-                displayStyle: mapDisplayStyle,
-                camera: cameraMode,
-                userCoordinate: locationSnapshot.coordinate,
-                userHeadingDegrees: locationSnapshot.courseDegrees,
-                trailOverlay: RideNavigationMapPresentationMapper.TrailOverlayInput(
-                hasSelectedRoute: selectedRoute != nil,
-                activity: activity,
-                isPresentingTrailExit: trailExitPreview != nil
-                    || roadNavigationPurpose == .trailExit,
-                trailMap: trailMap.presentationSnapshot,
-                guidancePlan: guidanceSnapshot.plan,
-                guidance: guidanceSnapshot.guidance
-                ),
-                roadRoute: roadRoute,
-                roadRouteRevision: state.roadRouteRevision,
-                destination: selectedDestination,
-                trailExit: trailExitPreview,
-                trailExitRevision: state.trailExitPreviewRevision,
-                rejoinGuide: rejoinGuide(inFocusModeOnly: true),
-                traces: routeTraces,
-                lineAppearances: appSettings.rideNavigation.lineAppearances,
-                showsCompassRing: appSettings.rideNavigation.showsCompassRing,
-                showsRoadsInFocus: appSettings.rideNavigation.showsRoadsInFocus
-            )
-        )
-    }
-
-    private func rejoinGuide(inFocusModeOnly: Bool) -> [GeographicCoordinate]? {
-        guard !inFocusModeOnly || mapDisplayStyle == .focus,
-              activity == .following,
-              didAnnounceOffRoute,
-              let location = locationSnapshot.coordinate,
-              let rejoinCoordinate = trailProgress?.rejoinCoordinate
-        else { return nil }
-        return [location, rejoinCoordinate]
-    }
-
-    private var routeTraces: [RideNavigationMapSceneBuilder.RouteTrace] {
-        [
-            .init(
-                idPrefix: "recorded",
-                role: .recorded,
-                segments: recorder.snapshot(at: now()).route?.segments ?? []
-            ),
-            .init(
-                idPrefix: "breadcrumb",
-                role: .completed,
-                segments: breadcrumbRecorder.snapshot(at: now()).route?.segments ?? []
-            )
-        ]
-    }
-
     var roadRouteOptions: [RideNavigationRoadRouteOption] {
-        roadRoutes.enumerated().map { index, route in
-            mapper.roadRouteOption(
+        planningController.snapshot.roadRoutes.enumerated().map { index, route in
+            dependencies.presentationMapper.roadRouteOption(
                 route,
                 index: index,
-                isSelected: index == selectedRoadRouteIndex,
+                isSelected: index == planningController.snapshot.selectedRoadRouteIndex,
                 measurementSystem: measurementSystem
             )
         }
@@ -275,7 +236,7 @@ extension RideNavigationViewModel {
     }
 
     var allowsFocusMapStyle: Bool {
-        activity == .following || activity == .navigating
+        activityController.snapshot.activity == .following || activityController.snapshot.activity == .navigating
     }
 
     var selectedMapStyleID: String {
@@ -283,9 +244,10 @@ extension RideNavigationViewModel {
     }
 
     var roadRouteForExport: RideRoute? {
-        roadRoute?.exportRoute(
-            name: selectedDestination?.name ?? roadRoute?.name ?? String(localized: .rideNavigationRouteName),
-            createdAt: now()
+        planningController.snapshot.roadRoute?.exportRoute(
+            name: planningController.snapshot.selectedDestination?.name
+                ?? planningController.snapshot.roadRoute?.name ?? String(localized: .rideNavigationRouteName),
+            createdAt: dependencies.timing.now()
         )
     }
 
@@ -313,8 +275,6 @@ extension RideNavigationViewModel {
         static let roadRerouteDistanceMeters = 75.0
         static let enduroLookAheadMeters = 35.0
         static let voiceDecisionDistanceMeters = 80.0
-        static let minimumRerouteIntervalSeconds: TimeInterval = 15
-        static let minimumSearchCharacters = 2
         static let roadStepAdvanceDistanceMeters = 30.0
         static let roadStepDistanceAdvantageMeters = 10.0
         static let focusMapStyleID = "focus"

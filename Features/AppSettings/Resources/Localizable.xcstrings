@@ -1,6 +1,22 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "app.settings.progressBar.thickness.title" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bar thickness" } } }
+    },
+    "app.settings.progressBar.thickness.regular" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Regular" } } }
+    },
+    "app.settings.progressBar.thickness.thick" : {
+      "extractionState" : "manual",
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Thick" } } }
+    },
+    "appSettingsSaveErrorTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Settings not saved"}}}},
+    "appSettingsSaveErrorDismiss" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "OK"}}}},
+    "appSettingsSaveFailed" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Your changes could not be saved. Please try again."}}}},
+
     "appSettingsLegalSection" : {
       "extractionState" : "manual",
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Legal" } } }

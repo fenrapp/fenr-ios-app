@@ -3,7 +3,6 @@ import BatteryHealth
 import BikeDiagnostics
 import BikeLockSettings
 import BikeOnboarding
-import Combine
 import DashboardCardSettings
 import MaintenanceLog
 import PowerModeSettings
@@ -12,7 +11,7 @@ import RideHistory
 import RideNavigation
 
 @MainActor
-final class AppFeatureStore: ObservableObject {
+struct AppFeatureStore {
     let diagnosticsViewModel: BikeDiagnosticsViewModel
     let batteryHealthViewModel: BatteryHealthViewModel
     let bikeLockSettingsViewModel: BikeLockSettingsViewModel
@@ -24,30 +23,4 @@ final class AppFeatureStore: ObservableObject {
     let maintenanceViewModel: MaintenanceViewModel
     let rideDashboardFactory: any RideDashboardFeatureBuilding
     let rideNavigationFactory: any RideNavigationFeatureBuilding
-
-    init(
-        diagnosticsViewModel: BikeDiagnosticsViewModel,
-        batteryHealthViewModel: BatteryHealthViewModel,
-        bikeLockSettingsViewModel: BikeLockSettingsViewModel,
-        onboardingViewModel: BikeOnboardingViewModel,
-        appSettingsViewModel: AppSettingsViewModel,
-        dashboardCardSettingsViewModel: DashboardCardSettingsViewModel,
-        powerModeSettingsViewModel: PowerModeSettingsViewModel,
-        rideHistoryViewModel: RideHistoryViewModel,
-        maintenanceViewModel: MaintenanceViewModel,
-        rideDashboardFactory: any RideDashboardFeatureBuilding,
-        rideNavigationFactory: any RideNavigationFeatureBuilding
-    ) {
-        self.diagnosticsViewModel = diagnosticsViewModel
-        self.batteryHealthViewModel = batteryHealthViewModel
-        self.bikeLockSettingsViewModel = bikeLockSettingsViewModel
-        self.onboardingViewModel = onboardingViewModel
-        self.appSettingsViewModel = appSettingsViewModel
-        self.dashboardCardSettingsViewModel = dashboardCardSettingsViewModel
-        self.powerModeSettingsViewModel = powerModeSettingsViewModel
-        self.rideHistoryViewModel = rideHistoryViewModel
-        self.maintenanceViewModel = maintenanceViewModel
-        self.rideDashboardFactory = rideDashboardFactory
-        self.rideNavigationFactory = rideNavigationFactory
-    }
 }

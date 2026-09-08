@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct WatchOnboardingView: View {
-    @ObservedObject private var viewModel: WatchOnboardingViewModel
+    private let viewModel: WatchOnboardingViewModel
 
     public init(viewModel: WatchOnboardingViewModel) {
         self.viewModel = viewModel

@@ -1,27 +1,32 @@
-import Combine
 import Foundation
+import Observation
 import RideSession
 import RideSessionDomain
 
 @MainActor
-public final class RangeCardViewModel: ObservableObject {
-    @Published public private(set) var viewState = DashboardRangeViewData()
-    @Published public private(set) var summary: DashboardRangeViewData.Summary?
+@Observable
+public final class RangeCardViewModel {
+    public private(set) var viewState = DashboardRangeViewData()
+    public private(set) var summary: DashboardRangeViewData.Summary?
 
     private let useCases: RangeCardUseCases
     private let mapper: RangeCardMapper
     private let session: any RideSessionService
-    private var snapshot = RideSessionSnapshot(
+    @ObservationIgnored private var snapshot = RideSessionSnapshot(
         vehicleIdentity: .temporary(UUID()),
         isCanonicalTelemetryAvailable: false
     )
-    private var historicalTrips: [RideTrip] = []
-    private var loadedKey: DashboardRideHistoryKey?
-    private var isStarted = false
-    private var isVisible = false
-    private var historyIsLoading = false
-    private var sessionTask: Task<Void, Never>?
-    private var loadTask: Task<Void, Never>?
+    @ObservationIgnored private var historicalTrips: [RideTrip] = []
+    @ObservationIgnored private var presentationCache =
+        DashboardPresentationCache<RangeCardMappingInput, DashboardRangeViewData>()
+    @ObservationIgnored private var loadedKey: DashboardRideHistoryKey?
+    @ObservationIgnored private var failedKey: DashboardRideHistoryKey?
+    @ObservationIgnored private var loadGeneration = 0
+    @ObservationIgnored private var isStarted = false
+    @ObservationIgnored private var isVisible = false
+    @ObservationIgnored private var historyIsLoading = false
+    @ObservationIgnored private var sessionTask: Task<Void, Never>?
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
 
     public init(
         useCases: RangeCardUseCases,
@@ -47,9 +52,11 @@ public final class RangeCardViewModel: ObservableObject {
     }
 
     func setIsVisible(_ isVisible: Bool) {
+        if isVisible, !self.isVisible { failedKey = nil }
         self.isVisible = isVisible
         guard isVisible else { return }
         start()
+        loadHistoryIfNeeded()
         render()
     }
 
@@ -58,6 +65,7 @@ public final class RangeCardViewModel: ObservableObject {
         isVisible = false
         stopPublishing()
         loadedKey = nil
+        failedKey = nil
         historicalTrips = []
         summary = nil
     }
@@ -68,7 +76,15 @@ public final class RangeCardViewModel: ObservableObject {
         stopPublishing()
     }
 
+    func retryHistory() {
+        guard loadTask == nil else { return }
+        failedKey = nil
+        loadHistoryIfNeeded()
+    }
+
 #if DEBUG
+    var historyLoadTaskForTesting: Task<Void, Never>? { loadTask }
+
     var isObservingForTesting: Bool { sessionTask != nil }
 
     func setPreviewState(_ viewState: DashboardRangeViewData) {
@@ -92,15 +108,21 @@ private extension RangeCardViewModel {
     }
 
     func receive(_ snapshot: RideSessionSnapshot) {
-        guard snapshot.isCanonicalTelemetryAvailable else { return }
-        let previousVIN = self.snapshot.vehicleIdentity.confirmedVIN
-        self.snapshot = snapshot
-        if previousVIN != snapshot.vehicleIdentity.confirmedVIN {
+        let changedVIN = self.snapshot.vehicleIdentity.confirmedVIN != snapshot.vehicleIdentity.confirmedVIN
+        if changedVIN {
+            self.snapshot = snapshot
             loadedKey = nil
+            failedKey = nil
             historicalTrips = []
+            presentationCache = .init()
+            loadGeneration += 1
             loadTask?.cancel()
             loadTask = nil
+            historyIsLoading = false
+            render()
         }
+        guard snapshot.isCanonicalTelemetryAvailable else { return }
+        self.snapshot = snapshot
         loadHistoryIfNeeded()
         render()
     }
@@ -110,19 +132,28 @@ private extension RangeCardViewModel {
               let vin = snapshot.vehicleIdentity.confirmedVIN,
               loadTask == nil else { return }
         let key = DashboardRideHistoryKey(vin: vin, revision: snapshot.historyRevision)
-        guard loadedKey != key else { return }
+        guard loadedKey != key, failedKey != key else { return }
+        failedKey = nil
         historyIsLoading = historicalTrips.isEmpty
         render()
         let loadHistory = useCases.loadHistory
+        let generation = loadGeneration
         loadTask = Task { [weak self] in
-            let trips = await loadHistory.execute(vin: vin)
-            guard !Task.isCancelled else { return }
-            self?.finishLoading(trips, key: key)
+            do {
+                let trips = try await loadHistory.execute(vin: vin)
+                guard !Task.isCancelled, self?.loadGeneration == generation else { return }
+                self?.finishLoading(trips, key: key)
+            } catch {
+                guard !Task.isCancelled, self?.loadGeneration == generation else { return }
+                self?.failLoading(key: key)
+            }
         }
     }
 
     func finishLoading(_ trips: [RideTrip], key: DashboardRideHistoryKey) {
+        guard acceptsCompletion(for: key) else { return }
         historicalTrips = trips
+        presentationCache = .init()
         loadedKey = key
         historyIsLoading = false
         loadTask = nil
@@ -130,12 +161,38 @@ private extension RangeCardViewModel {
         loadHistoryIfNeeded()
     }
 
+    func failLoading(key: DashboardRideHistoryKey) {
+        guard acceptsCompletion(for: key) else { return }
+        failedKey = key
+        historyIsLoading = false
+        loadTask = nil
+        render()
+        loadHistoryIfNeeded()
+    }
+
+    func acceptsCompletion(for key: DashboardRideHistoryKey) -> Bool {
+        guard key.vin == snapshot.vehicleIdentity.confirmedVIN, key.revision == snapshot.historyRevision else {
+            loadTask = nil
+            loadHistoryIfNeeded()
+            return false
+        }
+        return true
+    }
+
     func render() {
-        let nextState = mapper.map(
+        let input = RangeCardMappingInput(
             snapshot: snapshot,
-            historicalTrips: historicalTrips,
-            historyIsLoading: historyIsLoading
+            historyIsLoading: historyIsLoading,
+            historyReadFailed: failedKey != nil,
+            hasLoadedHistory: loadedKey != nil
         )
+        let nextState = presentationCache.value(for: input) {
+            mapper.map(
+                snapshot: snapshot, historicalTrips: historicalTrips,
+                historyIsLoading: input.historyIsLoading, historyReadFailed: input.historyReadFailed,
+                hasLoadedHistory: input.hasLoadedHistory
+            )
+        }
         if nextState.summary != summary {
             summary = nextState.summary
         }
@@ -145,6 +202,8 @@ private extension RangeCardViewModel {
     }
 
     func stopPublishing() {
+        presentationCache = .init()
+        loadGeneration += 1
         sessionTask?.cancel()
         sessionTask = nil
         loadTask?.cancel()

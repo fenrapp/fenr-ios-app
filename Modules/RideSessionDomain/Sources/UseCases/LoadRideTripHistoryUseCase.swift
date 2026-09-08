@@ -7,8 +7,8 @@ public struct LoadRideTripHistoryUseCase: Sendable {
         self.repository = repository
     }
 
-    public func execute(vin: String) async -> [RideTrip] {
-        await repository.loadCompletedTrips(vin: vin)
+    public func execute(vin: String) async throws -> [RideTrip] {
+        try await repository.loadCompletedTrips(vin: vin)
     }
 }
 
@@ -19,7 +19,7 @@ public struct LoadRideTripDetailUseCase: Sendable {
         self.repository = repository
     }
 
-    public func execute(id: UUID, vin: String) async -> RideTrip? {
-        await repository.loadCompletedTrip(id: id, vin: vin)
+    public func execute(id: UUID, vin: String) async throws -> RideTrip? {
+        try await repository.loadCompletedTrip(id: id, vin: vin)
     }
 }

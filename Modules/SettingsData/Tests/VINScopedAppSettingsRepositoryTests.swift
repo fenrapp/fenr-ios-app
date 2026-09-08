@@ -18,15 +18,21 @@ struct VINScopedAppSettingsRepositoryTests {
         first.dashboardTemperatureDisplayMode = .both
         first.rideNavigation.avoidsTolls = true
         first.dashboardCardConfiguration.setSectionVisibility(false, id: .efficiency)
-        await fixture.repository.save(first)
+        let changes: [AppSettingsChange] = [
+            .measurementSystem(.imperial), .speedSource(.gps), .dashboardTemperatureDisplayMode(.both),
+            .navigation(.avoidsTolls(true)), .dashboard(.sectionVisibility(id: .efficiency, isVisible: false))
+        ]
+        for change in changes {
+            _ = try await fixture.repository.update(expectedVIN: "FENRTEST000000001", change: change)
+        }
         await fixture.profiles.saveProfile(.init(vin: "FENRTEST000000002"))
         var second = await fixture.repository.load()
         #expect(second == AppSettings().scoped(toVIN: "FENRTEST000000002"))
         second.measurementSystem = .metric
-        await fixture.repository.save(second)
-        var stale = first
-        stale.measurementSystem = .system
-        await fixture.repository.save(stale)
+        _ = try await fixture.repository.update(expectedVIN: "FENRTEST000000002", change: .measurementSystem(.metric))
+        await #expect(throws: AppSettingsUpdateError.vehicleChanged) {
+            try await fixture.repository.update(expectedVIN: "FENRTEST000000001", change: .measurementSystem(.system))
+        }
         #expect(await fixture.repository.load() == second)
         await fixture.profiles.saveProfile(.init(vin: "FENRTEST000000001"))
         #expect(await fixture.reopen().load() == first)
@@ -73,7 +79,7 @@ struct VINScopedAppSettingsRepositoryTests {
         let observation = Task {
             for await value in await repository.observe() {
                 guard !Task.isCancelled else { return }
-                recorder.append(value)
+                recorder.append(value.settings)
             }
         }
         defer { observation.cancel() }
@@ -87,7 +93,7 @@ struct VINScopedAppSettingsRepositoryTests {
         let restarted = Task {
             for await value in await repository.observe() {
                 guard !Task.isCancelled else { return }
-                recorder.append(value)
+                recorder.append(value.settings)
             }
         }
         defer { restarted.cancel() }
@@ -101,13 +107,15 @@ struct VINScopedAppSettingsRepositoryTests {
     func validatesOwnership() async throws {
         let fixture = try VINSettingsTestFixture(vin: "invalid")
         defer { fixture.cleanUp() }
-        await fixture.repository.save(.init(measurementSystem: .imperial))
+        await #expect(throws: AppSettingsUpdateError.vehicleUnavailable) {
+            try await fixture.repository.update(expectedVIN: "FENRTEST000000001", change: .measurementSystem(.imperial))
+        }
         #expect(await fixture.repository.load() == AppSettings())
         await fixture.profiles.saveProfile(.init(vin: "fenrtest000000001"))
         var settings = await fixture.repository.load()
         #expect(settings.vin == "FENRTEST000000001")
         settings.measurementSystem = .metric
-        await fixture.repository.save(settings)
+        _ = try await fixture.repository.update(expectedVIN: "fenrtest000000001", change: .measurementSystem(.metric))
         #expect(await fixture.reopen().load() == settings)
     }
 
@@ -118,9 +126,9 @@ struct VINScopedAppSettingsRepositoryTests {
         let defaults = try #require(UserDefaults(suiteName: fixture.suite))
         let malformed = Data("invalid".utf8)
         defaults.set(malformed, forKey: "fenr.bike.settings.v1")
-        var settings = await fixture.repository.load()
-        settings.measurementSystem = .imperial
-        await fixture.repository.save(settings)
+        await #expect(throws: AppSettingsUpdateError.unreadableStore) {
+            try await fixture.repository.update(expectedVIN: "FENRTEST000000001", change: .measurementSystem(.imperial))
+        }
         #expect(defaults.data(forKey: "fenr.bike.settings.v1") == malformed)
     }
 }

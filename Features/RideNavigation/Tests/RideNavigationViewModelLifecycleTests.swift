@@ -65,6 +65,8 @@ struct RideNavigationViewModelLifecycleTests {
     @Test("a stale search failure cannot replace newer results")
     func staleSearchFailureIsIgnored() async throws {
         let fixture = RideNavigationViewModelFixture()
+        fixture.viewModel.start()
+        defer { fixture.viewModel.stop() }
         let destination = NavigationPlace(
             name: "Fresh destination",
             detail: "Barcelona",
@@ -195,6 +197,7 @@ struct RideNavigationViewModelLifecycleTests {
         #expect(fixture.viewModel.viewState.savedRoutes.first?.detail.contains("2023") == true)
 
         fixture.viewModel.shareSavedRoute(id: route.id)
+        await fixture.viewModel.library.shareTask?.value
 
         #expect(fixture.viewModel.shareRequest?.filename == "Mountain-Loop.gpx")
         #expect(fixture.viewModel.shareRequest?.data == StubGPXRouteExporter.exportedData)
@@ -214,7 +217,7 @@ struct RideNavigationViewModelLifecycleTests {
         fixture.viewModel.deleteSavedRoute(id: route.id)
 
         #expect(fixture.viewModel.viewState.savedRoutes.isEmpty)
-        #expect(await waitUntil { await repository.loadRoutes().isEmpty })
+        #expect(await waitUntil { await repository.loadRouteSummaries().isEmpty })
         fixture.viewModel.stop()
     }
 

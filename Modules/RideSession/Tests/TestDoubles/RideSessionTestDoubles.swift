@@ -46,9 +46,11 @@ actor SessionSettingsRepository: AppSettingsRepository {
     }
 
     func load() -> AppSettings { settings }
-    func save(_: AppSettings) {}
-    func observe() -> AsyncStream<AppSettings> {
-        AsyncStream { $0.yield(settings) }
+    func update(expectedVIN _: String, change _: AppSettingsChange) throws -> AppSettingsUpdateResult {
+        throw AppSettingsUpdateError.invalidChange
+    }
+    func observe() -> AsyncStream<AppSettingsSnapshot> {
+        AsyncStream { $0.yield(.init(settings: settings, revision: 0)) }
     }
 }
 
@@ -122,7 +124,7 @@ actor SessionTripRepository: RideTripRepository {
         completed.append(completedTrip)
         return true
     }
-    func loadCompletedTrips(vin _: String) -> [RideTrip] { [] }
+    func loadCompletedTrips(vin _: String) throws -> [RideTrip] { [] }
     func deleteCompletedTrip(id: UUID, vin _: String) -> Bool {
         deletedTripIDs.append(id)
         recordedEvents.append(.delete(id))
@@ -219,7 +221,7 @@ actor BlockingRideTripRepository: RideTripRepository {
         return true
     }
 
-    func loadCompletedTrips(vin _: String) -> [RideTrip] { [] }
+    func loadCompletedTrips(vin _: String) throws -> [RideTrip] { [] }
     func deleteCompletedTrip(id: UUID, vin _: String) -> Bool {
         recordedEvents.append(.delete(id))
         return true

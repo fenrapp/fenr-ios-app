@@ -5,6 +5,7 @@ struct DashboardEfficiencyPager: View {
     @Binding var selection: EfficiencyDashboardPage
     let state: DashboardEfficiencyViewData
     let reduceMotion: Bool
+    let retryHistory: () -> Void
 
     var body: some View {
         DashboardHorizontalCardPager(
@@ -18,7 +19,7 @@ struct DashboardEfficiencyPager: View {
             case .live:
                 DashboardEfficiencyLiveCard(state: state)
             case .trend:
-                DashboardEfficiencyTrendCard(state: state)
+                DashboardEfficiencyTrendCard(state: state, retryHistory: retryHistory)
             }
         }
     }

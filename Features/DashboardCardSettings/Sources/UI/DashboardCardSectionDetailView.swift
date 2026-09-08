@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct DashboardCardSectionDetailView: View {
-    @ObservedObject private var viewModel: DashboardCardSettingsViewModel
+    private let viewModel: DashboardCardSettingsViewModel
     private let sectionID: String
 
     public init(viewModel: DashboardCardSettingsViewModel, sectionID: String) {

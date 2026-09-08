@@ -1,125 +1,71 @@
 import Foundation
 import RideNavigationDomain
+
 @MainActor
 extension RideNavigationViewModel {
     public func startRecording() {
-        let date = now()
-        recorder.start(at: date, name: defaultRouteName(at: date))
-        completedRecording = nil
-        activityStartedAt = date
-        screen = .map
-        activity = .recording
-        mapDisplayStyle = .map
-        cameraMode = followCamera
-        startClock()
-        render()
-        announce(String(localized: .rideNavigationAnnouncementRecordingStarted))
+        cancelSavedRouteLoad()
+        let update = activityController.startRecording(name: defaultRouteName(at: dependencies.timing.now()))
+        receiveActivityUpdate(update)
     }
+
     public func toggleRecordingPause() {
-        let date = now()
-        switch activity {
-        case .recording:
-            recorder.pause(at: date)
-            activity = .paused
-            scheduleDraftSave()
-            announce(String(localized: .rideNavigationAnnouncementRecordingPaused))
-        case .paused:
-            recorder.resume(at: date)
-            activity = .recording
-            announce(String(localized: .rideNavigationAnnouncementRecordingResumed))
-        default:
-            return
-        }
+        activityController.toggleRecordingPause()
         render()
     }
+
     public func finishActivity() {
-        let reason: CompletionReason
-        switch activity {
-        case .recording, .paused:
-            reason = .rideRecorded
-        case .following:
-            reason = .trailEnded
-        case .navigating where roadNavigationPurpose == .trailExit:
-            reason = .exitNavigationEnded
-        case .navigating:
-            reason = .navigationEnded
-        case .preview:
-            return
-        }
-        finishActivity(reason: reason)
+        if let update = activityController.finishActivity() { receiveActivityUpdate(update) }
     }
-    func finishActivity(reason: CompletionReason) {
-        routeTask?.cancel()
-        routeTask = nil
-        trailExitTask?.cancel()
-        trailExitTask = nil
-        let date = now()
-        let finishedActivity = activity
-        let keepsMiniCompletion = presentationMode == .mini && reason.isAutomaticArrival
-        if keepsMiniCompletion {
-            frozenMiniMapScene = makeMiniMapScene()
-            miniCompletionTitle = reason.title
-        }
-        let completedTrailRouteToSave = prepareCompletionSummary(
-            reason: reason,
-            finishedActivity: finishedActivity,
-            at: date
-        )
-        let emptyRecording = reason == .rideRecorded && completedRecording == nil
-        state.summaryIsSuccessful = !emptyRecording
-        summaryTitle = emptyRecording ? String(localized: .rideNavigationRecordingEnded) : reason.title
-        if finishedActivity == .navigating {
-            _ = breadcrumbRecorder.finish(at: date)
-        }
-        activityStartedAt = nil
-        activity = .preview
+
+    public func discardActivity() {
+        cancelSavedRouteLoad()
+        guard !library.snapshot.persistence.status.isSaving else { return }
+        let destination = openIncomingDestinationAfterSummary
+            ? planningController.snapshot.pendingExternalDestination : nil
+        activityController.discardActivity()
+        frozenMiniMapScene = nil
+        miniCompletionTitle = nil
+        errorText = nil
+        screen = .home
         mapDisplayStyle = .map
-        isRerouting = false
-        isCalculatingRoadRoutes = false
-        isFindingTrailExit = false
-        screen = .summary
-        stopClock()
         synchronizePresentationObservations()
         render()
-        if keepsMiniCompletion {
-            locationObservationTask?.cancel()
-            locationObservationTask = nil
-        }
-        if reason.emitsSuccessFeedback, !emptyRecording {
-            replaceFeedbackTask { [guidance] in await guidance.notifySuccess() }
-        }
-        if let completedTrailRouteToSave {
-            beginCompletedRouteSave(completedTrailRouteToSave)
+        if let destination {
+            openIncomingDestinationAfterSummary = false
+            previewExternalDestination(destination)
         }
     }
+
     var currentGuidance: RideNavigationGuidance? {
-        if activity == .following, let trailProgress {
-            let remainingDistance = mapper.distance(
-                meters: trailProgress.remainingDistanceMeters,
+        if activityController.snapshot.activity == .following,
+           let progress = activityController.snapshot.trailProgress {
+            let remainingDistance = dependencies.presentationMapper.distance(
+                meters: progress.remainingDistanceMeters,
                 measurementSystem: measurementSystem
             )
-            let targetBearing = didAnnounceOffRoute
+            let targetBearing = activityController.snapshot.didAnnounceOffRoute
                 ? RideRouteGeometry.bearingDegrees(
-                    from: locationSnapshot.coordinate ?? trailProgress.rejoinCoordinate,
-                    to: trailProgress.rejoinCoordinate
+                    from: locationSnapshot.coordinate ?? progress.rejoinCoordinate,
+                    to: progress.rejoinCoordinate
                 )
-                : trailProgress.targetBearingDegrees
+                : progress.targetBearingDegrees
             return RideNavigationGuidance(
-                text: didAnnounceOffRoute
+                text: activityController.snapshot.didAnnounceOffRoute
                     ? String(localized: .rideNavigationOffTrail)
                     : String(localized: .rideNavigationEnduroFollowArrow),
-                detail: didAnnounceOffRoute
-                    ? offTrailDistanceText(trailProgress.distanceFromRouteMeters)
+                detail: activityController.snapshot.didAnnounceOffRoute
+                    ? offTrailDistanceText(progress.distanceFromRouteMeters)
                     : String(localized: .rideNavigationDistanceRemaining(remainingDistance)),
                 systemImage: "location.north.fill",
-                rotationDegrees: locationGeometry.relativeBearingDegrees(
+                rotationDegrees: dependencies.locationGeometry.relativeBearingDegrees(
                     targetBearing,
                     courseDegrees: locationSnapshot.courseDegrees
                 ),
-                emphasis: didAnnounceOffRoute ? .warning : .standard
+                emphasis: activityController.snapshot.didAnnounceOffRoute ? .warning : .standard
             )
         }
-        if activity == .following {
+        if activityController.snapshot.activity == .following {
             return RideNavigationGuidance(
                 text: String(localized: .rideNavigationEnduroFollowTrack),
                 detail: String(localized: .rideNavigationWaitingForAccurateLocation),
@@ -127,23 +73,23 @@ extension RideNavigationViewModel {
                 emphasis: .standard
             )
         }
-        if activity == .paused {
+        if activityController.snapshot.activity == .paused {
             return RideNavigationGuidance(
                 text: String(localized: .rideNavigationRecordingPaused),
                 systemImage: "pause.circle.fill",
                 emphasis: .warning
             )
         }
-        if activity == .navigating {
+        if activityController.snapshot.activity == .navigating {
             let step = activeRoadStep
             let instruction = step?.instruction.isEmpty == false
                 ? step?.instruction
                 : String(localized: .rideNavigationContinueToDestination)
             let distance = step.flatMap(roadStepDistanceToManeuver).map {
-                mapper.distance(meters: $0, measurementSystem: measurementSystem)
+                dependencies.presentationMapper.distance(meters: $0, measurementSystem: measurementSystem)
             }
             let rotation = step.flatMap(roadStepTargetBearing).map {
-                locationGeometry.relativeBearingDegrees(
+                dependencies.locationGeometry.relativeBearingDegrees(
                     $0,
                     courseDegrees: locationSnapshot.courseDegrees
                 )
@@ -156,30 +102,31 @@ extension RideNavigationViewModel {
                 emphasis: .standard
             )
         }
-            return nil
-        }
+        return nil
+    }
+
     func offTrailDistanceText(_ distanceMeters: Double) -> String {
         String(localized: .rideNavigationDistanceToTrail(
-            mapper.distance(meters: distanceMeters, measurementSystem: measurementSystem)
+            dependencies.presentationMapper.distance(meters: distanceMeters, measurementSystem: measurementSystem)
         ))
     }
 
     var currentDistanceText: String {
         let meters: Double
-        if activity == .recording || activity == .paused {
-            meters = recorder.snapshot(at: now()).route?.distanceMeters ?? .zero
-        } else if let roadRoute {
+        if activityController.snapshot.activity == .recording || activityController.snapshot.activity == .paused {
+            meters = activityController.snapshot.recording.route?.distanceMeters ?? .zero
+        } else if let roadRoute = planningController.snapshot.roadRoute {
             meters = roadRoute.distanceMeters
         } else {
-            meters = trailMap.routeDistanceMeters
+            meters = activityController.snapshot.trailDistanceMeters
         }
-        return mapper.distance(meters: meters, measurementSystem: measurementSystem)
+        return dependencies.presentationMapper.distance(meters: meters, measurementSystem: measurementSystem)
     }
 
     var followCamera: NavigationMapCamera {
         guard let coordinate = locationSnapshot.coordinate else { return .automatic }
         let heading = isHeadingUp ? locationSnapshot.courseDegrees : nil
-        return .follow(coordinate: mapMapper.coordinate(coordinate), headingDegrees: heading)
+        return .follow(coordinate: dependencies.mapPresentationMapper.coordinate(coordinate), headingDegrees: heading)
     }
 
     var isHeadingUp: Bool {
@@ -187,118 +134,19 @@ extension RideNavigationViewModel {
     }
 
     var allVisibleCoordinates: [NavigationMapCoordinate] {
-        if selectedRoute != nil { return trailMap.overviewCoordinates }
-        if let roadRoute { return mapMapper.coordinates(roadRoute.points) }
-        return mapMapper.coordinates(recorder.snapshot(at: now()).route?.points.map(\.coordinate) ?? [])
+        if planningController.snapshot.selectedRoute != nil {
+            return activityController.snapshot.trailOverviewCoordinates
+        }
+        if let roadRoute = planningController.snapshot.roadRoute {
+            return dependencies.mapPresentationMapper.coordinates(roadRoute.points)
+        }
+        return dependencies.mapPresentationMapper.coordinates(
+            activityController.snapshot.recording.route?.points.map(\.coordinate) ?? []
+        )
     }
 
-    func elapsedText(at date: Date) -> String {
-        if activity == .recording || activity == .paused {
-            return mapper.elapsed(recorder.snapshot(at: date).activeElapsedSeconds)
-        }
-        guard let activityStartedAt else { return "00:00" }
-        return mapper.elapsed(max(date.timeIntervalSince(activityStartedAt), .zero))
+    func elapsedText() -> String {
+        dependencies.presentationMapper.elapsed(activityController.snapshot.elapsedSeconds)
     }
 
-    public func discardActivity() {
-        guard !state.routePersistence.status.isSaving else { return }
-        let destinationToOpen = openIncomingDestinationAfterSummary ? pendingExternalDestination : nil
-        recorder.reset()
-        breadcrumbRecorder.reset()
-        completedRecording = nil
-        trailGuidance.reset()
-        state.routePersistence.reset()
-        frozenMiniMapScene = nil
-        miniCompletionTitle = nil
-        trailProgress = nil
-        didAnnounceOffRoute = false
-        lastRoadRerouteAt = nil
-        selectedRoute = nil
-        trailMap.reset()
-        roadRoute = nil
-        roadRoutes = []
-        roadNavigationPurpose = nil
-        trailExitPreview = nil
-        selectedRoadRouteIndex = 0
-        resetRoadStepGuidance()
-        selectedDestination = nil
-        activityStartedAt = nil
-        activity = .preview
-        mapDisplayStyle = .map
-        isRerouting = false
-        isCalculatingRoadRoutes = false
-        isFindingTrailExit = false
-        screen = .home
-        stopClock()
-        synchronizePresentationObservations()
-        replaceDraftPersistenceTask { [routeLibrary = dependencies.routeLibrary] in
-            try? await routeLibrary.saveDraft(nil)
-        }
-        render()
-        if let destinationToOpen {
-            pendingExternalDestination = nil
-            openIncomingDestinationAfterSummary = false
-            previewExternalDestination(destinationToOpen)
-        }
-    }
-
-    func stopNavigationWithoutSummary() {
-        routeTask?.cancel()
-        trailExitTask?.cancel()
-        if activity == .following || activity == .navigating {
-            _ = breadcrumbRecorder.finish(at: now())
-        }
-        activityStartedAt = nil
-        trailProgress = nil
-        trailExitPreview = nil
-        roadRoute = nil
-        roadRoutes = []
-        selectedDestination = nil
-        roadNavigationPurpose = nil
-        resetRoadStepGuidance()
-        didAnnounceOffRoute = false
-        lastRoadRerouteAt = nil
-        isRerouting = false
-        isFindingTrailExit = false
-        stopClock()
-    }
-    enum CompletionReason: Equatable {
-        case destinationReached
-        case navigationEnded
-        case trailComplete
-        case trailEnded
-        case exitPointReached
-        case exitNavigationEnded
-        case rideRecorded
-
-        var title: String {
-            switch self {
-            case .destinationReached: String(localized: .rideNavigationSummaryDestinationReached)
-            case .navigationEnded: String(localized: .rideNavigationSummaryNavigationEnded)
-            case .trailComplete: String(localized: .rideNavigationSummaryTrailComplete)
-            case .trailEnded: String(localized: .rideNavigationSummaryTrailEnded)
-            case .exitPointReached: String(localized: .rideNavigationSummaryExitPointReached)
-            case .exitNavigationEnded: String(localized: .rideNavigationSummaryExitNavigationEnded)
-            case .rideRecorded: String(localized: .rideNavigationSummaryRideRecorded)
-            }
-        }
-
-        var emitsSuccessFeedback: Bool {
-            switch self {
-            case .destinationReached, .trailComplete, .exitPointReached, .rideRecorded:
-                true
-            case .navigationEnded, .trailEnded, .exitNavigationEnded:
-                false
-            }
-        }
-
-        var isAutomaticArrival: Bool {
-            switch self {
-            case .destinationReached, .trailComplete, .exitPointReached:
-                true
-            case .navigationEnded, .trailEnded, .exitNavigationEnded, .rideRecorded:
-                false
-            }
-        }
-    }
 }

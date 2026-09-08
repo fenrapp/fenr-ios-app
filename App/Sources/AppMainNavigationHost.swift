@@ -3,7 +3,7 @@ import SwiftUI
 
 struct AppMainNavigationHost: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @ObservedObject var coordinator: AppNavigationCoordinator
+    let coordinator: AppNavigationCoordinator
     let featureStore: AppFeatureStore
     let settingsAccessory: () -> AnyView
     var dashboardAccessory: () -> AnyView = { AnyView(EmptyView()) }

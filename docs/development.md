@@ -14,7 +14,20 @@ String Catalog symbols also require the modern toolchain.
 
 ## Generate the project
 
-`project.yml` is the source of truth for `FENR.xcodeproj`.
+`project.yml` is the entry point for generating `FENR.xcodeproj`. It keeps global
+settings and includes the shared specifications in `config/xcodegen/`:
+
+- `modules.yml` defines supporting framework targets.
+- `features.yml` defines presentation framework targets, including Watch features.
+- `apps.yml` defines iPhone and Watch apps and their extensions.
+- `tests.yml` defines unit-test targets.
+- `schemes.yml` keeps the four shared schemes and their explicit test lists.
+- `templates.yml` shares framework and unit-test type/platform settings.
+
+All paths in these specifications are relative to the repository root. Add a
+target to its owning specification and keep its dependencies, bundle identifier
+and source/resource paths explicit. Apply an existing template when its platform
+matches, and add new tests to the relevant scheme's build and test lists.
 
 ```sh
 if [ -x .xcodegen/generate-local.sh ]; then
@@ -29,7 +42,9 @@ The optional local helper restores the developer's signing configuration after
 generation. `.xcodegen/` is ignored. A fresh clone uses XcodeGen directly; configure
 your own team for physical-device builds and keep signing values out of commits.
 Regenerate after adding, removing or moving source files as well as after editing
-`project.yml`; XcodeGen discovers target sources from the configured directories.
+any project specification; XcodeGen discovers target sources from the configured
+directories. Keep shared specifications in `config/xcodegen/`; the ignored
+`.xcodegen/` directory is reserved for local helpers and signing configuration.
 
 ## Schemes
 

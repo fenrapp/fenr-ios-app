@@ -14,7 +14,8 @@ struct PowerModeSettingsDependencyContainer {
         PowerModeSettingsViewModel(
             vehicleSession: vehicleSession,
             useCases: .init(
-                saveSettings: .init(repository: settingsRepository),
+                observeSettings: .init(repository: settingsRepository),
+                updateSettings: .init(repository: settingsRepository),
                 refreshPowerModes: .init(repository: bikeRepository),
                 preparePowerModeControl: .init(repository: bikeRepository),
                 setPowerModeConfiguration: .init(repository: bikeRepository),

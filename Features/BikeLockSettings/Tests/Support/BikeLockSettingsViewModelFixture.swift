@@ -33,7 +33,7 @@ struct BikeLockSettingsViewModelFixture {
         capabilityStore = BikeLockSettingsTestCapabilityStore(
             state: .init(vehicleIdentifier: vin, isAvailable: isAvailable)
         )
-        repository = BikeLockSettingsTestRepository(settings: settings)
+        repository = BikeLockSettingsTestRepository(settings: settings.scoped(toVIN: vin))
         credentialStore = BikeLockSettingsTestCredentialStore(vin: vin, pin: pin)
         authenticator = ControllableBikeLockSettingsAuthenticator(outcome: authenticatorOutcome)
         viewModel = BikeLockSettingsViewModel(

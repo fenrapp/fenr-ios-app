@@ -1,11 +1,13 @@
-import Combine
+import Observation
 
 @MainActor
-public final class BikeDemoViewModel: ObservableObject {
-    @Published public private(set) var viewState: BikeDemoViewState
+@Observable
+public final class BikeDemoViewModel {
+    public private(set) var viewState: BikeDemoViewState
     private let useCases: BikeDemoUseCases
     private let mapper: BikeDemoPresentationMapper
-    private var selectionTask: Task<Void, Never>?
+    @ObservationIgnored private var selectionTask: Task<Void, Never>?
+    @ObservationIgnored private var selectionGeneration: UInt = 0
 
     public init(viewState: BikeDemoViewState, useCases: BikeDemoUseCases, mapper: BikeDemoPresentationMapper) {
         self.viewState = viewState
@@ -18,6 +20,7 @@ public final class BikeDemoViewModel: ObservableObject {
     public func select(id: String) {
         let previous = selectionTask
         previous?.cancel()
+        selectionGeneration &+= 1
         selectionTask = Task { [weak self, useCases, mapper] in
             await previous?.value
             guard !Task.isCancelled else { return }
@@ -28,8 +31,11 @@ public final class BikeDemoViewModel: ObservableObject {
     }
 
     public func stop() async {
-        selectionTask?.cancel()
-        await selectionTask?.value
+        let task = selectionTask
+        let generation = selectionGeneration
+        task?.cancel()
+        await task?.value
+        guard selectionGeneration == generation else { return }
         selectionTask = nil
     }
 }

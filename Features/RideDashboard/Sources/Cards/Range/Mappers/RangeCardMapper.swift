@@ -15,7 +15,9 @@ public struct RangeCardMapper: Sendable {
     public func map(
         snapshot: RideSessionSnapshot,
         historicalTrips: [RideTrip],
-        historyIsLoading: Bool
+        historyIsLoading: Bool,
+        historyReadFailed: Bool = false,
+        hasLoadedHistory: Bool = false
     ) -> DashboardRangeViewData {
         let usesMiles = snapshot.measurementSystem.resolved(for: locale) == .us
         let estimate = estimator.estimate(
@@ -34,6 +36,10 @@ public struct RangeCardMapper: Sendable {
         let distanceUnitText = usesMiles ? "mi" : "km"
 
         return DashboardRangeViewData(
+            historyError: historyReadFailed
+                ? rideDashboardLocalized(hasLoadedHistory
+                    ? .rideDashboardHistoryRefreshError : .rideDashboardHistoryLoadError)
+                : nil,
             rangeText: rangeText,
             distanceUnitText: distanceUnitText,
             summary: range.map { _ in

@@ -16,7 +16,8 @@ struct DebugRideHistorySeeder: AppStartupPreparing {
 
     func prepare() async {
         let vin = BikeEmulatorIdentity.vin
-        guard await repository.loadCompletedTrips(vin: vin).count < Constants.tripCount else { return }
+        guard let trips = try? await repository.loadCompletedTrips(vin: vin),
+              trips.count < Constants.tripCount else { return }
         let referenceDate = now()
         for index in 0 ..< Constants.tripCount {
             let end = referenceDate.addingTimeInterval(-Double(Constants.tripCount - index) * 3_600)

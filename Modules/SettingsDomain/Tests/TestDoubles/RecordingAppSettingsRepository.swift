@@ -22,29 +22,39 @@ actor RecordingAppSettingsRepository: AppSettingsRepository {
     private var settings: AppSettings
     private var savedSettings: [AppSettings] = []
     private let operationRecorder: SettingsDomainOperationRecorder?
+    private let updateError: AppSettingsUpdateError?
+    private var revision: UInt64 = 0
 
     init(
         settings: AppSettings = .init(),
-        operationRecorder: SettingsDomainOperationRecorder? = nil
+        operationRecorder: SettingsDomainOperationRecorder? = nil,
+        updateError: AppSettingsUpdateError? = nil
     ) {
-        self.settings = settings
+        self.settings = settings.scoped(toVIN: settings.vin ?? "FENRTEST000000001")
         self.operationRecorder = operationRecorder
+        self.updateError = updateError
     }
 
     func load() async -> AppSettings {
         settings
     }
 
-    func save(_ settings: AppSettings) async {
-        self.settings = settings
-        savedSettings.append(settings)
+    func update(expectedVIN: String, change: AppSettingsChange) async throws -> AppSettingsUpdateResult {
+        guard expectedVIN == settings.vin else { throw AppSettingsUpdateError.vehicleChanged }
+        if let updateError { throw updateError }
+        let updated = try change.applying(to: settings)
+        guard updated != settings else { return .unchanged(.init(settings: settings, revision: revision)) }
+        settings = updated
+        revision += 1
+        savedSettings.append(updated)
         await operationRecorder?.record(.settingsSaved)
+        return .changed(.init(settings: settings, revision: revision))
     }
 
-    func observe() async -> AsyncStream<AppSettings> {
-        let settings = self.settings
+    func observe() async -> AsyncStream<AppSettingsSnapshot> {
+        let snapshot = AppSettingsSnapshot(settings: settings, revision: revision)
         return AsyncStream { continuation in
-            continuation.yield(settings)
+            continuation.yield(snapshot)
             continuation.finish()
         }
     }
@@ -55,5 +65,10 @@ actor RecordingAppSettingsRepository: AppSettingsRepository {
 
     func currentSettings() -> AppSettings {
         settings
+    }
+
+    func switchVIN(_ vin: String) {
+        settings = AppSettings().scoped(toVIN: vin)
+        revision += 1
     }
 }

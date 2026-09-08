@@ -2,7 +2,7 @@ import SwiftUI
 
 public struct AppSettingsScene: View {
     private let destination: AppSettingsDestination
-    @ObservedObject private var viewModel: AppSettingsViewModel
+    private let viewModel: AppSettingsViewModel
     private let bikeLockModeTitle: String?
     private let isPresentationActive: Bool
     private let onNavigation: (AppSettingsNavigationEvent) -> Void
@@ -26,6 +26,17 @@ public struct AppSettingsScene: View {
 
     public var body: some View {
         destinationView
+            .alert(
+                Text(.appSettingsSaveErrorTitle),
+                isPresented: Binding(
+                    get: { viewModel.settingsSaveError != nil },
+                    set: { if !$0 { viewModel.dismissSettingsSaveError() } }
+                )
+            ) {
+                Button(.appSettingsSaveErrorDismiss) { viewModel.dismissSettingsSaveError() }
+            } message: {
+                Text(verbatim: viewModel.settingsSaveError ?? "")
+            }
             .task { synchronizePresentation() }
             .onChange(of: isPresentationActive) { synchronizePresentation() }
             .onDisappear {

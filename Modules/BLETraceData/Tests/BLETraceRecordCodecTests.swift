@@ -161,6 +161,49 @@ struct BLETraceRecordCodecTests {
         ))
     }
 
+    @Test("Decodes timestamps with and without fractional seconds", arguments: [false, true])
+    func decodesTimestampPrecision(includesFractions: Bool) throws {
+        let startedAt = includesFractions ? "1970-01-01T00:00:10.125Z" : "1970-01-01T00:00:10Z"
+        let endedAt = includesFractions ? "1970-01-01T00:01:10.875Z" : "1970-01-01T00:01:10Z"
+        let header = data(headerBoundaryJSON.replacingOccurrences(of: "1970-01-01T00:00:10.000Z", with: startedAt))
+        let footer = data(footerBoundaryJSON(status: "complete").replacingOccurrences(
+            of: "1970-01-01T00:01:10.000Z", with: endedAt
+        ))
+
+        let boundary = try #require(codec.decodeSessionBoundary(headerData: header, footerData: footer))
+
+        #expect(boundary.startedAt == Date(timeIntervalSince1970: includesFractions ? 10.125 : 10))
+        #expect(boundary.endedAt == Date(timeIntervalSince1970: includesFractions ? 70.875 : 70))
+        #expect(boundary.sessionID == sessionID)
+        #expect(boundary.status == .complete)
+    }
+
+    @Test("Boundary decoding round trips the fractional timestamps produced by the encoder")
+    func roundTripsEncodedBoundaries() throws {
+        let startedAt = Date(timeIntervalSince1970: 10.125)
+        let endedAt = Date(timeIntervalSince1970: 70.875)
+        let context = BLETraceDataFixtures.session(id: sessionID, startedAt: startedAt)
+        let header = try codec.encodeHeader(
+            context: context,
+            environment: .init(appVersion: "1", appBuild: "1", operatingSystem: "Test OS", deviceModel: "Test")
+        )
+        let footer = try codec.encodeFooter(.init(
+            sessionID: sessionID,
+            endedAt: endedAt,
+            durationMilliseconds: 60_750,
+            eventCount: 3,
+            baseBytes: Int64(header.count),
+            status: .complete,
+            reason: .userDisconnected
+        ))
+
+        #expect(codec.decodeHeaderBoundary(header)?.startedAt == startedAt)
+        let boundary = codec.decodeSessionBoundary(headerData: header, footerData: footer)
+        #expect(boundary == BLETraceRecordCodec.SessionBoundary(
+            sessionID: sessionID, startedAt: startedAt, endedAt: endedAt, eventCount: 3, status: .complete
+        ))
+    }
+
     @Test("Rejects invalid header boundaries")
     func rejectsInvalidHeaders() {
         let valid = headerBoundaryJSON

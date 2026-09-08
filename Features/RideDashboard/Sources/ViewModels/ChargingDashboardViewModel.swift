@@ -1,25 +1,30 @@
 import BikeDomain
 import ChargeControl
-import Combine
 import Foundation
+import Observation
 import SettingsDomain
 import VehicleSession
 
 @MainActor
-public final class ChargingDashboardViewModel: ObservableObject {
-    @Published public private(set) var viewState = ChargingDashboardViewState()
+@Observable
+public final class ChargingDashboardViewModel {
+    public private(set) var viewState = ChargingDashboardViewState()
 
     private let vehicleSession: any VehicleSessionService
     private let chargeControl: ChargeControlSession
     private let makeMapper: @Sendable (AppSettings, String?) -> ChargingDashboardMapper
-    private var mapper: ChargingDashboardMapper
-    private var snapshot = VehicleSessionSnapshot()
-    private var observationTask: Task<Void, Never>?
+    @ObservationIgnored private var mapper: ChargingDashboardMapper
+    @ObservationIgnored private var snapshot = VehicleSessionSnapshot()
+    @ObservationIgnored private var observationTask: Task<Void, Never>?
     private let batteryHealthConsumerID = UUID()
-    private var isRequestingBatteryHealth = false
-    private var batteryHealthRequirementTask: Task<Void, Never>?
-    private var chargeControlCancellable: AnyCancellable?
-    private var hasCanonicalTelemetry = false
+    @ObservationIgnored private var isRequestingBatteryHealth = false
+    @ObservationIgnored private var batteryHealthRequirementTask: Task<Void, Never>?
+    @ObservationIgnored private var chargeControlObservationTask: Task<Void, Never>?
+    @ObservationIgnored private var observationGeneration: UInt = 0
+    @ObservationIgnored private var hasCanonicalTelemetry = false
+    @ObservationIgnored private var mapperConfiguration: ChargingDashboardMappingInput.Configuration?
+    @ObservationIgnored private var presentationCache =
+        DashboardPresentationCache<ChargingDashboardMappingInput, ChargingDashboardViewState>()
 
     public init(
         vehicleSession: any VehicleSessionService,
@@ -31,13 +36,11 @@ public final class ChargingDashboardViewModel: ObservableObject {
         self.chargeControl = chargeControl
         self.mapper = mapper
         self.makeMapper = makeMapper
-        chargeControlCancellable = chargeControl.$state
-            .dropFirst()
-            .sink { [weak self] _ in self?.render() }
     }
 
     deinit {
         observationTask?.cancel()
+        chargeControlObservationTask?.cancel()
         guard isRequestingBatteryHealth else { return }
         let previousRequirement = batteryHealthRequirementTask
         let vehicleSession = vehicleSession
@@ -50,6 +53,15 @@ public final class ChargingDashboardViewModel: ObservableObject {
 
     func start() {
         guard observationTask == nil else { return }
+        observationGeneration &+= 1
+        let generation = observationGeneration
+        let stateStream = chargeControl.observeState()
+        chargeControlObservationTask = Task { [weak self] in
+            for await _ in stateStream {
+                guard !Task.isCancelled, let self, observationGeneration == generation else { return }
+                render()
+            }
+        }
         let vehicleSession = vehicleSession
         observationTask = Task { [weak self] in
             let stream = await vehicleSession.observe()
@@ -63,10 +75,15 @@ public final class ChargingDashboardViewModel: ObservableObject {
     func stop() {
         suspend()
         snapshot = .init()
+        mapperConfiguration = nil
+        presentationCache = .init()
         viewState = .init()
     }
 
     func suspend() {
+        observationGeneration &+= 1
+        chargeControlObservationTask?.cancel()
+        chargeControlObservationTask = nil
         observationTask?.cancel()
         observationTask = nil
         setBatteryHealthRequired(false)
@@ -92,7 +109,7 @@ public final class ChargingDashboardViewModel: ObservableObject {
 #endif
 
     private func receive(_ snapshot: VehicleSessionSnapshot) {
-        guard Self.hasCanonicalTelemetry(snapshot) else {
+        guard snapshot.isCanonicalTelemetryAvailable else {
             hasCanonicalTelemetry = false
             chargeControl.receive(.init())
             if Self.isTerminal(snapshot.connection.state) {
@@ -103,14 +120,16 @@ public final class ChargingDashboardViewModel: ObservableObject {
         }
         hasCanonicalTelemetry = true
         self.snapshot = snapshot
-        mapper = makeMapper(snapshot.settings, snapshot.profile?.vin)
+        let configuration = ChargingDashboardMappingInput.Configuration(
+            settings: snapshot.settings, vin: snapshot.profile?.vin
+        )
+        if configuration != mapperConfiguration {
+            mapper = makeMapper(snapshot.settings, snapshot.profile?.vin)
+            mapperConfiguration = configuration
+        }
         chargeControl.receive(snapshot.batteryHealth)
         setBatteryHealthRequired(snapshot.telemetry.statusFlags.isChargerConnected)
         render()
-    }
-
-    private static func hasCanonicalTelemetry(_ snapshot: VehicleSessionSnapshot) -> Bool {
-        snapshot.isCanonicalTelemetryAvailable
     }
 
     private static func isTerminal(_ state: ConnectionState) -> Bool {
@@ -148,12 +167,18 @@ public final class ChargingDashboardViewModel: ObservableObject {
     }
 
     private func render() {
-        let nextViewState = mapper.map(
-            telemetry: snapshot.telemetry,
+        let input = ChargingDashboardMappingInput(
+            configuration: mapperConfiguration, batteryPercent: snapshot.telemetry.batteryLevel.percent,
+            isChargerConnected: snapshot.telemetry.statusFlags.isChargerConnected,
             batteryHealth: snapshot.batteryHealth,
             chargeControl: chargeControl.state
         )
-        guard nextViewState != viewState else { return }
+        let nextViewState = presentationCache.value(for: input) {
+            mapper.map(
+                telemetry: snapshot.telemetry, batteryHealth: input.batteryHealth, chargeControl: input.chargeControl
+            )
+        }
+        guard !nextViewState.hasSameDisplayedContent(as: viewState) else { return }
         viewState = nextViewState
     }
 }

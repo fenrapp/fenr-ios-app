@@ -4,6 +4,7 @@ import BikeDiagnostics
 import DashboardCardSettings
 import Foundation
 import MaintenanceLog
+import Observation
 import RideDashboard
 import RideHistory
 import RideNavigationDomain
@@ -13,6 +14,31 @@ import TestSupport
 @MainActor
 @Suite("App navigation coordinator")
 struct AppNavigationCoordinatorTests {
+    @Test("Nested navigation mutations invalidate the computed active surfaces")
+    func nestedStateChangesAreObserved() {
+        let coordinator = configuredCoordinator()
+        let recorder = AppObservationChangeRecorder()
+        withObservationTracking {
+            _ = coordinator.state.activeSurfaces
+        } onChange: {
+            recorder.record()
+        }
+
+        coordinator.send(.push(.settings(.overview)))
+
+        #expect(recorder.count == 1)
+        #expect(coordinator.state.activeSurfaces == [.settings])
+        withObservationTracking {
+            _ = coordinator.state.activeSurfaces
+        } onChange: {
+            recorder.record()
+        }
+        coordinator.send(.showRideNavigation(nil))
+
+        #expect(recorder.count == 2)
+        #expect(coordinator.state.activeSurfaces == [.rideNavigation])
+    }
+
     @Test("Builds canonical routes and ignores an identical top push")
     func canonicalRoutesAndDeduplication() {
         let coordinator = configuredCoordinator()

@@ -126,17 +126,15 @@ private func previewFeature(
     dashboardState: RideDashboardViewState,
     chargingState: ChargingDashboardViewState = .init()
 ) -> RideDashboardFeatureModel {
-    RideDashboardFeatureModel(
-        dashboardViewModel: RideDashboardPreviewFactory.makeViewModel(state: dashboardState),
-        deviceBatteryViewModel: DashboardDeviceBatteryPreviewFactory.makeViewModel(),
-        currentTripViewModel: previewCurrentTripViewModel(),
-        tripStatisticsViewModel: previewTripStatisticsViewModel(),
-        efficiencyViewModel: previewEfficiencyViewModel(),
-        rangeViewModel: previewRangeViewModel(),
-        systemHealthViewModel: SystemHealthCardPreviewFactory.makeViewModel(
+    let cards = RideDashboardCardLifecycleDependencies(
+        currentTrip: previewCurrentTripViewModel(),
+        statistics: previewTripStatisticsViewModel(),
+        efficiency: previewEfficiencyViewModel(),
+        range: previewRangeViewModel(),
+        systemHealth: SystemHealthCardPreviewFactory.makeViewModel(
             state: RideDashboardPreviewFixtures.systemHealth
         ),
-        dynamicsViewModel: RideDynamicsCardPreviewFactory.makeViewModel(
+        dynamics: RideDynamicsCardPreviewFactory.makeViewModel(
             state: .init(
                 status: .live,
                 leanDegrees: -18,
@@ -160,8 +158,24 @@ private func previewFeature(
                 canCalibrate: true
             )
         ),
-        chargingViewModel: previewChargingViewModel(state: chargingState),
-        bikeLockViewModel: BikeLockCardPreviewFactory.makeViewModel()
+        charging: previewChargingViewModel(state: chargingState),
+        bikeLock: BikeLockCardPreviewFactory.makeViewModel()
+    )
+    let lifecycle = RideDashboardCardLifecycleController(dependencies: cards)
+    return RideDashboardFeatureModel(
+        dashboardViewModel: RideDashboardPreviewFactory.makeViewModel(
+            state: dashboardState, onContinuityChanged: lifecycle.receiveContinuity
+        ),
+        deviceBatteryViewModel: DashboardDeviceBatteryPreviewFactory.makeViewModel(),
+        currentTripViewModel: cards.currentTrip,
+        tripStatisticsViewModel: cards.statistics,
+        efficiencyViewModel: cards.efficiency,
+        rangeViewModel: cards.range,
+        systemHealthViewModel: cards.systemHealth,
+        dynamicsViewModel: cards.dynamics,
+        chargingViewModel: cards.charging,
+        bikeLockViewModel: cards.bikeLock,
+        cardLifecycle: lifecycle
     )
 }
 

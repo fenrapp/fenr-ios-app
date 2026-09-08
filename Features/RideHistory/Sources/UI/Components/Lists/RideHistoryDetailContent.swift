@@ -3,9 +3,19 @@ import SwiftUI
 
 struct RideHistoryDetailContent: View {
     let state: RideHistoryDetailViewState
+    var retry: () -> Void = {}
 
     var body: some View {
         switch state.status {
+        case .failed:
+            ContentUnavailableView {
+                Label(.rideHistoryDetailReadErrorTitle, systemImage: "exclamationmark.triangle")
+            } description: {
+                Text(verbatim: state.loadErrorMessage ?? "")
+            } actions: {
+                Button(.rideHistoryRetry, action: retry)
+                    .accessibilityIdentifier("rideHistory.detail.retry")
+            }
         case .idle, .loading:
             ProgressView(.rideHistoryLoadingDetails)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -22,6 +32,9 @@ struct RideHistoryDetailContent: View {
 
     private var list: some View {
         List {
+            if let message = state.loadErrorMessage {
+                Section { RideHistoryReadErrorNotice(message: message, retry: retry) }
+            }
             Section {
                 RideHistoryDetailHeader(state: state)
             }
@@ -54,6 +67,7 @@ struct RideHistoryDetailContent: View {
             metricSection(title: .rideHistorySectionRideDynamics, metrics: state.dynamicsMetrics)
         }
         .listStyle(.insetGrouped)
+        .accessibilityIdentifier("rideHistory.detail.loaded")
     }
 
     @ViewBuilder

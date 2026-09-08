@@ -1,23 +1,29 @@
-import Combine
+import Observation
 import RideSession
 import RideSessionDomain
 import SettingsDomain
 
 @MainActor
-public final class TripStatisticsCardViewModel: ObservableObject {
-    @Published public private(set) var viewState = DashboardTripStatisticsViewData()
+@Observable
+public final class TripStatisticsCardViewModel {
+    public private(set) var viewState = DashboardTripStatisticsViewData(
+        showsStatistics: false, isLoading: true,
+        accessibilityLabel: rideDashboardLocalized(.rideDashboardTripStatisticsLoading)
+    )
 
     private let useCases: TripStatisticsCardUseCases
     private let mapper: TripStatisticsCardMapper
     private let session: any RideSessionService
-    private var measurementSystem = MeasurementSystem.metric
-    private var statistics = RideTripStatistics()
-    private var loadTask: Task<Void, Never>?
-    private var sessionTask: Task<Void, Never>?
-    private var activeVIN: String?
-    private var requestedRevision = 0
-    private var loadedKey: DashboardRideHistoryKey?
-    private var isVisible = false
+    @ObservationIgnored private var measurementSystem = MeasurementSystem.metric
+    @ObservationIgnored private var statistics = RideTripStatistics()
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
+    @ObservationIgnored private var sessionTask: Task<Void, Never>?
+    @ObservationIgnored private var activeVIN: String?
+    @ObservationIgnored private var requestedRevision = 0
+    @ObservationIgnored private var loadedKey: DashboardRideHistoryKey?
+    @ObservationIgnored private var failedKey: DashboardRideHistoryKey?
+    @ObservationIgnored private var loadGeneration = 0
+    @ObservationIgnored private var isVisible = false
 
     public init(
         useCases: TripStatisticsCardUseCases,
@@ -35,6 +41,7 @@ public final class TripStatisticsCardViewModel: ObservableObject {
     }
 
     func setIsVisible(_ isVisible: Bool) {
+        if isVisible, !self.isVisible { failedKey = nil }
         self.isVisible = isVisible
         guard isVisible else {
             pauseObservation()
@@ -48,6 +55,7 @@ public final class TripStatisticsCardViewModel: ObservableObject {
         isVisible = false
         pauseObservation()
         loadedKey = nil
+        failedKey = nil
         statistics = .init()
     }
 
@@ -57,13 +65,22 @@ public final class TripStatisticsCardViewModel: ObservableObject {
     }
 
     private func pauseObservation() {
+        loadGeneration += 1
         loadTask?.cancel()
         loadTask = nil
         sessionTask?.cancel()
         sessionTask = nil
     }
 
+    func retryHistory() {
+        guard loadTask == nil else { return }
+        failedKey = nil
+        loadIfNeeded()
+    }
+
 #if DEBUG
+    var historyLoadTaskForTesting: Task<Void, Never>? { loadTask }
+
     func setPreviewState(_ viewState: DashboardTripStatisticsViewData) {
         self.viewState = viewState
     }
@@ -74,19 +91,30 @@ private extension TripStatisticsCardViewModel {
     func loadIfNeeded() {
         guard isVisible, let activeVIN, loadTask == nil else { return }
         let key = DashboardRideHistoryKey(vin: activeVIN, revision: requestedRevision)
-        guard loadedKey != key else { return }
+        guard loadedKey != key, failedKey != key else { return }
+        failedKey = nil
         let loadStatistics = useCases.loadStatistics
+        let generation = loadGeneration
         if loadedKey == nil {
-            viewState = DashboardTripStatisticsViewData(isLoading: true)
+            viewState = DashboardTripStatisticsViewData(
+                showsStatistics: false, isLoading: true,
+                accessibilityLabel: rideDashboardLocalized(.rideDashboardTripStatisticsLoading)
+            )
         }
         loadTask = Task { [weak self] in
-            let statistics = await loadStatistics.execute(vin: activeVIN)
-            guard !Task.isCancelled else { return }
-            self?.finishLoading(statistics, key: key)
+            do {
+                let statistics = try await loadStatistics.execute(vin: activeVIN)
+                guard !Task.isCancelled, self?.loadGeneration == generation else { return }
+                self?.finishLoading(statistics, key: key)
+            } catch {
+                guard !Task.isCancelled, self?.loadGeneration == generation else { return }
+                self?.failLoading(key: key)
+            }
         }
     }
 
     func finishLoading(_ statistics: RideTripStatistics, key: DashboardRideHistoryKey) {
+        guard acceptsCompletion(for: key) else { return }
         self.statistics = statistics
         loadedKey = key
         loadTask = nil
@@ -94,11 +122,37 @@ private extension TripStatisticsCardViewModel {
         loadIfNeeded()
     }
 
+    func failLoading(key: DashboardRideHistoryKey) {
+        guard acceptsCompletion(for: key) else { return }
+        failedKey = key
+        loadTask = nil
+        render()
+        loadIfNeeded()
+    }
+
+    func acceptsCompletion(for key: DashboardRideHistoryKey) -> Bool {
+        guard key.vin == activeVIN, key.revision == requestedRevision else {
+            loadTask = nil
+            loadIfNeeded()
+            return false
+        }
+        return true
+    }
+
     func render() {
-        guard isVisible, loadedKey != nil else { return }
+        guard isVisible else { return }
+        if loadedKey == nil, failedKey == nil {
+            viewState = .init(
+                showsStatistics: false, isLoading: true,
+                accessibilityLabel: rideDashboardLocalized(.rideDashboardTripStatisticsLoading)
+            )
+            return
+        }
         viewState = mapper.map(
             statistics,
-            measurementSystem: measurementSystem
+            measurementSystem: measurementSystem,
+            historyReadFailed: failedKey != nil,
+            hasLoadedHistory: loadedKey != nil
         )
     }
 
@@ -114,18 +168,22 @@ private extension TripStatisticsCardViewModel {
     }
 
     func receive(_ snapshot: RideSessionSnapshot) {
-        guard snapshot.isCanonicalTelemetryAvailable else { return }
         measurementSystem = snapshot.measurementSystem
         let vin = snapshot.vehicleIdentity.confirmedVIN
         if vin != activeVIN {
             activeVIN = vin
             requestedRevision = snapshot.historyRevision
             loadedKey = nil
+            failedKey = nil
+            statistics = .init()
+            loadGeneration += 1
             loadTask?.cancel()
             loadTask = nil
         } else {
             requestedRevision = max(requestedRevision, snapshot.historyRevision)
         }
+        render()
+        guard snapshot.isCanonicalTelemetryAvailable else { return }
         loadIfNeeded()
     }
 }

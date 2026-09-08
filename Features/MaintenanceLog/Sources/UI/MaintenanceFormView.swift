@@ -3,7 +3,7 @@ import Foundation
 import SwiftUI
 
 public struct MaintenanceFormView: View {
-    @ObservedObject private var viewModel: MaintenanceViewModel
+    private let viewModel: MaintenanceViewModel
     private let entryID: UUID?
     private let onNavigation: (MaintenanceNavigationEvent) -> Void
     @State private var draft: MaintenanceFormDraft
@@ -28,10 +28,6 @@ public struct MaintenanceFormView: View {
             remindersSection
         }
         .scrollDismissesKeyboard(.interactively)
-        .simultaneousGesture(
-            TapGesture().onEnded { focusedField = nil },
-            including: .gesture
-        )
         .navigationTitle(entryID == nil ? Text(.maintenanceNewTitle) : Text(.maintenanceEditTitle))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $presentedSelection) { selection in
@@ -72,6 +68,7 @@ public struct MaintenanceFormView: View {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
                 Button(.maintenanceDone) { focusedField = nil }
+                    .accessibilityIdentifier("maintenance.keyboard.done")
             }
         }
     }
