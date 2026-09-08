@@ -24,7 +24,8 @@ public struct AppSettingsViewStateMapper: Sendable {
                         .init(id: $0.rawValue, title: dashboardProgressBarModeTitle($0))
                     }
                 ),
-                description: dashboardProgressBarModeDescription(settings.dashboardProgressBarMode)
+                description: dashboardProgressBarModeDescription(settings.dashboardProgressBarMode),
+                thickness: settings.dashboardProgressBarMode == .hidden ? nil : progressBarThickness(settings)
             ),
             dashboardBatteryIndicatorMode: .init(
                 selectedID: settings.dashboardBatteryIndicatorMode.rawValue,

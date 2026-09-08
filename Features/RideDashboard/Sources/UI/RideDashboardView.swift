@@ -178,7 +178,10 @@ extension RideDashboardView {
                     .overlay(alignment: .bottom) {
                         if viewModel.viewState.centerMode == .riding,
                            cardSelection.ridingCard == .speedometer {
-                            DashboardProgressBar(state: viewModel.viewState.progressBar)
+                            DashboardProgressBar(
+                                state: viewModel.viewState.progressBar,
+                                layout: viewModel.viewState.progressBarLayout
+                            )
                             .offset(y: proxy.safeAreaInsets.bottom)
                             .allowsHitTesting(false)
                         }

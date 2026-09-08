@@ -3,6 +3,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
     public let showsCompactSpeedReadout: Bool
     public let odometer: DashboardOdometerViewData
     public let progressBar: DashboardProgressBarViewData
+    public let progressBarLayout: DashboardProgressBarLayout
     public let battery: Battery
     public let showsEstimatedRangeBatteryIndicator: Bool
     public let temperatureSummary: TemperatureSummary
@@ -21,6 +22,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
         showsCompactSpeedReadout: Bool = false,
         odometer: DashboardOdometerViewData = .init(),
         progressBar: DashboardProgressBarViewData = .neutralEnergy,
+        progressBarLayout: DashboardProgressBarLayout = .regular,
         battery: Battery = .init(),
         showsEstimatedRangeBatteryIndicator: Bool = false,
         temperatureSummary: TemperatureSummary = .init(),
@@ -38,6 +40,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
         self.showsCompactSpeedReadout = showsCompactSpeedReadout
         self.odometer = odometer
         self.progressBar = progressBar
+        self.progressBarLayout = progressBarLayout
         self.battery = battery
         self.showsEstimatedRangeBatteryIndicator = showsEstimatedRangeBatteryIndicator
         self.temperatureSummary = temperatureSummary
@@ -54,6 +57,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
 
     func waitingForStableTelemetry() -> Self {
         .init(
+            progressBarLayout: progressBarLayout,
             showsEstimatedRangeBatteryIndicator: showsEstimatedRangeBatteryIndicator,
             connectionDetail: rideDashboardLocalized(.rideDashboardConnectionVerifying),
             showsConnectionProgress: true,
@@ -71,6 +75,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
             showsCompactSpeedReadout: showsCompactSpeedReadout,
             odometer: odometer,
             progressBar: progressBar,
+            progressBarLayout: progressBarLayout,
             battery: battery,
             showsEstimatedRangeBatteryIndicator: showsEstimatedRangeBatteryIndicator,
             temperatureSummary: temperatureSummary,

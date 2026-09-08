@@ -10,6 +10,7 @@ struct RideDisplaySettingsContent: View {
     let temperatureDisplayMode: AppSettingsSelectionViewState
     let speedSource: SpeedSourceSettingsViewState
     let onSelectProgressBarMode: (String) -> Void
+    let onSelectProgressBarThickness: (String) -> Void
     let onSelectBikeBatteryDisplayMode: (String) -> Void
     let onSelectDeviceBatteryDisplayMode: (String) -> Void
     let onSelectTemperatureDisplayMode: (String) -> Void
@@ -23,6 +24,14 @@ struct RideDisplaySettingsContent: View {
                 selection: progressBarMode.selection,
                 onSelect: onSelectProgressBarMode
             )
+            if let thickness = progressBarMode.thickness {
+                selectionPicker(
+                    .appSettingsProgressBarThicknessTitle,
+                    selection: thickness,
+                    onSelect: onSelectProgressBarThickness
+                )
+                .accessibilityIdentifier("settings.progressBarThickness")
+            }
             selectionPicker(
                 .appSettingsBikeBatteryPickerTitle,
                 selection: bikeBatteryDisplayMode,

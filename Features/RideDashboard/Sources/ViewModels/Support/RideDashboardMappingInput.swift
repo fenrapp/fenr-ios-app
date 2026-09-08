@@ -14,6 +14,7 @@ struct RideDashboardMappingInput: Equatable {
     let speedKilometersPerHour: Double?
     let speedSource: SpeedSource
     let progressBarMode: DashboardProgressBarMode
+    let progressBarThickness: DashboardProgressBarThickness
     let batteryIndicatorMode: DashboardBatteryIndicatorMode
     let temperatureDisplayMode: DashboardTemperatureDisplayMode
     let isGPSAvailable: Bool
@@ -26,6 +27,7 @@ struct RideDashboardMappingInput: Equatable {
         speedKilometersPerHour = snapshot.resolvedSpeedKilometersPerHour
         speedSource = snapshot.speedSource
         progressBarMode = snapshot.settings.dashboardProgressBarMode
+        progressBarThickness = snapshot.settings.dashboardProgressBarThickness
         batteryIndicatorMode = snapshot.settings.dashboardBatteryIndicatorMode
         temperatureDisplayMode = snapshot.settings.dashboardTemperatureDisplayMode
         isGPSAvailable = snapshot.isGPSAvailable
@@ -37,7 +39,7 @@ struct RideDashboardMappingInput: Equatable {
     ) -> RideDashboardViewState {
         mapper.map(
             telemetry: telemetry, connection: connection, speedKilometersPerHour: speedKilometersPerHour,
-            speedSource: speedSource, progressBarMode: progressBarMode,
+            speedSource: speedSource, progressBarMode: progressBarMode, progressBarThickness: progressBarThickness,
             batteryIndicatorMode: batteryIndicatorMode,
             temperatureDisplayMode: temperatureDisplayMode, measurementSystem: configuration.measurementSystem,
             isGPSAvailable: isGPSAvailable, powerModeNames: powerModeNames, using: measurementMapper
@@ -50,6 +52,7 @@ struct RideDashboardMappingInput: Equatable {
             && lhs.speedKilometersPerHour == rhs.speedKilometersPerHour
             && lhs.speedSource == rhs.speedSource
             && lhs.progressBarMode == rhs.progressBarMode
+            && lhs.progressBarThickness == rhs.progressBarThickness
             && lhs.batteryIndicatorMode == rhs.batteryIndicatorMode
             && lhs.temperatureDisplayMode == rhs.temperatureDisplayMode
             && lhs.isGPSAvailable == rhs.isGPSAvailable

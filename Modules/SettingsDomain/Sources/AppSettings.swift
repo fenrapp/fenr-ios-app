@@ -3,6 +3,7 @@ import Foundation
 public struct AppSettings: Codable, Equatable, Sendable {
     public private(set) var vin: String?
     public var speedSource: SpeedSource
+    public var dashboardProgressBarThickness: DashboardProgressBarThickness
     public var dashboardProgressBarMode: DashboardProgressBarMode
     public var dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode
     public var dashboardDeviceBatteryDisplayMode: DashboardDeviceBatteryDisplayMode
@@ -23,6 +24,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public init(
         speedSource: SpeedSource = .motorcycle,
         dashboardProgressBarMode: DashboardProgressBarMode = .energy,
+        dashboardProgressBarThickness: DashboardProgressBarThickness = .regular,
         dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
         dashboardDeviceBatteryDisplayMode: DashboardDeviceBatteryDisplayMode = .iconAndText,
         dashboardTemperatureDisplayMode: DashboardTemperatureDisplayMode = .off,
@@ -38,6 +40,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         vin = nil
         self.speedSource = speedSource
         self.dashboardProgressBarMode = dashboardProgressBarMode
+        self.dashboardProgressBarThickness = dashboardProgressBarThickness
         self.dashboardBatteryIndicatorMode = dashboardBatteryIndicatorMode
         self.dashboardDeviceBatteryDisplayMode = dashboardDeviceBatteryDisplayMode
         self.dashboardTemperatureDisplayMode = dashboardTemperatureDisplayMode
@@ -55,6 +58,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case vin
         case speedSource
         case dashboardProgressBarMode
+        case dashboardProgressBarThickness
         case dashboardBatteryIndicatorMode
         case dashboardDeviceBatteryDisplayMode
         case dashboardTemperatureDisplayMode
@@ -80,6 +84,9 @@ public struct AppSettings: Codable, Equatable, Sendable {
             DashboardProgressBarMode.self,
             forKey: .dashboardProgressBarMode
         ) ?? .energy
+        dashboardProgressBarThickness = try container.decodeIfPresent(
+            DashboardProgressBarThickness.self, forKey: .dashboardProgressBarThickness
+        ) ?? .regular
         dashboardBatteryIndicatorMode = try container.decodeIfPresent(
             DashboardBatteryIndicatorMode.self,
             forKey: .dashboardBatteryIndicatorMode

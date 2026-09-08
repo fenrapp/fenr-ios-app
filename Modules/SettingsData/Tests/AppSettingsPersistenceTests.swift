@@ -5,6 +5,54 @@ import Testing
 @MainActor
 @Suite("App settings persistence")
 struct AppSettingsPersistenceTests {
+    @Test("Retired thickness loads and permits unrelated saves without losing settings", arguments: [false, true])
+    func migratesRetiredThickness(scoped: Bool) async throws {
+        let fixture = try VINSettingsTestFixture()
+        defer { fixture.cleanUp() }
+        let defaults = try #require(UserDefaults(suiteName: fixture.suite))
+        let key = scoped
+            ? AppSettingsPersistenceFixtures.scopedSettingsKey : AppSettingsPersistenceFixtures.settingsKey
+        let original = AppSettingsPersistenceFixtures.settingsWithThickness("extraThick", scoped: scoped)
+        defaults.set(original, forKey: key)
+        var expected = AppSettings(
+            speedSource: .gps, dashboardProgressBarMode: .speed,
+            dashboardProgressBarThickness: .thick, measurementSystem: .imperial
+        ).scoped(toVIN: "FENRTEST000000001")
+
+        #expect(await fixture.repository.load() == expected)
+        _ = try await fixture.repository.update(
+            expectedVIN: "FENRTEST000000001", change: .dashboardDeviceBatteryDisplayMode(.hidden)
+        )
+        expected.dashboardDeviceBatteryDisplayMode = .hidden
+        #expect(await fixture.reopen().load() == expected)
+        let saved = try #require(defaults.data(forKey: AppSettingsPersistenceFixtures.scopedSettingsKey))
+        let records = try #require(JSONSerialization.jsonObject(with: saved) as? [String: [String: Any]])
+        #expect(records["FENRTEST000000001"]?["dashboardProgressBarThickness"] as? String == "thick")
+        if !scoped { #expect(defaults.data(forKey: key) == original) }
+    }
+
+    @Test("Unknown thickness rejects writes and preserves the original store", arguments: [false, true])
+    func preservesUnknownThickness(scoped: Bool) async throws {
+        let fixture = try VINSettingsTestFixture()
+        defer { fixture.cleanUp() }
+        let defaults = try #require(UserDefaults(suiteName: fixture.suite))
+        let key = scoped
+            ? AppSettingsPersistenceFixtures.scopedSettingsKey : AppSettingsPersistenceFixtures.settingsKey
+        let original = AppSettingsPersistenceFixtures.settingsWithThickness("unsupported", scoped: scoped)
+        defaults.set(original, forKey: key)
+
+        _ = await fixture.repository.load()
+        await #expect(throws: AppSettingsUpdateError.unreadableStore) {
+            try await fixture.repository.update(
+                expectedVIN: "FENRTEST000000001", change: .measurementSystem(.metric)
+            )
+        }
+        #expect(defaults.data(forKey: key) == original)
+        if !scoped {
+            #expect(defaults.object(forKey: AppSettingsPersistenceFixtures.scopedSettingsKey) == nil)
+        }
+    }
+
     @Test("Returns defaults until settings are saved")
     func returnsDefaults() async throws {
         let fixture = try VINSettingsTestFixture()
@@ -25,7 +73,7 @@ struct AppSettingsPersistenceTests {
         cardConfiguration.setSectionVisibility(false, id: .efficiency)
         let expected = AppSettings(
             speedSource: .hybrid,
-            dashboardProgressBarMode: .speed,
+            dashboardProgressBarMode: .speed, dashboardProgressBarThickness: .thick,
             dashboardBatteryIndicatorMode: .estimatedRange,
             dashboardDeviceBatteryDisplayMode: .hidden,
             dashboardTemperatureDisplayMode: .inverter,
@@ -54,7 +102,7 @@ struct AppSettingsPersistenceTests {
         ).scoped(toVIN: "FENRTEST000000001")
 
         let changes: [AppSettingsChange] = [
-            .speedSource(.hybrid), .dashboardProgressBarMode(.speed),
+            .speedSource(.hybrid), .dashboardProgressBarMode(.speed), .dashboardProgressBarThickness(.thick),
             .dashboardBatteryIndicatorMode(.estimatedRange), .dashboardDeviceBatteryDisplayMode(.hidden),
             .dashboardTemperatureDisplayMode(.inverter), .measurementSystem(.imperial),
             .batteryPackCapacity(.sixPointEightKilowattHours),

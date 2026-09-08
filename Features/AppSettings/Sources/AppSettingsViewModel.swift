@@ -96,6 +96,11 @@ public final class AppSettingsViewModel {
         applyAndSave(.dashboardProgressBarMode(mode))
     }
 
+    public func selectDashboardProgressBarThickness(id: String) {
+        guard let thickness = DashboardProgressBarThickness(rawValue: id) else { return }
+        applyAndSave(.dashboardProgressBarThickness(thickness))
+    }
+
     public func selectDashboardBatteryIndicatorMode(id: String) {
         guard let mode = DashboardBatteryIndicatorMode(rawValue: id) else { return }
         applyAndSave(.dashboardBatteryIndicatorMode(mode))

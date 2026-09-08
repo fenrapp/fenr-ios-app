@@ -1,6 +1,7 @@
 public enum AppSettingsChange: Equatable, Sendable {
     case speedSource(SpeedSource)
     case dashboardProgressBarMode(DashboardProgressBarMode)
+    case dashboardProgressBarThickness(DashboardProgressBarThickness)
     case dashboardBatteryIndicatorMode(DashboardBatteryIndicatorMode)
     case dashboardDeviceBatteryDisplayMode(DashboardDeviceBatteryDisplayMode)
     case dashboardTemperatureDisplayMode(DashboardTemperatureDisplayMode)
@@ -48,6 +49,7 @@ public enum AppSettingsChange: Equatable, Sendable {
         switch self {
         case let .speedSource(value): updated.speedSource = value
         case let .dashboardProgressBarMode(value): updated.dashboardProgressBarMode = value
+        case let .dashboardProgressBarThickness(value): updated.dashboardProgressBarThickness = value
         case let .dashboardBatteryIndicatorMode(value): updated.dashboardBatteryIndicatorMode = value
         case let .dashboardDeviceBatteryDisplayMode(value): updated.dashboardDeviceBatteryDisplayMode = value
         case let .dashboardTemperatureDisplayMode(value): updated.dashboardTemperatureDisplayMode = value

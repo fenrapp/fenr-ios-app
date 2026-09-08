@@ -36,6 +36,7 @@ public struct RideDashboardMapper: Sendable {
         speedKilometersPerHour: Double?,
         speedSource: SpeedSource = .motorcycle,
         progressBarMode: DashboardProgressBarMode = .energy,
+        progressBarThickness: DashboardProgressBarThickness = .regular,
         batteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
         temperatureDisplayMode: DashboardTemperatureDisplayMode = .off,
         measurementSystem: MeasurementSystem,
@@ -81,6 +82,7 @@ public struct RideDashboardMapper: Sendable {
                 hasTelemetry: hasTelemetry,
                 measurementMapper: measurementMapper
             ),
+            progressBarLayout: progressBarMapper.layout(for: progressBarThickness),
             battery: battery(percentage: hasTelemetry ? telemetry.batteryLevel.percent : nil),
             showsEstimatedRangeBatteryIndicator: batteryIndicatorMode == .estimatedRange,
             temperatureSummary: temperatureMapper.map(telemetry, mode: temperatureMode, using: measurementMapper),

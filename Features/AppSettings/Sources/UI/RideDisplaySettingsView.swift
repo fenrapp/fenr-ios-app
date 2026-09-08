@@ -17,6 +17,7 @@ public struct RideDisplaySettingsView: View {
                 temperatureDisplayMode: viewModel.viewState.dashboardTemperatureDisplayMode,
                 speedSource: viewModel.viewState.speedSource,
                 onSelectProgressBarMode: viewModel.selectDashboardProgressBarMode,
+                onSelectProgressBarThickness: viewModel.selectDashboardProgressBarThickness,
                 onSelectBikeBatteryDisplayMode: viewModel.selectDashboardBatteryIndicatorMode,
                 onSelectDeviceBatteryDisplayMode: viewModel.selectDashboardDeviceBatteryDisplayMode,
                 onSelectTemperatureDisplayMode: viewModel.selectDashboardTemperatureDisplayMode,
