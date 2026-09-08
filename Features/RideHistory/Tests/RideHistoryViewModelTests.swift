@@ -68,13 +68,16 @@ struct RideHistoryViewModelTests {
     }
 
     @Test("Deletes multiple selected rides serially")
-    func deletesMultipleRides() async {
+    func deletesMultipleRides() async throws {
         let first = RideHistoryFixtures.trip(startedAt: Date(timeIntervalSince1970: 3_000))
         let second = RideHistoryFixtures.trip(startedAt: Date(timeIntervalSince1970: 2_000))
         let third = RideHistoryFixtures.trip(startedAt: Date(timeIntervalSince1970: 1_000))
         let fixture = RideHistoryTestFactory.make(trips: [first, second, third])
         fixture.viewModel.start()
-        #expect(await waitUntil { fixture.viewModel.viewState.rides.count == 3 })
+        await fixture.operation.waitForCompletion(.history)
+        try #require(await waitUntil {
+            fixture.viewModel.viewState.rides.map(\.id) == [first.id, second.id, third.id]
+        })
 
         fixture.viewModel.deleteRides(ids: [first.id, third.id])
 
