@@ -8,7 +8,7 @@ actor LibraryControllerRouteRepository: RecordedRouteRepository {
     private var draft: RideRoute?
     private var blocksLoads = false
     private var blocksDrafts = false
-    private var pendingLoads: [CheckedContinuation<[RideRoute], Never>] = []
+    private var pendingLoads: [CheckedContinuation<[RideRouteSummary], Never>] = []
     private var pendingSaves: [(RideRoute, CheckedContinuation<Void, any Error>)] = []
     private var pendingDeletes: [UUID: [CheckedContinuation<Void, any Error>]] = [:]
     private var pendingDrafts: [(RideRoute?, CheckedContinuation<Void, any Error>)] = []
@@ -21,10 +21,14 @@ actor LibraryControllerRouteRepository: RecordedRouteRepository {
         self.routes = routes
     }
 
-    func loadRoutes() async -> [RideRoute] {
+    func loadRouteSummaries() async -> [RideRouteSummary] {
         loadCount += 1
-        guard blocksLoads else { return routes }
+        guard blocksLoads else { return routes.map(RideRouteSummary.init) }
         return await withCheckedContinuation { pendingLoads.append($0) }
+    }
+
+    func loadRoute(id: UUID) async throws -> RideRoute? {
+        routes.first { $0.id == id }
     }
 
     func save(_ route: RideRoute) async throws {
@@ -62,7 +66,7 @@ actor LibraryControllerRouteRepository: RecordedRouteRepository {
     func unblockDrafts() { blocksDrafts = false }
 
     func resumeLoad(at index: Int = 0, routes: [RideRoute]) {
-        pendingLoads.remove(at: index).resume(returning: routes)
+        pendingLoads.remove(at: index).resume(returning: routes.map(RideRouteSummary.init))
     }
 
     func completeSave(at index: Int = 0) {

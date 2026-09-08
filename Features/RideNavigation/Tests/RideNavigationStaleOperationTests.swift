@@ -79,6 +79,7 @@ struct RideNavigationStaleOperationTests {
         #expect(await waitUntil { fixture.viewModel.viewState.mapScene.userCoordinate != nil })
         #expect(await waitUntil { fixture.viewModel.viewState.savedRoutes.count == 1 })
         fixture.viewModel.openSavedRoute(id: route.id)
+        await fixture.viewModel.savedRouteLoadingTask?.value
         fixture.viewModel.startPreviewedRoute()
         #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
 

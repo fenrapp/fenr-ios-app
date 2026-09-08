@@ -148,13 +148,18 @@ extension RideNavigationViewModel {
     }
 
     var routeRows: [RideNavigationRouteRow] {
-        library.snapshot.savedRoutes.map {
+        let revision = library.snapshot.revision
+        if routeRowsRevision == revision, routeRowsMeasurementSystem == measurementSystem { return cachedRouteRows }
+        cachedRouteRows = library.snapshot.savedRoutes.map {
             RideNavigationRouteRow(
                 id: $0.id,
                 title: $0.name,
                 detail: dependencies.presentationMapper.routeDetail($0, measurementSystem: measurementSystem)
             )
         }
+        routeRowsRevision = revision
+        routeRowsMeasurementSystem = measurementSystem
+        return cachedRouteRows
     }
 
     var presentedSearchResults: [RideNavigationSearchResult] {

@@ -7,6 +7,7 @@ public struct RideRouteRecorder: Sendable {
     private var updatedAt: Date?
     private var segments: [RideRouteSegment] = []
     private var activeSegmentPoints: [RideRoutePoint] = []
+    private var distanceMeters: Double = .zero
     private var activeStartedAt: Date?
     private var accumulatedActiveSeconds: TimeInterval = .zero
     public private(set) var phase = RouteRecordingPhase.idle
@@ -23,12 +24,14 @@ public struct RideRouteRecorder: Sendable {
         activeSegmentPoints = []
         activeStartedAt = date
         accumulatedActiveSeconds = .zero
+        distanceMeters = .zero
         phase = .recording
     }
 
     public mutating func append(_ point: RideRoutePoint) {
         guard phase == .recording else { return }
-        guard shouldAppend(point) else { return }
+        guard let acceptedDistance = acceptedDistance(for: point) else { return }
+        distanceMeters += acceptedDistance
         activeSegmentPoints.append(point)
         if let timestamp = point.timestamp {
             updatedAt = effectiveDate(timestamp)
@@ -97,9 +100,9 @@ public struct RideRouteRecorder: Sendable {
         return RideRoute(
             id: id,
             name: name,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-            segments: segments
+            dates: (createdAt, updatedAt),
+            segments: segments,
+            recordedDistanceMeters: distanceMeters
         )
     }
 
@@ -126,12 +129,12 @@ public struct RideRouteRecorder: Sendable {
         max(date, updatedAt ?? createdAt ?? date)
     }
 
-    private func shouldAppend(_ point: RideRoutePoint) -> Bool {
+    private func acceptedDistance(for point: RideRoutePoint) -> Double? {
         guard let accuracy = point.horizontalAccuracyMeters,
               accuracy.isFinite,
               accuracy >= .zero,
-              accuracy <= Constants.maximumHorizontalAccuracyMeters else { return false }
-        guard let previous = activeSegmentPoints.last else { return true }
+              accuracy <= Constants.maximumHorizontalAccuracyMeters else { return nil }
+        guard let previous = activeSegmentPoints.last else { return .zero }
         let distance = RideRouteGeometry.distanceMeters(
             from: previous.coordinate,
             to: point.coordinate
@@ -139,8 +142,9 @@ public struct RideRouteRecorder: Sendable {
         let elapsed = point.timestamp.flatMap { current in
             previous.timestamp.map { current.timeIntervalSince($0) }
         } ?? .infinity
-        return distance >= Constants.minimumPointDistanceMeters
-            || elapsed >= Constants.maximumPointIntervalSeconds
+        guard distance >= Constants.minimumPointDistanceMeters
+            || elapsed >= Constants.maximumPointIntervalSeconds else { return nil }
+        return distance
     }
 
     private enum Constants {

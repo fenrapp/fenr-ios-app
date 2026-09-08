@@ -23,14 +23,45 @@ extension RideNavigationLibraryController {
     }
 
     func shareSavedRoute(id: UUID) {
-        guard let route = snapshot.savedRoutes.first(where: { $0.id == id }) else { return }
-        do {
-            snapshot.shareRequest = try exportRequest(for: route)
-            snapshot.errorMessage = nil
-        } catch {
-            snapshot.errorMessage = String(localized: .rideNavigationGPXCreateError)
+        guard let requested = snapshot.savedRoutes.first(where: { $0.id == id }) else { return }
+        cancelShare()
+        sharingRouteID = id
+        let generation = shareGeneration
+        let lifecycle = lifecycleGeneration
+        let context = contextGeneration
+        shareTask = Task { [weak self, routeLibrary] in
+            defer { self?.completeShare(generation: generation) }
+            do {
+                guard let route = try await routeLibrary.loadRoute(id: id) else {
+                    throw CocoaError(.fileReadNoSuchFile)
+                }
+                guard !Task.isCancelled, let self, isStarted, shareGeneration == generation,
+                      lifecycleGeneration == lifecycle, contextGeneration == context,
+                      snapshot.savedRoutes.first(where: { $0.id == id }) == requested else { return }
+                snapshot.shareRequest = try exportRequest(for: route)
+                snapshot.errorMessage = nil
+                publish()
+            } catch {
+                guard !Task.isCancelled, let self, isStarted, shareGeneration == generation,
+                      lifecycleGeneration == lifecycle, contextGeneration == context,
+                      snapshot.savedRoutes.first(where: { $0.id == id }) == requested else { return }
+                snapshot.errorMessage = String(localized: .rideNavigationGPXCreateError)
+                publish()
+            }
         }
-        publish()
+    }
+
+    private func completeShare(generation: UInt) {
+        guard shareGeneration == generation else { return }
+        shareTask = nil
+        sharingRouteID = nil
+    }
+
+    func cancelShare() {
+        shareGeneration &+= 1
+        shareTask?.cancel()
+        shareTask = nil
+        sharingRouteID = nil
     }
 
     func clearExportRequest() {
@@ -39,6 +70,7 @@ extension RideNavigationLibraryController {
     }
 
     func clearShareRequest() {
+        cancelShare()
         snapshot.shareRequest = nil
         publish()
     }

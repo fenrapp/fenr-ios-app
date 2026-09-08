@@ -5,12 +5,14 @@ import RideNavigationDomain
 @MainActor
 extension RideNavigationViewModel {
     public func updateSearchQuery(_ value: String) {
+        cancelSavedRouteLoad()
         clearPlanningFeedback()
         planningController.updateSearchQuery(value, near: locationSnapshot.coordinate)
         render()
     }
 
     public func search() {
+        cancelSavedRouteLoad()
         planningController.search(near: locationSnapshot.coordinate)
         render()
     }

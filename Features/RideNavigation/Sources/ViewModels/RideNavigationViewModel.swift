@@ -16,6 +16,11 @@ public final class RideNavigationViewModel {
     let library: RideNavigationLibraryController
     let planningController: RideNavigationPlanningController
     let activityController: RideNavigationActivityController
+    @ObservationIgnored var savedRouteLoadingTask: Task<Void, Never>?
+    @ObservationIgnored var savedRouteLoadingGeneration: UInt = 0
+    @ObservationIgnored var routeRowsRevision: UInt64?
+    @ObservationIgnored var routeRowsMeasurementSystem: MeasurementSystem?
+    @ObservationIgnored var cachedRouteRows: [RideNavigationRouteRow] = []
     @ObservationIgnored var isStarted = false
     @ObservationIgnored var presentationMode = RideNavigationPresentationMode.fullScreen
     @ObservationIgnored var vehicleSnapshot = VehicleSessionSnapshot()
@@ -62,6 +67,7 @@ public final class RideNavigationViewModel {
     }
 
     deinit {
+        savedRouteLoadingTask?.cancel()
         observationTask?.cancel()
         locationObservationTask?.cancel()
         settingsLoadingTask?.cancel()

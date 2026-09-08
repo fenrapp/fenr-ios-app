@@ -34,6 +34,7 @@ extension RideNavigationViewModel {
     }
 
     public func stop() {
+        cancelSavedRouteLoad()
         isStarted = false
         lifecycleGeneration &+= 1
         activityController.stop()

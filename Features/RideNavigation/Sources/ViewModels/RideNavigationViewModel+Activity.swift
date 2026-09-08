@@ -4,6 +4,7 @@ import RideNavigationDomain
 @MainActor
 extension RideNavigationViewModel {
     public func startRecording() {
+        cancelSavedRouteLoad()
         let update = activityController.startRecording(name: defaultRouteName(at: dependencies.timing.now()))
         receiveActivityUpdate(update)
     }
@@ -18,6 +19,7 @@ extension RideNavigationViewModel {
     }
 
     public func discardActivity() {
+        cancelSavedRouteLoad()
         guard !library.snapshot.persistence.status.isSaving else { return }
         let destination = openIncomingDestinationAfterSummary
             ? planningController.snapshot.pendingExternalDestination : nil

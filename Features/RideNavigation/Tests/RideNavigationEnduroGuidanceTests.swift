@@ -29,6 +29,7 @@ struct RideNavigationEnduroGuidanceTests {
         #expect(await waitUntil { fixture.viewModel.viewState.savedRoutes.count == 1 })
 
         fixture.viewModel.openSavedRoute(id: route.id)
+        await fixture.viewModel.savedRouteLoadingTask?.value
         fixture.viewModel.startPreviewedRoute()
         #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
         await fixture.deviceSpeedRepository.send(
@@ -73,6 +74,7 @@ struct RideNavigationEnduroGuidanceTests {
                 && fixture.viewModel.viewState.mapScene.userCoordinate == mapCoordinate(start)
         })
         fixture.viewModel.openSavedRoute(id: route.id)
+        await fixture.viewModel.savedRouteLoadingTask?.value
         fixture.viewModel.startPreviewedRoute()
         #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
 
@@ -108,6 +110,7 @@ struct RideNavigationEnduroGuidanceTests {
         await fixture.deviceSpeedRepository.send(sample(start, date: date, courseDegrees: .zero))
         #expect(await waitUntil { fixture.viewModel.viewState.savedRoutes.count == 1 })
         fixture.viewModel.openSavedRoute(id: route.id)
+        await fixture.viewModel.savedRouteLoadingTask?.value
         fixture.viewModel.startPreviewedRoute()
         #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
 
@@ -158,6 +161,7 @@ struct RideNavigationEnduroGuidanceTests {
                 && fixture.viewModel.viewState.mapScene.userCoordinate == mapCoordinate(start)
         })
         fixture.viewModel.openSavedRoute(id: route.id)
+        await fixture.viewModel.savedRouteLoadingTask?.value
         fixture.viewModel.startPreviewedRoute()
         #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
 

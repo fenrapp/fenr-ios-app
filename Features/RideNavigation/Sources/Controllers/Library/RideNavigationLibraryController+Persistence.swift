@@ -80,12 +80,13 @@ extension RideNavigationLibraryController {
     func includeSavedRoute(_ route: RideRoute) {
         guard deletionTasks[route.id] == nil else { return }
         snapshot.savedRoutes.removeAll { $0.id == route.id }
-        snapshot.savedRoutes.insert(route, at: 0)
+        snapshot.savedRoutes.insert(RideRouteSummary(route), at: 0)
     }
 
     func deleteSavedRoute(id: UUID) {
         guard snapshot.savedRoutes.contains(where: { $0.id == id }), deletionTasks[id] == nil else { return }
         invalidateRefresh()
+        if sharingRouteID == id { cancelShare() }
         let lifecycle = lifecycleGeneration
         snapshot.savedRoutes.removeAll { $0.id == id }
         snapshot.errorMessage = nil

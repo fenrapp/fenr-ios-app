@@ -14,6 +14,7 @@ struct RideNavigationObservationTests {
         model.start()
         try #require(await waitUntil { model.viewState.savedRoutes.contains { $0.id == route.id } })
         model.openSavedRoute(id: route.id)
+        await model.savedRouteLoadingTask?.value
         let created = NavigationObservationRecorder()
         withObservationTracking {
             if isShare {
@@ -26,6 +27,7 @@ struct RideNavigationObservationTests {
         }
         if isShare {
             model.shareSavedRoute(id: route.id)
+            await model.library.shareTask?.value
         } else {
             model.exportCompletedRoute()
         }

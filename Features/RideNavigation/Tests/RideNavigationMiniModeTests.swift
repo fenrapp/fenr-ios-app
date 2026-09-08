@@ -202,6 +202,7 @@ struct RideNavigationMiniModeTests {
                 && fixture.viewModel.viewState.mapScene.userCoordinate == mapCoordinate(coordinate)
         })
         fixture.viewModel.openSavedRoute(id: route.id)
+        await fixture.viewModel.savedRouteLoadingTask?.value
         fixture.viewModel.startPreviewedRoute()
         #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
     }

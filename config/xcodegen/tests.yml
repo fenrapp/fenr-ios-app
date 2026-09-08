@@ -185,6 +185,7 @@ targets:
       - target: EnvironmentDomain
       - target: RideNavigationDomain
       - target: RideNavigationData
+      - target: TestSupport
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigationdata.tests

@@ -124,7 +124,7 @@ struct RideNavigationPresentationMapperTests {
             Date.FormatStyle(date: .abbreviated, time: .shortened, locale: locale)
         )
 
-        #expect(mapper.routeDetail(route, measurementSystem: .metric) == "0,0 km · \(dateText)")
+        #expect(mapper.routeDetail(RideRouteSummary(route), measurementSystem: .metric) == "0,0 km · \(dateText)")
     }
 
     @Test("Fork directions map to the matching symbol and selected distance units", arguments: [

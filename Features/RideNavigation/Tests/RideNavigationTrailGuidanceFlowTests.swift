@@ -18,6 +18,7 @@ struct RideNavigationTrailGuidanceFlowTests {
         #expect(await waitUntil { fixture.viewModel.viewState.savedRoutes.count == 1 })
 
         fixture.viewModel.openSavedRoute(id: route.id)
+        await fixture.viewModel.savedRouteLoadingTask?.value
         fixture.viewModel.startPreviewedRoute()
 
         #expect(await waitUntil {
@@ -79,6 +80,7 @@ struct RideNavigationTrailGuidanceFlowTests {
         #expect(await waitUntil { fixture.viewModel.viewState.savedRoutes.count == 1 })
 
         fixture.viewModel.openSavedRoute(id: route.id)
+        await fixture.viewModel.savedRouteLoadingTask?.value
         fixture.viewModel.startPreviewedRoute()
 
         #expect(await waitUntil { await fixture.roadRouteCalculator.hasPendingRequest })
@@ -167,6 +169,7 @@ struct RideNavigationTrailGuidanceFlowTests {
         )
         #expect(await waitUntil { fixture.viewModel.viewState.savedRoutes.count == 1 })
         fixture.viewModel.openSavedRoute(id: route.id)
+        await fixture.viewModel.savedRouteLoadingTask?.value
         fixture.viewModel.startPreviewedRoute()
         #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
     }

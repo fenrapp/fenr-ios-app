@@ -18,6 +18,9 @@ public final class RideNavigationLibraryController {
     @ObservationIgnored var refreshTask: Task<Void, Never>?
     @ObservationIgnored var plannedSaveTask: Task<Void, Never>?
     @ObservationIgnored var completedSaveTask: Task<Void, Never>?
+    @ObservationIgnored var shareTask: Task<Void, Never>?
+    @ObservationIgnored var shareGeneration: UInt = 0
+    @ObservationIgnored var sharingRouteID: UUID?
     @ObservationIgnored var draftTask: Task<Void, Never>?
     @ObservationIgnored var deletionTasks: [UUID: Task<Void, Never>] = [:]
 
@@ -29,6 +32,7 @@ public final class RideNavigationLibraryController {
     deinit {
         continuation?.finish()
         refreshTask?.cancel()
+        shareTask?.cancel()
         plannedSaveTask?.cancel()
         draftTask?.cancel()
         deletionTasks.values.forEach { $0.cancel() }
@@ -54,6 +58,7 @@ public final class RideNavigationLibraryController {
         isStarted = false
         lifecycleGeneration &+= 1
         invalidateRefresh()
+        cancelShare()
         plannedSaveTask?.cancel()
         plannedSaveTask = nil
         draftTask?.cancel()
@@ -84,6 +89,7 @@ public final class RideNavigationLibraryController {
 
     func resetPersistence() {
         contextGeneration &+= 1
+        cancelShare()
         plannedSaveTask?.cancel()
         plannedSaveTask = nil
         selectedRouteID = nil
@@ -118,7 +124,7 @@ public final class RideNavigationLibraryController {
         let generation = refreshGeneration
         let lifecycle = lifecycleGeneration
         refreshTask = Task { [weak self, routeLibrary] in
-            let routes = await routeLibrary.loadRoutes()
+            let routes = await routeLibrary.loadRouteSummaries()
             guard !Task.isCancelled, let self, isStarted,
                   refreshGeneration == generation, lifecycleGeneration == lifecycle else { return }
             refreshTask = nil

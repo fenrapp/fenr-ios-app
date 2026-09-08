@@ -71,7 +71,7 @@ public struct RideNavigationPresentationMapper: Sendable {
         )
     }
 
-    func routeDetail(_ route: RideRoute, measurementSystem: MeasurementSystem) -> String {
+    func routeDetail(_ route: RideRouteSummary, measurementSystem: MeasurementSystem) -> String {
         let routeDistance = distance(
             meters: route.distanceMeters,
             measurementSystem: measurementSystem

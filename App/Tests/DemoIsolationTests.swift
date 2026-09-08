@@ -93,7 +93,9 @@ struct DemoIsolationTests {
         #expect(await realCalibration.load(vin: vin) == nil)
         let demoRoutes = fixture.routes(directory: demoDirectory)
         let realRoutes = fixture.routes(directory: fixture.realDirectory)
-        let route = RideRoute(name: "Synthetic demo route", createdAt: Date(), segments: [])
+        let route = RideRoute(
+            name: "Synthetic demo route", createdAt: Date(timeIntervalSince1970: 1_700_000_000), segments: []
+        )
         try await demoRoutes.save(route)
         try await demoRoutes.saveDraft(route)
         let demoLinks = try fixture.mapLinks(suite: fixture.demo.identity.suiteName)
@@ -103,11 +105,13 @@ struct DemoIsolationTests {
         await experience.close()
         #expect(try await realRides.loadCompletedTrips(vin: vin).map(\.id) == [trip.id])
         #expect(try await realMaintenance.loadEntries(vin: vin).map(\.id) == [entry.id])
-        #expect(await realRoutes.loadRoutes().isEmpty)
+        #expect(await realRoutes.loadRouteSummaries().isEmpty)
+        #expect(try await realRoutes.loadRoute(id: route.id) == nil)
         #expect(await realRoutes.loadDraft() == nil)
         #expect(try await realLinks.consume() == nil)
         #expect(try await demoLinks.consume() == link)
-        #expect(await demoRoutes.loadRoutes().map(\.id) == [route.id])
+        #expect(await demoRoutes.loadRouteSummaries().map(\.id) == [route.id])
+        #expect(try await demoRoutes.loadRoute(id: route.id) == route)
         #expect(await demoRoutes.loadDraft()?.id == route.id)
     }
 

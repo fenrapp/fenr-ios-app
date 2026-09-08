@@ -68,6 +68,7 @@ extension RideNavigationViewModel {
     }
 
     public func deleteSavedRoute(id: UUID) {
+        cancelSavedRouteLoad()
         guard library.snapshot.savedRoutes.contains(where: { $0.id == id }) else { return }
         if planningController.snapshot.selectedRoute?.id == id {
             planningController.resetPlan()
@@ -81,6 +82,7 @@ extension RideNavigationViewModel {
     }
 
     public func openIncomingMapLink(_ url: URL) {
+        cancelSavedRouteLoad()
         planningController.resolveExternalLink(url)
     }
 
@@ -107,6 +109,7 @@ extension RideNavigationViewModel {
     }
 
     public func importGPX(from url: URL) {
+        cancelSavedRouteLoad()
         do {
             let routes = try library.importGPX(from: url)
             guard let route = routes.first else { return }
@@ -115,7 +118,7 @@ extension RideNavigationViewModel {
             library.selectImportedRoute(id: route.id)
             activityController.resetRoadStepGuidance()
             screen = .map
-                mapDisplayStyle = .map
+            mapDisplayStyle = .map
             cameraMode = .automatic
             errorText = routes.count > 1
                 ? String(localized: .rideNavigationGPXMultipleTracks(trackCount: routes.count))
@@ -126,21 +129,6 @@ extension RideNavigationViewModel {
             errorText = String(localized: .rideNavigationGPXReadError)
             render()
         }
-    }
-
-    public func openSavedRoute(id: UUID) {
-        guard let route = library.snapshot.savedRoutes.first(where: { $0.id == id }) else { return }
-        planningController.selectTrailRoute(route)
-        activityController.resetForPreview()
-        library.selectSavedRoute(id: route.id)
-        activityController.resetRoadStepGuidance()
-        screen = .map
-        mapDisplayStyle = .map
-        cameraMode = .automatic
-        errorText = nil
-        library.clearError()
-        render()
-        prepareTrailPreview()
     }
 
     public func toggleRouteDirection() {
