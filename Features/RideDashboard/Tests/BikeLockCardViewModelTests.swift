@@ -186,13 +186,18 @@ struct BikeLockCardViewModelTests {
     }
 
     @Test("Bike Lock visibility does not rewrite the saved dashboard layout")
-    func visibilityDoesNotRewriteSavedDashboardLayout() async {
+    func visibilityDoesNotRewriteSavedDashboardLayout() async throws {
         var settings = AppSettings()
         settings.dashboardCardConfiguration.setSectionVisibility(false, id: .bikeLock)
-        let fixture = BikeLockCardViewModelTestFactory.make(settings: settings)
+        let fixture = BikeLockCardViewModelTestFactory.make(settings: settings, suspendsPreparation: true)
         fixture.viewModel.start()
+        defer { fixture.viewModel.stop() }
         await fixture.vehicleSession.send(BikeLockCardFixtures.snapshot(settings: settings))
-        #expect(await waitUntil { fixture.viewModel.viewState.isAvailable })
+        try #require(await waitUntil { await fixture.repository.hasPendingPreparation() })
+        #expect(fixture.viewModel.viewState.isAvailable)
+        #expect(!fixture.viewModel.viewState.isActionEnabled)
+        await fixture.repository.succeedPreparation()
+        try #require(await waitUntil { fixture.viewModel.viewState.isActionEnabled })
 
         fixture.viewModel.configure(
             securityOptionID: BikeLockSecurityMode.withoutPIN.rawValue,
