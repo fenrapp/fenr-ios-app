@@ -22,6 +22,9 @@ public final class ChargingDashboardViewModel {
     @ObservationIgnored private var chargeControlObservationTask: Task<Void, Never>?
     @ObservationIgnored private var observationGeneration: UInt = 0
     @ObservationIgnored private var hasCanonicalTelemetry = false
+    @ObservationIgnored private var mapperConfiguration: ChargingDashboardMappingInput.Configuration?
+    @ObservationIgnored private var presentationCache =
+        DashboardPresentationCache<ChargingDashboardMappingInput, ChargingDashboardViewState>()
 
     public init(
         vehicleSession: any VehicleSessionService,
@@ -72,6 +75,8 @@ public final class ChargingDashboardViewModel {
     func stop() {
         suspend()
         snapshot = .init()
+        mapperConfiguration = nil
+        presentationCache = .init()
         viewState = .init()
     }
 
@@ -104,7 +109,7 @@ public final class ChargingDashboardViewModel {
 #endif
 
     private func receive(_ snapshot: VehicleSessionSnapshot) {
-        guard Self.hasCanonicalTelemetry(snapshot) else {
+        guard snapshot.isCanonicalTelemetryAvailable else {
             hasCanonicalTelemetry = false
             chargeControl.receive(.init())
             if Self.isTerminal(snapshot.connection.state) {
@@ -115,14 +120,16 @@ public final class ChargingDashboardViewModel {
         }
         hasCanonicalTelemetry = true
         self.snapshot = snapshot
-        mapper = makeMapper(snapshot.settings, snapshot.profile?.vin)
+        let configuration = ChargingDashboardMappingInput.Configuration(
+            settings: snapshot.settings, vin: snapshot.profile?.vin
+        )
+        if configuration != mapperConfiguration {
+            mapper = makeMapper(snapshot.settings, snapshot.profile?.vin)
+            mapperConfiguration = configuration
+        }
         chargeControl.receive(snapshot.batteryHealth)
         setBatteryHealthRequired(snapshot.telemetry.statusFlags.isChargerConnected)
         render()
-    }
-
-    private static func hasCanonicalTelemetry(_ snapshot: VehicleSessionSnapshot) -> Bool {
-        snapshot.isCanonicalTelemetryAvailable
     }
 
     private static func isTerminal(_ state: ConnectionState) -> Bool {
@@ -160,12 +167,18 @@ public final class ChargingDashboardViewModel {
     }
 
     private func render() {
-        let nextViewState = mapper.map(
-            telemetry: snapshot.telemetry,
+        let input = ChargingDashboardMappingInput(
+            configuration: mapperConfiguration, batteryPercent: snapshot.telemetry.batteryLevel.percent,
+            isChargerConnected: snapshot.telemetry.statusFlags.isChargerConnected,
             batteryHealth: snapshot.batteryHealth,
             chargeControl: chargeControl.state
         )
-        guard nextViewState != viewState else { return }
+        let nextViewState = presentationCache.value(for: input) {
+            mapper.map(
+                telemetry: snapshot.telemetry, batteryHealth: input.batteryHealth, chargeControl: input.chargeControl
+            )
+        }
+        guard !nextViewState.hasSameDisplayedContent(as: viewState) else { return }
         viewState = nextViewState
     }
 }

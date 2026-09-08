@@ -17,6 +17,8 @@ public final class RangeCardViewModel {
         isCanonicalTelemetryAvailable: false
     )
     @ObservationIgnored private var historicalTrips: [RideTrip] = []
+    @ObservationIgnored private var presentationCache =
+        DashboardPresentationCache<RangeCardMappingInput, DashboardRangeViewData>()
     @ObservationIgnored private var loadedKey: DashboardRideHistoryKey?
     @ObservationIgnored private var failedKey: DashboardRideHistoryKey?
     @ObservationIgnored private var loadGeneration = 0
@@ -112,6 +114,7 @@ private extension RangeCardViewModel {
             loadedKey = nil
             failedKey = nil
             historicalTrips = []
+            presentationCache = .init()
             loadGeneration += 1
             loadTask?.cancel()
             loadTask = nil
@@ -150,6 +153,7 @@ private extension RangeCardViewModel {
     func finishLoading(_ trips: [RideTrip], key: DashboardRideHistoryKey) {
         guard acceptsCompletion(for: key) else { return }
         historicalTrips = trips
+        presentationCache = .init()
         loadedKey = key
         historyIsLoading = false
         loadTask = nil
@@ -176,13 +180,19 @@ private extension RangeCardViewModel {
     }
 
     func render() {
-        let nextState = mapper.map(
+        let input = RangeCardMappingInput(
             snapshot: snapshot,
-            historicalTrips: historicalTrips,
             historyIsLoading: historyIsLoading,
             historyReadFailed: failedKey != nil,
             hasLoadedHistory: loadedKey != nil
         )
+        let nextState = presentationCache.value(for: input) {
+            mapper.map(
+                snapshot: snapshot, historicalTrips: historicalTrips,
+                historyIsLoading: input.historyIsLoading, historyReadFailed: input.historyReadFailed,
+                hasLoadedHistory: input.hasLoadedHistory
+            )
+        }
         if nextState.summary != summary {
             summary = nextState.summary
         }
@@ -192,6 +202,7 @@ private extension RangeCardViewModel {
     }
 
     func stopPublishing() {
+        presentationCache = .init()
         loadGeneration += 1
         sessionTask?.cancel()
         sessionTask = nil

@@ -1,6 +1,7 @@
 import BikeDomain
 import Foundation
 import Observation
+import SettingsDomain
 import VehicleSession
 
 @MainActor
@@ -30,6 +31,12 @@ public final class RideDashboardViewModel {
     @ObservationIgnored private var lastLiveViewState: RideDashboardViewState?
     @ObservationIgnored private var lastLivePowerModeIndex: Int?
     @ObservationIgnored private var cachedVehicleIdentity: String?
+    @ObservationIgnored private var measurementCache =
+        DashboardPresentationCache<RideDashboardMappingInput.Configuration, RideDashboardMeasurementMapper>()
+    @ObservationIgnored private var presentationCache =
+        DashboardPresentationCache<RideDashboardMappingInput, RideDashboardViewState>()
+    @ObservationIgnored private var layoutCache =
+        DashboardPresentationCache<DashboardCardConfiguration, DashboardCardLayout>()
     private let initialConnectionStabilityPeriod: Duration
     private let reconnectionNoticeDelay: Duration
 
@@ -94,6 +101,9 @@ public final class RideDashboardViewModel {
     func invalidateSession() {
         pausePresentation()
         snapshot = .init()
+        measurementCache = .init()
+        presentationCache = .init()
+        layoutCache = .init()
         didRefreshStatusForTelemetrySession = false
         cachedVehicleIdentity = nil
         clearCachedPresentation()
@@ -116,22 +126,19 @@ extension RideDashboardViewModel {
 private extension RideDashboardViewModel {
     func render() {
         updateVehicleIdentity()
-        let nextCardLayout = cardLayoutMapper.map(snapshot.settings.dashboardCardConfiguration)
+        let nextCardLayout = layoutCache.value(for: snapshot.settings.dashboardCardConfiguration) {
+            cardLayoutMapper.map(snapshot.settings.dashboardCardConfiguration)
+        }
         if nextCardLayout != cardLayout {
             cardLayout = nextCardLayout
         }
-        let mappedViewState = mapper.map(
-            telemetry: snapshot.telemetry,
-            connection: snapshot.connection,
-            speedKilometersPerHour: snapshot.resolvedSpeedKilometersPerHour,
-            speedSource: snapshot.speedSource,
-            progressBarMode: snapshot.settings.dashboardProgressBarMode,
-            batteryIndicatorMode: snapshot.settings.dashboardBatteryIndicatorMode,
-            temperatureDisplayMode: snapshot.settings.dashboardTemperatureDisplayMode,
-            measurementSystem: snapshot.settings.measurementSystem,
-            isGPSAvailable: snapshot.isGPSAvailable,
-            powerModeNames: snapshot.settings.powerModeNames(forVIN: snapshot.profile?.vin)
-        )
+        let input = RideDashboardMappingInput(snapshot: snapshot)
+        let measurementMapper = measurementCache.value(for: input.configuration) {
+            mapper.measurementMapper(for: input.configuration.measurementSystem)
+        }
+        let mappedViewState = presentationCache.value(for: input) {
+            input.map(using: mapper, measurementMapper: measurementMapper)
+        }
         updateViewState(with: mappedViewState)
         updateStatusSnapshotRefresh()
         if mappedViewState.hasTelemetry, snapshot.isCanonicalTelemetryAvailable {
@@ -208,7 +215,7 @@ private extension RideDashboardViewModel {
 
     private func promoteStableConnection() {
         connectionStabilityTask = nil
-        guard let pendingLiveViewState, isReceivingTelemetry else {
+        guard let pendingLiveViewState, case .receivingTelemetry = snapshot.connection.state else {
             self.pendingLiveViewState = nil
             render()
             return
@@ -268,7 +275,7 @@ private extension RideDashboardViewModel {
     }
 
     private func updateStatusSnapshotRefresh() {
-        guard isReceivingTelemetry else {
+        guard case .receivingTelemetry = snapshot.connection.state else {
             statusSnapshotRefreshTask?.cancel()
             statusSnapshotRefreshTask = nil
             didRefreshStatusForTelemetrySession = false
@@ -280,14 +287,6 @@ private extension RideDashboardViewModel {
         let vehicleSession = vehicleSession
         statusSnapshotRefreshTask = Task {
             await vehicleSession.refreshBikeStatus()
-        }
-    }
-
-    private var isReceivingTelemetry: Bool {
-        if case .receivingTelemetry = snapshot.connection.state {
-            true
-        } else {
-            false
         }
     }
 

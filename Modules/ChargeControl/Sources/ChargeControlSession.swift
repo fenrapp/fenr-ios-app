@@ -6,7 +6,9 @@ import Observation
 @Observable
 public final class ChargeControlSession {
     public private(set) var state: ChargeControlState {
-        didSet { stateEmitter.send(state) }
+        didSet {
+            if state != oldValue { stateEmitter.send(state) }
+        }
     }
 
     public var logLines: [String] { logger.lines }
