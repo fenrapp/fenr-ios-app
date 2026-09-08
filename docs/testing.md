@@ -23,7 +23,8 @@ FENR_IOS_DESTINATION='platform=iOS Simulator,name=iPhone 17,OS=26.5'
 FENR_WATCH_DESTINATION='platform=watchOS Simulator,name=Apple Watch Series 11 (46mm),OS=26.5'
 ```
 
-These example destinations match the CI configuration in
+CI runs iPhone tests and builds on pushes and pull requests. Watch validation
+runs locally and in the scheduled/manual compatibility matrix in
 [ci.yml](../.github/workflows/ci.yml). Substitute installed device names and
 runtimes locally. The deployment targets remain iOS 17 and watchOS 10; running
 tests on a newer simulator does not establish runtime coverage of those minimums.

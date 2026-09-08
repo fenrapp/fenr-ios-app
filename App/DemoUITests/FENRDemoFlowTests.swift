@@ -16,9 +16,12 @@ final class FENRDemoFlowTests: XCTestCase {
 
     func testPublicDemoReturnsToOnboarding() throws {
         app.launch()
-        // This suite runs on a dedicated clean simulator, through the public entry.
         try tap("onboarding.exploreDemo")
         try revealAndTap("demo.start")
+        try waitFor(app.windows.firstMatch, predicate: NSPredicate { candidate, _ in
+            guard let window = candidate as? XCUIElement else { return false }
+            return window.frame.width > window.frame.height
+        })
         try tap("demo.openControls")
         let riding = app.buttons["demo.scenario.riding"]
         try tap("demo.scenario.riding")
@@ -39,20 +42,32 @@ final class FENRDemoFlowTests: XCTestCase {
 
     private func tap(_ identifier: String) throws {
         let button = app.buttons[identifier].firstMatch
-        try waitFor(button, predicate: NSPredicate(format: "exists == true AND hittable == true"))
+        try waitFor(button, predicate: NSPredicate { candidate, _ in
+            guard let element = candidate as? XCUIElement else { return false }
+            return self.isReadyToTap(element)
+        })
         button.tap()
     }
 
     private func revealAndTap(_ identifier: String) throws {
         let button = app.buttons[identifier].firstMatch
         for _ in 0 ..< 12 {
-            if button.exists && button.isHittable {
+            if isReadyToTap(button) {
                 button.tap()
                 return
             }
             app.swipeUp()
         }
         try tap(identifier)
+    }
+
+    private func isReadyToTap(_ element: XCUIElement) -> Bool {
+        guard element.exists else { return false }
+        let frame = element.frame
+        guard frame.origin.x.isFinite, frame.origin.y.isFinite,
+              frame.width.isFinite, frame.height.isFinite, !frame.isEmpty,
+              app.windows.firstMatch.frame.contains(frame) else { return false }
+        return element.isHittable
     }
 
     private func waitFor(
