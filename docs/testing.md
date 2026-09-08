@@ -23,7 +23,7 @@ FENR_IOS_DESTINATION='platform=iOS Simulator,name=iPhone 17,OS=26.5'
 FENR_WATCH_DESTINATION='platform=watchOS Simulator,name=Apple Watch Series 11 (46mm),OS=26.5'
 ```
 
-CI runs iPhone tests and builds on pushes and pull requests. Watch validation
+CI runs iPhone unit tests and builds on pushes and pull requests. Watch validation
 runs locally and in the scheduled/manual compatibility matrix in
 [ci.yml](../.github/workflows/ci.yml). Substitute installed device names and
 runtimes locally. The deployment targets remain iOS 17 and watchOS 10; running
@@ -125,7 +125,6 @@ If none can boot, the report explicitly records that compatibility was not teste
 A fallback never counts as coverage of the requested runtime. Provisioning tool
 errors and test/build failures fail the job; a documented unavailable-runtime gap
 does not. Reports, build logs, and result bundles are uploaded for seven days.
-These are Watch unit tests and app builds, not Watch E2E automation.
 
 To run preflight locally (it may download an official runtime and creates a device):
 
@@ -138,41 +137,6 @@ python3 scripts/prepare-compatibility-runtime.py --platform watchOS --version 10
 
 Use the report's `destination` for `xcodebuild` and delete its temporary `deviceID`
 after testing. CI performs that cleanup automatically.
-
-## Automated iPhone E2E
-
-`FENRUITests` runs the `FENRDemoUITests` suite serially against the public FENR
-app. Its sources and paging helper live under `App/DemoUITests`.
-CI creates a clean iPhone 17 and iPhone SE (3rd generation), both on iOS 26.5,
-and uploads result bundles with the tests' screenshot attachments.
-There is no new Watch UI automation target.
-
-Use a dedicated clean simulator locally for the public demo suite:
-
-```sh
-FENR_E2E_DEVICE=$(xcrun simctl create 'FENR iPhone E2E' \
-  com.apple.CoreSimulator.SimDeviceType.iPhone-17 \
-  com.apple.CoreSimulator.SimRuntime.iOS-26-5)
-xcrun simctl boot "$FENR_E2E_DEVICE"
-xcrun simctl bootstatus "$FENR_E2E_DEVICE" -b
-xcodebuild -project FENR.xcodeproj -scheme FENRUITests \
-  -destination "platform=iOS Simulator,id=$FENR_E2E_DEVICE" \
-  -derivedDataPath /tmp/fenr-e2e \
-  -resultBundlePath /tmp/fenr-e2e-results.xcresult \
-  -parallel-testing-enabled NO \
-  CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=- test
-xcrun simctl delete "$FENR_E2E_DEVICE"
-```
-
-Choose a new result-bundle path for each run. Replace the device type with
-`com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation` for compact QA.
-Delete only the simulator created by these commands, including after a failed run.
-
-The suite uses the real public demo entry without debug harness flags. It checks
-entry to the demo dashboard, return to onboarding through Change Bike, and
-onboarding persistence after relaunch. Other feature flows are covered by their
-unit tests and applicable manual checks. A passing simulator run does not
-establish physical VCU write or Bluetooth reconnection evidence.
 
 ## Manual checks
 

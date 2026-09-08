@@ -177,7 +177,7 @@ def validate(spec, root, exceptions=None):
 
     checked_files = set()
     for name, target in sorted(targets.items()):
-        if target.get("type", "").startswith("bundle.unit-test") or target.get("type") == "bundle.ui-testing":
+        if target.get("type", "").startswith("bundle.unit-test"):
             continue
         owner_layer = layer(name, target)
         for file in source_files(root, target):
