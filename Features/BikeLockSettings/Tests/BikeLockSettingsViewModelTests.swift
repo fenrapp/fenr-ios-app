@@ -174,7 +174,7 @@ struct BikeLockSettingsViewModelTests {
     }
 
     @Test("Stopping cancels authentication and allows restart")
-    func stopCancelsPendingAuthenticationAndCanRestart() async {
+    func stopCancelsPendingAuthenticationAndCanRestart() async throws {
         let fixture = BikeLockSettingsViewModelFixture(mode: .pinAndFaceID, pin: "123456")
         await fixture.authenticator.block()
         await fixture.start()
@@ -185,8 +185,7 @@ struct BikeLockSettingsViewModelTests {
         await fixture.authenticator.setOutcome(.success(true))
         await fixture.authenticator.release()
         fixture.viewModel.start()
-        await fixture.sendSnapshot(vin: fixture.vin)
-        #expect(await waitUntil { fixture.viewModel.viewState.isAvailable })
+        try #require(await waitUntil { fixture.viewModel.viewState.isAvailable })
         fixture.viewModel.changeProtection()
 
         #expect(await waitUntil { fixture.viewModel.viewState.destination == .chooseProtection })
