@@ -84,12 +84,9 @@ struct LiveRideSessionServiceTests {
 
     @Test("Publishes a history revision only after a completed ride is deleted")
     func publishesDeletionRevision() async {
-        let fixture = makeLiveRideSessionServiceFixture()
-        await fixture.start()
-        #expect(await waitUntil {
-            await fixture.latestSnapshot().vehicleIdentity.confirmedVIN != nil
-        })
         let vin = "TESTVIN0000000001"
+        let fixture = makeLiveRideSessionServiceFixture(initialVehicleIdentity: .vin(vin))
+        await fixture.start()
         let rideID = UUID()
         let initialRevision = await fixture.latestSnapshot().historyRevision
 

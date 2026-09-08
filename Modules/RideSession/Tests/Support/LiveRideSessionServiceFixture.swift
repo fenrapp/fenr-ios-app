@@ -7,6 +7,7 @@ import VehicleSession
 
 func makeLiveRideSessionServiceFixture(
     speedSource: SpeedSource = .motorcycle,
+    initialVehicleIdentity: RideVehicleIdentity = .temporary(UUID()),
     rideVehicleSession: (any VehicleSessionService)? = nil,
     tripRepository: SessionTripRepository = .init(),
     sleepController: SessionSleepController = .init(),
@@ -36,7 +37,7 @@ func makeLiveRideSessionServiceFixture(
         identityResolver: identityResolver,
         initialContext: .init(
             applicationSessionID: UUID(),
-            vehicleIdentity: .temporary(UUID())
+            vehicleIdentity: initialVehicleIdentity
         ),
         now: { date },
         sleep: { duration in try await sleepController.sleep(for: duration) }
