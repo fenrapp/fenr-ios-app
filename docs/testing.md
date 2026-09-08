@@ -140,13 +140,13 @@ after testing. CI performs that cleanup automatically.
 
 ## Automated iPhone E2E
 
-`FENRUITests` runs `FENRDebugUITests` against FENRDebug and the small
-`FENRDemoUITests` suite against the public FENR app. Both suites run serially.
+`FENRUITests` runs the `FENRDemoUITests` suite serially against the public FENR
+app. Its sources and paging helper live under `App/DemoUITests`.
 CI creates a clean iPhone 17 and iPhone SE (3rd generation), both on iOS 26.5,
 and uploads result bundles with the tests' screenshot attachments.
 There is no new Watch UI automation target.
 
-Use a dedicated clean simulator locally, especially for the public demo suite:
+Use a dedicated clean simulator locally for the public demo suite:
 
 ```sh
 FENR_E2E_DEVICE=$(xcrun simctl create 'FENR iPhone E2E' \
@@ -167,19 +167,11 @@ Choose a new result-bundle path for each run. Replace the device type with
 `com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation` for compact QA.
 Delete only the simulator created by these commands, including after a failed run.
 
-Debug tests launch with `-uiTesting -uiTestSession <UUID> -uiTestReset` for their
-first launch and omit reset when checking relaunch persistence. Their settings
-and files belong to that UUID; reset never clears ordinary debug or production
-data. Debug collaborators inject read/save failures and moving location samples.
-Tests interact with the real screens and persistence, using bounded UI waits.
-Route tests do not depend on Apple Maps search results or downloaded map tiles.
-The public demo suite passes no debug harness flags and uses its real entry flow.
-
-The suites cover independent settings persistence, history list/detail recovery,
-maintenance retry/create/edit/relaunch/delete, recording through pause and mini
-mode, route-save retry without duplicates, confirmed charge settings and return
-from the public demo to onboarding. A passing simulator run does not establish
-physical VCU write or Bluetooth reconnection evidence.
+The suite uses the real public demo entry without debug harness flags. It checks
+entry to the demo dashboard, return to onboarding through Change Bike, and
+onboarding persistence after relaunch. Other feature flows are covered by their
+unit tests and applicable manual checks. A passing simulator run does not
+establish physical VCU write or Bluetooth reconnection evidence.
 
 ## Manual checks
 

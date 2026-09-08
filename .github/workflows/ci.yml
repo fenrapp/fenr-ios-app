@@ -306,7 +306,7 @@ jobs:
           echo "device-id=$FENR_DEVICE_ID" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$FENR_DEVICE_ID"
           xcrun simctl bootstatus "$FENR_DEVICE_ID" -b
-      - name: Run serial iPhone E2E suites
+      - name: Run serial public demo E2E suite
         env:
           FENR_DEVICE_ID: ${{ steps.simulator.outputs.device-id }}
         run: |
@@ -323,7 +323,7 @@ jobs:
         env:
           FENR_DEVICE_ID: ${{ steps.simulator.outputs.device-id }}
         run: xcrun simctl delete "$FENR_DEVICE_ID"
-      - name: Upload iPhone E2E results
+      - name: Upload public demo E2E results
         if: always()
         uses: actions/upload-artifact@v7
         with:

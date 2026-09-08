@@ -29,34 +29,6 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "6588FED4595BEB5CD42031E1"
-               BuildableName = "FENRDebug.app"
-               BlueprintName = "FENRDebug"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "NO"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "87944D858ECE6468157E0C82"
-               BuildableName = "FENRDebugUITests.xctest"
-               BlueprintName = "FENRDebugUITests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "NO"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
                BlueprintIdentifier = "FFF6A45964F1FE304F4A3793"
                BuildableName = "FENRDemoUITests.xctest"
                BlueprintName = "FENRDemoUITests"
@@ -81,17 +53,6 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "87944D858ECE6468157E0C82"
-               BuildableName = "FENRDebugUITests.xctest"
-               BlueprintName = "FENRDebugUITests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
          <TestableReference
             skipped = "NO"
             parallelizable = "NO">

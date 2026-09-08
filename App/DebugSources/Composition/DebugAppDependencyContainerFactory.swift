@@ -2,7 +2,6 @@ import BikeDomain
 import BikeEmulator
 import BLETraceDomain
 import EnvironmentData
-import EnvironmentDomain
 import Foundation
 import MaintenanceData
 import MaintenanceDomain
@@ -11,7 +10,6 @@ import RideNavigationData
 import RideSessionData
 import RideSessionDomain
 import SettingsData
-import SettingsDomain
 
 @MainActor
 enum DebugAppDependencyContainerFactory {
@@ -30,8 +28,6 @@ enum DebugAppDependencyContainerFactory {
         arguments: [String],
         maintenanceReminderScheduler: any MaintenanceReminderScheduling
     ) -> DebugAppContext {
-        let environment = makeEnvironment(userDefaults: userDefaults, arguments: arguments)
-        let userDefaults = environment.defaults
         let captureState = BLETraceCaptureState()
         let traceRepository = NoOpBLETraceRepository()
         let skipsOnboarding = arguments.contains(Constants.skipOnboardingArgument)
@@ -46,11 +42,8 @@ enum DebugAppDependencyContainerFactory {
                 uptimeNanoseconds: { DispatchTime.now().uptimeNanoseconds }
             )
         )
-        let initialProfile = environment.profileStore?.load()
-            ?? (skipsOnboarding ? profile(for: launchConfiguration.powerModePreset) : nil)
-        if let initialProfile { environment.profileStore?.save(initialProfile) }
         let profileRepository = DebugBikeProfileRepository(
-            initialProfile: initialProfile, persistence: environment.profileStore
+            initialProfile: skipsOnboarding ? profile(for: launchConfiguration.powerModePreset) : nil
         )
         return DebugAppContext(
             container: makeContainer(
@@ -58,7 +51,7 @@ enum DebugAppDependencyContainerFactory {
                 profileRepository: profileRepository,
                 maintenanceReminderScheduler: maintenanceReminderScheduler,
                 diagnostics: DebugDiagnosticsContext(traceRepository: traceRepository, captureState: captureState),
-                environment: environment
+                forceOnboarding: !skipsOnboarding
             ),
             scenarioController: DebugScenarioController(
                 repository: repository,
@@ -66,48 +59,12 @@ enum DebugAppDependencyContainerFactory {
                 profileRepository: profileRepository,
                 initialPowerModePreset: launchConfiguration.powerModePreset,
                 initialMap: launchConfiguration.activeMap
-            ),
-            uiTestControls: environment.controls,
-            navigationControls: environment.navigation?.controls
+            )
         )
     }
-
 }
 
 private extension DebugAppDependencyContainerFactory {
-    static func makeEnvironment(userDefaults: UserDefaults, arguments: [String]) -> DebugLaunchEnvironment {
-        do {
-            let fileManager = FileManager.default
-            let applicationSupport = try fileManager.url(
-                for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true
-            )
-            let session = try DebugUITestSession.parse(arguments: arguments, applicationSupport: applicationSupport)
-            guard let session else {
-                return DebugLaunchEnvironment(
-                    defaults: userDefaults, uiTestSession: nil, profileStore: nil, controls: nil, navigation: nil,
-                    forceOnboarding: !arguments.contains(Constants.skipOnboardingArgument)
-                )
-            }
-            let defaults = try session.prepare(
-                fileManager: fileManager, clearCredentials: DebugUITestCredentialReset.clear
-            )
-            return DebugLaunchEnvironment(
-                defaults: defaults,
-                uiTestSession: session,
-                profileStore: DebugUITestProfileStore(
-                    defaults: defaults, encoder: JSONEncoder(), decoder: JSONDecoder(), lock: NSLock()
-                ),
-                controls: DebugUITestControls(),
-                navigation: DebugNavigationHarness.make(
-                    directory: session.directory.appendingPathComponent("Routes", isDirectory: true)
-                ),
-                forceOnboarding: false
-            )
-        } catch {
-            preconditionFailure("Unable to prepare the isolated UI test environment: \(error)")
-        }
-    }
-
     private static func makeLaunchConfiguration(
         arguments: [String],
         store: DebugScenarioStore
@@ -128,19 +85,14 @@ private extension DebugAppDependencyContainerFactory {
         profileRepository: DebugBikeProfileRepository,
         maintenanceReminderScheduler: any MaintenanceReminderScheduling,
         diagnostics: DebugDiagnosticsContext,
-        environment: DebugLaunchEnvironment
+        forceOnboarding: Bool
     ) -> AppDependencyContainer {
-        let settingsRepository = makeSettingsRepository(
-            profileRepository: profileRepository, session: environment.uiTestSession
+        let settingsRepository = AppSettingsRepositoryFactory.make(
+            userDefaults: .standard, profileRepository: profileRepository
         )
-        let deviceSpeedRepository: any DeviceSpeedRepository
-        if let navigation = environment.navigation {
-            deviceSpeedRepository = navigation.deviceSpeedRepository
-        } else {
-            deviceSpeedRepository = DebugDeviceSpeedRepository()
-        }
+        let deviceSpeedRepository = DebugDeviceSpeedRepository()
         let motionCalibrationRepository = makeMotionCalibrationRepository()
-        let persistence = makePersistence(environment: environment)
+        let persistence = makePersistence()
         let sessionServices = AppSessionDependencyContainer.makeServices(
             dependencies: .init(
                 repository: repository,
@@ -148,7 +100,7 @@ private extension DebugAppDependencyContainerFactory {
                 settingsRepository: settingsRepository,
                 deviceSpeedRepository: deviceSpeedRepository,
                 motionCalibrationRepository: motionCalibrationRepository,
-                imuProfile: .debug,
+                imuProfile: makeIMUProfile(),
                 rideTripRepository: persistence.rides
             )
         )
@@ -172,77 +124,31 @@ private extension DebugAppDependencyContainerFactory {
             dashboardCardSettingsContainer: DashboardCardSettingsDependencyContainer(),
             powerModeSettingsContainer: PowerModeSettingsDependencyContainer(),
             rideHistoryContainer: RideHistoryDependencyContainer(),
-            maintenanceContainer: MaintenanceDependencyContainer(
-                reminderScheduler: environment.uiTestSession == nil
-                    ? maintenanceReminderScheduler : NoOpMaintenanceReminderScheduler()
-            ),
+            maintenanceContainer: MaintenanceDependencyContainer(reminderScheduler: maintenanceReminderScheduler),
             bleTraceLogRepository: diagnostics.traceRepository,
-            incomingMapLinkStore: makeIncomingMapLinkStore(environment: environment),
+            incomingMapLinkStore: makeIncomingMapLinkStore(),
             bikeLockCredentialStore: KeychainBikeLockCredentialStore(
-                service: environment.uiTestSession?.credentialService ?? "com.fenr.app.debug.bike-lock"
+                service: "com.fenr.app.debug.bike-lock"
             ),
             bikeLockAuthenticator: BikeLockAuthenticationFactory.makeAuthenticator(),
             bikeLockCapabilityStore: bikeLockCapabilityStore,
             startupPreparer: persistence.seeder,
             initialOnboardingVIN: BikeEmulatorIdentity.vin,
-            forceOnboarding: environment.forceOnboarding,
-            rideNavigationFactoryBuilder: environment.navigation?.makeFeatureFactory
+            forceOnboarding: forceOnboarding
         )
     }
 
-    private static func makePersistence(environment: DebugLaunchEnvironment) -> DebugPersistenceContext {
-        let rides = makeRideTripRepository(directory: environment.uiTestSession?.directory)
-        let maintenance = makeMaintenanceRepository(directory: environment.uiTestSession?.directory)
-        let rideTripRepository: any RideTripRepository
-        let maintenanceRepository: any MaintenanceRepository
-        if let controls = environment.controls {
-            rideTripRepository = DebugUITestRideTripRepository(repository: rides, controls: controls)
-            maintenanceRepository = DebugUITestMaintenanceRepository(repository: maintenance, controls: controls)
-        } else {
-            rideTripRepository = rides
-            maintenanceRepository = maintenance
-        }
-        let now: @Sendable () -> Date
-        if environment.uiTestSession == nil {
-            now = Date.init
-        } else {
-            now = { Date(timeIntervalSince1970: 1_700_000_000) }
-        }
+    private static func makePersistence() -> DebugPersistenceContext {
+        let rides = makeRideTripRepository()
         return DebugPersistenceContext(
-            rides: rideTripRepository,
-            maintenance: maintenanceRepository,
-            seeder: DebugRideHistorySeeder(
-                repository: rides,
-                now: now
-            )
+            rides: rides,
+            maintenance: makeMaintenanceRepository(),
+            seeder: DebugRideHistorySeeder(repository: rides, now: Date.init)
         )
     }
 
-    private static func makeSettingsRepository(
-        profileRepository: DebugBikeProfileRepository,
-        session: DebugUITestSession?
-    ) -> any AppSettingsRepository {
-        if let session {
-            guard let defaults = UserDefaults(suiteName: session.suiteName) else {
-                preconditionFailure("Unable to open isolated settings defaults")
-            }
-            return AppSettingsRepositoryFactory.make(userDefaults: defaults, profileRepository: profileRepository)
-        }
-        return AppSettingsRepositoryFactory.make(userDefaults: .standard, profileRepository: profileRepository)
-    }
-
-    private static func makeIncomingMapLinkStore(
-        environment: DebugLaunchEnvironment
-    ) -> UserDefaultsIncomingMapLinkStore {
-        if let session = environment.uiTestSession {
-            guard let defaults = UserDefaults(suiteName: session.suiteName) else {
-                preconditionFailure("Unable to open isolated incoming-link defaults")
-            }
-            return UserDefaultsIncomingMapLinkStore(
-                userDefaults: defaults, encoder: JSONEncoder(), decoder: JSONDecoder()
-            )
-        }
-        return (try? UserDefaultsIncomingMapLinkStore.shared())
+    private static func makeIncomingMapLinkStore() -> UserDefaultsIncomingMapLinkStore {
+        (try? UserDefaultsIncomingMapLinkStore.shared())
             ?? UserDefaultsIncomingMapLinkStore(
                 userDefaults: .standard,
                 encoder: JSONEncoder(),
@@ -280,11 +186,9 @@ private extension DebugAppDependencyContainerFactory {
         ])
     }
 
-    private static func makeRideTripRepository(directory: URL?) -> SwiftDataRideTripRepository {
+    private static func makeRideTripRepository() -> SwiftDataRideTripRepository {
         do {
-            let modelContainer = try RideTripRepositoryFactory.makeModelContainer(
-                storeURL: directory?.appendingPathComponent("Rides.store")
-            )
+            let modelContainer = try RideTripRepositoryFactory.makeModelContainer()
             let repository = RideTripRepositoryFactory.make(
                 modelContainer: modelContainer,
                 mapper: RideTripRecordMapper(),
@@ -296,11 +200,9 @@ private extension DebugAppDependencyContainerFactory {
         }
     }
 
-    private static func makeMaintenanceRepository(directory: URL?) -> SwiftDataMaintenanceRepository {
+    private static func makeMaintenanceRepository() -> SwiftDataMaintenanceRepository {
         do {
-            return try MaintenanceRepositoryFactory.make(
-                storeURL: directory?.appendingPathComponent("Maintenance.store")
-            )
+            return try MaintenanceRepositoryFactory.make()
         } catch {
             preconditionFailure("Unable to create the debug maintenance store: \(error)")
         }
@@ -323,8 +225,6 @@ private struct DebugLaunchConfiguration {
 struct DebugAppContext {
     let container: AppDependencyContainer
     let scenarioController: DebugScenarioController
-    let uiTestControls: DebugUITestControls?
-    let navigationControls: DebugNavigationControls?
 }
 
 private struct DebugBikePinDeriver: BikePinDeriving {

@@ -3,12 +3,10 @@ import BikeEmulator
 import Foundation
 
 actor DebugBikeProfileRepository: BikeProfileRepository {
-    private let persistence: DebugUITestProfileStore?
     private var profile: BikeProfile?
     private var observers: [UUID: AsyncStream<BikeProfileState>.Continuation] = [:]
 
-    init(initialProfile: BikeProfile? = nil, persistence: DebugUITestProfileStore? = nil) {
-        self.persistence = persistence
+    init(initialProfile: BikeProfile? = nil) {
         profile = initialProfile
     }
 
@@ -19,14 +17,12 @@ actor DebugBikeProfileRepository: BikeProfileRepository {
     func saveProfile(_ profile: BikeProfile) async {
         guard profile != self.profile else { return }
         self.profile = profile
-        persistence?.save(profile)
         observers.values.forEach { $0.yield(BikeProfileState(profile: profile)) }
     }
 
     func clearProfile() async {
         guard profile != nil else { return }
         profile = nil
-        persistence?.save(nil)
         observers.values.forEach { $0.yield(BikeProfileState(profile: nil)) }
     }
 
@@ -42,7 +38,6 @@ actor DebugBikeProfileRepository: BikeProfileRepository {
             profile.alphaDetectedAt = nil
         }
         self.profile = profile
-        persistence?.save(profile)
         observers.values.forEach { $0.yield(BikeProfileState(profile: profile)) }
     }
 
