@@ -29,6 +29,10 @@ runs locally and in the scheduled/manual compatibility matrix in
 runtimes locally. The deployment targets remain iOS 17 and watchOS 10; running
 tests on a newer simulator does not establish runtime coverage of those minimums.
 
+CI creates its iPhone test simulator explicitly and selects it by UDID. Build-only
+steps use `generic/platform=iOS Simulator`, so they do not require a pre-created
+device on the runner.
+
 ## Lint and iPhone tests
 
 ```sh

@@ -65,11 +65,22 @@ jobs:
         run: brew install xcodegen
       - name: Generate Xcode project
         run: xcodegen generate
+      - name: Create iPhone test simulator
+        id: simulator
+        run: |
+          FENR_DEVICE_ID=$(xcrun simctl create 'FENR iOS tests' \
+            com.apple.CoreSimulator.SimDeviceType.iPhone-17 \
+            com.apple.CoreSimulator.SimRuntime.iOS-26-5)
+          echo "device-id=$FENR_DEVICE_ID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$FENR_DEVICE_ID"
+          xcrun simctl bootstatus "$FENR_DEVICE_ID" -b
       - name: Test iOS debug
+        env:
+          FENR_DEVICE_ID: ${{ steps.simulator.outputs.device-id }}
         run: |
           mkdir -p "$RUNNER_TEMP/fenr-reports"
           xcodebuild -project FENR.xcodeproj -scheme FENR \
-            -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5' \
+            -destination "platform=iOS Simulator,id=$FENR_DEVICE_ID" \
             -derivedDataPath "$RUNNER_TEMP/fenr-ios-debug" \
             -resultBundlePath "$RUNNER_TEMP/fenr-reports/ios-debug.xcresult" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test \
@@ -82,13 +93,18 @@ jobs:
       - name: Build and validate iOS debug app
         run: |
           xcodebuild -project FENR.xcodeproj -scheme FENRDebug \
-            -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5' \
+            -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath "$RUNNER_TEMP/fenr-ios-debug" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build \
             | tee "$RUNNER_TEMP/fenr-reports/ios-debug-build.log"
           python3 scripts/validate-runtime-frameworks.py \
             --app "$RUNNER_TEMP/fenr-ios-debug/Build/Products/Debug-iphonesimulator/FENRDebug.app" \
             --report "$RUNNER_TEMP/fenr-reports/embedding-report.json"
+      - name: Remove iPhone test simulator
+        if: always() && steps.simulator.outputs.device-id != ''
+        env:
+          FENR_DEVICE_ID: ${{ steps.simulator.outputs.device-id }}
+        run: xcrun simctl delete "$FENR_DEVICE_ID"
       - name: Upload iOS debug results
         if: always()
         uses: actions/upload-artifact@v7
@@ -113,7 +129,7 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/fenr-reports"
           xcodebuild -project FENR.xcodeproj -scheme FENR -configuration Release \
-            -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5' \
+            -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath "$RUNNER_TEMP/fenr-ios-release" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build \
             | tee "$RUNNER_TEMP/fenr-reports/ios-release-build.log"
