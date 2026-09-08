@@ -49,7 +49,8 @@ extension FileRecordedRouteRepository {
             }
         }
         summaryCache[id] = nil
-        guard !Task.isCancelled, let route = try? codec.decode(Data(contentsOf: url)), route.id == id else { return nil }
+        guard !Task.isCancelled,
+              let route = try? codec.decode(Data(contentsOf: url)), route.id == id else { return nil }
         guard !Task.isCancelled else { return nil }
         guard file == fileVersion(at: url) else { return nil }
         if let file { persistSummary(of: route, file: file) }
