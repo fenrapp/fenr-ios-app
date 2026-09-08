@@ -1,16 +1,4 @@
 targets:
-  FENRDemoUITests:
-    type: bundle.ui-testing
-    platform: iOS
-    sources:
-      - path: App/DemoUITests
-    dependencies:
-      - target: FENR
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.demo.uitests
-        TEST_TARGET_NAME: FENR
-        TARGETED_DEVICE_FAMILY: 1
   StarkProtocolTests:
     templates: [SharedUnitTests]
     sources:
