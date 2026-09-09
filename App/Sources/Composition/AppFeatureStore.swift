@@ -18,7 +18,9 @@ struct AppFeatureStore {
     let onboardingViewModel: BikeOnboardingViewModel
     let appSettingsViewModel: AppSettingsViewModel
     let dashboardCardSettingsViewModel: DashboardCardSettingsViewModel
-    let powerModeSettingsViewModel: PowerModeSettingsViewModel
+    let powerModes: PowerModeFeature
+    var powerModeSettingsViewModel: PowerModeSettingsViewModel { powerModes.basic }
+    var advancedPowerModeViewModel: PowerModeAdvancedViewModel { powerModes.advanced }
     let rideHistoryViewModel: RideHistoryViewModel
     let maintenanceViewModel: MaintenanceViewModel
     let rideDashboardFactory: any RideDashboardFeatureBuilding

@@ -1,7 +1,9 @@
 import BikeDomain
 import Foundation
 
-extension PowerModeSettingsViewStateMapper {
+struct PowerModeControlMapper: Sendable {
+    let locale: Locale
+
     func controlData(for input: PowerModeSettingsMappingInput) -> PowerModeControlData {
         let configuration = input.telemetry.powerModeConfigurations[input.selectedMapIndex]
         let tractionSupported = isSupportedTractionConfiguration(configuration)

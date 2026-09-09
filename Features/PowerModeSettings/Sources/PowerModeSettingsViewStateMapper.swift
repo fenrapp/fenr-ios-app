@@ -3,22 +3,28 @@ import Foundation
 import SettingsDomain
 
 public struct PowerModeSettingsViewStateMapper: Sendable {
-    let locale: Locale
+    private let controls: PowerModeControlMapper
+    private let statusMapper: PowerModeStatusMapper
+    private let selection: PowerModeMapSelectionMapper
 
-    public init(locale: Locale) {
-        self.locale = locale
+    init(
+        controls: PowerModeControlMapper, statusMapper: PowerModeStatusMapper, selection: PowerModeMapSelectionMapper
+    ) {
+        self.controls = controls
+        self.statusMapper = statusMapper
+        self.selection = selection
     }
 
     func map(_ input: PowerModeSettingsMappingInput) -> PowerModeSettingsViewState {
         let selection = selectionData(for: input)
-        let controls = controlData(for: input)
-        let operation = operationStatus(
+        let controls = self.controls.controlData(for: input)
+        let operation = statusMapper.operationStatus(
             configuration: controls.configuration,
             isTractionControlReady: controls.isTractionControlReady,
             input: input
         )
-        let connectionText = connectionText(input.connection.state)
-        let capabilityText = capabilityText(
+        let connectionText = statusMapper.connectionText(input.connection.state)
+        let capabilityText = statusMapper.capabilityText(
             detectedTier: input.telemetry.detectedPowerTier,
             declaredTier: input.profile?.declaredPowerTier
         )
@@ -51,18 +57,18 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
             capabilityText: connection.capability,
             statusText: operation.text,
             statusIsError: operation.isError,
-            status: status(
+            status: statusMapper.status(
                 connectionState: input.connection.state,
                 connection: connection,
                 operation: operation,
                 isActivity: input.isRefreshing
             ),
             canRefresh: input.isStarted
-                && isAuthenticated(input.connection.state)
+                && statusMapper.isAuthenticated(input.connection.state)
                 && !input.isRefreshing
                 && !input.isPreparingControl
                 && !input.isApplyingControl,
-            controlGroups: controlGroups(from: controls.adjustments)
+            controlGroups: self.controls.controlGroups(from: controls.adjustments)
         )
     }
 
@@ -70,18 +76,7 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
         for input: PowerModeSettingsMappingInput
     ) -> PowerModeSelectionData {
         let names = input.settings.powerModeNames(forVIN: input.profile?.vin)
-        let maps = (0 ... 4).map { mapIndex in
-            let mapNumber = mapIndex + 1
-            let name = names[mapIndex]?.value
-            return PowerModeMapViewData(
-                id: mapIndex,
-                title: name ?? String(mapNumber),
-                accessibilityLabel: name.map {
-                    String(localized: .powerModeSettingsNamedMapAccessibility(mapNumber, $0))
-                } ?? String(localized: .powerModeSettingsMapAccessibility(mapNumber)),
-                isSelected: mapIndex == input.selectedMapIndex
-            )
-        }
+        let maps = selection.map(settings: input.settings, profile: input.profile, selected: input.selectedMapIndex)
         return .init(
             maps: maps,
             currentName: names[input.selectedMapIndex]?.value ?? ""

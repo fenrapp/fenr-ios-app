@@ -1,7 +1,7 @@
 import BikeDomain
 import Foundation
 
-extension PowerModeSettingsViewStateMapper {
+struct PowerModeStatusMapper: Sendable {
     func operationStatus(
         configuration: BikePowerModeConfiguration?,
         isTractionControlReady: Bool,
@@ -120,10 +120,8 @@ extension PowerModeSettingsViewStateMapper {
         default: false
         }
     }
-}
 
-private extension PowerModeSettingsViewStateMapper {
-    func connectionStatus(
+    private func connectionStatus(
         state: ConnectionState,
         connection: PowerModeConnectionPresentation,
         detail: String,
@@ -165,7 +163,7 @@ private extension PowerModeSettingsViewStateMapper {
         }
     }
 
-    func status(
+    private func status(
         _ title: String,
         detail: String,
         icon: String,

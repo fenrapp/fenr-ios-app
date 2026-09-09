@@ -270,8 +270,8 @@ extension PowerModeSettingsViewModelTests {
         fixture.viewModel.stop()
     }
 
-    @Test("Selecting another map cancels stale preparation and write presentation")
-    func selectingAnotherMapCancelsStalePreparationAndWritePresentation() async {
+    @Test("Map selection cancels stale preparation and waits for an active write")
+    func mapSelectionCancelsPreparationAndWaitsForWrite() async {
         let preparation = ControllablePowerModeSettingsOperation()
         let writeOperation = ControllablePowerModeSettingsOperation()
         let bikeRepository = PowerModeSettingsBikeRepository(
@@ -295,9 +295,14 @@ extension PowerModeSettingsViewModelTests {
         fixture.viewModel.updateAdjustment(id: .power, value: 55)
         #expect(await waitUntil { await writeOperation.pendingCount == 1 })
         fixture.viewModel.selectMap(index: 2)
+        #expect(await preparation.requestCount == 2)
+        #expect(fixture.viewModel.viewState.selectedMapIndex == 1)
+        #expect(feedback(for: .power, in: fixture.viewModel).state == .applying)
+        await writeOperation.succeedNext()
+        #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
+        fixture.viewModel.selectMap(index: 2)
         #expect(await waitUntil { await preparation.requestCount == 3 })
         #expect(feedback(for: .power, in: fixture.viewModel).state == .idle)
-        await writeOperation.succeedNext()
         #expect(fixture.viewModel.viewState.selectedMapIndex == 2)
         #expect(fixture.viewModel.viewState.statusText != "Map 2 confirmed by the bike")
         await preparation.succeedNext()
@@ -474,9 +479,9 @@ extension PowerModeSettingsViewModelTests {
     ) -> Fixture {
         let vehicleSession = PowerModeSettingsVehicleSession()
         return Fixture(
-            viewModel: PowerModeSettingsViewModel(
+            viewModel: PowerModeFeatureFactory.make(
                 vehicleSession: vehicleSession,
-                useCases: .init(
+                basicUseCases: .init(
                     observeSettings: .init(repository: repository),
                     updateSettings: .init(repository: repository),
                     refreshPowerModes: .init(repository: bikeRepository),
@@ -485,8 +490,9 @@ extension PowerModeSettingsViewModelTests {
                     prepareTractionControl: .init(repository: bikeRepository),
                     setTractionControlConfiguration: .init(repository: bikeRepository)
                 ),
-                mapper: .init(locale: Locale(identifier: "en_US"))
-            ),
+                advancedUseCases: .init(editing: nil, calibration: BikePowerCurveCalibrationFactory.makeDefault()),
+                locale: Locale(identifier: "en_US"), makePresetID: UUID.init
+            ).basic,
             vehicleSession: vehicleSession,
             repository: repository,
             bikeRepository: bikeRepository
