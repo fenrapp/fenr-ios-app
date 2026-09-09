@@ -2,6 +2,7 @@ import BikeDomain
 import BikeSDK
 
 public struct LiveBikeControlService: Sendable {
+    private let advancedPowerModeMapper: BikeAdvancedPowerModeMapper
     private let client: BikeTelemetryClient
     private let chargePowerMapper: BikeSDKChargePowerControlToDomainMapper
     private let bikeLockMapper: BikeSDKBikeLockControlToDomainMapper
@@ -9,9 +10,11 @@ public struct LiveBikeControlService: Sendable {
     public init(
         client: BikeTelemetryClient,
         chargePowerMapper: BikeSDKChargePowerControlToDomainMapper,
-        bikeLockMapper: BikeSDKBikeLockControlToDomainMapper
+        bikeLockMapper: BikeSDKBikeLockControlToDomainMapper,
+        advancedPowerModeMapper: BikeAdvancedPowerModeMapper
     ) {
         self.client = client
+        self.advancedPowerModeMapper = advancedPowerModeMapper
         self.chargePowerMapper = chargePowerMapper
         self.bikeLockMapper = bikeLockMapper
     }
@@ -95,5 +98,22 @@ public struct LiveBikeControlService: Sendable {
 
     func setChargeTarget(percent: Int) async throws -> BikeChargePowerControlSnapshot {
         chargePowerMapper.map(try await client.setChargeTarget(percent: percent))
+    }
+    func readAdvancedPowerMode(mapIndex: Int) async throws -> BikeAdvancedPowerModeConfiguration {
+        advancedPowerModeMapper.map(try await client.readAdvancedPowerMode(mapIndex: mapIndex))
+    }
+    func applyAdvancedPowerMode(
+        expected: BikeAdvancedPowerModeConfiguration, desired: BikeAdvancedPowerModeConfiguration
+    ) async throws -> BikeAdvancedPowerModeConfiguration {
+        advancedPowerModeMapper.map(try await client.applyAdvancedPowerMode(
+            expected: advancedPowerModeMapper.map(expected), desired: advancedPowerModeMapper.map(desired)
+        ))
+    }
+    func applyBasicPowerMode(
+        mapIndex: Int, horsepower: Int?, regeneration: Int?
+    ) async throws -> BikeAdvancedPowerModeConfiguration {
+        advancedPowerModeMapper.map(try await client.applyBasicPowerMode(
+            mapIndex: mapIndex, horsepower: horsepower, regeneration: regeneration
+        ))
     }
 }

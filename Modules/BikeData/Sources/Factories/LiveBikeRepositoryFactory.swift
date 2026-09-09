@@ -10,6 +10,10 @@ public enum LiveBikeRepositoryFactory {
         diagnosticsEnabled: @escaping @Sendable () -> Bool = { false }
     ) -> LiveBikeRepository {
         let configuration = BikeRepositoryStreamConfiguration()
+        let stateStore = BikeRepositoryStateStore()
+        let telemetryHub = AsyncEventHub<BikeTelemetry>(
+            bufferingPolicy: .bufferingNewest(configuration.telemetryBufferLimit)
+        )
         return LiveBikeRepository(
             client: client,
             eventHandler: LiveBikeRepositoryEventHandler(
@@ -35,10 +39,7 @@ public enum LiveBikeRepositoryFactory {
                 now: Date.init,
                 diagnosticsEnabled: diagnosticsEnabled
             ),
-            stateStore: BikeRepositoryStateStore(),
-            telemetryHub: AsyncEventHub(
-                bufferingPolicy: .bufferingNewest(configuration.telemetryBufferLimit)
-            ),
+            stateStore: stateStore, telemetryHub: telemetryHub,
             connectionHub: AsyncEventHub(
                 bufferingPolicy: .bufferingNewest(configuration.connectionBufferLimit)
             ),
@@ -61,8 +62,10 @@ public enum LiveBikeRepositoryFactory {
             controlService: LiveBikeControlService(
                 client: client,
                 chargePowerMapper: BikeSDKChargePowerControlToDomainMapper(),
-                bikeLockMapper: BikeSDKBikeLockControlToDomainMapper()
-            )
+                bikeLockMapper: BikeSDKBikeLockControlToDomainMapper(),
+                advancedPowerModeMapper: BikeAdvancedPowerModeMapper()
+            ),
+            curveConfirmation: .init(stateStore: stateStore, telemetryHub: telemetryHub)
         )
     }
 

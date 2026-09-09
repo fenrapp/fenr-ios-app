@@ -68,8 +68,11 @@ struct AppDestinationView: View {
         case .powerModes:
             PowerModeSettingsView(
                 viewModel: featureStore.powerModeSettingsViewModel,
-                isPresentationActive: activeSurfaces.contains(.powerModes)
+                isPresentationActive: activeSurfaces.contains(.powerModes),
+                openAdvanced: { onIntent(.push(.advancedPowerModes)) }
             )
+        case .advancedPowerModes:
+            PowerModeAdvancedView(viewModel: featureStore.advancedPowerModeViewModel)
         case .bikeLockSettings:
             BikeLockSettingsView(viewModel: featureStore.bikeLockSettingsViewModel)
         }

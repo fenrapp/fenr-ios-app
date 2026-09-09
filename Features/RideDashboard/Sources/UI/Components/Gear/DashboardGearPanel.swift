@@ -5,6 +5,21 @@ struct DashboardGearPanel: View {
     let state: DashboardGearViewData
 
     var body: some View {
+        chip
+            .overlay(alignment: .topTrailing) {
+                if state.showsAdvancedCurve {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: Constants.advancedIconSize, weight: .semibold))
+                        .frame(width: Constants.advancedCutoutSize, height: Constants.advancedCutoutSize)
+                        .foregroundStyle(tint)
+                        .offset(x: -Constants.advancedInset, y: Constants.advancedVerticalOffset)
+                        .accessibilityLabel(.rideDashboardAdvancedCurveAccessibility)
+                }
+            }
+            .accessibilityElement(children: .combine)
+    }
+
+    private var chip: some View {
         gearValue
             .frame(width: Constants.width, height: Constants.height)
             .background {
@@ -13,7 +28,22 @@ struct DashboardGearPanel: View {
             }
             .overlay {
                 Capsule()
-                    .stroke(tint, lineWidth: Constants.outlineWidth)
+                    .strokeBorder(tint, lineWidth: Constants.outlineWidth)
+                    .mask {
+                        Rectangle()
+                            .overlay(alignment: .topTrailing) {
+                                if state.showsAdvancedCurve {
+                                    Rectangle()
+                                        .frame(
+                                            width: Constants.advancedCutoutSize,
+                                            height: Constants.advancedCutoutSize
+                                        )
+                                        .offset(x: -Constants.advancedInset, y: Constants.advancedVerticalOffset)
+                                        .blendMode(.destinationOut)
+                                }
+                            }
+                            .compositingGroup()
+                    }
             }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(state.accessibilityLabel)
@@ -56,11 +86,15 @@ struct DashboardGearPanel: View {
         return switch state.display {
         case .crawlForward: DesignColor.informational
         case .crawlReverse: DesignColor.warning
-        case .text: DesignColor.positive
+        case .text: state.showsAdvancedCurve ? DesignColor.warning : DesignColor.positive
         }
     }
 
     private enum Constants {
+        static let advancedIconSize: CGFloat = 20
+        static let advancedCutoutSize: CGFloat = 24
+        static let advancedInset: CGFloat = 10
+        static let advancedVerticalOffset: CGFloat = -10
         static let width: CGFloat = 112
         static let height: CGFloat = 60
         static let outlineWidth: CGFloat = 2.75

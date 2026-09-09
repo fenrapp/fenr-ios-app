@@ -8,7 +8,7 @@ import Testing
 struct PowerModeRegenerationMapperTests {
     @Test("Keeps negative raw regeneration out of rider controls")
     func rejectsNegativeRegenerationForRiderControl() throws {
-        let mapper = PowerModeSettingsViewStateMapper(locale: .init(identifier: "en_US"))
+        let mapper = PowerModeSettingsMapperFactory.make(locale: .init(identifier: "en_US"))
         let state = mapper.map(.init(
             telemetry: .init(powerModeConfigurations: [
                 0: .init(mapIndex: 0, horsepower: 35, regenerativeBrakingPercent: -8)

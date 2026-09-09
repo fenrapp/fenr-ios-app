@@ -1,7 +1,53 @@
 import Foundation
+import Observation
 import SettingsDomain
 
-extension PowerModeSettingsViewModel {
+@MainActor
+@Observable
+final class PowerModeNameCoordinator {
+    private let context: PowerModeContext
+    private let useCases: PowerModeSettingsUseCases
+    private(set) var settings = AppSettings()
+    private var pendingChanges = AppSettingsPendingChanges()
+    private(set) var nameError: String?
+    private(set) var nameSaveCompletionID: UUID?
+    @ObservationIgnored private var settingsObservationTask: Task<Void, Never>?
+    @ObservationIgnored private var settingsSaveTask: Task<Void, Never>?
+    @ObservationIgnored private var settingsGeneration = 0
+    var isSaving: Bool { !pendingChanges.isEmpty }
+
+    init(context: PowerModeContext, useCases: PowerModeSettingsUseCases) {
+        self.context = context
+        self.useCases = useCases
+    }
+
+    deinit {
+        settingsObservationTask?.cancel()
+        settingsSaveTask?.cancel()
+    }
+
+    func clearError() { nameError = nil }
+
+    func saveName(_ candidate: String) {
+        do {
+            let name = try PowerModeName(candidate)
+            saveNameChange(.powerModeName(mapIndex: context.selectedMap, name: name))
+        } catch { nameError = String(localized: .powerModeSettingsInvalidNameError) }
+    }
+
+    func resetName() { saveNameChange(.powerModeName(mapIndex: context.selectedMap, name: nil)) }
+
+    func stop() -> [Task<Void, Never>] {
+        settingsGeneration += 1
+        let tasks = [settingsObservationTask, settingsSaveTask].compactMap { $0 }
+        tasks.forEach { $0.cancel() }
+        settingsObservationTask = nil
+        settingsSaveTask = nil
+        pendingChanges.removeAll()
+        nameError = nil
+        return tasks
+    }
+
     func observeSettingsIfNeeded() {
         guard settingsObservationTask == nil else { return }
         let observeSettings = useCases.observeSettings
@@ -19,19 +65,16 @@ extension PowerModeSettingsViewModel {
         pendingChanges.receive(snapshot)
         settings = pendingChanges.confirmed?.settings ?? AppSettings()
         if previousVIN != settings.vin { nameError = nil }
-        render()
     }
 
     func saveNameChange(_ change: AppSettingsChange) {
-        guard let vin = profile?.vin, pendingChanges.confirmed?.settings.vin == vin else {
+        guard let vin = context.profile?.vin, pendingChanges.confirmed?.settings.vin == vin else {
             nameError = String(localized: .powerModeSettingsProfileRequiredError)
-            render()
             return
         }
         do {
             try pendingChanges.enqueue(change)
             nameError = nil
-            render()
             savePendingNameChanges()
         } catch {
             reportNameSaveError(error)
@@ -50,7 +93,7 @@ extension PowerModeSettingsViewModel {
                     )
                     guard !Task.isCancelled, self?.settingsGeneration == generation else { return }
                     if self?.pendingChanges.complete(id: pending.id, result: result) == true,
-                       self?.profile?.vin == pending.expectedVIN {
+                       self?.context.profile?.vin == pending.expectedVIN {
                         self?.nameSaveCompletionID = pending.id
                     }
                     self?.settings = self?.pendingChanges.confirmed?.settings ?? AppSettings()
@@ -60,7 +103,6 @@ extension PowerModeSettingsViewModel {
                         self?.reportNameSaveError(error)
                     }
                 }
-                self?.render()
             }
             guard !Task.isCancelled, self?.settingsGeneration == generation else { return }
             self?.settingsSaveTask = nil
@@ -78,6 +120,5 @@ extension PowerModeSettingsViewModel {
         default:
             nameError = String(localized: .powerModeSettingsNameSaveError)
         }
-        render()
     }
 }

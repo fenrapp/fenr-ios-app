@@ -4,19 +4,22 @@ public struct BikePowerModeConfiguration: Equatable, Sendable {
     public var regenerativeBrakingPercent: Double?
     public var powerTractionPercent: Double?
     public var brakingTractionPercent: Double?
+    public var curveConfirmation: BikePowerModeCurveConfirmation
 
     public init(
         mapIndex: Int,
         horsepower: Int? = nil,
         regenerativeBrakingPercent: Double? = nil,
         powerTractionPercent: Double? = nil,
-        brakingTractionPercent: Double? = nil
+        brakingTractionPercent: Double? = nil,
+        curveConfirmation: BikePowerModeCurveConfirmation = .init()
     ) {
         self.mapIndex = mapIndex
         self.horsepower = horsepower
         self.regenerativeBrakingPercent = regenerativeBrakingPercent
         self.powerTractionPercent = powerTractionPercent
         self.brakingTractionPercent = brakingTractionPercent
+        self.curveConfirmation = curveConfirmation
     }
 
     public var hasBaseConfiguration: Bool {

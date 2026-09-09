@@ -6,7 +6,7 @@ import Testing
 
 @Suite("Power mode control feedback presentation")
 struct PowerModeSettingsControlFeedbackMapperTests {
-    private let mapper = PowerModeSettingsViewStateMapper(locale: Locale(identifier: "en_US"))
+    private let mapper = PowerModeSettingsMapperFactory.make(locale: Locale(identifier: "en_US"))
     private let vin = "FENRTEST000000001"
 
     @Test("Maps applying, confirmed, and failed feedback to only the affected control")

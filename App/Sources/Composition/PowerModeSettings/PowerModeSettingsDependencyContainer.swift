@@ -1,19 +1,31 @@
 import BikeDomain
 import Foundation
 import PowerModeSettings
+import SettingsData
 import SettingsDomain
 import VehicleSession
 
 @MainActor
 struct PowerModeSettingsDependencyContainer {
-    func makeViewModel(
+    func makeFeature(
         settingsRepository: any AppSettingsRepository,
         bikeRepository: any BikeRepository,
         vehicleSession: any VehicleSessionService
-    ) -> PowerModeSettingsViewModel {
-        PowerModeSettingsViewModel(
+    ) -> PowerModeFeature {
+        let calibration = BikePowerCurveCalibrationFactory.makeDefault()
+        let advanced = PowerModeAdvancedUseCases(
+            editing: bikeRepository.supportsAdvancedPowerModes ? .init(
+                repository: bikeRepository,
+                presets: LocalBikePowerModePresetRepository(
+                    defaults: .standard, encoder: JSONEncoder(), decoder: JSONDecoder()
+                ),
+                calibration: calibration
+            ) : nil,
+            calibration: calibration
+        )
+        return PowerModeFeatureFactory.make(
             vehicleSession: vehicleSession,
-            useCases: .init(
+            basicUseCases: .init(
                 observeSettings: .init(repository: settingsRepository),
                 updateSettings: .init(repository: settingsRepository),
                 refreshPowerModes: .init(repository: bikeRepository),
@@ -22,7 +34,7 @@ struct PowerModeSettingsDependencyContainer {
                 prepareTractionControl: .init(repository: bikeRepository),
                 setTractionControlConfiguration: .init(repository: bikeRepository)
             ),
-            mapper: PowerModeSettingsViewStateMapper(locale: .autoupdatingCurrent)
+            advancedUseCases: advanced, locale: .autoupdatingCurrent, makePresetID: UUID.init
         )
     }
 }

@@ -3,14 +3,17 @@ import SwiftUI
 
 public struct PowerModeSettingsView: View {
     private let viewModel: PowerModeSettingsViewModel
+    private let openAdvanced: () -> Void
     private let isPresentationActive: Bool
     @State private var isNameEditorPresented = false
 
     public init(
         viewModel: PowerModeSettingsViewModel,
-        isPresentationActive: Bool = true
+        isPresentationActive: Bool = true,
+        openAdvanced: @escaping () -> Void
     ) {
         self.viewModel = viewModel
+        self.openAdvanced = openAdvanced
         self.isPresentationActive = isPresentationActive
     }
 
@@ -33,11 +36,25 @@ public struct PowerModeSettingsView: View {
                 mapNameButton
             }
 
+            Section {
+                Button(action: openAdvanced) {
+                    HStack {
+                        Label(.powerCurveAdvanced, systemImage: "chart.xyaxis.line")
+                        Spacer(minLength: DesignSpace.small)
+                        Image(systemName: "chevron.right")
+                    }
+                }
+                .disabled(!viewModel.hasAdvancedEditor)
+                .accessibilityIdentifier("powerModes.advanced")
+            } footer: {
+                Text(viewModel.hasAdvancedDraft ? .powerCurvePending : .powerCurveAdvancedDescription)
+            }
+
             ForEach(viewModel.viewState.controlGroups) { group in
                 Section {
                     ForEach(group.adjustments) { adjustment in
                         PowerModeAdjustmentRow(
-                            state: adjustment,
+                            state: adjustment, allowsExactValue: true,
                             commit: { value in
                                 viewModel.updateAdjustment(id: adjustment.id, value: value)
                             }
@@ -77,7 +94,7 @@ public struct PowerModeSettingsView: View {
         }
         .task { synchronizePresentation() }
         .onChange(of: isPresentationActive) { synchronizePresentation() }
-        .onDisappear { viewModel.setPresentationActive(false) }
+
     }
 
     private func synchronizePresentation() {

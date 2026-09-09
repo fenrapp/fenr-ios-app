@@ -70,15 +70,15 @@ phone and other clients before testing. Preserve one iPhone session across all
 screens; the Watch owns its own session and competes for the same vehicle link.
 
 Vehicle writes are limited to charging power/target, base-map power/regeneration,
-traction settings and bike lock. Keep firmware and capability gates, safe no-op
+traction settings, bike lock and iPhone advanced power/regeneration curves. Keep firmware and capability gates, safe no-op
 validation, serialized operations, sibling-value preservation, timeout recovery
 and fresh confirmation intact. Charging controls and base-map changes have
-physical validation evidence. Instrumented physical traction-control and lock
+physical validation evidence. Instrumented physical advanced-curve, traction-control and lock
 write/read-back evidence remains incomplete; emulator tests do not establish it.
 
 Keep packet layouts and evidence in the
 [protocol research repository](https://github.com/fenrapp/bike-protocol-research).
-Do not add arbitrary configuration, custom curves, safety-control, ownership or
+Do not add arbitrary configuration, safety-control, ownership or
 firmware writes. Repository implementation rules are in [AGENTS.md](../AGENTS.md).
 
 ## Diagnostic capture

@@ -1,6 +1,611 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "powerModeSettingsExactValueAccessibility" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Double-tap to enter an exact value."
+          }
+        }
+      }
+    },
+    "powerModeSettingsExactValueHint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apply sends this value to the motorcycle."
+          }
+        }
+      }
+    },
+    "power_curve_preset_name_error" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a preset name with 1 to %lld characters."
+          }
+        }
+      }
+    },
+    "power_curve_exact_value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exact value"
+          }
+        }
+      }
+    },
+    "power_curve_input_draft_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This updates your draft. Use Apply on the curve screen to send changes to the motorcycle."
+          }
+        }
+      }
+    },
+    "power_curve_peak_label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configured peak"
+          }
+        }
+      }
+    },
+    "power_curve_maximum_label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximum setting"
+          }
+        }
+      }
+    },
+    "power_curve_power_guide" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drag a point to adjust power, or double-tap for an exact value. This is not a live measurement."
+          }
+        }
+      }
+    },
+    "power_curve_regen_guide" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drag a point to adjust braking, or double-tap for an exact value. Percentages do not represent recovered energy."
+          }
+        }
+      }
+    },
+    "power_curve_presets_footer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved on this iPhone for this bike. Loading a preset creates a draft; use Apply to send it."
+          }
+        }
+      }
+    },
+    "power_curve_preset_load_hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Load as draft"
+          }
+        }
+      }
+    },
+    "power_curve_preset_incompatible" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not compatible with this bike configuration"
+          }
+        }
+      }
+    },
+    "power_curve_presets_empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save your current setup to use it again later."
+          }
+        }
+      }
+    },
+    "power_curve_axis_thousands" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RPM x 1,000"
+          }
+        }
+      }
+    },
+    "power_curve_regen_summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ %%"
+          }
+        }
+      }
+    },
+    "power_curve_limit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuration limit"
+          }
+        }
+      }
+    },
+    "power_curve_setting" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configured curve"
+          }
+        }
+      }
+    },
+    "power_curve_minimum_power" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep at least 10 HP at the final three RPM samples before applying the curve."
+          }
+        }
+      }
+    },
+    "power_curve_stale_draft" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The map changed since this draft was started. Save it as a preset, then discard or load a preset to edit the current configuration."
+          }
+        }
+      }
+    },
+    "power_curve_advanced" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Advanced"
+          }
+        }
+      }
+    },
+    "power_curve_advanced_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Advanced Power Modes"
+          }
+        }
+      }
+    },
+    "power_curve_advanced_description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit power and regenerative braking curves for this mode."
+          }
+        }
+      }
+    },
+    "power_curve_power" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Power"
+          }
+        }
+      }
+    },
+    "power_curve_regeneration" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regeneration"
+          }
+        }
+      }
+    },
+    "power_curve_curve" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Curve"
+          }
+        }
+      }
+    },
+    "power_curve_summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld HP"
+          }
+        }
+      }
+    },
+    "power_curve_rpm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RPM"
+          }
+        }
+      }
+    },
+    "power_curve_chart_accessibility" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Power mode curve"
+          }
+        }
+      }
+    },
+    "power_curve_point_value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Value"
+          }
+        }
+      }
+    },
+    "power_curve_point_accessibility" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Value at %@ RPM"
+          }
+        }
+      }
+    },
+    "power_curve_set_point" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set point"
+          }
+        }
+      }
+    },
+    "power_curve_apply" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apply"
+          }
+        }
+      }
+    },
+    "power_curve_discard" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discard"
+          }
+        }
+      }
+    },
+    "power_curve_pending" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changes have not been applied to the motorcycle."
+          }
+        }
+      }
+    },
+    "power_curve_stored" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Showing the configuration read from the motorcycle."
+          }
+        }
+      }
+    },
+    "power_curve_presets" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presets"
+          }
+        }
+      }
+    },
+    "power_curve_save_preset" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Preset"
+          }
+        }
+      }
+    },
+    "power_curve_preset_name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preset name"
+          }
+        }
+      }
+    },
+    "power_curve_save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        }
+      }
+    },
+    "power_curve_cancel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "power_curve_rename_preset" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rename Preset"
+          }
+        }
+      }
+    },
+    "power_curve_duplicate" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicate"
+          }
+        }
+      }
+    },
+    "power_curve_delete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
+    "power_curve_preset_actions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preset actions"
+          }
+        }
+      }
+    },
+    "power_curve_loading_description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Read this mode to edit its power and regeneration curves."
+          }
+        }
+      }
+    },
+    "power_curve_read" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Read Curves"
+          }
+        }
+      }
+    },
+    "power_curve_working" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updating power mode"
+          }
+        }
+      }
+    },
+    "power_curve_read_error" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not read this mode. Check the connection and try again."
+          }
+        }
+      }
+    },
+    "power_curve_apply_error" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The complete change was not confirmed. Some values may have changed. Refresh the mode; reconnect if necessary."
+          }
+        }
+      }
+    },
+    "power_curve_invalid_values" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check the curve values before applying. Power must not be zero across the entire curve."
+          }
+        }
+      }
+    },
+    "power_curve_confirmed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuration confirmed by the motorcycle."
+          }
+        }
+      }
+    },
+    "power_curve_preset_error" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not read or save presets. Existing presets have been preserved."
+          }
+        }
+      }
+    },
+    "power_curve_preset_saved" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preset library saved."
+          }
+        }
+      }
+    },
+    "power_curve_preset_copy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Copy"
+          }
+        }
+      }
+    },
+    "power_curve_incompatible_preset" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This preset is not compatible with the current motorcycle configuration."
+          }
+        }
+      }
+    },
     "powerModeSettingsNameSaveError" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unable to save the map name. Try again." } } } },
     "powerModeSettingsAllControlsReady" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "All map controls ready" } } } },
     "powerModeSettingsAlphaCapabilityDetected" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Alpha capability detected · 80 HP" } } } },

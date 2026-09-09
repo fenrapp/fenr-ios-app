@@ -6,7 +6,7 @@ import Testing
 
 @Suite("Power mode settings presentation")
 struct PowerModeSettingsViewStateMapperTests {
-    private let mapper = PowerModeSettingsViewStateMapper(locale: Locale(identifier: "en_US"))
+    private let mapper = PowerModeSettingsMapperFactory.make(locale: Locale(identifier: "en_US"))
     private let vin = "FENRTEST000000001"
 
     @Test("Maps five named modes and confirmed configuration")
@@ -104,7 +104,7 @@ struct PowerModeSettingsViewStateMapperTests {
 
     @Test("Maps typed adjustment IDs, supported ranges, and injected locale")
     func mapsTypedAdjustmentIDsRangesAndLocale() {
-        let localizedMapper = PowerModeSettingsViewStateMapper(
+        let localizedMapper = PowerModeSettingsMapperFactory.make(
             locale: Locale(identifier: "es_ES")
         )
         let state = localizedMapper.map(.init(

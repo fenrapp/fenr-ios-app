@@ -7,9 +7,11 @@ public struct BikeBLENotificationCoordinator {
     let eventEmitter: BikeBLEEventEmitter
     private let notificationProcessor: BikeBLENotificationProcessor
     private let subscriptionCoordinator: BikeBLESubscriptionCoordinator
-    private let chargePowerCoordinator: BikeBLEChargePowerCoordinator
-    private let powerModeCoordinator: BikeBLEPowerModeConfigurationCoordinator
-    private let bikeLockCoordinator: BikeBLEBikeLockConfigurationCoordinator
+    let chargePowerCoordinator: BikeBLEChargePowerCoordinator
+    let advancedPowerModeCoordinator: BikeBLEAdvancedPowerModeCoordinator
+    let configurationSequenceGate: BikeBLEVCUConfigurationTransactionGate
+    let powerModeCoordinator: BikeBLEPowerModeConfigurationCoordinator
+    let bikeLockCoordinator: BikeBLEBikeLockConfigurationCoordinator
     private let configurationTransport: BikeBLEVCUConfigurationTransport
     private let connectionDidBecomeReady: @MainActor () -> Void
     private let peripheralOperations: BikeBLEPeripheralOperations
@@ -21,6 +23,8 @@ public struct BikeBLENotificationCoordinator {
         subscriptionCoordinator: BikeBLESubscriptionCoordinator,
         chargePowerCoordinator: BikeBLEChargePowerCoordinator,
         powerModeCoordinator: BikeBLEPowerModeConfigurationCoordinator,
+        advancedPowerModeCoordinator: BikeBLEAdvancedPowerModeCoordinator,
+        configurationSequenceGate: BikeBLEVCUConfigurationTransactionGate,
         bikeLockCoordinator: BikeBLEBikeLockConfigurationCoordinator,
         configurationTransport: BikeBLEVCUConfigurationTransport,
         connectionDidBecomeReady: @escaping @MainActor () -> Void,
@@ -32,6 +36,8 @@ public struct BikeBLENotificationCoordinator {
         self.subscriptionCoordinator = subscriptionCoordinator
         self.chargePowerCoordinator = chargePowerCoordinator
         self.powerModeCoordinator = powerModeCoordinator
+        self.advancedPowerModeCoordinator = advancedPowerModeCoordinator
+        self.configurationSequenceGate = configurationSequenceGate
         self.bikeLockCoordinator = bikeLockCoordinator
         self.configurationTransport = configurationTransport
         self.connectionDidBecomeReady = connectionDidBecomeReady
@@ -134,72 +140,6 @@ public struct BikeBLENotificationCoordinator {
         await subscriptionCoordinator.stopBatteryHealthMonitoring()
     }
 
-    public func prepareChargePowerControl(
-        context: BikeSDKChargePowerTelemetryContext
-    ) async throws -> BikeSDKChargePowerControlSnapshot {
-        try await chargePowerCoordinator.prepareChargePowerControl(context: context)
-    }
-
-    public func setChargePowerLimit(watts: Int) async throws -> BikeSDKChargePowerControlSnapshot {
-        try await chargePowerCoordinator.setChargePowerLimit(watts: watts)
-    }
-
-    public func setChargeTarget(percent: Int) async throws -> BikeSDKChargePowerControlSnapshot {
-        try await chargePowerCoordinator.setChargeTarget(percent: percent)
-    }
-
-    public func refreshPowerModeConfigurations() async throws {
-        try await powerModeCoordinator.refresh()
-    }
-
-    public func prepareBikeLockControl() async throws -> BikeSDKBikeLockControlSnapshot {
-        try await bikeLockCoordinator.prepare()
-    }
-
-    public func setBikeLocked(_ isLocked: Bool) async throws -> BikeSDKBikeLockControlSnapshot {
-        try await bikeLockCoordinator.setLocked(isLocked)
-    }
-
-    public func refreshPowerModeConfiguration(mapIndex: Int) async throws {
-        try await powerModeCoordinator.refreshPowerModeConfiguration(mapIndex: mapIndex)
-    }
-
-    public func preparePowerModeControl(mapIndex: Int) async throws {
-        try await powerModeCoordinator.preparePowerModeControl(mapIndex: mapIndex)
-    }
-
-    public func setPowerModeConfiguration(
-        mapIndex: Int,
-        horsepower: Int,
-        regenerativeBrakingPercent: Int
-    ) async throws {
-        try await powerModeCoordinator.setPowerModeConfiguration(
-            mapIndex: mapIndex,
-            horsepower: horsepower,
-            regenerativeBrakingPercent: regenerativeBrakingPercent
-        )
-    }
-
-    public func prepareTractionControl(mapIndex: Int) async throws {
-        try await powerModeCoordinator.prepareTractionControl(mapIndex: mapIndex)
-    }
-
-    public func setTractionControlConfiguration(
-        mapIndex: Int,
-        powerTractionPercent: Double,
-        brakingTractionPercent: Double
-    ) async throws {
-        try await powerModeCoordinator.setTractionControlConfiguration(
-            mapIndex: mapIndex,
-            powerTractionPercent: powerTractionPercent,
-            brakingTractionPercent: brakingTractionPercent
-        )
-    }
-
-    public func refreshTractionControlConfiguration(mapIndex: Int) async throws {
-        try await powerModeCoordinator.refreshTractionControlConfiguration(mapIndex: mapIndex)
-    }
-
     public func didWriteValue(characteristic: CBCharacteristic, error: Error?) async {
         configurationTransport.completeWriteIfNeeded(characteristic: characteristic, error: error)
     }
@@ -208,6 +148,7 @@ public struct BikeBLENotificationCoordinator {
         subscriptionCoordinator.reset()
         chargePowerCoordinator.reset()
         powerModeCoordinator.reset()
+        advancedPowerModeCoordinator.reset()
         bikeLockCoordinator.reset()
         configurationTransport.reset()
     }
@@ -286,11 +227,5 @@ public struct BikeBLENotificationCoordinator {
     private func failRead(_ message: String) async throws -> Never {
         await eventEmitter.send(.error(.operationFailed(message)))
         throw BikeSDKError.operationFailed(message)
-    }
-}
-
-extension BikeBLENotificationCoordinator {
-    public func readBikeLockFirmwareCompatibility() async throws -> BikeSDKBikeLockFirmwareCompatibility {
-        try await bikeLockCoordinator.readFirmwareCompatibility()
     }
 }

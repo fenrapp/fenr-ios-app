@@ -3,6 +3,8 @@ import Foundation
 
 @MainActor
 final class BikeBLEVCUConfigurationTransport {
+    private var generation = 0
+    private var transactionGeneration: Int?
     let sessionStore: BLESessionStore
     private let eventEmitter: BikeBLEEventEmitter
     private let peripheralOperations: BikeBLEPeripheralOperations
@@ -90,8 +92,10 @@ final class BikeBLEVCUConfigurationTransport {
         characteristic: CBCharacteristic,
         operationName: String
     ) async throws -> Data {
+        let token = generation
         try ensureReady()
         await peripheralOperations.prepareReadValue(characteristic: characteristic)
+        try checkGeneration(token)
         return try await withCheckedThrowingContinuation { continuation in
             startOperation(
                 uuid: characteristic.uuid,
@@ -108,12 +112,17 @@ final class BikeBLEVCUConfigurationTransport {
         peripheral: CBPeripheral,
         characteristic: CBCharacteristic
     ) async throws {
+        let token = generation
         try ensureReady()
+        guard payload.count <= peripheral.maximumWriteValueLength(for: .withResponse) else {
+            throw BikeSDKError.operationFailed("VCU configuration exceeds the supported write length")
+        }
         await peripheralOperations.prepareWriteValue(
             payload,
             characteristic: characteristic,
             type: .withResponse
         )
+        try checkGeneration(token)
         _ = try await withCheckedThrowingContinuation { continuation in
             startOperation(
                 uuid: characteristic.uuid,
@@ -138,7 +147,19 @@ final class BikeBLEVCUConfigurationTransport {
         )
     }
 
+    func checkTransactionGeneration() throws {
+        try Task.checkCancellation()
+        if let transactionGeneration, transactionGeneration != generation { throw CancellationError() }
+    }
+
+    private func checkGeneration(_ token: Int) throws {
+        try Task.checkCancellation()
+        guard token == generation else { throw CancellationError() }
+        try ensureReady()
+    }
+
     func reset() {
+        generation += 1
         operationController.reset()
     }
 }
@@ -149,10 +170,12 @@ extension BikeBLEVCUConfigurationTransport {
         operationName: String,
         shouldRead: Bool
     ) async throws -> Data {
+        let token = generation
         try ensureReady()
         if shouldRead {
             await peripheralOperations.prepareReadValue(characteristic: characteristic)
         }
+        try checkGeneration(token)
         return try await withCheckedThrowingContinuation { continuation in
             startOperation(
                 uuid: characteristic.uuid,
@@ -192,14 +215,21 @@ extension BikeBLEVCUConfigurationTransport {
     func withTransaction<Value: Sendable>(
         _ operation: @MainActor () async throws -> Value
     ) async throws -> Value {
+        let token = generation
         try Task.checkCancellation()
         try await transactionGate.acquireCancellable()
         do {
             try Task.checkCancellation()
+            guard token == generation else { throw CancellationError() }
+            transactionGeneration = token
             let value = try await operation()
+            try Task.checkCancellation()
+            guard token == generation else { throw CancellationError() }
+            transactionGeneration = nil
             await transactionGate.release()
             return value
         } catch {
+            transactionGeneration = nil
             await transactionGate.release()
             throw error
         }

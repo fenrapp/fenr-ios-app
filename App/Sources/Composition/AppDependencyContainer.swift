@@ -231,8 +231,8 @@ struct AppDependencyContainer {
         )
     }
 
-    func makePowerModeSettingsViewModel() -> PowerModeSettingsViewModel {
-        powerModeSettingsContainer.makeViewModel(
+    func makePowerModesFeature() -> PowerModeFeature {
+        powerModeSettingsContainer.makeFeature(
             settingsRepository: settingsRepository,
             bikeRepository: session.repository,
             vehicleSession: vehicleSession
@@ -298,7 +298,7 @@ private extension AppDependencyContainer {
             onboardingViewModel: onboardingViewModel,
             appSettingsViewModel: makeAppSettingsViewModel(),
             dashboardCardSettingsViewModel: makeDashboardCardSettingsViewModel(),
-            powerModeSettingsViewModel: makePowerModeSettingsViewModel(),
+            powerModes: makePowerModesFeature(),
             rideHistoryViewModel: makeRideHistoryViewModel(),
             maintenanceViewModel: makeMaintenanceViewModel(),
             rideDashboardFactory: rideDashboardFactory,
