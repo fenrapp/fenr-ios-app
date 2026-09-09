@@ -12,6 +12,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
     private let accessibilityIdentifier: String?
     private let accessibilityValue: (Double) -> String
     private let onCommit: (Double) -> Void
+    private let onDoubleTap: (() -> Void)?
     private let header: (Double) -> Header
     private let footer: Footer
 
@@ -33,6 +34,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
         self.bounds = bounds
         self.step = step
         rendering = .system(tint)
+        onDoubleTap = nil
         self.isEnabled = isEnabled
         accessibilityLabel = nil
         self.accessibilityIdentifier = accessibilityIdentifier
@@ -51,6 +53,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
         isEnabled: Bool = true,
         accessibilityLabel: String? = nil,
         accessibilityValue: @escaping (Double) -> String = { $0.formatted() },
+        onDoubleTap: (() -> Void)? = nil,
         accessibilityIdentifier: String? = nil,
         onCommit: @escaping (Double) -> Void,
         @ViewBuilder header: @escaping (Double) -> Header,
@@ -60,6 +63,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
         self.bounds = bounds
         self.step = step
         rendering = .gradient(appearance)
+        self.onDoubleTap = onDoubleTap
         self.isEnabled = isEnabled
         self.accessibilityLabel = accessibilityLabel
         self.accessibilityIdentifier = accessibilityIdentifier
@@ -120,6 +124,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
                 accessibilityLabel: accessibilityLabel,
                 accessibilityValue: accessibilityValue(interaction.displayedValue),
                 interaction: $interaction,
+                onDoubleTap: onDoubleTap,
                 onCommit: { committedValue in
                     if appearance.providesCommitFeedback {
                         commitFeedbackToken += 1

@@ -9,6 +9,7 @@ struct GradientCommitSliderControl: View {
     let accessibilityLabel: String?
     let accessibilityValue: String
     @Binding var interaction: CommitSliderInteractionState
+    let onDoubleTap: (() -> Void)?
     let onCommit: (Double) -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -136,11 +137,7 @@ struct GradientCommitSliderControl: View {
     }
 
     private func sliderGradient(startPoint: UnitPoint, endPoint: UnitPoint) -> LinearGradient {
-        LinearGradient(
-            stops: resolvedStops,
-            startPoint: startPoint,
-            endPoint: endPoint
-        )
+        LinearGradient(stops: resolvedStops, startPoint: startPoint, endPoint: endPoint)
     }
 
     private var resolvedStops: [Gradient.Stop] {
@@ -179,10 +176,7 @@ struct GradientCommitSliderControl: View {
     }
 
     private var minimumControlHeight: CGFloat {
-        max(
-            CommitSliderConstants.minimumControlHeight,
-            thumbDiameter + CommitSliderConstants.haloExpansion
-        )
+        max(CommitSliderConstants.minimumControlHeight, thumbDiameter + CommitSliderConstants.haloExpansion)
     }
 
     @ViewBuilder private var thumbStroke: some View {
@@ -224,20 +218,35 @@ struct GradientCommitSliderControl: View {
             }
     }
 
-    private func tapGesture(layout: CommitSliderLayout) -> some Gesture {
-        SpatialTapGesture()
-            .onEnded { gesture in
-                guard effectiveIsEnabled else { return }
-                let tappedValue = layout.value(at: gesture.location.x, step: step)
-                guard tappedValue != interaction.displayedValue else { return }
-                interaction.beginEditing(isEnabled: effectiveIsEnabled)
-                interaction.updateDisplayedValue(
-                    tappedValue,
-                    bounds: bounds,
-                    isEnabled: effectiveIsEnabled
-                )
-                finishEditing()
-            }
+    private func tapGesture(layout: CommitSliderLayout) -> AnyGesture<Void> {
+        if let onDoubleTap {
+            return AnyGesture(
+                SpatialTapGesture(count: 2)
+                    .exclusively(before: SpatialTapGesture())
+                    .onEnded { gesture in
+                        guard effectiveIsEnabled else { return }
+                        switch gesture {
+                        case .first: onDoubleTap()
+                        case .second(let tap): selectValue(at: tap.location.x, layout: layout)
+                        }
+                    }
+                    .map { _ in () }
+            )
+        }
+        return AnyGesture(
+            SpatialTapGesture()
+                .onEnded { selectValue(at: $0.location.x, layout: layout) }
+                .map { _ in () }
+        )
+    }
+
+    private func selectValue(at position: CGFloat, layout: CommitSliderLayout) {
+        guard effectiveIsEnabled else { return }
+        let tappedValue = layout.value(at: position, step: step)
+        guard tappedValue != interaction.displayedValue else { return }
+        interaction.beginEditing(isEnabled: effectiveIsEnabled)
+        interaction.updateDisplayedValue(tappedValue, bounds: bounds, isEnabled: effectiveIsEnabled)
+        finishEditing()
     }
 
     private func adjustAccessibilityValue(_ direction: AccessibilityAdjustmentDirection) {
