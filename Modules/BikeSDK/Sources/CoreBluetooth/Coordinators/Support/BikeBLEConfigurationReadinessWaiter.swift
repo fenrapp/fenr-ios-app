@@ -29,6 +29,7 @@ struct BikeBLEConfigurationReadinessWaiter {
 
 extension BikeBLEVCUConfigurationTransport {
     func ensureReady() throws {
+        try checkTransactionGeneration()
         try operationController.ensureReady()
     }
 

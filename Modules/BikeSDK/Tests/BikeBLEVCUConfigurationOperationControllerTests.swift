@@ -28,13 +28,17 @@ struct BikeBLEVCUConfigurationOperationControllerTests {
         #expect(await waitUntil { scheduler.hasPendingOperation })
 
         #expect(controller.completeRead(uuid: characteristicID, data: response, error: nil))
+        #expect(scheduler.hasPendingOperation)
+        controller.completeWrite(uuid: characteristicID, error: nil)
         #expect(try await write.value == Data())
         #expect(try controller.takeBufferedResponse() == response)
         #expect(!scheduler.hasPendingOperation)
     }
 
-    @Test("A write timeout desynchronizes the controller until reset")
-    func recoversFromTimeoutOnlyAfterReset() async {
+    @Test("Timeouts require reset before another operation", arguments: [
+        BikeBLEVCUConfigurationOperationKind.write, .read, .configurationResponse
+    ])
+    func recoversFromTimeoutOnlyAfterReset(kind: BikeBLEVCUConfigurationOperationKind) async {
         let scheduler = FakeBikeBLETimeoutScheduler()
         let controller = BikeBLEVCUConfigurationOperationController(timeoutScheduler: scheduler)
         let characteristicID = BikeSDKConstants.vcuBikeConfigurationUUID
@@ -42,8 +46,8 @@ struct BikeBLEVCUConfigurationOperationControllerTests {
             try await withCheckedThrowingContinuation { continuation in
                 controller.start(
                     uuid: characteristicID,
-                    kind: .write,
-                    operationName: "test write",
+                    kind: kind,
+                    operationName: "test operation",
                     continuation: continuation
                 )
             } as Data

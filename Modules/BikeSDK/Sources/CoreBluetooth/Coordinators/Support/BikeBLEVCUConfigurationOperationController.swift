@@ -106,9 +106,8 @@ final class BikeBLEVCUConfigurationOperationController {
         if let operation = activeOperation, operation.uuid == uuid, operation.kind == .write {
             bufferedResponse = result
             BikePowerModeDebugLog.log(
-                "4005 response arrived before write callback; accepting response as acknowledgement"
+                "4005 response arrived before write callback; buffering until GATT acknowledgement"
             )
-            complete(operation, with: result.map { _ in Data() })
             return true
         }
         guard activeOperation != nil else {
@@ -153,7 +152,7 @@ final class BikeBLEVCUConfigurationOperationController {
               operation.uuid == uuid,
               operation.kind == kind else { return }
         activeOperation = nil
-        isDesynchronized = kind != .configurationResponse
+        isDesynchronized = true
         operation.continuation.resume(throwing: BikeSDKError.operationFailed(
             "VCU configuration \(operation.operationName) timed out: \(uuid.uuidString)"
         ))
