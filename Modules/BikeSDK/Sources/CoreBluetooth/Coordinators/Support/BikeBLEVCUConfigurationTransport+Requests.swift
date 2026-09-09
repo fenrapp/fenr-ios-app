@@ -1,4 +1,5 @@
 import Foundation
+import StarkProtocol
 
 extension BikeBLEVCUConfigurationTransport {
     func readVersions() async throws -> Data {
@@ -90,6 +91,7 @@ extension BikeBLEVCUConfigurationTransport {
                 )
             }
             guard response[2] == 0 else {
+                if payload[1] == 8 { throw StarkProtocolError.configurationRequestFailed(status: response[2]) }
                 throw BikeSDKError.operationFailed(
                     "VCU configuration write was rejected with status \(response[2])"
                 )

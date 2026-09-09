@@ -10,14 +10,26 @@ final class FakeBikeBLEPowerModeConfigurationTransport: BikeBLEPowerModeConfigur
     var failingRequests = Set<Data>()
     var versionData = Data("1.12.0".utf8)
     var curveOverrides: [UInt8: UInt8] = [:]
-    var writeError: BikeSDKError?
+    var writeError: (any Error)?
+    var isDesynchronized = false
+    var desynchronizesOnReadFailure = false
+    var tractionReadFailuresRemaining = 0
+    var tractionReadError: (any Error)?
+    var queuedTractionResponses: [Data] = []
+    var ignoresTractionWrites = false
+    var onVersions: (() -> Void)?
+    var onTractionRead: (() -> Void)?
+
     private var powerResponses: [UInt8: Data] = [:]
     private var tractionResponses: [UInt8: Data] = [:]
 
-    func ensureReady() throws {}
+    func ensureReady() throws {
+        if isDesynchronized { throw BikeSDKError.operationFailed("Synthetic desynchronization") }
+    }
 
     func readVersions() async throws -> Data {
-        versionData
+        onVersions?()
+        return versionData
     }
 
     func readConfiguration(
@@ -39,6 +51,13 @@ final class FakeBikeBLEPowerModeConfigurationTransport: BikeBLEPowerModeConfigur
                     curveOverrides[mapIndex] ?? 0, 0
                 ])
         case 8:
+            onTractionRead?()
+            if tractionReadFailuresRemaining > 0 {
+                tractionReadFailuresRemaining -= 1
+                isDesynchronized = desynchronizesOnReadFailure
+                throw tractionReadError ?? BikeSDKError.operationFailed("Synthetic timeout")
+            }
+            if !queuedTractionResponses.isEmpty { return queuedTractionResponses.removeFirst() }
             return tractionResponses[mapIndex]
                 ?? Data([2, 8, 0, mapIndex, 200, 0, 200, 0])
         default:
@@ -70,6 +89,7 @@ final class FakeBikeBLEPowerModeConfigurationTransport: BikeBLEPowerModeConfigur
                 throw BikeSDKError.operationFailed("Unsupported fake traction-control write")
             }
             let mapIndex = payload[3]
+            if ignoresTractionWrites { return }
             tractionResponses[mapIndex] = Data([
                 2, 8, 0, mapIndex,
                 payload[5], payload[6], payload[7], payload[8]

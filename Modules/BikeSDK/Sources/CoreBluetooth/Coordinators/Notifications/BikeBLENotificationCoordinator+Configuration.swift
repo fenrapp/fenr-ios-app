@@ -65,6 +65,24 @@ extension BikeBLENotificationCoordinator {
         }
     }
 
+    public func readTractionControlFirmwareCompatibility() async throws -> BikeSDKTractionControlFirmwareCompatibility {
+        try await withConfigurationSequence {
+            try await powerModeCoordinator.readTractionControlFirmwareCompatibility()
+        }
+    }
+
+    public func applyUserTractionControlConfiguration(
+        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double,
+        expected: BikeSDKTractionControlSnapshot?
+    ) async throws -> BikeSDKTractionControlSnapshot {
+        try await withConfigurationSequence {
+            try await powerModeCoordinator.applyUserTractionControlConfiguration(
+                mapIndex: mapIndex, powerTractionPercent: powerTractionPercent,
+                brakingTractionPercent: brakingTractionPercent, expected: expected
+            )
+        }
+    }
+
     public func prepareTractionControl(mapIndex: Int) async throws {
         try await withConfigurationSequence {
             try await powerModeCoordinator.prepareTractionControl(mapIndex: mapIndex)

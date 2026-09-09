@@ -115,7 +115,7 @@ struct BikeBLEPowerModeConfigurationCoordinatorTests {
         let baseTransport = FakeBikeBLEPowerModeConfigurationTransport()
         let baseCoordinator = makeCoordinator(transport: baseTransport)
         try await baseCoordinator.preparePowerModeControl(mapIndex: 0)
-        baseTransport.writeError = .operationFailed("Synthetic write failure")
+        baseTransport.writeError = BikeSDKError.operationFailed("Synthetic write failure")
 
         await #expect(throws: BikeSDKError.self) {
             try await baseCoordinator.setPowerModeConfiguration(
@@ -136,7 +136,7 @@ struct BikeBLEPowerModeConfigurationCoordinatorTests {
         let tractionTransport = FakeBikeBLEPowerModeConfigurationTransport()
         let tractionCoordinator = makeCoordinator(transport: tractionTransport)
         try await tractionCoordinator.prepareTractionControl(mapIndex: 0)
-        tractionTransport.writeError = .operationFailed("Synthetic write failure")
+        tractionTransport.writeError = BikeSDKError.operationFailed("Synthetic write failure")
 
         await #expect(throws: BikeSDKError.self) {
             try await tractionCoordinator.setTractionControlConfiguration(

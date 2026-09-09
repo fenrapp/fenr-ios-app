@@ -6,8 +6,14 @@ struct PowerModeControlMapper: Sendable {
 
     func controlData(for input: PowerModeSettingsMappingInput) -> PowerModeControlData {
         let configuration = input.telemetry.powerModeConfigurations[input.selectedMapIndex]
-        let tractionSupported = isSupportedTractionConfiguration(configuration)
+        let power = input.tractionPower
+            ?? configuration?.powerTractionPercent ?? (input.isTractionControlReady ? 0 : nil)
+        let braking = input.tractionBraking
+            ?? configuration?.brakingTractionPercent ?? (input.isTractionControlReady ? 0 : nil)
+        let tractionSupported = power.map(isSupportedTractionValue) == true
+            && braking.map(isSupportedTractionValue) == true
         let context = PowerModeAdjustmentMappingContext(
+            tractionPower: power, tractionBraking: braking, allowsTractionRecommit: input.allowsTractionRecommit,
             configuration: configuration,
             powerMaximum: maximumHorsepower(
                 detectedTier: input.telemetry.detectedPowerTier,
@@ -19,6 +25,7 @@ struct PowerModeControlMapper: Sendable {
             isTractionControlReady: input.isTractionControlReady
                 && input.isCanonicalTelemetryAvailable
                 && tractionSupported
+                && !input.isTractionBusy
                 && !input.isApplyingControl,
             activeAdjustmentID: input.activeAdjustmentID,
             pendingValue: input.pendingAdjustmentValue,
@@ -32,7 +39,7 @@ struct PowerModeControlMapper: Sendable {
     }
 
     func controlGroups(
-        from adjustments: [PowerModeAdjustmentViewState]
+        from adjustments: [PowerModeAdjustmentViewState], isTractionFirmwareIncompatible: Bool
     ) -> [PowerModeControlGroupViewData] {
         [
             .init(
@@ -44,7 +51,8 @@ struct PowerModeControlMapper: Sendable {
             .init(
                 id: .traction,
                 title: String(localized: .powerModeSettingsTractionGroupTitle),
-                detail: String(localized: .powerModeSettingsTractionGroupDetail),
+                detail: isTractionFirmwareIncompatible
+                    ? String(localized: .powerModeSettingsTractionGroupDetail) : nil,
                 adjustments: Array(adjustments.suffix(2))
             )
         ]
@@ -65,6 +73,7 @@ struct PowerModeControlMapper: Sendable {
                 minimum: 10,
                 maximum: context.powerMaximum,
                 isEnabled: context.isBaseControlReady,
+                allowsUnchangedCommit: false,
                 feedback: feedback(for: .power, context: context)
             )),
             adjustment(.init(
@@ -78,32 +87,35 @@ struct PowerModeControlMapper: Sendable {
                 minimum: 0,
                 maximum: 100,
                 isEnabled: context.isBaseControlReady,
+                allowsUnchangedCommit: false,
                 feedback: feedback(for: .regeneration, context: context)
             )),
             adjustment(.init(
                 id: .powerTraction,
                 title: String(localized: .powerModeSettingsTractionAdjustment),
                 value: displayedValue(
-                    .powerTraction, confirmed: context.configuration?.powerTractionPercent,
+                    .powerTraction, confirmed: context.tractionPower,
                     context: context
                 ),
                 unit: String(localized: .powerModeSettingsPercentUnit),
                 minimum: 0,
                 maximum: 100,
                 isEnabled: context.isTractionControlReady,
+                allowsUnchangedCommit: context.allowsTractionRecommit,
                 feedback: feedback(for: .powerTraction, context: context)
             )),
             adjustment(.init(
                 id: .brakingTraction,
                 title: String(localized: .powerModeSettingsRegenTractionAdjustment),
                 value: displayedValue(
-                    .brakingTraction, confirmed: context.configuration?.brakingTractionPercent,
+                    .brakingTraction, confirmed: context.tractionBraking,
                     context: context
                 ),
                 unit: String(localized: .powerModeSettingsPercentUnit),
                 minimum: 0,
                 maximum: 100,
                 isEnabled: context.isTractionControlReady,
+                allowsUnchangedCommit: context.allowsTractionRecommit,
                 feedback: feedback(for: .brakingTraction, context: context)
             ))
         ]
@@ -129,7 +141,8 @@ struct PowerModeControlMapper: Sendable {
             step: 1,
             isEnabled: input.isEnabled && input.value != nil,
             localeIdentifier: locale.identifier,
-            feedback: input.feedback
+            feedback: input.feedback,
+            allowsUnchangedCommit: input.allowsUnchangedCommit
         )
     }
 
@@ -187,17 +200,6 @@ struct PowerModeControlMapper: Sendable {
         return declaredTier == .alpha ? 80 : 60
     }
 
-    private func isSupportedTractionConfiguration(
-        _ configuration: BikePowerModeConfiguration?
-    ) -> Bool {
-        guard let power = configuration?.powerTractionPercent,
-              let braking = configuration?.brakingTractionPercent
-        else {
-            return false
-        }
-        return isSupportedTractionValue(power) && isSupportedTractionValue(braking)
-    }
-
     private func isSupportedTractionValue(_ value: Double) -> Bool {
         value.isFinite && 0 ... 100 ~= value && value.rounded() == value
     }
@@ -210,6 +212,9 @@ struct PowerModeControlData {
 }
 
 private struct PowerModeAdjustmentMappingContext {
+    let tractionPower: Double?
+    let tractionBraking: Double?
+    let allowsTractionRecommit: Bool
     let configuration: BikePowerModeConfiguration?
     let powerMaximum: Double
     let isBaseControlReady: Bool
@@ -227,5 +232,6 @@ private struct PowerModeAdjustmentPresentationInput {
     let minimum: Double
     let maximum: Double
     let isEnabled: Bool
+    let allowsUnchangedCommit: Bool
     let feedback: PowerModeControlFeedback
 }

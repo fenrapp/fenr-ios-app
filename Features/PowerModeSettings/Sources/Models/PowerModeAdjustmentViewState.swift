@@ -11,6 +11,7 @@ public struct PowerModeAdjustmentViewState: Equatable, Identifiable, Sendable {
     public let step: Double
     public let isEnabled: Bool
     public let localeIdentifier: String
+    public let allowsUnchangedCommit: Bool
     public let feedback: PowerModeControlFeedback
 
     public init(
@@ -24,7 +25,8 @@ public struct PowerModeAdjustmentViewState: Equatable, Identifiable, Sendable {
         step: Double,
         isEnabled: Bool,
         localeIdentifier: String,
-        feedback: PowerModeControlFeedback = .idle
+        feedback: PowerModeControlFeedback = .idle,
+        allowsUnchangedCommit: Bool = false
     ) {
         self.id = id
         self.title = title
@@ -36,6 +38,7 @@ public struct PowerModeAdjustmentViewState: Equatable, Identifiable, Sendable {
         self.step = step
         self.isEnabled = isEnabled
         self.localeIdentifier = localeIdentifier
+        self.allowsUnchangedCommit = allowsUnchangedCommit
         self.feedback = feedback
     }
 }

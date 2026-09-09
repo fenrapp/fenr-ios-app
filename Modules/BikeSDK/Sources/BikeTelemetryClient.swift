@@ -30,6 +30,11 @@ public protocol BikeTelemetryClient: AnyObject, Sendable {
         horsepower: Int,
         regenerativeBrakingPercent: Int
     ) async throws
+    func readTractionControlFirmwareCompatibility() async throws -> BikeSDKTractionControlFirmwareCompatibility
+    func applyUserTractionControlConfiguration(
+        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double,
+        expected: BikeSDKTractionControlSnapshot?
+    ) async throws -> BikeSDKTractionControlSnapshot
     func prepareTractionControl(mapIndex: Int) async throws
     func setTractionControlConfiguration(
         mapIndex: Int,
@@ -89,6 +94,15 @@ public extension BikeTelemetryClient {
         regenerativeBrakingPercent _: Int
     ) async throws {
         throw BikeSDKError.operationFailed("Power mode control is unavailable")
+    }
+    func readTractionControlFirmwareCompatibility() async throws -> BikeSDKTractionControlFirmwareCompatibility {
+        throw BikeSDKTractionControlError.unavailable
+    }
+    func applyUserTractionControlConfiguration(
+        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double,
+        expected: BikeSDKTractionControlSnapshot?
+    ) async throws -> BikeSDKTractionControlSnapshot {
+        throw BikeSDKTractionControlError.unavailable
     }
     func prepareTractionControl(mapIndex _: Int) async throws {
         throw BikeSDKError.operationFailed("Traction control is unavailable")

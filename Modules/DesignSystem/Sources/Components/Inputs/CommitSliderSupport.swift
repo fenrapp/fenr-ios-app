@@ -145,7 +145,8 @@ struct CommitSliderInteractionState: Equatable {
     mutating func finishEditing(
         externalValue: Double,
         bounds: ClosedRange<Double>,
-        isEnabled: Bool
+        isEnabled: Bool,
+        allowsUnchangedCommit: Bool = false
     ) -> Double? {
         guard isEditing else { return nil }
         isEditing = false
@@ -153,7 +154,7 @@ struct CommitSliderInteractionState: Equatable {
 
         guard
             isEnabled,
-            displayedValue != Self.clamped(externalValue, to: bounds)
+            allowsUnchangedCommit || displayedValue != Self.clamped(externalValue, to: bounds)
         else { return nil }
         return displayedValue
     }

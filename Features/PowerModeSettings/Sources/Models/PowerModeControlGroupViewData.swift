@@ -6,13 +6,13 @@ public enum PowerModeControlGroupID: String, Equatable, Hashable, Sendable {
 public struct PowerModeControlGroupViewData: Equatable, Identifiable, Sendable {
     public let id: PowerModeControlGroupID
     public let title: String
-    public let detail: String
+    public let detail: String?
     public let adjustments: [PowerModeAdjustmentViewState]
 
     public init(
         id: PowerModeControlGroupID,
         title: String,
-        detail: String,
+        detail: String?,
         adjustments: [PowerModeAdjustmentViewState]
     ) {
         self.id = id

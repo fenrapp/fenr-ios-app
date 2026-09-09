@@ -4,6 +4,21 @@ import Testing
 
 @Suite("Commit slider interaction")
 struct CommitSliderTests {
+    @Test("An explicit retry can commit an unchanged value exactly once")
+    func unchangedRetry() {
+        var state = CommitSliderInteractionState(value: 35, bounds: 0 ... 100)
+        #expect(state.finishEditing(
+            externalValue: 35, bounds: 0 ... 100, isEnabled: true, allowsUnchangedCommit: true
+        ) == nil)
+        state.beginEditing(isEnabled: true)
+        #expect(state.finishEditing(
+            externalValue: 35, bounds: 0 ... 100, isEnabled: true, allowsUnchangedCommit: true
+        ) == 35)
+        #expect(state.finishEditing(
+            externalValue: 35, bounds: 0 ... 100, isEnabled: true, allowsUnchangedCommit: true
+        ) == nil)
+    }
+
     @Test("Synchronizes external values while inactive")
     func synchronizesExternalValue() {
         var state = CommitSliderInteractionState(value: 40, bounds: 20 ... 100)

@@ -149,6 +149,20 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
         )
     }
 
+    public func readTractionControlFirmwareCompatibility() async throws -> BikeSDKTractionControlFirmwareCompatibility {
+        try await notificationCoordinator.readTractionControlFirmwareCompatibility()
+    }
+
+    public func applyUserTractionControlConfiguration(
+        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double,
+        expected: BikeSDKTractionControlSnapshot?
+    ) async throws -> BikeSDKTractionControlSnapshot {
+        try await notificationCoordinator.applyUserTractionControlConfiguration(
+            mapIndex: mapIndex, powerTractionPercent: powerTractionPercent,
+            brakingTractionPercent: brakingTractionPercent, expected: expected
+        )
+    }
+
     public func prepareTractionControl(mapIndex: Int) async throws {
         try await notificationCoordinator.prepareTractionControl(mapIndex: mapIndex)
     }

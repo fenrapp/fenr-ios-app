@@ -7,6 +7,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
     private let bounds: ClosedRange<Double>
     private let step: Double
     private let rendering: CommitSliderRendering
+    private let allowsUnchangedCommit: Bool
     private let isEnabled: Bool
     private let accessibilityLabel: String?
     private let accessibilityIdentifier: String?
@@ -25,6 +26,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
         step: Double,
         tint: Color = DesignColor.accent,
         isEnabled: Bool = true,
+        allowsUnchangedCommit: Bool = false,
         accessibilityIdentifier: String? = nil,
         onCommit: @escaping (Double) -> Void,
         @ViewBuilder header: @escaping (Double) -> Header,
@@ -35,6 +37,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
         self.step = step
         rendering = .system(tint)
         onDoubleTap = nil
+        self.allowsUnchangedCommit = allowsUnchangedCommit
         self.isEnabled = isEnabled
         accessibilityLabel = nil
         self.accessibilityIdentifier = accessibilityIdentifier
@@ -51,6 +54,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
         step: Double,
         appearance: CommitSliderAppearance,
         isEnabled: Bool = true,
+        allowsUnchangedCommit: Bool = false,
         accessibilityLabel: String? = nil,
         accessibilityValue: @escaping (Double) -> String = { $0.formatted() },
         onDoubleTap: (() -> Void)? = nil,
@@ -64,6 +68,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
         self.step = step
         rendering = .gradient(appearance)
         self.onDoubleTap = onDoubleTap
+        self.allowsUnchangedCommit = allowsUnchangedCommit
         self.isEnabled = isEnabled
         self.accessibilityLabel = accessibilityLabel
         self.accessibilityIdentifier = accessibilityIdentifier
@@ -121,6 +126,7 @@ public struct CommitSlider<Header: View, Footer: View>: View {
                 step: step,
                 appearance: appearance,
                 isEnabled: effectiveIsEnabled,
+                allowsUnchangedCommit: allowsUnchangedCommit,
                 accessibilityLabel: accessibilityLabel,
                 accessibilityValue: accessibilityValue(interaction.displayedValue),
                 interaction: $interaction,
@@ -154,7 +160,8 @@ public struct CommitSlider<Header: View, Footer: View>: View {
         } else if let committedValue = interaction.finishEditing(
             externalValue: value,
             bounds: bounds,
-            isEnabled: effectiveIsEnabled
+            isEnabled: effectiveIsEnabled,
+            allowsUnchangedCommit: allowsUnchangedCommit
         ) {
             onCommit(committedValue)
         }

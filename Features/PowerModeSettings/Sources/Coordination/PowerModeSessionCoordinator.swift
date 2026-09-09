@@ -7,6 +7,7 @@ final class PowerModeSessionCoordinator {
     private let context: PowerModeContext
     private let operations: PowerModeOperationController
     private let names: PowerModeNameCoordinator
+    private let traction: PowerModeTractionControls
     private let controls: PowerModeBasicControls
     private let advanced: PowerModeAdvancedOperations
     private let store: PowerModeDraftStore
@@ -17,13 +18,14 @@ final class PowerModeSessionCoordinator {
     init(
         vehicleSession: any VehicleSessionService, context: PowerModeContext,
         operations: PowerModeOperationController, names: PowerModeNameCoordinator,
-        controls: PowerModeBasicControls, advanced: PowerModeAdvancedOperations,
+        controls: PowerModeBasicControls, traction: PowerModeTractionControls, advanced: PowerModeAdvancedOperations,
         store: PowerModeDraftStore, presets: PowerModePresetCoordinator
     ) {
         self.vehicleSession = vehicleSession
         self.context = context
         self.operations = operations
         self.names = names
+        self.traction = traction
         self.controls = controls
         self.advanced = advanced
         self.store = store
@@ -73,6 +75,7 @@ final class PowerModeSessionCoordinator {
         controls.reset(resetRefresh: wasRefreshing)
         names.clearError()
         advanced.clearMessage()
+        traction.receive()
         controls.receive()
         if context.isAdvancedVisible { advanced.read() }
     }
@@ -81,7 +84,9 @@ final class PowerModeSessionCoordinator {
         generation += 1
         context.isStarted = false
         context.isAdvancedVisible = false
-        let tasks = [observationTask, operations.cancel(), presets.cancel(clear: false)].compactMap { $0 }
+        let tasks = [
+            observationTask, operations.cancel(), traction.reset(), presets.cancel(clear: false)
+        ].compactMap { $0 }
         observationTask?.cancel()
         observationTask = nil
         controls.reset(resetRefresh: true)
@@ -101,6 +106,7 @@ final class PowerModeSessionCoordinator {
         if changedBike {
             operations.cancel()
             presets.cancel(clear: true)
+            traction.reset()
             store.clear()
             controls.reset(resetRefresh: true)
             advanced.clearMessage()
@@ -109,11 +115,13 @@ final class PowerModeSessionCoordinator {
         if !context.canUseConfiguration {
             if wasReady || (wasAuthenticated && !context.isAuthenticated) {
                 operations.cancel()
+                traction.reset()
                 presets.cancel(clear: false)
                 controls.reset(resetRefresh: true)
             }
             store.invalidate()
         }
+        traction.receive()
         controls.receive()
         if context.isAdvancedVisible, !wasReady, context.canUseConfiguration, !operations.isBusy {
             advanced.read()

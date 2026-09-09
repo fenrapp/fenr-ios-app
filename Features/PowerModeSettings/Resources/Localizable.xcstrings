@@ -1,6 +1,10 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "powerModeSettingsTractionReconnect" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Could not confirm traction settings. Reconnect to the bike and try again."}}}},
+    "powerModeSettingsTractionUnconfirmed" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Could not confirm traction settings"}}}},
+    "powerModeSettingsTractionMismatch" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "The bike returned different traction settings. Try again."}}}},
+    "powerModeSettingsTractionChanged" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Traction settings changed. Adjust the slider again."}}}},
     "powerModeSettingsExactValueAccessibility" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -666,7 +670,7 @@
     "powerModeSettingsTitle" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Power Modes" } } } },
     "powerModeSettingsTractionAdjustment" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Traction control" } } } },
     "powerModeSettingsTractionControlsUnavailableError" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Traction controls are unavailable. Try again." } } } },
-    "powerModeSettingsTractionGroupDetail" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Available only when supported firmware and verified values are present." } } } },
+    "powerModeSettingsTractionGroupDetail" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Available with supported firmware." } } } },
     "powerModeSettingsTractionGroupTitle" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Traction" } } } },
     "powerModeSettingsUnavailable" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unavailable" } } } },
     "powerModeSettingsVerifyingSafetyStatus" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Verifying map write safety" } } } },

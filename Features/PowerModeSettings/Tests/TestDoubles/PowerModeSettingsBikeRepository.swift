@@ -27,19 +27,22 @@ actor PowerModeSettingsBikeRepository: BikeRepository {
     private let tractionPreparationOperation: ControllablePowerModeSettingsOperation?
     private let baseWriteOperation: ControllablePowerModeSettingsOperation?
     private let tractionWriteOperation: ControllablePowerModeSettingsOperation?
+    private let tractionCompatibilityOperation: ControllablePowerModeSettingsOperation?
 
     init(
         refreshOperation: ControllablePowerModeSettingsOperation? = nil,
         basePreparationOperation: ControllablePowerModeSettingsOperation? = nil,
         tractionPreparationOperation: ControllablePowerModeSettingsOperation? = nil,
         baseWriteOperation: ControllablePowerModeSettingsOperation? = nil,
-        tractionWriteOperation: ControllablePowerModeSettingsOperation? = nil
+        tractionWriteOperation: ControllablePowerModeSettingsOperation? = nil,
+        tractionCompatibilityOperation: ControllablePowerModeSettingsOperation? = nil
     ) {
         self.refreshOperation = refreshOperation
         self.basePreparationOperation = basePreparationOperation
         self.tractionPreparationOperation = tractionPreparationOperation
         self.baseWriteOperation = baseWriteOperation
         self.tractionWriteOperation = tractionWriteOperation
+        self.tractionCompatibilityOperation = tractionCompatibilityOperation
     }
 
     func start() {}
@@ -74,6 +77,35 @@ actor PowerModeSettingsBikeRepository: BikeRepository {
         requestedWrites.append(write)
         try await baseWriteOperation?.run()
         writes.append(write)
+    }
+
+    var tractionCompatibility = BikeTractionControlFirmwareCompatibility(firmware: "1.12.0", isCompatible: true)
+    var tractionCompatibilityError: (any Error)?
+    private(set) var tractionCompatibilityReads = 0
+
+    func setTractionCompatibility(_ value: BikeTractionControlFirmwareCompatibility) { tractionCompatibility = value }
+    func setTractionError(_ error: (any Error)?) { writeError = error }
+    func setTractionCompatibilityError(_ error: (any Error)?) { tractionCompatibilityError = error }
+
+    func readTractionControlFirmwareCompatibility() async throws -> BikeTractionControlFirmwareCompatibility {
+        tractionCompatibilityReads += 1
+        try await tractionCompatibilityOperation?.run()
+        if let tractionCompatibilityError { throw tractionCompatibilityError }
+        return tractionCompatibility
+    }
+
+    func applyUserTractionControlConfiguration(
+        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double,
+        expected: BikeTractionControlSnapshot?
+    ) async throws -> BikeTractionControlSnapshot {
+        try await setTractionControlConfiguration(
+            mapIndex: mapIndex, powerTractionPercent: powerTractionPercent,
+            brakingTractionPercent: brakingTractionPercent
+        )
+        return .init(
+            mapIndex: mapIndex, powerRaw: Int(powerTractionPercent * 10),
+            brakingRaw: Int(brakingTractionPercent * 10)
+        )
     }
 
     func prepareTractionControl(mapIndex: Int) async throws {
