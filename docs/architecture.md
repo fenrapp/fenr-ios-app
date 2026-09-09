@@ -72,19 +72,36 @@ their asynchronous tasks across stop, reset and reconnection boundaries.
 
 Vehicle writes are explicit use cases rather than generic BLE access. Features
 request them through domain contracts; `BikeData` maps to `BikeSDK`, whose shared
-VCU transport serializes operations. `StarkProtocol` owns payloads and encoders.
+VCU transport serializes individual requests inside a shared sequence gate that
+also covers complete multi-record read/no-op/write/confirmation operations. `StarkProtocol` owns payloads and encoders.
 
 Each supported record has firmware/capability gates, preparation, a safe no-op,
 sibling-value preservation and fresh confirmation. Charging power and target
-changes are confirmed by charger telemetry. Base-map, traction and lock changes
+changes are confirmed by charger telemetry. Base-map, advanced-curve, traction and lock changes
 require matching configuration reads. A transport timeout invalidates the
 transaction stream until reconnection so a late reply cannot confirm a new write.
 
 Charging controls and base-map changes have physical evidence. Instrumented
-traction-control and lock write/read-back evidence remains incomplete. Protocol
+advanced-curve, traction-control and lock write/read-back evidence remains incomplete. Protocol
 research details and physical validation evidence belong in the
 [protocol research repository](https://github.com/fenrapp/bike-protocol-research);
 implementation constraints remain in [AGENTS.md](../AGENTS.md).
+
+`PowerModeSettings` composes separate basic and advanced view models, use-case
+bundles and presentation mappers through `PowerModeFeatureFactory`. Injected
+collaborators own basic controls, advanced operations, names and local presets.
+Both destinations share one session observer, a serialized operation controller
+and a per-map draft store with separate confirmed configurations. Opening a destination or managing a local
+preset never writes to the bike. Apply checks the complete baseline, prepares
+all touched records and confirms the complete result before accepting the draft.
+A partial failure stops the sequence, attempts a fresh read and never retries a
+changed write automatically. A timeout requires reconnection before recovery.
+
+Curve conversions use an injected, versioned calibration profile. Presets are
+stored per normalized motorcycle identity and include firmware, power tier and
+calibration compatibility. A corrupt preset library cannot be overwritten by an
+empty in-memory library. The advanced screen retains Apply, Discard and Save
+Preset independently of the basic sliders.
 
 ## Startup and diagnostic capture
 
