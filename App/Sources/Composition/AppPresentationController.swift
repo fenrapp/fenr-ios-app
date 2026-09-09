@@ -27,6 +27,7 @@ private extension AppInterfaceOrientation {
         switch self {
         case .portrait: .portrait
         case .landscape: .landscape
+        case .adaptive: .allButUpsideDown
         }
     }
 }

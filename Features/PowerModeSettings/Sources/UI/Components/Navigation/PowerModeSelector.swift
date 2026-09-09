@@ -8,6 +8,21 @@ struct PowerModeSelector: View {
     let select: (Int) -> Void
 
     var body: some View {
+        ScrollViewReader { proxy in
+            selector
+                .onAppear {
+                    if let selected = maps.first(where: \.isSelected)?.id {
+                        proxy.scrollTo(selected, anchor: .center)
+                    }
+                }
+                .onChange(of: maps.first(where: \.isSelected)?.id) { _, selected in
+                    guard let selected else { return }
+                    proxy.scrollTo(selected, anchor: .center)
+                }
+        }
+    }
+
+    private var selector: some View {
         ScrollView(.horizontal) {
             HStack(spacing: DesignSpace.extraSmall) {
                 ForEach(maps) { map in
@@ -32,6 +47,7 @@ struct PowerModeSelector: View {
                                     )
                             }
                     }
+                    .id(map.id)
                     .buttonStyle(.plain)
                     .accessibilityLabel(map.accessibilityLabel)
                     .accessibilityAddTraits(map.isSelected ? .isSelected : [])

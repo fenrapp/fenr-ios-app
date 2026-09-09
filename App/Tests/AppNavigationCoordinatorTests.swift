@@ -303,6 +303,20 @@ struct AppExternalNavigationTests {
 @MainActor
 @Suite("App presentation policy")
 struct AppPresentationPolicyTests {
+    @Test("Only the advanced curve editor permits portrait and landscape in settings")
+    func advancedEditorSupportsRotation() {
+        let spy = AppNavigationOrientationSpy()
+        let controller = AppPresentationController(policy: .init(), orientationController: spy)
+        var state = AppNavigationState(root: .dashboard, path: [.powerModes])
+        controller.update(for: state)
+        state.push(.advancedPowerModes)
+        controller.update(for: state)
+        controller.update(for: state)
+        state.pop()
+        controller.update(for: state)
+        #expect(spy.requests == [.portrait, .allButUpsideDown, .portrait])
+    }
+
     @Test("Derives orientation and suppresses duplicate requests")
     func orientationAndDeduplication() {
         let spy = AppNavigationOrientationSpy()

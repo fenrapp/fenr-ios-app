@@ -7,7 +7,14 @@ struct PowerModeAdvancedContent: View {
     let send: (PowerModeAdvancedIntent) -> Void
 
     var body: some View {
-        portraitContent(chartHeight: Constants.chartHeight)
+        GeometryReader { geometry in
+            if geometry.size.width > geometry.size.height, state.hasConfiguration {
+                PowerModeAdvancedLandscapeContent(state: state, maps: maps, send: send, size: geometry.size)
+            } else {
+                portraitContent(chartHeight: geometry.size.width < Constants.compactWidth
+                    ? Constants.compactChartHeight : Constants.chartHeight)
+            }
+        }
         .navigationTitle(Text(.powerCurveAdvancedTitle))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
