@@ -37,6 +37,14 @@ public protocol BikeTelemetryClient: AnyObject, Sendable {
         brakingTractionPercent: Double
     ) async throws
     func refreshTractionControlConfiguration(mapIndex: Int) async throws
+    func applyBasicPowerMode(
+        mapIndex: Int, horsepower: Int?, regeneration: Int?
+    ) async throws -> BikeSDKAdvancedPowerModeConfiguration
+    func readAdvancedPowerMode(mapIndex: Int) async throws -> BikeSDKAdvancedPowerModeConfiguration
+    func applyAdvancedPowerMode(
+        expected: BikeSDKAdvancedPowerModeConfiguration,
+        desired: BikeSDKAdvancedPowerModeConfiguration
+    ) async throws -> BikeSDKAdvancedPowerModeConfiguration
     func events() async -> AsyncStream<BikeSDKEvent>
 }
 
@@ -94,5 +102,21 @@ public extension BikeTelemetryClient {
     }
     func refreshTractionControlConfiguration(mapIndex _: Int) async throws {
         throw BikeSDKError.operationFailed("Traction control configuration refresh is unavailable")
+    }
+
+    func readAdvancedPowerMode(mapIndex: Int) async throws -> BikeSDKAdvancedPowerModeConfiguration {
+        throw BikeSDKError.operationFailed("Advanced power modes are unavailable")
+    }
+    func applyAdvancedPowerMode(
+        expected: BikeSDKAdvancedPowerModeConfiguration,
+        desired: BikeSDKAdvancedPowerModeConfiguration
+    ) async throws -> BikeSDKAdvancedPowerModeConfiguration {
+        throw BikeSDKError.operationFailed("Advanced power modes are unavailable")
+    }
+
+    func applyBasicPowerMode(
+        mapIndex: Int, horsepower: Int?, regeneration: Int?
+    ) async throws -> BikeSDKAdvancedPowerModeConfiguration {
+        throw BikeSDKError.operationFailed("Advanced power modes are unavailable")
     }
 }

@@ -31,18 +31,7 @@ enum BikeBLECoordinatorAssembly {
             eventEmitter: dependencies.eventEmitter,
             peripheralOperations: dependencies.peripheralOperations
         )
-        let transactionGate = BikeBLEVCUConfigurationTransactionGate()
-        let configurationTransport = BikeBLEVCUConfigurationTransport(
-            sessionStore: dependencies.sessionStore,
-            eventEmitter: dependencies.eventEmitter,
-            peripheralOperations: dependencies.peripheralOperations,
-            configurationReadinessWaiter: .init(
-                checkInterval: .milliseconds(50),
-                maximumCheckCount: 100
-            ),
-            transactionGate: transactionGate,
-            operationController: .init(timeoutScheduler: BikeBLEOperationTimeoutScheduler(duration: .seconds(5)))
-        )
+        let configurationTransport = makeConfigurationTransport(dependencies)
         let experimentalCaptureCoordinator = BikeBLEExperimentalCaptureCoordinator(
             sessionStore: dependencies.sessionStore,
             eventEmitter: dependencies.eventEmitter,
@@ -82,10 +71,31 @@ enum BikeBLECoordinatorAssembly {
             subscriptionCoordinator: subscriptionCoordinator,
             chargePowerCoordinator: chargePowerCoordinator,
             powerModeCoordinator: powerModeCoordinator,
+            advancedPowerModeCoordinator: .init(
+                transport: configurationTransport, eventEmitter: dependencies.eventEmitter
+            ),
+            configurationSequenceGate: BikeBLEVCUConfigurationTransactionGate(),
             bikeLockCoordinator: bikeLockCoordinator,
             configurationTransport: configurationTransport,
             connectionDidBecomeReady: dependencies.connectionDidBecomeReady,
             peripheralOperations: dependencies.peripheralOperations
+        )
+    }
+
+    private static func makeConfigurationTransport(
+        _ dependencies: NotificationDependencies
+    ) -> BikeBLEVCUConfigurationTransport {
+        let transactionGate = BikeBLEVCUConfigurationTransactionGate()
+        return BikeBLEVCUConfigurationTransport(
+            sessionStore: dependencies.sessionStore,
+            eventEmitter: dependencies.eventEmitter,
+            peripheralOperations: dependencies.peripheralOperations,
+            configurationReadinessWaiter: .init(
+                checkInterval: .milliseconds(50),
+                maximumCheckCount: 100
+            ),
+            transactionGate: transactionGate,
+            operationController: .init(timeoutScheduler: BikeBLEOperationTimeoutScheduler(duration: .seconds(5)))
         )
     }
 

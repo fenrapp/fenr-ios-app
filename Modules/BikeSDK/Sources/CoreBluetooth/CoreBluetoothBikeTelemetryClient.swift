@@ -179,3 +179,25 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
         isCentralStarted = true
     }
 }
+
+extension CoreBluetoothBikeTelemetryClient {
+    public func readAdvancedPowerMode(mapIndex: Int) async throws -> BikeSDKAdvancedPowerModeConfiguration {
+        try await notificationCoordinator.readAdvancedPowerMode(mapIndex: mapIndex)
+    }
+    public func applyAdvancedPowerMode(
+        expected: BikeSDKAdvancedPowerModeConfiguration,
+        desired: BikeSDKAdvancedPowerModeConfiguration
+    ) async throws -> BikeSDKAdvancedPowerModeConfiguration {
+        try await notificationCoordinator.applyAdvancedPowerMode(expected: expected, desired: desired)
+    }
+}
+
+extension CoreBluetoothBikeTelemetryClient {
+    public func applyBasicPowerMode(
+        mapIndex: Int, horsepower: Int?, regeneration: Int?
+    ) async throws -> BikeSDKAdvancedPowerModeConfiguration {
+        try await notificationCoordinator.applyBasicPowerMode(
+            mapIndex: mapIndex, horsepower: horsepower, regeneration: regeneration
+        )
+    }
+}
