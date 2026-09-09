@@ -1,10 +1,20 @@
 import BikeDomain
 
 enum DashboardGearMapper {
+    static func map(telemetry: BikeTelemetry, hasTelemetry: Bool, modeName: String?) -> DashboardGearViewData {
+        map(
+            runState: hasTelemetry ? telemetry.runState : .unknown,
+            modeIndex: hasTelemetry ? telemetry.mode.displayIndex : nil,
+            modeName: hasTelemetry ? modeName : nil,
+            hasAdvancedCurve: telemetry.activePowerModeConfiguration?.curveConfirmation.hasAdvancedCurve == true
+        )
+    }
+
     static func map(
         runState: BikeRunState,
         modeIndex: Int?,
-        modeName: String?
+        modeName: String?,
+        hasAdvancedCurve: Bool = false
     ) -> DashboardGearViewData {
         switch runState {
         case .unknown:
@@ -26,7 +36,7 @@ enum DashboardGearMapper {
                 accessibilityLabel: rideDashboardLocalized(.rideDashboardGearNeutralAccessibility)
             )
         case .on:
-            powerMode(modeIndex: modeIndex, modeName: modeName)
+            powerMode(modeIndex: modeIndex, modeName: modeName, hasAdvancedCurve: hasAdvancedCurve)
         case .crawlForward:
             .init(
                 display: .crawlForward,
@@ -42,11 +52,14 @@ enum DashboardGearMapper {
         }
     }
 
-    private static func powerMode(modeIndex: Int?, modeName: String?) -> DashboardGearViewData {
+    private static func powerMode(
+        modeIndex: Int?, modeName: String?, hasAdvancedCurve: Bool
+    ) -> DashboardGearViewData {
         let display = modeName ?? modeIndex.map(String.init) ?? "--"
         return .init(
             display: .text(display),
             isActive: true,
+            showsAdvancedCurve: modeIndex.map { 1 ... 5 ~= $0 } == true && hasAdvancedCurve,
             accessibilityLabel: display == "--"
                 ? rideDashboardLocalized(.rideDashboardPowerModeUnavailableAccessibility)
                 : rideDashboardLocalized(.rideDashboardAccessibilityPowerMode(display))

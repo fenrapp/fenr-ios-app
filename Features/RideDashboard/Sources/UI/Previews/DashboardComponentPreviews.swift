@@ -69,6 +69,7 @@ import SwiftUI
     HStack(spacing: DesignSpace.extraLarge) {
         DashboardGearPanel(state: .init(display: .text("N"), isActive: true, accessibilityLabel: "Gear neutral"))
         DashboardGearPanel(state: .init(display: .text("3"), isActive: true, accessibilityLabel: "Gear 3"))
+        DashboardGearPanel(state: .init(display: .text("4"), isActive: true, showsAdvancedCurve: true))
         DashboardGearPanel(state: .init(display: .crawlForward, isActive: true, accessibilityLabel: "Crawl forward"))
         DashboardGearPanel(state: .init(display: .crawlReverse, isActive: true, accessibilityLabel: "Crawl reverse"))
     }

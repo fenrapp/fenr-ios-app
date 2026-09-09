@@ -2348,6 +2348,7 @@
 		D4A1BFF50FF037E8532A3382 /* PowerTierSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CDA78F0BD5A4363F0C85BE /* PowerTierSettingsSection.swift */; };
 		D4A2D05F4A65121E89A4E93F /* DataHexString.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E9283CDF5A495C758D92E3E /* DataHexString.swift */; };
 		D4A79DA4DE62EDF090F917C1 /* StarkNotificationDecoderRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42763727530BC940700ECA2B /* StarkNotificationDecoderRegistry.swift */; };
+		D4CEDD37F4E2FC52941C6BC1 /* DashboardAdvancedCurveIndicatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4D5DBA29E498001248EAF7 /* DashboardAdvancedCurveIndicatorTests.swift */; };
 		D4D8F372EC61473795E67A78 /* MaintenanceLog.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DD58A92107544F57E14D1D27 /* MaintenanceLog.framework */; };
 		D509860C1A5FE24E87D17F5D /* StarkNotificationToSDKEventMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CBAA182A011B7089086A580 /* StarkNotificationToSDKEventMapper.swift */; };
 		D51701B81B445D7CE847AE3A /* DashboardCardSettingsPreviewData.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90512B6C7E684EBF3908AA0 /* DashboardCardSettingsPreviewData.swift */; };
@@ -7912,6 +7913,7 @@
 		BAFD361C4F73C43E636B5BB3 /* DebugAppDependencyContainerFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugAppDependencyContainerFactory.swift; sourceTree = "<group>"; };
 		BB18CB012C7D0BDFA87B90C4 /* PlanningControllerUpdateRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanningControllerUpdateRecorder.swift; sourceTree = "<group>"; };
 		BB3FDB367207F40931DEB321 /* CoreLocationDeviceSpeedRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreLocationDeviceSpeedRepository.swift; sourceTree = "<group>"; };
+		BB4D5DBA29E498001248EAF7 /* DashboardAdvancedCurveIndicatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardAdvancedCurveIndicatorTests.swift; sourceTree = "<group>"; };
 		BB796CED30EF3701E79DED95 /* BikeEmulatorRepository+PowerModeControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BikeEmulatorRepository+PowerModeControl.swift"; sourceTree = "<group>"; };
 		BB7BB13958C323AD033C9E0F /* URLSessionMapLinkRedirectResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSessionMapLinkRedirectResolver.swift; sourceTree = "<group>"; };
 		BB9ABC1DA152AE6B2AEC6D15 /* PrepareBikePowerModeControlUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrepareBikePowerModeControlUseCase.swift; sourceTree = "<group>"; };
@@ -12252,6 +12254,7 @@
 				F198C12A0E0493C127CB2E09 /* ChargingDisplayedContentViewModelTests.swift */,
 				30978C94CAD1467B77693E2D /* CurrentTripCardMapperTests.swift */,
 				CD59907B652C2D669BD1AEC8 /* CurrentTripCardViewModelTests.swift */,
+				BB4D5DBA29E498001248EAF7 /* DashboardAdvancedCurveIndicatorTests.swift */,
 				B294846BBCA975CE6F2F329B /* DashboardAltitudeMapperTests.swift */,
 				2CE8DA833BD70375BE218F69 /* DashboardCardLayoutMapperTests.swift */,
 				A8B80B61CF0C8BE14356DBE6 /* DashboardCardSelectionStateTests.swift */,
@@ -22030,6 +22033,7 @@
 				B85FAE7687835EADA01C6B21 /* CurrentTripCardMapperTests.swift in Sources */,
 				BD73586EA3ADC19D63EF972D /* CurrentTripCardRepositories.swift in Sources */,
 				CEF53AB7B2CE0AE7498F5171 /* CurrentTripCardViewModelTests.swift in Sources */,
+				D4CEDD37F4E2FC52941C6BC1 /* DashboardAdvancedCurveIndicatorTests.swift in Sources */,
 				786B4E3E398A806435BD10DF /* DashboardAltitudeMapperTests.swift in Sources */,
 				D3D1FA2B3FB55D560128CF5B /* DashboardCardLayoutMapperTests.swift in Sources */,
 				26769F940F83FCBFF14A5EA6 /* DashboardCardSelectionStateTests.swift in Sources */,
