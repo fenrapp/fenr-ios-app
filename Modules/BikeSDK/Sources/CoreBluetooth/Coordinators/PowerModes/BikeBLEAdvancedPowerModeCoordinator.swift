@@ -3,9 +3,9 @@ import StarkProtocol
 
 @MainActor
 final class BikeBLEAdvancedPowerModeCoordinator {
-    let transport: any BikeBLEPowerModeConfigurationTransporting
-    let eventEmitter: BikeBLEEventEmitter
-    var generation = 0
+    private let transport: any BikeBLEPowerModeConfigurationTransporting
+    private let eventEmitter: BikeBLEEventEmitter
+    private(set) var generation = 0
 
     init(transport: any BikeBLEPowerModeConfigurationTransporting, eventEmitter: BikeBLEEventEmitter) {
         self.transport = transport
@@ -52,7 +52,7 @@ final class BikeBLEAdvancedPowerModeCoordinator {
         )
     }
 
-    func readBase(mapIndex: Int) async throws -> StarkPowerModeConfigurationPayload {
+    private func readBase(mapIndex: Int) async throws -> StarkPowerModeConfigurationPayload {
         let response = try await transport.readConfiguration(
             request: StarkPowerModeConfigurationCommand.readPacket(mapIndex: mapIndex),
             operationName: "4005 advanced base read", allowLiveTelemetrySession: false
@@ -62,7 +62,7 @@ final class BikeBLEAdvancedPowerModeCoordinator {
         return value
     }
 
-    func readCurves(mapIndex: Int) async throws -> StarkPowerCurveConfigurationPayload {
+    private func readCurves(mapIndex: Int) async throws -> StarkPowerCurveConfigurationPayload {
         let curve = try StarkPowerModeConfigurationCommand.normalizedWriteCurve(mapIndex: mapIndex)
         let response = try await transport.readConfiguration(
             request: StarkPowerCurveConfigurationCommand.readPacket(curve: curve),
@@ -71,7 +71,7 @@ final class BikeBLEAdvancedPowerModeCoordinator {
         return try StarkPowerCurveConfigurationCommand.decodeResponse(response, expectedCurve: curve)
     }
 
-    func readTraction(mapIndex: Int) async throws -> StarkTractionControlConfigurationPayload {
+    private func readTraction(mapIndex: Int) async throws -> StarkTractionControlConfigurationPayload {
         let response = try await transport.readConfiguration(
             request: StarkTractionControlConfigurationCommand.readPacket(mapIndex: mapIndex),
             operationName: "4005 advanced traction read", allowLiveTelemetrySession: false
@@ -130,6 +130,27 @@ final class BikeBLEAdvancedPowerModeCoordinator {
             throw BikeSDKError.operationFailed("The complete advanced configuration was not confirmed; refresh the map")
         }
         return verified
+    }
+
+    func applyBasic(
+        mapIndex: Int, horsepower: Int?, regeneration: Int?
+    ) async throws -> BikeSDKAdvancedPowerModeConfiguration {
+        let token = generation
+        let expected = try await read(mapIndex: mapIndex)
+        try check(token)
+        var desired = expected
+        if let horsepower {
+            guard 10 ... 80 ~= horsepower else { throw BikeSDKError.operationFailed("Invalid horsepower") }
+            desired.torqueRaw = Int((Double(horsepower) * 1.25).rounded())
+        }
+        if let regeneration {
+            guard 0 ... 100 ~= regeneration else { throw BikeSDKError.operationFailed("Invalid regeneration") }
+            desired.regenerationRaw = regeneration
+        }
+        return try await apply(
+            expected: expected, desired: desired,
+            allowsPowerAdaptation: horsepower != nil, allowsRegenerationAdaptation: regeneration != nil
+        )
     }
 
     private func prepare(
@@ -219,25 +240,5 @@ final class BikeBLEAdvancedPowerModeCoordinator {
             mapIndex: value.mapIndex, powerRaw: power, brakingRaw: braking
         ))
         try await transport.writeConfiguration(packet)
-    }
-    func applyBasic(
-        mapIndex: Int, horsepower: Int?, regeneration: Int?
-    ) async throws -> BikeSDKAdvancedPowerModeConfiguration {
-        let token = generation
-        let expected = try await read(mapIndex: mapIndex)
-        try check(token)
-        var desired = expected
-        if let horsepower {
-            guard 10 ... 80 ~= horsepower else { throw BikeSDKError.operationFailed("Invalid horsepower") }
-            desired.torqueRaw = Int((Double(horsepower) * 1.25).rounded())
-        }
-        if let regeneration {
-            guard 0 ... 100 ~= regeneration else { throw BikeSDKError.operationFailed("Invalid regeneration") }
-            desired.regenerationRaw = regeneration
-        }
-        return try await apply(
-            expected: expected, desired: desired,
-            allowsPowerAdaptation: horsepower != nil, allowsRegenerationAdaptation: regeneration != nil
-        )
     }
 }

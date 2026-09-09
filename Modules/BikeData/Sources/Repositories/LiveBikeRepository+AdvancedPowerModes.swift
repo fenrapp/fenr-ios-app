@@ -6,6 +6,7 @@ extension LiveBikeRepository {
             try await self.controlService.readAdvancedPowerMode(mapIndex: mapIndex)
         }
     }
+
     public func applyAdvancedPowerMode(
         expected: BikeAdvancedPowerModeConfiguration, desired: BikeAdvancedPowerModeConfiguration
     ) async throws -> BikeAdvancedPowerModeConfiguration {
@@ -13,6 +14,7 @@ extension LiveBikeRepository {
             try await self.controlService.applyAdvancedPowerMode(expected: expected, desired: desired)
         }
     }
+
     public func applyBasicPowerMode(
         mapIndex: Int, horsepower: Int?, regeneration: Int?
     ) async throws -> BikeAdvancedPowerModeConfiguration {

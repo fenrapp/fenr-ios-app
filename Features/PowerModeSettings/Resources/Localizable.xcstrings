@@ -45,17 +45,6 @@
         }
       }
     },
-    "power_curve_input_range" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enter a value from 0 to %1$@ %2$@."
-          }
-        }
-      }
-    },
     "power_curve_input_draft_hint" : {
       "extractionState" : "manual",
       "localizations" : {

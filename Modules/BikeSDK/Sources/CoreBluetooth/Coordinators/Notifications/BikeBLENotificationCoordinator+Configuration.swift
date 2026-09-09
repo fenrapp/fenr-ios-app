@@ -96,6 +96,7 @@ extension BikeBLENotificationCoordinator {
             try await bikeLockCoordinator.readFirmwareCompatibility()
         }
     }
+
     public func readAdvancedPowerMode(mapIndex: Int) async throws -> BikeSDKAdvancedPowerModeConfiguration {
         try await withConfigurationSequence { try await advancedPowerModeCoordinator.read(mapIndex: mapIndex) }
     }
@@ -106,6 +107,16 @@ extension BikeBLENotificationCoordinator {
     ) async throws -> BikeSDKAdvancedPowerModeConfiguration {
         try await withConfigurationSequence {
             try await advancedPowerModeCoordinator.apply(expected: expected, desired: desired)
+        }
+    }
+
+    public func applyBasicPowerMode(
+        mapIndex: Int, horsepower: Int?, regeneration: Int?
+    ) async throws -> BikeSDKAdvancedPowerModeConfiguration {
+        try await withConfigurationSequence {
+            try await advancedPowerModeCoordinator.applyBasic(
+                mapIndex: mapIndex, horsepower: horsepower, regeneration: regeneration
+            )
         }
     }
 
@@ -123,15 +134,6 @@ extension BikeBLENotificationCoordinator {
         } catch {
             await configurationSequenceGate.release()
             throw error
-        }
-    }
-    public func applyBasicPowerMode(
-        mapIndex: Int, horsepower: Int?, regeneration: Int?
-    ) async throws -> BikeSDKAdvancedPowerModeConfiguration {
-        try await withConfigurationSequence {
-            try await advancedPowerModeCoordinator.applyBasic(
-                mapIndex: mapIndex, horsepower: horsepower, regeneration: regeneration
-            )
         }
     }
 }
