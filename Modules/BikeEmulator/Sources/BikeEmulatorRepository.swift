@@ -19,6 +19,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatt
     let captureHub: BikeEmulatorCaptureHub
     let discoveredBikesHub: AsyncEventHub<[DiscoveredBike]>
     let powerCalculator: BikePowerTelemetryCalculator
+    var powerCurves: BikeEmulatorPowerCurveStore
     let runtime: BikeEmulatorRuntime
     let diagnostics: BikeEmulatorDiagnostics
     var diagnosticsStopTask: Task<Bool, Never>?
@@ -59,6 +60,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatt
         activeMapNumber: Int,
         channels: BikeEmulatorChannels,
         powerCalculator: BikePowerTelemetryCalculator,
+        powerCurves: BikeEmulatorPowerCurveStore,
         runtime: BikeEmulatorRuntime,
         configuration: BikeEmulatorConfiguration
     ) {
@@ -74,6 +76,7 @@ public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatt
         discoveredBikesHub = channels.discoveredBikes
         diagnostics = channels.diagnostics
         self.powerCalculator = powerCalculator
+        self.powerCurves = powerCurves
         self.runtime = runtime
         self.configuration = configuration
         let saved = configuration.initialState
@@ -161,6 +164,49 @@ public actor BikeEmulatorRepository: BikeRepository, BikeIMURepository, BikeBatt
 
     public func readTelemetrySnapshot() async throws {
         await publishCurrentState()
+    }
+
+    nonisolated public var supportsAdvancedPowerModes: Bool { !configuration.isDemo }
+
+    public func readAdvancedPowerMode(mapIndex: Int) async throws -> BikeAdvancedPowerModeConfiguration {
+        try Task.checkCancellation()
+        guard supportsAdvancedPowerModes, isConnected, powerModePreset != .failure,
+              let basic = currentPowerModeConfigurations()[mapIndex] else {
+            throw BikeEmulatorPowerModeError.readFailure
+        }
+        return try powerCurves.read(basic, maximum: maximumCurveHorsepower)
+    }
+
+    public func applyBasicPowerMode(
+        mapIndex: Int, horsepower: Int?, regeneration: Int?
+    ) async throws -> BikeAdvancedPowerModeConfiguration {
+        let current = try await readAdvancedPowerMode(mapIndex: mapIndex)
+        let desired = try powerCurves.changingBasic(
+            current, horsepower: horsepower, regeneration: regeneration, maximum: maximumCurveHorsepower
+        )
+        return try await applyPowerCurves(expected: current, desired: desired, isAdvancedEdit: false)
+    }
+
+    public func applyAdvancedPowerMode(
+        expected: BikeAdvancedPowerModeConfiguration, desired: BikeAdvancedPowerModeConfiguration
+    ) async throws -> BikeAdvancedPowerModeConfiguration {
+        try await applyPowerCurves(expected: expected, desired: desired, isAdvancedEdit: true)
+    }
+
+    private func applyPowerCurves(
+        expected: BikeAdvancedPowerModeConfiguration, desired: BikeAdvancedPowerModeConfiguration,
+        isAdvancedEdit: Bool
+    ) async throws -> BikeAdvancedPowerModeConfiguration {
+        _ = try await readAdvancedPowerMode(mapIndex: expected.mapIndex)
+        powerModeOverrides[desired.mapIndex] = try powerCurves.apply(
+            expected: expected, desired: desired, maximum: maximumCurveHorsepower, isAdvancedEdit: isAdvancedEdit
+        )
+        await publishCurrentState()
+        return desired
+    }
+
+    private var maximumCurveHorsepower: Int {
+        powerModePreset.declaredTier == .alpha || powerModePreset == .mismatch ? 80 : 60
     }
 
     func invalidateControlPreparations() {

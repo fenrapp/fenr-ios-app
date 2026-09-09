@@ -29,6 +29,7 @@ extension BikeEmulatorRepository {
     public func setPowerModePreset(_ preset: BikeEmulatorPowerModePreset) async {
         powerModePreset = preset
         powerModeOverrides.removeAll()
+        powerCurves.reset()
         preparedPowerModeIndexes.removeAll()
         preparedTractionControlIndexes.removeAll()
         persistState()
