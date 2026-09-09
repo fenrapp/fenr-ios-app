@@ -17,6 +17,7 @@ struct PowerModeSettingsMappingInput: Sendable {
     let isPreparingControl: Bool
     let isApplyingControl: Bool
     let activeAdjustmentID: PowerModeAdjustmentID?
+    let pendingAdjustmentValue: Double?
     let recentAdjustmentResult: PowerModeAdjustmentResult?
     let isBaseControlReady: Bool
     let isTractionControlReady: Bool
@@ -39,6 +40,7 @@ struct PowerModeSettingsMappingInput: Sendable {
         isPreparingControl: Bool = false,
         isApplyingControl: Bool = false,
         activeAdjustmentID: PowerModeAdjustmentID? = nil,
+        pendingAdjustmentValue: Double? = nil,
         recentAdjustmentResult: PowerModeAdjustmentResult? = nil,
         isBaseControlReady: Bool = false,
         isTractionControlReady: Bool = false,
@@ -60,6 +62,7 @@ struct PowerModeSettingsMappingInput: Sendable {
         self.isPreparingControl = isPreparingControl
         self.isApplyingControl = isApplyingControl
         self.activeAdjustmentID = activeAdjustmentID
+        self.pendingAdjustmentValue = pendingAdjustmentValue
         self.recentAdjustmentResult = recentAdjustmentResult
         self.isBaseControlReady = isBaseControlReady
         self.isTractionControlReady = isTractionControlReady

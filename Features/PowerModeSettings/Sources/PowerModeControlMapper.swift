@@ -21,6 +21,7 @@ struct PowerModeControlMapper: Sendable {
                 && tractionSupported
                 && !input.isApplyingControl,
             activeAdjustmentID: input.activeAdjustmentID,
+            pendingValue: input.pendingAdjustmentValue,
             recentAdjustmentResult: input.recentAdjustmentResult
         )
         return .init(
@@ -56,7 +57,10 @@ struct PowerModeControlMapper: Sendable {
             adjustment(.init(
                 id: .power,
                 title: String(localized: .powerModeSettingsPowerAdjustment),
-                value: context.configuration?.horsepower.map(Double.init),
+                value: displayedValue(
+                    .power, confirmed: context.configuration?.horsepower.map(Double.init),
+                    context: context
+                ),
                 unit: String(localized: .powerModeSettingsHorsepowerUnit),
                 minimum: 10,
                 maximum: context.powerMaximum,
@@ -66,7 +70,10 @@ struct PowerModeControlMapper: Sendable {
             adjustment(.init(
                 id: .regeneration,
                 title: String(localized: .powerModeSettingsRegenerationAdjustment),
-                value: supportedRegeneration(context.configuration?.regenerativeBrakingPercent),
+                value: displayedValue(
+                    .regeneration, confirmed: supportedRegeneration(context.configuration?.regenerativeBrakingPercent),
+                    context: context
+                ),
                 unit: String(localized: .powerModeSettingsPercentUnit),
                 minimum: 0,
                 maximum: 100,
@@ -76,7 +83,10 @@ struct PowerModeControlMapper: Sendable {
             adjustment(.init(
                 id: .powerTraction,
                 title: String(localized: .powerModeSettingsTractionAdjustment),
-                value: context.configuration?.powerTractionPercent,
+                value: displayedValue(
+                    .powerTraction, confirmed: context.configuration?.powerTractionPercent,
+                    context: context
+                ),
                 unit: String(localized: .powerModeSettingsPercentUnit),
                 minimum: 0,
                 maximum: 100,
@@ -86,7 +96,10 @@ struct PowerModeControlMapper: Sendable {
             adjustment(.init(
                 id: .brakingTraction,
                 title: String(localized: .powerModeSettingsRegenTractionAdjustment),
-                value: context.configuration?.brakingTractionPercent,
+                value: displayedValue(
+                    .brakingTraction, confirmed: context.configuration?.brakingTractionPercent,
+                    context: context
+                ),
                 unit: String(localized: .powerModeSettingsPercentUnit),
                 minimum: 0,
                 maximum: 100,
@@ -94,6 +107,12 @@ struct PowerModeControlMapper: Sendable {
                 feedback: feedback(for: .brakingTraction, context: context)
             ))
         ]
+    }
+
+    private func displayedValue(
+        _ id: PowerModeAdjustmentID, confirmed: Double?, context: PowerModeAdjustmentMappingContext
+    ) -> Double? {
+        context.activeAdjustmentID == id ? context.pendingValue ?? confirmed : confirmed
     }
 
     private func adjustment(
@@ -196,6 +215,7 @@ private struct PowerModeAdjustmentMappingContext {
     let isBaseControlReady: Bool
     let isTractionControlReady: Bool
     let activeAdjustmentID: PowerModeAdjustmentID?
+    let pendingValue: Double?
     let recentAdjustmentResult: PowerModeAdjustmentResult?
 }
 

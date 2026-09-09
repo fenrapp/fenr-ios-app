@@ -19,6 +19,7 @@ final class PowerModeBasicControls {
     private(set) var preparedBaseMap: Int?
     private(set) var preparedTractionMap: Int?
     private(set) var activeAdjustment: PowerModeAdjustmentID?
+    private(set) var pendingValue: Double?
     private(set) var recentResult: PowerModeAdjustmentResult?
     private var attemptedMap: Int?
 
@@ -46,6 +47,7 @@ final class PowerModeBasicControls {
         preparedTractionMap = nil
         attemptedMap = nil
         activeAdjustment = nil
+        pendingValue = nil
         recentResult = nil
         controlError = nil
         controlMessage = nil
@@ -108,6 +110,7 @@ final class PowerModeBasicControls {
         let isBase = id == .power || id == .regeneration
         guard (isBase ? preparedBaseMap : preparedTractionMap) == map else { return }
         activeAdjustment = id
+        pendingValue = value
         recentResult = nil
         controlError = nil
         controlMessage = nil
@@ -119,6 +122,7 @@ final class PowerModeBasicControls {
         }, completion: { [weak self] result in
             guard let self else { return }
             self.activeAdjustment = nil
+            self.pendingValue = nil
             switch result {
             case .success(let outcome): self.accept(outcome, map: map, id: id, maximum: maximum)
             case .failure:

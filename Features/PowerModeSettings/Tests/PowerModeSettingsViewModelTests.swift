@@ -11,6 +11,65 @@ import VehicleSession
 struct PowerModeSettingsViewModelTests {
     private let vin = "FENRTEST000000001"
 
+    @Test("Keeps each requested value visible until confirmation and rolls back on failure", arguments: [
+        PowerModeAdjustmentID.power, .regeneration, .powerTraction, .brakingTraction
+    ])
+    func pendingValuesRemainVisible(id: PowerModeAdjustmentID) async {
+        let operation = ControllablePowerModeSettingsOperation()
+        let fixture = makeFixture(bikeRepository: .init(
+            baseWriteOperation: operation, tractionWriteOperation: operation
+        ))
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(connectedSnapshot())
+        #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
+        let original = fixture.viewModel.viewState.adjustments
+        fixture.viewModel.updateAdjustment(id: id, value: 50)
+        #expect(fixture.viewModel.viewState.adjustments.first { $0.id == id }?.value == 50)
+        #expect(fixture.viewModel.viewState.adjustments.allSatisfy { !$0.isEnabled })
+        #expect(await waitUntil { await operation.pendingCount == 1 })
+        await fixture.vehicleSession.send(connectedSnapshot())
+        #expect(fixture.viewModel.viewState.adjustments.first { $0.id == id }?.value == 50)
+        for sibling in original where sibling.id != id {
+            #expect(fixture.viewModel.viewState.adjustments.first { $0.id == sibling.id }?.value == sibling.value)
+        }
+        await operation.failNext(message: "Rejected")
+        #expect(await waitUntil { feedback(for: id, in: fixture.viewModel).state == .failed })
+        #expect(fixture.viewModel.viewState.adjustments.first { $0.id == id }?.value
+            == original.first { $0.id == id }?.value)
+        fixture.viewModel.refresh()
+        #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
+        fixture.viewModel.updateAdjustment(id: id, value: 50)
+        #expect(await waitUntil { await operation.pendingCount == 1 })
+        await operation.succeedNext()
+        #expect(await waitUntil { feedback(for: id, in: fixture.viewModel).state == .confirmed })
+        #expect(fixture.viewModel.viewState.adjustments.first { $0.id == id }?.value == 50)
+        #expect(controlsAreEnabled(fixture.viewModel))
+        fixture.viewModel.stop()
+    }
+
+    @Test("Stopping clears optimistic values and ignores a late write completion", arguments: [
+        PowerModeAdjustmentID.power, .regeneration, .powerTraction, .brakingTraction
+    ])
+    func stoppingClearsPendingValue(id: PowerModeAdjustmentID) async {
+        let operation = ControllablePowerModeSettingsOperation()
+        let fixture = makeFixture(bikeRepository: .init(
+            baseWriteOperation: operation, tractionWriteOperation: operation
+        ))
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(connectedSnapshot())
+        #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
+        let confirmed = fixture.viewModel.viewState.adjustments.first { $0.id == id }?.value
+        fixture.viewModel.updateAdjustment(id: id, value: 50)
+        #expect(await waitUntil { await operation.pendingCount == 1 })
+        let stopping = Task { await fixture.viewModel.stopAndWait() }
+        #expect(await waitUntil { feedback(for: id, in: fixture.viewModel).state == .idle })
+        #expect(fixture.viewModel.viewState.adjustments.first { $0.id == id }?.value == confirmed)
+        await operation.succeedNext()
+        await stopping.value
+        #expect(fixture.viewModel.viewState.adjustments.first { $0.id == id }?.value == confirmed)
+        #expect(fixture.viewModel.viewState.adjustments.allSatisfy { !$0.isEnabled })
+    }
+
     @Test("Saves unique names and rejects duplicates without letter case")
     func savesAndRejectsDuplicates() async {
         let fixture = makeFixture()
