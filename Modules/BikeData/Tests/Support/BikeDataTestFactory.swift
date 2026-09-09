@@ -1,3 +1,4 @@
+import AsyncSupport
 @testable import BikeData
 import BikeDomain
 import BikeSDK
@@ -10,7 +11,9 @@ func makeRepository(
     now: @escaping @Sendable () -> Date = Date.init,
     diagnosticsEnabled: @escaping @Sendable () -> Bool = { true }
 ) -> LiveBikeRepository {
-    LiveBikeRepository(
+    let stateStore = BikeRepositoryStateStore()
+    let telemetryHub = AsyncEventHub<BikeTelemetry>(bufferingPolicy: .unbounded)
+    return LiveBikeRepository(
         client: client,
         eventHandler: makeEventHandler(
             profileRepository: profileRepository,
@@ -18,8 +21,7 @@ func makeRepository(
             now: now,
             diagnosticsEnabled: diagnosticsEnabled
         ),
-        stateStore: .init(),
-        telemetryHub: .init(bufferingPolicy: .unbounded),
+        stateStore: stateStore, telemetryHub: telemetryHub,
         connectionHub: .init(bufferingPolicy: .unbounded),
         debugHub: .init(bufferingPolicy: .unbounded),
         imuHub: .init(bufferingPolicy: .unbounded),
@@ -30,8 +32,10 @@ func makeRepository(
         controlService: .init(
             client: client,
             chargePowerMapper: .init(),
-            bikeLockMapper: .init()
-        )
+            bikeLockMapper: .init(),
+            advancedPowerModeMapper: .init()
+        ),
+        curveConfirmation: .init(stateStore: stateStore, telemetryHub: telemetryHub)
     )
 }
 

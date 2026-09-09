@@ -23,7 +23,8 @@ public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryH
     private let batteryHealthHub: AsyncEventHub<BikeBatteryHealth>
     private let batteryCaptureHub: AsyncEventHub<BatteryDatasetCapture>
     private let discoveredBikesHub: AsyncEventHub<[DiscoveredBike]>
-    private let controlService: LiveBikeControlService
+    let controlService: LiveBikeControlService
+    let curveConfirmation: BikePowerModeCurveConfirmationCoordinator
     private(set) var lifecycleState: LiveBikeRepositoryLifecycleState = .stopped
     private var generation: UInt64 = 0
     private var startupTask: Task<AsyncStream<BikeSDKEvent>?, Never>?
@@ -42,7 +43,8 @@ public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryH
         batteryHealthHub: AsyncEventHub<BikeBatteryHealth>,
         batteryCaptureHub: AsyncEventHub<BatteryDatasetCapture>,
         discoveredBikesHub: AsyncEventHub<[DiscoveredBike]>,
-        controlService: LiveBikeControlService
+        controlService: LiveBikeControlService,
+        curveConfirmation: BikePowerModeCurveConfirmationCoordinator
     ) {
         self.client = client
         self.stateStore = stateStore
@@ -55,6 +57,7 @@ public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryH
         self.batteryCaptureHub = batteryCaptureHub
         self.discoveredBikesHub = discoveredBikesHub
         self.controlService = controlService
+        self.curveConfirmation = curveConfirmation
         self.eventHandler = eventHandler
     }
     deinit {
@@ -202,6 +205,7 @@ public actor LiveBikeRepository: BikeRepository, BikeIMURepository, BikeBatteryH
 }
 
 extension LiveBikeRepository {
+    nonisolated public var supportsAdvancedPowerModes: Bool { true }
     public func connect(vin: String) async throws {
         try await client.connect(to: vin)
     }

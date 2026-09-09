@@ -129,6 +129,10 @@ public struct BikeSDKTelemetryPayloadToDomainMapper: Sendable {
     ) {
         var current = telemetry.powerModeConfigurations[configuration.mapIndex]
             ?? BikePowerModeConfiguration(mapIndex: configuration.mapIndex)
+        current.curveConfirmation = current.curveConfirmation.invalidating(
+            power: current.horsepower != configuration.horsepower,
+            regeneration: current.regenerativeBrakingPercent != configuration.regenerativeBrakingPercent
+        )
         current.horsepower = configuration.horsepower
         current.regenerativeBrakingPercent = configuration.regenerativeBrakingPercent
         telemetry.powerModeConfigurations[configuration.mapIndex] = current
