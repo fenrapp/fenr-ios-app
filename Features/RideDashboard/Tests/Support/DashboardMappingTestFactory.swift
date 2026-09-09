@@ -29,7 +29,8 @@ enum DashboardMappingTestFactory {
     }
 
     static func charging(
-        recorder: DashboardMapperCallRecorder, session: ChargingDashboardVehicleSession
+        recorder: DashboardMapperCallRecorder, session: ChargingDashboardVehicleSession,
+        locale: Locale = Locale(identifier: "en_GB")
     ) -> ChargingMappingTestFixture {
         let repository = DashboardMappingChargeRepository()
         let control = ChargeControlSession(
@@ -45,14 +46,14 @@ enum DashboardMappingTestFactory {
         let makeMapper: @Sendable (AppSettings, String?) -> ChargingDashboardMapper = { settings, vin in
             recorder.record("chargingMapper")
             return RideDashboardMapperFactory.makeChargingMapper(
-                settings: settings, locale: Locale(identifier: "en_GB"), vin: vin
+                settings: settings, locale: locale, vin: vin
             )
         }
         return ChargingMappingTestFixture(
             model: ChargingDashboardViewModel(
                 vehicleSession: session, chargeControl: control,
                 mapper: RideDashboardMapperFactory.makeChargingMapper(
-                    settings: .init(), locale: .init(identifier: "en_GB")
+                    settings: .init(), locale: locale
                 ),
                 makeMapper: makeMapper
             ),
