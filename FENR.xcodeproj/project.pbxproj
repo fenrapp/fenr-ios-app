@@ -1275,6 +1275,7 @@
 		74D1CDA6DCA567A94DA15DA6 /* AppRideNavigationHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84F0E75CD02684DD3AFB5C03 /* AppRideNavigationHost.swift */; };
 		74D5E50D0DA4F7BF8EB0A199 /* BikeLockAuthenticationFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BC95E1FF6A41B3488F4FE2B /* BikeLockAuthenticationFactory.swift */; };
 		74DEFFC527C743F1C83DDC7B /* RideNavigationFocusPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 379A3701ADA5FF56CD77A1B7 /* RideNavigationFocusPalette.swift */; };
+		7541E5ED392328E3BE848D22 /* LocalBikePowerModePresetRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0F9C937A8AC627D0C6AF5B /* LocalBikePowerModePresetRepository.swift */; };
 		754B41B95C532F938B38C269 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = DE417E47DB9C3134E046C07C /* Localizable.xcstrings */; };
 		755A86242F35A84B93B329E2 /* BikeData.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 62C7241EF6F3763B1653EABC /* BikeData.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		756CB9BFFAA044C2CF53EFDF /* EnvironmentDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 67E788861D8D9D6A5E754217 /* EnvironmentDomain.framework */; };
@@ -7147,6 +7148,7 @@
 		5EF45B0CEA0745A578DC96F7 /* DashboardOdometerViewData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardOdometerViewData.swift; sourceTree = "<group>"; };
 		5EF818B8FBE463FB83600E43 /* DiagnosticsDestinationRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsDestinationRow.swift; sourceTree = "<group>"; };
 		5F00A8A390EA2C375348C6DC /* StarkCellVoltagesDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarkCellVoltagesDecoder.swift; sourceTree = "<group>"; };
+		5F0F9C937A8AC627D0C6AF5B /* LocalBikePowerModePresetRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalBikePowerModePresetRepository.swift; sourceTree = "<group>"; };
 		5F17C0792FF14B6005F46AE8 /* RideNavigationFinishConfirmationOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideNavigationFinishConfirmationOverlay.swift; sourceTree = "<group>"; };
 		5FDE9D819047A221587D82E9 /* AppSettingsViewStateMapper+ProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppSettingsViewStateMapper+ProgressBar.swift"; sourceTree = "<group>"; };
 		5FF1A018B8634C303BFD4041 /* BikeLockSettingsContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BikeLockSettingsContent.swift; sourceTree = "<group>"; };
@@ -9600,6 +9602,7 @@
 				B1130761EBC6B0DFD686F4A9 /* AppSettingsRepositoryFactory.swift */,
 				D76761462371D0990E1F39F9 /* VINAppSettingsStore.swift */,
 				6DAF55CD0BA740B37BC47A93 /* VINScopedAppSettingsRepository.swift */,
+				67B3E01161BD139F22E09E32 /* Repositories */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -12364,6 +12367,14 @@
 			path = Sources;
 			sourceTree = "<group>";
 		};
+		67B3E01161BD139F22E09E32 /* Repositories */ = {
+			isa = PBXGroup;
+			children = (
+				822E3249F1F7C6BD3F61E7BB /* PowerModes */,
+			);
+			path = Repositories;
+			sourceTree = "<group>";
+		};
 		67BC7AA3BBBAC71DE5CA440E /* Discovery */ = {
 			isa = PBXGroup;
 			children = (
@@ -13040,6 +13051,14 @@
 				02729F5925AB3285B72904A8 /* RideSessionUseCases.swift */,
 			);
 			path = UseCases;
+			sourceTree = "<group>";
+		};
+		822E3249F1F7C6BD3F61E7BB /* PowerModes */ = {
+			isa = PBXGroup;
+			children = (
+				5F0F9C937A8AC627D0C6AF5B /* LocalBikePowerModePresetRepository.swift */,
+			);
+			path = PowerModes;
 			sourceTree = "<group>";
 		};
 		829A34672FFFF75A3E3C5C47 /* Profile */ = {
@@ -20086,6 +20105,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B1BC0AED97C160604DDBF10C /* AppSettingsRepositoryFactory.swift in Sources */,
+				7541E5ED392328E3BE848D22 /* LocalBikePowerModePresetRepository.swift in Sources */,
 				B5B883F7449A6CC32B4094A0 /* VINAppSettingsStore.swift in Sources */,
 				C556207B9FB788D0BA619534 /* VINScopedAppSettingsRepository.swift in Sources */,
 			);
