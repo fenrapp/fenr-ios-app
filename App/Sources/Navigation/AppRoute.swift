@@ -14,6 +14,7 @@ enum AppRoute: Hashable {
     case diagnostics(BikeDiagnosticsDestination)
     case batteryHealth(BatteryHealthDestination)
     case powerModes
+    case advancedPowerModes
     case bikeLockSettings
 
     var family: AppNavigationSurface {
@@ -24,7 +25,7 @@ enum AppRoute: Hashable {
         case .maintenance: .maintenance
         case .diagnostics: .diagnostics
         case .batteryHealth: .batteryHealth
-        case .powerModes: .powerModes
+        case .powerModes, .advancedPowerModes: .powerModes
         case .bikeLockSettings: .bikeLockSettings
         }
     }
@@ -40,6 +41,8 @@ enum AppRoute: Hashable {
              .powerModes,
              .bikeLockSettings:
             nil
+        case .advancedPowerModes:
+            .powerModes
         case .settings:
             .settings(.overview)
         case .dashboardCards:
