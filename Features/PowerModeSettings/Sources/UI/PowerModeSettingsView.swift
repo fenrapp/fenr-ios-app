@@ -54,7 +54,7 @@ public struct PowerModeSettingsView: View {
                 Section {
                     ForEach(group.adjustments) { adjustment in
                         PowerModeAdjustmentRow(
-                            state: adjustment,
+                            state: adjustment, allowsExactValue: true,
                             commit: { value in
                                 viewModel.updateAdjustment(id: adjustment.id, value: value)
                             }

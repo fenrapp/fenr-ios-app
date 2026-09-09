@@ -5,39 +5,80 @@ import SwiftUI
 struct PowerModeAdjustmentRow: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
+    @State private var showsExactValue = false
+
     let state: PowerModeAdjustmentViewState
+    let allowsExactValue: Bool
     let commit: (Double) -> Void
+
+    init(
+        state: PowerModeAdjustmentViewState, allowsExactValue: Bool = false,
+        commit: @escaping (Double) -> Void
+    ) {
+        self.state = state
+        self.allowsExactValue = allowsExactValue
+        self.commit = commit
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.spacing) {
-            if let value = state.value {
-                CommitSlider(
-                    value: value,
-                    in: state.minimum ... state.maximum,
-                    step: state.step,
-                    appearance: appearance,
-                    isEnabled: state.isEnabled,
-                    accessibilityLabel: state.title,
-                    accessibilityValue: valueText,
-                    accessibilityIdentifier: "powerModes.control." + state.id.rawValue,
-                    onCommit: commit,
-                    header: { displayedValue in
-                        adjustmentHeader(displayedValue)
-                    },
-                    footer: {
-                        adjustmentFooter
-                    }
-                )
-            } else {
-                adjustmentHeader(state.minimum)
-            }
+            adjustmentControl
 
             if state.feedback.state != .idle {
                 PowerModeControlFeedbackView(feedback: state.feedback)
             }
         }
+        .sheet(isPresented: $showsExactValue) {
+            if let value = state.value {
+                PowerModeValueInput(
+                    title: state.title, value: value, bounds: state.minimum ... state.maximum,
+                    wholeNumbersOnly: true, hint: .powerModeSettingsExactValueHint,
+                    confirmationTitle: .powerCurveApply, unit: state.unit, commit: commit
+                )
+            }
+        }
+        .onChange(of: state.isEnabled) { _, enabled in
+            if !enabled { showsExactValue = false }
+        }
+        .onChange(of: state.id) { showsExactValue = false }
+        .accessibilityActions {
+            if allowsExactValue, state.isEnabled {
+                Button(.powerCurveExactValue, action: openExactValue)
+            }
+        }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("powerModes.adjustment." + state.id.rawValue)
+    }
+
+    @ViewBuilder
+    private var adjustmentControl: some View {
+        if let value = state.value {
+            CommitSlider(
+                value: value,
+                in: state.minimum ... state.maximum,
+                step: state.step,
+                appearance: appearance,
+                isEnabled: state.isEnabled,
+                accessibilityLabel: state.title,
+                accessibilityValue: valueText,
+                onDoubleTap: exactValueAction,
+                accessibilityIdentifier: "powerModes.control." + state.id.rawValue,
+                onCommit: commit,
+                header: { displayedValue in
+                    adjustmentHeader(displayedValue)
+                },
+                footer: {
+                    adjustmentFooter
+                }
+            )
+        } else {
+            adjustmentHeader(state.minimum)
+        }
+    }
+
+    private var exactValueAction: (() -> Void)? {
+        guard allowsExactValue else { return nil }
+        return { openExactValue() }
     }
 
     @ViewBuilder
@@ -66,6 +107,15 @@ struct PowerModeAdjustmentRow: View {
         Text(valueText(displayedValue))
             .font(.callout.weight(.semibold))
             .monospacedDigit()
+            .contentShape(Rectangle())
+            .onTapGesture(count: 2, perform: openExactValue)
+            .accessibilityHint(allowsExactValue
+                ? Text(.powerModeSettingsExactValueAccessibility) : Text(verbatim: ""))
+    }
+
+    private func openExactValue() {
+        guard allowsExactValue, state.isEnabled, state.value != nil else { return }
+        showsExactValue = true
     }
 
     private func valueText(_ displayedValue: Double) -> String {

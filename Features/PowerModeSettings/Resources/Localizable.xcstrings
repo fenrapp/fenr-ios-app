@@ -1,6 +1,28 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "powerModeSettingsExactValueAccessibility" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Double-tap to enter an exact value."
+          }
+        }
+      }
+    },
+    "powerModeSettingsExactValueHint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apply sends this value to the motorcycle."
+          }
+        }
+      }
+    },
     "power_curve_preset_name_error" : {
       "extractionState" : "manual",
       "localizations" : {
