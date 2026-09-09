@@ -17,7 +17,6 @@ final class PowerModeBasicControls {
     private(set) var controlError: String?
     private(set) var controlMessage: String?
     private(set) var preparedBaseMap: Int?
-    private(set) var preparedTractionMap: Int?
     private(set) var activeAdjustment: PowerModeAdjustmentID?
     private(set) var pendingValue: Double?
     private(set) var recentResult: PowerModeAdjustmentResult?
@@ -44,7 +43,6 @@ final class PowerModeBasicControls {
 
     func reset(resetRefresh: Bool = false) {
         preparedBaseMap = nil
-        preparedTractionMap = nil
         attemptedMap = nil
         activeAdjustment = nil
         pendingValue = nil
@@ -77,7 +75,6 @@ final class PowerModeBasicControls {
         let configuration = context.telemetry.powerModeConfigurations[map]
         if advanced.isAvailable {
             preparedBaseMap = configuration?.hasBaseConfiguration == true ? map : nil
-            preparedTractionMap = configuration?.hasTractionControlConfiguration == true ? map : nil
             return
         }
         guard preparedBaseMap != map, attemptedMap != map, configuration?.hasBaseConfiguration == true else { return }
@@ -85,30 +82,27 @@ final class PowerModeBasicControls {
         controlError = nil
         controlMessage = nil
         let preparation = preparation
-        let tractionAvailable = configuration?.hasTractionControlConfiguration == true
         operations.run(.preparation, execute: {
-            try await preparation.execute(map: map, tractionAvailable: tractionAvailable)
+            try await preparation.execute(map: map)
         }, completion: { [weak self] result in
             guard let self else { return }
             if case .success(let readiness) = result {
                 self.preparedBaseMap = readiness.baseReady ? map : nil
-                self.preparedTractionMap = readiness.tractionReady ? map : nil
                 self.controlError = readiness.error
-                if readiness.error == nil {
-                    self.controlMessage = String(localized:
-                        readiness.tractionReady
-                            ? .powerModeSettingsAllControlsReady : .powerModeSettingsBaseControlsReady
-                    )
-                }
             }
         })
+    }
+
+    func clearFeedback() {
+        recentResult = nil
+        controlError = nil
+        controlMessage = nil
     }
 
     func apply(id: PowerModeAdjustmentID, value: Double) {
         guard context.canUseConfiguration, !operations.isBusy else { return }
         let map = context.selectedMap
-        let isBase = id == .power || id == .regeneration
-        guard (isBase ? preparedBaseMap : preparedTractionMap) == map else { return }
+        guard id == .power || id == .regeneration, preparedBaseMap == map else { return }
         activeAdjustment = id
         pendingValue = value
         recentResult = nil
@@ -145,9 +139,6 @@ final class PowerModeBasicControls {
         case .base(let horsepower, let regeneration):
             context.telemetry.powerModeConfigurations[map]?.horsepower = horsepower
             context.telemetry.powerModeConfigurations[map]?.regenerativeBrakingPercent = Double(regeneration)
-        case .traction(let power, let braking):
-            context.telemetry.powerModeConfigurations[map]?.powerTractionPercent = power
-            context.telemetry.powerModeConfigurations[map]?.brakingTractionPercent = braking
         case nil: break
         }
         recentResult = .confirmed(id)
@@ -157,7 +148,7 @@ final class PowerModeBasicControls {
     private func fail(map: Int, id: PowerModeAdjustmentID, message: String) {
         controlError = message
         recentResult = .failed(id, message: message)
-        if id == .power || id == .regeneration { preparedBaseMap = nil } else { preparedTractionMap = nil }
+        preparedBaseMap = nil
         attemptedMap = map
     }
 }

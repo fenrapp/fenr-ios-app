@@ -63,7 +63,9 @@ public struct PowerModeSettingsView: View {
                 } header: {
                     Text(group.title)
                 } footer: {
-                    Text(group.detail)
+                    if let detail = group.detail {
+                        Text(detail)
+                    }
                 }
             }
         }

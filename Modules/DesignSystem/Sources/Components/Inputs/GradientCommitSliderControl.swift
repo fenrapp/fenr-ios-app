@@ -6,6 +6,7 @@ struct GradientCommitSliderControl: View {
     let step: Double
     let appearance: CommitSliderAppearance
     let isEnabled: Bool
+    let allowsUnchangedCommit: Bool
     let accessibilityLabel: String?
     let accessibilityValue: String
     @Binding var interaction: CommitSliderInteractionState
@@ -243,7 +244,7 @@ struct GradientCommitSliderControl: View {
     private func selectValue(at position: CGFloat, layout: CommitSliderLayout) {
         guard effectiveIsEnabled else { return }
         let tappedValue = layout.value(at: position, step: step)
-        guard tappedValue != interaction.displayedValue else { return }
+        guard allowsUnchangedCommit || tappedValue != interaction.displayedValue else { return }
         interaction.beginEditing(isEnabled: effectiveIsEnabled)
         interaction.updateDisplayedValue(tappedValue, bounds: bounds, isEnabled: effectiveIsEnabled)
         finishEditing()
@@ -266,7 +267,8 @@ struct GradientCommitSliderControl: View {
         guard let committedValue = interaction.finishEditing(
             externalValue: externalValue,
             bounds: bounds,
-            isEnabled: effectiveIsEnabled
+            isEnabled: effectiveIsEnabled,
+            allowsUnchangedCommit: allowsUnchangedCommit
         ) else { return }
         onCommit(committedValue)
     }

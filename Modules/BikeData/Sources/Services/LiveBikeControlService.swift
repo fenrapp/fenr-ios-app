@@ -2,6 +2,7 @@ import BikeDomain
 import BikeSDK
 
 public struct LiveBikeControlService: Sendable {
+    private let tractionMapper: BikeSDKTractionControlMapper
     private let advancedPowerModeMapper: BikeAdvancedPowerModeMapper
     private let client: BikeTelemetryClient
     private let chargePowerMapper: BikeSDKChargePowerControlToDomainMapper
@@ -11,8 +12,10 @@ public struct LiveBikeControlService: Sendable {
         client: BikeTelemetryClient,
         chargePowerMapper: BikeSDKChargePowerControlToDomainMapper,
         bikeLockMapper: BikeSDKBikeLockControlToDomainMapper,
-        advancedPowerModeMapper: BikeAdvancedPowerModeMapper
+        advancedPowerModeMapper: BikeAdvancedPowerModeMapper,
+        tractionMapper: BikeSDKTractionControlMapper
     ) {
+        self.tractionMapper = tractionMapper
         self.client = client
         self.advancedPowerModeMapper = advancedPowerModeMapper
         self.chargePowerMapper = chargePowerMapper
@@ -57,6 +60,23 @@ public struct LiveBikeControlService: Sendable {
             horsepower: horsepower,
             regenerativeBrakingPercent: regenerativeBrakingPercent
         )
+    }
+
+    func readTractionControlFirmwareCompatibility() async throws -> BikeTractionControlFirmwareCompatibility {
+        let value = try await client.readTractionControlFirmwareCompatibility()
+        return .init(firmware: value.firmware, isCompatible: value.isCompatible)
+    }
+
+    func applyUserTractionControlConfiguration(
+        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double,
+        expected: BikeTractionControlSnapshot?
+    ) async throws -> BikeTractionControlSnapshot {
+        do {
+            return tractionMapper.map(try await client.applyUserTractionControlConfiguration(
+                mapIndex: mapIndex, powerTractionPercent: powerTractionPercent,
+                brakingTractionPercent: brakingTractionPercent, expected: expected.map(tractionMapper.map)
+            ))
+        } catch let error as BikeSDKTractionControlError { throw tractionMapper.map(error) }
     }
 
     func prepareTractionControl(mapIndex: Int) async throws {

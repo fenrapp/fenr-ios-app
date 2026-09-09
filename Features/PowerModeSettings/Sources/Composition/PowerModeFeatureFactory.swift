@@ -22,6 +22,10 @@ public enum PowerModeFeatureFactory {
         let advanced = PowerModeAdvancedOperations(
             context: context, operations: operations, store: store, presets: presets, useCases: advancedUseCases
         )
+        let traction = PowerModeTractionControls(
+            context: context, operations: operations, store: store,
+            compatibility: basicUseCases.tractionCompatibility, apply: basicUseCases.applyUserTraction
+        )
         let controls = PowerModeBasicControls(
             context: context, operations: operations, advanced: advanced, store: store, useCases: basicUseCases,
             writer: .init(useCases: basicUseCases, advanced: advancedUseCases),
@@ -29,11 +33,11 @@ public enum PowerModeFeatureFactory {
         )
         let session = PowerModeSessionCoordinator(
             vehicleSession: vehicleSession, context: context, operations: operations, names: names,
-            controls: controls, advanced: advanced, store: store, presets: presets
+            controls: controls, traction: traction, advanced: advanced, store: store, presets: presets
         )
         return .init(
             basic: PowerModeSettingsViewModel(
-                context: context, session: session, controls: controls, operations: operations,
+                context: context, session: session, controls: controls, traction: traction, operations: operations,
                 names: names, store: store, mapper: PowerModeSettingsMapperFactory.make(locale: locale),
                 summaryMapper: .init(),
                 hasAdvancedEditor: advanced.isAvailable

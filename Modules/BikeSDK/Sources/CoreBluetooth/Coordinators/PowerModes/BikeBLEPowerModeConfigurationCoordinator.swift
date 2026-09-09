@@ -3,6 +3,7 @@ import StarkProtocol
 
 @MainActor
 final class BikeBLEPowerModeConfigurationCoordinator {
+    var generation = 0
     let transport: any BikeBLEPowerModeConfigurationTransporting
     let eventEmitter: BikeBLEEventEmitter
     private var preparedConfigurations: [Int: StarkPowerModeConfigurationPayload] = [:]
@@ -126,6 +127,7 @@ final class BikeBLEPowerModeConfigurationCoordinator {
     }
 
     func reset() {
+        generation += 1
         preparedConfigurations.removeAll()
         preparedTractionConfigurations.removeAll()
         BikePowerModeDebugLog.log("session reset")
@@ -210,12 +212,15 @@ final class BikeBLEPowerModeConfigurationCoordinator {
     func readTractionControlConfiguration(
         mapIndex: Int
     ) async throws -> StarkTractionControlConfigurationPayload {
+        let token = generation
+        try checkTractionSession(token)
         let request = try StarkTractionControlConfigurationCommand.readPacket(mapIndex: mapIndex)
         let response = try await transport.readConfiguration(
             request: request,
             operationName: "4005 traction control \(mapIndex) read",
             allowLiveTelemetrySession: false
         )
+        try checkTractionSession(token)
         let payload = try StarkTractionControlConfigurationCommand.decodeResponse(
             response,
             expectedMapIndex: mapIndex
@@ -224,7 +229,9 @@ final class BikeBLEPowerModeConfigurationCoordinator {
             "4005 TC map \(mapIndex) decoded power=\(payload.powerPercent)% "
                 + "braking=\(payload.brakingPercent)%"
         )
+        try checkTractionSession(token)
         await eventEmitter.send(.telemetry(.tractionControlConfiguration(payload)))
+        try checkTractionSession(token)
         return payload
     }
 

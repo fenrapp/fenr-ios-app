@@ -20,7 +20,12 @@ struct PowerModeSettingsMappingInput: Sendable {
     let pendingAdjustmentValue: Double?
     let recentAdjustmentResult: PowerModeAdjustmentResult?
     let isBaseControlReady: Bool
+    let isTractionFirmwareIncompatible: Bool
     let isTractionControlReady: Bool
+    let tractionPower: Double?
+    let tractionBraking: Double?
+    let allowsTractionRecommit: Bool
+    let isTractionBusy: Bool
     let controlMessage: String?
     let controlError: String?
     let isCanonicalTelemetryAvailable: Bool
@@ -44,6 +49,11 @@ struct PowerModeSettingsMappingInput: Sendable {
         recentAdjustmentResult: PowerModeAdjustmentResult? = nil,
         isBaseControlReady: Bool = false,
         isTractionControlReady: Bool = false,
+        isTractionFirmwareIncompatible: Bool = false,
+        tractionPower: Double? = nil,
+        tractionBraking: Double? = nil,
+        allowsTractionRecommit: Bool = false,
+        isTractionBusy: Bool = false,
         controlMessage: String? = nil,
         controlError: String? = nil,
         isCanonicalTelemetryAvailable: Bool = false
@@ -65,7 +75,12 @@ struct PowerModeSettingsMappingInput: Sendable {
         self.pendingAdjustmentValue = pendingAdjustmentValue
         self.recentAdjustmentResult = recentAdjustmentResult
         self.isBaseControlReady = isBaseControlReady
+        self.isTractionFirmwareIncompatible = isTractionFirmwareIncompatible
         self.isTractionControlReady = isTractionControlReady
+        self.tractionPower = tractionPower
+        self.tractionBraking = tractionBraking
+        self.allowsTractionRecommit = allowsTractionRecommit
+        self.isTractionBusy = isTractionBusy
         self.controlMessage = controlMessage
         self.controlError = controlError
         self.isCanonicalTelemetryAvailable = isCanonicalTelemetryAvailable

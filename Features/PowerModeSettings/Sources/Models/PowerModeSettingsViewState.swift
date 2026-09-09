@@ -78,7 +78,7 @@ public struct PowerModeSettingsViewState: Equatable, Sendable {
                 .init(
                     id: .traction,
                     title: String(localized: .powerModeSettingsTractionGroupTitle),
-                    detail: String(localized: .powerModeSettingsTractionGroupDetail),
+                    detail: nil,
                     adjustments: adjustments.filter {
                         $0.id == .powerTraction || $0.id == .brakingTraction
                     }

@@ -33,7 +33,7 @@ func makeRepository(
             client: client,
             chargePowerMapper: .init(),
             bikeLockMapper: .init(),
-            advancedPowerModeMapper: .init()
+            advancedPowerModeMapper: .init(), tractionMapper: .init()
         ),
         curveConfirmation: .init(stateStore: stateStore, telemetryHub: telemetryHub)
     )

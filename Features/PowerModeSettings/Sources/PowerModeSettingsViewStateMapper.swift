@@ -68,7 +68,9 @@ public struct PowerModeSettingsViewStateMapper: Sendable {
                 && !input.isRefreshing
                 && !input.isPreparingControl
                 && !input.isApplyingControl,
-            controlGroups: self.controls.controlGroups(from: controls.adjustments)
+            controlGroups: self.controls.controlGroups(
+                from: controls.adjustments, isTractionFirmwareIncompatible: input.isTractionFirmwareIncompatible
+            )
         )
     }
 

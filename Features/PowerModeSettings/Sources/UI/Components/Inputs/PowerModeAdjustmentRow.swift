@@ -59,6 +59,7 @@ struct PowerModeAdjustmentRow: View {
                 step: state.step,
                 appearance: appearance,
                 isEnabled: state.isEnabled,
+                allowsUnchangedCommit: state.allowsUnchangedCommit,
                 accessibilityLabel: state.title,
                 accessibilityValue: valueText,
                 onDoubleTap: exactValueAction,

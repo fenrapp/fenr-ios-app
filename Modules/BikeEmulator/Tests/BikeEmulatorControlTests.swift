@@ -4,6 +4,23 @@ import Testing
 
 @Suite("Bike emulator controls")
 struct BikeEmulatorControlTests {
+    @Test("Explicit traction writes initialize missing values while preserving base configuration")
+    func initializesUserTraction() async throws {
+        let repository = BikeEmulatorRepositoryFactory.make(scenario: .riding, powerModePreset: .standard)
+        let before = await repository.currentPowerModeConfigurations()[0]
+        #expect(before?.powerTractionPercent == nil)
+        #expect(try await repository.readTractionControlFirmwareCompatibility().isCompatible)
+        let actual = try await repository.applyUserTractionControlConfiguration(
+            mapIndex: 0, powerTractionPercent: 35, brakingTractionPercent: 0, expected: nil
+        )
+        #expect(actual == .init(mapIndex: 0, powerRaw: 350, brakingRaw: 0))
+        let after = await repository.currentPowerModeConfigurations()[0]
+        #expect(after?.horsepower == before?.horsepower)
+        #expect(after?.regenerativeBrakingPercent == before?.regenerativeBrakingPercent)
+        #expect(after?.powerTractionPercent == 35)
+        #expect(after?.brakingTractionPercent == 0)
+    }
+
     @Test("Charge writes require preparation and preserve sibling values")
     func chargeWritesRequirePreparation() async throws {
         let repository = BikeEmulatorRepositoryFactory.make(scenario: .charging)

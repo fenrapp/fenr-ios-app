@@ -63,7 +63,7 @@ public enum LiveBikeRepositoryFactory {
                 client: client,
                 chargePowerMapper: BikeSDKChargePowerControlToDomainMapper(),
                 bikeLockMapper: BikeSDKBikeLockControlToDomainMapper(),
-                advancedPowerModeMapper: BikeAdvancedPowerModeMapper()
+                advancedPowerModeMapper: BikeAdvancedPowerModeMapper(), tractionMapper: BikeSDKTractionControlMapper()
             ),
             curveConfirmation: .init(stateStore: stateStore, telemetryHub: telemetryHub)
         )

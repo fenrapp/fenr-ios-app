@@ -41,6 +41,7 @@ struct PowerModeSettingsViewStateMapperTests {
         #expect(state.maps.map(\.title) == ["ECO", "2", "3", "4", "5"])
         #expect(state.currentName == "ECO")
         #expect(state.controlGroups.map(\.id) == [.performance, .traction])
+        #expect(state.controlGroups[1].detail == nil)
         #expect(state.controlGroups.map(\.adjustments.count) == [2, 2])
         #expect(state.controlGroups[0].adjustments.map(\.id) == [.power, .regeneration])
         #expect(state.controlGroups[1].adjustments.map(\.id) == [

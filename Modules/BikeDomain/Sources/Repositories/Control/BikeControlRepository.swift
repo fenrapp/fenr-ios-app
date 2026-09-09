@@ -21,6 +21,11 @@ public protocol BikeControlRepository: Sendable {
         horsepower: Int,
         regenerativeBrakingPercent: Int
     ) async throws
+    func readTractionControlFirmwareCompatibility() async throws -> BikeTractionControlFirmwareCompatibility
+    func applyUserTractionControlConfiguration(
+        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double,
+        expected: BikeTractionControlSnapshot?
+    ) async throws -> BikeTractionControlSnapshot
     func prepareTractionControl(mapIndex: Int) async throws
     func setTractionControlConfiguration(
         mapIndex: Int,
@@ -60,6 +65,15 @@ public extension BikeControlRepository {
         throw BikeControlRepositoryError.powerModeControlUnavailable
     }
 
+    func readTractionControlFirmwareCompatibility() async throws -> BikeTractionControlFirmwareCompatibility {
+        throw BikeTractionControlError.unavailable
+    }
+    func applyUserTractionControlConfiguration(
+        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double,
+        expected: BikeTractionControlSnapshot?
+    ) async throws -> BikeTractionControlSnapshot {
+        throw BikeTractionControlError.unavailable
+    }
     func prepareTractionControl(mapIndex _: Int) async throws {
         throw BikeControlRepositoryError.tractionControlUnavailable
     }

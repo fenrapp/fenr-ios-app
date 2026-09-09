@@ -11,12 +11,12 @@ import VehicleSession
 struct PowerModeSettingsViewModelTests {
     private let vin = "FENRTEST000000001"
 
-    @Test("Keeps each requested value visible until confirmation and rolls back on failure", arguments: [
+    @Test("Keeps pending values visible and retains failed traction proposals", arguments: [
         PowerModeAdjustmentID.power, .regeneration, .powerTraction, .brakingTraction
     ])
     func pendingValuesRemainVisible(id: PowerModeAdjustmentID) async {
         let operation = ControllablePowerModeSettingsOperation()
-        let fixture = makeFixture(bikeRepository: .init(
+        let fixture = makePowerModeSettingsFixture(bikeRepository: .init(
             baseWriteOperation: operation, tractionWriteOperation: operation
         ))
         fixture.viewModel.start()
@@ -34,8 +34,9 @@ struct PowerModeSettingsViewModelTests {
         }
         await operation.failNext(message: "Rejected")
         #expect(await waitUntil { feedback(for: id, in: fixture.viewModel).state == .failed })
-        #expect(fixture.viewModel.viewState.adjustments.first { $0.id == id }?.value
-            == original.first { $0.id == id }?.value)
+        let expectedAfterFailure = id == .powerTraction || id == .brakingTraction
+            ? 50 : original.first { $0.id == id }?.value
+        #expect(fixture.viewModel.viewState.adjustments.first { $0.id == id }?.value == expectedAfterFailure)
         fixture.viewModel.refresh()
         #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
         fixture.viewModel.updateAdjustment(id: id, value: 50)
@@ -52,7 +53,7 @@ struct PowerModeSettingsViewModelTests {
     ])
     func stoppingClearsPendingValue(id: PowerModeAdjustmentID) async {
         let operation = ControllablePowerModeSettingsOperation()
-        let fixture = makeFixture(bikeRepository: .init(
+        let fixture = makePowerModeSettingsFixture(bikeRepository: .init(
             baseWriteOperation: operation, tractionWriteOperation: operation
         ))
         fixture.viewModel.start()
@@ -72,7 +73,7 @@ struct PowerModeSettingsViewModelTests {
 
     @Test("Saves unique names and rejects duplicates without letter case")
     func savesAndRejectsDuplicates() async {
-        let fixture = makeFixture()
+        let fixture = makePowerModeSettingsFixture()
         fixture.viewModel.start()
         await fixture.vehicleSession.send(snapshot())
         #expect(await waitUntil { fixture.viewModel.viewState.canEditName })
@@ -92,7 +93,7 @@ struct PowerModeSettingsViewModelTests {
 
     @Test("Rejects a name when a bike profile is unavailable")
     func rejectsNameWithoutProfile() async {
-        let fixture = makeFixture()
+        let fixture = makePowerModeSettingsFixture()
         fixture.viewModel.start()
         await fixture.vehicleSession.send(.init(hasReceivedSettings: true))
         #expect(await waitUntil {
@@ -106,7 +107,7 @@ struct PowerModeSettingsViewModelTests {
 
     @Test("Resets a saved name to the numeric fallback")
     func resetsName() async throws {
-        let fixture = makeFixture()
+        let fixture = makePowerModeSettingsFixture()
         var settings = AppSettings()
         try settings.setPowerModeName(try PowerModeName("MX"), forVIN: vin, mapIndex: 0)
         await fixture.repository.send(settings)
@@ -125,7 +126,7 @@ struct PowerModeSettingsViewModelTests {
 
     @Test("Enables guarded map controls and preserves sibling values")
     func preparesAndWritesAdjustments() async {
-        let fixture = makeFixture()
+        let fixture = makePowerModeSettingsFixture()
         fixture.viewModel.start()
         await fixture.vehicleSession.send(connectedSnapshot())
 
@@ -160,7 +161,7 @@ struct PowerModeSettingsViewModelTests {
     func publishesApplyingAndConfirmedFeedback() async {
         let writeOperation = ControllablePowerModeSettingsOperation()
         let bikeRepository = PowerModeSettingsBikeRepository(baseWriteOperation: writeOperation)
-        let fixture = makeFixture(bikeRepository: bikeRepository)
+        let fixture = makePowerModeSettingsFixture(bikeRepository: bikeRepository)
         fixture.viewModel.start()
         await fixture.vehicleSession.send(connectedSnapshot())
         #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
@@ -196,7 +197,7 @@ struct PowerModeSettingsViewModelTests {
     func presentationPausePreservesCommittedWrite() async {
         let writeOperation = ControllablePowerModeSettingsOperation()
         let bikeRepository = PowerModeSettingsBikeRepository(baseWriteOperation: writeOperation)
-        let fixture = makeFixture(bikeRepository: bikeRepository)
+        let fixture = makePowerModeSettingsFixture(bikeRepository: bikeRepository)
         fixture.viewModel.start()
         await fixture.vehicleSession.send(connectedSnapshot())
         #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
@@ -216,7 +217,7 @@ struct PowerModeSettingsViewModelTests {
 extension PowerModeSettingsViewModelTests {
     @Test("Refreshes once per connection session and again after reconnect")
     func refreshesOncePerSessionAndAgainAfterReconnect() async {
-        let fixture = makeFixture()
+        let fixture = makePowerModeSettingsFixture()
         fixture.viewModel.start()
 
         await fixture.vehicleSession.send(connectedSnapshot())
@@ -244,7 +245,7 @@ extension PowerModeSettingsViewModelTests {
     func stopCancelsRefreshAndRestartRequestsItAgain() async {
         let refreshOperation = ControllablePowerModeSettingsOperation()
         let bikeRepository = PowerModeSettingsBikeRepository(refreshOperation: refreshOperation)
-        let fixture = makeFixture(bikeRepository: bikeRepository)
+        let fixture = makePowerModeSettingsFixture(bikeRepository: bikeRepository)
         fixture.viewModel.start()
         await fixture.vehicleSession.send(connectedSnapshot())
         #expect(await waitUntil { await refreshOperation.pendingCount == 1 })
@@ -264,7 +265,7 @@ extension PowerModeSettingsViewModelTests {
     func blocksRefreshWhileControlOperationIsInFlight() async {
         let writeOperation = ControllablePowerModeSettingsOperation()
         let bikeRepository = PowerModeSettingsBikeRepository(baseWriteOperation: writeOperation)
-        let fixture = makeFixture(bikeRepository: bikeRepository)
+        let fixture = makePowerModeSettingsFixture(bikeRepository: bikeRepository)
         fixture.viewModel.start()
         await fixture.vehicleSession.send(connectedSnapshot())
         #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
@@ -286,7 +287,7 @@ extension PowerModeSettingsViewModelTests {
     func doesNotWriteBeforePreparationCompletes() async {
         let preparation = ControllablePowerModeSettingsOperation()
         let bikeRepository = PowerModeSettingsBikeRepository(basePreparationOperation: preparation)
-        let fixture = makeFixture(bikeRepository: bikeRepository)
+        let fixture = makePowerModeSettingsFixture(bikeRepository: bikeRepository)
         fixture.viewModel.start()
         await fixture.vehicleSession.send(connectedSnapshot())
         #expect(await waitUntil { await preparation.pendingCount == 1 })
@@ -305,7 +306,7 @@ extension PowerModeSettingsViewModelTests {
     func serializesBaseWritesAndPreservesConfirmedSiblingValues() async {
         let writeOperation = ControllablePowerModeSettingsOperation()
         let bikeRepository = PowerModeSettingsBikeRepository(baseWriteOperation: writeOperation)
-        let fixture = makeFixture(bikeRepository: bikeRepository)
+        let fixture = makePowerModeSettingsFixture(bikeRepository: bikeRepository)
         fixture.viewModel.start()
         await fixture.vehicleSession.send(connectedSnapshot())
         #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
@@ -337,7 +338,7 @@ extension PowerModeSettingsViewModelTests {
             basePreparationOperation: preparation,
             baseWriteOperation: writeOperation
         )
-        let fixture = makeFixture(bikeRepository: bikeRepository)
+        let fixture = makePowerModeSettingsFixture(bikeRepository: bikeRepository)
         fixture.viewModel.start()
         await fixture.vehicleSession.send(connectedSnapshot(mapCount: 3))
         #expect(await waitUntil { await preparation.pendingCount == 1 })
@@ -373,7 +374,7 @@ extension PowerModeSettingsViewModelTests {
     func disconnectCancelsPreparationAndDisablesControls() async {
         let preparation = ControllablePowerModeSettingsOperation()
         let bikeRepository = PowerModeSettingsBikeRepository(basePreparationOperation: preparation)
-        let fixture = makeFixture(bikeRepository: bikeRepository)
+        let fixture = makePowerModeSettingsFixture(bikeRepository: bikeRepository)
         fixture.viewModel.start()
         await fixture.vehicleSession.send(connectedSnapshot())
         #expect(await waitUntil { await preparation.pendingCount == 1 })
@@ -392,7 +393,7 @@ extension PowerModeSettingsViewModelTests {
 
     @Test("Disconnect clears confirmed control feedback")
     func disconnectClearsConfirmedControlFeedback() async {
-        let fixture = makeFixture()
+        let fixture = makePowerModeSettingsFixture()
         fixture.viewModel.start()
         await fixture.vehicleSession.send(connectedSnapshot())
         #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
@@ -415,7 +416,7 @@ extension PowerModeSettingsViewModelTests {
     func writeFailureDoesNotPublishUnconfirmedValuesAndRequiresFreshVerification() async {
         let writeOperation = ControllablePowerModeSettingsOperation()
         let bikeRepository = PowerModeSettingsBikeRepository(baseWriteOperation: writeOperation)
-        let fixture = makeFixture(bikeRepository: bikeRepository)
+        let fixture = makePowerModeSettingsFixture(bikeRepository: bikeRepository)
         fixture.viewModel.start()
         await fixture.vehicleSession.send(connectedSnapshot())
         #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
@@ -439,7 +440,7 @@ extension PowerModeSettingsViewModelTests {
 
     @Test("Stop cancels queued settings names before persistence begins")
     func stopCancelsQueuedSettingsSaves() async {
-        let fixture = makeFixture()
+        let fixture = makePowerModeSettingsFixture()
         fixture.viewModel.start()
         await fixture.vehicleSession.send(snapshot())
         #expect(await waitUntil { fixture.viewModel.viewState.canEditName })
@@ -457,7 +458,7 @@ extension PowerModeSettingsViewModelTests {
     @Test("Does not send traction values outside the supported range")
     func doesNotSendTractionValuesOutsideSupportedRange() async {
         let bikeRepository = PowerModeSettingsBikeRepository()
-        let fixture = makeFixture(bikeRepository: bikeRepository)
+        let fixture = makePowerModeSettingsFixture(bikeRepository: bikeRepository)
         fixture.viewModel.start()
         await fixture.vehicleSession.send(connectedSnapshot())
         #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
@@ -492,7 +493,7 @@ extension PowerModeSettingsViewModelTests {
     func nameConfirmationWaitsForPersistence() async {
         let operation = ControllablePowerModeSettingsOperation()
         let repository = PowerModeSettingsRepository(operation: operation)
-        let fixture = makeFixture(repository: repository)
+        let fixture = makePowerModeSettingsFixture(repository: repository)
         fixture.viewModel.start()
         await fixture.vehicleSession.send(snapshot())
         #expect(await waitUntil { fixture.viewModel.viewState.canEditName })
@@ -519,7 +520,7 @@ extension PowerModeSettingsViewModelTests {
         var settings = AppSettings()
         try settings.setPowerModeName(try PowerModeName("Eco"), forVIN: vin, mapIndex: 0)
         let repository = PowerModeSettingsRepository(settings: settings, operation: operation)
-        let fixture = makeFixture(repository: repository)
+        let fixture = makePowerModeSettingsFixture(repository: repository)
         fixture.viewModel.start()
         await fixture.vehicleSession.send(snapshot(settings: settings))
         #expect(await waitUntil { fixture.viewModel.viewState.currentName == "Eco" })
@@ -532,31 +533,178 @@ extension PowerModeSettingsViewModelTests {
         fixture.viewModel.stop()
     }
 
-    private func makeFixture(
-        bikeRepository: PowerModeSettingsBikeRepository = .init(),
-        repository: PowerModeSettingsRepository = .init()
-    ) -> Fixture {
-        let vehicleSession = PowerModeSettingsVehicleSession()
-        return Fixture(
-            viewModel: PowerModeFeatureFactory.make(
-                vehicleSession: vehicleSession,
-                basicUseCases: .init(
-                    observeSettings: .init(repository: repository),
-                    updateSettings: .init(repository: repository),
-                    refreshPowerModes: .init(repository: bikeRepository),
-                    preparePowerModeControl: .init(repository: bikeRepository),
-                    setPowerModeConfiguration: .init(repository: bikeRepository),
-                    prepareTractionControl: .init(repository: bikeRepository),
-                    setTractionControlConfiguration: .init(repository: bikeRepository)
-                ),
-                advancedUseCases: .init(editing: nil, calibration: BikePowerCurveCalibrationFactory.makeDefault()),
-                locale: Locale(identifier: "en_US"), makePresetID: UUID.init
-            ).basic,
-            vehicleSession: vehicleSession,
-            repository: repository,
-            bikeRepository: bikeRepository
+    @Test("Compatible firmware exposes missing traction values without any background write")
+    func missingTractionValues() async throws {
+        let fixture = makePowerModeSettingsFixture()
+        fixture.viewModel.start()
+        var incoming = connectedSnapshot()
+        var telemetry = incoming.telemetry
+        telemetry.powerModeConfigurations[0]?.powerTractionPercent = nil
+        telemetry.powerModeConfigurations[0]?.brakingTractionPercent = nil
+        incoming = .init(
+            telemetry: telemetry, connection: incoming.connection, profile: incoming.profile,
+            isCanonicalTelemetryAvailable: true
         )
+        await fixture.vehicleSession.send(incoming)
+        #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
+        #expect(fixture.viewModel.viewState.adjustments[2].value == 0)
+        #expect(fixture.viewModel.viewState.adjustments[3].value == 0)
+        #expect(fixture.viewModel.viewState.adjustments[2].allowsUnchangedCommit)
+        #expect(fixture.viewModel.viewState.controlGroups[1].detail == nil)
+        #expect(await fixture.bikeRepository.requestedTractionWrites.isEmpty)
+        #expect(await fixture.bikeRepository.preparedTractionMapIndexes.isEmpty)
+        fixture.viewModel.updateAdjustment(id: .powerTraction, value: 35)
+        #expect(await waitUntil { await fixture.bikeRepository.tractionWrites.count == 1 })
+        #expect(await fixture.bikeRepository.tractionWrites == [
+            .init(mapIndex: 0, powerTractionPercent: 35, brakingTractionPercent: 0)
+        ])
+        #expect(fixture.viewModel.viewState.adjustments[2].value == 35)
+        #expect(fixture.viewModel.viewState.adjustments[3].value == 0)
+        fixture.viewModel.stop()
     }
+
+    @Test("Firmware compatibility is required even when traction values are present")
+    func incompatibleTractionFirmware() async {
+        let repository = PowerModeSettingsBikeRepository()
+        await repository.setTractionCompatibility(.init(firmware: "1.10.0", isCompatible: false))
+        let fixture = makePowerModeSettingsFixture(bikeRepository: repository)
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(connectedSnapshot())
+        #expect(await waitUntil { fixture.viewModel.viewState.adjustments[0].isEnabled })
+        #expect(!fixture.viewModel.viewState.adjustments[2].isEnabled)
+        #expect(!fixture.viewModel.viewState.adjustments[3].isEnabled)
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.controlGroups[1].detail == "Available with supported firmware."
+        })
+        fixture.viewModel.updateAdjustment(id: .powerTraction, value: 30)
+        #expect(await repository.requestedTractionWrites.isEmpty)
+        fixture.viewModel.stop()
+    }
+
+    @Test("A late firmware result cannot re-enable traction after disconnect")
+    func lateTractionCompatibility() async {
+        let operation = ControllablePowerModeSettingsOperation()
+        let repository = PowerModeSettingsBikeRepository(tractionCompatibilityOperation: operation)
+        let fixture = makePowerModeSettingsFixture(bikeRepository: repository)
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(connectedSnapshot())
+        #expect(await waitUntil { await operation.pendingCount == 1 })
+        #expect(!fixture.viewModel.viewState.adjustments[2].isEnabled)
+        #expect(fixture.viewModel.viewState.controlGroups[1].detail == nil)
+        await fixture.vehicleSession.send(.init(
+            connection: .init(state: .disconnected(reason: "Connection lost")),
+            profile: .init(vin: vin)
+        ))
+        #expect(await waitUntil { fixture.viewModel.viewState.connectionText == "Bike disconnected" })
+        await operation.succeedAll()
+        await repository.setTractionCompatibility(.init(firmware: "1.10.0", isCompatible: false))
+        await fixture.vehicleSession.send(connectedSnapshot())
+        #expect(await waitUntil { await operation.pendingCount == 1 })
+        #expect(!fixture.viewModel.viewState.adjustments[2].isEnabled)
+        #expect(fixture.viewModel.viewState.controlGroups[1].detail == nil)
+        await operation.succeedAll()
+        #expect(await waitUntil {
+            fixture.viewModel.viewState.controlGroups[1].detail == "Available with supported firmware."
+        })
+        #expect(!fixture.viewModel.viewState.adjustments[2].isEnabled)
+        #expect(await repository.requestedTractionWrites.isEmpty)
+        await fixture.viewModel.stopAndWait()
+    }
+
+    @Test("A firmware read failure hides the incompatibility notice and can be refreshed")
+    func failedTractionCompatibility() async {
+        let repository = PowerModeSettingsBikeRepository()
+        await repository.setTractionCompatibilityError(BikeTractionControlError.confirmationUnavailable)
+        let fixture = makePowerModeSettingsFixture(bikeRepository: repository)
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(connectedSnapshot())
+        #expect(await waitUntil { fixture.viewModel.viewState.adjustments[0].isEnabled })
+        #expect(await repository.tractionCompatibilityReads == 1)
+        #expect(!fixture.viewModel.viewState.adjustments[2].isEnabled)
+        #expect(fixture.viewModel.viewState.controlGroups[1].detail == nil)
+        await repository.setTractionCompatibilityError(nil)
+        fixture.viewModel.refresh()
+        #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
+        #expect(await repository.tractionCompatibilityReads == 2)
+        #expect(await repository.requestedTractionWrites.isEmpty)
+        fixture.viewModel.stop()
+    }
+
+    @Test("Traction can be retried at the same value without refreshing")
+    func tractionRetry() async {
+        let repository = PowerModeSettingsBikeRepository()
+        let fixture = makePowerModeSettingsFixture(bikeRepository: repository)
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(connectedSnapshot())
+        #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
+        await repository.setTractionError(BikeTractionControlError.confirmationUnavailable)
+        fixture.viewModel.updateAdjustment(id: .powerTraction, value: 35)
+        #expect(await waitUntil { feedback(for: .powerTraction, in: fixture.viewModel).state == .failed })
+        #expect(fixture.viewModel.viewState.adjustments[2].value == 35)
+        #expect(fixture.viewModel.viewState.adjustments[2].isEnabled)
+        #expect(fixture.viewModel.viewState.adjustments[2].allowsUnchangedCommit)
+        await repository.setTractionError(nil)
+        fixture.viewModel.updateAdjustment(id: .powerTraction, value: 35)
+        #expect(await waitUntil { feedback(for: .powerTraction, in: fixture.viewModel).state == .confirmed })
+        #expect(await repository.tractionWrites.count == 1)
+        fixture.viewModel.stop()
+    }
+
+    @Test("Traction remains usable with no base configuration", arguments: [false, true])
+    func tractionWithoutBase(partial: Bool) async {
+        let fixture = makePowerModeSettingsFixture()
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(.init(
+            telemetry: .init(powerModeConfigurations:
+                partial ? [0: .init(mapIndex: 0, powerTractionPercent: 20)] : [:]
+            ),
+            connection: connectedSnapshot().connection, profile: connectedSnapshot().profile,
+            isCanonicalTelemetryAvailable: true
+        ))
+        #expect(await waitUntil { fixture.viewModel.viewState.adjustments[2].isEnabled })
+        #expect(!fixture.viewModel.viewState.adjustments[0].isEnabled)
+        #expect(fixture.viewModel.viewState.adjustments[2].value == (partial ? 20 : 0))
+        #expect(fixture.viewModel.viewState.adjustments[3].value == 0)
+        fixture.viewModel.updateAdjustment(id: .brakingTraction, value: 40)
+        #expect(await waitUntil { await fixture.bikeRepository.tractionWrites.count == 1 })
+        #expect(await fixture.bikeRepository.tractionWrites == [
+            .init(mapIndex: 0, powerTractionPercent: partial ? 20 : 0, brakingTractionPercent: 40)
+        ])
+        fixture.viewModel.stop()
+    }
+
+    @Test("A stale baseline updates both controls and waits for another gesture")
+    func changedTractionBaseline() async {
+        let repository = PowerModeSettingsBikeRepository()
+        let fixture = makePowerModeSettingsFixture(bikeRepository: repository)
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(connectedSnapshot())
+        #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
+        await repository.setTractionError(BikeTractionControlError.changed(
+            .init(mapIndex: 0, powerRaw: 100, brakingRaw: 300)
+        ))
+        fixture.viewModel.updateAdjustment(id: .powerTraction, value: 35)
+        #expect(await waitUntil { feedback(for: .powerTraction, in: fixture.viewModel).state == .failed })
+        #expect(fixture.viewModel.viewState.adjustments[2].value == 10)
+        #expect(fixture.viewModel.viewState.adjustments[3].value == 30)
+        #expect(await repository.tractionWrites.isEmpty)
+        fixture.viewModel.stop()
+    }
+
+    @Test("Base-control feedback is not masked by an earlier traction confirmation")
+    func baseFeedbackAfterTraction() async {
+        let fixture = makePowerModeSettingsFixture()
+        fixture.viewModel.start()
+        await fixture.vehicleSession.send(connectedSnapshot())
+        #expect(await waitUntil { controlsAreEnabled(fixture.viewModel) })
+        fixture.viewModel.updateAdjustment(id: .powerTraction, value: 35)
+        #expect(await waitUntil { feedback(for: .powerTraction, in: fixture.viewModel).state == .confirmed })
+        fixture.viewModel.updateAdjustment(id: .power, value: 50)
+        #expect(await waitUntil { feedback(for: .power, in: fixture.viewModel).state == .confirmed })
+        #expect(feedback(for: .powerTraction, in: fixture.viewModel).state == .idle)
+        fixture.viewModel.stop()
+    }
+
     private func snapshot(settings: AppSettings = .init()) -> VehicleSessionSnapshot {
         .init(
             settings: settings,
@@ -607,10 +755,5 @@ extension PowerModeSettingsViewModelTests {
     ) -> PowerModeControlFeedback {
         viewModel.viewState.adjustments.first { $0.id == id }?.feedback ?? .idle
     }
-    private struct Fixture {
-        let viewModel: PowerModeSettingsViewModel
-        let vehicleSession: PowerModeSettingsVehicleSession
-        let repository: PowerModeSettingsRepository
-        let bikeRepository: PowerModeSettingsBikeRepository
-    }
+
 }
