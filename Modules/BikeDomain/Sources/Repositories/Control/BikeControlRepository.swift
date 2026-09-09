@@ -1,6 +1,15 @@
 import Foundation
 
 public protocol BikeControlRepository: Sendable {
+    var supportsAdvancedPowerModes: Bool { get }
+    func applyBasicPowerMode(
+        mapIndex: Int, horsepower: Int?, regeneration: Int?
+    ) async throws -> BikeAdvancedPowerModeConfiguration
+    func readAdvancedPowerMode(mapIndex: Int) async throws -> BikeAdvancedPowerModeConfiguration
+    func applyAdvancedPowerMode(
+        expected: BikeAdvancedPowerModeConfiguration,
+        desired: BikeAdvancedPowerModeConfiguration
+    ) async throws -> BikeAdvancedPowerModeConfiguration
     func readBikeLockFirmwareCompatibility() async throws -> BikeLockFirmwareCompatibility
     func prepareBikeLockControl() async throws -> BikeLockControlSnapshot
     func setBikeLocked(_ isLocked: Bool) async throws -> BikeLockControlSnapshot
@@ -22,6 +31,7 @@ public protocol BikeControlRepository: Sendable {
 }
 
 public extension BikeControlRepository {
+    var supportsAdvancedPowerModes: Bool { false }
     func readBikeLockFirmwareCompatibility() async throws -> BikeLockFirmwareCompatibility {
         throw BikeControlRepositoryError.bikeLockControlUnavailable
     }
@@ -63,6 +73,21 @@ public extension BikeControlRepository {
     }
 
     func refreshTractionControlConfiguration(mapIndex _: Int) async throws {}
+
+    func readAdvancedPowerMode(mapIndex: Int) async throws -> BikeAdvancedPowerModeConfiguration {
+        throw BikeControlRepositoryError.powerModeControlUnavailable
+    }
+    func applyAdvancedPowerMode(
+        expected: BikeAdvancedPowerModeConfiguration,
+        desired: BikeAdvancedPowerModeConfiguration
+    ) async throws -> BikeAdvancedPowerModeConfiguration {
+        throw BikeControlRepositoryError.powerModeControlUnavailable
+    }
+    func applyBasicPowerMode(
+        mapIndex: Int, horsepower: Int?, regeneration: Int?
+    ) async throws -> BikeAdvancedPowerModeConfiguration {
+        throw BikeControlRepositoryError.powerModeControlUnavailable
+    }
 }
 
 public enum BikeControlRepositoryError: LocalizedError, Equatable, Sendable {
