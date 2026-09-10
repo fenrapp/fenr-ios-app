@@ -1,4 +1,5 @@
 import CoreBluetooth
+import StarkProtocol
 
 @MainActor
 public final class BLESessionStore {
@@ -22,6 +23,12 @@ public final class BLESessionStore {
     private var imuMonitoringLeaseCount = 0
 
     public init() {}
+
+    func authenticatedConnectionName(fallback: String?) -> String? {
+        guard authenticationState == .authenticated,
+              StarkPairingIdentity.isValidVIN(targetVIN) else { return fallback }
+        return StarkPairingIdentity.normalizedVIN(targetVIN)
+    }
 
     public func setTargetVIN(_ vin: String) {
         targetVIN = vin

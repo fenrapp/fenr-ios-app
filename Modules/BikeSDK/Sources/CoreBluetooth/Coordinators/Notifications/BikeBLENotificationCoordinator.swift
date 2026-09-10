@@ -108,7 +108,9 @@ public struct BikeBLENotificationCoordinator {
             requiredCharacteristicUUIDs: BikeSDKConstants.requiredTelemetryNotifyUUIDs
         ) {
             connectionDidBecomeReady()
-            await eventEmitter.send(.connection(.receivingTelemetry(peripheralName: peripheral.name)))
+            await eventEmitter.send(.connection(.receivingTelemetry(
+                peripheralName: sessionStore.authenticatedConnectionName(fallback: peripheral.name)
+            )))
         }
     }
 
