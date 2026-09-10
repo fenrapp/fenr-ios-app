@@ -29,6 +29,11 @@ struct BikeBLESubscriptionCoordinator {
     }
 
     func prepareIfNeeded(characteristic: CBCharacteristic, peripheral: CBPeripheral) async {
+        if characteristic.uuid == BikeSDKConstants.vcuBikeConfigurationUUID,
+           sessionStore.authenticationState == .authenticated {
+            await prepareConfigurationNotificationIfAvailable(peripheral: peripheral)
+            return
+        }
         guard shouldPrepareNotification(for: characteristic) else { return }
         await notificationPreparer.prepare(characteristic: characteristic, peripheral: peripheral)
     }
@@ -38,11 +43,16 @@ struct BikeBLESubscriptionCoordinator {
         characteristic: CBCharacteristic,
         error: Error?
     ) async {
+        let generation = sessionStore.generation
         let characteristicUUID = characteristic.uuid.uuidString
         if let error {
             await eventEmitter.send(.error(.operationFailed(
                 "Descriptor discovery failed \(characteristicUUID): \(error.localizedDescription)"
             )))
+            guard sessionStore.generation == generation else { return }
+            if sessionStore.claimTelemetryRetry(for: characteristic.uuid, operation: .descriptors) {
+                await notificationPreparer.prepare(characteristic: characteristic, peripheral: peripheral)
+            }
             await experimentalCaptureCoordinator.advance(after: characteristic.uuid, peripheral: peripheral)
             return
         }
@@ -78,6 +88,7 @@ struct BikeBLESubscriptionCoordinator {
         characteristic: CBCharacteristic,
         error: Error?
     ) async {
+        let generation = sessionStore.generation
         let characteristicUUID = characteristic.uuid.uuidString
         if sessionStore.completeActiveUnsubscriptionCharacteristic(matching: characteristic.uuid) {
             queue.cancelTimeout()
@@ -107,6 +118,8 @@ struct BikeBLESubscriptionCoordinator {
             await eventEmitter.send(.error(.operationFailed(
                 "Subscribe failed \(characteristicUUID): \(error.localizedDescription)"
             )))
+            guard sessionStore.generation == generation else { return }
+            queue.retrySubscriptionIfNeeded(characteristic)
             await queue.processNext(peripheral: peripheral)
             await experimentalCaptureCoordinator.advance(after: characteristic.uuid, peripheral: peripheral)
             return
@@ -116,6 +129,8 @@ struct BikeBLESubscriptionCoordinator {
                 title: BikeSDKText.subscriptionTitle,
                 detail: "Not notifying \(characteristicUUID)"
             )))
+            guard sessionStore.generation == generation else { return }
+            queue.retrySubscriptionIfNeeded(characteristic)
             await queue.processNext(peripheral: peripheral)
             await experimentalCaptureCoordinator.advance(after: characteristic.uuid, peripheral: peripheral)
             return
@@ -137,7 +152,6 @@ struct BikeBLESubscriptionCoordinator {
                 await eventEmitter.send(.connection(subscribed))
             }
             requiredSubscriptionsDidComplete()
-            await prepareConfigurationNotificationIfAvailable(peripheral: peripheral)
             return
         }
         let missing = BikeSDKConstants.requiredTelemetryNotifyUUIDs
@@ -149,6 +163,7 @@ struct BikeBLESubscriptionCoordinator {
 
     func authenticationDidSucceed(peripheral: CBPeripheral) async {
         await queue.processNext(peripheral: peripheral)
+        await prepareConfigurationNotificationIfAvailable(peripheral: peripheral)
     }
 
     func startBatteryHealthMonitoring() async throws {

@@ -2,6 +2,13 @@ import CoreBluetooth
 
 @MainActor
 public final class BLESessionStore {
+    enum TelemetryRetryOperation: Hashable {
+        case descriptors, subscription, read
+    }
+
+    public private(set) var generation = 0
+    public private(set) var hasReportedDashboardTelemetry = false
+    private var telemetryRetries: [CBUUID: Set<TelemetryRetryOperation>] = [:]
     public private(set) var targetVIN = ""
     public private(set) var peripheral: CBPeripheral?
     public private(set) var discoveredCharacteristics: [CBUUID: CBCharacteristic] = [:]
@@ -57,7 +64,10 @@ public final class BLESessionStore {
     public func startNextNotificationCharacteristic() -> CBCharacteristic? {
         guard !hasActiveNotificationOperation else { return nil }
         guard !pendingNotificationCharacteristics.isEmpty else { return nil }
-        activeNotificationCharacteristic = pendingNotificationCharacteristics.removeFirst()
+        let index = pendingNotificationCharacteristics.firstIndex {
+            BikeSDKConstants.dashboardTelemetryUUIDs.contains($0.uuid)
+        } ?? pendingNotificationCharacteristics.startIndex
+        activeNotificationCharacteristic = pendingNotificationCharacteristics.remove(at: index)
         return activeNotificationCharacteristic
     }
 
@@ -137,7 +147,7 @@ public final class BLESessionStore {
     }
 
     var shouldPublishSubscribedConnectionState: Bool {
-        !hasReportedCompleteTelemetry
+        !hasReportedDashboardTelemetry && !hasReportedCompleteTelemetry
     }
 
     public func markExperimentalCaptureStarted() -> Bool {
@@ -184,7 +194,23 @@ public final class BLESessionStore {
         return true
     }
 
+    func markDashboardTelemetryReady() -> Bool {
+        guard authenticationState == .authenticated, !hasReportedDashboardTelemetry,
+              !receivedTelemetryCharacteristics.isDisjoint(with: BikeSDKConstants.dashboardTelemetryUUIDs)
+        else { return false }
+        hasReportedDashboardTelemetry = true
+        return true
+    }
+
+    func claimTelemetryRetry(for uuid: CBUUID, operation: TelemetryRetryOperation) -> Bool {
+        guard BikeSDKConstants.telemetryCharacteristicUUIDs.contains(uuid) else { return false }
+        return telemetryRetries[uuid, default: []].insert(operation).inserted
+    }
+
     public func resetSession() {
+        generation += 1
+        hasReportedDashboardTelemetry = false
+        telemetryRetries.removeAll()
         peripheral?.delegate = nil
         peripheral = nil
         discoveredCharacteristics.removeAll()

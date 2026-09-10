@@ -20,6 +20,7 @@ enum BikeBLECoordinatorAssembly {
         let eventEmitter: BikeBLEEventEmitter
         let notificationProcessor: BikeBLENotificationProcessor
         let timeoutScheduler: any BikeBLETimeoutScheduling
+        let telemetryStartupScheduler: any BikeBLETimeoutScheduling
         let connectionDidBecomeReady: @MainActor () -> Void
         let peripheralOperations: BikeBLEPeripheralOperations
     }
@@ -68,6 +69,12 @@ enum BikeBLECoordinatorAssembly {
             sessionStore: dependencies.sessionStore,
             eventEmitter: dependencies.eventEmitter,
             notificationProcessor: dependencies.notificationProcessor,
+            telemetryStartup: BikeBLETelemetryStartup(
+                sessionStore: dependencies.sessionStore,
+                eventEmitter: dependencies.eventEmitter,
+                timeoutScheduler: dependencies.telemetryStartupScheduler,
+                peripheralOperations: dependencies.peripheralOperations
+            ),
             subscriptionCoordinator: subscriptionCoordinator,
             chargePowerCoordinator: chargePowerCoordinator,
             powerModeCoordinator: powerModeCoordinator,

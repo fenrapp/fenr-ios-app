@@ -31,6 +31,11 @@ enum BikeSDKConstants {
         BikeBLEDiagnosticsProfile.telemetryCharacteristicUUIDs
     }
 
+    // Each of these decoded datasets supplies a dashboard metric on its own.
+    static var dashboardTelemetryUUIDs: [CBUUID] {
+        [CBUUID(nsuuid: StarkUUIDs.liveSpeed), batterySOCCharacteristicUUID, CBUUID(nsuuid: StarkUUIDs.liveTotals)]
+    }
+
     static var requiredTelemetryNotifyUUIDs: [CBUUID] {
         BikeBLEDiagnosticsProfile.requiredTelemetryNotifyUUIDs
     }
