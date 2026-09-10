@@ -3,6 +3,12 @@ import Testing
 
 @Suite("Bike telemetry state")
 struct BikeTelemetryTests {
+    @Test("Brake data alone cannot establish whether the motorcycle is on or off")
+    func brakeWithoutStatusRemainsUnknown() {
+        let telemetry = BikeTelemetry(statusFlags: .init(isBrakeActive: true, crawlState: .unknown))
+        #expect(telemetry.runState == .unknown)
+    }
+
     @Test("Unknown status remains unknown before the first status packet")
     func unknownStatusDoesNotBecomeOff() {
         let telemetry = BikeTelemetry()

@@ -73,7 +73,7 @@ public struct BikeTelemetry: Equatable, Sendable {
     }
 
     public var runState: BikeRunState {
-        guard statusFlags != .unknown else { return .unknown }
+        guard statusFlags.crawlState != .unknown else { return .unknown }
         switch statusFlags.crawlState {
         case .forward:
             return .crawlForward

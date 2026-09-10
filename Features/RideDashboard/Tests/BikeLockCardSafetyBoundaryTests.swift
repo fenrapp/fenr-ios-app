@@ -1,11 +1,25 @@
+import Foundation
 @testable import RideDashboard
 import SettingsDomain
 import Testing
 import TestSupport
+import VehicleSession
 
 @Suite("Bike Lock card safety boundaries")
 @MainActor
 struct BikeLockCardSafetyBoundaryTests {
+    @Test("A stationary speed without bike status cannot enable a lock operation")
+    func missingStatusDoesNotEnableLock() {
+        let context = BikeLockCardVehicleContextMapper().map(.init(
+            telemetry: .init(speed: .known(kmh: 0, kmhX10: 0), lastUpdated: Date()),
+            connection: .init(state: .receivingTelemetry(peripheralName: "Test Bike")),
+            resolvedSpeedKilometersPerHour: 0
+        ))
+        #expect(context.isReceivingTelemetry)
+        #expect(!context.canPrepareNoOp)
+        #expect(!context.canPerformLockWrite)
+    }
+
     @Test("Rejects a preparation snapshot without confirmed no-op evidence")
     func noOpEvidenceIsRequiredToEnableControl() async {
         let fixture = BikeLockCardViewModelTestFactory.make(passesNoOpWrite: false)

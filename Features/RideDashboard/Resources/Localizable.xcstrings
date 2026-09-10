@@ -1,6 +1,7 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "rideDashboardValueUnavailable" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "--" } } } },
     "rideDashboardAdvancedCurveAccessibility" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Advanced curve confirmed" } } } },
     "rideDashboardHistoryRetry" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Retry" } } } },
     "rideDashboardHistoryRefreshError" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unable to refresh saved ride data. Showing previous data." } } } },

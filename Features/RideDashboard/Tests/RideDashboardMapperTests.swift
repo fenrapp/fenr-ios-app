@@ -161,7 +161,7 @@ struct RideDashboardMapperTests {
         )
 
         #expect(!state.hasTelemetry)
-        #expect(state.speedometer.valueText == "0")
+        #expect(state.speedometer.valueText == "--")
         #expect(state.battery == .init())
         #expect(state.odometer == .init())
         #expect(state.gear == .init())

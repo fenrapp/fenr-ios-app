@@ -183,7 +183,9 @@ public struct RideDashboardMapper: Sendable {
             ? min(max(value / maximum.value, .zero), 1)
             : .zero
         let unit = speed?.unit ?? maximum.unit
-        let valueText = measurementMapper.number(value, fractionDigits: .zero)
+        let valueText = speed == nil
+            ? rideDashboardLocalized(.rideDashboardValueUnavailable)
+            : measurementMapper.number(value, fractionDigits: .zero)
         let sourceIndicator = speedSourceIndicatorMapper.map(source, isGPSAvailable: isGPSAvailable)
         return .init(
             valueText: valueText,

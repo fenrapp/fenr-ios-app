@@ -18,6 +18,7 @@ public struct BikeLockCardVehicleContextMapper: Sendable {
         let receivesTelemetry = snapshot.isCanonicalTelemetryAvailable
         let speed = snapshot.resolvedSpeedKilometersPerHour
         let isStopped = receivesTelemetry
+            && snapshot.telemetry.statusFlags.crawlState != .unknown
             && !snapshot.telemetry.statusFlags.isInGear
             && speed?.isFinite == true
             && abs(speed ?? .infinity) < Constants.maximumStationarySpeed
