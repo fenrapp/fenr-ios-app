@@ -18,8 +18,10 @@ struct RideNavigationActivityMiniArrivalTests {
             from: ActivityControllerTestData.coordinate(index: 0),
             to: ActivityControllerTestData.destination(), showsSearchLoading: false
         )
+        let previewTask = try #require(model.planningController.routeTask)
         try #require(await waitUntil { await fixture.roadRouteCalculator.requestCount == 1 })
         await fixture.roadRouteCalculator.succeed(routes: [ActivityControllerTestData.roadRoute()])
+        await previewTask.value
         try #require(await waitUntil { model.viewState.screen == .map && model.viewState.activity == .preview })
         model.startPreviewedRoute()
         model.setPresentationMode(.mini)
