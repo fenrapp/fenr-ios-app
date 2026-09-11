@@ -130,10 +130,11 @@ struct BikeDiagnosticsTests {
     }
 
     @Test("Visible events coalesce to 30 while export preserves 600")
-    func eventLimitsAndExport() async {
+    func eventLimitsAndExport() async throws {
         let repository = FakeBikeDiagnosticsRepository()
         let viewModel = makeViewModel(repository: repository)
         viewModel.setPresentationActive(true)
+        defer { viewModel.setPresentationActive(false) }
         let repeatedID = UUID()
         for index in 0..<605 {
             await repository.sendDebugEvent(.init(
@@ -141,14 +142,22 @@ struct BikeDiagnosticsTests {
                 title: "Notification",
                 detail: "Packet \(index)"
             ))
+            // Bound the pending work; this checks retention, not runner throughput.
+            if (index + 1).isMultiple(of: 25) {
+                try #require(await waitUntil {
+                    viewModel.viewState.debugEvents.first?.detail == "Packet \(index)"
+                })
+            }
         }
-        #expect(await waitUntil { viewModel.viewState.debugEvents.first?.detail == "Packet 604" })
+        try #require(await waitUntil { viewModel.viewState.debugEvents.first?.detail == "Packet 604" })
 
         let eventLines = viewModel.debugLogText()
             .components(separatedBy: BikeDiagnosticsConstants.debugLogLineSeparator)
             .filter { $0.contains(" | Notification | ") }
         #expect(viewModel.viewState.debugEvents.count == 30)
         #expect(eventLines.count == 600)
+        #expect(eventLines.first?.hasSuffix(" | Packet 604") == true)
+        #expect(eventLines.last?.hasSuffix(" | Packet 5") == true)
         #expect(viewModel.debugLogText().contains("[Decoded Status]"))
         #expect(viewModel.debugLogText().contains("[Raw Status]"))
 
