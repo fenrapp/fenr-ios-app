@@ -5,6 +5,7 @@ import Foundation
 public struct BikeBLENotificationCoordinator {
     let sessionStore: BLESessionStore
     let eventEmitter: BikeBLEEventEmitter
+    private let telemetryStartup: BikeBLETelemetryStartup
     private let notificationProcessor: BikeBLENotificationProcessor
     private let subscriptionCoordinator: BikeBLESubscriptionCoordinator
     let chargePowerCoordinator: BikeBLEChargePowerCoordinator
@@ -20,6 +21,7 @@ public struct BikeBLENotificationCoordinator {
         sessionStore: BLESessionStore,
         eventEmitter: BikeBLEEventEmitter,
         notificationProcessor: BikeBLENotificationProcessor,
+        telemetryStartup: BikeBLETelemetryStartup,
         subscriptionCoordinator: BikeBLESubscriptionCoordinator,
         chargePowerCoordinator: BikeBLEChargePowerCoordinator,
         powerModeCoordinator: BikeBLEPowerModeConfigurationCoordinator,
@@ -32,6 +34,7 @@ public struct BikeBLENotificationCoordinator {
     ) {
         self.sessionStore = sessionStore
         self.eventEmitter = eventEmitter
+        self.telemetryStartup = telemetryStartup
         self.notificationProcessor = notificationProcessor
         self.subscriptionCoordinator = subscriptionCoordinator
         self.chargePowerCoordinator = chargePowerCoordinator
@@ -54,6 +57,11 @@ public struct BikeBLENotificationCoordinator {
             characteristic: characteristic,
             peripheral: peripheral
         )
+        if sessionStore.authenticationState == .authenticated,
+           BikeSDKConstants.telemetryCharacteristicUUIDs.contains(characteristic.uuid),
+           characteristic.properties.contains(.read) {
+            await peripheralOperations.readValue(characteristic: characteristic, peripheral: peripheral)
+        }
     }
 
     public func didDiscoverDescriptors(
@@ -85,9 +93,15 @@ public struct BikeBLENotificationCoordinator {
         if configurationTransport.completeReadIfNeeded(characteristic: characteristic, error: error) {
             return
         }
+        let generation = sessionStore.generation
         if let error {
             let message = "Value update failed \(characteristicUUIDString): \(error.localizedDescription)"
             await eventEmitter.send(.error(.operationFailed(message)))
+            if sessionStore.generation == generation, sessionStore.authenticationState == .authenticated,
+               characteristic.properties.contains(.read),
+               sessionStore.claimTelemetryRetry(for: characteristic.uuid, operation: .read) {
+                await peripheralOperations.readValue(characteristic: characteristic, peripheral: peripheral)
+            }
             return
         }
         guard let data = characteristic.value else { return }
@@ -103,10 +117,8 @@ public struct BikeBLENotificationCoordinator {
             )))
         }
         let didDecodeTelemetry = await notificationProcessor.process(characteristic: uuid, data: data, date: date)
-        if didDecodeTelemetry, sessionStore.markTelemetryReceived(
-            characteristicUUID: characteristic.uuid,
-            requiredCharacteristicUUIDs: BikeSDKConstants.requiredTelemetryNotifyUUIDs
-        ) {
+        guard sessionStore.generation == generation, didDecodeTelemetry else { return }
+        if telemetryStartup.received(characteristicUUID: characteristic.uuid) {
             connectionDidBecomeReady()
             await eventEmitter.send(.connection(.receivingTelemetry(
                 peripheralName: sessionStore.authenticatedConnectionName(fallback: peripheral.name)
@@ -120,6 +132,7 @@ public struct BikeBLENotificationCoordinator {
     }
 
     public func authenticationDidSucceed(peripheral: CBPeripheral) async {
+        telemetryStartup.start()
         notificationProcessor.resetDebugSampling()
         await subscriptionCoordinator.authenticationDidSucceed(peripheral: peripheral)
         await readAvailableTelemetrySnapshot(peripheral: peripheral, logsEveryRead: false)
@@ -147,6 +160,7 @@ public struct BikeBLENotificationCoordinator {
     }
 
     public func resetSession() {
+        telemetryStartup.reset()
         subscriptionCoordinator.reset()
         chargePowerCoordinator.reset()
         powerModeCoordinator.reset()

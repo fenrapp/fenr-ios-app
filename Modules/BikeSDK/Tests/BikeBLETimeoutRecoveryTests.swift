@@ -118,6 +118,11 @@ struct BikeBLETimeoutRecoveryTests {
         #expect(event == .error(.operationFailed(
             "Subscription timed out: \(characteristic.uuid.uuidString)"
         )))
+        #expect(sessionStore.pendingNotificationCharacteristics.count == 1)
+        _ = try #require(sessionStore.startNextNotificationCharacteristic())
+        await coordinator.subscriptionDidTimeOut(characteristicUUID: characteristic.uuid)
+        #expect(sessionStore.pendingNotificationCharacteristics.isEmpty)
+        #expect(sessionStore.activeNotificationCharacteristic == nil)
     }
 
     @Test("Timeout scheduler executes its operation")

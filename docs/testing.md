@@ -49,6 +49,15 @@ Use `-only-testing:<target>/<suite>` for focused runs. For manual simulator chec
 that use Keychain-backed PIN storage, build with ad hoc signing instead:
 `CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=-`.
 
+## Partial Bluetooth telemetry
+
+Keep the original security handshake mandatory. After authentication, one decoded
+speed, battery SOC, or odometer dataset can open the dashboard. The other datasets
+remain optional. Verify unavailable values, late samples, one bounded retry per
+failed telemetry operation, and configuration readiness without all six telemetry
+subscriptions. Without any dashboard dataset, retry readable metrics at 15 seconds
+and report a startup failure at 30 seconds. Physical motorcycle validation is required.
+
 ## Watch tests
 
 ```sh

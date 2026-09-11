@@ -288,6 +288,7 @@ private extension BikeTelemetryClientFactory {
             timeoutScheduler: BikeBLEOperationTimeoutScheduler(
                 duration: context.runtimeConfiguration.subscriptionOperationTimeout
             ),
+            telemetryStartupScheduler: BikeBLEOperationTimeoutScheduler(duration: .seconds(15)),
             connectionDidBecomeReady: context.reconnectController.markConnectionReady,
             peripheralOperations: context.peripheralOperations
         ))

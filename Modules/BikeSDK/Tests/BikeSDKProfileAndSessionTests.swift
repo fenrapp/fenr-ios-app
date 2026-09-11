@@ -72,7 +72,7 @@ struct BikeSDKProfileAndSessionTests {
         ).isEmpty)
         #expect(BikeSDKConstants.requiredCharacteristicUUIDs(
             for: CBUUID(nsuuid: StarkUUIDs.batteryService)
-        ) == [CBUUID(nsuuid: StarkUUIDs.batterySOC)])
+        ).isEmpty)
     }
 
     @Test("New electrical characteristics are readable and optional")

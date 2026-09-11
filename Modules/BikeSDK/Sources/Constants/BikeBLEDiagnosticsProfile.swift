@@ -66,7 +66,7 @@ enum BikeBLECurrentObservedFirmwareProfile {
     static var imuMonitoringUUID: CBUUID { liveIMUUUID }
 
     static var requiredServiceUUIDs: [CBUUID] {
-        [statusService.serviceUUID, liveService.serviceUUID, batteryService.serviceUUID]
+        [statusService.serviceUUID]
     }
 
     static func characteristicUUIDs(for serviceUUID: CBUUID) -> [CBUUID] {
@@ -76,11 +76,7 @@ enum BikeBLECurrentObservedFirmwareProfile {
     static func requiredCharacteristicUUIDs(for serviceUUID: CBUUID) -> [CBUUID] {
         switch serviceUUID {
         case statusService.serviceUUID:
-            [securityUUID, statusUUID]
-        case liveService.serviceUUID:
-            [speedUUID, mapUUID]
-        case batteryService.serviceUUID:
-            [batterySOCUUID]
+            [securityUUID]
         default:
             []
         }

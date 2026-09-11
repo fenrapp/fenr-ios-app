@@ -2,6 +2,7 @@ import CoreBluetooth
 
 @MainActor
 final class BikeBLESubscriptionQueue {
+    private var timeoutGeneration = 0
     private let sessionStore: BLESessionStore
     private let eventEmitter: BikeBLEEventEmitter
     private let timeoutScheduler: any BikeBLETimeoutScheduling
@@ -50,17 +51,27 @@ final class BikeBLESubscriptionQueue {
     }
 
     func reset() {
-        timeoutScheduler.cancel()
+        cancelTimeout()
     }
 
     func cancelTimeout() {
+        timeoutGeneration += 1
         timeoutScheduler.cancel()
     }
 
+    func retrySubscriptionIfNeeded(_ characteristic: CBCharacteristic) {
+        guard sessionStore.claimTelemetryRetry(for: characteristic.uuid, operation: .subscription) else { return }
+        sessionStore.enqueueNotificationCharacteristic(characteristic)
+    }
+
     private func scheduleTimeout(for characteristic: CBCharacteristic, isUnsubscription: Bool) {
+        cancelTimeout()
         let uuid = characteristic.uuid
+        let generation = sessionStore.generation
+        let timeout = timeoutGeneration
         timeoutScheduler.schedule { [weak self] in
-            guard let self else { return }
+            guard let self, self.sessionStore.generation == generation,
+                  self.timeoutGeneration == timeout else { return }
             if isUnsubscription {
                 await self.unsubscriptionDidTimeOut(characteristicUUID: uuid)
             } else {
@@ -70,13 +81,17 @@ final class BikeBLESubscriptionQueue {
     }
 
     func subscriptionDidTimeOut(characteristicUUID: CBUUID) async {
-        guard sessionStore.completeActiveNotificationCharacteristic(matching: characteristicUUID) else {
+        guard let characteristic = sessionStore.activeNotificationCharacteristic,
+              sessionStore.completeActiveNotificationCharacteristic(matching: characteristicUUID) else {
             return
         }
+        let generation = sessionStore.generation
+        cancelTimeout()
+        retrySubscriptionIfNeeded(characteristic)
         await eventEmitter.send(.error(.operationFailed(
             "Subscription timed out: \(characteristicUUID.uuidString)"
         )))
-        guard let peripheral = sessionStore.peripheral else { return }
+        guard sessionStore.generation == generation, let peripheral = sessionStore.peripheral else { return }
         await processNext(peripheral: peripheral)
         await experimentalCaptureCoordinator.advance(after: characteristicUUID, peripheral: peripheral)
     }

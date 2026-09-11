@@ -26,16 +26,19 @@ struct DashboardBikeLockCard: View {
                 }
 
                 Button(action: performPrimaryAction) {
-                    if viewState.isWorking {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                    } else {
-                        Label(
-                            viewState.actionTitle,
-                            systemImage: actionSystemImage
-                        )
-                        .font(.body.weight(.semibold))
-                        .frame(maxWidth: .infinity)
+                    Label(
+                        viewState.actionTitle,
+                        systemImage: actionSystemImage
+                    )
+                    .font(.body.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .opacity(viewState.isWorking ? .zero : 1)
+                    .overlay {
+                        if viewState.isWorking {
+                            ProgressView()
+                                .controlSize(.small)
+                                .accessibilityHidden(true)
+                        }
                     }
                 }
                 .buttonStyle(.borderedProminent)

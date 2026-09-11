@@ -16,6 +16,11 @@ final class FakeBikeBLETimeoutScheduler: BikeBLETimeoutScheduling {
         operation = nil
     }
 
+    func takePendingOperation() -> (@MainActor @Sendable () async -> Void)? {
+        defer { operation = nil }
+        return operation
+    }
+
     func fire() async {
         let pendingOperation = operation
         operation = nil

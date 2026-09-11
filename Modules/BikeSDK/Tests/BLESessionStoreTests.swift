@@ -6,7 +6,7 @@ import Testing
 @MainActor
 @Suite("BLE session store")
 struct BLESessionStoreTests {
-    @Test("Notification subscription queue is ordered and deduplicated")
+    @Test("Notification queue prioritizes dashboard data and deduplicates subscriptions")
     func notificationQueueIsOrderedAndDeduplicated() throws {
         let store = BLESessionStore()
         let status = makeMutableCharacteristic(uuid: StarkUUIDs.bikeStatus)
@@ -16,10 +16,10 @@ struct BLESessionStoreTests {
         store.enqueueNotificationCharacteristic(status)
         store.enqueueNotificationCharacteristic(speed)
 
-        #expect(try #require(store.startNextNotificationCharacteristic()).uuid == status.uuid)
-        #expect(store.completeActiveNotificationCharacteristic(matching: status.uuid))
         #expect(try #require(store.startNextNotificationCharacteristic()).uuid == speed.uuid)
         #expect(store.completeActiveNotificationCharacteristic(matching: speed.uuid))
+        #expect(try #require(store.startNextNotificationCharacteristic()).uuid == status.uuid)
+        #expect(store.completeActiveNotificationCharacteristic(matching: status.uuid))
         #expect(store.startNextNotificationCharacteristic() == nil)
     }
 

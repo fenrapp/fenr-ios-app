@@ -106,6 +106,7 @@ private func makeNotificationCoordinator(
             traceEmitter: traceEmitter
         ),
         timeoutScheduler: timeoutScheduler,
+        telemetryStartupScheduler: FakeBikeBLETimeoutScheduler(),
         connectionDidBecomeReady: connectionDidBecomeReady,
         peripheralOperations: BikeBLEPeripheralOperations(traceEmitter: traceEmitter)
     ))

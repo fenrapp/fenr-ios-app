@@ -90,6 +90,10 @@ struct OnboardingConnectionProgressView: View {
                 Image(systemName: "checkmark")
                     .font(.caption2.bold())
                     .foregroundStyle(Color(uiColor: .systemBackground))
+            } else if item == phase, item != .live {
+                ProgressView()
+                    .controlSize(.small)
+                    .tint(Color(uiColor: .systemBackground))
             } else if item == phase {
                 Circle()
                     .fill(Color(uiColor: .systemBackground))
