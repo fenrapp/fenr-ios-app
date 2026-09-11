@@ -81,6 +81,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/fenr-reports"
           xcodebuild -project FENR.xcodeproj -scheme FENR \
             -destination "platform=iOS Simulator,id=$FENR_DEVICE_ID" \
+            -destination-timeout 180 \
             -derivedDataPath "$RUNNER_TEMP/fenr-ios-debug" \
             -resultBundlePath "$RUNNER_TEMP/fenr-reports/ios-debug.xcresult" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test \
@@ -187,6 +188,7 @@ jobs:
         run: |
           xcodebuild -project FENR.xcodeproj -scheme '${{ matrix.test-scheme }}' \
             -destination "$FENR_DESTINATION" \
+            -destination-timeout 180 \
             -derivedDataPath "$RUNNER_TEMP/fenr-compatibility" \
             -resultBundlePath "$RUNNER_TEMP/fenr-reports/compatibility.xcresult" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test \

@@ -29,7 +29,10 @@ runs locally and in the scheduled/manual compatibility matrix in
 runtimes locally. The deployment targets remain iOS 17 and watchOS 10; running
 tests on a newer simulator does not establish runtime coverage of those minimums.
 
-CI creates its iPhone test simulator explicitly and selects it by UDID. Build-only
+CI creates its iPhone test simulator explicitly and selects it by UDID. Test commands
+allow up to 180 seconds for Xcode to discover the selected destination after boot;
+`simctl bootstatus` alone does not establish Xcode destination availability. This
+wait applies before test execution and does not retry failed tests. Build-only
 steps use `generic/platform=iOS Simulator`, so they do not require a pre-created
 device on the runner.
 
