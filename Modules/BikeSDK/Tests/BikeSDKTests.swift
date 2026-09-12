@@ -194,7 +194,8 @@ struct BikeSDKMappingTests {
         )
 
         #expect(event == .inverterTemperatures(.init(
-            rawValues: [395, 408, 323, 519, 322, 325, 330, 0]
+            motor: .init(rawValues: [395, 408, 323], validStatus: 7, usedStatus: 2),
+            igbt: .init(rawValues: [322, 325, 330], validStatus: 0, usedStatus: 0)
         )))
     }
 

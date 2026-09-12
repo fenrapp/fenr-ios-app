@@ -12,9 +12,24 @@ public struct StarkInverterTemperaturesDecoder: StarkPayloadDecoding {
         }
         let reader = StarkByteReader(data: data)
 
-        let rawValues = (0 ..< StarkInverterTemperaturesPayloadLayout.temperatureCount).map { index in
-            reader.u16(at: index * StarkInverterTemperaturesPayloadLayout.temperatureByteWidth)
+        return StarkInverterTemperaturesPayload(
+            motor: decodeGroup(reader, at: .zero),
+            igbt: decodeGroup(reader, at: StarkInverterTemperaturesPayloadLayout.groupByteWidth)
+        )
+    }
+
+    private func decodeGroup(
+        _ reader: StarkByteReader,
+        at offset: Int
+    ) -> StarkInverterTemperaturesPayload.SensorGroup {
+        let rawValues = (0 ..< StarkInverterTemperaturesPayloadLayout.temperaturesPerGroup).map { index in
+            reader.u16(at: offset + index * StarkInverterTemperaturesPayloadLayout.temperatureByteWidth)
         }
-        return StarkInverterTemperaturesPayload(rawValues: rawValues)
+        // The trailing bytes describe sensor status, not another temperature.
+        return .init(
+            rawValues: rawValues,
+            validStatus: reader.u8(at: offset + StarkInverterTemperaturesPayloadLayout.validStatusOffset),
+            usedStatus: reader.u8(at: offset + StarkInverterTemperaturesPayloadLayout.usedStatusOffset)
+        )
     }
 }

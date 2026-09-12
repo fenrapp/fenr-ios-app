@@ -1,1 +1,3 @@
-First FENR beta. Start with Explore demo > Start demo. Test Parked, Riding, Charging and Battery issue; dashboard customization, battery diagnostics, ride history and maintenance. Relaunch to verify persistence, then use Settings > Change bike to exit. Navigation requires your real location and network access. Report the scenario and steps to reproduce; never include a real VIN, pairing code or credentials. Physical motorcycle testing is optional; demo confirmations are simulated.
+Fixed incorrect inverter temperature readings that could show extremely high maximum and average values on some motorcycles.
+
+Please check the inverter temperature in the dashboard header and the minimum, average and maximum in the Thermal card. If a reading looks incorrect, report the screen and steps to reproduce without including a VIN, pairing code or credentials. You can also use Explore demo > Start demo to check the dashboard without a motorcycle.
