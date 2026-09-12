@@ -22,7 +22,7 @@ struct StarkPayloadDecoderContractTests {
         )
         let inverterTemperatures = try decode(
             StarkInverterTemperaturesDecoder(),
-            data: StarkProtocolFixtures.validatedInverterTemperatures
+            data: StarkProtocolFixtures.inverterTemperaturesWithStatus
         )
         let estimations = try decode(
             StarkLiveEstimationsDecoder(),

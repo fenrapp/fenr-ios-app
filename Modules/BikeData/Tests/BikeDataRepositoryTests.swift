@@ -67,8 +67,8 @@ struct BikeDataRepositoryTests {
         let telemetry = await iterator.next()
 
         #expect(telemetry?.odometer == .known(kilometers: 180.66, centiKilometers: 18_066))
-        #expect(telemetry?.inverterTemperatureRawValues == [395, 408, 323, 519, 322, 325, 330, 0])
-        #expect(telemetry?.inverterTemperaturesCelsius == [39.5, 40.8, 32.3, 51.9, 32.2, 32.5, 33.0, nil])
+        #expect(telemetry?.inverterTemperatureRawValues == [395, 408, 323, 322, 325, 330])
+        #expect(telemetry?.inverterTemperaturesCelsius == [39.5, 40.8, 32.3, 32.2, 32.5, 33.0])
     }
 
     @Test("Repository init does not start client or consume events")
@@ -328,21 +328,5 @@ extension BikeDataRepositoryTests {
 
         #expect(await recorder.count == 3)
         connectionTask.cancel()
-    }
-}
-
-private actor BatteryHealthEmissionRecorder {
-    private(set) var count = 0
-
-    func append(_: BikeBatteryHealth) {
-        count += 1
-    }
-}
-
-private actor ConnectionEmissionRecorder {
-    private(set) var count = 0
-
-    func append(_: BikeConnection) {
-        count += 1
     }
 }

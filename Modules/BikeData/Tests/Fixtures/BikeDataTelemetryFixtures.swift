@@ -1,4 +1,5 @@
 import BikeSDK
+import Foundation
 
 enum BikeDataTelemetryFixtures {
     static let batteryStatusFault = BikeSDKTelemetryPayload.batteryStatus(.init(
@@ -86,8 +87,17 @@ enum BikeDataTelemetryFixtures {
         fourthRawCounter: 203_916
     ))
     static let inverterTemperatures = BikeSDKTelemetryPayload.inverterTemperatures(.init(
-        rawValues: [395, 408, 323, 519, 322, 325, 330, 0]
+        motor: .init(rawValues: [395, 408, 323], validStatus: 7, usedStatus: 2),
+        igbt: .init(rawValues: [322, 325, 330], validStatus: 0, usedStatus: 0)
     ))
+    static let inverterTemperaturesWithLargeStatusBytes = Data([
+        240, 0, 250, 0, 4, 1, 0, 48,
+        14, 1, 14, 1, 24, 1, 0, 48
+    ])
+    static let unavailableInverterWithStatus = Data([
+        0, 0, 0, 0, 0, 0, 7, 2,
+        0, 0, 0, 0, 0, 0, 255, 48
+    ])
     static let charger = BikeSDKTelemetryPayload.charger(.init(
         requestedCurrentAmperes: 2.5,
         reportedCurrentAmperes: 2.5,
