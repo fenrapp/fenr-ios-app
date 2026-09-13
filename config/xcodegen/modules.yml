@@ -243,3 +243,19 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigationapplemaps
+  WatchCompanionDomain:
+    templates: [SharedFramework]
+    sources:
+      - path: Modules/WatchCompanionDomain/Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchcompaniondomain
+  WatchCompanionData:
+    templates: [SharedFramework]
+    sources:
+      - path: Modules/WatchCompanionData/Sources
+    dependencies:
+      - target: WatchCompanionDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchcompaniondata

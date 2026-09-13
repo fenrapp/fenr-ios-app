@@ -556,3 +556,13 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug.tests
+  WatchCompanionDataTests:
+    templates: [SharedUnitTests]
+    sources:
+      - path: Modules/WatchCompanionData/Tests
+    dependencies:
+      - target: WatchCompanionData
+      - target: WatchCompanionDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchcompaniondata.tests

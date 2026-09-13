@@ -46,6 +46,7 @@ schemes:
         FENRShareExtensionTests: [test]
         TestSupportTests: [test]
         FENRTests: [test]
+        WatchCompanionDataTests: [test]
         FENRDebugTests: [test]
     test:
       targets:
@@ -88,6 +89,7 @@ schemes:
         - FENRShareExtensionTests
         - TestSupportTests
         - FENRTests
+        - WatchCompanionDataTests
         - FENRDebugTests
   FENRDebug:
     management:
