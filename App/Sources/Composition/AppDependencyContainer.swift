@@ -328,7 +328,10 @@ private extension AppDependencyContainer {
             stopDiagnosticsCapture: { [repository = session.repository] in
                 _ = await repository.stopDiagnosticsCapture()
             },
-            startupPreparer: startupPreparer
+            startupPreparer: startupPreparer,
+            companionController: BikeCompanionFactory.make(
+                vehicleSession: vehicleSession, isDemo: experienceOptions.isDemo
+            )
         )
     }
 

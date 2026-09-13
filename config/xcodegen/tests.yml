@@ -468,6 +468,8 @@ targets:
       - path: App/Resources/Shared/Localizable.xcstrings
         buildPhase: resources
     dependencies:
+      - target: WatchCompanionData
+      - target: WatchCompanionDomain
       - target: TestSupport
       - target: BLETraceData
       - target: BLETraceDomain
@@ -523,6 +525,8 @@ targets:
       - path: App/Resources/Shared/Localizable.xcstrings
         buildPhase: resources
     dependencies:
+      - target: WatchCompanionData
+      - target: WatchCompanionDomain
       - target: AsyncSupport
       - target: BLETraceData
       - target: BLETraceDomain

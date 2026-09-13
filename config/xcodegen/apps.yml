@@ -69,6 +69,10 @@ targets:
             echo "warning: SwiftLint not installed. Install with: brew install swiftlint"
           fi
     dependencies:
+      - target: WatchCompanionDomain
+        embed: true
+      - target: WatchCompanionData
+        embed: true
       # DesignSystem is embedded for feature frameworks at runtime; the app does not import it.
       - target: DesignSystem
         embed: true
@@ -210,6 +214,10 @@ targets:
             echo "warning: SwiftLint not installed. Install with: brew install swiftlint"
           fi
     dependencies:
+      - target: WatchCompanionDomain
+        embed: true
+      - target: WatchCompanionData
+        embed: true
       # DesignSystem is embedded for feature frameworks at runtime; the app does not import it.
       - target: DesignSystem
         embed: true
