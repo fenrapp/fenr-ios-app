@@ -46,6 +46,7 @@ public struct AppSettingsViewStateMapper: Sendable {
                     .init(id: $0.rawValue, title: measurementSystemTitle($0))
                 }
             ),
+            showsBikeHours: settings.showsBikeHours,
             batteryCapacity: .init(
                 selectedID: settings.batteryPackCapacity(forVIN: profile?.vin).rawValue,
                 options: BatteryPackCapacity.allCases.map {

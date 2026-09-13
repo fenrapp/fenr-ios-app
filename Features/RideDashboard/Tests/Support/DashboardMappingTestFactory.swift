@@ -19,7 +19,8 @@ enum DashboardMappingTestFactory {
                 speedSourceIndicatorMapper: DashboardSpeedSourceIndicatorMapper(),
                 progressBarMapper: DashboardProgressBarMapper(), connectionMapper: RideDashboardConnectionMapper(),
                 temperatureMapper: DashboardTemperatureSummaryMapper(),
-                compactSpeedVisibilityMapper: DashboardCompactSpeedVisibilityMapper()
+                compactSpeedVisibilityMapper: DashboardCompactSpeedVisibilityMapper(),
+                experimentalHoursMapper: DashboardExperimentalHoursMapper()
             ),
             cardLayoutMapper: DashboardCardLayoutMapper(), vehicleSession: session,
             timing: .live, continuityPolicy: RideDashboardContinuityPolicy(),

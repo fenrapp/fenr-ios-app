@@ -15,12 +15,14 @@ public struct RideDisplaySettingsView: View {
                 bikeBatteryDisplayMode: viewModel.viewState.dashboardBatteryIndicatorMode,
                 deviceBatteryDisplayMode: viewModel.viewState.dashboardDeviceBatteryDisplayMode,
                 temperatureDisplayMode: viewModel.viewState.dashboardTemperatureDisplayMode,
+                showsBikeHours: viewModel.viewState.showsBikeHours,
                 speedSource: viewModel.viewState.speedSource,
                 onSelectProgressBarMode: viewModel.selectDashboardProgressBarMode,
                 onSelectProgressBarThickness: viewModel.selectDashboardProgressBarThickness,
                 onSelectBikeBatteryDisplayMode: viewModel.selectDashboardBatteryIndicatorMode,
                 onSelectDeviceBatteryDisplayMode: viewModel.selectDashboardDeviceBatteryDisplayMode,
                 onSelectTemperatureDisplayMode: viewModel.selectDashboardTemperatureDisplayMode,
+                onSetShowsBikeHours: viewModel.setShowsBikeHours,
                 onSelectSpeedSource: viewModel.selectSpeedSource,
                 onRequestLocationAccess: viewModel.requestLocationAccess
             )

@@ -2,6 +2,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
     public let speedometer: DashboardSpeedometerViewData
     public let showsCompactSpeedReadout: Bool
     public let odometer: DashboardOdometerViewData
+    public let experimentalHours: DashboardExperimentalHoursViewData?
     public let progressBar: DashboardProgressBarViewData
     public let progressBarLayout: DashboardProgressBarLayout
     public let battery: Battery
@@ -21,6 +22,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
         speedometer: DashboardSpeedometerViewData = .init(),
         showsCompactSpeedReadout: Bool = false,
         odometer: DashboardOdometerViewData = .init(),
+        experimentalHours: DashboardExperimentalHoursViewData? = nil,
         progressBar: DashboardProgressBarViewData = .neutralEnergy,
         progressBarLayout: DashboardProgressBarLayout = .regular,
         battery: Battery = .init(),
@@ -39,6 +41,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
         self.speedometer = speedometer
         self.showsCompactSpeedReadout = showsCompactSpeedReadout
         self.odometer = odometer
+        self.experimentalHours = experimentalHours
         self.progressBar = progressBar
         self.progressBarLayout = progressBarLayout
         self.battery = battery
@@ -74,6 +77,7 @@ public struct RideDashboardViewState: Equatable, Sendable {
             speedometer: speedometer,
             showsCompactSpeedReadout: showsCompactSpeedReadout,
             odometer: odometer,
+            experimentalHours: phase == .live ? experimentalHours : nil,
             progressBar: progressBar,
             progressBarLayout: progressBarLayout,
             battery: battery,

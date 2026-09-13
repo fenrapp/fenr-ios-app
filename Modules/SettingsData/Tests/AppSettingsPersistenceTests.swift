@@ -5,6 +5,17 @@ import Testing
 @MainActor
 @Suite("App settings persistence")
 struct AppSettingsPersistenceTests {
+    @Test("Bike hours default to hidden and preserve a saved visibility choice", arguments: [false, true])
+    func persistsBikeHoursVisibility(isVisible: Bool) async throws {
+        let fixture = try VINSettingsTestFixture()
+        defer { fixture.cleanUp() }
+        #expect(await fixture.repository.load().showsBikeHours == false)
+        _ = try await fixture.repository.update(
+            expectedVIN: "FENRTEST000000001", change: .showsBikeHours(isVisible)
+        )
+        #expect(await fixture.reopen().load().showsBikeHours == isVisible)
+    }
+
     @Test("Retired thickness loads and permits unrelated saves without losing settings", arguments: [false, true])
     func migratesRetiredThickness(scoped: Bool) async throws {
         let fixture = try VINSettingsTestFixture()

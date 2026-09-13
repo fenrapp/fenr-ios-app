@@ -4,6 +4,7 @@ public struct AppSettingsViewState: Equatable, Sendable {
     public let dashboardBatteryIndicatorMode: AppSettingsSelectionViewState
     public let dashboardDeviceBatteryDisplayMode: AppSettingsSelectionViewState
     public let dashboardTemperatureDisplayMode: AppSettingsSelectionViewState
+    public let showsBikeHours: Bool
     public let measurementSystem: AppSettingsSelectionViewState
     public let batteryCapacity: AppSettingsSelectionViewState
     public let powerTier: PowerTierSettingsViewState
@@ -31,6 +32,7 @@ public struct AppSettingsViewState: Equatable, Sendable {
             options: []
         ),
         measurementSystem: AppSettingsSelectionViewState,
+        showsBikeHours: Bool = false,
         batteryCapacity: AppSettingsSelectionViewState,
         powerTier: PowerTierSettingsViewState? = nil,
         isBikeModelSelectionVisible: Bool = true,
@@ -49,6 +51,7 @@ public struct AppSettingsViewState: Equatable, Sendable {
         self.dashboardBatteryIndicatorMode = dashboardBatteryIndicatorMode
         self.dashboardDeviceBatteryDisplayMode = dashboardDeviceBatteryDisplayMode
         self.dashboardTemperatureDisplayMode = dashboardTemperatureDisplayMode
+        self.showsBikeHours = showsBikeHours
         self.measurementSystem = measurementSystem
         self.batteryCapacity = batteryCapacity
         self.powerTier = powerTier ?? .init(

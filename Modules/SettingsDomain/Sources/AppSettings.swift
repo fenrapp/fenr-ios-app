@@ -8,6 +8,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode
     public var dashboardDeviceBatteryDisplayMode: DashboardDeviceBatteryDisplayMode
     public var dashboardTemperatureDisplayMode: DashboardTemperatureDisplayMode
+    public var showsBikeHours: Bool
     public var dashboardCardConfiguration: DashboardCardConfiguration
     public var rideNavigation: RideNavigationSettings
     public var liveActivities: LiveActivitySettings
@@ -28,6 +29,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         dashboardBatteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
         dashboardDeviceBatteryDisplayMode: DashboardDeviceBatteryDisplayMode = .iconAndText,
         dashboardTemperatureDisplayMode: DashboardTemperatureDisplayMode = .off,
+        showsBikeHours: Bool = false,
         dashboardCardConfiguration: DashboardCardConfiguration = .init(),
         rideNavigation: RideNavigationSettings = .init(),
         liveActivities: LiveActivitySettings = .init(),
@@ -44,6 +46,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.dashboardBatteryIndicatorMode = dashboardBatteryIndicatorMode
         self.dashboardDeviceBatteryDisplayMode = dashboardDeviceBatteryDisplayMode
         self.dashboardTemperatureDisplayMode = dashboardTemperatureDisplayMode
+        self.showsBikeHours = showsBikeHours
         self.dashboardCardConfiguration = dashboardCardConfiguration
         self.rideNavigation = rideNavigation
         self.liveActivities = liveActivities
@@ -62,6 +65,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case dashboardBatteryIndicatorMode
         case dashboardDeviceBatteryDisplayMode
         case dashboardTemperatureDisplayMode
+        case showsBikeHours
         case dashboardCardConfiguration
         case rideNavigation
         case liveActivities
@@ -95,6 +99,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
             DashboardDeviceBatteryDisplayMode.self,
             forKey: .dashboardDeviceBatteryDisplayMode
         ) ?? .iconAndText
+        showsBikeHours = try container.decodeIfPresent(Bool.self, forKey: .showsBikeHours) ?? false
         let legacyContainer = try decoder.container(keyedBy: LegacyCodingKeys.self)
         dashboardTemperatureDisplayMode = try container.decodeIfPresent(
             DashboardTemperatureDisplayMode.self,

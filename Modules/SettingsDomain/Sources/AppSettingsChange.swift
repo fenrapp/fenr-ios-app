@@ -5,6 +5,7 @@ public enum AppSettingsChange: Equatable, Sendable {
     case dashboardBatteryIndicatorMode(DashboardBatteryIndicatorMode)
     case dashboardDeviceBatteryDisplayMode(DashboardDeviceBatteryDisplayMode)
     case dashboardTemperatureDisplayMode(DashboardTemperatureDisplayMode)
+    case showsBikeHours(Bool)
     case measurementSystem(MeasurementSystem)
     case batteryPackCapacity(BatteryPackCapacity)
     case powerModeName(mapIndex: Int, name: PowerModeName?)
@@ -53,13 +54,13 @@ public enum AppSettingsChange: Equatable, Sendable {
         case let .dashboardBatteryIndicatorMode(value): updated.dashboardBatteryIndicatorMode = value
         case let .dashboardDeviceBatteryDisplayMode(value): updated.dashboardDeviceBatteryDisplayMode = value
         case let .dashboardTemperatureDisplayMode(value): updated.dashboardTemperatureDisplayMode = value
+        case let .showsBikeHours(value): updated.showsBikeHours = value
         case let .measurementSystem(value): updated.measurementSystem = value
         case let .batteryPackCapacity(value): updated.setBatteryPackCapacity(value, forVIN: vin)
         case let .powerModeName(mapIndex, name):
             try applyPowerModeName(name, mapIndex: mapIndex, vin: vin, to: &updated)
         case let .bikeLockSecurity(mode):
-            updated.setBikeLockSettings(.init(securityMode: mode), forVIN: vin)
-            if mode.requiresPIN { updated.dashboardCardConfiguration.setSectionVisibility(true, id: .bikeLock) }
+            applyBikeLockSecurity(mode, vin: vin, to: &updated)
         case let .dashboard(change): try change.apply(to: &updated.dashboardCardConfiguration)
         case let .navigation(change): change.apply(to: &updated.rideNavigation)
         case let .liveActivities(change): change.apply(to: &updated.liveActivities)
@@ -69,6 +70,11 @@ public enum AppSettingsChange: Equatable, Sendable {
 }
 
 private extension AppSettingsChange {
+    func applyBikeLockSecurity(_ mode: BikeLockSecurityMode, vin: String, to updated: inout AppSettings) {
+        updated.setBikeLockSettings(.init(securityMode: mode), forVIN: vin)
+        if mode.requiresPIN { updated.dashboardCardConfiguration.setSectionVisibility(true, id: .bikeLock) }
+    }
+
     func applyPowerModeName(_ name: PowerModeName?, mapIndex: Int, vin: String, to updated: inout AppSettings) throws {
             guard (0 ... 4).contains(mapIndex) else { throw AppSettingsUpdateError.invalidChange }
             if let name {

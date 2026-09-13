@@ -43,6 +43,7 @@ public struct BikeSDKTelemetryPayloadToDomainMapper: Sendable {
             apply(speed, to: &telemetry)
         case .liveTotals(let totals):
             apply(totals, to: &telemetry)
+            telemetry.experimentalUsageCounter = .init(rawValue: totals.fourthRawCounter, sampledAt: date)
         case .inverterTemperatures(let temperatures):
             telemetry.inverterTemperatureRawValues = temperatures.rawValues
             telemetry.inverterTemperaturesCelsius = temperatures.celsius

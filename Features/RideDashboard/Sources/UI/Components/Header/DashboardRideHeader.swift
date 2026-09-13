@@ -25,7 +25,7 @@ struct DashboardRideHeader: View {
     }
 
     private var horizontalHeader: some View {
-        HStack(spacing: Constants.itemSpacing) {
+        HStack(alignment: .firstTextBaseline, spacing: Constants.itemSpacing) {
             clock
             if deviceBattery.isVisible {
                 separator

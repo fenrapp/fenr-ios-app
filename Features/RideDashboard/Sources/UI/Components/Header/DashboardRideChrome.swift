@@ -13,20 +13,25 @@ struct DashboardRideChrome<Content: View>: View {
 
     var body: some View {
         content()
-            .overlay(alignment: .topLeading) {
-                DashboardRideHeader(
-                    deviceBattery: deviceBattery,
-                    connectionNotice: state.connectionNotice,
-                    toggleDeviceBatteryDisplayMode: toggleDeviceBatteryDisplayMode
-                )
-                .frame(width: headerContentWidth, alignment: .leading)
-                .padding(DashboardRideChromeConstants.edgePadding)
-            }
-            .overlay(alignment: .topTrailing) {
-                if state.hasTelemetry {
-                    DashboardOdometerLabel(state: state.odometer)
-                        .padding(DashboardRideChromeConstants.edgePadding)
+            .overlay(alignment: .top) {
+                HStack(alignment: .firstTextBaseline, spacing: DesignSpace.small) {
+                    DashboardRideHeader(
+                        deviceBattery: deviceBattery,
+                        connectionNotice: state.connectionNotice,
+                        toggleDeviceBatteryDisplayMode: toggleDeviceBatteryDisplayMode
+                    )
+                    .frame(width: headerContentWidth, alignment: .leading)
+                    Spacer(minLength: DesignSpace.small)
+                    if state.hasTelemetry {
+                        HStack(alignment: .firstTextBaseline, spacing: DesignSpace.small) {
+                            DashboardOdometerLabel(state: state.odometer)
+                            if let hours = state.experimentalHours {
+                                DashboardExperimentalHoursLabel(state: hours)
+                            }
+                        }
+                    }
                 }
+                .padding(DashboardRideChromeConstants.edgePadding)
             }
             .overlay(alignment: .bottomLeading) {
                 VStack(alignment: .leading, spacing: DesignSpace.small) {

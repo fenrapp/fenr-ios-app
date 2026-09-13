@@ -47,6 +47,9 @@ enum BikeEmulatorPayloadFactory {
             speed: .known(kmh: speed, kmhX10: Int(speed * Constants.speedScale)),
             motorRPM: .known(isRiding ? Int(speed * Constants.rpmPerKmh) : .zero),
             odometer: odometer(context: context, scenario: scenario, tick: tick),
+            experimentalUsageCounter: context.isDemo ? nil : .init(
+                rawValue: Constants.syntheticUsageCounter + UInt32(clamping: tick), sampledAt: context.date
+            ),
             inverterTemperaturesCelsius: inverterTemperatures(for: tick),
             statusFlags: BikeStatusFlags(
                 isOn: !scenario.isChargerConnected,
@@ -204,6 +207,7 @@ private extension BikeEmulatorPayloadFactory {
         static let peripheralIdentifier = UUID(uuidString: "00000000-0000-0000-0000-000000000001")
         static let rssi = -48
         static let healthPercent = 94
+        static let syntheticUsageCounter: UInt32 = 36_000
         static let ridingSpeedMaximum = 180.0
         static let ridingSpeedStep = 5.0
         static let gearStateDurationTicks = 4
