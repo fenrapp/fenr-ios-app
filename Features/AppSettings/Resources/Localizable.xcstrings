@@ -1,6 +1,13 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "appSettingsRideBatteryDisplayTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Battery Display"}}}},
+    "appSettingsRideInformationTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Ride Information"}}}},
+    "appSettingsRideDisplayPairSummary" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "%1$@ · %2$@"}}}},
+    "appSettingsRideBatterySummary" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Bike: %1$@ · Phone: %2$@"}}}},
+    "appSettingsRideInformationSummary" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "%1$@ · Temperatures: %2$@"}}}},
+    "appSettingsRideHoursVisible" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Bike hours on"}}}},
+    "appSettingsRideHoursHidden" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Bike hours off"}}}},
     "appSettingsShowBikeHours" : {
       "extractionState": "manual",
       "localizations": {
@@ -384,17 +391,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Estimated range falls back to battery percentage until range data is available."
-          }
-        }
-      }
-    },
-    "app.settings.dashboard.presentation.header" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dashboard Presentation"
           }
         }
       }

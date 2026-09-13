@@ -304,7 +304,8 @@ struct AppExternalNavigationTests {
 @Suite("App presentation policy")
 struct AppPresentationPolicyTests {
     @Test("All settings destinations support rotation", arguments: [
-        AppRoute.settings(.overview), .settings(.rideDisplay), .settings(.navigation),
+        AppRoute.settings(.overview), .settings(.rideDisplay), .settings(.rideProgressBar),
+        .settings(.rideBatteryDisplay), .settings(.rideInformation), .settings(.rideSpeed), .settings(.navigation),
         .settings(.navigationAppearance), .settings(.bikeModel), .settings(.liveActivities),
         .settings(.acknowledgments), .dashboardCards(.overview), .dashboardCards(.section(id: "energy")),
         .rideHistory(.overview), .rideHistory(.detail(id: UUID())),
@@ -325,7 +326,7 @@ struct AppPresentationPolicyTests {
         let controller = AppPresentationController(policy: .init(), orientationController: spy)
         var state = AppNavigationState(root: .dashboard, path: [.powerModes])
         controller.update(for: state)
-        state.push(.advancedPowerModes)
+        state.replacePath(state.path + [.advancedPowerModes])
         controller.update(for: state)
         controller.update(for: state)
         state.pop()

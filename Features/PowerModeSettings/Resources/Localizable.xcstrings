@@ -1,6 +1,7 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "powerCurveOptions" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Options"}}}},
     "powerModeSettingsTractionReconnect" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Could not confirm traction settings. Reconnect to the bike and try again."}}}},
     "powerModeSettingsTractionUnconfirmed" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Could not confirm traction settings"}}}},
     "powerModeSettingsTractionMismatch" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "The bike returned different traction settings. Try again."}}}},

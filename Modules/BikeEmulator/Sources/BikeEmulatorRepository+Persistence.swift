@@ -9,6 +9,7 @@ extension BikeEmulatorRepository {
         state.chargeTargetPercent = chargeTargetPercent
         state.isBikeLocked = isBikeLocked
         state.distanceKilometers = distanceKilometers
+        state.advancedMaps = powerCurves.savedConfigurations
         state.maps = powerModeOverrides.values.sorted { $0.mapIndex < $1.mapIndex }.map(BikeEmulatorState.Map.init)
         return state
     }

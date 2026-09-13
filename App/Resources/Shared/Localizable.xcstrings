@@ -1,6 +1,7 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "appCloseSettings" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Close Settings"}}}},
     "appStorageRecoveryTitle": {
       "extractionState": "manual",
       "localizations": {

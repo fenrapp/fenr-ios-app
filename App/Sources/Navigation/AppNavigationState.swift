@@ -53,6 +53,18 @@ struct AppNavigationState: Equatable {
         self.rideNavigationResource = rideNavigationResource
     }
 
+    var isSettingsPresented: Bool {
+        root == .dashboard && path.first == .settings(.overview) && rideNavigationMode != .fullScreen
+    }
+
+    var settingsPath: [AppRoute] {
+        path.first == .settings(.overview) ? Array(path.dropFirst()) : []
+    }
+
+    var dashboardPath: [AppRoute] {
+        path.first == .settings(.overview) ? [] : path
+    }
+
     var activeSurfaces: Set<AppNavigationSurface> {
         guard root == .dashboard else { return [] }
         switch rideNavigationMode {
@@ -67,11 +79,6 @@ struct AppNavigationState: Equatable {
 
     mutating func setRoot(_ root: AppNavigationRoot) {
         self.root = root
-    }
-
-    mutating func push(_ route: AppRoute) {
-        guard path.last != route else { return }
-        path.append(route)
     }
 
     mutating func replacePath(_ path: [AppRoute]) {

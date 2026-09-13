@@ -1,12 +1,13 @@
 import BikeDomain
 import Foundation
 import PowerModeSettings
-import SettingsData
 import SettingsDomain
 import VehicleSession
 
 @MainActor
 struct PowerModeSettingsDependencyContainer {
+    let presets: any BikePowerModePresetRepository
+
     func makeFeature(
         settingsRepository: any AppSettingsRepository,
         bikeRepository: any BikeRepository,
@@ -16,9 +17,7 @@ struct PowerModeSettingsDependencyContainer {
         let advanced = PowerModeAdvancedUseCases(
             editing: bikeRepository.supportsAdvancedPowerModes ? .init(
                 repository: bikeRepository,
-                presets: LocalBikePowerModePresetRepository(
-                    defaults: .standard, encoder: JSONEncoder(), decoder: JSONDecoder()
-                ),
+                presets: presets,
                 calibration: calibration
             ) : nil,
             calibration: calibration

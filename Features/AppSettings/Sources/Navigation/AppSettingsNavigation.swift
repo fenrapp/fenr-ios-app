@@ -1,6 +1,10 @@
 public enum AppSettingsDestination: Hashable, Sendable {
     case overview
     case rideDisplay
+    case rideProgressBar
+    case rideBatteryDisplay
+    case rideInformation
+    case rideSpeed
     case navigation
     case navigationAppearance
     case bikeModel

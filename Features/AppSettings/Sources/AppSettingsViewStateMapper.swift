@@ -62,6 +62,7 @@ public struct AppSettingsViewStateMapper: Sendable {
             ),
             isBikeModelSelectionVisible: profile?.alphaEvidence.isEmpty != false,
             rideDisplay: .init(detail: rideDisplayDetail(settings: settings)),
+            rideDisplayOverview: rideDisplayOverview(settings),
             dashboardCards: .init(detail: dashboardCardsDetail(settings.dashboardCardConfiguration)),
             powerModes: powerModes(settings: settings, profile: profile),
             navigation: .init(detail: .appSettingsNavigationDetail),
@@ -178,7 +179,7 @@ public struct AppSettingsViewStateMapper: Sendable {
         }
     }
 
-    private func dashboardProgressBarModeTitle(_ mode: DashboardProgressBarMode) -> LocalizedStringResource {
+    func dashboardProgressBarModeTitle(_ mode: DashboardProgressBarMode) -> LocalizedStringResource {
         switch mode {
         case .energy: .appSettingsProgressBarEnergy
         case .speed: .appSettingsProgressBarSpeed
@@ -194,14 +195,14 @@ public struct AppSettingsViewStateMapper: Sendable {
         }
     }
 
-    private func dashboardBatteryIndicatorModeTitle(_ mode: DashboardBatteryIndicatorMode) -> LocalizedStringResource {
+    func dashboardBatteryIndicatorModeTitle(_ mode: DashboardBatteryIndicatorMode) -> LocalizedStringResource {
         switch mode {
         case .percentage: .appSettingsBatteryIndicatorPercentage
         case .estimatedRange: .appSettingsBatteryIndicatorEstimatedRange
         }
     }
 
-    private func dashboardDeviceBatteryDisplayModeTitle(
+    func dashboardDeviceBatteryDisplayModeTitle(
         _ mode: DashboardDeviceBatteryDisplayMode
     ) -> LocalizedStringResource {
         switch mode {
@@ -212,7 +213,7 @@ public struct AppSettingsViewStateMapper: Sendable {
         }
     }
 
-    private func dashboardTemperatureDisplayModeTitle(
+    func dashboardTemperatureDisplayModeTitle(
         _ mode: DashboardTemperatureDisplayMode
     ) -> LocalizedStringResource {
         switch mode {

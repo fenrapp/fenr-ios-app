@@ -10,11 +10,12 @@ struct PowerCurveEditor: View {
     let summary: String
     let isEnabled: Bool
     let commit: (Int, Double) -> Void
+    let editPoint: (PowerCurvePointViewData) -> Void
     let chartHeight: CGFloat
     var showsHeader = true
+    var isExpanded = false
     @State private var selectedIndex: Int?
     @State private var draggedValue: Double?
-    @State private var editingPoint: PowerCurvePointViewData?
 
     private var selected: PowerCurvePointViewData? {
         points.first { $0.id == selectedIndex } ?? (points.isEmpty ? nil : points[points.count / 2])
@@ -30,16 +31,9 @@ struct PowerCurveEditor: View {
             if showsHeader { header }
             chart
         }
-        .padding(.bottom, DesignSpace.small)
+        .padding(.bottom, isExpanded ? .zero : DesignSpace.small)
         .onChange(of: isEnabled) {
             draggedValue = nil
-            if !isEnabled { editingPoint = nil }
-        }
-        .sheet(item: $editingPoint) { point in
-            PowerCurveValueInput(point: point, unit: unit) { value in
-                guard isEnabled else { return }
-                commit(point.id, value)
-            }
         }
     }
 
@@ -113,8 +107,8 @@ struct PowerCurveEditor: View {
                         .fill(.background)
                         .overlay(Circle().strokeBorder(accent, lineWidth: Constants.pointBorder))
                         .frame(
-                            width: selected?.id == point.id ? Constants.selectedSize : Constants.pointSize,
-                            height: selected?.id == point.id ? Constants.selectedSize : Constants.pointSize
+                            width: selected?.id == point.id ? selectedPointSize : pointSize,
+                            height: selected?.id == point.id ? selectedPointSize : pointSize
                         )
                 }
                 .annotation(
@@ -129,7 +123,7 @@ struct PowerCurveEditor: View {
                             )
                             Text(verbatim: unit)
                         }
-                        .font(.caption.weight(.semibold))
+                        .font((isExpanded ? Font.headline : .caption).weight(.semibold))
                         .monospacedDigit()
                         .padding(DesignSpace.extraSmall)
                         .foregroundStyle(DesignColor.primaryText)
@@ -152,15 +146,21 @@ struct PowerCurveEditor: View {
                 AxisValueLabel(centered: false, anchor: .top, collisionResolution: .disabled) {
                     if let rpm = value.as(Double.self) {
                         Text(rpm / Constants.rpmDivisor, format: .number.precision(.fractionLength(0)))
+                            .font(isExpanded ? .body : .caption2)
                     }
                 }
             }
         }
         .chartYAxis {
-            AxisMarks(position: .leading, values: yTicks) {
+            AxisMarks(position: .leading, values: yTicks) { value in
                 AxisGridLine(stroke: StrokeStyle(lineWidth: Constants.gridWidth))
                     .foregroundStyle(DesignColor.border)
-                AxisValueLabel(format: FloatingPointFormatStyle<Double>.number.precision(.fractionLength(0)))
+                AxisValueLabel {
+                    if let number = value.as(Double.self) {
+                        Text(number, format: .number.precision(.fractionLength(0)))
+                            .font(isExpanded ? .body : .caption2)
+                    }
+                }
             }
         }
         .chartXAxisLabel(.powerCurveAxisThousands, alignment: .trailing)
@@ -190,7 +190,7 @@ struct PowerCurveEditor: View {
                 Button(.powerCurvePointAccessibility(point.rpmText)) { selectedIndex = point.id }
                     .accessibilityAction(named: Text(.powerCurveExactValue)) {
                         guard isEnabled else { return }
-                        editingPoint = point
+                        editPoint(point)
                     }
             }
         }
@@ -203,10 +203,11 @@ struct PowerCurveEditor: View {
             let distance = hypot(location.x - frame.minX - position.x, location.y - frame.minY - position.y)
             return (point, distance)
         }
-        guard let nearest = candidates.min(by: { $0.1 < $1.1 }), nearest.1 <= Constants.pointHitRadius else { return }
+        guard let nearest = candidates.min(by: { $0.1 < $1.1 }),
+              nearest.1 <= (isExpanded ? Constants.expandedPointHitRadius : Constants.pointHitRadius) else { return }
         selectedIndex = nearest.0.id
         draggedValue = nil
-        editingPoint = nearest.0
+        editPoint(nearest.0)
     }
 
     private func updateDrag(_ value: DragGesture.Value, proxy: ChartProxy, frame: CGRect) {
@@ -219,7 +220,13 @@ struct PowerCurveEditor: View {
         draggedValue = min(point.maximum, max(0, candidate))
     }
 
+    private var pointSize: CGFloat { isExpanded ? Constants.expandedPointSize : Constants.pointSize }
+    private var selectedPointSize: CGFloat { isExpanded ? Constants.expandedSelectedSize : Constants.selectedSize }
+
     private enum Constants {
+        static let expandedPointSize: CGFloat = 12
+        static let expandedSelectedSize: CGFloat = 24
+        static let expandedPointHitRadius: CGFloat = 32
         static let editTapCount = 2
         static let pointHitRadius: CGFloat = 22
         static let yIntervals = 4.0

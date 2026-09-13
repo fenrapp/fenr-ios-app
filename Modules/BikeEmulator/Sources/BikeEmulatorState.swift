@@ -11,6 +11,7 @@ public struct BikeEmulatorState: Codable, Equatable, Sendable {
     public var isBikeLocked = false
     public var distanceKilometers = 0.0
     public var maps: [Map] = []
+    public var advancedMaps: [BikeAdvancedPowerModeConfiguration]?
 
     public init(
         scenario: BikeEmulatorScenario = .parked,
@@ -27,6 +28,7 @@ public struct BikeEmulatorState: Codable, Equatable, Sendable {
             && (300 ... 3_300).contains(chargePowerWatts)
             && (1 ... 100).contains(chargeTargetPercent)
             && distanceKilometers.isFinite && distanceKilometers >= 0
+            && hasValidAdvancedMaps
             && maps.allSatisfy(\.isValid)
             && Set(maps.map(\.index)).count == maps.count
     }

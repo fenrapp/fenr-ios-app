@@ -1,112 +1,41 @@
 #if os(iOS)
-import DesignSystem
-import Foundation
 import SwiftUI
 
 struct RideDisplaySettingsContent: View {
-    let progressBarMode: DashboardProgressBarSettingsViewState
-    let bikeBatteryDisplayMode: AppSettingsSelectionViewState
-    let deviceBatteryDisplayMode: AppSettingsSelectionViewState
-    let temperatureDisplayMode: AppSettingsSelectionViewState
-    let showsBikeHours: Bool
-    let speedSource: SpeedSourceSettingsViewState
-    let onSelectProgressBarMode: (String) -> Void
-    let onSelectProgressBarThickness: (String) -> Void
-    let onSelectBikeBatteryDisplayMode: (String) -> Void
-    let onSelectDeviceBatteryDisplayMode: (String) -> Void
-    let onSelectTemperatureDisplayMode: (String) -> Void
-    let onSetShowsBikeHours: (Bool) -> Void
-    let onSelectSpeedSource: (String) -> Void
-    let onRequestLocationAccess: () -> Void
+    let state: RideDisplayOverviewViewState
+    let onNavigation: (AppSettingsNavigationEvent) -> Void
 
     var body: some View {
         Section {
-            selectionPicker(
-                .appSettingsProgressBarPickerTitle,
-                selection: progressBarMode.selection,
-                onSelect: onSelectProgressBarMode
+            SettingsNavigationRow(
+                icon: "rectangle.bottomthird.inset.filled", iconTint: .orange,
+                title: .appSettingsProgressBarPickerTitle, detail: state.progressBar,
+                accessibilityIdentifier: "settings.rideDisplay.progressBar",
+                showsDetailBelowTitle: true,
+                action: { onNavigation(.show(.rideProgressBar)) }
             )
-            if let thickness = progressBarMode.thickness {
-                selectionPicker(
-                    .appSettingsProgressBarThicknessTitle,
-                    selection: thickness,
-                    onSelect: onSelectProgressBarThickness
-                )
-                .accessibilityIdentifier("settings.progressBarThickness")
-            }
-            selectionPicker(
-                .appSettingsBikeBatteryPickerTitle,
-                selection: bikeBatteryDisplayMode,
-                onSelect: onSelectBikeBatteryDisplayMode
+            SettingsNavigationRow(
+                icon: "battery.75percent", iconTint: .green,
+                title: .appSettingsRideBatteryDisplayTitle, detail: state.batteryDisplay,
+                accessibilityIdentifier: "settings.rideDisplay.batteryDisplay",
+                showsDetailBelowTitle: true,
+                action: { onNavigation(.show(.rideBatteryDisplay)) }
             )
-            selectionPicker(
-                .appSettingsPhoneBatteryPickerTitle,
-                selection: deviceBatteryDisplayMode,
-                onSelect: onSelectDeviceBatteryDisplayMode
+            SettingsNavigationRow(
+                icon: "gauge.with.dots.needle.50percent", iconTint: .purple,
+                title: .appSettingsRideInformationTitle, detail: state.rideInformation,
+                accessibilityIdentifier: "settings.rideDisplay.information",
+                showsDetailBelowTitle: true,
+                action: { onNavigation(.show(.rideInformation)) }
             )
-            .accessibilityIdentifier("settings.phoneBattery")
-            Toggle(.appSettingsShowBikeHours, isOn: Binding(
-                get: { showsBikeHours }, set: { onSetShowsBikeHours($0) }
-            ))
-            .accessibilityIdentifier("settings.bikeHours")
-        } header: {
-            Text(.appSettingsDashboardPresentationHeader)
-        } footer: {
-            VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
-                Text(progressBarMode.description)
-                Text(.appSettingsDashboardPresentationFooter)
-            }
+            SettingsNavigationRow(
+                icon: "speedometer", iconTint: .blue,
+                title: .appSettingsSpeedSectionHeader, detail: state.speed,
+                accessibilityIdentifier: "settings.rideDisplay.speed",
+                showsDetailBelowTitle: true,
+                action: { onNavigation(.show(.rideSpeed)) }
+            )
         }
-
-        Section {
-            selectionPicker(
-                .appSettingsTemperaturesPickerTitle,
-                selection: temperatureDisplayMode,
-                onSelect: onSelectTemperatureDisplayMode
-            )
-        } header: {
-            Text(.appSettingsTemperaturesSection)
-        } footer: {
-            Text(.appSettingsTemperaturesFooter)
-        }
-
-        Section {
-            selectionPicker(
-                .appSettingsSpeedSourcePickerTitle,
-                selection: speedSource.selection,
-                onSelect: onSelectSpeedSource
-            )
-
-            if let locationPermission = speedSource.locationPermission {
-                LocationPermissionRow(
-                    status: locationPermission,
-                    onRequestAccess: onRequestLocationAccess
-                )
-            }
-        } header: {
-            Text(.appSettingsSpeedSectionHeader)
-        } footer: {
-            Text(speedSource.description)
-        }
-    }
-
-    private func selectionPicker(
-        _ title: LocalizedStringResource,
-        selection: AppSettingsSelectionViewState,
-        onSelect: @escaping (String) -> Void
-    ) -> some View {
-        Picker(
-            title,
-            selection: Binding(
-                get: { selection.selectedID },
-                set: { selectedID in onSelect(selectedID) }
-            )
-        ) {
-            ForEach(selection.options) { option in
-                Text(option.title).tag(option.id)
-            }
-        }
-        .pickerStyle(.menu)
     }
 }
 #endif

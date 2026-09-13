@@ -18,6 +18,8 @@ and gives access to the main screens and interactions.
 To open Settings, swipe up through the dashboard's central cards and tap
 **Open Settings**. On the Charging dashboard, use the **Settings** button.
 The demo controls are also available in Settings.
+Settings opens full screen, with a close button at its root. Ride Display groups
+options into Progress Bar, Battery Display, Ride Information and Speed.
 
 ## Suggested review
 
@@ -33,6 +35,11 @@ The demo controls are also available in Settings.
 - **Parked:** select Parked. Open Settings to explore dashboard customization,
   measurement units and power-mode settings. Bike Lock can be explored using
   the authentication options available on the review device.
+- **Advanced curves:** open Settings > Power Modes > Advanced. Select any of the
+  five maps, edit power or regeneration points and use Apply to save the simulated
+  configuration. Saved curves remain available between demo visits.
+- **Bike hours:** the dashboard shows a synthetic usage counter by default. Use
+  Settings > Ride Display > Ride Information to hide or show it.
 - **Ride History and Maintenance:** open these screens from Settings. The demo
   starts with three sample rides and two maintenance entries. Open a record and
   try the available editing actions.

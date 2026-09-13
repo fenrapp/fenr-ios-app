@@ -59,7 +59,13 @@ public enum BikeEmulatorRepositoryFactory {
                 )
             ),
             powerCalculator: BikePowerTelemetryCalculator(),
-            powerCurves: BikeEmulatorPowerCurveStore(calibration: BikePowerCurveCalibrationFactory.makeDefault()),
+            powerCurves: BikeEmulatorPowerCurveStore(
+                calibration: BikePowerCurveCalibrationFactory.makeDefault(),
+                configurations: Dictionary(
+                    (configuration?.initialState.advancedMaps ?? []).map { ($0.mapIndex, $0) },
+                    uniquingKeysWith: { first, _ in first }
+                )
+            ),
             runtime: runtime,
             configuration: configuration ?? BikeEmulatorConfiguration(
                 vin: BikeEmulatorIdentity.vin,

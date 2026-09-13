@@ -45,7 +45,7 @@ struct DemoExperienceFactory {
         try await DemoSeedPreparer(
             identity: identity, defaults: storage.defaults, rides: storage.rides, maintenance: storage.maintenance
         ).prepare()
-        let root = try makeContainer(
+        let root = try await makeContainer(
             identity: identity, repository: repository, profileRepository: profileRepository, storage: storage
         ).makeRootDependencies()
         let mapper = BikeDemoPresentationMapper()
@@ -113,10 +113,13 @@ struct DemoExperienceFactory {
         repository: BikeEmulatorRepository,
         profileRepository: UserDefaultsBikeProfileRepository,
         storage: DemoStorage
-    ) throws -> AppDependencyContainer {
+    ) async throws -> AppDependencyContainer {
         let settings = AppSettingsRepositoryFactory.make(
             userDefaults: try makeDefaults(identity: identity), profileRepository: profileRepository
         )
+        try await DemoDisplaySettingsPreparer(
+            defaults: storage.defaults, settings: settings, vin: identity.vin
+        ).prepare()
         let speed = makeDeviceSpeedRepository()
         let services = AppSessionDependencyContainer.makeServices(dependencies: .init(
             repository: repository, profileRepository: profileRepository,
@@ -142,7 +145,11 @@ struct DemoExperienceFactory {
             dashboardContainer: RideDashboardDependencyContainer(),
             appSettingsContainer: AppSettingsDependencyContainer(),
             dashboardCardSettingsContainer: DashboardCardSettingsDependencyContainer(),
-            powerModeSettingsContainer: PowerModeSettingsDependencyContainer(),
+            powerModeSettingsContainer: PowerModeSettingsDependencyContainer(
+                presets: LocalBikePowerModePresetRepository(
+                    defaults: try makeDefaults(identity: identity), encoder: JSONEncoder(), decoder: JSONDecoder()
+                )
+            ),
             rideHistoryContainer: RideHistoryDependencyContainer(),
             maintenanceContainer: MaintenanceDependencyContainer(
                 reminderScheduler: scheduler

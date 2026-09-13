@@ -82,24 +82,21 @@ private extension AppNavigationCoordinator {
     }
 
     func pushCanonical(_ route: AppRoute) {
-        if let parent = route.canonicalParent,
-           state.path.last?.family != route.family {
-            state.push(parent)
-        }
-        state.push(route)
+        state.replacePath(canonicalized(state.path + [route]))
     }
 
     func canonicalized(_ path: [AppRoute]) -> [AppRoute] {
         var canonicalPath: [AppRoute] = []
         for route in path {
-            if let parent = route.canonicalParent,
-               canonicalPath.last?.family != route.family {
-                canonicalPath.append(parent)
-            }
-            if canonicalPath.last != route {
-                canonicalPath.append(route)
-            }
+            appendCanonical(route, to: &canonicalPath)
         }
         return canonicalPath
+    }
+
+    private func appendCanonical(_ route: AppRoute, to path: inout [AppRoute]) {
+        if let parent = route.canonicalParent, !path.contains(parent) {
+            appendCanonical(parent, to: &path)
+        }
+        if path.last != route { path.append(route) }
     }
 }

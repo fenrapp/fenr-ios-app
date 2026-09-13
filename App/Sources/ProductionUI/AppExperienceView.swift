@@ -87,7 +87,6 @@ private struct AppDemoExperienceView: View {
     let model: BikeDemoViewModel
     let navigationCoordinator: AppNavigationCoordinator
     let onExit: () -> Void
-    @State private var showsControls = false
     @State private var controlsHeight: CGFloat = .zero
 
     var body: some View {
@@ -95,23 +94,22 @@ private struct AppDemoExperienceView: View {
             dependencies: root,
             onExitDemo: onExit,
             destinationBottomInset: controlsHeight + DesignSpace.small * 2,
-            dashboardAccessory: { AnyView(demoAccessButton) }
+            dashboardAccessory: { AnyView(demoAccessButton) },
+            settingsAccessory: { AnyView(AppDemoControlsButton(model: model)) }
         )
         .overlay(alignment: .bottomLeading) {
-            if navigationCoordinator.state.rideNavigationMode != .fullScreen,
+            if !navigationCoordinator.state.isSettingsPresented,
+               navigationCoordinator.state.rideNavigationMode != .fullScreen,
                navigationCoordinator.state.root != .dashboard || !navigationCoordinator.state.path.isEmpty {
                 demoAccessButton
                     .padding(.horizontal, DesignSpace.large)
                     .padding(.bottom, DesignSpace.small)
             }
         }
-        .sheet(isPresented: $showsControls) {
-            BikeDemoPanel(state: model.viewState, onSelect: model.select)
-        }
     }
 
     private var demoAccessButton: some View {
-        BikeDemoAccessButton { showsControls = true }
+        AppDemoControlsButton(model: model)
             .onGeometryChange(for: CGFloat.self) { geometry in
                 geometry.size.height
             } action: { height in

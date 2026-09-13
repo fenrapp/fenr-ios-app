@@ -2,18 +2,31 @@ import DesignSystem
 import SwiftUI
 
 struct PowerModeAdvancedContent: View {
+    @State private var editingPoint: PowerCurvePointViewData?
     let state: PowerModeAdvancedViewState
     let maps: [PowerModeMapViewData]
     let send: (PowerModeAdvancedIntent) -> Void
 
     var body: some View {
         GeometryReader { geometry in
-            if geometry.size.width > geometry.size.height, state.hasConfiguration {
-                PowerModeAdvancedLandscapeContent(state: state, maps: maps, send: send, size: geometry.size)
+            if geometry.size.width > geometry.size.height {
+                PowerModeAdvancedLandscapeContent(
+                    state: state, maps: maps, send: send, editPoint: { editingPoint = $0 },
+                    availableWidth: geometry.size.width
+                )
             } else {
                 portraitContent(chartHeight: geometry.size.width < Constants.compactWidth
                     ? Constants.compactChartHeight : Constants.chartHeight)
             }
+        }
+        .sheet(item: $editingPoint) { point in
+            PowerCurveValueInput(point: point, unit: state.unit) { value in
+                guard state.canEdit else { return }
+                send(.setPoint(index: point.id, value: value))
+            }
+        }
+        .onChange(of: state.canEdit) {
+            if !state.canEdit { editingPoint = nil }
         }
         .navigationTitle(Text(.powerCurveAdvancedTitle))
         .navigationBarTitleDisplayMode(.inline)
@@ -68,7 +81,7 @@ struct PowerModeAdvancedContent: View {
                 points: state.points, samples: state.samples, kind: state.kind,
                 unit: state.unit, summary: state.summary,
                 isEnabled: state.canEdit, commit: { send(.setPoint(index: $0, value: $1)) },
-                chartHeight: chartHeight
+                editPoint: { editingPoint = $0 }, chartHeight: chartHeight
             )
             .id("\(state.kind)-\(maps.first(where: \.isSelected)?.id ?? 0)")
             .listRowInsets(EdgeInsets(
