@@ -1,8 +1,8 @@
 # App Store resources
 
 The production `FENR` scheme packages the iPhone app with Share and Live Activity
-extensions. The Watch app is built separately and is not embedded in the first
-iPhone distribution.
+extensions and the read-only Watch companion. The Watch companion requires its
+paired iPhone and ships inside the iPhone distribution.
 
 [store/README.md](../../store/README.md) contains the maintained ASC workflow,
 listing metadata, screenshots and upload commands. The
@@ -44,7 +44,7 @@ are separate steps. Use the ASC workflow for uploading, review and release.
 
 ## Public copy
 
-Keep listing text aligned with supported firmware, the iPhone-only distribution,
+Keep listing text aligned with supported firmware, the iPhone distribution with its Watch companion,
 the simulated demo and manual diagnostic capture. Settings exposes
 [Support](https://fenr.to), [Privacy Policy](https://fenr.to/privacy) and
 [Terms of Use](https://fenr.to/terms). Verify those destinations and the current

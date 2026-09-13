@@ -6,7 +6,7 @@ Use `asc <command> --help` when updating ASC. There is no custom release CLI.
 
 FENR - Unleash your varg is an iPhone app for compatible Stark Varg motorcycles.
 App ID: `6808795194`. Bundle ID: `in.fenr.app`. The FENR scheme includes the Share
-and Live Activity extensions; the Watch app is a separate submission.
+and Live Activity extensions plus the read-only Watch companion.
 
 ## Files and local setup
 
@@ -134,7 +134,8 @@ Missing screenshots do not prevent metadata updates or TestFlight uploads.
 
 Archive and export the FENR scheme using the [existing Xcode workflow](../docs/app-store/README.md).
 Keep distribution signing private; resolve Xcode account/profile errors locally.
-Validate the exported app and both extensions before uploading. Uploading and
+Validate the exported app, both extensions, and the embedded Watch companion
+before uploading. Uploading and
 processing a build do not submit the App Store version for review.
 
 ```sh
