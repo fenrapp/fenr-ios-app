@@ -29,6 +29,8 @@ class CompanionArchiveTests(unittest.TestCase):
         self.info = dict(self.phone_info, CFBundleIdentifier="in.fenr.app.watch",
                          WKCompanionAppBundleIdentifier="in.fenr.app", UIDeviceFamily=[4],
                          WKApplication=True, WKSupportsRunningWithoutiOSApp=False)
+        self.info["CFBundleIcons"] = {"CFBundlePrimaryIcon": {"CFBundleIconName": "AppIcon"}}
+        (self.watch / "Assets.car").write_bytes(b"fixture")
 
     def validate(self):
         (self.watch / "Info.plist").write_bytes(plistlib.dumps(self.info))
@@ -38,9 +40,19 @@ class CompanionArchiveTests(unittest.TestCase):
         self.validate()
 
     def test_missing_companion_is_rejected(self):
+        (self.watch / "Assets.car").unlink()
         self.watch.rmdir()
         with self.assertRaisesRegex(ValueError, "exactly one"):
             RESOURCES.validate_companion(self.app, self.phone_info)
+
+    def test_missing_icon_metadata_or_asset_is_rejected(self):
+        icons = self.info.pop("CFBundleIcons")
+        with self.assertRaisesRegex(ValueError, "app icon"):
+            self.validate()
+        self.info["CFBundleIcons"] = icons
+        (self.watch / "Assets.car").unlink()
+        with self.assertRaisesRegex(ValueError, "app icon"):
+            self.validate()
 
     def test_wrong_identity_or_version_is_rejected(self):
         for key in ("CFBundleIdentifier", "WKCompanionAppBundleIdentifier",

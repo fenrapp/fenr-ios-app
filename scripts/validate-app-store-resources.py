@@ -82,6 +82,9 @@ def validate_companion(app, phone_info):
     require(len(companions) == 1, "Expected exactly one embedded Watch companion")
     companion = companions[0]
     info = read_plist(companion / "Info.plist")
+    icon = info.get("CFBundleIcons", {}).get("CFBundlePrimaryIcon", {})
+    require(bool(icon.get("CFBundleIconName")) and (companion / "Assets.car").is_file(),
+            "Watch companion is missing its compiled app icon")
     require(info.get("CFBundleIdentifier") == "in.fenr.app.watch", "Unexpected Watch bundle ID")
     require(info.get("WKCompanionAppBundleIdentifier") == phone_info["CFBundleIdentifier"],
             "Watch companion points to a different iPhone app")

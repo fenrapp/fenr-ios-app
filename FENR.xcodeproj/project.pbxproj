@@ -926,6 +926,7 @@
 		54549C1FC847BE8CADE25458 /* CBCharacteristicProperties+ProtocolDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24AC75FCD7627BDB0F2FCD5B /* CBCharacteristicProperties+ProtocolDescription.swift */; };
 		54721679AF082F25E5C05BE9 /* StarkBatteryTemperaturesDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126A2AD5E5AFC69F18C70FED /* StarkBatteryTemperaturesDecoder.swift */; };
 		54A14945F7C0DE36CB5DB50B /* BikeSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 49C8A294F5FCCF6DA2312AB7 /* BikeSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		54C1ABCA2E5F30D9875A0C61 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7B38029BC11332A7989F445A /* Assets.xcassets */; };
 		54FD911E83E8677ADD4437DE /* LocalAuthenticationBikeLockAuthenticatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFEB7981B85DFEEAE3E8358D /* LocalAuthenticationBikeLockAuthenticatorTests.swift */; };
 		552F5EDD17E535FC31810E17 /* BikeDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66791CC3437C3C3CF15B7DC3 /* BikeDomain.framework */; };
 		5533D32D26E8199B8D49C48F /* BatteryHealthAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F082C84AD0A1BF8BE142BB2 /* BatteryHealthAnalyzer.swift */; };
@@ -2458,6 +2459,7 @@
 		DDD358B4309CFF0A451584F5 /* BikeDemoViewState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 246D4A9C8096A60E59B920F9 /* BikeDemoViewState.swift */; };
 		DDE04E8C842C109B6D9A10B5 /* AsyncSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 307B01E584E7F27278D08FF8 /* AsyncSupport.framework */; };
 		DE1B2F40324278846B279C1D /* RuntimeConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4B6E1FF0AFD3619BD8C8E82 /* RuntimeConfiguration.framework */; };
+		DE1C00B7719408A26D4C796F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7B38029BC11332A7989F445A /* Assets.xcassets */; };
 		DE27CEA106246A9158DB15AD /* RideNavigationActivityRecordingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04E7A168CB20D34B8FB56901 /* RideNavigationActivityRecordingTests.swift */; };
 		DE4113A2BEB95640DAA7AE75 /* SwiftDataVehicleMotionCalibrationRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = B64F0D3C18E3A87E4FB8E41C /* SwiftDataVehicleMotionCalibrationRepository.swift */; };
 		DE45D9ABFA05298A676217E8 /* BikeUsageCounterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08F77E4B132818D68F783252 /* BikeUsageCounterTests.swift */; };
@@ -19138,6 +19140,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				54C1ABCA2E5F30D9875A0C61 /* Assets.xcassets in Resources */,
 				5121B4EDD44B5CD9E0F7C985 /* InfoPlist.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -19318,6 +19321,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DE1C00B7719408A26D4C796F /* Assets.xcassets in Resources */,
 				FFC54CFAB11CE3BD7811AAEC /* InfoPlist.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
