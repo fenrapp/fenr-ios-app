@@ -154,12 +154,11 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
     }
 
     public func applyUserTractionControlConfiguration(
-        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double,
-        expected: BikeSDKTractionControlSnapshot?
+        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double
     ) async throws -> BikeSDKTractionControlSnapshot {
         try await notificationCoordinator.applyUserTractionControlConfiguration(
             mapIndex: mapIndex, powerTractionPercent: powerTractionPercent,
-            brakingTractionPercent: brakingTractionPercent, expected: expected
+            brakingTractionPercent: brakingTractionPercent
         )
     }
 

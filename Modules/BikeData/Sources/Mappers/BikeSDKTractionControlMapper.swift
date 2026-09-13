@@ -8,10 +8,6 @@ public struct BikeSDKTractionControlMapper: Sendable {
         .init(mapIndex: value.mapIndex, powerRaw: value.powerRaw, brakingRaw: value.brakingRaw)
     }
 
-    func map(_ value: BikeTractionControlSnapshot) -> BikeSDKTractionControlSnapshot {
-        .init(mapIndex: value.mapIndex, powerRaw: value.powerRaw, brakingRaw: value.brakingRaw)
-    }
-
     func map(_ error: BikeSDKTractionControlError) -> BikeTractionControlError {
         switch error {
         case .connectionRecoveryRequired: .connectionRecoveryRequired

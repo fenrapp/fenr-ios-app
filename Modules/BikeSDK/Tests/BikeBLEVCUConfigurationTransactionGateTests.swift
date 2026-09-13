@@ -95,7 +95,7 @@ struct BikeBLEVCUConfigurationResponseMatchingTests {
         }
     }
 
-    @Test("Matches only acknowledged write responses for ordinary configuration types")
+    @Test("Traction writes accept acknowledgements or complete values for the requested map")
     func matchesExpectedWriteResponse() throws {
         let expected = try BikeBLEVCUConfigurationExpectedResponse(
             writeRequest: Data([1, 8, 1, 3, 15, 120, 0, 200, 0])
@@ -103,8 +103,33 @@ struct BikeBLEVCUConfigurationResponseMatchingTests {
 
         #expect(expected.matches(Data([1, 8, 0])))
         #expect(expected.matches(Data([1, 8, 7])))
-        #expect(!expected.matches(Data([2, 8, 0, 3, 120, 0, 200, 0])))
+        #expect(expected.matches(Data([2, 8, 0, 3, 120, 0, 200, 0])))
+        #expect(expected.matches(Data([2, 8, 0, 3, 120, 0, 200, 0] + Array(repeating: 0, count: 28))))
+        #expect(expected.matches(Data([2, 8, 7])))
+        #expect(!expected.matches(Data([2, 8, 0, 2, 120, 0, 200, 0])))
+        #expect(!expected.matches(Data([2, 8, 7, 2])))
+        #expect(!expected.matches(Data([2, 8, 0])))
+        #expect(!expected.matches(Data([2, 8, 0, 3, 120, 0])))
+        #expect(!expected.matches(Data([2, 8])))
+        #expect(!expected.matches(Data([0, 8, 0, 3, 120, 0, 200, 0])))
         #expect(!expected.matches(Data([1, 0, 0])))
+        #expect(!expected.matches(Data([2, 0, 0])))
+    }
+
+    @Test("Malformed traction writes cannot create an uncorrelated response expectation")
+    func rejectsMalformedTractionWrite() {
+        #expect(throws: BikeSDKError.self) {
+            try BikeBLEVCUConfigurationExpectedResponse(writeRequest: Data([1, 8]))
+        }
+        #expect(throws: BikeSDKError.self) {
+            try BikeBLEVCUConfigurationExpectedResponse(writeRequest: Data([1, 8, 1, 5, 15, 120, 0, 200, 0]))
+        }
+    }
+
+    @Test("Base-map write acknowledgements do not accept notification envelopes")
+    func keepsOtherWriteResponsesScoped() throws {
+        let expected = try BikeBLEVCUConfigurationExpectedResponse(writeRequest: Data([1, 0]))
+        #expect(expected.matches(Data([1, 0, 0])))
         #expect(!expected.matches(Data([2, 0, 0])))
     }
 
@@ -128,6 +153,36 @@ struct BikeBLEVCUConfigurationResponseMatchingTests {
 @MainActor
 @Suite("VCU 4005 notification readiness")
 struct BikeBLEConfigurationReadinessWaiterTests {
+    @Test("Write responses require notifications even when the characteristic is readable")
+    func readableWriteWaitsForNotifications() async throws {
+        let waiter = BikeBLEConfigurationReadinessWaiter(checkInterval: .milliseconds(1), maximumCheckCount: 5)
+        var checks = 0
+        try await waiter.waitUntilReady(canRead: true, requiresNotification: true) {
+            checks += 1
+            return checks == 3
+        }
+        #expect(checks == 3)
+    }
+
+    @Test("Missing write notifications fail before starting a transport operation")
+    func readableWriteWithoutNotifications() async {
+        let waiter = BikeBLEConfigurationReadinessWaiter(checkInterval: .milliseconds(1), maximumCheckCount: 2)
+        await #expect(throws: BikeSDKError.self) {
+            try await waiter.waitUntilReady(canRead: true, requiresNotification: true) { false }
+        }
+    }
+
+    @Test("Readable configuration requests can still work without notifications")
+    func readableRequestDoesNotWait() async throws {
+        let waiter = BikeBLEConfigurationReadinessWaiter(checkInterval: .milliseconds(1), maximumCheckCount: 2)
+        var checks = 0
+        try await waiter.waitUntilReady(canRead: true) {
+            checks += 1
+            return false
+        }
+        #expect(checks == 0)
+    }
+
     @Test("Waits for the configuration notification without issuing a BLE operation")
     func waitsUntilReady() async throws {
         let waiter = BikeBLEConfigurationReadinessWaiter(

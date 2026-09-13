@@ -75,9 +75,12 @@ request them through domain contracts; `BikeData` maps to `BikeSDK`, whose share
 VCU transport serializes individual requests inside a shared sequence gate that
 also covers complete multi-record read/no-op/write/confirmation operations. `StarkProtocol` owns payloads and encoders.
 
-Each supported record has firmware/capability gates, preparation, a safe no-op,
-sibling-value preservation and fresh confirmation. Charging power and target
-changes are confirmed by charger telemetry. Base-map, advanced-curve, traction and lock changes
+Configuration operations retain firmware/capability gates, sibling-value
+preservation and fresh confirmation. Basic traction-slider commits check firmware
+and write both selected values directly, without a baseline read or no-op write.
+Other guarded operations retain preparation and safe no-op validation. Charging
+power and target changes are confirmed by charger telemetry. Base-map,
+advanced-curve, traction and lock changes
 require matching configuration reads. A transport timeout invalidates the
 transaction stream until reconnection so a late reply cannot confirm a new write.
 

@@ -71,11 +71,17 @@ phone and other clients before testing. Preserve one iPhone session across all
 screens. The Watch receives read-only snapshots from that same iPhone session.
 
 Vehicle writes are limited to charging power/target, base-map power/regeneration,
-traction settings, bike lock and iPhone advanced power/regeneration curves. Keep firmware and capability gates, safe no-op
-validation, serialized operations, sibling-value preservation, timeout recovery
-and fresh confirmation intact. Charging controls and base-map changes have
-physical validation evidence. Instrumented physical advanced-curve, traction-control and lock
-write/read-back evidence remains incomplete; emulator tests do not establish it.
+traction settings, bike lock and iPhone advanced power/regeneration curves. Basic
+traction commits check firmware and write both selected values directly, then
+confirm both through a fresh read. Other guarded operations retain safe no-op
+validation. All writes retain firmware/capability gates, serialized operations,
+sibling-value preservation, timeout recovery and fresh confirmation. Charging
+controls and base-map changes have physical validation evidence. A basic traction
+slider change has also been confirmed on a physical motorcycle: the requested
+traction value and the unchanged regen-traction value both matched a fresh read.
+This does not establish coverage of every map, value, or firmware version.
+Physical advanced-curve and lock write/read-back evidence remains incomplete;
+emulator tests do not establish it.
 
 Keep packet layouts and evidence in the
 [protocol research repository](https://github.com/fenrapp/bike-protocol-research).

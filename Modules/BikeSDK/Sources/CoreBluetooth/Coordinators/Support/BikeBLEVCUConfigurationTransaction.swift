@@ -30,10 +30,17 @@ struct BikeBLEVCUConfigurationExpectedResponse {
             throw BikeSDKError.operationFailed("Invalid 4005 write request")
         }
         type = writeRequest[1]
-        mapIndex = nil
-        allowedOperations = type == StarkBikeLockConfigurationCommand.configurationType
-            ? [1, 2]
-            : [1]
+        if type == StarkTractionControlConfigurationCommand.configurationType {
+            guard writeRequest.count == StarkTractionControlConfigurationCommand.writePacketLength,
+                  StarkPowerModeConfigurationCommand.mapIndexes.contains(Int(writeRequest[3])) else {
+                throw BikeSDKError.operationFailed("Invalid 4005 traction write request")
+            }
+            mapIndex = writeRequest[3]
+            allowedOperations = [1, 2]
+        } else {
+            mapIndex = nil
+            allowedOperations = type == StarkBikeLockConfigurationCommand.configurationType ? [1, 2] : [1]
+        }
     }
 
     func matches(_ response: Data) -> Bool {
@@ -42,6 +49,13 @@ struct BikeBLEVCUConfigurationExpectedResponse {
               response[1] == type
         else {
             return false
+        }
+        if type == StarkTractionControlConfigurationCommand.configurationType, allowedOperations.contains(1) {
+            guard response.count >= 3 else { return false }
+            if response[0] == 1 { return true }
+            if response[2] != 0 { return response.count < 4 || response[3] == mapIndex }
+            return response.count >= StarkTractionControlConfigurationCommand.responseLength
+                && response[3] == mapIndex
         }
         guard let mapIndex else { return true }
         return response.count < 4 || response[3] == mapIndex
