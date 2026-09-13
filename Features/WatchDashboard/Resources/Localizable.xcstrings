@@ -1,121 +1,231 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "watchDashboardConnectionFailed" : {
-      "comment" : "Safe connection failure shown instead of a transport error.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unable to connect. Try again." } } }
+  "sourceLanguage": "en",
+  "strings": {
+    "watchDashboardAccessibilityBatteryPercent": {
+      "comment": "Accessibility label for a known battery percentage.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Battery %1$(percentage)lld percent"
+          }
+        }
+      }
     },
-    "watchDashboardAccessibilityBatteryPercent" : {
-      "comment" : "Accessibility label for a known battery percentage.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery %1$(percentage)lld percent" } } }
+    "watchDashboardAccessibilityBatteryUnknown": {
+      "comment": "Accessibility label when the battery percentage is unavailable.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Battery percentage unknown"
+          }
+        }
+      }
     },
-    "watchDashboardAccessibilityBatteryUnknown" : {
-      "comment" : "Accessibility label when the battery percentage is unavailable.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery percentage unknown" } } }
+    "watchDashboardCharging": {
+      "comment": "Charging state heading when no ETA is available.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CHARGING"
+          }
+        }
+      }
     },
-    "watchDashboardChangeBike" : {
-      "comment" : "Button that returns to bike selection.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Change Bike" } } }
+    "watchDashboardChargingETA": {
+      "comment": "Charging state heading with an estimated time remaining.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ETA: %1$(eta)@"
+          }
+        }
+      }
     },
-    "watchDashboardCharging" : {
-      "comment" : "Charging state heading when no ETA is available.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "CHARGING" } } }
+    "watchDashboardCurrent": {
+      "comment": "Charging current metric title.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CURRENT"
+          }
+        }
+      }
     },
-    "watchDashboardChargingETA" : {
-      "comment" : "Charging state heading with an estimated time remaining.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "ETA: %1$(eta)@" } } }
+    "watchCompanionTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FENR Companion"
+          }
+        }
+      }
     },
-    "watchDashboardConnectionBluetoothOff" : {
-      "comment" : "Connection detail when Bluetooth is powered off.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bluetooth is off" } } }
+    "watchCompanionOpenPhone": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open FENR on your iPhone and connect to your bike."
+          }
+        }
+      }
     },
-    "watchDashboardConnectionBluetoothPermission" : {
-      "comment" : "Connection detail when Bluetooth permission is missing.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bluetooth permission required" } } }
+    "watchCompanionConnectBike": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect to your bike in FENR on iPhone."
+          }
+        }
+      }
     },
-    "watchDashboardConnectionConnecting" : {
-      "comment" : "Connection detail while connecting to the bike.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting" } } }
+    "watchCompanionPhoneUnavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone unavailable"
+          }
+        }
+      }
     },
-    "watchDashboardConnectionDisconnected" : {
-      "comment" : "Fallback detail for a disconnected bike.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Disconnected" } } }
+    "watchCompanionBikeDisconnected": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bike disconnected"
+          }
+        }
+      }
     },
-    "watchDashboardConnectionLookingForBike" : {
-      "comment" : "Connection detail while scanning for a bike.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Looking for bike" } } }
+    "watchCompanionWaitingUpdate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for fresh data"
+          }
+        }
+      }
     },
-    "watchDashboardConnectionPairAgain" : {
-      "comment" : "Connection detail when the bike must be paired again.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Forget and re-pair the bike on iPhone" } } }
+    "watchCompanionLive": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live from iPhone"
+          }
+        }
+      }
     },
-    "watchDashboardConnectionReconnecting" : {
-      "comment" : "Connection detail during reconnection.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Reconnecting" } } }
+    "watchCompanionLastUpdate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last update"
+          }
+        }
+      }
     },
-    "watchDashboardConnectionWaitingTelemetry" : {
-      "comment" : "Connection detail before fresh telemetry arrives.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Waiting for telemetry" } } }
+    "watchCompanionMap": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAP"
+          }
+        }
+      }
     },
-    "watchDashboardCurrent" : {
-      "comment" : "Charging current metric title.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "CURRENT" } } }
+    "watchCompanionTraction": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRACTION"
+          }
+        }
+      }
     },
-    "watchDashboardDebug" : {
-      "comment" : "Debug event section title.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Debug" } } }
+    "watchCompanionMaximumPower": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAX POWER"
+          }
+        }
+      }
     },
-    "watchDashboardGear" : {
-      "comment" : "Current gear metric title.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "GEAR" } } }
+    "watchCompanionState": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "STATE"
+          }
+        }
+      }
     },
-    "watchDashboardGearOff" : {
-      "comment" : "Gear display when the bike is off.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "OFF" } } }
+    "watchCompanionOff": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OFF"
+          }
+        }
+      }
     },
-    "watchDashboardOdometer" : {
-      "comment" : "Odometer metric title.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "ODOMETER" } } }
+    "watchCompanionNeutral": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NEUTRAL"
+          }
+        }
+      }
     },
-    "watchDashboardPackTemperature" : {
-      "comment" : "Battery pack temperature metric title.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "PACK TEMP" } } }
-    },
-    "watchDashboardPower" : {
-      "comment" : "Charging power metric title.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "POWER" } } }
-    },
-    "watchDashboardSettings" : {
-      "comment" : "Accessibility label for the settings button.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings" } } }
-    },
-    "watchDashboardWaitingForBike" : {
-      "comment" : "Unavailable dashboard heading.",
-      "extractionState" : "manual",
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Waiting for bike" } } }
+    "watchCompanionCrawl": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CRAWL"
+          }
+        }
+      }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }

@@ -188,25 +188,8 @@ targets:
       - path: Features/WatchDashboard/Resources
         buildPhase: resources
     dependencies:
-      - target: BikeDomain
+      - target: WatchCompanionDomain
       - target: DesignSystem
-      - target: MeasurementPresentation
-      - target: SettingsDomain
-      - target: RuntimeConfiguration
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchdashboard
-  WatchOnboarding:
-    type: framework
-    platform: watchOS
-    deploymentTarget: "10.0"
-    sources:
-      - path: Features/WatchOnboarding/Sources
-      - path: Features/WatchOnboarding/Resources
-        buildPhase: resources
-    dependencies:
-      - target: BikeDomain
-      - target: DesignSystem
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchonboarding

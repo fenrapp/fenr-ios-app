@@ -325,29 +325,13 @@ targets:
     deploymentTarget: "10.0"
     sources:
       - path: Features/WatchDashboard/Tests
-      - path: Watch/Tests
-      - path: Watch/Sources/Navigation
     dependencies:
       - target: WatchDashboard
-      - target: BikeDomain
-      - target: SettingsDomain
+      - target: WatchCompanionDomain
       - target: TestSupport
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchdashboard.tests
-  WatchOnboardingTests:
-    type: bundle.unit-test
-    platform: watchOS
-    deploymentTarget: "10.0"
-    sources:
-      - path: Features/WatchOnboarding/Tests
-    dependencies:
-      - target: WatchOnboarding
-      - target: BikeDomain
-      - target: TestSupport
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchonboarding.tests
   BatteryHealthTests:
     templates: [IOSUnitTests]
     sources:

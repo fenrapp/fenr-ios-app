@@ -1,16 +1,14 @@
 import SwiftUI
+import WatchDashboard
 
 @main
 struct FENRWatchApp: App {
-    private let dependencies: WatchRootDependencies
-
-    init() {
-        dependencies = LiveWatchAppDependencyContainerFactory.makeDefault().makeRootDependencies()
-    }
+    @WKApplicationDelegateAdaptor(WatchCompanionAppDelegate.self) private var appDelegate
+    private let viewModel = WatchAppFactory.makeViewModel()
 
     var body: some Scene {
         WindowGroup {
-            WatchRootView(dependencies: dependencies)
+            NavigationStack { WatchDashboardView(viewModel: viewModel) }
         }
     }
 }

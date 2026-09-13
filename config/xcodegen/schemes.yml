@@ -123,29 +123,9 @@ schemes:
     build:
       targets:
         FENRWatchDebug: all
-        StarkProtocolTests: [test]
-        AsyncSupportTests: [test]
-        BLETraceDomainTests: [test]
-        BikeDomainTests: [test]
-        BikeEmulatorTests: [test]
-        EnvironmentDomainTests: [test]
-        SettingsDomainTests: [test]
-        SettingsDataTests: [test]
-        TestSupportTests: [test]
-        MeasurementPresentationTests: [test]
         WatchDashboardTests: [test]
-        WatchOnboardingTests: [test]
+        WatchCompanionDataTests: [test]
     test:
       targets:
-        - StarkProtocolTests
-        - AsyncSupportTests
-        - BLETraceDomainTests
-        - BikeDomainTests
-        - BikeEmulatorTests
-        - EnvironmentDomainTests
-        - SettingsDomainTests
-        - SettingsDataTests
-        - TestSupportTests
-        - MeasurementPresentationTests
         - WatchDashboardTests
-        - WatchOnboardingTests
+        - WatchCompanionDataTests

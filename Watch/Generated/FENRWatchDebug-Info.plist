@@ -21,7 +21,7 @@
 	<key>WKApplication</key>
 	<true/>
 	<key>WKCompanionAppBundleIdentifier</key>
-	<string>in.fenr.app</string>
+	<string>com.fenr.app.debug</string>
 	<key>WKSupportsAlwaysOnDisplay</key>
 	<true/>
 	<key>WKSupportsRunningWithoutiOSApp</key>

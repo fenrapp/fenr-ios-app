@@ -73,6 +73,8 @@ targets:
         embed: true
       - target: WatchCompanionData
         embed: true
+      - target: FENRWatch
+        embed: true
       # DesignSystem is embedded for feature frameworks at runtime; the app does not import it.
       - target: DesignSystem
         embed: true
@@ -217,6 +219,8 @@ targets:
       - target: WatchCompanionDomain
         embed: true
       - target: WatchCompanionData
+        embed: true
+      - target: FENRWatchDebug
         embed: true
       # DesignSystem is embedded for feature frameworks at runtime; the app does not import it.
       - target: DesignSystem
@@ -364,95 +368,57 @@ targets:
     info:
       path: Watch/Generated/FENRWatch-Info.plist
       properties:
-        UIBackgroundModes:
-          - bluetooth-central
+        WKCompanionAppBundleIdentifier: in.fenr.app
+        WKApplication: true
+        WKSupportsRunningWithoutiOSApp: false
+        WKSupportsAlwaysOnDisplay: true
     sources:
       - path: Watch/Sources
       - path: Watch/Resources/Production/InfoPlist.xcstrings
         buildPhase: resources
     dependencies:
-      - target: AsyncSupport
+      - target: WatchCompanionDomain
         embed: true
-      - target: BLETraceDomain
-        embed: true
-      - target: StarkProtocol
-        embed: true
-      - target: BikeSDK
-        embed: true
-      - target: BikeDomain
-        embed: true
-      - target: BikeData
+      - target: WatchCompanionData
         embed: true
       - target: WatchDashboard
         embed: true
-      - target: WatchOnboarding
-        embed: true
-      - target: AppSettings
-        embed: true
-      - target: SettingsDomain
-        embed: true
-      - target: SettingsData
-        embed: true
-      - target: EnvironmentDomain
-        embed: true
       - target: DesignSystem
-        embed: true
-      - target: MeasurementPresentation
-        embed: true
-      - target: RuntimeConfiguration
         embed: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watch
+        PRODUCT_BUNDLE_IDENTIFIER: in.fenr.app.watch
         INFOPLIST_KEY_CFBundleDisplayName: FENR
-        INFOPLIST_KEY_WKWatchOnly: YES
-        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: FENR uses Bluetooth to connect directly to your bike and show live telemetry.
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
   FENRWatchDebug:
     type: application
     platform: watchOS
     deploymentTarget: "10.0"
+    info:
+      path: Watch/Generated/FENRWatchDebug-Info.plist
+      properties:
+        WKCompanionAppBundleIdentifier: com.fenr.app.debug
+        WKApplication: true
+        WKSupportsRunningWithoutiOSApp: false
+        WKSupportsAlwaysOnDisplay: true
     sources:
       - path: Watch/Sources
         excludes:
           - App/FENRWatchApp.swift
-          - Composition/Production/LiveWatchAppDependencyContainerFactory.swift
       - path: Watch/DebugSources
       - path: Watch/Resources/Debug/InfoPlist.xcstrings
         buildPhase: resources
     dependencies:
-      - target: AsyncSupport
+      - target: WatchCompanionDomain
         embed: true
-      - target: BikeDomain
-        embed: true
-      - target: BikeEmulator
-        embed: true
-      - target: BLETraceDomain
+      - target: WatchCompanionData
         embed: true
       - target: WatchDashboard
         embed: true
-      - target: WatchOnboarding
-        embed: true
-      - target: AppSettings
-        embed: true
-      - target: SettingsDomain
-        embed: true
-      - target: SettingsData
-        embed: true
-      - target: StarkProtocol
-        embed: true
-      - target: EnvironmentDomain
-        embed: true
       - target: DesignSystem
-        embed: true
-      - target: MeasurementPresentation
-        embed: true
-      - target: RuntimeConfiguration
         embed: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watch.debug
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug.watch
         INFOPLIST_KEY_CFBundleDisplayName: FENR Debug
-        INFOPLIST_KEY_WKWatchOnly: YES
-        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: FENR uses Bluetooth to connect directly to your bike and show live telemetry.
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
