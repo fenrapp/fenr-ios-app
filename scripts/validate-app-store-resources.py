@@ -77,6 +77,28 @@ def validate_schemes():
                 f"Incorrect routing reference: {name}")
 
 
+def validate_companion(app, phone_info):
+    companions = list((app / "Watch").glob("*.app"))
+    require(len(companions) == 1, "Expected exactly one embedded Watch companion")
+    companion = companions[0]
+    info = read_plist(companion / "Info.plist")
+    require(info.get("CFBundleIdentifier") == "in.fenr.app.watch", "Unexpected Watch bundle ID")
+    require(info.get("WKCompanionAppBundleIdentifier") == phone_info["CFBundleIdentifier"],
+            "Watch companion points to a different iPhone app")
+    require(info.get("UIDeviceFamily") == [4] and info.get("WKApplication") is True,
+            "Embedded companion is not a Watch application")
+    require(info.get("WKSupportsRunningWithoutiOSApp") is False,
+            "Watch companion must require its paired iPhone")
+    for key in ("CFBundleShortVersionString", "CFBundleVersion"):
+        require(bool(info.get(key)) and info.get(key) == phone_info.get(key),
+                f"Watch companion version mismatch: {key}")
+    require(not any(key.startswith("NSBluetooth") for key in info),
+            "Watch companion must not request motorcycle Bluetooth access")
+    for name in ("BikeSDK", "StarkProtocol", "BikeData"):
+        require(not (companion / "Frameworks" / f"{name}.framework").exists(),
+                f"Watch companion unexpectedly embeds {name}")
+
+
 def validate_archive(archive):
     app = archive / "Products/Applications/FENR.app"
     info = read_plist(app / "Info.plist")
@@ -87,7 +109,7 @@ def validate_archive(archive):
         require(bool(info.get(key)), f"Missing purpose string: {key}")
     require(info.get("MKDirectionsApplicationSupportedModes") == ["MKDirectionsModeCar"],
             "Missing routing registration")
-    require(not (app / "Watch").exists(), "The iOS-only archive unexpectedly embeds a Watch app")
+    validate_companion(app, info)
     for source, (bundle, reasons) in MANIFESTS.items():
         packaged = app / bundle / "PrivacyInfo.xcprivacy"
         validate_manifest(packaged, reasons)
