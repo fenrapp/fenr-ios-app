@@ -11,6 +11,7 @@ struct SettingsNavigationRow: View {
     let title: LocalizedStringResource
     let detail: Text
     let accessibilityIdentifier: String
+    let showsDetailBelowTitle: Bool
     let action: () -> Void
 
     init(
@@ -19,6 +20,7 @@ struct SettingsNavigationRow: View {
         title: LocalizedStringResource,
         detail: LocalizedStringResource,
         accessibilityIdentifier: String,
+        showsDetailBelowTitle: Bool = false,
         action: @escaping () -> Void
     ) {
         self.icon = icon
@@ -26,6 +28,7 @@ struct SettingsNavigationRow: View {
         self.title = title
         self.detail = Text(detail)
         self.accessibilityIdentifier = accessibilityIdentifier
+        self.showsDetailBelowTitle = showsDetailBelowTitle
         self.action = action
     }
 
@@ -35,6 +38,7 @@ struct SettingsNavigationRow: View {
         title: LocalizedStringResource,
         verbatimDetail: String,
         accessibilityIdentifier: String,
+        showsDetailBelowTitle: Bool = false,
         action: @escaping () -> Void
     ) {
         self.icon = icon
@@ -42,6 +46,7 @@ struct SettingsNavigationRow: View {
         self.title = title
         self.detail = Text(verbatim: verbatimDetail)
         self.accessibilityIdentifier = accessibilityIdentifier
+        self.showsDetailBelowTitle = showsDetailBelowTitle
         self.action = action
     }
 
@@ -50,7 +55,7 @@ struct SettingsNavigationRow: View {
             HStack(spacing: DesignSpace.small) {
                 SettingsRowIcon(systemName: icon, tint: iconTint)
 
-                if dynamicTypeSize.isAccessibilitySize {
+                if showsDetailBelowTitle || dynamicTypeSize.isAccessibilitySize {
                     VStack(alignment: .leading, spacing: Constants.labelSpacing) {
                         titleLabel
                         detailLabel
@@ -62,7 +67,7 @@ struct SettingsNavigationRow: View {
                         .lineLimit(1)
                 }
 
-                if dynamicTypeSize.isAccessibilitySize {
+                if showsDetailBelowTitle || dynamicTypeSize.isAccessibilitySize {
                     Spacer(minLength: DesignSpace.extraSmall)
                 }
 

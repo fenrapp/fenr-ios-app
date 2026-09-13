@@ -47,7 +47,7 @@ enum BikeEmulatorPayloadFactory {
             speed: .known(kmh: speed, kmhX10: Int(speed * Constants.speedScale)),
             motorRPM: .known(isRiding ? Int(speed * Constants.rpmPerKmh) : .zero),
             odometer: odometer(context: context, scenario: scenario, tick: tick),
-            experimentalUsageCounter: context.isDemo ? nil : .init(
+            experimentalUsageCounter: .init(
                 rawValue: Constants.syntheticUsageCounter + UInt32(clamping: tick), sampledAt: context.date
             ),
             inverterTemperaturesCelsius: inverterTemperatures(for: tick),

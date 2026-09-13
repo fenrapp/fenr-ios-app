@@ -122,7 +122,11 @@ private extension DebugAppDependencyContainerFactory {
             dashboardContainer: RideDashboardDependencyContainer(),
             appSettingsContainer: AppSettingsDependencyContainer(),
             dashboardCardSettingsContainer: DashboardCardSettingsDependencyContainer(),
-            powerModeSettingsContainer: PowerModeSettingsDependencyContainer(),
+            powerModeSettingsContainer: PowerModeSettingsDependencyContainer(
+                presets: LocalBikePowerModePresetRepository(
+                    defaults: .standard, encoder: JSONEncoder(), decoder: JSONDecoder()
+                )
+            ),
             rideHistoryContainer: RideHistoryDependencyContainer(),
             maintenanceContainer: MaintenanceDependencyContainer(reminderScheduler: maintenanceReminderScheduler),
             bleTraceLogRepository: diagnostics.traceRepository,

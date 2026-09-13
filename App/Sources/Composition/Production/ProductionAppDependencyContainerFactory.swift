@@ -18,6 +18,7 @@ enum ProductionAppDependencyContainerFactory {
         maintenanceReminderScheduler: any MaintenanceReminderScheduling,
         storageFactory: ProductionAppStorageFactory = .live
     ) throws -> AppDependencyContainer {
+        let presets = makePowerModePresets()
         let storage = try storageFactory.make()
         let bikeSDKContainer = BikeSDKDependencyContainer()
         let bikeDataContainer = BikeDataDependencyContainer()
@@ -65,7 +66,7 @@ enum ProductionAppDependencyContainerFactory {
             dashboardContainer: RideDashboardDependencyContainer(),
             appSettingsContainer: AppSettingsDependencyContainer(),
             dashboardCardSettingsContainer: DashboardCardSettingsDependencyContainer(),
-            powerModeSettingsContainer: PowerModeSettingsDependencyContainer(),
+            powerModeSettingsContainer: PowerModeSettingsDependencyContainer(presets: presets),
             rideHistoryContainer: RideHistoryDependencyContainer(),
             maintenanceContainer: MaintenanceDependencyContainer(reminderScheduler: maintenanceReminderScheduler),
             bleTraceLogRepository: bleTraceRepository,
@@ -115,6 +116,10 @@ enum ProductionAppDependencyContainerFactory {
                 encoder: JSONEncoder(),
                 decoder: JSONDecoder()
             )
+    }
+
+    private static func makePowerModePresets() -> LocalBikePowerModePresetRepository {
+        LocalBikePowerModePresetRepository(defaults: .standard, encoder: JSONEncoder(), decoder: JSONDecoder())
     }
 
 }

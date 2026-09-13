@@ -38,65 +38,15 @@ import SwiftUI
 }
 
 #Preview("Ride display") {
-    Form {
-        RideDisplaySettingsContent(
-            progressBarMode: .init(
-                selection: .init(
-                    selectedID: "energy",
-                    options: [
-                        .init(id: "energy", title: "Energy"),
-                        .init(id: "speed", title: "Speed"),
-                        .init(id: "hidden", title: "Hidden")
-                    ]
-                ),
-                description: "Regeneration fills left from the center; consumption fills right."
-            ),
-            bikeBatteryDisplayMode: .init(
-                selectedID: "percentage",
-                options: [
-                    .init(id: "percentage", title: "Percentage"),
-                    .init(id: "estimatedRange", title: "Estimated range")
-                ]
-            ),
-            deviceBatteryDisplayMode: .init(
-                selectedID: "iconAndText",
-                options: [
-                    .init(id: "iconAndText", title: "Icon and percentage"),
-                    .init(id: "hidden", title: "Hidden")
-                ]
-            ),
-            temperatureDisplayMode: .init(
-                selectedID: "both",
-                options: [
-                    .init(id: "off", title: "Off"),
-                    .init(id: "battery", title: "Battery"),
-                    .init(id: "inverter", title: "Inverter"),
-                    .init(id: "both", title: "Both")
-                ]
-            ),
-            showsBikeHours: false,
-            speedSource: .init(
-                selection: .init(
-                    selectedID: "gps",
-                    options: [
-                        .init(id: "motorcycle", title: "Bike"),
-                        .init(id: "gps", title: "GPS"),
-                        .init(id: "hybrid", title: "GPS+")
-                    ]
-                ),
-                description: "Uses phone GPS when a recent, accurate reading is available.",
-                locationPermission: .authorized
-            ),
-            onSelectProgressBarMode: { _ in },
-            onSelectProgressBarThickness: { _ in },
-            onSelectBikeBatteryDisplayMode: { _ in },
-            onSelectDeviceBatteryDisplayMode: { _ in },
-            onSelectTemperatureDisplayMode: { _ in },
-            onSetShowsBikeHours: { _ in },
-            onSelectSpeedSource: { _ in },
-            onRequestLocationAccess: {}
-        )
-    }
+    RideDisplaySettingsView(
+        state: .init(
+            progressBar: "Energy - Regular",
+            batteryDisplay: "Bike: Percentage - Phone: Icon and percentage",
+            rideInformation: "Bike hours on - Temperatures: Off",
+            speed: "Bike"
+        ),
+        onNavigation: { _ in }
+    )
 }
 
 #Preview("Power tier states") {

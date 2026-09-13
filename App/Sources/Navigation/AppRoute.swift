@@ -43,6 +43,9 @@ enum AppRoute: Hashable {
             nil
         case .advancedPowerModes:
             .powerModes
+        case .settings(.rideProgressBar), .settings(.rideBatteryDisplay),
+             .settings(.rideInformation), .settings(.rideSpeed):
+            .settings(.rideDisplay)
         case .settings:
             .settings(.overview)
         case .dashboardCards:

@@ -56,7 +56,33 @@ public struct AppSettingsScene: View {
             )
         #if os(iOS)
         case .rideDisplay:
-            RideDisplaySettingsView(viewModel: viewModel)
+            RideDisplaySettingsView(state: viewModel.viewState.rideDisplayOverview, onNavigation: onNavigation)
+        case .rideProgressBar:
+            RideProgressBarSettingsView(
+                state: viewModel.viewState.dashboardProgressBarMode,
+                onSelectMode: viewModel.selectDashboardProgressBarMode,
+                onSelectThickness: viewModel.selectDashboardProgressBarThickness
+            )
+        case .rideBatteryDisplay:
+            RideBatteryDisplaySettingsView(
+                bikeBattery: viewModel.viewState.dashboardBatteryIndicatorMode,
+                phoneBattery: viewModel.viewState.dashboardDeviceBatteryDisplayMode,
+                onSelectBikeBattery: viewModel.selectDashboardBatteryIndicatorMode,
+                onSelectPhoneBattery: viewModel.selectDashboardDeviceBatteryDisplayMode
+            )
+        case .rideInformation:
+            RideInformationSettingsView(
+                showsBikeHours: viewModel.viewState.showsBikeHours,
+                temperatures: viewModel.viewState.dashboardTemperatureDisplayMode,
+                onSetShowsBikeHours: viewModel.setShowsBikeHours,
+                onSelectTemperatures: viewModel.selectDashboardTemperatureDisplayMode
+            )
+        case .rideSpeed:
+            RideSpeedSettingsView(
+                state: viewModel.viewState.speedSource,
+                onSelect: viewModel.selectSpeedSource,
+                onRequestLocationAccess: viewModel.requestLocationAccess
+            )
         case .navigation:
             NavigationSettingsView(viewModel: viewModel, onNavigation: onNavigation)
         case .navigationAppearance:
@@ -68,7 +94,8 @@ public struct AppSettingsScene: View {
         case .acknowledgments:
             AcknowledgmentsSettingsView(onNavigation: onNavigation)
         #else
-        case .rideDisplay, .navigation, .navigationAppearance, .bikeModel, .liveActivities, .acknowledgments:
+        case .rideDisplay, .rideProgressBar, .rideBatteryDisplay, .rideInformation, .rideSpeed,
+             .navigation, .navigationAppearance, .bikeModel, .liveActivities, .acknowledgments:
             EmptyView()
         #endif
         }

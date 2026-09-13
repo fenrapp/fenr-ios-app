@@ -9,6 +9,7 @@ public struct AppSettingsViewState: Equatable, Sendable {
     public let batteryCapacity: AppSettingsSelectionViewState
     public let powerTier: PowerTierSettingsViewState
     public let isBikeModelSelectionVisible: Bool
+    public let rideDisplayOverview: RideDisplayOverviewViewState
     public let rideDisplay: SettingsNavigationSummaryViewData
     public let dashboardCards: SettingsNavigationSummaryViewData
     public let powerModes: SettingsNavigationSummaryViewData
@@ -37,6 +38,7 @@ public struct AppSettingsViewState: Equatable, Sendable {
         powerTier: PowerTierSettingsViewState? = nil,
         isBikeModelSelectionVisible: Bool = true,
         rideDisplay: SettingsNavigationSummaryViewData? = nil,
+        rideDisplayOverview: RideDisplayOverviewViewState = .init(),
         dashboardCards: SettingsNavigationSummaryViewData? = nil,
         powerModes: SettingsNavigationSummaryViewData? = nil,
         navigation: SettingsNavigationSummaryViewData? = nil,
@@ -59,6 +61,7 @@ public struct AppSettingsViewState: Equatable, Sendable {
             status: .appSettingsPowerTierStandardBaseline
         )
         self.isBikeModelSelectionVisible = isBikeModelSelectionVisible
+        self.rideDisplayOverview = rideDisplayOverview
         self.rideDisplay = rideDisplay ?? .init(detail: .appSettingsRideDisplayDefaultSummary)
         self.dashboardCards = dashboardCards ?? .init(detail: .appSettingsDashboardCardsDefaultSummary)
         self.powerModes = powerModes ?? .init(detail: .appSettingsPowerModesConfigured)

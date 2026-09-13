@@ -2,114 +2,97 @@ import DesignSystem
 import SwiftUI
 
 struct PowerModeAdvancedLandscapeContent: View {
+    @State private var showsOptions = false
     let state: PowerModeAdvancedViewState
     let maps: [PowerModeMapViewData]
     let send: (PowerModeAdvancedIntent) -> Void
-    let size: CGSize
+    let editPoint: (PowerCurvePointViewData) -> Void
+    let availableWidth: CGFloat
 
     var body: some View {
-        HStack(alignment: .top, spacing: DesignSpace.medium) {
-            VStack(spacing: .zero) {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: DesignSpace.small) {
-                        editor
-                        feedback
-                    }
+        VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
+            if showsOptions {
+                PowerModeAdvancedOptionsContent(state: state, maps: maps, send: send)
+            } else if state.hasConfiguration {
+                GeometryReader { geometry in
+                    PowerCurveEditor(
+                        points: state.points, samples: state.samples, kind: state.kind,
+                        unit: state.unit, summary: state.summary,
+                        isEnabled: state.canEdit, commit: { send(.setPoint(index: $0, value: $1)) },
+                        editPoint: editPoint,
+                        chartHeight: geometry.size.height,
+                        showsHeader: false, isExpanded: true
+                    )
+                    .id("\(state.kind)-\(maps.first(where: \.isSelected)?.id ?? 0)")
                 }
-                .scrollBounceBehavior(.basedOnSize)
-                PowerCurveActionButtons(state: state, send: send)
-                    .padding(.horizontal, DesignSpace.small)
+                .clipped()
+            } else {
+                VStack(spacing: DesignSpace.medium) {
+                    Text(.powerCurveLoadingDescription)
+                        .foregroundStyle(DesignColor.secondaryText)
+                    Button(.powerCurveRead) { send(.refresh) }
+                        .disabled(state.isBusy)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            sidebar
+            footer
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, DesignSpace.medium)
         .padding(.top, DesignSpace.extraSmall)
-        .padding(.bottom, DesignSpace.small)
-        .background(.background.secondary)
-    }
-
-    private var sidebar: some View {
-        List {
-            Section(.powerModeSettingsMapSection) {
-                PowerModeSelector(maps: maps, select: { send(.selectMap($0)) })
-                    .disabled(state.isBusy)
+        .padding(.bottom, DesignSpace.medium)
+        .ignoresSafeArea(.container, edges: .bottom)
+        .background(.background)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                tabs
+                    .frame(width: availableWidth * Constants.toolbarWidthRatio)
             }
-            Section {
-                HStack {
-                    Text(state.kind == .power ? .powerCurvePeakLabel : .powerCurveMaximumLabel)
-                    Spacer(minLength: DesignSpace.extraSmall)
-                    Text(verbatim: state.summary)
-                        .monospacedDigit()
-                        .foregroundStyle(state.kind == .power ? DesignColor.warning : DesignColor.informational)
-                }
-                .font(.subheadline)
-                VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
-                    Label(.powerCurveSetting, systemImage: "minus")
-                        .foregroundStyle(state.kind == .power ? DesignColor.warning : DesignColor.informational)
-                    Label(.powerCurveLimit, systemImage: "minus")
-                        .foregroundStyle(DesignColor.secondaryText)
-                }
-                .font(.caption)
-            }
-            Section(.powerModeSettingsTractionGroupTitle) {
-                ForEach(state.tractionAdjustments) { adjustment in
-                    PowerModeAdjustmentRow(state: adjustment) { value in
-                        send(.setTraction(id: adjustment.id, value: value))
-                    }
-                }
-            }
-            PowerCurvePresetsSection(state: state, send: send)
         }
-        .listStyle(.insetGrouped)
-        .listSectionSpacing(DesignSpace.medium)
-        .contentMargins(.vertical, .zero, for: .scrollContent)
-        .scrollContentBackground(.hidden)
-        .frame(width: max(Constants.minimumSidebarWidth, size.width * Constants.sidebarRatio))
     }
 
-    private var editor: some View {
-        VStack(spacing: DesignSpace.extraSmall) {
-            Picker(.powerCurveCurve, selection: Binding(
-                get: { state.kind }, set: { send(.selectCurve($0)) }
-            )) {
-                Text(.powerCurvePower).tag(PowerModeCurveKind.power)
-                Text(.powerCurveRegeneration).tag(PowerModeCurveKind.regeneration)
+    private var tabs: some View {
+        Picker(.powerCurveCurve, selection: Binding<PowerModeCurveKind?>(
+            get: { showsOptions ? nil : state.kind },
+            set: { kind in
+                showsOptions = kind == nil
+                if let kind { send(.selectCurve(kind)) }
             }
-            .pickerStyle(.segmented)
-            PowerCurveEditor(
-                points: state.points, samples: state.samples, kind: state.kind,
-                unit: state.unit, summary: state.summary,
-                isEnabled: state.canEdit, commit: { send(.setPoint(index: $0, value: $1)) },
-                chartHeight: max(Constants.minimumChartHeight, size.height - Constants.editorChromeHeight),
-                showsHeader: false
-            )
-            .id("\(state.kind)-\(maps.first(where: \.isSelected)?.id ?? 0)")
+        )) {
+            Text(.powerCurvePower).tag(Optional(PowerModeCurveKind.power))
+            Text(.powerCurveRegeneration).tag(Optional(PowerModeCurveKind.regeneration))
+            Text(.powerCurveOptions).tag(Optional<PowerModeCurveKind>.none)
         }
-        .padding(DesignSpace.small)
-        .background(.background, in: RoundedRectangle(cornerRadius: DesignRadius.medium))
+        .pickerStyle(.segmented)
+        .accessibilityIdentifier("powerModes.advanced.tabs")
     }
 
-    private var feedback: some View {
-        VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
+    private var footer: some View {
+        HStack(spacing: DesignSpace.medium) {
+            VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
+                if let map = maps.first(where: \.isSelected) {
+                    Text(verbatim: map.accessibilityLabel)
+                        .font(.headline)
+                        .lineLimit(1)
+                }
+                Text(verbatim: state.summary)
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(state.kind == .power ? DesignColor.warning : DesignColor.informational)
+            }
             if state.isBusy {
-                ProgressView { Text(.powerCurveWorking) }
-            }
-            if let message = state.message {
+                ProgressView().accessibilityLabel(.powerCurveWorking)
+            } else if let message = state.message {
                 Text(verbatim: message)
+                    .font(.footnote)
+                    .foregroundStyle(DesignColor.secondaryText)
+                    .lineLimit(Constants.feedbackLineLimit)
             }
-            Text(state.kind == .power ? .powerCurvePowerGuide : .powerCurveRegenGuide)
-            Text(state.hasDraft ? .powerCurvePending : .powerCurveStored)
+            PowerCurveActionButtons(state: state, send: send, controlSize: .large, verticalPadding: .zero)
         }
-        .font(.footnote)
-        .foregroundStyle(DesignColor.secondaryText)
-        .padding(.horizontal, DesignSpace.small)
-        .padding(.bottom, DesignSpace.small)
     }
 
     private enum Constants {
-        static let minimumSidebarWidth: CGFloat = 260
-        static let sidebarRatio: CGFloat = 0.34
-        static let minimumChartHeight: CGFloat = 140
-        static let editorChromeHeight: CGFloat = 140
+        static let toolbarWidthRatio: CGFloat = 0.7
+        static let feedbackLineLimit = 2
     }
 }

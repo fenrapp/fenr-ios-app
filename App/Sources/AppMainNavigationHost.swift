@@ -33,13 +33,34 @@ struct AppMainNavigationHost: View {
                 .safeAreaPadding(.bottom, destinationBottomInset)
             }
         }
-        .animation(navigationAnimation, value: coordinator.state.path)
+        .animation(navigationAnimation, value: coordinator.state.dashboardPath)
+        .fullScreenCover(isPresented: settingsPresentation) {
+            AppSettingsNavigationHost(
+                coordinator: coordinator, featureStore: featureStore,
+                settingsAccessory: settingsAccessory,
+                onChangeBike: onChangeBike
+            )
+        }
     }
 
     private var pathBinding: Binding<[AppRoute]> {
         Binding(
-            get: { coordinator.state.path },
-            set: { coordinator.send(.replacePath($0)) }
+            get: { coordinator.state.dashboardPath },
+            set: {
+                guard coordinator.state.path.first != .settings(.overview) else { return }
+                coordinator.send(.replacePath($0))
+            }
+        )
+    }
+
+    private var settingsPresentation: Binding<Bool> {
+        Binding(
+            get: { coordinator.state.isSettingsPresented },
+            set: { isPresented in
+                if !isPresented, coordinator.state.isSettingsPresented {
+                    coordinator.send(.popToRoot)
+                }
+            }
         )
     }
 

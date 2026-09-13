@@ -5,6 +5,9 @@ struct PowerCurveActionButtons: View {
     let state: PowerModeAdvancedViewState
     let send: (PowerModeAdvancedIntent) -> Void
 
+    var controlSize: ControlSize = .regular
+    var verticalPadding: CGFloat = DesignSpace.extraSmall
+
     var body: some View {
         HStack(spacing: DesignSpace.small) {
             Spacer()
@@ -15,7 +18,7 @@ struct PowerCurveActionButtons: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(!state.canApply)
         }
-        .controlSize(.regular)
-        .padding(.vertical, DesignSpace.extraSmall)
+        .controlSize(controlSize)
+        .padding(.vertical, verticalPadding)
     }
 }

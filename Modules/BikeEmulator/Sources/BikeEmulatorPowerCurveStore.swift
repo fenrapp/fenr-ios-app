@@ -2,11 +2,19 @@ import BikeDomain
 
 struct BikeEmulatorPowerCurveStore: Sendable {
     private let calibration: BikePowerCurveCalibration
-    private var configurations: [Int: BikeAdvancedPowerModeConfiguration] = [:]
+    private var configurations: [Int: BikeAdvancedPowerModeConfiguration]
     private var confirmations: [Int: BikePowerModeCurveConfirmation] = [:]
 
-    init(calibration: BikePowerCurveCalibration) {
+    init(
+        calibration: BikePowerCurveCalibration,
+        configurations: [Int: BikeAdvancedPowerModeConfiguration] = [:]
+    ) {
         self.calibration = calibration
+        self.configurations = configurations
+    }
+
+    var savedConfigurations: [BikeAdvancedPowerModeConfiguration] {
+        configurations.values.sorted { $0.mapIndex < $1.mapIndex }
     }
 
     mutating func reset() {
@@ -15,7 +23,17 @@ struct BikeEmulatorPowerCurveStore: Sendable {
     }
 
     mutating func read(_ basic: BikePowerModeConfiguration, maximum: Int) throws -> BikeAdvancedPowerModeConfiguration {
-        if let current = configurations[basic.mapIndex] { return current }
+        if let current = configurations[basic.mapIndex] {
+            let curveHorsepower = Int((Double(current.torqueRaw) / 1.25).rounded())
+            var synchronized = try changingBasic(
+                current, horsepower: basic.horsepower == curveHorsepower ? nil : basic.horsepower,
+                regeneration: basic.regenerativeBrakingPercent.map { Int($0) }, maximum: maximum
+            )
+            synchronized.powerTractionRaw = basic.powerTractionPercent.map { Int(($0 * 10).rounded()) }
+            synchronized.brakingTractionRaw = basic.brakingTractionPercent.map { Int(($0 * 10).rounded()) }
+            configurations[basic.mapIndex] = synchronized
+            return synchronized
+        }
         guard let horsepower = basic.horsepower, let regeneration = basic.regenerativeBrakingPercent,
               regeneration.isFinite, 0 ... 100 ~= regeneration else {
             throw BikeEmulatorPowerModeError.readFailure

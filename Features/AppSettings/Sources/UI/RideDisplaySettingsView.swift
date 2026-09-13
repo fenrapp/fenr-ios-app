@@ -2,30 +2,20 @@
 import SwiftUI
 
 public struct RideDisplaySettingsView: View {
-    private let viewModel: AppSettingsViewModel
+    let state: RideDisplayOverviewViewState
+    let onNavigation: (AppSettingsNavigationEvent) -> Void
 
-    public init(viewModel: AppSettingsViewModel) {
-        self.viewModel = viewModel
+    public init(
+        state: RideDisplayOverviewViewState,
+        onNavigation: @escaping (AppSettingsNavigationEvent) -> Void
+    ) {
+        self.state = state
+        self.onNavigation = onNavigation
     }
 
     public var body: some View {
         Form {
-            RideDisplaySettingsContent(
-                progressBarMode: viewModel.viewState.dashboardProgressBarMode,
-                bikeBatteryDisplayMode: viewModel.viewState.dashboardBatteryIndicatorMode,
-                deviceBatteryDisplayMode: viewModel.viewState.dashboardDeviceBatteryDisplayMode,
-                temperatureDisplayMode: viewModel.viewState.dashboardTemperatureDisplayMode,
-                showsBikeHours: viewModel.viewState.showsBikeHours,
-                speedSource: viewModel.viewState.speedSource,
-                onSelectProgressBarMode: viewModel.selectDashboardProgressBarMode,
-                onSelectProgressBarThickness: viewModel.selectDashboardProgressBarThickness,
-                onSelectBikeBatteryDisplayMode: viewModel.selectDashboardBatteryIndicatorMode,
-                onSelectDeviceBatteryDisplayMode: viewModel.selectDashboardDeviceBatteryDisplayMode,
-                onSelectTemperatureDisplayMode: viewModel.selectDashboardTemperatureDisplayMode,
-                onSetShowsBikeHours: viewModel.setShowsBikeHours,
-                onSelectSpeedSource: viewModel.selectSpeedSource,
-                onRequestLocationAccess: viewModel.requestLocationAccess
-            )
+            RideDisplaySettingsContent(state: state, onNavigation: onNavigation)
         }
         .navigationTitle(Text(.appSettingsRideDisplayTitle))
         .navigationBarTitleDisplayMode(.inline)

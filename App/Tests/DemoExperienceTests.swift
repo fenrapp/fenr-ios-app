@@ -36,6 +36,27 @@ struct DemoExperienceTests {
         ))
     }
 
+    @Test("Demo enables curves and hours while preserving later display preferences")
+    func demoDisplayPreferences() async throws {
+        let fixture = DemoExperienceTestFixture()
+        let experience = try await fixture.factory.make(identity: fixture.identity)
+        let settings = experience.root.featureStore.appSettingsViewModel
+        #expect(experience.root.featureStore.powerModeSettingsViewModel.hasAdvancedEditor)
+        settings.start()
+        #expect(await waitUntil { settings.viewState.showsBikeHours })
+        settings.setShowsBikeHours(false)
+        #expect(await waitUntil { !settings.viewState.showsBikeHours })
+        await settings.stopAndWait()
+        await experience.close()
+        let reopened = try await fixture.factory.make(identity: fixture.identity)
+        let restored = reopened.root.featureStore.appSettingsViewModel
+        restored.start()
+        #expect(await waitUntil { !restored.viewState.dashboardBatteryIndicatorMode.options.isEmpty })
+        #expect(!restored.viewState.showsBikeHours)
+        await reopened.close()
+        try await reopened.discard()
+    }
+
     @Test("Rapid scenario selections settle on the most recent intent")
     func latestScenarioWins() async throws {
         let fixture = DemoExperienceTestFixture()
