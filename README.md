@@ -26,11 +26,11 @@ FENR is independent and unofficial. It is not affiliated with or endorsed by Sta
 
 Diagnostic capture starts only when you select **Start** in Diagnostics and ends with **Stop**. It begins disabled on every app launch. Saved logs can be reviewed, exported or deleted.
 
-The first release is for iPhone. A separate, telemetry-only Apple Watch app remains in the repository for future distribution.
+The first release is for iPhone. A read-only Apple Watch companion receives basic motorcycle and charging data from the iPhone.
 
 ## Getting started
 
-The iPhone app targets **iOS 17 or later**. Liquid Glass is used on **iOS 26 or later**, with standard materials and controls on earlier versions. The separate Watch app targets watchOS 10 or later.
+The iPhone app targets **iOS 17 or later**. Liquid Glass is used on **iOS 26 or later**, with standard materials and controls on earlier versions. The Watch companion targets watchOS 10 or later and requires the paired iPhone.
 
 Build with **Xcode 26 or later** for the SwiftUI APIs and generated String Catalog symbols. See [Development](docs/development.md) for setup and [Testing](docs/testing.md) for validation commands.
 

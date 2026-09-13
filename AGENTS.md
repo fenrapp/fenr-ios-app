@@ -7,7 +7,7 @@ FENR is an iPhone and Apple Watch dashboard and diagnostics app for compatible e
 ## Architecture
 
 - `App/` owns application composition, navigation, and the single `BikeSessionController` lifecycle.
-- `Watch/` owns the standalone watchOS app shell, direct Watch Bluetooth lifecycle, and compact onboarding.
+- `Watch/` owns the read-only watchOS companion shell and WatchConnectivity composition.
 - `Features/` contains SwiftUI presentation modules. Features may depend on `DesignSystem`, domain modules, and their own use-case/container layer.
 - `Modules/*Domain` exposes entities, repository contracts, and use cases.
 - `Modules/*Data` implements repositories and persistence.
@@ -51,7 +51,7 @@ View models depend on use cases and mappers, not concrete data repositories or B
 - Use `StarkPairingIdentity` as the only VIN normalization/validation utility.
 - Treat user-provided VINs and real motorcycle identifiers as sensitive data. Never copy them into source, tests, previews, docs, commit messages, logs, or final responses; use synthetic VINs such as `FENRTEST000000001` or shared debug constants instead.
 - Preserve the app-wide single BLE session. Navigating between dashboard, settings, diagnostics, and battery health must not create competing telemetry connections.
-- The Watch app has its own direct Bluetooth session and declares Bluetooth background support. Preserve one Watch session and its restoration policy, and do not route its runtime dependency through a paired iPhone.
+- The Watch app receives read-only snapshots from the paired iPhone through WatchConnectivity. Keep motorcycle Bluetooth, authentication, monitoring and all vehicle writes on the single iPhone session. Do not add BikeSDK, direct Bluetooth, PIN storage or configuration controls to the Watch graph. Always preserve source timestamps and show stale or unavailable data honestly.
 - Add only confirmed telemetry to rider-facing UI. Clearly keep experimental protocol candidates out of production presentation.
 - Keep all source and docs ASCII unless a user-facing file intentionally uses Unicode, such as README emoji.
 
