@@ -95,8 +95,7 @@ actor PowerModeSettingsBikeRepository: BikeRepository {
     }
 
     func applyUserTractionControlConfiguration(
-        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double,
-        expected: BikeTractionControlSnapshot?
+        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double
     ) async throws -> BikeTractionControlSnapshot {
         try await setTractionControlConfiguration(
             mapIndex: mapIndex, powerTractionPercent: powerTractionPercent,

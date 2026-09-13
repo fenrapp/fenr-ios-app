@@ -14,7 +14,12 @@ struct BikeBLEConfigurationReadinessWaiter {
         self.maximumCheckCount = maximumCheckCount
     }
 
-    func waitUntilReady(_ isReady: @escaping @MainActor () -> Bool) async throws {
+    func waitUntilReady(
+        canRead: Bool = false,
+        requiresNotification: Bool = false,
+        _ isReady: @escaping @MainActor () -> Bool
+    ) async throws {
+        guard requiresNotification || !canRead else { return }
         guard !isReady() else { return }
         for _ in 0 ..< maximumCheckCount {
             try await Task.sleep(for: checkInterval)
@@ -33,9 +38,14 @@ extension BikeBLEVCUConfigurationTransport {
         try operationController.ensureReady()
     }
 
-    func waitForConfigurationNotificationsIfNeeded(_ characteristic: CBCharacteristic) async throws {
-        guard !characteristic.properties.contains(.read) else { return }
-        try await configurationReadinessWaiter.waitUntilReady {
+    func waitForConfigurationNotificationsIfNeeded(
+        _ characteristic: CBCharacteristic,
+        requiresNotification: Bool = false
+    ) async throws {
+        try await configurationReadinessWaiter.waitUntilReady(
+            canRead: characteristic.properties.contains(.read),
+            requiresNotification: requiresNotification
+        ) {
             characteristic.isNotifying
                 || self.sessionStore.subscribedCharacteristics.contains(characteristic.uuid)
         }

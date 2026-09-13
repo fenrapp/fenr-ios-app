@@ -69,7 +69,7 @@ extension BikeBLEVCUConfigurationTransport {
             let expectedResponse = try BikeBLEVCUConfigurationExpectedResponse(
                 writeRequest: payload
             )
-            try await waitForConfigurationNotificationsIfNeeded(characteristic)
+            try await waitForConfigurationNotificationsIfNeeded(characteristic, requiresNotification: true)
             operationController.expect(expectedResponse)
             defer { operationController.clearExpectation() }
             try await write(payload, peripheral: peripheral, characteristic: characteristic)

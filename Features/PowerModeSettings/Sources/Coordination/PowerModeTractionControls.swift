@@ -16,7 +16,6 @@ final class PowerModeTractionControls {
     private(set) var activeAdjustment: PowerModeAdjustmentID?
     private(set) var results: [Int: PowerModeAdjustmentResult] = [:]
     private(set) var proposals: [Int: [PowerModeAdjustmentID: Double]] = [:]
-    private var confirmed: [Int: BikeTractionControlSnapshot] = [:]
     @ObservationIgnored private var compatibilityTask: Task<Void, Never>?
     private var generation = 0
 
@@ -61,7 +60,6 @@ final class PowerModeTractionControls {
         activeAdjustment = nil
         proposals.removeAll()
         results.removeAll()
-        confirmed.removeAll()
         return pending
     }
 
@@ -95,7 +93,6 @@ final class PowerModeTractionControls {
                   && 0 ... 100 ~= $0 && $0.rounded() == $0 }) else { return }
         let desiredPower = id == .powerTraction ? value : power
         let desiredBraking = id == .brakingTraction ? value : braking
-        let expected = baseline(map)
         proposals[map] = [.powerTraction: desiredPower, .brakingTraction: desiredBraking]
         results[map] = nil
         activeAdjustment = id
@@ -103,8 +100,7 @@ final class PowerModeTractionControls {
         let token = generation
         operations.run(.basicWrite, execute: {
             try await apply.execute(
-                mapIndex: map, powerTractionPercent: desiredPower, brakingTractionPercent: desiredBraking,
-                expected: expected
+                mapIndex: map, powerTractionPercent: desiredPower, brakingTractionPercent: desiredBraking
             )
         }, completion: { [weak self] result in
             guard let self, self.generation == token else { return }
@@ -120,16 +116,7 @@ final class PowerModeTractionControls {
         })
     }
 
-    private func baseline(_ map: Int) -> BikeTractionControlSnapshot? {
-        if proposals[map] != nil { return confirmed[map] }
-        let configuration = context.telemetry.powerModeConfigurations[map]
-        guard let power = configuration?.powerTractionPercent, let braking = configuration?.brakingTractionPercent,
-              [power, braking].allSatisfy({ $0.isFinite && 0 ... 100 ~= $0 && $0.rounded() == $0 }) else { return nil }
-        return .init(mapIndex: map, powerRaw: Int(power * 10), brakingRaw: Int(braking * 10))
-    }
-
     private func accept(_ value: BikeTractionControlSnapshot) {
-        confirmed[value.mapIndex] = value
         var configuration = context.telemetry.powerModeConfigurations[value.mapIndex] ?? .init(mapIndex: value.mapIndex)
         configuration.powerTractionPercent = Double(value.powerRaw) / 10
         configuration.brakingTractionPercent = Double(value.brakingRaw) / 10
@@ -147,7 +134,6 @@ final class PowerModeTractionControls {
             accept(actual)
             message = String(localized: .powerModeSettingsTractionMismatch)
         case .connectionRecoveryRequired:
-            confirmed[map] = nil
             message = String(localized: .powerModeSettingsTractionReconnect)
         case .rejected:
             message = String(localized: .powerModeSettingsApplyTractionError)
@@ -155,7 +141,6 @@ final class PowerModeTractionControls {
             compatibility = .failed
             message = String(localized: .powerModeSettingsTractionControlsUnavailableError)
         default:
-            confirmed[map] = nil
             message = String(localized: .powerModeSettingsTractionUnconfirmed)
         }
         results[map] = .failed(id, message: message)

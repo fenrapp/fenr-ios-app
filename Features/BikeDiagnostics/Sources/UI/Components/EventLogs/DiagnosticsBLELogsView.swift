@@ -119,10 +119,11 @@ struct DiagnosticsBLELogsView: View {
             }
             .tint(.indigo)
         }
-        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             if session.canDelete {
                 Button(role: .destructive) {
-                    deleteRequest = .session(session.id)
+                    feedbackToken += 1
+                    onDelete(session.id)
                 } label: {
                     Label(DiagnosticsCopy.delete, systemImage: "trash")
                 }

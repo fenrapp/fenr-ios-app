@@ -11,7 +11,7 @@ struct BikeEmulatorControlTests {
         #expect(before?.powerTractionPercent == nil)
         #expect(try await repository.readTractionControlFirmwareCompatibility().isCompatible)
         let actual = try await repository.applyUserTractionControlConfiguration(
-            mapIndex: 0, powerTractionPercent: 35, brakingTractionPercent: 0, expected: nil
+            mapIndex: 0, powerTractionPercent: 35, brakingTractionPercent: 0
         )
         #expect(actual == .init(mapIndex: 0, powerRaw: 350, brakingRaw: 0))
         let after = await repository.currentPowerModeConfigurations()[0]

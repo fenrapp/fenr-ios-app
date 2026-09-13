@@ -32,8 +32,7 @@ public protocol BikeTelemetryClient: AnyObject, Sendable {
     ) async throws
     func readTractionControlFirmwareCompatibility() async throws -> BikeSDKTractionControlFirmwareCompatibility
     func applyUserTractionControlConfiguration(
-        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double,
-        expected: BikeSDKTractionControlSnapshot?
+        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double
     ) async throws -> BikeSDKTractionControlSnapshot
     func prepareTractionControl(mapIndex: Int) async throws
     func setTractionControlConfiguration(
@@ -99,8 +98,7 @@ public extension BikeTelemetryClient {
         throw BikeSDKTractionControlError.unavailable
     }
     func applyUserTractionControlConfiguration(
-        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double,
-        expected: BikeSDKTractionControlSnapshot?
+        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double
     ) async throws -> BikeSDKTractionControlSnapshot {
         throw BikeSDKTractionControlError.unavailable
     }

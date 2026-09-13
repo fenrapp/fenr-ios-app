@@ -68,13 +68,12 @@ public struct LiveBikeControlService: Sendable {
     }
 
     func applyUserTractionControlConfiguration(
-        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double,
-        expected: BikeTractionControlSnapshot?
+        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double
     ) async throws -> BikeTractionControlSnapshot {
         do {
             return tractionMapper.map(try await client.applyUserTractionControlConfiguration(
                 mapIndex: mapIndex, powerTractionPercent: powerTractionPercent,
-                brakingTractionPercent: brakingTractionPercent, expected: expected.map(tractionMapper.map)
+                brakingTractionPercent: brakingTractionPercent
             ))
         } catch let error as BikeSDKTractionControlError { throw tractionMapper.map(error) }
     }

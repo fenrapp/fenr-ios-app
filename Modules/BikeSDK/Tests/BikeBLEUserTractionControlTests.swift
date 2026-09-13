@@ -28,125 +28,122 @@ struct BikeBLEUserTractionControlTests {
         #expect(transport.writePayloads.isEmpty)
     }
 
-    @Test("Missing initial read permits exactly one requested write and fresh confirmation")
-    func missingBaseline() async throws {
+    @Test("A commit checks firmware, writes both requested values once, then reads confirmation")
+    func directWrite() async throws {
         let transport = FakeBikeBLEPowerModeConfigurationTransport()
-        transport.tractionReadFailuresRemaining = 1
         let actual = try await apply(makeUserTractionCoordinator(transport))
         #expect(actual == .init(mapIndex: 0, powerRaw: 350, brakingRaw: 0))
-        #expect(transport.writePayloads.count == 1)
-        #expect(transport.requests == [Data([0, 8, 0]), Data([0, 8, 0])])
+        #expect(transport.operations == [
+            .versions,
+            .configurationWrite(Data([1, 8, 1, 0, 15, 94, 1, 0, 0])),
+            .configurationRead(Data([0, 8, 0]))
+        ])
     }
 
-    @Test("Readable baseline requires a no-op and confirmation before the requested write")
-    func readableBaseline() async throws {
-        let transport = FakeBikeBLEPowerModeConfigurationTransport()
-        _ = try await apply(makeUserTractionCoordinator(transport))
-        #expect(transport.writePayloads.count == 2)
-        #expect(transport.writePayloads.first == Data([1, 8, 1, 0, 15, 200, 0, 200, 0]))
-        #expect(transport.requests.count == 3)
-    }
-
-    @Test("Current requested values confirm without writing")
+    @Test("An explicit unchanged commit still writes and confirms without a baseline read")
     func exactValues() async throws {
         let transport = FakeBikeBLEPowerModeConfigurationTransport()
-        _ = try await makeUserTractionCoordinator(transport).applyUserTractionControlConfiguration(
-            mapIndex: 0, powerTractionPercent: 20, brakingTractionPercent: 20, expected: nil
+        let actual = try await makeUserTractionCoordinator(transport).applyUserTractionControlConfiguration(
+            mapIndex: 0, powerTractionPercent: 20, brakingTractionPercent: 20
         )
-        #expect(transport.writePayloads.isEmpty)
+        #expect(actual == .init(mapIndex: 0, powerRaw: 200, brakingRaw: 200))
+        #expect(transport.writePayloads.count == 1)
+        #expect(transport.requests.count == 1)
     }
 
-    @Test("Changed known configuration is returned without writing")
-    func staleBaseline() async {
+    @Test("A write that the bike ignores is not reported as applied")
+    func ignoredWrite() async {
         let transport = FakeBikeBLEPowerModeConfigurationTransport()
-        await #expect(throws: BikeSDKTractionControlError.changed(.init(mapIndex: 0, powerRaw: 200, brakingRaw: 200))) {
-            try await makeUserTractionCoordinator(transport).applyUserTractionControlConfiguration(
-                mapIndex: 0, powerTractionPercent: 35, brakingTractionPercent: 0,
-                expected: .init(mapIndex: 0, powerRaw: 100, brakingRaw: 0)
-            )
-        }
-        #expect(transport.writePayloads.isEmpty)
-    }
-
-    @Test("An unsuccessful no-op never falls through to the requested write")
-    func noOpMismatch() async {
-        let transport = FakeBikeBLEPowerModeConfigurationTransport()
-        transport.queuedTractionResponses = [
-            Data([2, 8, 0, 0, 200, 0, 200, 0]), Data([2, 8, 0, 0, 100, 0, 200, 0])
-        ]
-        let expectedError = BikeSDKTractionControlError.mismatch(.init(mapIndex: 0, powerRaw: 100, brakingRaw: 200))
-        await #expect(throws: expectedError) {
+        transport.ignoresTractionWrites = true
+        let error = BikeSDKTractionControlError.mismatch(.init(mapIndex: 0, powerRaw: 200, brakingRaw: 200))
+        await #expect(throws: error) {
             try await apply(makeUserTractionCoordinator(transport))
         }
         #expect(transport.writePayloads.count == 1)
     }
 
-    @Test("Unconfirmed writes can be explicitly retried on the same coordinator")
-    func retryAfterTimeout() async throws {
+    @Test("An unavailable confirmation permits a new explicit commit while the transport remains ready")
+    func retryAfterReadFailure() async throws {
         let transport = FakeBikeBLEPowerModeConfigurationTransport()
-        transport.tractionReadFailuresRemaining = 2
+        transport.tractionReadFailuresRemaining = 1
         let coordinator = makeUserTractionCoordinator(transport)
         await #expect(throws: BikeSDKTractionControlError.confirmationUnavailable) { try await apply(coordinator) }
         #expect(transport.writePayloads.count == 1)
         _ = try await apply(coordinator)
-        #expect(transport.writePayloads.count == 1)
+        #expect(transport.writePayloads.count == 2)
     }
 
-    @Test("Both returned fields must match, including the unchanged sibling")
-    func siblingMismatch() async {
+    @Test("Both returned fields must match exactly", arguments: [
+        BikeSDKTractionControlSnapshot(mapIndex: 0, powerRaw: 350, brakingRaw: 1),
+        BikeSDKTractionControlSnapshot(mapIndex: 0, powerRaw: 349, brakingRaw: 0)
+    ])
+    func returnedValuesMismatch(actual: BikeSDKTractionControlSnapshot) async {
         let transport = FakeBikeBLEPowerModeConfigurationTransport()
-        transport.tractionReadFailuresRemaining = 1
-        transport.queuedTractionResponses = [Data([2, 8, 0, 0, 94, 1, 10, 0])]
-        await #expect(throws: BikeSDKTractionControlError.mismatch(.init(mapIndex: 0, powerRaw: 350, brakingRaw: 10))) {
+        transport.queuedTractionResponses = [Data([
+            2, 8, 0, 0,
+            UInt8(truncatingIfNeeded: actual.powerRaw), UInt8(truncatingIfNeeded: actual.powerRaw >> 8),
+            UInt8(truncatingIfNeeded: actual.brakingRaw), UInt8(truncatingIfNeeded: actual.brakingRaw >> 8)
+        ])]
+        await #expect(throws: BikeSDKTractionControlError.mismatch(actual)) {
             try await apply(makeUserTractionCoordinator(transport))
         }
     }
 
-    @Test("Write errors distinguish explicit rejection from an uncertain outcome", arguments: [true, false])
+    @Test("Write errors distinguish rejection from an uncertain outcome", arguments: [true, false])
     func writeErrors(rejected: Bool) async {
         let transport = FakeBikeBLEPowerModeConfigurationTransport()
-        transport.tractionReadFailuresRemaining = 1
         transport.writeError = rejected
             ? StarkProtocolError.configurationRequestFailed(status: 1)
-            : BikeSDKError.operationFailed("Synthetic timeout")
+            : BikeSDKError.operationFailed("Synthetic write failure")
         await #expect(throws: rejected ? BikeSDKTractionControlError.rejected : .confirmationUnavailable) {
             try await apply(makeUserTractionCoordinator(transport))
         }
         #expect(transport.writePayloads.count == 1)
+        #expect(transport.requests.isEmpty)
     }
 
-    @Test("A desynchronized transport requires reconnect before retrying")
+    @Test("A desynchronized confirmation requires reconnect before another write")
     func desynchronizedTransport() async throws {
         let transport = FakeBikeBLEPowerModeConfigurationTransport()
         transport.tractionReadFailuresRemaining = 1
         transport.desynchronizesOnReadFailure = true
         let coordinator = makeUserTractionCoordinator(transport)
         await #expect(throws: BikeSDKTractionControlError.connectionRecoveryRequired) { try await apply(coordinator) }
-        #expect(transport.writePayloads.isEmpty)
+        #expect(transport.writePayloads.count == 1)
         await #expect(throws: BikeSDKTractionControlError.connectionRecoveryRequired) { try await apply(coordinator) }
-        #expect(transport.writePayloads.isEmpty)
+        #expect(transport.writePayloads.count == 1)
         coordinator.reset()
         transport.isDesynchronized = false
         _ = try await apply(coordinator)
         #expect(transport.writePayloads.count == 2)
     }
 
-    @Test("Cancellation of the initial read never authorizes fallback writing")
-    func cancelledRead() async {
+    @Test("Cancellation while writing never falls through to confirmation")
+    func cancelledWrite() async {
         let transport = FakeBikeBLEPowerModeConfigurationTransport()
-        transport.tractionReadFailuresRemaining = 1
-        transport.tractionReadError = CancellationError()
+        transport.writeError = CancellationError()
         await #expect(throws: CancellationError.self) { try await apply(makeUserTractionCoordinator(transport)) }
-        #expect(transport.writePayloads.isEmpty)
+        #expect(transport.writePayloads.count == 1)
+        #expect(transport.requests.isEmpty)
     }
 
-    @Test("A session reset during reading prevents a stale write")
-    func staleSession() async {
+    @Test("A session reset during the firmware check prevents a stale write")
+    func staleFirmwareSession() async {
+        let transport = FakeBikeBLEPowerModeConfigurationTransport()
+        let coordinator = makeUserTractionCoordinator(transport)
+        transport.onVersions = { coordinator.reset() }
+        await #expect(throws: CancellationError.self) { try await apply(coordinator) }
+        #expect(transport.writePayloads.isEmpty)
+        #expect(transport.requests.isEmpty)
+    }
+
+    @Test("A session reset during confirmation cannot report a stale success")
+    func staleConfirmationSession() async {
         let transport = FakeBikeBLEPowerModeConfigurationTransport()
         let coordinator = makeUserTractionCoordinator(transport)
         transport.onTractionRead = { coordinator.reset() }
         await #expect(throws: CancellationError.self) { try await apply(coordinator) }
-        #expect(transport.writePayloads.isEmpty)
+        #expect(transport.writePayloads.count == 1)
     }
 
     @Test("Invalid requested values never reach the transport", arguments: [-1.0, 100.1, 12.5, Double.nan])
@@ -154,18 +151,17 @@ struct BikeBLEUserTractionControlTests {
         let transport = FakeBikeBLEPowerModeConfigurationTransport()
         await #expect(throws: (any Error).self) {
             try await makeUserTractionCoordinator(transport).applyUserTractionControlConfiguration(
-                mapIndex: 0, powerTractionPercent: value, brakingTractionPercent: 0, expected: nil
+                mapIndex: 0, powerTractionPercent: value, brakingTractionPercent: 0
             )
         }
-        #expect(transport.writePayloads.isEmpty)
+        #expect(transport.operations.isEmpty)
     }
 
     private func apply(
         _ coordinator: BikeBLEPowerModeConfigurationCoordinator
     ) async throws -> BikeSDKTractionControlSnapshot {
         try await coordinator.applyUserTractionControlConfiguration(
-            mapIndex: 0, powerTractionPercent: 35, brakingTractionPercent: 0, expected: nil
+            mapIndex: 0, powerTractionPercent: 35, brakingTractionPercent: 0
         )
     }
-
 }

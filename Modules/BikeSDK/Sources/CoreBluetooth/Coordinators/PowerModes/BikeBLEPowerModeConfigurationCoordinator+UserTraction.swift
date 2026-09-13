@@ -20,8 +20,7 @@ extension BikeBLEPowerModeConfigurationCoordinator {
     }
 
     func applyUserTractionControlConfiguration(
-        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double,
-        expected: BikeSDKTractionControlSnapshot?
+        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double
     ) async throws -> BikeSDKTractionControlSnapshot {
         let token = generation
         try checkTractionSession(token)
@@ -34,44 +33,15 @@ extension BikeBLEPowerModeConfigurationCoordinator {
             powerRaw: try StarkTractionControlConfigurationCommand.rawValue(forPercent: powerTractionPercent),
             brakingRaw: try StarkTractionControlConfigurationCommand.rawValue(forPercent: brakingTractionPercent)
         )
-        guard expected == nil || expected?.mapIndex == mapIndex else { throw BikeSDKTractionControlError.rejected }
         let compatibility = try await readTractionControlFirmwareCompatibility()
         try checkTractionSession(token)
         guard compatibility.isCompatible else { throw BikeSDKTractionControlError.unavailable }
         preparedTractionConfigurations[mapIndex] = nil
-        let previous = try await readOptionalUserTraction(mapIndex: mapIndex, token: token)
-        try checkTractionSession(token)
-        if let previous {
-            let actual = tractionSnapshot(previous)
-            if let expected, expected != actual { throw BikeSDKTractionControlError.changed(actual) }
-            if actual == desired { return actual }
-            // A readable baseline always retains the exact no-op guard.
-            let noOp = try StarkTractionControlConfigurationCommand.noOpWritePacket(configuration: previous)
-            try await writeUserTraction(noOp, token: token)
-            let verified = try await confirmUserTraction(mapIndex: mapIndex, token: token)
-            guard verified == actual else { throw BikeSDKTractionControlError.mismatch(verified) }
-        }
-        try checkTractionSession(token)
-        // Only this user-initiated operation may proceed without a readable baseline.
+        await report("4005 TC map \(mapIndex) user write firmware=\(compatibility.firmware)")
         try await writeUserTraction(packet, token: token)
         let verified = try await confirmUserTraction(mapIndex: mapIndex, token: token)
         guard verified == desired else { throw BikeSDKTractionControlError.mismatch(verified) }
         return verified
-    }
-
-    private func readOptionalUserTraction(
-        mapIndex: Int, token: Int
-    ) async throws -> StarkTractionControlConfigurationPayload? {
-        do {
-            let value = try await readTractionControlConfiguration(mapIndex: mapIndex)
-            try checkTractionSession(token)
-            return value
-        } catch is CancellationError {
-            throw CancellationError()
-        } catch {
-            try checkTractionSession(token)
-            return nil
-        }
     }
 
     private func writeUserTraction(_ packet: Data, token: Int) async throws {
@@ -79,6 +49,7 @@ extension BikeBLEPowerModeConfigurationCoordinator {
         do { try await transport.writeConfiguration(packet) } catch is CancellationError {
             throw CancellationError()
         } catch {
+            await report("4005 TC write failed: \(error.localizedDescription)")
             try checkTractionSession(token)
             if case StarkProtocolError.configurationRequestFailed = error {
                 throw BikeSDKTractionControlError.rejected
@@ -98,6 +69,7 @@ extension BikeBLEPowerModeConfigurationCoordinator {
         } catch is CancellationError {
             throw CancellationError()
         } catch {
+            await report("4005 TC map \(mapIndex) confirmation failed: \(error.localizedDescription)")
             try checkTractionSession(token)
             throw BikeSDKTractionControlError.confirmationUnavailable
         }

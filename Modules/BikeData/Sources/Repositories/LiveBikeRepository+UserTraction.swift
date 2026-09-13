@@ -6,12 +6,11 @@ extension LiveBikeRepository {
     }
 
     public func applyUserTractionControlConfiguration(
-        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double,
-        expected: BikeTractionControlSnapshot?
+        mapIndex: Int, powerTractionPercent: Double, brakingTractionPercent: Double
     ) async throws -> BikeTractionControlSnapshot {
         try await controlService.applyUserTractionControlConfiguration(
             mapIndex: mapIndex, powerTractionPercent: powerTractionPercent,
-            brakingTractionPercent: brakingTractionPercent, expected: expected
+            brakingTractionPercent: brakingTractionPercent
         )
     }
 

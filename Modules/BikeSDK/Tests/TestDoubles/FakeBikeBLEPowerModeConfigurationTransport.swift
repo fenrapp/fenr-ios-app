@@ -4,6 +4,13 @@ import StarkProtocol
 
 @MainActor
 final class FakeBikeBLEPowerModeConfigurationTransport: BikeBLEPowerModeConfigurationTransporting {
+    enum Operation: Equatable {
+        case versions
+        case configurationRead(Data)
+        case configurationWrite(Data)
+    }
+
+    private(set) var operations: [Operation] = []
     private(set) var requests: [Data] = []
     private(set) var writePayloads: [Data] = []
     private(set) var allowedLiveTelemetrySessionValues: [Bool] = []
@@ -28,6 +35,7 @@ final class FakeBikeBLEPowerModeConfigurationTransport: BikeBLEPowerModeConfigur
     }
 
     func readVersions() async throws -> Data {
+        operations.append(.versions)
         onVersions?()
         return versionData
     }
@@ -37,6 +45,7 @@ final class FakeBikeBLEPowerModeConfigurationTransport: BikeBLEPowerModeConfigur
         operationName: String,
         allowLiveTelemetrySession: Bool
     ) async throws -> Data {
+        operations.append(.configurationRead(request))
         requests.append(request)
         allowedLiveTelemetrySessionValues.append(allowLiveTelemetrySession)
         guard !failingRequests.contains(request) else {
@@ -66,6 +75,7 @@ final class FakeBikeBLEPowerModeConfigurationTransport: BikeBLEPowerModeConfigur
     }
 
     func writeConfiguration(_ payload: Data) async throws {
+        operations.append(.configurationWrite(payload))
         writePayloads.append(payload)
         if let writeError { throw writeError }
         guard !payload.isEmpty, payload[0] == 1 else {
