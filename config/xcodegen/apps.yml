@@ -373,6 +373,7 @@ targets:
         WKSupportsRunningWithoutiOSApp: false
         WKSupportsAlwaysOnDisplay: true
     sources:
+      - path: App/Resources/Assets.xcassets
       - path: Watch/Sources
       - path: Watch/Resources/Production/InfoPlist.xcstrings
         buildPhase: resources
@@ -402,6 +403,7 @@ targets:
         WKSupportsRunningWithoutiOSApp: false
         WKSupportsAlwaysOnDisplay: true
     sources:
+      - path: App/Resources/Assets.xcassets
       - path: Watch/Sources
         excludes:
           - App/FENRWatchApp.swift
