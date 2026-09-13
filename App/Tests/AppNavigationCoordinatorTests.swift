@@ -303,7 +303,23 @@ struct AppExternalNavigationTests {
 @MainActor
 @Suite("App presentation policy")
 struct AppPresentationPolicyTests {
-    @Test("Only the advanced curve editor permits portrait and landscape in settings")
+    @Test("All settings destinations support rotation", arguments: [
+        AppRoute.settings(.overview), .settings(.rideDisplay), .settings(.navigation),
+        .settings(.navigationAppearance), .settings(.bikeModel), .settings(.liveActivities),
+        .settings(.acknowledgments), .dashboardCards(.overview), .dashboardCards(.section(id: "energy")),
+        .rideHistory(.overview), .rideHistory(.detail(id: UUID())),
+        .maintenance(.overview), .maintenance(.detail(id: UUID())), .maintenance(.form(id: nil)),
+        .powerModes, .advancedPowerModes, .bikeLockSettings
+    ] + BikeDiagnosticsDestination.allCases.map(AppRoute.diagnostics)
+        + BatteryHealthDestination.allCases.map(AppRoute.batteryHealth))
+    func settingsSupportRotation(route: AppRoute) {
+        let spy = AppNavigationOrientationSpy()
+        let controller = AppPresentationController(policy: .init(), orientationController: spy)
+        controller.update(for: AppNavigationState(root: .dashboard, path: [route]))
+        #expect(spy.requests == [.allButUpsideDown])
+    }
+
+    @Test("Navigating between basic and advanced controls preserves adaptive orientation")
     func advancedEditorSupportsRotation() {
         let spy = AppNavigationOrientationSpy()
         let controller = AppPresentationController(policy: .init(), orientationController: spy)
@@ -314,7 +330,49 @@ struct AppPresentationPolicyTests {
         controller.update(for: state)
         state.pop()
         controller.update(for: state)
-        #expect(spy.requests == [.portrait, .allButUpsideDown, .portrait])
+        #expect(spy.requests == [.allButUpsideDown])
+    }
+
+    @Test("Closing the map restores settings rotation; minimizing returns to the dashboard")
+    func mapPresentationRestoresSettingsOrientation() {
+        let spy = AppNavigationOrientationSpy()
+        let controller = AppPresentationController(policy: .init(), orientationController: spy)
+        let navigation = AppNavigationCoordinator()
+        navigation.send(.setRoot(.dashboard))
+        navigation.send(.push(.settings(.overview)))
+        navigation.send(.push(.settings(.navigation)))
+        let settingsPath = navigation.state.path
+        controller.update(for: navigation.state)
+        navigation.send(.showRideNavigation(nil))
+        controller.update(for: navigation.state)
+        navigation.send(.closeRideNavigation)
+        controller.update(for: navigation.state)
+        #expect(navigation.state.path == settingsPath)
+        navigation.send(.showRideNavigation(nil))
+        controller.update(for: navigation.state)
+        navigation.send(.minimizeRideNavigation)
+        controller.update(for: navigation.state)
+        #expect(navigation.state.path.isEmpty)
+        navigation.send(.replacePath(settingsPath))
+        controller.update(for: navigation.state)
+        navigation.send(.expandRideNavigation)
+        controller.update(for: navigation.state)
+        navigation.send(.closeRideNavigation)
+        controller.update(for: navigation.state)
+
+        #expect(navigation.state.path == settingsPath)
+        #expect(spy.requests == [
+            .allButUpsideDown, .landscape, .allButUpsideDown, .landscape,
+            .allButUpsideDown, .landscape, .allButUpsideDown
+        ])
+    }
+
+    @Test("Loading and onboarding stay portrait", arguments: [
+        AppNavigationRoot.loading, .onboarding
+    ])
+    func setupStaysPortrait(root: AppNavigationRoot) {
+        let policy = AppPresentationPolicy()
+        #expect(policy.orientation(for: AppNavigationState(root: root)) == .portrait)
     }
 
     @Test("Derives orientation and suppresses duplicate requests")
@@ -328,10 +386,16 @@ struct AppPresentationPolicyTests {
 
         controller.update(for: navigation.state)
         controller.update(for: navigation.state)
+
         navigation.send(.setRoot(.dashboard))
         controller.update(for: navigation.state)
         navigation.send(.push(.settings(.overview)))
         controller.update(for: navigation.state)
+        controller.update(for: navigation.state)
+
+        navigation.send(.push(.settings(.rideDisplay)))
+        controller.update(for: navigation.state)
+        navigation.send(.pop(ifTop: .settings(.rideDisplay)))
         controller.update(for: navigation.state)
 
         navigation.send(.popToRoot)
@@ -341,7 +405,7 @@ struct AppPresentationPolicyTests {
         navigation.send(.push(.settings(.overview)))
         controller.update(for: navigation.state)
 
-        #expect(spy.requests == [.portrait, .landscape, .portrait, .landscape, .portrait])
+        #expect(spy.requests == [.portrait, .landscape, .allButUpsideDown, .landscape, .allButUpsideDown])
     }
 }
 
