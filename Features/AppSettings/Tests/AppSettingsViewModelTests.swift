@@ -25,6 +25,8 @@ struct AppSettingsViewModelTests {
         viewModel.selectDashboardBatteryIndicatorMode(id: DashboardBatteryIndicatorMode.estimatedRange.rawValue)
         viewModel.selectDashboardDeviceBatteryDisplayMode(id: DashboardDeviceBatteryDisplayMode.iconOnly.rawValue)
         viewModel.selectDashboardTemperatureDisplayMode(id: DashboardTemperatureDisplayMode.inverter.rawValue)
+        viewModel.setShowsBikeHours(true)
+        #expect(viewModel.viewState.showsBikeHours)
         viewModel.selectMeasurementSystem(id: MeasurementSystem.imperial.rawValue)
         viewModel.selectBatteryPackCapacity(id: BatteryPackCapacity.sixPointEightKilowattHours.rawValue)
         #expect(viewModel.viewState.measurementSystem.selectedID == MeasurementSystem.imperial.rawValue)
@@ -38,6 +40,7 @@ struct AppSettingsViewModelTests {
             dashboardBatteryIndicatorMode: .estimatedRange,
             dashboardDeviceBatteryDisplayMode: .iconOnly,
             dashboardTemperatureDisplayMode: .inverter,
+            showsBikeHours: true,
             measurementSystem: .imperial
         )
         expectedSettings.setBatteryPackCapacity(
@@ -85,6 +88,7 @@ struct AppSettingsViewModelTests {
                 == ["Icon and percentage", "Percentage only", "Icon only", "Hidden"]
         )
         #expect(viewModel.viewState.dashboardTemperatureDisplayMode.selectedID == "off")
+        #expect(!viewModel.viewState.showsBikeHours)
         #expect(
             viewModel.viewState.dashboardTemperatureDisplayMode.options.map { String(localized: $0.title) }
                 == ["Off", "Battery", "Inverter", "Both"]

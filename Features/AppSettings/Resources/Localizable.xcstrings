@@ -1,6 +1,17 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "appSettingsShowBikeHours" : {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Bike Hours"
+          }
+        }
+      }
+    },
     "app.settings.progressBar.thickness.title" : {
       "extractionState" : "manual",
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Bar thickness" } } }

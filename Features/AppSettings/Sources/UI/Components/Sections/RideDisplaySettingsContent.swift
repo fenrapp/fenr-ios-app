@@ -8,12 +8,14 @@ struct RideDisplaySettingsContent: View {
     let bikeBatteryDisplayMode: AppSettingsSelectionViewState
     let deviceBatteryDisplayMode: AppSettingsSelectionViewState
     let temperatureDisplayMode: AppSettingsSelectionViewState
+    let showsBikeHours: Bool
     let speedSource: SpeedSourceSettingsViewState
     let onSelectProgressBarMode: (String) -> Void
     let onSelectProgressBarThickness: (String) -> Void
     let onSelectBikeBatteryDisplayMode: (String) -> Void
     let onSelectDeviceBatteryDisplayMode: (String) -> Void
     let onSelectTemperatureDisplayMode: (String) -> Void
+    let onSetShowsBikeHours: (Bool) -> Void
     let onSelectSpeedSource: (String) -> Void
     let onRequestLocationAccess: () -> Void
 
@@ -43,6 +45,10 @@ struct RideDisplaySettingsContent: View {
                 onSelect: onSelectDeviceBatteryDisplayMode
             )
             .accessibilityIdentifier("settings.phoneBattery")
+            Toggle(.appSettingsShowBikeHours, isOn: Binding(
+                get: { showsBikeHours }, set: { onSetShowsBikeHours($0) }
+            ))
+            .accessibilityIdentifier("settings.bikeHours")
         } header: {
             Text(.appSettingsDashboardPresentationHeader)
         } footer: {

@@ -17,6 +17,7 @@ struct RideDashboardMappingInput: Equatable {
     let progressBarThickness: DashboardProgressBarThickness
     let batteryIndicatorMode: DashboardBatteryIndicatorMode
     let temperatureDisplayMode: DashboardTemperatureDisplayMode
+    let showsBikeHours: Bool
     let isGPSAvailable: Bool
     let powerModeNames: [Int: PowerModeName]
 
@@ -30,6 +31,7 @@ struct RideDashboardMappingInput: Equatable {
         progressBarThickness = snapshot.settings.dashboardProgressBarThickness
         batteryIndicatorMode = snapshot.settings.dashboardBatteryIndicatorMode
         temperatureDisplayMode = snapshot.settings.dashboardTemperatureDisplayMode
+        showsBikeHours = snapshot.settings.showsBikeHours
         isGPSAvailable = snapshot.isGPSAvailable
         powerModeNames = snapshot.settings.powerModeNames(forVIN: snapshot.profile?.vin)
     }
@@ -41,7 +43,8 @@ struct RideDashboardMappingInput: Equatable {
             telemetry: telemetry, connection: connection, speedKilometersPerHour: speedKilometersPerHour,
             speedSource: speedSource, progressBarMode: progressBarMode, progressBarThickness: progressBarThickness,
             batteryIndicatorMode: batteryIndicatorMode,
-            temperatureDisplayMode: temperatureDisplayMode, measurementSystem: configuration.measurementSystem,
+            temperatureDisplayMode: temperatureDisplayMode, showsBikeHours: showsBikeHours,
+            measurementSystem: configuration.measurementSystem,
             isGPSAvailable: isGPSAvailable, powerModeNames: powerModeNames, using: measurementMapper
         )
     }
@@ -55,6 +58,7 @@ struct RideDashboardMappingInput: Equatable {
             && lhs.progressBarThickness == rhs.progressBarThickness
             && lhs.batteryIndicatorMode == rhs.batteryIndicatorMode
             && lhs.temperatureDisplayMode == rhs.temperatureDisplayMode
+            && lhs.showsBikeHours == rhs.showsBikeHours
             && lhs.isGPSAvailable == rhs.isGPSAvailable
             && lhs.powerModeNames == rhs.powerModeNames
             && sameTelemetryPresentation(lhs.telemetry, rhs.telemetry)
@@ -64,6 +68,8 @@ struct RideDashboardMappingInput: Equatable {
         (lhs.speed.kmh != nil) == (rhs.speed.kmh != nil)
             && lhs.batteryLevel.percent == rhs.batteryLevel.percent
             && lhs.odometer.kilometers == rhs.odometer.kilometers
+            && DashboardExperimentalHoursMapper.freshCounter(in: lhs)?.rawValue
+                == DashboardExperimentalHoursMapper.freshCounter(in: rhs)?.rawValue
             && lhs.runState == rhs.runState
             && lhs.mode == rhs.mode
             && lhs.statusFlags.isChargerConnected == rhs.statusFlags.isChargerConnected

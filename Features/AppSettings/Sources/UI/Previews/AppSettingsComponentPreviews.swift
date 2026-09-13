@@ -74,6 +74,7 @@ import SwiftUI
                     .init(id: "both", title: "Both")
                 ]
             ),
+            showsBikeHours: false,
             speedSource: .init(
                 selection: .init(
                     selectedID: "gps",
@@ -91,6 +92,7 @@ import SwiftUI
             onSelectBikeBatteryDisplayMode: { _ in },
             onSelectDeviceBatteryDisplayMode: { _ in },
             onSelectTemperatureDisplayMode: { _ in },
+            onSetShowsBikeHours: { _ in },
             onSelectSpeedSource: { _ in },
             onRequestLocationAccess: {}
         )

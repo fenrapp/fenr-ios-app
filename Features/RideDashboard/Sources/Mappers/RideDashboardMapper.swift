@@ -9,6 +9,7 @@ public struct RideDashboardMapper: Sendable {
     private let connectionMapper: RideDashboardConnectionMapper
     private let temperatureMapper: DashboardTemperatureSummaryMapper
     private let compactSpeedVisibilityMapper: DashboardCompactSpeedVisibilityMapper
+    private let experimentalHoursMapper: DashboardExperimentalHoursMapper
 
     public init(
         makeMeasurementMapper: @escaping @Sendable (MeasurementSystem) -> RideDashboardMeasurementMapper,
@@ -16,7 +17,8 @@ public struct RideDashboardMapper: Sendable {
         progressBarMapper: DashboardProgressBarMapper,
         connectionMapper: RideDashboardConnectionMapper,
         temperatureMapper: DashboardTemperatureSummaryMapper,
-        compactSpeedVisibilityMapper: DashboardCompactSpeedVisibilityMapper
+        compactSpeedVisibilityMapper: DashboardCompactSpeedVisibilityMapper,
+        experimentalHoursMapper: DashboardExperimentalHoursMapper
     ) {
         self.makeMeasurementMapper = makeMeasurementMapper
         self.speedSourceIndicatorMapper = speedSourceIndicatorMapper
@@ -24,6 +26,7 @@ public struct RideDashboardMapper: Sendable {
         self.connectionMapper = connectionMapper
         self.temperatureMapper = temperatureMapper
         self.compactSpeedVisibilityMapper = compactSpeedVisibilityMapper
+        self.experimentalHoursMapper = experimentalHoursMapper
     }
 
     func measurementMapper(for system: MeasurementSystem) -> RideDashboardMeasurementMapper {
@@ -39,6 +42,7 @@ public struct RideDashboardMapper: Sendable {
         progressBarThickness: DashboardProgressBarThickness = .regular,
         batteryIndicatorMode: DashboardBatteryIndicatorMode = .percentage,
         temperatureDisplayMode: DashboardTemperatureDisplayMode = .off,
+        showsBikeHours: Bool = false,
         measurementSystem: MeasurementSystem,
         isGPSAvailable: Bool = true,
         powerModeNames: [Int: PowerModeName] = [:],
@@ -75,6 +79,7 @@ public struct RideDashboardMapper: Sendable {
                 kilometers: hasTelemetry ? telemetry.odometer.kilometers : nil,
                 measurementMapper: measurementMapper
             ),
+            experimentalHours: experimentalHoursMapper.map(telemetry, hasTelemetry: hasTelemetry && showsBikeHours),
             progressBar: progressBarMapper.map(
                 mode: progressBarMode,
                 speedProgress: speedometer.progress,
@@ -256,8 +261,10 @@ public struct RideDashboardMapper: Sendable {
             emphasis: emphasis
         )
     }
+}
 
-    private enum Constants {
+private extension RideDashboardMapper {
+    enum Constants {
         static let maximumBatteryPercentage = 100
         static let criticalBatteryPercentage = 21
         static let warningBatteryPercentage = 51

@@ -28,7 +28,8 @@ public enum RideDashboardMapperFactory {
             progressBarMapper: DashboardProgressBarMapper(),
             connectionMapper: RideDashboardConnectionMapper(),
             temperatureMapper: DashboardTemperatureSummaryMapper(),
-            compactSpeedVisibilityMapper: DashboardCompactSpeedVisibilityMapper()
+            compactSpeedVisibilityMapper: DashboardCompactSpeedVisibilityMapper(),
+            experimentalHoursMapper: DashboardExperimentalHoursMapper()
         )
     }
 

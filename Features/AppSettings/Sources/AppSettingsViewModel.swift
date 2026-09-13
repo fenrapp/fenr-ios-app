@@ -121,6 +121,10 @@ public final class AppSettingsViewModel {
         applyAndSave(.measurementSystem(measurementSystem))
     }
 
+    public func setShowsBikeHours(_ isVisible: Bool) {
+        applyAndSave(.showsBikeHours(isVisible))
+    }
+
     public func selectBatteryPackCapacity(id: String) {
         guard let batteryPackCapacity = BatteryPackCapacity(rawValue: id),
               profile?.vin == settings.vin else { return }

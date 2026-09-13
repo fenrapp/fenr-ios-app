@@ -49,6 +49,7 @@ struct AppSettingsDecodingTests {
         #expect(settings.dashboardBatteryIndicatorMode == .percentage)
         #expect(settings.dashboardDeviceBatteryDisplayMode == .iconAndText)
         #expect(settings.dashboardTemperatureDisplayMode == .off)
+        #expect(!settings.showsBikeHours)
         #expect(settings.dashboardCardConfiguration == .init())
         #expect(settings.rideNavigation == .init())
         #expect(settings.powerModeNamesByVIN.isEmpty)

@@ -6,6 +6,7 @@ public struct BikeTelemetry: Equatable, Sendable {
     public var speed: BikeSpeed
     public var motorRPM: MotorRPM
     public var odometer: BikeOdometer
+    public var experimentalUsageCounter: BikeUsageCounter?
     public var inverterTemperatureRawValues: [UInt16]
     public var inverterTemperaturesCelsius: [Double?]
     public var statusFlags: BikeStatusFlags
@@ -34,6 +35,7 @@ public struct BikeTelemetry: Equatable, Sendable {
         speed: BikeSpeed = .unknown,
         motorRPM: MotorRPM = .unknown,
         odometer: BikeOdometer = .unknown,
+        experimentalUsageCounter: BikeUsageCounter? = nil,
         inverterTemperatureRawValues: [UInt16] = [],
         inverterTemperaturesCelsius: [Double?] = [],
         statusFlags: BikeStatusFlags = .unknown,
@@ -49,6 +51,7 @@ public struct BikeTelemetry: Equatable, Sendable {
         self.speed = speed
         self.motorRPM = motorRPM
         self.odometer = odometer
+        self.experimentalUsageCounter = experimentalUsageCounter
         self.inverterTemperatureRawValues = inverterTemperatureRawValues
         self.inverterTemperaturesCelsius = inverterTemperaturesCelsius
         self.statusFlags = statusFlags

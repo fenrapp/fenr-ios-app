@@ -1,6 +1,61 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "rideDashboardExperimentalHoursValue" : {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ h"
+          }
+        }
+      }
+    },
+    "rideDashboardExperimentalHoursAccessibility" : {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Experimental hours: approximately %@ hours. Tap for details."
+          }
+        }
+      }
+    },
+    "rideDashboardExperimentalHoursTitle" : {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Experimental Hours"
+          }
+        }
+      }
+    },
+    "rideDashboardExperimentalHoursDismiss" : {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "rideDashboardExperimentalHoursExplanation" : {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This estimate assumes the bike counter measures seconds. Its units and meaning are still being tested; it is not a verified lifetime hour meter. Raw counter: %@."
+          }
+        }
+      }
+    },
     "rideDashboardValueUnavailable" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "--" } } } },
     "rideDashboardAdvancedCurveAccessibility" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Advanced curve confirmed" } } } },
     "rideDashboardHistoryRetry" : { "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Retry" } } } },
