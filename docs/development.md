@@ -52,11 +52,12 @@ directories. Keep shared specifications in `config/xcodegen/`; the ignored
 | --- | --- |
 | `FENR` | Production iPhone app, public demo, Share and Live Activity extensions. |
 | `FENRDebug` | Emulator-backed iPhone development app, without motorcycle hardware. |
-| `FENRWatch` | Independent, telemetry-only Watch app with direct Bluetooth. |
-| `FENRWatchDebug` | Emulator-backed Watch app; starts in the charging scenario. |
+| `FENRWatch` | Read-only Watch companion embedded in FENR; receives iPhone snapshots. |
+| `FENRWatchDebug` | Companion embedded in FENRDebug; optional local dashboard fixtures. |
 
-The iPhone app does not embed the Watch app. The first distribution is iPhone-only;
-the Watch implementation remains available for development.
+The iPhone targets embed their matching Watch companions. Production uses
+`in.fenr.app.watch`; debug uses `com.fenr.app.debug.watch`. The Watch has no
+motorcycle Bluetooth permissions, credentials, or configuration controls.
 
 For the public demo, launch `FENR` and choose **Explore demo > Start demo**. Its
 motorcycle data and saved records are isolated from real-bike storage. Navigation
@@ -67,7 +68,7 @@ still uses actual location and Apple Maps services. See the
 
 The observed VCU accepts one active Bluetooth client. Disconnect the Arkenstone
 phone and other clients before testing. Preserve one iPhone session across all
-screens; the Watch owns its own session and competes for the same vehicle link.
+screens. The Watch receives read-only snapshots from that same iPhone session.
 
 Vehicle writes are limited to charging power/target, base-map power/regeneration,
 traction settings, bike lock and iPhone advanced power/regeneration curves. Keep firmware and capability gates, safe no-op
@@ -87,3 +88,26 @@ Capture is opt-in through **Start** and **Stop** in Diagnostics and is disabled
 at every process launch. It can start while disconnected and continue across
 reconnection to the same motorcycle. Telemetry and vehicle confirmations work
 without recording. Keep exported logs, captures and build results outside Git.
+
+## Watch companion
+
+`WatchCompanionDomain` defines the versioned, identifier-free snapshot and session
+contracts for reading on Watch and publishing on iPhone. `WatchCompanionData`
+handles WatchConnectivity and the last received
+snapshot. The iPhone observes `VehicleSession` and owns the charging-monitoring
+consumer; the Watch only renders battery, active map, power traction, and charging.
+Missing fields remain unavailable. No vehicle command is accepted over this channel.
+The iPhone publisher serializes stop/restart and releases its monitoring lease
+even if its owner is destroyed. Watch observers and refresh tasks end with the dashboard.
+
+Live messages are limited to one per second and one tracked send. Lost replies
+expire after 15 seconds; callbacks from expired or previous-connection transfers
+cannot complete a newer request. The latest
+state is also synchronized opportunistically with application context. Opening or
+resuming the Watch app requests the latest state; old background deliveries cannot
+replace a newer snapshot. Source telemetry age and phone reachability determine
+whether values are stale. Persisted data never counts as a live connection by itself.
+
+Always On uses a dimmed presentation with reduced ambient refresh frequency.
+The user controls Settings > General > Return to Clock > FENR, up to one hour.
+There is no workout session or promise of continuous background Watch execution.

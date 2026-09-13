@@ -9,76 +9,6 @@
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
-            buildForRunning = "NO"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C4CF7DCAF8635785666B76B1"
-               BuildableName = "AsyncSupportTests.xctest"
-               BlueprintName = "AsyncSupportTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "NO"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A7D34EB549EB91C1186B3A15"
-               BuildableName = "BLETraceDomainTests.xctest"
-               BlueprintName = "BLETraceDomainTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "NO"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A49F065AE3CF70B75CBB79D7"
-               BuildableName = "BikeDomainTests.xctest"
-               BlueprintName = "BikeDomainTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "NO"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "BB55B55EC6FA739D0C8DD1CE"
-               BuildableName = "BikeEmulatorTests.xctest"
-               BlueprintName = "BikeEmulatorTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "NO"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "6E3F61F6793BFE222B4B8EF6"
-               BuildableName = "EnvironmentDomainTests.xctest"
-               BlueprintName = "EnvironmentDomainTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
             buildForRunning = "YES"
             buildForProfiling = "YES"
             buildForArchiving = "YES"
@@ -99,65 +29,9 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "6884A7C381057CB503D75197"
-               BuildableName = "MeasurementPresentationTests.xctest"
-               BlueprintName = "MeasurementPresentationTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "NO"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "4F60C80AD9FE8D96269B7741"
-               BuildableName = "SettingsDataTests.xctest"
-               BlueprintName = "SettingsDataTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "NO"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "464C3F927D9F021D0705E218"
-               BuildableName = "SettingsDomainTests.xctest"
-               BlueprintName = "SettingsDomainTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "NO"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C453FEFC1E038CB490AD2E39"
-               BuildableName = "StarkProtocolTests.xctest"
-               BlueprintName = "StarkProtocolTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "NO"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "28F27724F8C61BA761C6C1E7"
-               BuildableName = "TestSupportTests.xctest"
-               BlueprintName = "TestSupportTests"
+               BlueprintIdentifier = "AC315D76F938AD2E12917CEC"
+               BuildableName = "WatchCompanionDataTests.xctest"
+               BlueprintName = "WatchCompanionDataTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -172,20 +46,6 @@
                BlueprintIdentifier = "A3CD38ED7B4B04E359083090"
                BuildableName = "WatchDashboardTests.xctest"
                BlueprintName = "WatchDashboardTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "NO"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "8A58000E4600947527540951"
-               BuildableName = "WatchOnboardingTests.xctest"
-               BlueprintName = "WatchOnboardingTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -212,116 +72,6 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C453FEFC1E038CB490AD2E39"
-               BuildableName = "StarkProtocolTests.xctest"
-               BlueprintName = "StarkProtocolTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C4CF7DCAF8635785666B76B1"
-               BuildableName = "AsyncSupportTests.xctest"
-               BlueprintName = "AsyncSupportTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A7D34EB549EB91C1186B3A15"
-               BuildableName = "BLETraceDomainTests.xctest"
-               BlueprintName = "BLETraceDomainTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A49F065AE3CF70B75CBB79D7"
-               BuildableName = "BikeDomainTests.xctest"
-               BlueprintName = "BikeDomainTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "BB55B55EC6FA739D0C8DD1CE"
-               BuildableName = "BikeEmulatorTests.xctest"
-               BlueprintName = "BikeEmulatorTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "6E3F61F6793BFE222B4B8EF6"
-               BuildableName = "EnvironmentDomainTests.xctest"
-               BlueprintName = "EnvironmentDomainTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "464C3F927D9F021D0705E218"
-               BuildableName = "SettingsDomainTests.xctest"
-               BlueprintName = "SettingsDomainTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "4F60C80AD9FE8D96269B7741"
-               BuildableName = "SettingsDataTests.xctest"
-               BlueprintName = "SettingsDataTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "28F27724F8C61BA761C6C1E7"
-               BuildableName = "TestSupportTests.xctest"
-               BlueprintName = "TestSupportTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "6884A7C381057CB503D75197"
-               BuildableName = "MeasurementPresentationTests.xctest"
-               BlueprintName = "MeasurementPresentationTests"
-               ReferencedContainer = "container:FENR.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
                BlueprintIdentifier = "A3CD38ED7B4B04E359083090"
                BuildableName = "WatchDashboardTests.xctest"
                BlueprintName = "WatchDashboardTests"
@@ -333,9 +83,9 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "8A58000E4600947527540951"
-               BuildableName = "WatchOnboardingTests.xctest"
-               BlueprintName = "WatchOnboardingTests"
+               BlueprintIdentifier = "AC315D76F938AD2E12917CEC"
+               BuildableName = "WatchCompanionDataTests.xctest"
+               BlueprintName = "WatchCompanionDataTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </TestableReference>

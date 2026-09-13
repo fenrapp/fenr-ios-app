@@ -1,8 +1,18 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "CFBundleDisplayName" : { "comment" : "The debug Watch app name shown by the system.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "FENR Debug" } } } },
-    "NSBluetoothAlwaysUsageDescription" : { "comment" : "Explains why the debug Watch app needs Bluetooth access.", "extractionState" : "manual", "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "FENR uses Bluetooth to connect directly to your bike and show live telemetry." } } } }
+  "sourceLanguage": "en",
+  "strings": {
+    "CFBundleDisplayName": {
+      "comment": "The debug Watch app name shown by the system.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FENR Debug"
+          }
+        }
+      }
+    }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }

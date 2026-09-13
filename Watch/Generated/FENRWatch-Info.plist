@@ -18,9 +18,13 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>bluetooth-central</string>
-	</array>
+	<key>WKApplication</key>
+	<true/>
+	<key>WKCompanionAppBundleIdentifier</key>
+	<string>in.fenr.app</string>
+	<key>WKSupportsAlwaysOnDisplay</key>
+	<true/>
+	<key>WKSupportsRunningWithoutiOSApp</key>
+	<false/>
 </dict>
 </plist>

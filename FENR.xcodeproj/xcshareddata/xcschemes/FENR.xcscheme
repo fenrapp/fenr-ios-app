@@ -581,6 +581,20 @@
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AC315D76F938AD2E12917CEC"
+               BuildableName = "WatchCompanionDataTests.xctest"
+               BlueprintName = "WatchCompanionDataTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -1025,6 +1039,17 @@
                BlueprintIdentifier = "219B2EEDB6F7F684341D70C5"
                BuildableName = "FENRTests.xctest"
                BlueprintName = "FENRTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AC315D76F938AD2E12917CEC"
+               BuildableName = "WatchCompanionDataTests.xctest"
+               BlueprintName = "WatchCompanionDataTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </TestableReference>

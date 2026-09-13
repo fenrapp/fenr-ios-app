@@ -69,15 +69,16 @@ xcodebuild -project FENR.xcodeproj -scheme FENRWatchDebug \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test
 ```
 
-The debug Watch app starts in charging. After installing it, use the Watch UDID
+The debug Watch app normally receives its paired FENRDebug iPhone data. For local
+UI checks, use an explicit fixture argument and the Watch UDID
 from `simctl list` to select a scenario:
 
 ```sh
 FENR_WATCH_SIMULATOR_ID='<watch-simulator-udid>'
 xcrun simctl launch --terminate-running-process \
-  "$FENR_WATCH_SIMULATOR_ID" com.fenr.watch.debug -debugScenario=riding
+  "$FENR_WATCH_SIMULATOR_ID" com.fenr.app.debug.watch -debugScenario=riding
 xcrun simctl launch --terminate-running-process \
-  "$FENR_WATCH_SIMULATOR_ID" com.fenr.watch.debug -debugScenario=charging
+  "$FENR_WATCH_SIMULATOR_ID" com.fenr.app.debug.watch -debugScenario=charging
 ```
 
 ## Release builds
@@ -180,3 +181,13 @@ These checks validate repository resources and the reviewer-document generator;
 they do not submit or upload anything.
 
 See [Security](../SECURITY.md) for the credential scan and sensitive-data review.
+
+## Companion device validation
+
+Connect the iPhone to the motorcycle before locking it. With FENR visible on the
+Watch, compare active map, battery, traction, and charging against the phone.
+Test at least 30 minutes with the phone locked, wrist-down/raise transitions,
+phone-to-Watch range loss, motorcycle disconnect/reconnect, and a changed bike.
+Confirm stale indicators and unavailable fields, and verify that reopening the
+Watch requests a fresh snapshot. Simulator fixtures do not validate this link.
+For Always On, enable it for FENR and choose the desired Return to Clock duration.

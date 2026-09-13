@@ -325,29 +325,13 @@ targets:
     deploymentTarget: "10.0"
     sources:
       - path: Features/WatchDashboard/Tests
-      - path: Watch/Tests
-      - path: Watch/Sources/Navigation
     dependencies:
       - target: WatchDashboard
-      - target: BikeDomain
-      - target: SettingsDomain
+      - target: WatchCompanionDomain
       - target: TestSupport
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchdashboard.tests
-  WatchOnboardingTests:
-    type: bundle.unit-test
-    platform: watchOS
-    deploymentTarget: "10.0"
-    sources:
-      - path: Features/WatchOnboarding/Tests
-    dependencies:
-      - target: WatchOnboarding
-      - target: BikeDomain
-      - target: TestSupport
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchonboarding.tests
   BatteryHealthTests:
     templates: [IOSUnitTests]
     sources:
@@ -468,6 +452,8 @@ targets:
       - path: App/Resources/Shared/Localizable.xcstrings
         buildPhase: resources
     dependencies:
+      - target: WatchCompanionData
+      - target: WatchCompanionDomain
       - target: TestSupport
       - target: BLETraceData
       - target: BLETraceDomain
@@ -523,6 +509,8 @@ targets:
       - path: App/Resources/Shared/Localizable.xcstrings
         buildPhase: resources
     dependencies:
+      - target: WatchCompanionData
+      - target: WatchCompanionDomain
       - target: AsyncSupport
       - target: BLETraceData
       - target: BLETraceDomain
@@ -556,3 +544,13 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.app.debug.tests
+  WatchCompanionDataTests:
+    templates: [SharedUnitTests]
+    sources:
+      - path: Modules/WatchCompanionData/Tests
+    dependencies:
+      - target: WatchCompanionData
+      - target: WatchCompanionDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchcompaniondata.tests

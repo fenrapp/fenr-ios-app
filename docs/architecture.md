@@ -9,7 +9,7 @@ FENR is structured as a modular Swift application. The goal is to keep vehicle t
 | Layer | Responsibility |
 | --- | --- |
 | `App` | iPhone app composition, top-level navigation, dependency wiring, and the single BLE session lifecycle. |
-| `Watch` | Standalone watchOS composition, direct Watch Bluetooth lifecycle, and compact onboarding. |
+| `Watch` | Read-only watchOS companion composition and WatchConnectivity lifecycle. |
 | `Features` | SwiftUI screens, view models, presentation mappers, and feature-specific containers. |
 | `*Domain` | Entities, repository protocols, and use cases. |
 | `*Data` | Repository implementations, persistence, and mappings from lower layers. |
@@ -23,7 +23,7 @@ FENR is structured as a modular Swift application. The goal is to keep vehicle t
 
 `AppLifecycleController` owns the iPhone `BikeSessionController` and coordinates startup, shutdown, ride services and Live Activities. `AppRootView` receives that lifecycle controller through `AppRootDependencies`. Feature modules observe streams through use cases, so moving from the dashboard to settings or diagnostics does not create a second Bluetooth session.
 
-`WatchSetupController` owns an independent `WatchBikeSessionController` and is supplied to `WatchRootView` through its dependencies. It connects directly through the Watch's Bluetooth stack, without requiring the paired iPhone at runtime, and declares the Bluetooth central background mode. watchOS still controls suspension and screen wake behaviour, so background support preserves the session when execution is available rather than guaranteeing continuous execution. Battery-health monitoring starts only while the bike reports charging.
+The Watch is a read-only companion. `BikeCompanionController` observes the iPhone's existing `VehicleSession`, owns its charging-monitoring consumer, and publishes a versioned snapshot through `WatchCompanionData`. `WatchAppFactory` supplies that transport to `WatchDashboard`, which maps snapshots into feature-owned presentation. The Watch has no direct motorcycle Bluetooth session, onboarding, credentials or configuration writes. Persisted values retain source timestamps; stale data and phone unavailability remain visible. Always On supports a dimmed dashboard within the user's Return to Clock policy.
 
 ## Main features
 
@@ -34,7 +34,7 @@ FENR is structured as a modular Swift application. The goal is to keep vehicle t
 - `AppSettings`: preferences and navigation to settings, history, maintenance and diagnostics.
 - `RideNavigation`: Apple Maps directions, imported GPX trails, recording and incoming shared destinations.
 - `RideHistory` and `MaintenanceLog`: locally stored rides and maintenance records.
-- `WatchOnboarding` and `WatchDashboard`: direct-bike setup and a telemetry-only Watch dashboard.
+- `WatchDashboard`: battery, active map, traction and charging received from the paired iPhone.
 
 `ChargeControl` coordinates charging settings, `VehicleSession` combines vehicle
 and device measurements for iPhone features, and `RideSession` coordinates trip
