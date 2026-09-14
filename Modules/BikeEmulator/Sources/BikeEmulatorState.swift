@@ -25,7 +25,7 @@ public struct BikeEmulatorState: Codable, Equatable, Sendable {
 
     public var isValid: Bool {
         version == 1 && (1 ... 5).contains(activeMap)
-            && (300 ... 3_300).contains(chargePowerWatts)
+            && (300 ... BikeChargerType.fast.maximumChargePowerWatts).contains(chargePowerWatts)
             && (1 ... 100).contains(chargeTargetPercent)
             && distanceKilometers.isFinite && distanceKilometers >= 0
             && hasValidAdvancedMaps

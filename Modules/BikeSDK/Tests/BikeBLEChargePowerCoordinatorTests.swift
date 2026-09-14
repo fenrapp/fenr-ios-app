@@ -7,6 +7,48 @@ import Testing
 @MainActor
 @Suite("Bike BLE charge power coordinator")
 struct BikeBLEChargePowerCoordinatorTests {
+    @Test("Configuration read never performs a no-op write")
+    func readIsReadOnly() async throws {
+        let transport = FakeBikeBLEChargePowerConfigurationTransport()
+        let coordinator = BikeBLEChargePowerCoordinator(
+            transport: transport, verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter(),
+            captureState: BLETraceCaptureState()
+        )
+        let snapshot = try await coordinator.read()
+        #expect(transport.writePayloads.isEmpty)
+        #expect(snapshot.isFirmwareCompatible)
+        #expect(!snapshot.didPassNoOpWrite)
+        #expect(snapshot.parsedConfig.chargePowerWatts == 3_300)
+    }
+
+    @Test("Target writes without charger telemetry preserve every sibling")
+    func targetWithoutCharger() async throws {
+        let transport = FakeBikeBLEChargePowerConfigurationTransport()
+        let coordinator = BikeBLEChargePowerCoordinator(
+            transport: transport, verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter(),
+            captureState: BLETraceCaptureState()
+        )
+        let initial = try await coordinator.read()
+        _ = try await coordinator.prepare(chargerTypeRaw: nil)
+        let result = try await coordinator.setChargeTarget(percent: 85)
+        #expect(result.parsedConfig == initial.parsedConfig.settingMaximumStateOfCharge(percent: 85))
+        #expect(transport.writePayloads.count == 2)
+        #expect(transport.requests.count == 4)
+    }
+
+    @Test("Power uses explicit charger context without charging telemetry")
+    func powerWithoutCharger() async throws {
+        let transport = FakeBikeBLEChargePowerConfigurationTransport()
+        let coordinator = BikeBLEChargePowerCoordinator(
+            transport: transport, verificationWaiter: ImmediateBikeBLEChargePowerVerificationWaiter(),
+            captureState: BLETraceCaptureState()
+        )
+        let initial = try await coordinator.read()
+        _ = try await coordinator.prepare(chargerTypeRaw: 2)
+        let result = try await coordinator.setChargePowerLimit(watts: 7_000)
+        #expect(result.parsedConfig == initial.parsedConfig.settingChargePower(7_000, chargerType: .fast))
+    }
+
     @Test("Setting 3300 watts repairs a stale two ampere current limit")
     func settingMaximumPowerRepairsTwoAmpereLimit() async throws {
         let transport = FakeBikeBLEChargePowerConfigurationTransport()

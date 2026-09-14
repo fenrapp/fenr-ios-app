@@ -22,6 +22,7 @@ enum AppNavigationEventAdapter {
         case .openPowerModes: .push(.powerModes)
         case .openRideHistory: .push(.rideHistory(.overview))
         case .openMaintenance: .push(.maintenance(.overview))
+        case .openCharging: .push(.chargingSettings)
         case .openBikeLock: .push(.bikeLockSettings)
         case .openDiagnostics: .push(.diagnostics(.overview))
         case .openSupport, .openPrivacyPolicy, .openTerms, .openAcknowledgedProject: nil

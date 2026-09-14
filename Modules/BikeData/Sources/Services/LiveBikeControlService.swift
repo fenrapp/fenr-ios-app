@@ -98,6 +98,18 @@ public struct LiveBikeControlService: Sendable {
         try await client.refreshTractionControlConfiguration(mapIndex: mapIndex)
     }
 
+    func readChargeConfiguration() async throws -> BikeChargePowerControlSnapshot {
+        chargePowerMapper.map(try await client.readChargeConfiguration())
+    }
+
+    func applyChargePower(watts: Int, chargerType: BikeChargerType) async throws -> BikeChargePowerControlSnapshot {
+        chargePowerMapper.map(try await client.applyChargePower(watts: watts, chargerType: chargerType.rawValue))
+    }
+
+    func applyChargeTarget(percent: Int) async throws -> BikeChargePowerControlSnapshot {
+        chargePowerMapper.map(try await client.applyChargeTarget(percent: percent))
+    }
+
     func prepareChargePowerControl(
         chargingStatus: BikeChargingStatus
     ) async throws -> BikeChargePowerControlSnapshot {

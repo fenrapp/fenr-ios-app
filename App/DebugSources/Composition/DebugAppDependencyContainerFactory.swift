@@ -110,7 +110,7 @@ private extension DebugAppDependencyContainerFactory {
             batteryHealthContainer: BatteryHealthDependencyContainer(),
             session: BikeSession(repository: repository, pinDeriver: DebugBikePinDeriver()),
             chargeControlSession: ChargeControlDependencyContainer().makeSession(
-                repository: repository, captureState: diagnostics.captureState
+                repository: repository, captureState: diagnostics.captureState, storageNamespace: "debug"
             ),
             profileRepository: profileRepository,
             settingsRepository: settingsRepository,

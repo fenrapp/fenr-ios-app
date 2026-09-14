@@ -5,16 +5,19 @@ struct DashboardSpeedometer: View {
     let state: DashboardSpeedometerViewData
     private let showsSourceIndicator: Bool
     private let referenceSize: CGSize?
+    private let verticalClearance: CGFloat
     @ScaledMetric(relativeTo: .body) private var dynamicTypeScale: CGFloat = 1
 
     init(
         state: DashboardSpeedometerViewData,
         showsSourceIndicator: Bool = true,
-        referenceSize: CGSize? = nil
+        referenceSize: CGSize? = nil,
+        verticalClearance: CGFloat = .zero
     ) {
         self.state = state
         self.showsSourceIndicator = showsSourceIndicator
         self.referenceSize = referenceSize
+        self.verticalClearance = verticalClearance
     }
 
     var body: some View {
@@ -30,30 +33,23 @@ struct DashboardSpeedometer: View {
                 availableSize: proxy.size,
                 dynamicTypeScale: dynamicTypeScale
             )
-            VStack(spacing: Constants.valueToUnitSpacing) {
-                speedValue(fontSize: valueFontSize)
-                    .overlay(alignment: .top) {
-                        if showsSourceIndicator,
-                           let sourceIndicator = state.sourceIndicator {
-                            DashboardSpeedSourceChip(state: sourceIndicator)
-                                .offset(y: -Constants.chipVerticalOffset)
-                                .transition(
-                                    .scale(scale: Constants.chipTransitionScale)
-                                        .combined(with: .opacity)
-                                )
-                        }
-                    }
-                Text(state.unit)
-                    .font(
-                        .system(
-                            size: unitFontSize,
-                            weight: .semibold,
-                            design: .rounded
-                        )
-                    )
-                    .lineLimit(1)
-                    .foregroundStyle(DesignColor.secondaryText)
+            let availableHeight = max(.zero, proxy.size.height - verticalClearance * 2)
+            ViewThatFits(in: .vertical) {
+                VStack(spacing: Constants.valueToUnitSpacing) {
+                    speedValue(fontSize: valueFontSize)
+                    unit(fontSize: unitFontSize)
+                }
+                .fixedSize(horizontal: false, vertical: true)
+
+                HStack(alignment: .firstTextBaseline, spacing: Constants.inlineSpacing) {
+                    speedValue(fontSize: min(valueFontSize, availableHeight * Constants.inlineValueHeightRatio))
+                        .layoutPriority(1)
+                    unit(fontSize: min(unitFontSize, Constants.maximumInlineUnitSize))
+                        .fixedSize()
+                }
             }
+            .frame(maxWidth: .infinity)
+            .frame(height: availableHeight)
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         }
@@ -61,6 +57,13 @@ struct DashboardSpeedometer: View {
         .accessibilityLabel(state.accessibilityLabel)
         .animation(.easeInOut(duration: Constants.chipAnimationDuration), value: state.sourceIndicator)
         .animation(.easeInOut(duration: Constants.chipAnimationDuration), value: showsSourceIndicator)
+    }
+
+    private func unit(fontSize: CGFloat) -> some View {
+        Text(state.unit)
+            .font(.system(size: fontSize, weight: .semibold, design: .rounded))
+            .lineLimit(1)
+            .foregroundStyle(DesignColor.secondaryText)
     }
 
     private func speedValue(fontSize: CGFloat) -> some View {
@@ -74,8 +77,14 @@ struct DashboardSpeedometer: View {
             )
             .monospacedDigit()
             .lineLimit(1)
-            .fixedSize(horizontal: true, vertical: false)
+            .minimumScaleFactor(Constants.minimumValueScale)
             .foregroundStyle(DesignColor.primaryText)
+            .overlay(alignment: .top) {
+                if showsSourceIndicator, let sourceIndicator = state.sourceIndicator {
+                    DashboardSpeedSourceChip(state: sourceIndicator)
+                        .offset(y: -Constants.chipVerticalOffset)
+                }
+            }
     }
 
     static func minimumContentWidth(
@@ -118,6 +127,10 @@ struct DashboardSpeedometer: View {
     }
 
     private enum Constants {
+        static let inlineSpacing: CGFloat = 8
+        static let maximumInlineUnitSize: CGFloat = 24
+        static let inlineValueHeightRatio: CGFloat = 0.8
+        static let minimumValueScale: CGFloat = 0.3
         static let valueToUnitSpacing: CGFloat = 4
         static let valueWidthRatio: CGFloat = 0.22
         static let valueHeightRatio: CGFloat = 0.46

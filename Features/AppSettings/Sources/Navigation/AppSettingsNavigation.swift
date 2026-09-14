@@ -18,6 +18,7 @@ public enum AppSettingsNavigationEvent: Equatable, Sendable {
     case openPowerModes
     case openRideHistory
     case openMaintenance
+    case openCharging
     case openBikeLock
     case openDiagnostics
     case openSupport

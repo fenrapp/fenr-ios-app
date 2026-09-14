@@ -29,7 +29,7 @@ public struct BikeChargePowerControlSnapshot: Equatable, Sendable {
     }
 }
 
-public struct BikeChargePowerConfiguration: Equatable, Sendable {
+public struct BikeChargePowerConfiguration: Codable, Equatable, Sendable {
     public let chargeCurrentDeciAmperes: Int
     public let chargePowerWatts: Int
     public let maximumStateOfChargeDeciPercent: Int

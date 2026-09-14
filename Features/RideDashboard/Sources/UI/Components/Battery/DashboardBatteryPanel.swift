@@ -117,9 +117,9 @@ struct DashboardBatteryPanel: View {
     }
 
     private enum Constants {
-        static let percentageWidth: CGFloat = 112
-        static let minimumWidth: CGFloat = 112
-        static let height: CGFloat = 60
+        static let percentageWidth = DashboardSideStatusLayoutMetrics.primaryStatusWidth
+        static let minimumWidth = DashboardSideStatusLayoutMetrics.primaryStatusWidth
+        static let height = DashboardSideStatusLayoutMetrics.primaryStatusHeight
         static let outlineWidth: CGFloat = 2.75
         static let backgroundOpacity = 0.08
         static let iconFontSize: CGFloat = 22

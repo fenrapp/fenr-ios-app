@@ -25,6 +25,21 @@ final class BikeBLEChargePowerCoordinator {
     func prepareChargePowerControl(
         context: BikeSDKChargePowerTelemetryContext
     ) async throws -> BikeSDKChargePowerControlSnapshot {
+        try await prepare(chargerTypeRaw: context.chargerTypeRaw)
+    }
+
+    func read() async throws -> BikeSDKChargePowerControlSnapshot {
+        let firmwareRead = try await readVCUFirmware()
+        let result = try await readChargeConfiguration()
+        return .init(
+            vcuFirmware: firmwareRead.version?.description,
+            isFirmwareCompatible: firmwareRead.version?.isChargePowerControlCompatible == true,
+            readRequestHex: "", readResponseHex: "", parsedConfig: result.configuration,
+            lastWriteHex: nil, didPassNoOpWrite: false, logLines: []
+        )
+    }
+
+    func prepare(chargerTypeRaw: Int?) async throws -> BikeSDKChargePowerControlSnapshot {
         clearGuardState()
         let firmwareRead = try await readVCUFirmware()
         let firmware = firmwareRead.version
@@ -46,7 +61,7 @@ final class BikeBLEChargePowerCoordinator {
         let verifiedResult = try await readChargeConfiguration(matching: configuration)
 
         cachedChargePowerConfiguration = verifiedResult.configuration
-        cachedChargerType = StarkChargerType(rawValue: context.chargerTypeRaw)
+        cachedChargerType = chargerTypeRaw.map(StarkChargerType.init(rawValue:))
         cachedChargePowerFirmware = firmware?.description
         didPassChargePowerNoOp = true
 

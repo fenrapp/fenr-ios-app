@@ -1,4 +1,17 @@
 targets:
+  ChargingSettings:
+    templates: [IOSFramework]
+    sources:
+      - path: Features/ChargingSettings/Sources
+      - path: Features/ChargingSettings/Resources
+        buildPhase: resources
+    dependencies:
+      - target: BikeDomain
+      - target: ChargeControl
+      - target: DesignSystem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.chargingsettings
   BikeDemo:
     templates: [IOSFramework]
     sources:

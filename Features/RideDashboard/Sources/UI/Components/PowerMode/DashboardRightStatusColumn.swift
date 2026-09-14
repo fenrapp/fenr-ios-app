@@ -11,10 +11,18 @@ struct DashboardRightStatusColumn: View {
 
             if showsPowerMode {
                 DashboardPowerModeSummary(state: powerMode, layout: .sidebar)
-                    .frame(height: DashboardSideStatusLayoutMetrics.secondaryStatusHeight)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(
+                        width: DashboardSideStatusLayoutMetrics.primaryStatusWidth,
+                        height: DashboardSideStatusLayoutMetrics.secondaryStatusHeight
+                    )
                     .transition(.opacity)
             }
         }
+        .frame(
+            height: showsPowerMode ? DashboardSideStatusLayoutMetrics.columnHeight : nil,
+            alignment: .top
+        )
         .padding(.horizontal, Constants.horizontalPadding)
     }
 

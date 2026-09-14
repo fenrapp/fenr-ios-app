@@ -6,6 +6,7 @@ import BikeLockSettings
 import BikeOnboarding
 import BLETraceDomain
 import ChargeControl
+import ChargingSettings
 import DashboardCardSettings
 import EnvironmentDomain
 import Foundation
@@ -41,7 +42,7 @@ struct AppDependencyContainer {
     private let rideTripRepository: any RideTripRepository
     private let maintenanceRepository: any MaintenanceRepository
     private let rideSession: any RideSessionService
-    private let vehicleSession: any VehicleSessionService
+    let vehicleSession: any VehicleSessionService
     private let initialOnboardingVIN: String?
     private let forceOnboarding: Bool
     private let bleTraceLogRepository: any BLETraceLogRepository
@@ -50,7 +51,7 @@ struct AppDependencyContainer {
     private let bikeLockAuthenticator: any BikeLockAuthenticating
     private let bikeLockCapabilityStore: any BikeLockCapabilityStateStoring
     private let startupPreparer: any AppStartupPreparing
-    private let experienceOptions: AppExperienceOptions
+    let experienceOptions: AppExperienceOptions
 
     init(
         diagnosticsContainer: BikeDiagnosticsDependencyContainer,
@@ -253,37 +254,6 @@ struct AppDependencyContainer {
         )
     }
 
-    func makeBikeLiveActivityController() -> BikeLiveActivityController {
-        let activityClient = ActivityKitBikeLiveActivityClient(isDemo: experienceOptions.isDemo)
-        let locale = Locale.autoupdatingCurrent
-        return BikeLiveActivityController(
-            vehicleSession: vehicleSession,
-            activityClient: activityClient,
-            clock: SystemBikeLiveActivityClock(),
-            timing: .live,
-            continuityPolicy: RideDashboardContinuityPolicy(),
-            updatePolicy: BikeLiveActivityUpdatePolicy(
-                updateInterval: FENRRuntimeConstants.LiveActivity.chargingUpdateInterval
-            ),
-            reconnectionNoticeDelay: FENRRuntimeConstants.RideDashboard.reconnectionNoticeDelay,
-            stateMapper: BikeLiveActivityStateMapper(
-                makeDashboardMapper: { settings in
-                    RideDashboardMapperFactory.makeChargingMapper(
-                        settings: settings,
-                        locale: locale
-                    )
-                },
-                makeSpeedMapper: { measurementSystem in
-                    RideDashboardMapperFactory.makeMeasurementMapper(
-                        measurementSystem: measurementSystem,
-                        locale: locale
-                    )
-                },
-                telemetryFreshnessInterval: FENRRuntimeConstants.Telemetry.freshnessInterval,
-                completeBatteryPercent: FENRRuntimeConstants.LiveActivity.completeBatteryPercent
-            )
-        )
-    }
 }
 
 private extension AppDependencyContainer {
@@ -292,6 +262,9 @@ private extension AppDependencyContainer {
         rideDashboardFactory: any RideDashboardFeatureBuilding
     ) -> AppFeatureStore {
         AppFeatureStore(
+            chargingSettingsViewModel: chargeControlSession.preferencesController.map {
+                ChargingSettingsViewModel(useCases: .init(controller: $0), mapper: ChargingSettingsMapper())
+            },
             diagnosticsViewModel: makeBikeDiagnosticsViewModel(session: session),
             batteryHealthViewModel: makeBatteryHealthViewModel(session: session),
             bikeLockSettingsViewModel: makeBikeLockSettingsViewModel(),
@@ -331,7 +304,10 @@ private extension AppDependencyContainer {
             startupPreparer: startupPreparer,
             companionController: BikeCompanionFactory.make(
                 vehicleSession: vehicleSession, isDemo: experienceOptions.isDemo
-            )
+            ),
+            chargingController: chargeControlSession.preferencesController.map {
+                AppChargingController(vehicleSession: vehicleSession, session: chargeControlSession, preferences: $0)
+            }
         )
     }
 

@@ -1,4 +1,7 @@
 public protocol BikeChargePowerControlRepository: Sendable {
+    func readChargeConfiguration() async throws -> BikeChargePowerControlSnapshot
+    func applyChargePower(watts: Int, chargerType: BikeChargerType) async throws -> BikeChargePowerControlSnapshot
+    func applyChargeTarget(percent: Int) async throws -> BikeChargePowerControlSnapshot
     func prepareChargePowerControl(
         chargingStatus: BikeChargingStatus
     ) async throws -> BikeChargePowerControlSnapshot
@@ -7,6 +10,18 @@ public protocol BikeChargePowerControlRepository: Sendable {
 }
 
 public extension BikeChargePowerControlRepository {
+    func readChargeConfiguration() async throws -> BikeChargePowerControlSnapshot {
+        throw BikeChargePowerControlRepositoryError.chargePowerControlUnavailable
+    }
+
+    func applyChargePower(watts: Int, chargerType: BikeChargerType) async throws -> BikeChargePowerControlSnapshot {
+        throw BikeChargePowerControlRepositoryError.chargePowerControlUnavailable
+    }
+
+    func applyChargeTarget(percent: Int) async throws -> BikeChargePowerControlSnapshot {
+        throw BikeChargePowerControlRepositoryError.chargePowerControlUnavailable
+    }
+
     func prepareChargePowerControl(
         chargingStatus _: BikeChargingStatus
     ) async throws -> BikeChargePowerControlSnapshot {

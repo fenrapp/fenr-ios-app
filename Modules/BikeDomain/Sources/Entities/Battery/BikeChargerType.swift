@@ -1,4 +1,4 @@
-public enum BikeChargerType: Equatable, Sendable {
+public enum BikeChargerType: Codable, Equatable, Sendable {
     case standard
     case fast
     case backpack

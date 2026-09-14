@@ -99,6 +99,18 @@ public final class CoreBluetoothBikeTelemetryClient: BikeTelemetryClient {
         await notificationCoordinator.stopBatteryHealthMonitoring()
     }
 
+    public func readChargeConfiguration() async throws -> BikeSDKChargePowerControlSnapshot {
+        try await notificationCoordinator.readChargeConfiguration()
+    }
+
+    public func applyChargePower(watts: Int, chargerType: Int) async throws -> BikeSDKChargePowerControlSnapshot {
+        try await notificationCoordinator.applyChargePower(watts: watts, chargerType: chargerType)
+    }
+
+    public func applyChargeTarget(percent: Int) async throws -> BikeSDKChargePowerControlSnapshot {
+        try await notificationCoordinator.applyChargeTarget(percent: percent)
+    }
+
     public func prepareChargePowerControl(
         context: BikeSDKChargePowerTelemetryContext
     ) async throws -> BikeSDKChargePowerControlSnapshot {

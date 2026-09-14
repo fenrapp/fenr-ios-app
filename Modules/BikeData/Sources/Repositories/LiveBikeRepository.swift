@@ -334,17 +334,4 @@ extension LiveBikeRepository {
         await batteryCaptureHub.stream()
     }
 
-    public func prepareChargePowerControl(
-        chargingStatus: BikeChargingStatus
-    ) async throws -> BikeChargePowerControlSnapshot {
-        try await controlService.prepareChargePowerControl(chargingStatus: chargingStatus)
-    }
-
-    public func setChargePowerLimit(watts: Int) async throws -> BikeChargePowerControlSnapshot {
-        try await controlService.setChargePowerLimit(watts: watts)
-    }
-
-    public func setChargeTarget(percent: Int) async throws -> BikeChargePowerControlSnapshot {
-        try await controlService.setChargeTarget(percent: percent)
-    }
 }

@@ -93,6 +93,7 @@ targets:
       - target: MeasurementPresentation
         embed: true
       - target: BatteryHealth
+      - target: ChargingSettings
       - target: ChargeControl
       - target: AppSettings
       - target: DashboardCardSettings
@@ -242,6 +243,7 @@ targets:
       - target: MeasurementPresentation
         embed: true
       - target: BatteryHealth
+      - target: ChargingSettings
       - target: ChargeControl
       - target: AppSettings
       - target: DashboardCardSettings
@@ -253,6 +255,10 @@ targets:
       - target: RideNavigationAppleMaps
       - target: RideNavigationData
       - target: RideNavigationDomain
+      - target: BikeData
+        embed: true
+      - target: BikeSDK
+        embed: true
       - target: BikeDomain
       - target: EnvironmentDomain
       - target: EnvironmentData

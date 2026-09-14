@@ -138,7 +138,9 @@ struct DemoExperienceFactory {
             session: BikeSession(
                 repository: repository, pinDeriver: BikeDataDependencyContainer().makeBikePinDeriver()
             ),
-            chargeControlSession: ChargeControlDependencyContainer().makeSession(repository: repository),
+            chargeControlSession: ChargeControlDependencyContainer().makeSession(
+                repository: repository, storageNamespace: "demo"
+            ),
             profileRepository: profileRepository, settingsRepository: settings, deviceSpeedRepository: speed,
             rideTripRepository: storage.rides, maintenanceRepository: storage.maintenance, sessionServices: services,
             onboardingContainer: BikeOnboardingDependencyContainer(),

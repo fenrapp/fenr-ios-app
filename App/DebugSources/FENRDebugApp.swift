@@ -33,6 +33,12 @@ struct FENRDebugApp: App {
                     AnyView(DebugPowerModeControls(controller: scenarioController))
                 }
             )
+            .onChange(of: dependencies.navigationCoordinator.state.root) { _, root in
+                if root == .dashboard,
+                   ProcessInfo.processInfo.arguments.contains("-openChargingSettings") {
+                    dependencies.navigationCoordinator.send(.push(.chargingSettings))
+                }
+            }
         }
     }
 }
