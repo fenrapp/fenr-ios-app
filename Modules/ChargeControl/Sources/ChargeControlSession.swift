@@ -13,6 +13,8 @@ public final class ChargeControlSession {
 
     public var logLines: [String] { logger.lines }
 
+    public let preferencesController: ChargingPreferencesController?
+
     private let useCases: ChargeControlUseCases
     private var logger: ChargeControlLogStore
     private let stateUpdater: ChargeControlStateUpdater
@@ -30,8 +32,10 @@ public final class ChargeControlSession {
         stateUpdater: ChargeControlStateUpdater,
         taskScheduler: ChargeControlTaskScheduler,
         stateEmitter: ChargeControlStateEmitter,
-        initialState: ChargeControlState = .init()
+        initialState: ChargeControlState = .init(),
+        preferencesController: ChargingPreferencesController? = nil
     ) {
+        self.preferencesController = preferencesController
         self.useCases = useCases
         self.logger = logger
         self.stateUpdater = stateUpdater
@@ -46,6 +50,7 @@ public final class ChargeControlSession {
     }
 
     public func setPowerLimit(watts: Double) {
+        if let preferencesController { return preferencesController.setPower(watts: watts) }
         guard state.canAcceptInput else { return }
         let finalWatts = stateUpdater.normalizedPowerWatts(Int(watts.rounded()), state: state)
         guard state.selectedWatts != Double(finalWatts) else { return }
@@ -58,6 +63,7 @@ public final class ChargeControlSession {
     }
 
     public func setTarget(percent: Double) {
+        if let preferencesController { return preferencesController.setTarget(percent: percent) }
         guard state.canAcceptInput else { return }
         let finalPercent = stateUpdater.normalizedTargetPercent(Int(percent.rounded()))
         guard state.selectedTargetPercent != Double(finalPercent) else { return }
@@ -70,6 +76,7 @@ public final class ChargeControlSession {
     }
 
     public func receive(_ health: BikeBatteryHealth) {
+        guard preferencesController == nil else { return }
         self.health = health
         guard isConnected, let charging = health.chargingStatus else {
             resetAfterDisconnect()
@@ -277,6 +284,11 @@ public final class ChargeControlSession {
 }
 
 extension ChargeControlSession {
+    public func receiveManaged(_ preferences: ChargingPreferencesState) {
+        guard preferencesController != nil else { return }
+        state = stateUpdater.managedState(preferences)
+    }
+
     private func drainQueuedWriteIfNeeded() {
         guard let command = operations.nextQueuedCommand() else { return }
         let generation = operations.connectionGeneration

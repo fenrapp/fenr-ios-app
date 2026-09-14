@@ -1,6 +1,31 @@
 import Foundation
+import StarkProtocol
 
 extension BikeBLENotificationCoordinator {
+    public func readChargeConfiguration() async throws -> BikeSDKChargePowerControlSnapshot {
+        try await withConfigurationSequence { try await chargePowerCoordinator.read() }
+    }
+
+    public func applyChargePower(watts: Int, chargerType: Int) async throws -> BikeSDKChargePowerControlSnapshot {
+        guard [0, 2, 3].contains(chargerType),
+              (300 ... StarkChargerType(rawValue: chargerType).maximumChargePowerWatts).contains(watts),
+              watts.isMultiple(of: 100) else { throw BikeSDKError.operationFailed("Invalid charge power") }
+        return try await withConfigurationSequence {
+            _ = try await chargePowerCoordinator.prepare(chargerTypeRaw: chargerType)
+            try Task.checkCancellation()
+            return try await chargePowerCoordinator.setChargePowerLimit(watts: watts)
+        }
+    }
+
+    public func applyChargeTarget(percent: Int) async throws -> BikeSDKChargePowerControlSnapshot {
+        guard (1 ... 100).contains(percent) else { throw BikeSDKError.operationFailed("Invalid charge target") }
+        return try await withConfigurationSequence {
+            _ = try await chargePowerCoordinator.prepare(chargerTypeRaw: nil)
+            try Task.checkCancellation()
+            return try await chargePowerCoordinator.setChargeTarget(percent: percent)
+        }
+    }
+
     public func prepareChargePowerControl(
         context: BikeSDKChargePowerTelemetryContext
     ) async throws -> BikeSDKChargePowerControlSnapshot {

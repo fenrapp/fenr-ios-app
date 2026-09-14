@@ -3,6 +3,7 @@ import BatteryHealth
 import BikeDiagnostics
 import BikeLockSettings
 import BikeOnboarding
+import ChargingSettings
 import DashboardCardSettings
 import MaintenanceLog
 import PowerModeSettings
@@ -12,6 +13,7 @@ import RideNavigation
 
 @MainActor
 struct AppFeatureStore {
+    let chargingSettingsViewModel: ChargingSettingsViewModel?
     let diagnosticsViewModel: BikeDiagnosticsViewModel
     let batteryHealthViewModel: BatteryHealthViewModel
     let bikeLockSettingsViewModel: BikeLockSettingsViewModel

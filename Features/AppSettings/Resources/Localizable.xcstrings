@@ -1,6 +1,8 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "appSettingsChargingDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Power and charge target"}}}},
+    "appSettingsChargingTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Charging"}}}},
     "appSettingsRideBatteryDisplayTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Battery Display"}}}},
     "appSettingsRideInformationTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Ride Information"}}}},
     "appSettingsRideDisplayPairSummary" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "%1$@ · %2$@"}}}},

@@ -16,6 +16,7 @@ public struct RideDashboardView: View {
     private let chargingViewModel: ChargingDashboardViewModel
     private let bikeLockViewModel: BikeLockCardViewModel
     @ScaledMetric(relativeTo: .body) private var speedometerTypeScale: CGFloat = 1
+    @State private var speedometerAccessoryHeight: CGFloat = .zero
     @State private var cardSelection = DashboardCardSelectionState()
     @State private var hiddenPageResetTask: Task<Void, Never>?
     private let onSettings: () -> Void
@@ -101,6 +102,12 @@ extension RideDashboardView {
                                 }
                             }
                             .frame(width: layout.sideColumnWidth)
+                            .frame(
+                                height: viewModel.viewState.centerMode == .riding
+                                    && cardSelection.ridingCard != .speedometer
+                                    ? DashboardSideStatusLayoutMetrics.columnHeight : nil,
+                                alignment: .top
+                            )
 
                             ZStack(alignment: .bottom) {
                                 DashboardCenterCard(
@@ -126,6 +133,7 @@ extension RideDashboardView {
                                     bikeLockSecurityOptions: bikeLockViewModel.securityOptions,
                                     charging: chargingViewModel.viewState,
                                     referenceSize: proxy.size,
+                                    speedometerVerticalClearance: speedometerAccessoryHeight,
                                     reduceMotion: reduceMotion,
                                     toggleCurrentTripPause: currentTripViewModel.togglePauseCurrentTrip,
                                     resetCurrentTrip: currentTripViewModel.resetCurrentTrip,
@@ -153,6 +161,14 @@ extension RideDashboardView {
                                 if viewModel.viewState.centerMode == .riding,
                                    cardSelection.ridingCard == .speedometer {
                                     DashboardIndicatorStatus(indicators: viewModel.viewState.indicators)
+                                        .background {
+                                            GeometryReader { accessory in
+                                                Color.clear.preference(
+                                                    key: DashboardSpeedClearanceKey.self,
+                                                    value: accessory.size.height + Constants.accessoryEdgePadding
+                                                )
+                                            }
+                                        }
                                         .frame(maxHeight: .infinity, alignment: .top)
                                         .padding(.top, Constants.accessoryEdgePadding)
                                 }
@@ -161,6 +177,14 @@ extension RideDashboardView {
                                    cardSelection.ridingCard == .speedometer {
                                     DashboardPowerModeSummary(state: viewModel.viewState.powerMode)
                                         .padding(.bottom, Constants.accessoryEdgePadding)
+                                        .background {
+                                            GeometryReader { accessory in
+                                                Color.clear.preference(
+                                                    key: DashboardSpeedClearanceKey.self,
+                                                    value: accessory.size.height + Constants.accessoryEdgePadding
+                                                )
+                                            }
+                                        }
                                 }
                             }
                             .frame(width: layout.centerColumnWidth)
@@ -200,6 +224,7 @@ extension RideDashboardView {
                 .frame(width: proxy.size.width, height: proxy.size.height)
             }
         }
+        .onPreferenceChange(DashboardSpeedClearanceKey.self) { speedometerAccessoryHeight = $0 }
         .background(Color(uiColor: .systemBackground).ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .task {

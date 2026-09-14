@@ -3,6 +3,7 @@ import BatteryHealth
 import BikeDiagnostics
 import BikeLockSettings
 import BikeOnboarding
+import ChargingSettings
 import DashboardCardSettings
 import MaintenanceLog
 import PowerModeSettings
@@ -73,6 +74,10 @@ struct AppDestinationView: View {
             )
         case .advancedPowerModes:
             PowerModeAdvancedView(viewModel: featureStore.advancedPowerModeViewModel)
+        case .chargingSettings:
+            if let viewModel = featureStore.chargingSettingsViewModel {
+                ChargingSettingsView(viewModel: viewModel)
+            }
         case .bikeLockSettings:
             BikeLockSettingsView(viewModel: featureStore.bikeLockSettingsViewModel)
         }

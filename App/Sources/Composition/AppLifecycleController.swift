@@ -10,6 +10,7 @@ final class AppLifecycleController {
         case stopping
     }
 
+    private let chargingController: AppChargingController?
     private let companionController: BikeCompanionController?
     private let sessionController: BikeSessionController
     private let setupFlow: BikeSetupFlowController
@@ -36,8 +37,10 @@ final class AppLifecycleController {
         vehicleSession: any VehicleSessionService,
         stopDiagnosticsCapture: @escaping @Sendable () async -> Void,
         startupPreparer: any AppStartupPreparing,
-        companionController: BikeCompanionController? = nil
+        companionController: BikeCompanionController? = nil,
+        chargingController: AppChargingController? = nil
     ) {
+        self.chargingController = chargingController
         self.companionController = companionController
         self.sessionController = sessionController
         self.setupFlow = setupFlow
@@ -96,6 +99,7 @@ final class AppLifecycleController {
             await pendingStart?.value
             await pendingChangeBike?.value
             await pendingPersistence?.value
+            await chargingController?.stopAndWait()
             await companionController?.stop()
             if didStartLiveActivity {
                 await bikeLiveActivityController.stop()
@@ -196,6 +200,7 @@ private extension AppLifecycleController {
         companionController?.start()
         await vehicleSession.start()
         didStartVehicleSession = true
+        chargingController?.start()
         guard canContinueStarting else { return }
 
         await rideSession.start()

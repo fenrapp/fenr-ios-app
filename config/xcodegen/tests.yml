@@ -1,4 +1,15 @@
 targets:
+  ChargingSettingsTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Features/ChargingSettings/Tests
+    dependencies:
+      - target: ChargingSettings
+      - target: ChargeControl
+      - target: BikeDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.chargingsettings.tests
   StarkProtocolTests:
     templates: [SharedUnitTests]
     sources:
@@ -457,6 +468,8 @@ targets:
       - target: TestSupport
       - target: BLETraceData
       - target: BLETraceDomain
+      - target: ChargingSettings
+      - target: ChargeControl
       - target: BikeDiagnostics
       - target: BikeOnboarding
       - target: BikeDemo
@@ -524,6 +537,8 @@ targets:
       - target: RideNavigationAppleMaps
       - target: RideNavigationData
       - target: RideNavigationDomain
+      - target: ChargingSettings
+      - target: ChargeControl
       - target: BikeDiagnostics
       - target: BikeOnboarding
       - target: RideDashboard

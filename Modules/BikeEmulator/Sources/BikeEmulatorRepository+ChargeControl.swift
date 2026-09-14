@@ -1,6 +1,42 @@
 import BikeDomain
 
 extension BikeEmulatorRepository {
+    public func readChargeConfiguration() async throws -> BikeChargePowerControlSnapshot {
+        try validateDemoConnection()
+        return makeChargeControlSnapshot(
+            watts: chargePowerLimitWatts, targetPercent: chargeTargetPercent,
+            lastWriteHex: nil, didPassNoOpWrite: false
+        )
+    }
+
+    public func applyChargePower(
+        watts: Int, chargerType: BikeChargerType
+    ) async throws -> BikeChargePowerControlSnapshot {
+        try validateDemoConnection()
+        guard (300 ... chargerType.maximumChargePowerWatts).contains(watts), watts.isMultiple(of: 100) else {
+            throw BikeEmulatorChargeControlError.invalidPower
+        }
+        try Task.checkCancellation()
+        chargePowerLimitWatts = watts
+        persistState()
+        await publishCurrentState()
+        return makeChargeControlSnapshot(
+            watts: chargePowerLimitWatts, targetPercent: chargeTargetPercent, lastWriteHex: nil
+        )
+    }
+
+    public func applyChargeTarget(percent: Int) async throws -> BikeChargePowerControlSnapshot {
+        try validateDemoConnection()
+        guard (1 ... 100).contains(percent) else { throw BikeEmulatorChargeControlError.invalidTarget }
+        try Task.checkCancellation()
+        chargeTargetPercent = percent
+        persistState()
+        await publishCurrentState()
+        return makeChargeControlSnapshot(
+            watts: chargePowerLimitWatts, targetPercent: chargeTargetPercent, lastWriteHex: nil
+        )
+    }
+
     public func prepareChargePowerControl(
         chargingStatus: BikeChargingStatus
     ) async throws -> BikeChargePowerControlSnapshot {
@@ -67,7 +103,8 @@ extension BikeEmulatorRepository {
     private func makeChargeControlSnapshot(
         watts: Int,
         targetPercent: Int,
-        lastWriteHex: String
+        lastWriteHex: String?,
+        didPassNoOpWrite: Bool = true
     ) -> BikeChargePowerControlSnapshot {
         .init(
             vcuFirmware: "1.12.0",
@@ -84,7 +121,7 @@ extension BikeEmulatorRepository {
                 backpackChargerMaximumPowerWatts: BikeEmulatorConstants.maximumChargePowerWatts
             ),
             lastWriteHex: lastWriteHex,
-            didPassNoOpWrite: true,
+            didPassNoOpWrite: didPassNoOpWrite,
             logLines: ["Debug charge control confirmed"]
         )
     }

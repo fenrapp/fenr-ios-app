@@ -282,3 +282,25 @@ struct BikeEmulatorControlTests {
         )
     }
 }
+
+extension BikeEmulatorControlTests {
+    @Test("Offline charger configuration reads and fast-power persistence")
+    func configurationWithoutCharger() async throws {
+        let repository = BikeEmulatorRepositoryFactory.make(scenario: .parked)
+        await repository.start()
+        try await repository.connect(vin: BikeEmulatorIdentity.vin)
+        let read = try await repository.readChargeConfiguration()
+        #expect(!read.didPassNoOpWrite)
+        #expect(read.lastWriteHex == nil)
+        let target = try await repository.applyChargeTarget(percent: 85)
+        let power = try await repository.applyChargePower(watts: 7_000, chargerType: .fast)
+        #expect(target.parsedConfig.maximumStateOfChargeDeciPercent == 850)
+        #expect(power.parsedConfig.maximumStateOfChargeDeciPercent == 850)
+        #expect(power.parsedConfig.chargePowerWatts == 7_000)
+        var state = BikeEmulatorState()
+        state.chargePowerWatts = 7_000
+        #expect(state.isValid)
+        await repository.stop()
+    }
+
+}

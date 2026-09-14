@@ -4,6 +4,17 @@ import Testing
 @MainActor
 @Suite("Full screen settings navigation")
 struct AppSettingsPresentationTests {
+    @Test("Charging is reachable directly and remains in Settings")
+    func chargingSettingsNavigation() {
+        let navigation = AppNavigationCoordinator()
+        navigation.send(.setRoot(.dashboard))
+        navigation.send(.push(.chargingSettings))
+        #expect(navigation.state.isSettingsPresented)
+        #expect(navigation.state.path == [.settings(.overview), .chargingSettings])
+        #expect(navigation.state.activeSurfaces.contains(.settings))
+        #expect(AppNavigationEventAdapter.intent(for: .openCharging) == .push(.chargingSettings))
+    }
+
     @Test("Settings uses a separate stack and closes back to the dashboard")
     func presentsAndDismisses() {
         let navigation = AppNavigationCoordinator()

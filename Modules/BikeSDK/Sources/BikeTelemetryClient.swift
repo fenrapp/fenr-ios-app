@@ -14,6 +14,9 @@ public protocol BikeTelemetryClient: AnyObject, Sendable {
     func stopIMUMonitoring() async
     func startBatteryHealthMonitoring() async throws
     func stopBatteryHealthMonitoring() async
+    func readChargeConfiguration() async throws -> BikeSDKChargePowerControlSnapshot
+    func applyChargePower(watts: Int, chargerType: Int) async throws -> BikeSDKChargePowerControlSnapshot
+    func applyChargeTarget(percent: Int) async throws -> BikeSDKChargePowerControlSnapshot
     func prepareChargePowerControl(
         context: BikeSDKChargePowerTelemetryContext
     ) async throws -> BikeSDKChargePowerControlSnapshot
@@ -58,6 +61,18 @@ public extension BikeTelemetryClient {
     func readBikeStatusSnapshot() async throws {}
     func startIMUMonitoring() async throws {}
     func stopIMUMonitoring() async {}
+    func readChargeConfiguration() async throws -> BikeSDKChargePowerControlSnapshot {
+        throw BikeSDKError.operationFailed("Charge configuration unavailable")
+    }
+
+    func applyChargePower(watts: Int, chargerType: Int) async throws -> BikeSDKChargePowerControlSnapshot {
+        throw BikeSDKError.operationFailed("Charge configuration unavailable")
+    }
+
+    func applyChargeTarget(percent: Int) async throws -> BikeSDKChargePowerControlSnapshot {
+        throw BikeSDKError.operationFailed("Charge configuration unavailable")
+    }
+
     func prepareChargePowerControl(
         context: BikeSDKChargePowerTelemetryContext
     ) async throws -> BikeSDKChargePowerControlSnapshot {

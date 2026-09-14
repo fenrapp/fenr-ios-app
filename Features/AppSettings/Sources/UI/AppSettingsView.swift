@@ -105,6 +105,12 @@ public struct AppSettingsView: View {
     private var bikeSection: some View {
         Section {
             SettingsNavigationRow(
+                icon: "bolt.fill", iconTint: .green,
+                title: .appSettingsChargingTitle, detail: .appSettingsChargingDetail,
+                accessibilityIdentifier: "settings.charging",
+                action: { onNavigation(.openCharging) }
+            )
+            SettingsNavigationRow(
                 icon: "slider.horizontal.3",
                 iconTint: .orange,
                 title: .appSettingsPowerModesTitle,

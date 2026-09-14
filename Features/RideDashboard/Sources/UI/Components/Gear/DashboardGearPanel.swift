@@ -95,8 +95,8 @@ struct DashboardGearPanel: View {
         static let advancedCutoutSize: CGFloat = 24
         static let advancedInset: CGFloat = 10
         static let advancedVerticalOffset: CGFloat = -10
-        static let width: CGFloat = 112
-        static let height: CGFloat = 60
+        static let width = DashboardSideStatusLayoutMetrics.primaryStatusWidth
+        static let height = DashboardSideStatusLayoutMetrics.primaryStatusHeight
         static let outlineWidth: CGFloat = 2.75
         static let backgroundOpacity = 0.08
         static let valueFontSize: CGFloat = 34

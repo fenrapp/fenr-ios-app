@@ -15,11 +15,12 @@ enum AppRoute: Hashable {
     case batteryHealth(BatteryHealthDestination)
     case powerModes
     case advancedPowerModes
+    case chargingSettings
     case bikeLockSettings
 
     var family: AppNavigationSurface {
         switch self {
-        case .settings: .settings
+        case .settings, .chargingSettings: .settings
         case .dashboardCards: .dashboardCards
         case .rideHistory: .rideHistory
         case .maintenance: .maintenance
@@ -41,6 +42,8 @@ enum AppRoute: Hashable {
              .powerModes,
              .bikeLockSettings:
             nil
+        case .chargingSettings:
+            .settings(.overview)
         case .advancedPowerModes:
             .powerModes
         case .settings(.rideProgressBar), .settings(.rideBatteryDisplay),

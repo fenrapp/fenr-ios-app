@@ -1,0 +1,303 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "chargingSettingsTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charging"
+          }
+        }
+      }
+    },
+    "chargingSettingsCharger": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charger type"
+          }
+        }
+      }
+    },
+    "chargingSettingsChooseCharger": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a charger"
+          }
+        }
+      }
+    },
+    "chargingSettingsStandard": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standard"
+          }
+        }
+      }
+    },
+    "chargingSettingsFast": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fast"
+          }
+        }
+      }
+    },
+    "chargingSettingsBackpack": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backpack"
+          }
+        }
+      }
+    },
+    "chargingSettingsPower": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maximum power"
+          }
+        }
+      }
+    },
+    "chargingSettingsTarget": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charge target"
+          }
+        }
+      }
+    },
+    "chargingSettingsConfirmed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirmed: %@"
+          }
+        }
+      }
+    },
+    "chargingSettingsLastReading": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last reading: %@"
+          }
+        }
+      }
+    },
+    "chargingSettingsSuggested": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggested value. Release the control to save it."
+          }
+        }
+      }
+    },
+    "chargingSettingsPendingDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pending: %1$@. %2$@"
+          }
+        }
+      }
+    },
+    "chargingSettingsStorageError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not save or load charging settings. Retry before making changes."
+          }
+        }
+      }
+    },
+    "chargingSettingsFirmwareError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This firmware does not support changing charging settings."
+          }
+        }
+      }
+    },
+    "chargingSettingsChargerError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The connected charger differs from the pending selection. Cancel the pending power or select a new value, then retry."
+          }
+        }
+      }
+    },
+    "chargingSettingsWriteError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The change could not be confirmed. Pending values are kept. Retry when the bike is connected."
+          }
+        }
+      }
+    },
+    "chargingSettingsValueError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a supported charger and a value within its limits."
+          }
+        }
+      }
+    },
+    "chargingSettingsNoBike": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect or configure a bike before preparing its charging settings."
+          }
+        }
+      }
+    },
+    "chargingSettingsApplying": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Applying and verifying changes..."
+          }
+        }
+      }
+    },
+    "chargingSettingsReading": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading charging settings..."
+          }
+        }
+      }
+    },
+    "chargingSettingsPending": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pending changes will be applied when this bike connects."
+          }
+        }
+      }
+    },
+    "chargingSettingsConnected": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bike connected. Changes are verified after you release each control."
+          }
+        }
+      }
+    },
+    "chargingSettingsOffline": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bike disconnected. You can prepare changes for its next connection."
+          }
+        }
+      }
+    },
+    "chargingSettingsControlsFooter": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Release each control to save that value. The charge target applies to all charger types. Changing the charger selection alone does not change the bike."
+          }
+        }
+      }
+    },
+    "chargingSettingsConnectionFooter": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pending changes need a connection between FENR and this bike. Connecting the charger alone cannot guarantee they are applied."
+          }
+        }
+      }
+    },
+    "chargingSettingsRetry": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        }
+      }
+    },
+    "chargingSettingsCancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel pending changes"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

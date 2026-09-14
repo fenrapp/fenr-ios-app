@@ -21,6 +21,7 @@ struct DashboardCenterCard: View {
     let bikeLockSecurityOptions: [BikeLockSecurityOptionViewData]
     let charging: ChargingDashboardViewState
     let referenceSize: CGSize
+    let speedometerVerticalClearance: CGFloat
     let reduceMotion: Bool
     let toggleCurrentTripPause: () -> Void
     let resetCurrentTrip: () -> Void
@@ -150,7 +151,8 @@ struct DashboardCenterCard: View {
         DashboardSpeedometer(
             state: speedometer,
             showsSourceIndicator: showsSpeedSourceIndicator,
-            referenceSize: referenceSize
+            referenceSize: referenceSize,
+            verticalClearance: speedometerVerticalClearance
         )
         .overlay(alignment: .top) {
             if bikeLock.isLocked {
