@@ -52,10 +52,12 @@ options into Progress Bar, Battery Display, Ride Information and Speed.
 Motorcycle readings and responses to motorcycle controls are simulated in demo
 mode. The demo does not connect to or make changes to a real motorcycle.
 
-Navigation and the compass use the iPhone's actual location or sensors when
-available. Place searches and road directions use Apple Maps and may require
-Internet access. The demo does not simulate GPS travel. You can review the
-motorcycle dashboard and battery features without enabling location access.
+The dashboard's compass, altitude and GPS speed use simulated readings in demo
+mode, so the dynamics cards work without location access or device sensors.
+Navigation uses the iPhone's actual location when available. Place searches and
+road directions use Apple Maps and may require Internet access. The demo does
+not simulate navigation travel. You can review the motorcycle dashboard and
+battery features without enabling location access.
 
 ## Permissions and external services
 
