@@ -10,6 +10,7 @@ import RideHistory
 import RideNavigationDomain
 import Testing
 import TestSupport
+import UIKit
 
 @MainActor
 @Suite("App navigation coordinator")
@@ -303,6 +304,26 @@ struct AppExternalNavigationTests {
 @MainActor
 @Suite("App presentation policy")
 struct AppPresentationPolicyTests {
+    @Test("Geometry requests preserve an allowed current orientation", arguments: [
+        (UIInterfaceOrientationMask.allButUpsideDown, UIInterfaceOrientation.landscapeLeft,
+         UIInterfaceOrientationMask.landscapeLeft),
+        (.allButUpsideDown, .landscapeRight, .landscapeRight),
+        (.allButUpsideDown, .portrait, .portrait),
+        (.landscape, .landscapeLeft, .landscapeLeft),
+        (.landscape, .landscapeRight, .landscapeRight),
+        (.landscape, .portrait, .landscape),
+        (.portrait, .landscapeLeft, .portrait),
+        (.allButUpsideDown, .portraitUpsideDown, .allButUpsideDown),
+        (.allButUpsideDown, .unknown, .allButUpsideDown)
+    ])
+    func geometryPreservesCurrentOrientation(
+        supported: UIInterfaceOrientationMask,
+        current: UIInterfaceOrientation,
+        expected: UIInterfaceOrientationMask
+    ) {
+        #expect(supported.preservingCurrentOrientation(current) == expected)
+    }
+
     @Test("All settings destinations support rotation", arguments: [
         AppRoute.settings(.overview), .settings(.rideDisplay), .settings(.rideProgressBar),
         .settings(.rideBatteryDisplay), .settings(.rideInformation), .settings(.rideSpeed), .settings(.navigation),

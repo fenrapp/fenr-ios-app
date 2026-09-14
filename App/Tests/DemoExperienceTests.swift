@@ -1,10 +1,37 @@
 import Foundation
+@testable import RideDashboard
 import Testing
 import TestSupport
 
 @MainActor
 @Suite("Demo experience integration")
 struct DemoExperienceTests {
+    @Test("Demo dynamics show heading and altitude without device location, including after reopening")
+    func dynamicsWithoutDeviceLocation() async throws {
+        let fixture = DemoExperienceTestFixture()
+        for _ in 0..<2 {
+            let experience = try await fixture.factory.make(identity: fixture.identity)
+            let dashboard = experience.root.featureStore.rideDashboardFactory.makeFeature()
+            await experience.root.lifecycleController.start()
+            dashboard.setPresentationActive(true)
+            dashboard.synchronizeCardLifecycles(
+                centerMode: .riding, selection: .init(ridingCard: .dynamics)
+            )
+            for scenario in ["parked", "riding"] {
+                experience.demoViewModel?.select(id: scenario)
+                #expect(await waitUntil(timeout: .seconds(5)) {
+                    let state = dashboard.dynamicsViewModel.viewState
+                    return experience.demoViewModel?.viewState.selectedID == scenario
+                        && state.isHeadingAvailable && state.altimeter.isAvailable
+                        && state.latitudeText != nil && state.longitudeText != nil
+                })
+            }
+            dashboard.invalidateSession()
+            await experience.close()
+        }
+        try await fixture.factory.discard(identity: fixture.identity)
+    }
+
     @Test("Seeds once, keeps deletions and restores the same selected scenario")
     func seedsOnceAndRestores() async throws {
         let fixture = DemoExperienceTestFixture()

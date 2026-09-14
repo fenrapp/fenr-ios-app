@@ -123,8 +123,8 @@ struct DemoExperienceFactory {
         let speed = makeDeviceSpeedRepository()
         let services = AppSessionDependencyContainer.makeServices(dependencies: .init(
             repository: repository, profileRepository: profileRepository,
-            settingsRepository: settings, deviceSpeedRepository: speed,
-            deviceHeadingRepository: DeviceHeadingDependencyContainer.makeRepository(),
+            settingsRepository: settings, deviceSpeedRepository: DebugDeviceSpeedRepository(),
+            deviceHeadingRepository: nil,
             motionCalibrationRepository: storage.calibration, imuProfile: makeIMUProfile(),
             rideTripRepository: storage.rides
         ))
