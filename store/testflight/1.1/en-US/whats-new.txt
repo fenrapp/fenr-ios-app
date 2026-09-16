@@ -1,0 +1,3 @@
+Saved charging preferences and improved dashboard layouts are new since the previous TestFlight build. The demo now restores simulated dynamics correctly, and Settings better preserves the selected orientation.
+
+Please check charging-power and battery-target preferences in Settings, reconnecting to a compatible motorcycle, dashboard readability, and switching between portrait and landscape. You can use Explore demo > Start demo without a motorcycle.
