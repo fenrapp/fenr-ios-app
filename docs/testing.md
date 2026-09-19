@@ -108,7 +108,7 @@ python3 -m unittest discover -s scripts/tests -p 'test_runtime_frameworks.py'
 The architecture validator reads `xcodegen dump --type parsed-json --no-env`, so
 includes and target templates are resolved before checking missing targets,
 cycles, layer boundaries, direct module imports, UI infrastructure imports, and
-legacy observation wrappers throughout owned production Swift. Its three named
+legacy observation wrappers throughout owned production Swift. Its named
 exceptions include their reasons and fail validation when they become unused.
 This source check does not replace review of inferred domain types passed into UI.
 

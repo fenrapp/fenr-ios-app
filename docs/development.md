@@ -117,3 +117,8 @@ whether values are stale. Persisted data never counts as a live connection by it
 Always On uses a dimmed presentation with reduced ambient refresh frequency.
 The user controls Settings > General > Return to Clock > FENR, up to one hour.
 There is no workout session or promise of continuous background Watch execution.
+
+## Mapbox offline maps
+
+See [Offline maps](offline-maps.md) for the local public-token configuration,
+download lifecycle, privacy requirements and offline acceptance checks.
