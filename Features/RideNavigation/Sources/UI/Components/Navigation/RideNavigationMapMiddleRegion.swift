@@ -4,6 +4,7 @@ import SwiftUI
 struct RideNavigationMapMiddleRegion<Content: View>: View {
     let hasContent: Bool
     let showsScrollIndicators: Bool
+    var expandsScrollArea = false
     @ViewBuilder let content: () -> Content
 
     var body: some View {
@@ -17,7 +18,10 @@ struct RideNavigationMapMiddleRegion<Content: View>: View {
                         content()
                     }
                     .scrollIndicators(showsScrollIndicators ? .visible : .hidden)
-                    .frame(maxHeight: RideNavigationMapMiddleRegionConstants.maximumScrollHeight)
+                    .frame(
+                        maxHeight: expandsScrollArea ? .infinity
+                            : RideNavigationMapMiddleRegionConstants.maximumScrollHeight
+                    )
                 }
                 .frame(maxWidth: .infinity, alignment: .top)
             }

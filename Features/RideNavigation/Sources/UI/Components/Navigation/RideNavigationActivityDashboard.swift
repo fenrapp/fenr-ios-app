@@ -14,6 +14,10 @@ struct RideNavigationActivityDashboard: View {
     let onResumeGPX: () -> Void
     let onRequestFinish: () -> Void
 
+    var rangeState = RideNavigationRangeState()
+    var showsEstimatedRange = false
+    var onToggleBatteryDisplay: () -> Void = {}
+
     var body: some View {
         if isFocusDriving {
             focusDashboard
@@ -62,7 +66,10 @@ struct RideNavigationActivityDashboard: View {
     }
 
     private var metricsGrid: some View {
-        RideNavigationMetricsRow(state: state)
+        RideNavigationMetricsRow(
+            state: state, rangeState: rangeState, showsEstimatedRange: showsEstimatedRange,
+            onToggleBatteryDisplay: onToggleBatteryDisplay
+        )
     }
 
     @ViewBuilder

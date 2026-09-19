@@ -2,7 +2,6 @@ import DesignSystem
 import SwiftUI
 struct RideNavigationMapOverlay: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @Environment(\.verticalSizeClass) private var verticalSizeClass
     let state: RideNavigationViewState
     let showsControls: Bool
     let onInteraction: () -> Void
@@ -33,6 +32,9 @@ struct RideNavigationMapOverlay: View {
     let onEndRideAndOpenIncomingDestination: () -> Void
     var onDownloadMap: (() -> Void)?
     var onFollowGPX: (() -> Void)?
+    var rangeState = RideNavigationRangeState()
+    @State private var showsEstimatedRange = false
+    @State private var topControlsHeight = RideNavigationTopControls.height
     @State private var showsFinishConfirmation = false
     private let guidanceVisibilityPolicy = RideNavigationGuidanceVisibilityPolicy()
     @State private var showsTrailExitConfirmation = false
@@ -113,8 +115,9 @@ private extension RideNavigationMapOverlay {
             VStack(spacing: DesignSpace.small) {
                 if showsControls {
                     topControls
-                        .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
-                        .layoutPriority(dynamicTypeSize.isAccessibilitySize ? 2 : 0)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .layoutPriority(2)
+                        .onGeometryChange(for: CGFloat.self, of: { $0.size.height }, action: { topControlsHeight = $0 })
                         .transition(.move(edge: .top).combined(with: .opacity))
                         .zIndex(1)
                 }
@@ -127,13 +130,13 @@ private extension RideNavigationMapOverlay {
                     }
                     standardMiddle
                 }
-                if !usesCompactAccessibilityLayout { bottomContent }
+                if !usesAccessibilityScrollLayout { bottomContent }
             }
             .zIndex(1)
             if !dynamicTypeSize.isAccessibilitySize {
                 mapSelectorPanel
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                    .padding(.top, RideNavigationTopControls.height + DesignSpace.small)
+                    .padding(.top, topControlsHeight + DesignSpace.small)
                     .zIndex(2)
             }
         }
@@ -158,12 +161,13 @@ private extension RideNavigationMapOverlay {
     }
     private var accessibilityMiddle: some View {
         RideNavigationMapMiddleRegion(
-            hasContent: hasAccessibilityMiddleContent || usesCompactAccessibilityLayout,
-            showsScrollIndicators: true
+            hasContent: hasAccessibilityMiddleContent || usesAccessibilityScrollLayout,
+            showsScrollIndicators: true,
+            expandsScrollArea: true
         ) {
             accessibilityMiddleContent
         }
-        .id(usesCompactAccessibilityLayout && state.activity == .paused)
+        .id(usesAccessibilityScrollLayout && state.activity == .paused)
     }
 
     private var accessibilityMiddleContent: some View {
@@ -179,7 +183,7 @@ private extension RideNavigationMapOverlay {
             guidance
             forkGuidance
             trailExitPreview
-            if usesCompactAccessibilityLayout { compactBottomContent }
+            if usesAccessibilityScrollLayout { bottomContent }
         }
         .frame(maxWidth: .infinity, alignment: .top)
     }
@@ -227,8 +231,7 @@ private extension RideNavigationMapOverlay {
             bottomDashboard
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         } else {
-            RideNavigationCompactDashboard(state: state)
-                .allowsHitTesting(false)
+            compactDashboard
                 .transition(.scale(scale: Constants.compactTransitionScale).combined(with: .opacity))
         }
     }
@@ -240,8 +243,7 @@ private extension RideNavigationMapOverlay {
         guard let forkGuidance = state.forkGuidance else { return false }
         return shouldShowForkGuidance(forkGuidance)
     }
-    private var usesCompactAccessibilityLayout: Bool { dynamicTypeSize.isAccessibilitySize
-        && verticalSizeClass == .compact }
+    private var usesAccessibilityScrollLayout: Bool { dynamicTypeSize.isAccessibilitySize }
     private var hasPlanningOptions: Bool { (state.activity == .preview
         && (state.roadRouteOptions.count > 1 || state.canReverseRoute)) || state.showsRoadRoutePreferences }
     @ViewBuilder
@@ -276,17 +278,16 @@ private extension RideNavigationMapOverlay {
             onReverse: onReverse,
             onRequestTrailExit: { perform { showsTrailExitConfirmation = true } },
             onResumeGPX: { perform(onResumeGPX) },
-            onRequestFinish: { perform { showsFinishConfirmation = true } }
+            onRequestFinish: { perform { showsFinishConfirmation = true } },
+            rangeState: rangeState, showsEstimatedRange: showsEstimatedRange,
+            onToggleBatteryDisplay: { perform { showsEstimatedRange.toggle() } }
         )
     }
-    @ViewBuilder
-    private var compactBottomContent: some View {
-        if showsControls {
-            bottomDashboard
-        } else {
-            RideNavigationCompactDashboard(state: state)
-                .allowsHitTesting(false)
-        }
+    private var compactDashboard: some View {
+        RideNavigationCompactDashboard(
+            state: state, rangeState: rangeState, showsEstimatedRange: showsEstimatedRange,
+            onToggleBatteryDisplay: { showsEstimatedRange.toggle() }
+        )
     }
     @ViewBuilder
     private var trailExitPreview: some View {

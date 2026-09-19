@@ -1,6 +1,9 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "rideNavigationEstimatedRange": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Est. range"}}}},
+    "rideNavigationShowBatteryPercentage": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Show battery percentage"}}}},
+    "rideNavigationShowEstimatedRange": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Show estimated remaining range"}}}},
     "offlineDeleteAction": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Delete"}}}},
     "offlineUpdateAction": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Update"}}}},
     "rideNavigationNormalMode": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Normal"}}}},

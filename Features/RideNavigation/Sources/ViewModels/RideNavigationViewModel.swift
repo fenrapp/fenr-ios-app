@@ -13,6 +13,8 @@ public final class RideNavigationViewModel {
     public var exportRequest: GPXExportRequest? { library.snapshot.exportRequest }
     public var shareRequest: GPXExportRequest? { library.snapshot.shareRequest }
 
+    public let rangeViewModel: RideNavigationRangeViewModel?
+
     let dependencies: RideNavigationViewModelDependencies
     let library: RideNavigationLibraryController
     let planningController: RideNavigationPlanningController
@@ -63,8 +65,10 @@ public final class RideNavigationViewModel {
         dependencies: RideNavigationViewModelDependencies,
         library: RideNavigationLibraryController,
         planningController: RideNavigationPlanningController,
-        activityController: RideNavigationActivityController
+        activityController: RideNavigationActivityController,
+        rangeViewModel: RideNavigationRangeViewModel? = nil
     ) {
+        self.rangeViewModel = rangeViewModel
         self.dependencies = dependencies
         self.library = library
         self.planningController = planningController

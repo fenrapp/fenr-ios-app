@@ -264,6 +264,8 @@ private extension AppDependencyContainer {
         let offlineMaps = AppOfflineMapsFeature.make()
         let navigationFactory = AppRideNavigationFeatureFactory(
             offlineMaps: offlineMaps,
+            rideSession: rideSession,
+            rideTripRepository: rideTripRepository,
             vehicleSession: vehicleSession,
             observeDeviceSpeed: ObserveDeviceSpeedUseCase(
                 repository: deviceSpeedRepository, requestsAuthorization: experienceOptions.isDemo

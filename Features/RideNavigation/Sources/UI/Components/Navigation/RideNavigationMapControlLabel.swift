@@ -5,6 +5,7 @@ struct RideNavigationMapControlLabel: View {
 
     var body: some View {
         Image(systemName: systemImage)
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
             .frame(width: Constants.size, height: Constants.size)
             .contentShape(Circle())
     }
