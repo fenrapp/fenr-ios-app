@@ -25,6 +25,8 @@ schemes:
         RideSessionDomainTests: [test]
         RideNavigationDomainTests: [test]
         RideNavigationDataTests: [test]
+        OfflineMapsDomainTests: [test]
+        OfflineMapsDataTests: [test]
         RideNavigationTests: [test]
         RideNavigationAppleMapsTests: [test]
         RideSessionTests: [test]
@@ -69,6 +71,8 @@ schemes:
         - RideSessionDomainTests
         - RideNavigationDomainTests
         - RideNavigationDataTests
+        - OfflineMapsDomainTests
+        - OfflineMapsDataTests
         - RideNavigationTests
         - RideNavigationAppleMapsTests
         - RideSessionTests

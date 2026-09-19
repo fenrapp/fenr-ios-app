@@ -12,6 +12,7 @@ import SwiftUI
 
 struct AppDestinationView: View {
     @Environment(\.openURL) private var openURL
+    @State private var showsOfflineMaps = false
     let route: AppRoute
     let activeSurfaces: Set<AppNavigationSurface>
     let featureStore: AppFeatureStore
@@ -31,6 +32,7 @@ struct AppDestinationView: View {
                 onNavigation: handleSettingsEvent,
                 accessory: settingsAccessory
             )
+            .sheet(isPresented: $showsOfflineMaps) { featureStore.offlineMapsFactory.make() }
         case .dashboardCards(let destination):
             DashboardCardSettingsScene(
                 destination: destination,
@@ -89,7 +91,9 @@ struct AppDestinationView: View {
     }
 
     private func handleSettingsEvent(_ event: AppSettingsNavigationEvent) {
-        if event == .changeBike {
+        if event == .openOfflineMaps {
+            showsOfflineMaps = true
+        } else if event == .changeBike {
             onChangeBike()
         } else if let url = AppNavigationEventAdapter.externalURL(for: event) {
             openURL(url)

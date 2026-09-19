@@ -1,4 +1,8 @@
 name: FENR
+packages:
+  MapboxMaps:
+    url: https://github.com/mapbox/mapbox-maps-ios.git
+    exactVersion: 11.30.1
 include:
   - path: config/xcodegen/templates.yml
     relativePaths: false

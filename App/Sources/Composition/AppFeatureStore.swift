@@ -26,5 +26,7 @@ struct AppFeatureStore {
     let rideHistoryViewModel: RideHistoryViewModel
     let maintenanceViewModel: MaintenanceViewModel
     let rideDashboardFactory: any RideDashboardFeatureBuilding
+    let offlineMaps: AppOfflineMapsFeature
+    let offlineMapsFactory: OfflineMapsFeatureFactory
     let rideNavigationFactory: any RideNavigationFeatureBuilding
 }

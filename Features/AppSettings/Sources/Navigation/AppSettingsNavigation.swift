@@ -14,6 +14,7 @@ public enum AppSettingsDestination: Hashable, Sendable {
 
 public enum AppSettingsNavigationEvent: Equatable, Sendable {
     case show(AppSettingsDestination)
+    case openOfflineMaps
     case openDashboardCards
     case openPowerModes
     case openRideHistory

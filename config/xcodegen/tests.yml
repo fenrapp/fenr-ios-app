@@ -210,6 +210,9 @@ targets:
       - target: EnvironmentDomain
       - target: RideNavigation
       - target: RideNavigationAppleMaps
+      - target: RideNavigationMapbox
+      - target: OfflineMapsDomain
+      - target: OfflineMapsData
       - target: RideNavigationDomain
       - target: TestSupport
     settings:
@@ -484,6 +487,9 @@ targets:
       - target: MaintenanceLog
       - target: RideNavigation
       - target: RideNavigationAppleMaps
+      - target: RideNavigationMapbox
+      - target: OfflineMapsDomain
+      - target: OfflineMapsData
       - target: RideNavigationData
       - target: RideNavigationDomain
       - target: BikeData
@@ -535,6 +541,9 @@ targets:
       - target: MaintenanceLog
       - target: RideNavigation
       - target: RideNavigationAppleMaps
+      - target: RideNavigationMapbox
+      - target: OfflineMapsDomain
+      - target: OfflineMapsData
       - target: RideNavigationData
       - target: RideNavigationDomain
       - target: ChargingSettings
@@ -569,3 +578,24 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchcompaniondata.tests
+
+  OfflineMapsDomainTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/OfflineMapsDomain/Tests
+    dependencies:
+      - target: OfflineMapsDomain
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.offlinemapsdomain.tests
+  OfflineMapsDataTests:
+    templates: [IOSUnitTests]
+    sources:
+      - path: Modules/OfflineMapsData/Tests
+    dependencies:
+      - target: OfflineMapsData
+      - target: OfflineMapsDomain
+      - target: TestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.offlinemapsdata.tests

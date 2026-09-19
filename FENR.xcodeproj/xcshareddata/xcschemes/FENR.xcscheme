@@ -393,6 +393,34 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C31534A16A710BF896CAED46"
+               BuildableName = "OfflineMapsDataTests.xctest"
+               BlueprintName = "OfflineMapsDataTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "CEDC1AFF82659BF81D44E6FC"
+               BuildableName = "OfflineMapsDomainTests.xctest"
+               BlueprintName = "OfflineMapsDomainTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "BF81C21AA8B4D4EA10C2CEE9"
                BuildableName = "PowerModeSettingsTests.xctest"
                BlueprintName = "PowerModeSettingsTests"
@@ -822,6 +850,28 @@
                BlueprintIdentifier = "E8DC84F8868FF25C7537B843"
                BuildableName = "RideNavigationDataTests.xctest"
                BlueprintName = "RideNavigationDataTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "CEDC1AFF82659BF81D44E6FC"
+               BuildableName = "OfflineMapsDomainTests.xctest"
+               BlueprintName = "OfflineMapsDomainTests"
+               ReferencedContainer = "container:FENR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C31534A16A710BF896CAED46"
+               BuildableName = "OfflineMapsDataTests.xctest"
+               BlueprintName = "OfflineMapsDataTests"
                ReferencedContainer = "container:FENR.xcodeproj">
             </BuildableReference>
          </TestableReference>
