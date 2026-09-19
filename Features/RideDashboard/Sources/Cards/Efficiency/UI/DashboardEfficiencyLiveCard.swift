@@ -177,7 +177,7 @@ struct DashboardEfficiencyLiveCard: View {
     }
 
     private var chartDomain: ClosedRange<Double> {
-        let maximum = state.powerPoints.reduce(0.5) { result, point in
+        let maximum = state.powerPoints.reduce(Constants.minimumChartMaximum) { result, point in
             max(result, max(point.usedKilowatts, point.regenKilowatts))
         }
         return .zero ... (maximum * Constants.chartScalePadding)
@@ -211,6 +211,7 @@ struct DashboardEfficiencyLiveCard: View {
         static let zeroLineDash: [CGFloat] = [3, 3]
         static let zeroLineOpacity = 0.45
         static let chartScalePadding = 1.12
+        static let minimumChartMaximum = 0.5
         static let legendLineWidth: CGFloat = 16
         static let legendLineHeight: CGFloat = 3
     }
