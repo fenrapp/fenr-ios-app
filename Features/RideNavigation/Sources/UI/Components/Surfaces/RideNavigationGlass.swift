@@ -1,3 +1,4 @@
+import DesignSystem
 import SwiftUI
 
 struct RideNavigationGlassGroup<Content: View>: View {
@@ -22,6 +23,24 @@ struct RideNavigationGlassGroup<Content: View>: View {
 }
 
 extension View {
+    @ViewBuilder
+    func rideNavigationMapToolbar(title: String) -> some View {
+        if #available(iOS 26.0, *) {
+            toolbarBackground(.hidden, for: .navigationBar)
+                .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        Text(verbatim: title).font(.headline).lineLimit(1)
+                            .padding(.horizontal, DesignSpace.medium)
+                            .padding(.vertical, DesignSpace.small)
+                            .glassEffect(.regular, in: Capsule())
+                    }
+                }
+        } else {
+            toolbarBackground(.regularMaterial, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+        }
+    }
+
     func rideNavigationGlassSurface(cornerRadius: CGFloat) -> some View {
         modifier(RideNavigationGlassSurfaceModifier(cornerRadius: cornerRadius))
     }
