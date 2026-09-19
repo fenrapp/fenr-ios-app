@@ -205,6 +205,13 @@ private struct AppleNavigationMapView: UIViewRepresentable {
                 edgePadding: Constants.routeInsets,
                 animated: true
             )
+        case .viewport(let viewport):
+            let camera = MKMapCamera(
+                lookingAtCenter: viewport.center.clCoordinate,
+                fromDistance: viewport.visibleHeightMeters * Constants.cameraHeightRatio,
+                pitch: 0, heading: viewport.bearingDegrees
+            )
+            map.setCamera(camera, animated: false)
         case .userControlled:
             break
         }
@@ -240,6 +247,7 @@ private struct AppleNavigationMapView: UIViewRepresentable {
     }
 
     private enum Constants {
+        static let cameraHeightRatio = 1.2
         static let followDistance: CLLocationDistance = 450
         static let followPitch: CGFloat = 0
         static let automaticRegionMeters: CLLocationDistance = 1_600

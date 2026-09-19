@@ -28,6 +28,11 @@ struct FocusNavigationViewport {
             scale = result.scale
             rotationDegrees = .zero
             anchor = CGPoint(x: size.width / 2, y: size.height / 2)
+        case .viewport(let viewport):
+            center = MKMapPoint(viewport.center.clCoordinate)
+            scale = max(Double(size.height) / viewport.visibleHeightMeters, Constants.minimumScale)
+            rotationDegrees = viewport.bearingDegrees
+            anchor = CGPoint(x: size.width / 2, y: size.height / 2)
         case .automatic, .userControlled:
             let result = Self.overviewViewport(coordinates: Self.visibleCoordinates(in: scene), size: size)
             center = result.center

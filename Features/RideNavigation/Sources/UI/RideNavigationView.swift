@@ -3,6 +3,10 @@ import SwiftUI
 public struct RideNavigationView: View {
     @Environment(\.colorScheme) private var colorScheme
     private let viewModel: RideNavigationViewModel
+    private let offlineMapsFactory: OfflineMapsFeatureFactory?
+    @State private var offlineRequest: OfflineMapSelectionSeed?
+    @State private var offlineRouteID: UUID?
+    @State private var showsOfflineMaps = false
     private let mapSurfaceFactory: RideNavigationMapSurfaceFactory
     private let transitionNamespace: Namespace.ID
     private let onClose: () -> Void
@@ -19,10 +23,12 @@ public struct RideNavigationView: View {
     public init(
         viewModel: RideNavigationViewModel,
         mapSurfaceFactory: RideNavigationMapSurfaceFactory,
+        offlineMapsFactory: OfflineMapsFeatureFactory? = nil,
         transitionNamespace: Namespace.ID,
         onClose: @escaping () -> Void,
         onMinimize: @escaping () -> Void
     ) {
+        self.offlineMapsFactory = offlineMapsFactory
         self.viewModel = viewModel
         self.mapSurfaceFactory = mapSurfaceFactory
         self.transitionNamespace = transitionNamespace
@@ -42,74 +48,88 @@ public struct RideNavigationView: View {
             .transition(.opacity)
             .ignoresSafeArea()
 
-            switch viewModel.viewState.screen {
-            case .home:
-                RideNavigationHomePanel(
-                    state: viewModel.viewState,
-                    onClose: onClose,
-                    onImport: { showsImporter = true },
-                    onRecord: viewModel.startRecording,
-                    onSearchQueryChanged: viewModel.updateSearchQuery,
-                    onSearch: viewModel.search,
-                    onSelectSearchResult: viewModel.selectSearchResult,
-                    onOpenRoute: viewModel.openSavedRoute,
-                    onShareRoute: viewModel.shareSavedRoute,
-                    onDeleteRoute: viewModel.deleteSavedRoute
-                )
-            case .map:
-                RideNavigationMapOverlay(
-                    state: viewModel.viewState,
-                    showsControls: showsFocusControls || !isFocusDriving,
-                    onInteraction: revealFocusControls,
-                    onClose: closeMap,
-                    onStart: viewModel.startPreviewedRoute,
-                    onTogglePause: viewModel.toggleRecordingPause,
-                    onFinish: viewModel.finishActivity,
-                    onMinimize: onMinimize,
-                    onReverse: viewModel.toggleRouteDirection,
-                    onSelectTrailDirection: viewModel.selectTrailDirection,
-                    onCancelTrailDirectionSelection: viewModel.cancelTrailDirectionSelection,
-                    onFinishAfterArrival: viewModel.finishAfterTrailArrival,
-                    onKeepRidingAfterArrival: viewModel.keepRidingAfterTrailArrival,
-                    onSelectRouteOption: viewModel.selectRoadRouteOption,
-                    onAvoidTolls: viewModel.setAvoidsTolls,
-                    onAvoidHighways: viewModel.setAvoidsHighways,
-                    onRecenter: { viewModel.handleMapIntent(.recenter) },
-                    onOverview: { viewModel.handleMapIntent(.overview) },
-                    onMapHeadingUp: viewModel.setMapHeadingUp,
-                    onToggleVoice: viewModel.toggleVoice,
-                    onMapStyle: viewModel.setMapStyle,
-                    activeMapSelector: $activeMapSelector,
-                    onFindTrailExit: viewModel.findTrailExit,
-                    onCancelTrailExit: viewModel.cancelTrailExitPreview,
-                    onStartTrailExit: viewModel.startTrailExit,
-                    onResumeGPX: viewModel.resumeGPX,
-                    onKeepRidingWithIncomingDestination: viewModel.keepRidingWithIncomingDestination,
-                    onEndRideAndOpenIncomingDestination: viewModel.endRideAndOpenIncomingDestination
-                )
-            case .summary:
-                RideNavigationSummaryPanel(
-                    state: viewModel.viewState,
-                    routeName: $routeName,
-                    onSave: { viewModel.saveCompletedRouteAndClose(name: routeName) },
-                    onRetrySave: { viewModel.retryCompletedRouteSave(name: routeName) },
-                    onDiscardUnsaved: viewModel.discardUnsavedCompletedRoute,
-                    onExport: viewModel.exportCompletedRoute,
-                    onClose: viewModel.discardActivity
-                )
+            Group {
+                switch viewModel.viewState.screen {
+                case .home:
+                    RideNavigationHomePanel(
+                        state: viewModel.viewState,
+                        onClose: onClose,
+                        onImport: { showsImporter = true },
+                        onRecord: viewModel.startRecording,
+                        onSearchQueryChanged: viewModel.updateSearchQuery,
+                        onSearch: viewModel.search,
+                        onSelectSearchResult: viewModel.selectSearchResult,
+                        onOpenRoute: viewModel.openSavedRoute,
+                        onShareRoute: viewModel.shareSavedRoute,
+                        onDeleteRoute: viewModel.deleteSavedRoute,
+                        onOfflineMaps: { offlineRouteID = nil; offlineRequest = nil; showsOfflineMaps = true },
+                        onDownloadRoute: { offlineRouteID = $0; offlineRequest = nil; showsOfflineMaps = true }
+                    )
+                case .map:
+                    RideNavigationMapOverlay(
+                        state: viewModel.viewState,
+                        showsControls: showsFocusControls || !isFocusDriving,
+                        onInteraction: revealFocusControls,
+                        onClose: closeMap,
+                        onStart: viewModel.startPreviewedRoute,
+                        onTogglePause: viewModel.toggleRecordingPause,
+                        onFinish: viewModel.finishActivity,
+                        onMinimize: onMinimize,
+                        onReverse: viewModel.toggleRouteDirection,
+                        onSelectTrailDirection: viewModel.selectTrailDirection,
+                        onCancelTrailDirectionSelection: viewModel.cancelTrailDirectionSelection,
+                        onFinishAfterArrival: viewModel.finishAfterTrailArrival,
+                        onKeepRidingAfterArrival: viewModel.keepRidingAfterTrailArrival,
+                        onSelectRouteOption: viewModel.selectRoadRouteOption,
+                        onAvoidTolls: viewModel.setAvoidsTolls,
+                        onAvoidHighways: viewModel.setAvoidsHighways,
+                        onRecenter: { viewModel.handleMapIntent(.recenter) },
+                        onOverview: { viewModel.handleMapIntent(.overview) },
+                        onMapHeadingUp: viewModel.setMapHeadingUp,
+                        onToggleVoice: viewModel.toggleVoice,
+                        onMapStyle: viewModel.setMapStyle,
+                        activeMapSelector: $activeMapSelector,
+                        onFindTrailExit: viewModel.findTrailExit,
+                        onCancelTrailExit: viewModel.cancelTrailExitPreview,
+                        onStartTrailExit: viewModel.startTrailExit,
+                        onResumeGPX: viewModel.resumeGPX,
+                        onKeepRidingWithIncomingDestination: viewModel.keepRidingWithIncomingDestination,
+                        onEndRideAndOpenIncomingDestination: viewModel.endRideAndOpenIncomingDestination,
+                        onDownloadMap: {
+                            offlineRouteID = nil
+                            offlineRequest = viewModel.offlineSelectionSeed
+                            showsOfflineMaps = true
+                        },
+                        onFollowGPX: viewModel.followGPXDirectly
+                    )
+                case .summary:
+                    RideNavigationSummaryPanel(
+                        state: viewModel.viewState,
+                        routeName: $routeName,
+                        onSave: { viewModel.saveCompletedRouteAndClose(name: routeName) },
+                        onRetrySave: { viewModel.retryCompletedRouteSave(name: routeName) },
+                        onDiscardUnsaved: viewModel.discardUnsavedCompletedRoute,
+                        onExport: viewModel.exportCompletedRoute,
+                        onClose: viewModel.discardActivity
+                    )
+                }
             }
+            .padding(.bottom, RideNavigationMapAttributionLayout.clearance)
         }
-            .alert(
-                Text(.rideNavigationSaveErrorTitle),
-                isPresented: Binding(
-                    get: { viewModel.settingsSaveError != nil },
-                    set: { if !$0 { viewModel.dismissSettingsSaveError() } }
-                )
-            ) {
-                Button(.rideNavigationSaveErrorDismiss) { viewModel.dismissSettingsSaveError() }
-            } message: {
-                Text(verbatim: viewModel.settingsSaveError ?? "")
-            }
+        .sheet(isPresented: $showsOfflineMaps) {
+            offlineMapsFactory?.make(routeID: offlineRouteID, seed: offlineRequest)
+        }
+        .alert(
+            Text(.rideNavigationSaveErrorTitle),
+            isPresented: Binding(
+                get: { viewModel.settingsSaveError != nil },
+                set: { if !$0 { viewModel.dismissSettingsSaveError() } }
+            )
+        ) {
+            Button(.rideNavigationSaveErrorDismiss) { viewModel.dismissSettingsSaveError() }
+        } message: {
+            Text(verbatim: viewModel.settingsSaveError ?? "")
+        }
 
         .background(navigationBackground)
         .rideNavigationFocusAppearance(usesFocusAppearance)
@@ -224,11 +244,13 @@ public struct RideNavigationView: View {
     private struct MapSurfaceIdentity: Hashable {
         let displayStyle: NavigationMapDisplayStyle
         let sourceID: String
+        let usesOfflineMap: Bool
         let showsRoadsInFocus: Bool
 
         init(scene: NavigationMapScene) {
             displayStyle = scene.displayStyle
             sourceID = scene.source.id
+            usesOfflineMap = scene.usesOfflineMap
             showsRoadsInFocus = scene.showsRoadsInFocus
         }
     }

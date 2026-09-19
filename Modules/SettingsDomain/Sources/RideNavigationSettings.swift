@@ -1,6 +1,7 @@
 public struct RideNavigationSettings: Codable, Equatable, Sendable {
     public var avoidsTolls: Bool
     public var avoidsHighways: Bool
+    public var mapMode: RideNavigationMapModePreference
     public var preferredMapStyle: RideNavigationMapStylePreference
     public var mapOrientation: RideNavigationMapOrientationPreference
     public var miniMapPosition: MiniMapPosition
@@ -14,7 +15,8 @@ public struct RideNavigationSettings: Codable, Equatable, Sendable {
     public init(
         avoidsTolls: Bool = false,
         avoidsHighways: Bool = false,
-        preferredMapStyle: RideNavigationMapStylePreference = .focus,
+        preferredMapStyle: RideNavigationMapStylePreference = .standard,
+        mapMode: RideNavigationMapModePreference = .normal,
         mapOrientation: RideNavigationMapOrientationPreference = .headingUp,
         miniMapPosition: MiniMapPosition = .topTrailing,
         miniMapScale: MiniMapScale = .initial,
@@ -26,6 +28,7 @@ public struct RideNavigationSettings: Codable, Equatable, Sendable {
     ) {
         self.avoidsTolls = avoidsTolls
         self.avoidsHighways = avoidsHighways
+        self.mapMode = mapMode
         self.preferredMapStyle = preferredMapStyle
         self.mapOrientation = mapOrientation
         self.miniMapPosition = miniMapPosition
@@ -41,6 +44,7 @@ public struct RideNavigationSettings: Codable, Equatable, Sendable {
         case avoidsTolls
         case avoidsHighways
         case preferredMapStyle
+        case mapMode
         case mapOrientation
         case miniMapPosition
         case miniMapScale
@@ -56,10 +60,11 @@ public struct RideNavigationSettings: Codable, Equatable, Sendable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         avoidsTolls = try container.decodeIfPresent(Bool.self, forKey: .avoidsTolls) ?? false
         avoidsHighways = try container.decodeIfPresent(Bool.self, forKey: .avoidsHighways) ?? false
+        mapMode = try container.decodeIfPresent(RideNavigationMapModePreference.self, forKey: .mapMode) ?? .normal
         preferredMapStyle = try container.decodeIfPresent(
             RideNavigationMapStylePreference.self,
             forKey: .preferredMapStyle
-        ) ?? .focus
+        ) ?? .standard
         mapOrientation = try container.decodeIfPresent(
             RideNavigationMapOrientationPreference.self,
             forKey: .mapOrientation
@@ -97,6 +102,7 @@ public struct RideNavigationSettings: Codable, Equatable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(avoidsTolls, forKey: .avoidsTolls)
         try container.encode(avoidsHighways, forKey: .avoidsHighways)
+        try container.encode(mapMode, forKey: .mapMode)
         try container.encode(preferredMapStyle, forKey: .preferredMapStyle)
         try container.encode(mapOrientation, forKey: .mapOrientation)
         try container.encode(miniMapPosition, forKey: .miniMapPosition)
@@ -107,6 +113,11 @@ public struct RideNavigationSettings: Codable, Equatable, Sendable {
         try container.encode(showsRoadsInFocus, forKey: .showsRoadsInFocus)
         try container.encode(lineAppearances, forKey: .lineAppearances)
     }
+}
+
+public enum RideNavigationMapModePreference: String, Codable, Sendable {
+    case normal
+    case offline
 }
 
 public enum RideNavigationMapStylePreference: String, Codable, CaseIterable, Sendable {

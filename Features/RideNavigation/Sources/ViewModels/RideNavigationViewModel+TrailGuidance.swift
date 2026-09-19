@@ -8,7 +8,12 @@ extension RideNavigationViewModel {
 
     func startSelectedTrailRoute() {
         activityController.updatePreferences(roadRoutePreferences)
-        activityController.startSelectedTrailRoute()
+        activityController.startSelectedTrailRoute(usesRoadApproach: true)
+        render()
+    }
+
+    public func followGPXDirectly() {
+        activityController.startSelectedTrailRoute(usesRoadApproach: false)
         render()
     }
 

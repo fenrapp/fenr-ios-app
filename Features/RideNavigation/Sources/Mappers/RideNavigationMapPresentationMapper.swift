@@ -2,6 +2,24 @@ import EnvironmentDomain
 import RideNavigationDomain
 
 public struct RideNavigationMapPresentationMapper: Sendable {
+    func mapMode(offline: Bool) -> RideNavigationMapModeState {
+        guard offline else { return .normal }
+        return RideNavigationMapModeState(
+            selectedID: "map.offline", title: String(localized: .rideNavigationOfflineMode),
+            detail: String(localized: .rideNavigationOfflineModeDetail),
+            isEmphasized: true, symbol: "arrow.down.circle.fill",
+            choices: RideNavigationMapModeState.normal.choices
+        )
+    }
+
+    func mapSources(offline: Bool) -> [MapSourceDescriptor] {
+        [
+            .init(id: MapSourceDescriptor.appleStandard.id, title: offline
+                ? String(localized: .offlineTopographic) : MapSourceDescriptor.appleStandard.title),
+            .appleHybrid
+        ]
+    }
+
     struct TrailOverlayInput: Sendable {
         let hasSelectedRoute: Bool
         let activity: RideNavigationViewState.Activity

@@ -7,6 +7,25 @@ import TestSupport
 
 @MainActor
 struct RideNavigationTrailGuidanceFlowTests {
+    @Test("direct GPX following works far from the route without a road calculation")
+    func directFollowingDoesNotRequestAnApproach() async {
+        let route = makeRoute(finishLatitude: 41.01)
+        let fixture = RideNavigationViewModelFixture(routes: [route])
+        fixture.viewModel.start()
+        await fixture.deviceSpeedRepository.send(
+            sample(coordinate(latitude: 42, longitude: 3), seconds: 0, courseDegrees: 0)
+        )
+        #expect(await waitUntil { fixture.viewModel.viewState.savedRoutes.count == 1 })
+        fixture.viewModel.openSavedRoute(id: route.id)
+        await fixture.viewModel.savedRouteLoadingTask?.value
+        fixture.viewModel.followGPXDirectly()
+        #expect(await waitUntil { fixture.viewModel.viewState.activity == .following })
+        #expect(await fixture.roadRouteCalculator.requestCount == 0)
+        #expect(fixture.viewModel.planningController.snapshot.roadRoute == nil)
+        #expect(!fixture.viewModel.viewState.mapScene.usesOfflineMap)
+        fixture.viewModel.stop()
+    }
+
     @Test("reverse intermediate entry asks before changing direction")
     func reverseEntryRequiresConfirmation() async {
         let route = makeRoute(finishLatitude: 41.01)

@@ -13,6 +13,7 @@ public struct RideNavigationViewModelDependencies: Sendable {
     let mapPresentationMapper: RideNavigationMapPresentationMapper
     let mapSceneBuilder: RideNavigationMapSceneBuilder
     let locationGeometry: RideNavigationLocationGeometry
+    let offlineNavigation: OfflineNavigationDependencies?
     let timing: RideNavigationTiming
 
     public init(
@@ -25,7 +26,8 @@ public struct RideNavigationViewModelDependencies: Sendable {
         mapPresentationMapper: RideNavigationMapPresentationMapper,
         mapSceneBuilder: RideNavigationMapSceneBuilder,
         locationGeometry: RideNavigationLocationGeometry,
-        timing: RideNavigationTiming
+        timing: RideNavigationTiming,
+        offlineNavigation: OfflineNavigationDependencies? = nil
     ) {
         self.vehicleSession = vehicleSession
         self.observeDeviceSpeed = observeDeviceSpeed
@@ -36,6 +38,7 @@ public struct RideNavigationViewModelDependencies: Sendable {
         self.mapPresentationMapper = mapPresentationMapper
         self.mapSceneBuilder = mapSceneBuilder
         self.locationGeometry = locationGeometry
+        self.offlineNavigation = offlineNavigation
         self.timing = timing
     }
 }

@@ -113,7 +113,8 @@ extension RideNavigationActivityController {
         }
     }
 
-    func startSelectedTrailRoute() {
+    func startSelectedTrailRoute(usesRoadApproach: Bool? = nil) {
+        if let usesRoadApproach { self.usesRoadApproach = usesRoadApproach }
         guard let route = dependencies.planning.snapshot.selectedRoute,
               !dependencies.library.snapshot.persistence.status.isSaving else { return }
         let guidanceSnapshot = dependencies.trailGuidance.snapshot
@@ -176,6 +177,10 @@ extension RideNavigationActivityController {
 
     private func resolveTrailEntryAndStart() {
         guard let plan = dependencies.trailGuidance.snapshot.plan else { return }
+        guard usesRoadApproach else {
+            beginTrailFollowing(plan: plan, projection: nearestEntryProjection(in: plan))
+            return
+        }
         guard let sample = trailGuidanceSample else {
             beginTrailFollowing(plan: plan, projection: nil)
             return

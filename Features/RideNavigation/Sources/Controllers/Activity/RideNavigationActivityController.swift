@@ -3,6 +3,7 @@ import RideNavigationDomain
 
 @MainActor
 public final class RideNavigationActivityController {
+    var usesRoadApproach = true
     let dependencies: RideNavigationActivityDependencies
     var recorder: RideRouteRecorder
     var breadcrumbRecorder: RideRouteRecorder

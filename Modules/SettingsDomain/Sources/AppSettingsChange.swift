@@ -25,6 +25,7 @@ public enum AppSettingsChange: Equatable, Sendable {
         case avoidsTolls(Bool)
         case avoidsHighways(Bool)
         case preferredMapStyle(RideNavigationMapStylePreference)
+        case mapMode(RideNavigationMapModePreference)
         case mapOrientation(RideNavigationMapOrientationPreference)
         case miniMapPosition(MiniMapPosition)
         case miniMapScale(MiniMapScale)
@@ -124,6 +125,7 @@ private extension AppSettingsChange.Navigation {
         case let .avoidsTolls(value): settings.avoidsTolls = value
         case let .avoidsHighways(value): settings.avoidsHighways = value
         case let .preferredMapStyle(value): settings.preferredMapStyle = value
+        case let .mapMode(value): settings.mapMode = value
         case let .mapOrientation(value): settings.mapOrientation = value
         case let .miniMapPosition(value): settings.miniMapPosition = value
         case let .miniMapScale(value): settings.miniMapScale = value

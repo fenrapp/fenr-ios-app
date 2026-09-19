@@ -1,4 +1,6 @@
 public struct NavigationMapScene: Equatable, Sendable {
+    public let offlineNotice: String?
+    public let usesOfflineMap: Bool
     public let source: MapSourceDescriptor
     public let displayStyle: NavigationMapDisplayStyle
     public let camera: NavigationMapCamera
@@ -11,6 +13,8 @@ public struct NavigationMapScene: Equatable, Sendable {
     public let showsRoadsInFocus: Bool
 
     public init(
+        offlineNotice: String? = nil,
+        usesOfflineMap: Bool = false,
         source: MapSourceDescriptor = .appleStandard,
         displayStyle: NavigationMapDisplayStyle = .map,
         camera: NavigationMapCamera = .automatic,
@@ -22,6 +26,8 @@ public struct NavigationMapScene: Equatable, Sendable {
         showsCompassRing: Bool = false,
         showsRoadsInFocus: Bool = false
     ) {
+        self.offlineNotice = offlineNotice
+        self.usesOfflineMap = usesOfflineMap
         self.source = source
         self.displayStyle = displayStyle
         self.camera = camera

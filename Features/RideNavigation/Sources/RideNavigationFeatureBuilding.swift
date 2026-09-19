@@ -9,11 +9,14 @@ public protocol RideNavigationFeatureBuilding {
 public struct RideNavigationFeatureModel {
     let viewModel: RideNavigationViewModel
     let mapSurfaceFactory: RideNavigationMapSurfaceFactory
+    let offlineMapsFactory: OfflineMapsFeatureFactory?
 
     public init(
         viewModel: RideNavigationViewModel,
-        mapSurfaceFactory: RideNavigationMapSurfaceFactory
+        mapSurfaceFactory: RideNavigationMapSurfaceFactory,
+        offlineMapsFactory: OfflineMapsFeatureFactory? = nil
     ) {
+        self.offlineMapsFactory = offlineMapsFactory
         self.viewModel = viewModel
         self.mapSurfaceFactory = mapSurfaceFactory
     }

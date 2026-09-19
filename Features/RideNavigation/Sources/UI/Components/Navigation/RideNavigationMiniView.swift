@@ -49,6 +49,7 @@ struct RideNavigationMiniView: View {
                             .accessibilityAddTraits(.isButton)
                             .accessibilityAction(.default, onExpand)
                             .accessibilityIdentifier("rideNavigation.miniMap")
+                            .padding(.bottom, RideNavigationMapAttributionLayout.clearance)
                     }
                     .matchedGeometryEffect(
                         id: Constants.navigationSurfaceID,
@@ -113,8 +114,6 @@ struct RideNavigationMiniView: View {
                 onIntent: { _ in },
                 onInteraction: {}
             )
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
 
             if let statusText = miniStatusText {
                 HStack(spacing: DesignSpace.extraSmall) {
@@ -141,7 +140,6 @@ struct RideNavigationMiniView: View {
         }
         .shadow(color: .black.opacity(Constants.shadowOpacity), radius: Constants.shadowRadius, y: DesignSpace.small)
         .contentShape(RoundedRectangle(cornerRadius: Constants.cornerRadius, style: .continuous))
-        .accessibilityHidden(true)
     }
 
     private var miniStatusText: String? {
