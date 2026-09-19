@@ -43,7 +43,7 @@ public final class OfflineSelectionViewModel {
         name = seed.name
         isRoute = !seed.segments.isEmpty
         scene = OfflineMapSelectionScene(
-            outlines: [], existing: [], center: seed.center, isCorridor: !seed.segments.isEmpty
+            outlines: [], existing: [], center: seed.initialCenter, isCorridor: !seed.segments.isEmpty
         )
     }
 
@@ -122,7 +122,7 @@ public final class OfflineSelectionViewModel {
     public func locate() {
         scene = OfflineMapSelectionScene(
             outlines: scene.outlines, existing: scene.existing,
-            center: currentCenter ?? seed.center, isCorridor: isRoute,
+            center: currentCenter ?? seed.initialCenter, isCorridor: isRoute,
             cameraCommand: scene.cameraCommand + 1
         )
     }
@@ -195,7 +195,7 @@ public final class OfflineSelectionViewModel {
             outlines: mapper.outlines(geometry),
             existing: useCases.snapshot.regions.filter { $0.layers.contains(where: \.available) }
                 .flatMap { mapper.outlines($0.geometry) },
-            center: currentCenter ?? seed.center, isCorridor: isRoute,
+            center: seed.initialCenter ?? currentCenter, isCorridor: isRoute,
             cameraCommand: scene.cameraCommand
         )
     }

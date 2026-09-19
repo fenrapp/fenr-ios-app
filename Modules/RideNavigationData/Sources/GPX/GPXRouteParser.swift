@@ -21,6 +21,17 @@ public struct GPXRouteParser: GPXRouteImporting, Sendable {
     }
 
     public func importRoutes(from data: Data, fallbackName: String) throws -> [RideRoute] {
+        do {
+            return try parseRoutes(from: data, fallbackName: fallbackName)
+        } catch GPXRouteParserError.invalidXML(let description) {
+            guard let recovered = recoveringText(in: data, maximumBytes: limits.maximumFileSizeBytes) else {
+                throw GPXRouteParserError.invalidXML(description)
+            }
+            return try parseRoutes(from: recovered, fallbackName: fallbackName)
+        }
+    }
+
+    private func parseRoutes(from data: Data, fallbackName: String) throws -> [RideRoute] {
         guard data.count <= limits.maximumFileSizeBytes else {
             throw GPXRouteParserError.fileTooLarge(maximumBytes: limits.maximumFileSizeBytes)
         }

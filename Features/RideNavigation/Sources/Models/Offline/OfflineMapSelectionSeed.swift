@@ -7,6 +7,10 @@ public struct OfflineMapSelectionSeed: Identifiable, Equatable, Sendable {
     public let segments: [[NavigationMapCoordinate]]
     public let center: NavigationMapCoordinate?
 
+    public var initialCenter: NavigationMapCoordinate? {
+        segments.lazy.compactMap(\.first).first ?? center
+    }
+
     public init(
         id: UUID = UUID(), name: String, routeID: UUID? = nil,
         segments: [[NavigationMapCoordinate]] = [], center: NavigationMapCoordinate? = nil

@@ -4,11 +4,14 @@ import RideNavigationDomain
 
 enum LibraryControllerTestFactory {
     @MainActor
-    static func makeController(repository: any RecordedRouteRepository) -> RideNavigationLibraryController {
+    static func makeController(
+        repository: any RecordedRouteRepository,
+        importer: any GPXRouteImporting = StubGPXRouteImporter()
+    ) -> RideNavigationLibraryController {
         RideNavigationLibraryController(
             routeLibrary: RideNavigationRouteLibraryService(
                 repository: repository,
-                importer: StubGPXRouteImporter(),
+                importer: importer,
                 exporter: StubGPXRouteExporter()
             ),
             timing: RideNavigationTiming(
