@@ -73,6 +73,24 @@ import SwiftUI
     .dashboardCardPreviewCanvas()
 }
 
+#Preview("Efficiency waiting - iPhone 15 large text") {
+    DashboardEfficiencyLiveCard(state: .init())
+        .dynamicTypeSize(.xxxLarge)
+        .dashboardCardPreviewCanvas(width: 360, height: 372)
+}
+
+#Preview("Efficiency live - iPhone 15 large text") {
+    DashboardEfficiencyLiveCard(state: .init(
+        valueText: "128",
+        status: .calculated,
+        usedEnergyText: "1.2 kWh",
+        recoveredEnergyText: "180 Wh",
+        powerPoints: previewPowerPoints
+    ))
+    .dynamicTypeSize(.xxxLarge)
+    .dashboardCardPreviewCanvas(width: 360, height: 372)
+}
+
 #Preview("Range live card") {
     DashboardRangeLiveCard(state: previewRangeState, retryHistory: {})
         .dashboardCardPreviewCanvas()
@@ -257,8 +275,8 @@ private func makePreviewSystemHealthState(
 }
 
 extension View {
-    func dashboardCardPreviewCanvas() -> some View {
-        frame(width: 430, height: 390)
+    func dashboardCardPreviewCanvas(width: CGFloat = 430, height: CGFloat = 390) -> some View {
+        frame(width: width, height: height)
             .background(DesignColor.surface)
             .preferredColorScheme(.dark)
     }
