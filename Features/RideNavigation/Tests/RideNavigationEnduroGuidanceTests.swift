@@ -2,6 +2,7 @@ import EnvironmentDomain
 import Foundation
 @testable import RideNavigation
 import RideNavigationDomain
+import SettingsDomain
 import Testing
 import TestSupport
 
@@ -47,7 +48,8 @@ struct RideNavigationEnduroGuidanceTests {
         #expect(fixture.viewModel.viewState.mapScene.userCoordinate == mapCoordinate(next))
         #expect((fixture.viewModel.viewState.guidance?.rotationDegrees ?? .zero) < -80)
         #expect(!(await fixture.roadRouteCalculator.hasPendingRequest))
-        #expect(fixture.viewModel.viewState.mapScene.displayStyle == .focus)
+        #expect(fixture.viewModel.viewState.mapScene.displayStyle == .map)
+        #expect(fixture.viewModel.viewState.mapScene.source == .appleStandard)
 
         fixture.viewModel.stop()
     }
@@ -66,7 +68,9 @@ struct RideNavigationEnduroGuidanceTests {
                 ])
             ]
         )
-        let fixture = RideNavigationViewModelFixture(routes: [route])
+        let fixture = RideNavigationViewModelFixture(
+            routes: [route], settings: AppSettings(rideNavigation: .init(preferredMapStyle: .focus))
+        )
         fixture.viewModel.start()
         await fixture.deviceSpeedRepository.send(sample(start, date: date, courseDegrees: .zero))
         #expect(await waitUntil {

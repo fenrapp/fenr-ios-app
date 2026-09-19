@@ -9,6 +9,8 @@ struct RideNavigationSavedRoutesPanel: View {
     let onShareRoute: (UUID) -> Void
     let onDeleteRoute: (UUID) -> Void
 
+    var onDownloadRoute: ((UUID) -> Void)?
+
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSpace.medium) {
             header
@@ -64,6 +66,13 @@ struct RideNavigationSavedRoutesPanel: View {
             Button { onOpenRoute(route.id) } label: {
                 savedRouteRow(route)
             }
+            .contextMenu {
+                if let onDownloadRoute {
+                    Button { onDownloadRoute(route.id) } label: {
+                        Label(.offlineDownloadRoute, systemImage: "arrow.down.circle")
+                    }
+                }
+            }
             .buttonStyle(.plain)
             .accessibilityIdentifier("rideNavigation.savedRoute")
             .listRowInsets(EdgeInsets(top: .zero, leading: .zero, bottom: DesignSpace.extraSmall, trailing: .zero))
@@ -94,6 +103,9 @@ struct RideNavigationSavedRoutesPanel: View {
                 Text(route.title)
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+                if let status = route.offlineStatus {
+                    Text(verbatim: status).font(.caption2).foregroundStyle(.secondary)
+                }
                 Text(route.detail)
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)

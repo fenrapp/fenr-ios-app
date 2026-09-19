@@ -19,6 +19,7 @@ struct RideNavigationLoadedScene: View {
                 RideNavigationView(
                     viewModel: feature.viewModel,
                     mapSurfaceFactory: feature.mapSurfaceFactory,
+                    offlineMapsFactory: feature.offlineMapsFactory,
                     transitionNamespace: navigationSurfaceNamespace,
                     onClose: { onNavigation(.close) },
                     onMinimize: { onNavigation(.minimize) }

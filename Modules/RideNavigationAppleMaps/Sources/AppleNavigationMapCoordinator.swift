@@ -13,6 +13,7 @@ final class AppleNavigationMapCoordinator: NSObject, MKMapViewDelegate {
     var renderedMarkers: [NavigationMapMarker] = []
     var renderedDirectionalIndicators: [NavigationMapDirectionalIndicator] = []
     var renderedCamera: AppleNavigationMapCameraRenderState?
+    private var isUserMoving = false
     private var riderAnnotation: RiderAnnotation?
 
     init(
@@ -136,8 +137,22 @@ final class AppleNavigationMapCoordinator: NSObject, MKMapViewDelegate {
 
     func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
         guard hasActiveGesture(in: mapView) else { return }
+        isUserMoving = true
         onInteraction()
         onIntent(.userMovedCamera)
+    }
+
+    func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+        guard isUserMoving else { return }
+        isUserMoving = false
+        let center = mapView.centerCoordinate
+        guard let coordinate = NavigationMapCoordinate(
+            latitudeDegrees: center.latitude, longitudeDegrees: center.longitude
+        ), let viewport = NavigationMapViewport(
+            center: coordinate, visibleHeightMeters: mapView.camera.centerCoordinateDistance / 1.2,
+            bearingDegrees: mapView.camera.heading
+        ) else { return }
+        onIntent(.rememberViewport(viewport))
     }
 
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {

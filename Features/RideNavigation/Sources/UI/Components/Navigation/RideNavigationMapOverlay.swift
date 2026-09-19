@@ -31,6 +31,8 @@ struct RideNavigationMapOverlay: View {
     let onResumeGPX: () -> Void
     let onKeepRidingWithIncomingDestination: () -> Void
     let onEndRideAndOpenIncomingDestination: () -> Void
+    var onDownloadMap: (() -> Void)?
+    var onFollowGPX: (() -> Void)?
     @State private var showsFinishConfirmation = false
     private let guidanceVisibilityPolicy = RideNavigationGuidanceVisibilityPolicy()
     @State private var showsTrailExitConfirmation = false
@@ -193,16 +195,26 @@ private extension RideNavigationMapOverlay {
         )
     }
     private var planningOptions: some View {
-        RideNavigationRoutePlanningOptionsView(
-            state: state,
-            onSelectRouteOption: onSelectRouteOption,
-            onAvoidTolls: onAvoidTolls,
-            onAvoidHighways: onAvoidHighways
-        )
+        VStack(spacing: DesignSpace.extraSmall) {
+            RideNavigationRoutePlanningOptionsView(
+                state: state,
+                onSelectRouteOption: onSelectRouteOption,
+                onAvoidTolls: onAvoidTolls,
+                onAvoidHighways: onAvoidHighways
+            )
+            if state.activity == .preview, state.canReverseRoute {
+                ViewThatFits {
+                    HStack { OfflineRouteActions(onDownloadMap: onDownloadMap, onFollowGPX: onFollowGPX) }
+                    VStack { OfflineRouteActions(onDownloadMap: onDownloadMap, onFollowGPX: onFollowGPX) }
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
     }
     private var mapSelectorPanel: some View {
         RideNavigationMapSelectorPanel(
             state: state,
+            onOfflineMaps: { activeMapSelector = nil; onDownloadMap?() },
             onMapStyle: { styleID in perform { onMapStyle(styleID) } },
             activeSelector: $activeMapSelector
         )
@@ -231,7 +243,7 @@ private extension RideNavigationMapOverlay {
     private var usesCompactAccessibilityLayout: Bool { dynamicTypeSize.isAccessibilitySize
         && verticalSizeClass == .compact }
     private var hasPlanningOptions: Bool { (state.activity == .preview
-        && state.roadRouteOptions.count > 1) || state.showsRoadRoutePreferences }
+        && (state.roadRouteOptions.count > 1 || state.canReverseRoute)) || state.showsRoadRoutePreferences }
     @ViewBuilder
     private var guidance: some View {
         if shouldShowGuidance {

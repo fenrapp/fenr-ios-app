@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import OfflineMapsDomain
 import SettingsDomain
 import VehicleSession
 
@@ -21,6 +22,10 @@ public final class RideNavigationViewModel {
     @ObservationIgnored var routeRowsRevision: UInt64?
     @ObservationIgnored var routeRowsMeasurementSystem: MeasurementSystem?
     @ObservationIgnored var cachedRouteRows: [RideNavigationRouteRow] = []
+    @ObservationIgnored var offlineObserver: UUID?
+    @ObservationIgnored var offlineRoutesTask: Task<Void, Never>?
+    @ObservationIgnored var offlineRouteGeometry: [UUID: OfflineGeometry] = [:]
+    @ObservationIgnored var offlineRoutesRevision: UInt64?
     @ObservationIgnored var isStarted = false
     @ObservationIgnored var presentationMode = RideNavigationPresentationMode.fullScreen
     @ObservationIgnored var vehicleSnapshot = VehicleSessionSnapshot()
@@ -67,6 +72,7 @@ public final class RideNavigationViewModel {
     }
 
     deinit {
+        offlineRoutesTask?.cancel()
         savedRouteLoadingTask?.cancel()
         observationTask?.cancel()
         locationObservationTask?.cancel()

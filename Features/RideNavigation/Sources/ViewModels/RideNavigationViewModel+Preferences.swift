@@ -18,6 +18,11 @@ extension RideNavigationViewModel {
     }
 
     public func setMapStyle(_ styleID: String) {
+        if styleID == "map.normal" || styleID == "map.offline" {
+            guard persistSettings(.mapMode(styleID == "map.offline" ? .offline : .normal)) else { return }
+            render()
+            return
+        }
         let style: RideNavigationMapStylePreference
         switch styleID {
         case Constants.focusMapStyleID where allowsFocusMapStyle: style = .focus
@@ -62,6 +67,8 @@ extension RideNavigationViewModel {
 
     public func handleMapIntent(_ intent: NavigationMapIntent) {
         switch intent {
+        case .rememberViewport(let viewport):
+            cameraMode = .viewport(viewport)
         case .userMovedCamera:
             cameraMode = .userControlled
         case .recenter:

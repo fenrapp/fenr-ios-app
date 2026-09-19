@@ -1,0 +1,2 @@
+// Set MAPBOX_ACCESS_TOKEN in CI or in the ignored local override.
+#include? "../.xcodegen/Mapbox.xcconfig"

@@ -27,6 +27,8 @@ extension RideNavigationViewModel {
             screen: screen,
             activity: activity.activity,
             mapScene: makeMapScene(activity: activity, planning: planning),
+            mapSources: dependencies.mapPresentationMapper.mapSources(offline: usesOfflineMap),
+            mapMode: dependencies.mapPresentationMapper.mapMode(offline: usesOfflineMap),
             selectedMapStyleID: selectedMapStyleID,
             allowsFocusMapStyle: allowsFocusMapStyle,
             isHeadingUp: isHeadingUp,
@@ -43,7 +45,7 @@ extension RideNavigationViewModel {
             showsGuidanceInFocus: appSettings.rideNavigation.showsGuidanceInFocus,
             guidance: currentGuidance,
             routeTitle: planning.selectedRoute?.name ?? planning.selectedDestination?.name,
-            savedRoutes: routeRows,
+            savedRoutes: offlineRows(routeRows),
             searchQuery: planning.searchQuery,
             searchResults: presentedSearchResults,
             roadRouteOptions: activity.activity == .preview ? roadRouteOptions : [],
@@ -238,6 +240,8 @@ extension RideNavigationViewModel {
     var allowsFocusMapStyle: Bool {
         activityController.snapshot.activity == .following || activityController.snapshot.activity == .navigating
     }
+
+    var usesOfflineMap: Bool { appSettings.rideNavigation.mapMode == .offline }
 
     var selectedMapStyleID: String {
         mapDisplayStyle == .focus ? Constants.focusMapStyleID : mapSource.id

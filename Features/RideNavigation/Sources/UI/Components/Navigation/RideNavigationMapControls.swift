@@ -18,6 +18,7 @@ struct RideNavigationMapControls: View {
             HStack(spacing: DesignSpace.extraSmall) {
                 RideNavigationMapSourceMenu(
                     sources: state.mapSources,
+                    mode: state.mapMode,
                     selectedStyleID: state.selectedMapStyleID,
                     allowsFocus: state.allowsFocusMapStyle,
                     isPresented: activeSelector == .source,
@@ -65,6 +66,7 @@ struct RideNavigationMapControls: View {
 
 struct RideNavigationMapSelectorPanel: View {
     let state: RideNavigationViewState
+    var onOfflineMaps: (() -> Void)?
     let onMapStyle: (String) -> Void
     @Binding var activeSelector: RideNavigationMapSelector?
 
@@ -75,10 +77,13 @@ struct RideNavigationMapSelectorPanel: View {
             RideNavigationMapSourcePicker(
                 sources: state.mapSources,
                 selectedStyleID: state.selectedMapStyleID,
-                allowsFocus: state.allowsFocusMapStyle
+                allowsFocus: state.allowsFocusMapStyle,
+                mode: state.mapMode,
+                coverageNotice: state.mapScene.offlineNotice,
+                onOfflineMaps: onOfflineMaps
             ) { styleID in
                 onMapStyle(styleID)
-                activeSelector = nil
+                if !state.mapMode.choices.contains(where: { $0.id == styleID }) { activeSelector = nil }
             }
         case nil:
             EmptyView()

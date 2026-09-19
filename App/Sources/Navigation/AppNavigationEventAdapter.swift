@@ -25,7 +25,7 @@ enum AppNavigationEventAdapter {
         case .openCharging: .push(.chargingSettings)
         case .openBikeLock: .push(.bikeLockSettings)
         case .openDiagnostics: .push(.diagnostics(.overview))
-        case .openSupport, .openPrivacyPolicy, .openTerms, .openAcknowledgedProject: nil
+        case .openOfflineMaps, .openSupport, .openPrivacyPolicy, .openTerms, .openAcknowledgedProject: nil
         case .changeBike: .popToRoot
         }
     }

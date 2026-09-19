@@ -10,6 +10,8 @@ public struct RideNavigationMapSceneBuilder: Sendable {
     }
 
     struct Input: Sendable {
+        var offlineNotice: String?
+        var usesOfflineMap = false
         let source: MapSourceDescriptor
         let displayStyle: NavigationMapDisplayStyle
         let camera: NavigationMapCamera
@@ -46,6 +48,8 @@ public struct RideNavigationMapSceneBuilder: Sendable {
             $0.withAppearance(lineAppearance(for: $0.role, settings: input.lineAppearances))
         }
         return NavigationMapScene(
+            offlineNotice: input.offlineNotice,
+            usesOfflineMap: input.usesOfflineMap,
             source: input.source,
             displayStyle: input.displayStyle,
             camera: input.camera,
@@ -69,6 +73,8 @@ public struct RideNavigationMapSceneBuilder: Sendable {
             appendRejoinGuide(rejoinGuide, to: &polylines)
         }
         return NavigationMapScene(
+            offlineNotice: scene.offlineNotice,
+            usesOfflineMap: scene.usesOfflineMap,
             source: scene.source,
             displayStyle: scene.displayStyle,
             camera: camera,

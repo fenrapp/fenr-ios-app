@@ -122,6 +122,7 @@ struct FocusNavigationMapView: View {
 
     private func isUserControlled(_ camera: NavigationMapCamera) -> Bool {
         if case .userControlled = camera { return true }
+        if case .viewport = camera { return true }
         return false
     }
 

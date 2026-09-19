@@ -259,3 +259,36 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fenr.watchcompaniondata
+
+  OfflineMapsDomain:
+    templates: [IOSFramework]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.offlinemapsdomain
+    sources:
+      - path: Modules/OfflineMapsDomain/Sources
+    dependencies:
+      - target: EnvironmentDomain
+  OfflineMapsData:
+    templates: [IOSFramework]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.offlinemapsdata
+    sources:
+      - path: Modules/OfflineMapsData/Sources
+      - path: Modules/OfflineMapsData/Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
+    dependencies:
+      - target: OfflineMapsDomain
+      - target: EnvironmentDomain
+      - package: MapboxMaps
+  RideNavigationMapbox:
+    templates: [IOSFramework]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fenr.ridenavigationmapbox
+    sources:
+      - path: Modules/RideNavigationMapbox/Sources
+    dependencies:
+      - target: RideNavigation
+      - package: MapboxMaps

@@ -34,6 +34,14 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode_26.6.app
       - name: Install tooling
         run: brew install xcodegen swiftlint
+      - name: Configure Mapbox runtime token
+        env:
+          MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
+        run: |
+          mkdir -p .xcodegen
+          if [ -n "$MAPBOX_ACCESS_TOKEN" ]; then
+            printf 'MAPBOX_ACCESS_TOKEN = %s\n' "$MAPBOX_ACCESS_TOKEN" > .xcodegen/Mapbox.xcconfig
+          fi
       - name: Generate Xcode project
         run: xcodegen generate
       - name: Validate architecture and automation scripts
@@ -63,6 +71,14 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode_26.6.app
       - name: Install XcodeGen
         run: brew install xcodegen
+      - name: Configure Mapbox runtime token
+        env:
+          MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
+        run: |
+          mkdir -p .xcodegen
+          if [ -n "$MAPBOX_ACCESS_TOKEN" ]; then
+            printf 'MAPBOX_ACCESS_TOKEN = %s\n' "$MAPBOX_ACCESS_TOKEN" > .xcodegen/Mapbox.xcconfig
+          fi
       - name: Generate Xcode project
         run: xcodegen generate
       - name: Create iPhone test simulator
@@ -124,6 +140,14 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode_26.6.app
       - name: Install XcodeGen
         run: brew install xcodegen
+      - name: Configure Mapbox runtime token
+        env:
+          MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
+        run: |
+          mkdir -p .xcodegen
+          if [ -n "$MAPBOX_ACCESS_TOKEN" ]; then
+            printf 'MAPBOX_ACCESS_TOKEN = %s\n' "$MAPBOX_ACCESS_TOKEN" > .xcodegen/Mapbox.xcconfig
+          fi
       - name: Generate Xcode project
         run: xcodegen generate
       - name: Build and validate iOS release
@@ -173,6 +197,14 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode_26.6.app
       - name: Install XcodeGen
         run: brew install xcodegen
+      - name: Configure Mapbox runtime token
+        env:
+          MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
+        run: |
+          mkdir -p .xcodegen
+          if [ -n "$MAPBOX_ACCESS_TOKEN" ]; then
+            printf 'MAPBOX_ACCESS_TOKEN = %s\n' "$MAPBOX_ACCESS_TOKEN" > .xcodegen/Mapbox.xcconfig
+          fi
       - name: Generate Xcode project
         run: xcodegen generate
       - name: Provision requested official runtime or report fallback

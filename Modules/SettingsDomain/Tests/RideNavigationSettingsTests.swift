@@ -4,6 +4,22 @@ import Testing
 
 @Suite("Ride navigation settings")
 struct RideNavigationSettingsTests {
+    @Test func startsWithStandardWithoutSavedAppearance() throws {
+        #expect(RideNavigationSettings().preferredMapStyle == .standard)
+        let decoded = try JSONDecoder().decode(RideNavigationSettings.self, from: Data("{}".utf8))
+        #expect(decoded.preferredMapStyle == .standard)
+    }
+
+    @Test func preservesExplicitMapAppearance() throws {
+        for style in [RideNavigationMapStylePreference.focus, .standard, .satellite] {
+            let settings = RideNavigationSettings(preferredMapStyle: style)
+            let decoded = try JSONDecoder().decode(
+                RideNavigationSettings.self, from: JSONEncoder().encode(settings)
+            )
+            #expect(decoded.preferredMapStyle == style)
+        }
+    }
+
     @Test("Decodes legacy ride navigation settings with heading up")
     func decodesLegacyRideNavigationSettings() throws {
         let data = Data("""
@@ -16,6 +32,7 @@ struct RideNavigationSettingsTests {
 
         let settings = try JSONDecoder().decode(RideNavigationSettings.self, from: data)
 
+        #expect(settings.mapMode == .normal)
         #expect(settings.mapOrientation == .headingUp)
         #expect(settings.miniMapPosition == .topTrailing)
         #expect(settings.miniMapScale == .initial)
@@ -38,6 +55,7 @@ struct RideNavigationSettingsTests {
             thickness: .thick
         )
         let settings = RideNavigationSettings(
+            mapMode: .offline,
             showsGuidanceInFocus: true,
             showsCompassRing: true,
             showsRoadsInFocus: true,

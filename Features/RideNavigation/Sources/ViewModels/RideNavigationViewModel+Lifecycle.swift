@@ -10,6 +10,7 @@ extension RideNavigationViewModel {
     public func start() {
         guard !isStarted else { return }
         isStarted = true
+        startOfflineObservation()
         lifecycleGeneration &+= 1
         let lifecycle = lifecycleGeneration
         startLibraryObservation(lifecycle: lifecycle)
@@ -34,6 +35,7 @@ extension RideNavigationViewModel {
     }
 
     public func stop() {
+        stopOfflineObservation()
         cancelSavedRouteLoad()
         isStarted = false
         lifecycleGeneration &+= 1

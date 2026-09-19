@@ -86,6 +86,7 @@ private extension AppRootView {
     }
 
     func start() async {
+        featureStore.offlineMaps.service.setActive(scenePhase == .active)
         await lifecycleController.start()
         guard !Task.isCancelled else { return }
         setupDidChange()
@@ -95,6 +96,7 @@ private extension AppRootView {
     }
 
     func stop() {
+        featureStore.offlineMaps.service.setActive(false)
         featureStore.diagnosticsViewModel.setPresentationActive(false)
         featureStore.batteryHealthViewModel.setPresentationActive(false)
         featureStore.appSettingsViewModel.stop()
@@ -123,6 +125,7 @@ private extension AppRootView {
     }
 
     func updateScenePhase() {
+        featureStore.offlineMaps.service.setActive(scenePhase == .active)
         lifecycleController.setCanShowLiveActivity(scenePhase != .active)
         if scenePhase != .active {
             lifecycleController.persistRideSession()

@@ -261,7 +261,18 @@ private extension AppDependencyContainer {
         onboardingViewModel: BikeOnboardingViewModel,
         rideDashboardFactory: any RideDashboardFeatureBuilding
     ) -> AppFeatureStore {
-        AppFeatureStore(
+        let offlineMaps = AppOfflineMapsFeature.make()
+        let navigationFactory = AppRideNavigationFeatureFactory(
+            offlineMaps: offlineMaps,
+            vehicleSession: vehicleSession,
+            observeDeviceSpeed: ObserveDeviceSpeedUseCase(
+                repository: deviceSpeedRepository, requestsAuthorization: experienceOptions.isDemo
+            ),
+            settingsRepository: settingsRepository,
+            routeDirectory: experienceOptions.routeDirectory,
+            isDemo: experienceOptions.isDemo
+        )
+        return AppFeatureStore(
             chargingSettingsViewModel: chargeControlSession.preferencesController.map {
                 ChargingSettingsViewModel(useCases: .init(controller: $0), mapper: ChargingSettingsMapper())
             },
@@ -275,15 +286,9 @@ private extension AppDependencyContainer {
             rideHistoryViewModel: makeRideHistoryViewModel(),
             maintenanceViewModel: makeMaintenanceViewModel(),
             rideDashboardFactory: rideDashboardFactory,
-            rideNavigationFactory: AppRideNavigationFeatureFactory(
-                vehicleSession: vehicleSession,
-                observeDeviceSpeed: ObserveDeviceSpeedUseCase(
-                    repository: deviceSpeedRepository, requestsAuthorization: experienceOptions.isDemo
-                ),
-                settingsRepository: settingsRepository,
-                routeDirectory: experienceOptions.routeDirectory,
-                isDemo: experienceOptions.isDemo
-            )
+            offlineMaps: offlineMaps,
+            offlineMapsFactory: navigationFactory.makeOfflineFactory(),
+            rideNavigationFactory: navigationFactory
         )
     }
 

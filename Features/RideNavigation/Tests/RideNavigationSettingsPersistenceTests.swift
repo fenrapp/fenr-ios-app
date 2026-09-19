@@ -8,6 +8,60 @@ import TestSupport
 
 @MainActor
 struct RideNavigationSettingsPersistenceTests {
+    @Test("Map source changes preserve Focus, camera and active navigation")
+    func mapModeIsIndependentFromDisplayStyle() async throws {
+        let fixture = RideNavigationViewModelFixture(
+            settings: AppSettings(rideNavigation: .init(preferredMapStyle: .focus, showsRoadsInFocus: true))
+        )
+        let model = fixture.viewModel
+        model.start()
+        #expect(await waitUntil { model.pendingSettings.confirmed != nil })
+        model.activityController.activity = .navigating
+        model.screen = .map
+        model.applyPreferredMapStyleForActiveNavigation()
+        let viewport = try #require(NavigationMapViewport(
+            center: NavigationMapCoordinate(latitudeDegrees: 41, longitudeDegrees: 2)!,
+            visibleHeightMeters: 2_000, bearingDegrees: 45
+        ))
+        model.handleMapIntent(.rememberViewport(viewport))
+        for id in ["map.offline", "map.normal"] {
+            model.setMapStyle(id)
+            #expect(await waitUntil { model.pendingSettings.isEmpty })
+            #expect(model.viewState.mapScene.usesOfflineMap == (id == "map.offline"))
+            #expect(model.viewState.mapMode.isEmphasized == (id == "map.offline"))
+            #expect(model.viewState.mapScene.displayStyle == .focus)
+            #expect(model.viewState.mapScene.showsRoadsInFocus)
+            #expect(model.viewState.mapScene.camera == .viewport(viewport))
+            #expect(model.viewState.activity == .navigating)
+            #expect(model.makeMiniMapScene().usesOfflineMap == (id == "map.offline"))
+            #expect(model.makeMiniMapScene().displayStyle == .focus)
+        }
+        model.setMapStyle("map.offline")
+        model.setMapStyle(MapSourceDescriptor.appleHybrid.id)
+        #expect(await waitUntil { model.pendingSettings.isEmpty })
+        #expect(model.viewState.mapScene.usesOfflineMap)
+        #expect(model.viewState.mapScene.source == .appleHybrid)
+        model.setMapStyle("map.normal")
+        #expect(await waitUntil { model.pendingSettings.isEmpty })
+        #expect(model.viewState.mapScene.source == .appleHybrid)
+        #expect(await fixture.settingsRepository.load().rideNavigation.mapMode == .normal)
+        model.stop()
+    }
+
+    @Test("Rejected map mode persistence restores the previous provider")
+    func rejectedMapModeRestoresProvider() async {
+        let fixture = RideNavigationViewModelFixture()
+        let model = fixture.viewModel
+        model.start()
+        #expect(await waitUntil { model.pendingSettings.confirmed != nil })
+        await fixture.settingsRepository.failNextUpdate(.persistenceFailed)
+        model.setMapStyle("map.offline")
+        #expect(await waitUntil { model.settingsSaveError != nil })
+        #expect(!model.viewState.mapScene.usesOfflineMap)
+        #expect(model.viewState.mapMode.selectedID == "map.normal")
+        model.stop()
+    }
+
     @Test("Rejected route preferences cancel stale calculations and recalculate confirmed preferences")
     func rejectedRoutePreferencesRecalculatePreview() async {
         let fixture = RideNavigationViewModelFixture()

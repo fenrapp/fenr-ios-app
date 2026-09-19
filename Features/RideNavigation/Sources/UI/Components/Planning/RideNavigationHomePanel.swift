@@ -4,6 +4,7 @@ import UIKit
 
 struct RideNavigationHomePanel: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     let state: RideNavigationViewState
     let onClose: () -> Void
     let onImport: () -> Void
@@ -14,6 +15,8 @@ struct RideNavigationHomePanel: View {
     let onOpenRoute: (UUID) -> Void
     let onShareRoute: (UUID) -> Void
     let onDeleteRoute: (UUID) -> Void
+    var onOfflineMaps: (() -> Void)?
+    var onDownloadRoute: ((UUID) -> Void)?
     @State private var query = ""
     @State private var keyboardFrame: CGRect?
     @FocusState private var isSearchFieldFocused: Bool
@@ -64,8 +67,9 @@ struct RideNavigationHomePanel: View {
         if dynamicTypeSize.isAccessibilitySize {
             verticalHomeScroll
         } else {
-            ViewThatFits(in: .horizontal) {
+            ViewThatFits {
                 horizontalCards
+                    .fixedSize(horizontal: false, vertical: true)
                 verticalHomeScroll
             }
         }
@@ -106,7 +110,8 @@ struct RideNavigationHomePanel: View {
                 errorText: state.errorText,
                 onOpenRoute: onOpenRoute,
                 onShareRoute: onShareRoute,
-                onDeleteRoute: onDeleteRoute
+                onDeleteRoute: onDeleteRoute,
+                onDownloadRoute: onDownloadRoute
             )
             .frame(height: dynamicTypeSize.isAccessibilitySize ? nil : homePanelHeight)
             .transition(.move(edge: .trailing).combined(with: .opacity))
@@ -114,7 +119,8 @@ struct RideNavigationHomePanel: View {
     }
 
     private var panel: some View {
-        VStack(alignment: .leading, spacing: isSearchMode ? DesignSpace.extraSmall : DesignSpace.medium) {
+        VStack(alignment: .leading, spacing: isSearchMode || usesCompactLayout
+            ? DesignSpace.extraSmall : DesignSpace.small) {
             if !isSearchMode {
                 header
             }
@@ -130,12 +136,15 @@ struct RideNavigationHomePanel: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             } else {
                 RideNavigationHomeActions(onImport: onImport, onRecord: onRecord)
+                if let onOfflineMaps {
+                    RideNavigationOfflineMapsAction(action: onOfflineMaps)
+                }
                 if let errorText = state.errorText, state.savedRoutes.isEmpty {
                     RideNavigationErrorBanner(text: errorText)
                 }
             }
         }
-        .padding(isSearchMode ? DesignSpace.small : DesignSpace.medium)
+        .padding(isSearchMode || usesCompactLayout ? DesignSpace.small : DesignSpace.medium)
         .frame(
             maxWidth: dynamicTypeSize.isAccessibilitySize || isSearchMode
                 ? Constants.searchPanelWidth
@@ -239,8 +248,12 @@ private extension RideNavigationHomePanel {
         )
     }
 
+    private var usesCompactLayout: Bool {
+        verticalSizeClass == .compact && !dynamicTypeSize.isAccessibilitySize
+    }
+
     private var homePanelHeight: CGFloat {
-        max(Constants.planningPanelHeight, savedRoutesPanelHeight)
+        max(usesCompactLayout ? Constants.compactPanelHeight : Constants.planningPanelHeight, savedRoutesPanelHeight)
     }
 
     private func clearSearch() {
@@ -263,7 +276,8 @@ private extension RideNavigationHomePanel {
     private enum Constants {
         static let panelWidth: CGFloat = 390
         static let searchPanelWidth: CGFloat = 480
-        static let planningPanelHeight: CGFloat = 260
+        static let planningPanelHeight: CGFloat = 320
+        static let compactPanelHeight: CGFloat = 296
         static let savedRoutesMinimumHeight: CGFloat = 150
         static let savedRoutesMaximumHeight: CGFloat = 330
         static let savedRoutesHeaderHeight: CGFloat = 84

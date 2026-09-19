@@ -1,16 +1,19 @@
 import AVFoundation
 import EnvironmentDomain
 import Foundation
+import OfflineMapsDomain
 import RideNavigation
 import RideNavigationAppleMaps
 import RideNavigationData
 import RideNavigationDomain
+import RideNavigationMapbox
 import SettingsDomain
 import UIKit
 import VehicleSession
 
 @MainActor
 struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
+    let offlineMaps: AppOfflineMapsFeature
     let vehicleSession: any VehicleSessionService
     let observeDeviceSpeed: ObserveDeviceSpeedUseCase
     let settingsRepository: any AppSettingsRepository
@@ -47,14 +50,39 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
                     mapPresentationMapper: mapPresentationMapper,
                     mapSceneBuilder: RideNavigationMapSceneBuilder(mapper: mapPresentationMapper),
                     locationGeometry: locationGeometry,
-                    timing: timing
+                    timing: timing,
+                    offlineNavigation: OfflineNavigationDependencies(
+                        useCases: offlineMaps.useCases,
+                        mapper: OfflineNavigationMapper(geometry: OfflineGeometryService())
+                    )
                 ),
                 library: library,
                 planningController: planning,
                 activityController: activity
             ),
-            mapSurfaceFactory: AppleNavigationMapSurfaceFactory().makeFactory()
+            mapSurfaceFactory: MapboxNavigationMapSurfaceFactory(
+                fallback: AppleNavigationMapSurfaceFactory().makeFactory()
+            ).makeFactory(),
+            offlineMapsFactory: makeOfflineFactory()
         )
+    }
+
+    func makeOfflineFactory() -> OfflineMapsFeatureFactory {
+        let repository = Self.makeRecordedRouteRepository(directory: routeDirectory)
+        return offlineMaps.makeFactory(observePosition: observeDeviceSpeed) { id in
+            guard let route = try await repository.loadRoute(id: id) else { throw CocoaError(.fileReadNoSuchFile) }
+            return OfflineMapSelectionSeed(
+                name: route.name, routeID: route.id,
+                segments: route.segments.map { segment in
+                    segment.points.compactMap {
+                        NavigationMapCoordinate(
+                            latitudeDegrees: $0.coordinate.latitudeDegrees,
+                            longitudeDegrees: $0.coordinate.longitudeDegrees
+                        )
+                    }
+                }
+            )
+        }
     }
 
     private static func makeActivityController(

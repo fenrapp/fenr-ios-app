@@ -24,8 +24,17 @@ extension RideNavigationViewModel {
         let activity = activity ?? activityController.snapshot
         let planning = planning ?? planningController.snapshot
         let location = location ?? locationSnapshot
+        let offline = usesOfflineMap ? dependencies.offlineNavigation.map {
+            $0.mapper.presentation(
+                source: mapSource,
+                coordinate: location.coordinate.map(dependencies.mapPresentationMapper.coordinate),
+                snapshot: $0.useCases.snapshot
+            )
+        } : nil
         return dependencies.mapSceneBuilder.makeScene(.init(
-            source: mapSource,
+            offlineNotice: offline?.notice,
+            usesOfflineMap: usesOfflineMap,
+            source: offline?.source ?? mapSource,
             displayStyle: mapDisplayStyle,
             camera: cameraMode,
             userCoordinate: location.coordinate,

@@ -186,6 +186,7 @@ targets:
       - target: BikeDomain
       - target: EnvironmentDomain
       - target: RideNavigationDomain
+      - target: OfflineMapsDomain
       - target: SettingsDomain
       - target: VehicleSession
       - target: DesignSystem

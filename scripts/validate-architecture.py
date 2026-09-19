@@ -10,6 +10,8 @@ import sys
 
 
 EXCEPTIONS = {
+    ("RideNavigationMapbox", "RideNavigation"):
+        "The Mapbox adapter implements map and offline selection presentation contracts.",
     ("RideNavigationAppleMaps", "RideNavigation"):
         "The Apple Maps adapter implements the feature's map surface and presentation contracts.",
     ("BikeDemo", "BikeEmulator"):
@@ -97,7 +99,7 @@ def layer(name, target):
         return "support"
     if name in PRESENTATION:
         return "presentation"
-    if name == "RideNavigationAppleMaps":
+    if name in {"RideNavigationAppleMaps", "RideNavigationMapbox"}:
         return "map-adapter"
     if name == "BikeSDK":
         return "sdk"

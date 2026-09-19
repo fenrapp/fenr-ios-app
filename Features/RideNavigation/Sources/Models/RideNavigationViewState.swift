@@ -19,6 +19,7 @@ public struct RideNavigationViewState: Equatable, Sendable {
     public let activity: Activity
     public let mapScene: NavigationMapScene
     public let mapSources: [MapSourceDescriptor]
+    public let mapMode: RideNavigationMapModeState
     public let selectedMapStyleID: String
     public let allowsFocusMapStyle: Bool
     public let isHeadingUp: Bool
@@ -72,6 +73,7 @@ public struct RideNavigationViewState: Equatable, Sendable {
         activity: Activity = .preview,
         mapScene: NavigationMapScene = .init(),
         mapSources: [MapSourceDescriptor] = [.appleStandard, .appleHybrid],
+        mapMode: RideNavigationMapModeState = .normal,
         selectedMapStyleID: String = MapSourceDescriptor.appleStandard.id,
         allowsFocusMapStyle: Bool = false,
         isHeadingUp: Bool = true,
@@ -124,6 +126,7 @@ public struct RideNavigationViewState: Equatable, Sendable {
         self.activity = activity
         self.mapScene = mapScene
         self.mapSources = mapSources
+        self.mapMode = mapMode
         self.selectedMapStyleID = selectedMapStyleID
         self.allowsFocusMapStyle = allowsFocusMapStyle
         self.isHeadingUp = isHeadingUp

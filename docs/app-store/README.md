@@ -50,3 +50,21 @@ the simulated demo and manual diagnostic capture. Settings exposes
 [Terms of Use](https://fenr.to/terms). Verify those destinations and the current
 App Store declarations when preparing a release. Historical QA reports and
 per-build evidence belong outside the public repository.
+
+## Offline maps privacy declarations
+
+The public policy at [fenr.to/privacy](https://fenr.to/privacy) describes Mapbox
+map requests, SDK telemetry, the attribution control's telemetry preferences and
+local map-download storage. Review it against the actual SDK configuration.
+
+Mapbox Maps 11.30.1 and its embedded MapboxCommon privacy manifests declare
+precise and coarse location, user ID, product interaction, other usage data,
+performance data and other diagnostic data. Their declared purposes are app
+functionality and analytics, with neither identity linking nor tracking. Check
+the manifests in the exported app whenever the SDK version changes. These
+third-party declarations do not mean FENR uploads its local motorcycle logs.
+
+App Store Connect publishes privacy answers immediately. Its questionnaire
+requires answers for the currently available App Store version. Coordinate the
+Mapbox label update with the first public offline-maps release; a TestFlight
+upload does not publish the new App Store version or its privacy answers.

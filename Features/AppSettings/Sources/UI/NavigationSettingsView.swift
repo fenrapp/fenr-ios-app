@@ -17,6 +17,11 @@ public struct NavigationSettingsView: View {
         Form {
             focusSection
             mapSection
+            Section {
+                Button { onNavigation(.openOfflineMaps) } label: {
+                    Label(.appSettingsOfflineMaps, systemImage: "map")
+                }
+            }
             appearanceSection
         }
         .navigationTitle(Text(.appSettingsNavigationTitle))

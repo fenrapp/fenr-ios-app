@@ -1,6 +1,8 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "appSettingsOfflineMaps": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Offline maps"}}}},
+
     "appSettingsChargingDetail" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Power and charge target"}}}},
     "appSettingsChargingTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Charging"}}}},
     "appSettingsRideBatteryDisplayTitle" : {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Battery Display"}}}},

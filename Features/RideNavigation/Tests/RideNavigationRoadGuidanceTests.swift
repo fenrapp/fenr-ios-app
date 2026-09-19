@@ -8,9 +8,29 @@ import TestSupport
 
 @MainActor
 struct RideNavigationRoadGuidanceTests {
+    @Test("An offline map can display a calculated road route without switching provider")
+    func explicitMapModeSurvivesRoadNavigation() async throws {
+        let fixture = RideNavigationViewModelFixture()
+        _ = try await prepareRoadPreview(fixture: fixture)
+        let normal = fixture.viewModel.viewState.mapScene
+        #expect(!normal.usesOfflineMap)
+        fixture.viewModel.setMapStyle("map.offline")
+        #expect(await waitUntil { fixture.viewModel.pendingSettings.isEmpty })
+        let offline = fixture.viewModel.viewState.mapScene
+        #expect(offline.usesOfflineMap)
+        #expect(offline.polylines == normal.polylines)
+        #expect(offline.markers == normal.markers)
+        fixture.viewModel.startPreviewedRoute()
+        #expect(fixture.viewModel.viewState.mapScene.usesOfflineMap)
+        #expect(fixture.viewModel.viewState.activity == .navigating)
+        fixture.viewModel.stop()
+    }
+
     @Test("route preferences persist, recalculate alternatives, and drive the active map style")
     func preferencesAndFocusStyle() async throws {
-        let fixture = RideNavigationViewModelFixture()
+        let fixture = RideNavigationViewModelFixture(
+            settings: AppSettings(rideNavigation: .init(preferredMapStyle: .focus))
+        )
         let context = try await prepareRoadPreview(fixture: fixture)
 
         fixture.viewModel.setAvoidsTolls(true)
