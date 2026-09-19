@@ -1,0 +1,7 @@
+FENR 1.2 - Offline maps
+
+Download an area or coverage around a GPX route, with topographic maps and optional satellite imagery. Switch between Normal and Offline in the map selector, and try Standard, Satellite and Focus where available.
+
+Please test downloading, pausing and resuming, reopening the app, renaming and deleting areas, and following a saved GPX. Check portrait and landscape layouts, map coverage warnings, and switching layers. After downloading, test with Wi-Fi and mobile data turned off and report any missing coverage. Physical-device offline acceptance is still being evaluated.
+
+Search and calculated road routes still need an internet connection. Verify that map errors or missing coverage do not interrupt ride recording or the motorcycle connection. Check that your Apple Watch still receives battery, riding and charging updates from the paired iPhone.
