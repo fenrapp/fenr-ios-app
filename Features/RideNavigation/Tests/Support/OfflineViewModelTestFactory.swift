@@ -1,3 +1,4 @@
+import EnvironmentDomain
 import Foundation
 import OfflineMapsDomain
 @testable import RideNavigation
@@ -19,10 +20,14 @@ enum OfflineViewModelTestFactory {
         OfflineDetailViewModel(id: id, useCases: useCases(repository), mapper: OfflineMapsPresentationMapper())
     }
 
-    static func selection(_ repository: OfflineMapsRepositorySpy) -> OfflineSelectionViewModel {
+    static func selection(
+        _ repository: OfflineMapsRepositorySpy,
+        seed: OfflineMapSelectionSeed = OfflineMapSelectionSeed(name: "Synthetic"),
+        position: TestDeviceSpeedRepository? = nil
+    ) -> OfflineSelectionViewModel {
         OfflineSelectionViewModel(
-            seed: OfflineMapSelectionSeed(name: "Synthetic"),
-            useCases: useCases(repository), mapper: OfflineMapsPresentationMapper()
+            seed: seed, useCases: useCases(repository), mapper: OfflineMapsPresentationMapper(),
+            observePosition: position.map { ObserveDeviceSpeedUseCase(repository: $0) }
         )
     }
 }

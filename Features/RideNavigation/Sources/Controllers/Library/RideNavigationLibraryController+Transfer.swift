@@ -4,6 +4,9 @@ import RideNavigationDomain
 @MainActor
 extension RideNavigationLibraryController {
     func importGPX(from url: URL) throws -> [RideRoute] {
+        guard ["gpx", "xml"].contains(url.pathExtension.lowercased()) else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
         let gainedAccess = url.startAccessingSecurityScopedResource()
         defer { if gainedAccess { url.stopAccessingSecurityScopedResource() } }
         let data = try Data(contentsOf: url, options: .mappedIfSafe)

@@ -9,8 +9,7 @@ extension RideNavigationViewModel {
             name: route.name, routeID: route.id,
             segments: route.segments.map { segment in
                 segment.points.map { dependencies.mapPresentationMapper.coordinate($0.coordinate) }
-            },
-            center: locationSnapshot.coordinate.map(dependencies.mapPresentationMapper.coordinate)
+            }
         )
     }
     func startOfflineObservation() {

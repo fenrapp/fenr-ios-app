@@ -4,9 +4,7 @@ public struct RideNavigationView: View {
     @Environment(\.colorScheme) private var colorScheme
     private let viewModel: RideNavigationViewModel
     private let offlineMapsFactory: OfflineMapsFeatureFactory?
-    @State private var offlineRequest: OfflineMapSelectionSeed?
-    @State private var offlineRouteID: UUID?
-    @State private var showsOfflineMaps = false
+    @State private var offlineRequest: OfflineMapsRequest?
     private let mapSurfaceFactory: RideNavigationMapSurfaceFactory
     private let transitionNamespace: Namespace.ID
     private let onClose: () -> Void
@@ -62,8 +60,8 @@ public struct RideNavigationView: View {
                         onOpenRoute: viewModel.openSavedRoute,
                         onShareRoute: viewModel.shareSavedRoute,
                         onDeleteRoute: viewModel.deleteSavedRoute,
-                        onOfflineMaps: { offlineRouteID = nil; offlineRequest = nil; showsOfflineMaps = true },
-                        onDownloadRoute: { offlineRouteID = $0; offlineRequest = nil; showsOfflineMaps = true }
+                        onOfflineMaps: { offlineRequest = OfflineMapsRequest() },
+                        onDownloadRoute: { offlineRequest = OfflineMapsRequest(routeID: $0) }
                     )
                 case .map:
                     RideNavigationMapOverlay(
@@ -96,9 +94,7 @@ public struct RideNavigationView: View {
                         onKeepRidingWithIncomingDestination: viewModel.keepRidingWithIncomingDestination,
                         onEndRideAndOpenIncomingDestination: viewModel.endRideAndOpenIncomingDestination,
                         onDownloadMap: {
-                            offlineRouteID = nil
-                            offlineRequest = viewModel.offlineSelectionSeed
-                            showsOfflineMaps = true
+                            offlineRequest = OfflineMapsRequest(seed: viewModel.offlineSelectionSeed)
                         },
                         onFollowGPX: viewModel.followGPXDirectly
                     )
@@ -116,8 +112,8 @@ public struct RideNavigationView: View {
             }
             .padding(.bottom, RideNavigationMapAttributionLayout.clearance)
         }
-        .sheet(isPresented: $showsOfflineMaps) {
-            offlineMapsFactory?.make(routeID: offlineRouteID, seed: offlineRequest)
+        .sheet(item: $offlineRequest) { request in
+            offlineMapsFactory?.make(routeID: request.routeID, seed: request.seed)
         }
         .alert(
             Text(.rideNavigationSaveErrorTitle),
@@ -173,7 +169,8 @@ public struct RideNavigationView: View {
         }
         .fileImporter(
             isPresented: $showsImporter,
-            allowedContentTypes: [.gpx, .xml],
+            // File providers and other apps can classify GPX as plain text or generic data.
+            allowedContentTypes: [.data],
             allowsMultipleSelection: false
         ) { result in
             guard case .success(let urls) = result, let url = urls.first else { return }
