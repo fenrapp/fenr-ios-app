@@ -173,7 +173,7 @@ Reuse the processed TestFlight build for the App Store version:
 
 ```sh
 asc --profile "$FENR_ASC_PROFILE" --strict-auth versions attach-build \
-  --version-id "$FENR_VERSION_ID" --build "$FENR_BUILD_ID"
+  --version-id "$FENR_VERSION_ID" --build-id "$FENR_BUILD_ID"
 asc --profile "$FENR_ASC_PROFILE" --strict-auth validate --app "$FENR_APP_ID" --version-id "$FENR_VERSION_ID" --strict
 ```
 
