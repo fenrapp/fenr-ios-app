@@ -9,10 +9,14 @@ struct DashboardEfficiencyLiveCard: View {
         DashboardAdaptiveCardSurface {
             VStack(alignment: .leading, spacing: DesignSpace.extraSmall) {
                 header
+                    .fixedSize(horizontal: false, vertical: true)
                 powerLegend
+                    .fixedSize(horizontal: false, vertical: true)
                 powerChart
                 hero
+                    .fixedSize(horizontal: false, vertical: true)
                 energySummary
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .accessibilityElement(children: .contain)
@@ -22,30 +26,44 @@ struct DashboardEfficiencyLiveCard: View {
     }
 
     private var header: some View {
-        DashboardTripCardHeader(title: rideDashboardLocalized(.rideDashboardEfficiencyLiveTitle)) {
-            Text(.rideDashboardEfficiencyWindow)
-                .font(.caption2)
-                .foregroundStyle(DesignColor.secondaryText)
+        ViewThatFits(in: .horizontal) {
+            DashboardTripCardHeader(title: rideDashboardLocalized(.rideDashboardEfficiencyLiveTitle)) {
+                windowLabel
+            }
+            .fixedSize(horizontal: true, vertical: true)
+
+            VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
+                DashboardTripCardHeader(title: rideDashboardLocalized(.rideDashboardEfficiencyLiveTitle))
+                windowLabel
+            }
         }
     }
 
+    private var windowLabel: some View {
+        Text(.rideDashboardEfficiencyWindow)
+            .font(.caption2)
+            .foregroundStyle(DesignColor.secondaryText)
+    }
+
     private var hero: some View {
-        HStack(alignment: .lastTextBaseline, spacing: DesignSpace.extraSmall) {
-            VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
-                Text(.rideDashboardEfficiencyAverage)
-                    .font(.caption2)
-                    .foregroundStyle(DesignColor.secondaryText)
+        VStack(alignment: .leading, spacing: DesignSpace.extraExtraSmall) {
+            Text(.rideDashboardEfficiencyAverage)
+                .font(.caption2)
+                .foregroundStyle(DesignColor.secondaryText)
+            HStack(alignment: .lastTextBaseline, spacing: DesignSpace.extraSmall) {
                 Text(verbatim: state.valueText)
                     .font(.system(size: Constants.heroFontSize, weight: .medium, design: .rounded))
                     .monospacedDigit()
+                Text(state.unitText)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(DesignColor.secondaryText)
+                Spacer(minLength: DesignSpace.extraSmall)
+                Text(state.status.text)
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(statusColor)
             }
-            Text(state.unitText)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(DesignColor.secondaryText)
-            Spacer(minLength: DesignSpace.small)
-            Text(state.status.text)
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(statusColor)
+            .lineLimit(1)
+            .minimumScaleFactor(Constants.minimumTextScale)
         }
     }
 
@@ -87,7 +105,9 @@ struct DashboardEfficiencyLiveCard: View {
             }
         }
         .chartYScale(domain: chartDomain)
-        .frame(maxWidth: .infinity, minHeight: Constants.chartHeight)
+        .frame(maxWidth: .infinity, minHeight: .zero, maxHeight: .infinity)
+        // Text keeps its readable height; the chart uses the remaining landscape space.
+        .layoutPriority(Constants.chartLayoutPriority)
         .overlay {
             if state.powerPoints.isEmpty {
                 Text(.rideDashboardEfficiencyWaitingPower)
@@ -183,7 +203,8 @@ struct DashboardEfficiencyLiveCard: View {
 
     private enum Constants {
         static let heroFontSize: CGFloat = 34
-        static let chartHeight: CGFloat = 108
+        static let minimumTextScale: CGFloat = 0.7
+        static let chartLayoutPriority = -1.0
         static let axisLabelCount = 3
         static let chartLineWidth: CGFloat = 2
         static let gridLineWidth: CGFloat = 1
