@@ -10,9 +10,18 @@ FENR is an open-source iPhone app for compatible electric motorcycles, with a li
 FENR is independent and unofficial. It is not affiliated with or endorsed by Stark Future or any vehicle manufacturer.
 
 <p align="center">
-  <img src="store/screenshots/1.0/en-US/iphone69/01-dashboard.png" width="250" alt="FENR riding dashboard">
-  <img src="store/screenshots/1.0/en-US/iphone69/03-charging.png" width="250" alt="FENR charging controls">
-  <img src="store/screenshots/1.0/en-US/iphone69/09-gpx-routes.png" width="250" alt="FENR GPX import and ride navigation">
+  <img src="store/screenshots/1.2/en-US/iphone69/01-dashboard.png" width="250" alt="FENR riding dashboard">
+  <img src="store/screenshots/1.2/en-US/iphone69/02-gpx-routes.png" width="250" alt="FENR GPX import and ride navigation">
+  <img src="store/screenshots/1.2/en-US/iphone69/03-offline-maps.png" width="250" alt="FENR offline map downloads">
+</p>
+<p align="center">
+  <img src="store/screenshots/1.2/en-US/iphone69/04-power-curves.png" width="250" alt="FENR power and regeneration curves">
+  <img src="store/screenshots/1.2/en-US/iphone69/06-charging.png" width="250" alt="FENR charging controls">
+  <img src="store/screenshots/1.2/en-US/iphone69/09-battery-health.png" width="250" alt="FENR battery health insights">
+</p>
+<p align="center">
+  <img src="store/screenshots/1.2/en-US/watch46/01-riding.png" width="180" alt="FENR riding dashboard on Apple Watch">
+  <img src="store/screenshots/1.2/en-US/watch46/02-charging.png" width="180" alt="FENR charging progress on Apple Watch">
 </p>
 
 ## Features
