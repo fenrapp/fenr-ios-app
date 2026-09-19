@@ -1,5 +1,6 @@
 import DesignSystem
 import SwiftUI
+
 struct RideNavigationMapOverlay: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let state: RideNavigationViewState
@@ -116,7 +117,7 @@ private extension RideNavigationMapOverlay {
                 if showsControls {
                     topControls
                         .fixedSize(horizontal: false, vertical: true)
-                        .layoutPriority(2)
+                        .layoutPriority(Constants.topControlsLayoutPriority)
                         .onGeometryChange(for: CGFloat.self, of: { $0.size.height }, action: { topControlsHeight = $0 })
                         .transition(.move(edge: .top).combined(with: .opacity))
                         .zIndex(1)
@@ -130,7 +131,7 @@ private extension RideNavigationMapOverlay {
                     }
                     standardMiddle
                 }
-                if !usesAccessibilityScrollLayout { bottomContent }
+                if !dynamicTypeSize.isAccessibilitySize { bottomContent }
             }
             .zIndex(1)
             if !dynamicTypeSize.isAccessibilitySize {
@@ -161,13 +162,13 @@ private extension RideNavigationMapOverlay {
     }
     private var accessibilityMiddle: some View {
         RideNavigationMapMiddleRegion(
-            hasContent: hasAccessibilityMiddleContent || usesAccessibilityScrollLayout,
+            hasContent: true,
             showsScrollIndicators: true,
             expandsScrollArea: true
         ) {
             accessibilityMiddleContent
         }
-        .id(usesAccessibilityScrollLayout && state.activity == .paused)
+        .id(state.activity == .paused)
     }
 
     private var accessibilityMiddleContent: some View {
@@ -183,7 +184,7 @@ private extension RideNavigationMapOverlay {
             guidance
             forkGuidance
             trailExitPreview
-            if usesAccessibilityScrollLayout { bottomContent }
+            bottomContent
         }
         .frame(maxWidth: .infinity, alignment: .top)
     }
@@ -235,17 +236,11 @@ private extension RideNavigationMapOverlay {
                 .transition(.scale(scale: Constants.compactTransitionScale).combined(with: .opacity))
         }
     }
-    private var hasAccessibilityMiddleContent: Bool { activeMapSelector != nil
-        || (showsControls && hasPlanningOptions) || state.isRerouting
-        || state.guidance != nil || state.forkGuidance != nil || state.trailExitPreview != nil }
     private var hasStandardMiddleContent: Bool {
         if shouldShowGuidance || state.trailExitPreview != nil { return true }
         guard let forkGuidance = state.forkGuidance else { return false }
         return shouldShowForkGuidance(forkGuidance)
     }
-    private var usesAccessibilityScrollLayout: Bool { dynamicTypeSize.isAccessibilitySize }
-    private var hasPlanningOptions: Bool { (state.activity == .preview
-        && (state.roadRouteOptions.count > 1 || state.canReverseRoute)) || state.showsRoadRoutePreferences }
     @ViewBuilder
     private var guidance: some View {
         if shouldShowGuidance {
@@ -340,6 +335,7 @@ private extension RideNavigationMapOverlay {
         action()
     }
     private enum Constants {
+        static let topControlsLayoutPriority = 2.0
         static let compactTransitionScale = 0.96
         static let mapSelectorTransitionScale = 0.94
         static let mapSelectorTransitionDuration = 0.2

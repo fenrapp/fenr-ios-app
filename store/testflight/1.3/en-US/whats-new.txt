@@ -1,0 +1,7 @@
+FENR 1.3 - Navigation and route-import improvements
+
+Tap the navigation battery metric to switch between percentage and estimated range. Check metric and imperial units, unavailable telemetry, and reopening navigation. Estimates require sufficient riding data.
+
+Try larger accessibility text in portrait and landscape, including the navigation controls and efficiency card. Import GPX files from Files and other providers, including routes with an unescaped ampersand in descriptive text.
+
+Download maps for a saved GPX and check that the selected route and its map area are preserved. Confirm that navigation and offline-map screens do not interrupt ride recording or the paired Apple Watch updates.
