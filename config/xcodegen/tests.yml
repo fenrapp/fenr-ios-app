@@ -196,6 +196,8 @@ targets:
       - target: EnvironmentDomain
       - target: RideNavigation
       - target: RideNavigationDomain
+      - target: RideSession
+      - target: RideSessionDomain
       - target: SettingsDomain
       - target: TestSupport
       - target: VehicleSession

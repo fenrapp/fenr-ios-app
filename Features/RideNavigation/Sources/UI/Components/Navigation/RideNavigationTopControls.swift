@@ -13,11 +13,24 @@ struct RideNavigationTopControls: View {
     let onMapHeadingUp: (Bool) -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: DesignSpace.small) {
-            routeHeader
-            Spacer(minLength: DesignSpace.medium)
-            rightControls
-                .fixedSize(horizontal: true, vertical: false)
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .top, spacing: DesignSpace.small) {
+                routeHeader
+                    .frame(
+                        minWidth: Constants.minimumHeaderWidth, idealWidth: Constants.minimumHeaderWidth,
+                        maxWidth: .infinity, alignment: .leading
+                    )
+                Spacer(minLength: DesignSpace.medium)
+                rightControls
+                    .fixedSize(horizontal: true, vertical: true)
+            }
+            VStack(alignment: .leading, spacing: DesignSpace.small) {
+                routeHeader
+                ScrollView(.horizontal) {
+                    rightControls
+                }
+                .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("rideNavigation.topControls")
@@ -74,6 +87,7 @@ struct RideNavigationTopControls: View {
         }
         .padding(DesignSpace.extraExtraSmall)
         .frame(minHeight: Self.height)
+        .fixedSize(horizontal: false, vertical: true)
         .rideNavigationGlassSurface(cornerRadius: Constants.controlRadius)
     }
 
@@ -96,6 +110,7 @@ struct RideNavigationTopControls: View {
     }
 
     private enum Constants {
+        static let minimumHeaderWidth: CGFloat = 180
         static let controlRadius: CGFloat = 24
         static let recordingIndicatorSize: CGFloat = 8
     }

@@ -7,6 +7,8 @@ import RideNavigationAppleMaps
 import RideNavigationData
 import RideNavigationDomain
 import RideNavigationMapbox
+import RideSession
+import RideSessionDomain
 import SettingsDomain
 import UIKit
 import VehicleSession
@@ -14,6 +16,8 @@ import VehicleSession
 @MainActor
 struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
     let offlineMaps: AppOfflineMapsFeature
+    let rideSession: any RideSessionService
+    let rideTripRepository: any RideTripRepository
     let vehicleSession: any VehicleSessionService
     let observeDeviceSpeed: ObserveDeviceSpeedUseCase
     let settingsRepository: any AppSettingsRepository
@@ -58,7 +62,12 @@ struct AppRideNavigationFeatureFactory: RideNavigationFeatureBuilding {
                 ),
                 library: library,
                 planningController: planning,
-                activityController: activity
+                activityController: activity,
+                rangeViewModel: RideNavigationRangeViewModel(
+                    session: rideSession,
+                    loadHistory: LoadRideTripRangeHistoryUseCase(repository: rideTripRepository),
+                    mapper: RideNavigationRangeMapper(estimator: RideRangeEstimator(), locale: .autoupdatingCurrent)
+                )
             ),
             mapSurfaceFactory: MapboxNavigationMapSurfaceFactory(
                 fallback: AppleNavigationMapSurfaceFactory().makeFactory()

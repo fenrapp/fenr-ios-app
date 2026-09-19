@@ -96,7 +96,8 @@ public struct RideNavigationView: View {
                         onDownloadMap: {
                             offlineRequest = OfflineMapsRequest(seed: viewModel.offlineSelectionSeed)
                         },
-                        onFollowGPX: viewModel.followGPXDirectly
+                        onFollowGPX: viewModel.followGPXDirectly,
+                        rangeState: viewModel.rangeViewModel?.state ?? RideNavigationRangeState()
                     )
                 case .summary:
                     RideNavigationSummaryPanel(

@@ -4,8 +4,15 @@ import SwiftUI
 struct RideNavigationCompactDashboard: View {
     let state: RideNavigationViewState
 
+    var rangeState = RideNavigationRangeState()
+    var showsEstimatedRange = false
+    var onToggleBatteryDisplay: () -> Void = {}
+
     var body: some View {
-        RideNavigationMetricsRow(state: state)
+        RideNavigationMetricsRow(
+            state: state, rangeState: rangeState, showsEstimatedRange: showsEstimatedRange,
+            onToggleBatteryDisplay: onToggleBatteryDisplay
+        )
         .padding(.horizontal, DesignSpace.large)
         .padding(.vertical, DesignSpace.small)
         .frame(minHeight: Constants.height)
