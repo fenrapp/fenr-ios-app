@@ -51,8 +51,13 @@ final class AppChargingController {
                 let ready: Bool
                 switch snapshot.connection.state {
                 case .receivingTelemetry:
+                    // The single bike session selects the configured VIN before connecting;
+                    // the optional VIN characteristic is not exposed by every motorcycle.
+                    let matchesProfile = snapshot.profile.map {
+                        snapshot.telemetry.vin.isEmpty || $0.vin == snapshot.telemetry.vin
+                    } ?? false
                     ready = snapshot.isCanonicalTelemetryAvailable
-                        && snapshot.profile?.vin == snapshot.telemetry.vin
+                        && matchesProfile
                 default: ready = false
                 }
                 let connected = ready && snapshot.telemetry.statusFlags.isChargerConnected

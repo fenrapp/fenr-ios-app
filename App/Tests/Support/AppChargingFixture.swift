@@ -38,15 +38,19 @@ struct AppChargingFixture {
         )
     }
 
-    func publish(connected: Bool, charger: Bool = false, matchesBike: Bool = true) async {
-        var telemetry = BikeTelemetry(vin: matchesBike ? BikeEmulatorIdentity.vin : "FENRTEST000000002")
+    func publish(
+        connected: Bool, charger: Bool = false, matchesBike: Bool = true,
+        hasTelemetryVIN: Bool = true, hasProfile: Bool = true, hasCanonicalTelemetry: Bool = true
+    ) async {
+        let telemetryVIN = matchesBike ? BikeEmulatorIdentity.vin : "FENRTEST000000002"
+        var telemetry = BikeTelemetry(vin: hasTelemetryVIN ? telemetryVIN : "")
         telemetry.lastUpdated = Date()
         telemetry.statusFlags = .init(isChargerConnected: charger)
         await hub.send(.init(
             telemetry: telemetry,
             connection: .init(state: connected ? .receivingTelemetry(peripheralName: nil) : .disconnected(reason: nil)),
-            profile: .init(vin: BikeEmulatorIdentity.vin),
-            isCanonicalTelemetryAvailable: connected
+            profile: hasProfile ? .init(vin: BikeEmulatorIdentity.vin) : nil,
+            isCanonicalTelemetryAvailable: connected && hasCanonicalTelemetry
         ))
     }
 }
