@@ -1,0 +1,3 @@
+Fixes charging controls remaining unavailable on some connected motorcycles.
+
+Please test changing the charging power, confirm the new limit is applied, and check that the controls still work after reconnecting.
