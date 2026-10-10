@@ -1,5 +1,6 @@
 public enum StarkChargerPayloadLayout {
     public static let length = 19
+    public static let extendedLength = 21
 
     public static let requestedCurrentOffset = 0
     public static let reportedCurrentOffset = 2

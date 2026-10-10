@@ -72,6 +72,33 @@ struct StarkBatteryHealthDecoderTests {
         #expect(payload.typeRaw == 3)
     }
 
+    @Test("Extended charger telemetry preserves every field in the legacy prefix")
+    func extendedChargerDecodes() throws {
+        let payload = try StarkChargerDecoder().decode(StarkProtocolFixtures.extendedCharger)
+
+        #expect(payload.requestedCurrentAmperes == 3.2)
+        #expect(payload.reportedCurrentAmperes == 3.1)
+        #expect(payload.targetCellVoltageVolts == 4.2)
+        #expect(payload.maximumCurrentAmperes == 20)
+        #expect(payload.maximumPowerWatts == 1_200)
+        #expect(payload.maximumStateOfChargePercent == 80)
+        #expect(payload.requestedVoltageRaw == 4_200)
+        #expect(payload.reportedVoltageRaw == 3_900)
+        #expect(payload.statusRaw == 0)
+        #expect(payload.isEnabled)
+        #expect(payload.typeRaw == 3)
+    }
+
+    @Test("Charger rejects truncated and unsupported packet lengths", arguments: [0, 18, 20, 22])
+    func unsupportedChargerLengthIsRejected(length: Int) {
+        #expect(throws: StarkProtocolError.invalidPayloadLength(
+            expected: StarkChargerPayloadLayout.length,
+            actual: length
+        )) {
+            try StarkChargerDecoder().decode(Data(repeating: 0, count: length))
+        }
+    }
+
     @Test("Advanced battery decoders reject incomplete captures")
     func incompleteCaptureIsRejected() {
         #expect(throws: StarkProtocolError.invalidPayloadLength(

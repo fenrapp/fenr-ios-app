@@ -4,13 +4,15 @@ public struct StarkChargerDecoder: StarkPayloadDecoding {
     public init() {}
 
     public func decode(_ data: Data) throws -> StarkChargerPayload {
-        guard data.count == StarkChargerPayloadLayout.length else {
+        guard data.count == StarkChargerPayloadLayout.length
+            || data.count == StarkChargerPayloadLayout.extendedLength else {
             throw StarkProtocolError.invalidPayloadLength(
                 expected: StarkChargerPayloadLayout.length,
                 actual: data.count
             )
         }
 
+        // Both formats share this prefix; the extended trailing fields are not interpreted.
         let reader = StarkByteReader(data: data)
         return StarkChargerPayload(
             requestedCurrentAmperes: amperes(reader.u16(at: StarkChargerPayloadLayout.requestedCurrentOffset)),

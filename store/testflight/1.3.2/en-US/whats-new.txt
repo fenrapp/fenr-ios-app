@@ -1,0 +1,3 @@
+Fixed an issue that could leave charging power and charge-limit controls unavailable on some motorcycles while charging.
+
+Please check that charging readings appear and that both controls become available after connecting. When you change a setting, check that the confirmed value updates and remains correct after reconnecting.
